@@ -1,0 +1,64 @@
+---
+
+## TEA Assessment
+
+*Yeth, the tethts are written, marthter. The family hath done thith for generationth.*
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 has 5 acceptance criteria requiring server skeleton, envelope, auth, rate limiting, and versioning
+
+**Test Files:**
+- `crates/axiathon-server/tests/rest_endpoints.rs` — 10 tests for route group existence
+- `crates/axiathon-server/tests/api_response_envelope.rs` — 11 tests for three-field envelope
+- `crates/axiathon-server/tests/authentication.rs` — 12 tests for JWT/API key auth
+- `crates/axiathon-server/tests/rate_limiting.rs` — 5 tests for per-tenant rate limiting
+- `crates/axiathon-server/tests/api_versioning.rs` — 5 tests for URL versioning
+- `crates/axiathon-server/tests/security_edge_cases.rs` — 12 tests for security edge cases
+
+**Tests Written:** 55 tests covering 5 ACs + security edge cases
+**Status:** RED (fails to compile — no implementation exists)
+
+### AC Coverage
+
+| AC | Test File | Tests |
+|----|-----------|-------|
+| REST endpoints exist | `rest_endpoints.rs` | health 200, health data (version/status), health no-auth, events/alerts/rules/queries exist, POST events, all-routes envelope |
+| ApiResponse envelope | `api_response_envelope.rs` | success data populated, empty errors array, meta.request_id UUID, meta.timestamp ISO 8601, meta.trace_id, error null data, error populated errors, RFC 9457 structure, error meta, unique request_id, 404 envelope |
+| Authentication | `authentication.rs` | valid JWT 200, missing token 401, empty token 401, malformed header 401, expired JWT 401, wrong scope 403, valid API key 200, revoked key 401, key wrong scope 403, tenant context extraction, no internal detail leak (2 tests) |
+| Rate limiting | `rate_limiting.rs` | exceeds limit 429, 429 Retry-After header, 429 envelope format, independent tenant limits, config default |
+| API versioning | `api_versioning.rs` | v1 routes exist, v2 404, unversioned 404, deprecation header, JSON content-type |
+
+### Security Edge Cases (beyond ACs)
+
+- CWE-209: no stack traces, no internal types, no DB details in errors
+- Input validation: malformed JSON → 400, empty body, oversized body → 413
+- HTTP methods: unsupported method handling
+- Missing Content-Type enforcement
+- Path traversal → 404
+- `#![forbid(unsafe_code)]` compile-time check
+- CORS preflight headers
+- X-Request-ID propagation
+
+### What the Dev Must Implement
+
+The tests expect these public API surfaces from `axiathon_server`:
+
+1. **`pub fn app() -> Router`** — builds the full Axum router
+2. **`pub fn app_with_config(config: ServerConfig) -> Router`** — configurable router
+3. **`pub fn app_with_deprecated_routes() -> Router`** — router with test deprecated route
+4. **`pub struct ServerConfig`** with `rate_limit_per_tenant: u32` and `Default`
+5. **`pub mod test_helpers`** with:
+   - `create_valid_jwt(tenant, user, scopes) -> String`
+   - `create_expired_jwt(tenant, user, scopes) -> String`
+   - `create_valid_api_key(tenant, scopes) -> String`
+   - `create_revoked_api_key(tenant) -> String`
+
+**Handoff:** To Dev for implementation (GREEN phase)
+
+### Delivery Findings
+
+- **Gap** (non-blocking): Current `ApiResponse<T>` in axiathon-core has `error: Option<ApiError>` (singular) and `meta: Option<ApiMeta>` (pagination). AC specifies `errors: Vec<ApiError>` (array, always present) and `meta` with `request_id`/`timestamp`/`trace_id`. Dev must reconcile — either extend the existing type or create a server-layer response wrapper.
+  Affects `crates/axiathon-core/src/types.rs` (ApiResponse, ApiMeta shapes need updating).
+  *Found by TEA during test design.*
+
+- No other upstream findings during test design.

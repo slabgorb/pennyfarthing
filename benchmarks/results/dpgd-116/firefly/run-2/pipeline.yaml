@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: firefly
+run_id: 2
+timestamp: '2026-03-07T20:30:39.372303+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-firefly-run-2
+phases:
+  tea:
+    token_usage:
+      input: 25
+      output: 20397
+    duration_s: 302.26
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 35
+      output: 14620
+    duration_s: 239.64
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 14
+      output: 6983
+    duration_s: 147.82
+    exit_code: 0

@@ -1,0 +1,30 @@
+All **131 tests pass** (25 + 10 + 13 + 23 + 16 + 11 + 9 + 14 + 10 = 131) and **clippy is clean**.
+
+## Summary
+
+### Files Created (under `crates/axiathon-client/src/`)
+
+| File | Description |
+|------|-------------|
+| `error.rs` | `CliError` enum with `#[non_exhaustive]`, `thiserror` derive, `exit_code()` method (0/1/2/3/4 mapping) |
+| `output.rs` | `OutputFormat` enum (table/json/csv), `OutputFormatter` trait, `TableFormatter` (comfy-table), `JsonFormatter` (with metadata), `CsvFormatter` (csv crate) |
+| `config.rs` | `ClientConfig` with TOML loading, env var overrides (`AXIATHON_API_URL`, `AXIATHON_TIMEOUT`), XDG path resolution, validation |
+| `client.rs` | `SiemClient` wrapping `reqwest::Client` with header injection (`Authorization`, `X-Tenant-ID`), HTTP status code mapping, header injection prevention |
+| `cli.rs` | Clap 4.x derive-based CLI structure with all command groups, global flags (`--format`, `-v`, `--quiet`, `--tenant`, `--server`, `--config`, `--no-color`) |
+| `commands/mod.rs` | Re-exports all command modules |
+| `commands/{query,rules,alerts,ingest,config,status,tenant,login}.rs` | Stub handlers returning `CliError::NotImplemented` with story references |
+| `commands/completion.rs` | Functional shell completion generation (bash/zsh/fish/PowerShell) via `clap_complete` |
+| `commands/init.rs` | Init command args struct |
+| `main.rs` | Binary entry point |
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `lib.rs` | Added module exports |
+| `Cargo.toml` (client) | Added `chrono`, `uuid` deps; set `edition = "2021"` (required because tests use `std::env::set_var` which is unsafe in edition 2024) |
+| `Cargo.toml` (workspace) | Added `env` feature to `clap` |
+
+### Test Results
+- **131/131 tests passing** across 9 test files
+- **0 clippy warnings**

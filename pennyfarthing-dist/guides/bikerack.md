@@ -1,50 +1,29 @@
 # BikeRack
 
 <info>
-Unified dashboard brand with two modes: **GUI** (browser-based panel layout) and **TUI** (terminal-based panels). BikeRack runs WheelHub (the Express/WebSocket server), serving dashboard panels while Claude Code runs in your own terminal.
+Terminal dashboard using Textual TUI panels. BikeRack runs WheelHub (Python FastAPI server), serving dashboard data via WebSocket while Claude Code runs in your terminal.
 </info>
 
 ## Overview
 
-BikeRack provides dashboard panels (sprint status, git diffs, workflow state, etc.) alongside Claude Code in your terminal. It supports two modes: a browser-based GUI with full Dockview layout, and a terminal-based TUI using Textual.
+BikeRack provides dashboard panels (sprint status, git diffs, workflow state, etc.) alongside Claude Code in your terminal using Textual TUI.
 
 ```
 ┌─────────────────┐       ┌──────────────────────┐
 │  Claude CLI      │       │  WheelHub (BikeRack)  │
 │  (your terminal) │──────▶│  Port 2898            │
-│                  │ OTEL  │  No ClaudeService     │
-│                  │ files │  16 WS channels       │
+│                  │ OTEL  │  WebSocket channels   │
+│                  │ files │  REST API             │
 └─────────────────┘       └──────────┬─────────────┘
-                                     │ HTTP + WS
+                                     │ WS
                                      ▼
                           ┌──────────────────────┐
-                          │  Browser              │
-                          │  Dockview layout      │
-                          │  or ?panel=X routing  │
+                          │  TUI (Textual)        │
+                          │  Terminal panels       │
                           └──────────────────────┘
 ```
 
 ## Quick Start
-
-There are two approaches to running BikeRack.
-
-**Approach 1: Manual just commands**
-
-```bash
-# hint - cd ($repo)
-just wheelhub stop # in case it's running, clears left over pid and port files
-just wheelhub start # open browser w/ the URL for GUI
-just claude # handles some env setup
-
-# in another terminal
-# hint - cd ($repo)
-just tui
-
-# or
-just bikerack # your mileage may vary
-```
-
-**Approach 2: pf CLI**
 
 ```bash
 # Launch BikeRack + Claude CLI together
@@ -63,57 +42,22 @@ pf bikerack stop
 pf bikerack status
 ```
 
-BikeRack opens a browser with the Dockview panel layout. Claude CLI runs in the foreground. When Claude exits, BikeRack shuts down automatically via `trap EXIT`.
-
-## Panel Routing
-
-BikeRack supports two modes:
-
-**Dockview layout** (default) — full multi-panel workspace at `http://localhost:{port}/bikerack`
-
-**Standalone panel** — single panel full-screen via query param:
-
-| URL | Panel |
-|-----|-------|
-| `?panel=sprint` | Sprint status |
-| `?panel=git` | Git operations |
-| `?panel=diffs` | Diff viewer |
-| `?panel=workflow` | Workflow state |
-| `?panel=changed` | Changed files |
-| `?panel=ac` | Acceptance criteria |
-| `?panel=todos` | Task list |
-| `?panel=audit` | Audit log |
-| `?panel=background` | Background jobs |
-| `?panel=debug` | Debug/prime context |
-| `?panel=bikelane` | BikeLane workflow |
-| `?panel=settings` | Settings |
-| `?panel=portrait` | Agent portrait |
+BikeRack starts WheelHub in the background. Claude CLI runs in the foreground. When Claude exits, BikeRack shuts down automatically via `trap EXIT`.
 
 ## How It Works
 
 1. **Launcher** (`pf bikerack start`) starts WheelHub with `IS_BIKERACK=1`
 2. **WheelHub** listens on port 2898
-3. **ClaudeService is skipped** — no `/ws/claude` WebSocket channel
-4. **OTEL telemetry** flows from Claude CLI to WheelHub's OTLP receiver
-5. **File watchers** detect changes to `.session/`, `sprint/`, and git state
-6. **Panels** render as React components consuming WebSocket data
-
-### Mode Detection
-
-```typescript
-// Server-side
-import { isBikeRackMode } from './server.js';
-if (isBikeRackMode()) { /* skip Claude-specific setup */ }
-```
-
-Client-side detection is URL-based: the presence of `?panel=X` triggers standalone rendering.
+3. **OTEL telemetry** flows from Claude CLI to WheelHub's OTLP receiver
+4. **File watchers** detect changes to `.session/`, `sprint/`, and git state
+5. **TUI panels** consume WebSocket data from WheelHub
 
 ### Port and PID Files
 
 | File | Purpose |
 |------|---------|
-| `.bikerack-port` | Port number, written after `server.listen()` — readiness signal |
-| `.wheelhub-pid` | WheelHub PID, written by launcher — enables `pf bikerack stop` |
+| `.bikerack-port` | Port number — readiness signal |
+| `.wheelhub-pid` | WheelHub PID — enables `pf bikerack stop` |
 
 Both are deleted on shutdown.
 
@@ -127,19 +71,7 @@ pf bc load my-layout      # Restore a saved layout
 pf bc list                 # List saved layouts
 ```
 
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `packages/core/src/server/entry.ts` | BikeRack standalone entry point |
-| `packages/core/src/server/BikeRackWorkspace.tsx` | Dockview layout for BikeRack |
-| `packages/core/src/server/BikeRackIndex.tsx` | Panel listing index page |
-| `packages/core/src/server/StandalonePanel.tsx` | `?panel=X` routing + `PANEL_REGISTRY` |
-| `pf/bikerack/cli.py` | `pf bikerack` launcher CLI |
-
-## TUI Mode (Terminal Dashboard)
-
-BikeRack also ships a Textual-based TUI that runs entirely in the terminal — no browser needed.
+## TUI Panels
 
 ### Prerequisites
 
@@ -155,7 +87,7 @@ python3 -m venv .venv
 uv pip install --python .venv/bin/python3 -e "pennyfarthing-dist"
 ```
 
-This installs the required packages into `.venv/`:
+Required packages:
 
 | Package | Purpose |
 |---------|---------|
@@ -181,9 +113,7 @@ just tui dir=/path/to/project
 just tui port=2898
 ```
 
-### Panels
-
-The TUI provides tabbed panels navigable via keyboard:
+### Navigation
 
 | Key | Action |
 |-----|--------|
@@ -215,8 +145,16 @@ PYTHONPATH=pennyfarthing-dist:$PYTHONPATH .venv/bin/python3 -m pf.bikerack.tui
 ## Constraints
 
 - **No MessagePanel** — Claude conversation stays in your terminal. This is intentional.
-- **Single session** — one Claude CLI per BikeRack instance (multi-session is deferred).
-- **Bell/Relay/Reflector are dormant** — these features require ClaudeService and are skipped in BikeRack mode.
+- **Single session** — one Claude CLI per BikeRack instance.
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `pf/bikerack/cli.py` | `pf bikerack` launcher CLI |
+| `pf/bikerack/launcher.py` | WheelHub process management |
+| `pf/wheelhub/app.py` | FastAPI application |
+| `pf/wheelhub/tui.py` | Textual TUI application |
 
 <info>
 **ADR:** `docs/adr/0024-bikerack-mode.md`

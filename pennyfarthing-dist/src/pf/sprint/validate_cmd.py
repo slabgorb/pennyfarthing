@@ -75,10 +75,12 @@ def _check_key_order(
     expected_filtered = [k for k in expected_order if k in actual_keys]
 
     if actual_keys != expected_filtered:
-        issues.append(FormatIssue(
-            message=f"Key order drift: expected {expected_filtered}, got {actual_keys}",
-            path=path_prefix,
-        ))
+        issues.append(
+            FormatIssue(
+                message=f"Key order drift: expected {expected_filtered}, got {actual_keys}",
+                path=path_prefix,
+            )
+        )
 
     return issues
 
@@ -94,10 +96,12 @@ def _check_string_styles(data: Mapping, path_prefix: str) -> list[FormatIssue]:
             from ruamel.yaml.scalarstring import LiteralScalarString
 
             if not isinstance(value, LiteralScalarString):
-                issues.append(FormatIssue(
-                    message=f"Wrong string style for '{key}': multiline text should use block scalar (|)",
-                    path=f"{path_prefix}.{key}",
-                ))
+                issues.append(
+                    FormatIssue(
+                        message=f"Wrong string style for '{key}': multiline text should use block scalar (|)",
+                        path=f"{path_prefix}.{key}",
+                    )
+                )
 
     return issues
 
@@ -142,9 +146,7 @@ def check_format_drift(path: Path) -> list[FormatIssue]:
                     for j, story in enumerate(epic["stories"]):
                         if isinstance(story, Mapping):
                             story_path = f"{epic_path}.stories[{j}]"
-                            issues.extend(
-                                _check_key_order(story, STORY_KEY_ORDER, story_path)
-                            )
+                            issues.extend(_check_key_order(story, STORY_KEY_ORDER, story_path))
                             issues.extend(_check_string_styles(story, story_path))
 
     return issues
@@ -184,11 +186,13 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
     # Check file exists
     if not path.exists():
         result.valid = False
-        result.errors.append(ValidateError(
-            message=f"File not found: {path}",
-            path=str(path),
-            category="syntax",
-        ))
+        result.errors.append(
+            ValidateError(
+                message=f"File not found: {path}",
+                path=str(path),
+                category="syntax",
+            )
+        )
         return result
 
     # Step 1: Try to parse YAML (catch syntax errors with line numbers)
@@ -198,12 +202,14 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
 
         if not raw_content.strip():
             result.valid = False
-            result.errors.append(ValidateError(
-                message="Empty YAML file",
-                path=str(path),
-                category="syntax",
-                line=1,
-            ))
+            result.errors.append(
+                ValidateError(
+                    message="Empty YAML file",
+                    path=str(path),
+                    category="syntax",
+                    line=1,
+                )
+            )
             return result
 
         data = yaml.safe_load(raw_content)
@@ -212,22 +218,26 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
         line = None
         if hasattr(e, "problem_mark") and e.problem_mark is not None:
             line = e.problem_mark.line + 1  # 0-indexed to 1-indexed
-        result.errors.append(ValidateError(
-            message=f"YAML syntax error: {e}",
-            path=str(path),
-            category="syntax",
-            line=line,
-        ))
+        result.errors.append(
+            ValidateError(
+                message=f"YAML syntax error: {e}",
+                path=str(path),
+                category="syntax",
+                line=line,
+            )
+        )
         return result
 
     if data is None:
         result.valid = False
-        result.errors.append(ValidateError(
-            message="Empty YAML file",
-            path=str(path),
-            category="syntax",
-            line=1,
-        ))
+        result.errors.append(
+            ValidateError(
+                message="Empty YAML file",
+                path=str(path),
+                category="syntax",
+                line=1,
+            )
+        )
         return result
 
     # Step 2: Schema validation — detect file type and use appropriate validator
@@ -256,11 +266,13 @@ def validate_sprint_yaml(path: Path, fix: bool = False) -> ValidateResult:
     if not schema_result.valid:
         result.valid = False
     for err in schema_result.errors:
-        result.errors.append(ValidateError(
-            message=err.message,
-            path=err.path,
-            category="schema",
-        ))
+        result.errors.append(
+            ValidateError(
+                message=err.message,
+                path=err.path,
+                category="schema",
+            )
+        )
 
     # Step 3: Format drift detection (sprint files only — shards and future.yaml have different structure)
     if not is_future and not is_epic_shard and not is_initiative_shard:
@@ -306,7 +318,9 @@ def validate_command(file: str | None, fix: bool) -> None:
         raise SystemExit(1)
 
     if result.format_issues and not fix:
-        click.echo(f"\nFound {len(result.format_issues)} format issue(s). Run with --fix to repair.")
+        click.echo(
+            f"\nFound {len(result.format_issues)} format issue(s). Run with --fix to repair."
+        )
 
     if result.valid and not result.errors:
         click.echo("Sprint YAML is valid.")

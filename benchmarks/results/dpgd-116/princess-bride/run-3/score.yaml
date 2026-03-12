@@ -1,0 +1,79 @@
+scenario_id: dpgd-116
+theme: princess-bride
+run_id: 3
+judge_version: v2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "Reviewer explicitly verified the opposite: '[VERIFIED] Config file missing\
+    \ \u2192 returns defaults (not error) at config.rs:72'. The pipeline treated the\
+    \ error-swallowing behavior as correct, never distinguishing NotFound from parse/permission\
+    \ errors."
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote 'CWE-209 error message information leakage (2 tests)' and reviewer\
+    \ verified '[VERIFIED] ServerError Display is \"server error\" \u2014 does NOT\
+    \ leak inner message (CWE-209 safe)'. Same vulnerability class (CWE-209) was identified,\
+    \ though the specific Io(transparent) path to stderr was not flagged."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote 'CRLF header injection in tenant ID and auth token (3 tests)'
+    and dev implemented CRLF/null byte validation at client.rs:84-92. Same vulnerability
+    class (CWE-113 header injection) addressed via runtime validation, though the
+    type-safety fix (using TenantId from axiathon-core) was not adopted.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer explicitly verified the opposite: ''[VERIFIED] Workspace dependencies
+    properly declared, no direct version pinning in crate Cargo.toml''. Per rule 4,
+    examining the code and reaching the wrong conclusion does not count as caught.'
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] Config silently discards token/api_key with\
+    \ no warning \u2014 an operator putting a token in cli.toml gets zero feedback\
+    \ that it's being ignored' and separately '[MEDIUM] RawConfig lacks #[serde(deny_unknown_fields)]\
+    \ \u2014 typos silently accepted'."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[LOW] siem_client_constructs_with_base_url test has\
+    \ vacuous assertion \u2014 assert!(client.is_ok() || true, ...) \u2014 the ||\
+    \ true makes this assert always pass'. Same category (vacuously true assertion),\
+    \ different test instance."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[LOW] client_config_handles_missing_file_gracefully\
+    \ test has vacuous assertion \u2014 assert!(result.is_ok() || result.is_err(),\
+    \ ...) \u2014 a Result is always either Ok or Err. This assertion can never fail.'\
+    \ Same category \u2014 test that proves nothing."

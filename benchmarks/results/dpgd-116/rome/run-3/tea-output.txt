@@ -1,0 +1,27 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI binary — every acceptance criterion requires behavioral validation.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `tests/error_exit_codes.rs` | 17 | AC-3 | CliError variants, exit codes (0/1/3/4), From\<AxiathonError\>, Send+Sync, CWE-209 |
+| `tests/cli_command_structure.rs` | 49 | AC-1, AC-2, AC-5, AC-6 | All 12 command groups, plural noun enforcement, help rendering, global flags, derive check |
+| `tests/output_format.rs` | 18 | AC-4 | Table/JSON/CSV formatting, metadata envelope, CSV escaping, empty data, no-color, parse |
+| `tests/siem_client.rs` | 16 | AC-7 | HTTP status mapping (401/403/404/429/5xx), header injection, CWE-113, silent error detection |
+| `tests/config_loading.rs` | 15 | AC-8 | TOML loading, XDG path, env overrides, precedence, validation, token-not-in-file, HTTPS warning |
+| `tests/shell_completion.rs` | 5 | AC-9 | bash/zsh/fish/powershell generation, subcommand presence |
+| `tests/stub_handlers.rs` | 13 | AC-10 | All 8 stub handlers return NotImplemented with story refs |
+
+**Tests Written:** 117 tests (across 7 files) covering all 10 ACs + security edge cases
+**Status:** RED (101 failing, 16 passing structural/negative checks — ready for Dev)
+
+**Security tests included:**
+- CWE-113: CRLF header injection via tenant ID and token
+- CWE-209: Error Display doesn't leak server internals
+- Silent error swallowing: 200 with invalid JSON body must error
+- Config validation: empty URL, negative timeout, non-HTTPS warnings
+- Token isolation: tokens must not be stored in config file
+
+**Handoff:** To Dev for implementation

@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: princess-bride
+run_id: 1
+timestamp: '2026-03-08T06:13:20.958417+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-princess-bride-run-1
+phases:
+  tea:
+    token_usage:
+      input: 689
+      output: 47676
+    duration_s: 829.69
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 28
+      output: 24270
+    duration_s: 480.45
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 10
+      output: 4842
+    duration_s: 103.83
+    exit_code: 0

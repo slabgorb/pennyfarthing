@@ -1,0 +1,48 @@
+# E2E test scenarios for Pennyfarthing
+#
+# Usage:
+#   cd pennyfarthing && ./tests/e2e/run.sh          # run all scenarios
+#   docker compose -f tests/e2e/docker-compose.yml run fresh-init  # run one
+#
+# Each service is a self-contained test scenario that exits 0 on success.
+
+x-common: &common
+  build:
+    context: ../..
+    dockerfile: tests/e2e/Dockerfile
+  volumes:
+    - ./scenarios:/scenarios:ro
+    - ./lib.sh:/lib.sh:ro
+    - ./fixtures:/fixtures:ro
+
+services:
+
+  # Scenario 1: Fresh consumer project — pf init on empty repo
+  fresh-init:
+    <<: *common
+    command: /scenarios/fresh-init.sh
+
+  # Scenario 2: Re-init preserves custom content (gates, workflows, agents)
+  reinit-preserves-custom:
+    <<: *common
+    command: /scenarios/reinit-preserves-custom.sh
+
+  # Scenario 3: WheelHub starts on Node 24 without CJS errors
+  wheelhub-node24:
+    <<: *common
+    command: /scenarios/wheelhub-node24.sh
+
+  # Scenario 4: Framework upgrade doesn't clobber consumer customizations
+  upgrade-safety:
+    <<: *common
+    command: /scenarios/upgrade-safety.sh
+
+  # Scenario 5: orc-ax snapshot — init against a repo with real dirty state
+  orc-ax-snapshot:
+    <<: *common
+    command: /scenarios/orc-ax-snapshot.sh
+
+  # Scenario 6: Idempotency — run init 3 times, assert same result
+  idempotency:
+    <<: *common
+    command: /scenarios/idempotency.sh

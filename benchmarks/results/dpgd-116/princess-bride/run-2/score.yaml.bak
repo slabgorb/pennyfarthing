@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: princess-bride
+run_id: 2
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: TEA wrote tests for missing file fallback and malformed TOML, but the
+    implementation uses from_file_or_default which swallows all errors. Config silently
+    falls back on invalid URL scheme was flagged by Reviewer as MEDIUM, but the broader
+    from_file_or_default swallowing parse/permission errors was not specifically caught.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote security tests for CWE-209 error exposure. Dev implemented\
+    \ safe Display on ServerError suppressing internal details. Reviewer flagged NotFound\
+    \ leaking full URL as MEDIUM. However, the core issue of CliError Display with\
+    \ eprintln! leaking via Io(transparent) was only partially addressed \u2014 Reviewer\
+    \ flagged the NotFound URL leak but not the general Io transparent forwarding."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged as MEDIUM: '--tenant accepts raw String instead of validated\
+    \ TenantId newtype \u2014 cli.rs:34' and as HIGH: 'SiemClient::new() bypasses\
+    \ all validation \u2014 CWE-113 header injection'. TEA also wrote CRLF header\
+    \ injection tests in security.rs."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that dependencies like clap_complete, comfy-table, csv,
+    dirs, reqwest, and toml use direct version strings instead of workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged as MEDIUM: 'RawConfig silently ignores unknown fields\
+    \ \u2014 config.rs:15-21' noting that typos and token field are silently ignored,\
+    \ recommending #[serde(deny_unknown_fields)] or warnings."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...) in the test suite. TEA wrote the tests but included the flawed assertion
+    logic.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the test with zero assertions (let _ = config). TEA
+    wrote the test but did not include meaningful assert_eq! checks on the default
+    config values.

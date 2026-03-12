@@ -1,0 +1,38 @@
+All right. Machine shop's done stress-testing the blueprint. Here's the damage report.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI binary — every module needs test coverage.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `tests/cli_structure.rs` | 30 | AC-1, AC-2, AC-5, AC-6 | Command groups, help rendering, global flags, derive macros |
+| `tests/exit_codes.rs` | 13 | AC-3 | CliError exit code mapping (0/1/2/3/4), error traits, CWE-209 |
+| `tests/output_format.rs` | 10 | AC-4 | Table/JSON/CSV formatting, escaping, metadata |
+| `tests/siem_client.rs` | 12 | AC-7 | HTTP wrapper, status code mapping, header injection prevention |
+| `tests/config_loading.rs` | 9 | AC-8 | TOML loading, env overrides, precedence, token exclusion |
+| `tests/shell_completion.rs` | 6 | AC-9 | Bash/zsh/fish/PowerShell generation |
+| `tests/stub_handlers.rs` | 4 | AC-10 | "not yet implemented" messages with story refs |
+| `tests/security.rs` | 8 | Cross-cutting | CWE-209, CWE-113, credential debug exposure |
+
+**Tests Written:** 92 tests covering all 10 ACs
+**Status:** RED (compilation failures — modules `cli`, `error`, `output`, `client`, `config`, `commands::completion` don't exist yet)
+
+**Key types the dev must create:**
+- `axiathon_client::cli::Cli` — clap `#[derive(Parser)]` with all command groups
+- `axiathon_client::error::CliError` — enum with `exit_code()` method, variants: `ServerError`, `NotFound`, `AuthenticationExpired`, `Unauthorized`, `RateLimited`, `ServerUnavailable`, `ConnectionTimeout`, `ConfigError`, `NotImplemented`
+- `axiathon_client::output::{OutputFormat, OutputFormatter}` — Table/JSON/CSV formatting
+- `axiathon_client::client::SiemClient` — HTTP wrapper with `map_http_status()`, `build_request()`, `build_url()`, header injection prevention
+- `axiathon_client::config::ClientConfig` — TOML loading with `load_from()`, `with_env_override()`, `with_cli_override()`, `token()` returns `None`
+- `axiathon_client::commands::completion::generate_completion` — clap_complete integration
+
+**Security coverage:**
+- Header injection via CRLF/null bytes in token and tenant (CWE-113)
+- Token exposure in Debug output
+- Token exclusion from config files (keychain only)
+- Error message information exposure (CWE-209)
+- All CliError variants produce non-empty Display (no silent swallowing)
+
+**Handoff:** To Dev for implementation (GREEN phase)

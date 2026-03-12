@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: the-west-wing
+run_id: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 13
+total_weight: 37
+score_pct: 35.1
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors. TEA
+    tests config loading but none specifically test that parse/permission errors are
+    distinguished from NotFound. Reviewer did not flag this.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: "Dev implemented CWE-209 mitigation: ServerError display omits internal\
+    \ details (error.rs:27), verified by reviewer. TEA also wrote exit_codes.rs tests\
+    \ for CWE-209 security. However, the Display impl still uses eprintln directly\
+    \ \u2014 the reviewer verified the Display sanitization but did not flag that\
+    \ stderr still leaks via Io(transparent). Partial catch."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote header injection tests for CWE-113 (newlines in tenant rejected
+    via try_with_tenant), but SiemClient.tenant_id remains a raw String rather than
+    using TenantId from axiathon-core. The type-safety gap was not flagged by any
+    phase.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged [MEDIUM]: ''clap_complete, comfy-table, csv, dirs, keyring,
+    reqwest, toml are declared with inline versions instead of workspace = true, despite
+    existing in [workspace.dependencies]. This creates version drift risk.'''
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged [MEDIUM]: ''No #[serde(deny_unknown_fields)]. An operator
+    who writes token = "my-secret" in cli.toml gets zero feedback that the field is
+    ignored.'' TEA also wrote config_file_with_token_field_is_rejected_or_ignored
+    test but reviewer noted the test ''explicitly accepts both behaviors (reject or
+    ignore), masking this gap.'''
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...). TEA wrote config_loading tests but did not flag this specific assertion
+    logic flaw.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified a test with zero assertions that only checks non-panic
+    via 'let _ = config'. TEA wrote config tests but this specific zero-assertion
+    test was not flagged.

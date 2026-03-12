@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Castaway
   portrait_style: ", 1960s TV sitcom portrait, black and white, stylized illustration, palm trees lagoon backdrop"
-  tier: D
+  tier: C
   pennyfarthing_version: "5.3.0"
   created: 2026-01-06
   spinner_verbs:
@@ -55,10 +55,18 @@ theme:
     era: retro
     genre: comedy
     energy: slapstick
+    zeitgeist: low
+    scrutiny: trusting
+    cooperation_model: found-family
+    conflict_approach: consensus
+    authority_model: egalitarian
+    formality: casual
+    intellectual_style: pragmatic
+    stakes: communal
 
 zeitgeist:
   score: 71.8
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:

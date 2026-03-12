@@ -1,0 +1,63 @@
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+**"OFF WITH THEIR HEADS!"** ...well, perhaps not *quite* yet. But the Queen demands a thorough accounting, and there are matters requiring attention before any royal stamp of approval.
+
+## Observations
+
+### [HIGH] Missing `main.rs` binary entry point — no `axiathon` binary produced
+**`crates/axiathon-client/src/main.rs`** does not exist. There is no `[[bin]]` section in `Cargo.toml`. The story explicitly requires producing an `axiathon` binary with `main.rs` handling tracing init, dispatch, exit codes via `std::process::exit()`. Without this, the crate is a library only — you cannot run `axiathon status` from the command line. This is the **core deliverable** of the story.
+
+### [HIGH] Missing `logout` and `tui` command groups (AC-1 violation)
+AC-1 explicitly requires: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/**`logout`**, `tui`, `completion`, `init`. The `Commands` enum at `cli.rs:46` is missing both `Logout` and `Tui` variants. The help output test at `cli_structure.rs:80` also omits checking for `logout` and `tui`.
+
+### [HIGH] `RawConfig` silently ignores unknown fields including `token` — config security gap
+At `config.rs:8`, `RawConfig` uses `#[derive(Deserialize)]` with serde's default behavior, which **silently ignores** unknown fields. The doc comment on line 7 even acknowledges this: *"extra fields (like `token`) are silently ignored."* A user writing `token = "my-secret"` in `cli.toml` gets zero feedback that they've put a credential in plaintext on disk. Use `#[serde(deny_unknown_fields)]` to reject unknown fields and actively warn users away from this mistake.
+
+### [HIGH] `apply_env_override` silently swallows invalid `AXIATHON_TIMEOUT` values
+At `config.rs:66-69`, if `AXIATHON_TIMEOUT=abc` is set, the parse failure is silently ignored and the old timeout value is kept. An operator setting an env var expects it to take effect — silent fallthrough violates the principle of least surprise and could mask operational issues. This should return a `Result` or at minimum log a warning.
+
+### [MEDIUM] `cargo +nightly fmt --all --check` fails — formatting violations
+Per `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the preflight."* Multiple files have nightly rustfmt violations including `cli.rs`, `client.rs`, `cli_structure.rs`, `config_loading.rs`, `siem_client.rs`, and `shell_completion.rs`. Import ordering and line-length reformats needed.
+
+### [MEDIUM] `toml` dependency version mismatch — Cargo.toml says `"0.8"`, story spec says `"0.9"`
+At `Cargo.toml:20`, `toml = "0.8"` is used. The story spec under Technical Guardrails says `toml 0.9`. This is a minor version drift but should match the spec.
+
+### [MEDIUM] `keyring` dependency missing from `Cargo.toml`
+The story spec lists `keyring 3` as a key dependency for OS keychain credential storage. It's not in the dependencies. While the actual keychain integration is deferred to Story 9.1, the story spec says to establish the dependency here.
+
+### [MEDIUM] JSON `ResponseMetadata` incomplete — missing `timestamp` and `api_version`
+At `output.rs:22-24`, `JsonMeta` only has `request_id`. AC-4 says: *"JSON includes `ResponseMetadata` (request_id, timestamp, api_version)."* The test at `output_formatting.rs:81-83` only checks for `request_id`, conveniently skipping the other two required fields — a test that validates its own gaps.
+
+### [MEDIUM] `SiemClient` has no actual `reqwest::Client` — it doesn't wrap anything
+AC-7 says: *"SiemClient wraps reqwest::Client."* The current `SiemClient` at `client.rs:3-7` is three string fields with no `reqwest::Client`. The `reqwest` dependency is listed but unused. The header validation methods exist but are never integrated into actual HTTP calls. This is more shell than stub.
+
+### [LOW] `exit_code_success_is_zero` test is vacuous
+At `error_exit_codes.rs:16`: `assert_eq!(0i32, 0, "Success exit code must be 0")` — this asserts that zero equals zero. It proves nothing about the codebase. A proper test would exercise `main()` and verify process exit code 0.
+
+### [LOW] `crate_forbids_unsafe_code` test is vacuous
+At `security.rs:120`: `assert!(true, ...)` — always passes regardless of whether `#![forbid(unsafe_code)]` exists. This is not a test, it's a comment wearing a test's clothing.
+
+### [LOW] `cli_error_is_non_exhaustive` test doesn't actually verify `#[non_exhaustive]`
+At `security.rs:101-108`, the wildcard `_ => {}` arm is always valid in match expressions even without `#[non_exhaustive]`. The test would pass identically if the attribute were removed.
+
+### [VERIFIED] Token redaction in `SiemClient::Debug` — correctly maps to `[REDACTED]` at `client.rs:13`
+### [VERIFIED] Header injection checks for `\r`, `\n`, `\0` at `client.rs:51-59` and `client.rs:62-69`
+### [VERIFIED] `CliError` Display impls sanitize internal details — `ServerError` only shows HTTP status, not body
+### [VERIFIED] `#![forbid(unsafe_code)]` present at `lib.rs:2`
+### [VERIFIED] `#[non_exhaustive]` on `CliError` at `error.rs:3`
+### [VERIFIED] Exit code mapping correct: 0/1/3/4 per AC-3
+
+## The King of Hearts whispers: *"Consider, my dear..."*
+
+The library-level code is well-structured. The error handling design is solid with proper CWE-209 sanitization. The test suite is thorough for what it covers. The gaps are primarily about completeness — missing binary, missing commands, and a few spec deviations.
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three HIGH findings block approval:
+1. **No `main.rs`** — the story's core deliverable (a runnable binary) doesn't exist
+2. **Missing `logout` and `tui` commands** — AC-1 explicitly lists them
+3. **Silent config error swallowing** — `apply_env_override` and `RawConfig` both silently ignore problems
+
+The MEDIUM findings (nightly fmt failures, incomplete JSON metadata, missing keyring dep) should also be addressed before approval.

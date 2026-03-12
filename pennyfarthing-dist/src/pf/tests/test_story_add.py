@@ -705,10 +705,16 @@ class TestCLIIntegration:
         """Basic CLI invocation should add a story successfully."""
         from pf.sprint.story_add import story_add_command
 
-        result = runner.invoke(story_add_command, [
-            "--sprint-file", str(sprint_file),
-            "76", "New CLI story", "3",
-        ])
+        result = runner.invoke(
+            story_add_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76",
+                "New CLI story",
+                "3",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -716,11 +722,18 @@ class TestCLIIntegration:
         """--jira option should set the jira field."""
         from pf.sprint.story_add import story_add_command
 
-        result = runner.invoke(story_add_command, [
-            "--sprint-file", str(sprint_file),
-            "76", "Jira story", "3",
-            "--jira", "MSSCI-14999",
-        ])
+        result = runner.invoke(
+            story_add_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76",
+                "Jira story",
+                "3",
+                "--jira",
+                "MSSCI-14999",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -732,11 +745,18 @@ class TestCLIIntegration:
         """--type option should set the story type."""
         from pf.sprint.story_add import story_add_command
 
-        result = runner.invoke(story_add_command, [
-            "--sprint-file", str(sprint_file),
-            "76", "Bug fix", "2",
-            "--type", "bug",
-        ])
+        result = runner.invoke(
+            story_add_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76",
+                "Bug fix",
+                "2",
+                "--type",
+                "bug",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -744,11 +764,18 @@ class TestCLIIntegration:
         """--priority option should override default P1 (CLI normalizes to lowercase)."""
         from pf.sprint.story_add import story_add_command
 
-        result = runner.invoke(story_add_command, [
-            "--sprint-file", str(sprint_file),
-            "76", "Critical", "1",
-            "--priority", "p0",
-        ])
+        result = runner.invoke(
+            story_add_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76",
+                "Critical",
+                "1",
+                "--priority",
+                "p0",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -760,11 +787,18 @@ class TestCLIIntegration:
         """--workflow option should override default tdd."""
         from pf.sprint.story_add import story_add_command
 
-        result = runner.invoke(story_add_command, [
-            "--sprint-file", str(sprint_file),
-            "76", "Quick task", "1",
-            "--workflow", "trivial",
-        ])
+        result = runner.invoke(
+            story_add_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76",
+                "Quick task",
+                "1",
+                "--workflow",
+                "trivial",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -772,16 +806,20 @@ class TestCLIIntegration:
         new_story = data["epics"][0]["stories"][-1]
         assert new_story["workflow"] == "trivial"
 
-    def test_cli_nonexistent_epic_exits_nonzero(
-        self, runner: CliRunner, sprint_file: Path
-    ) -> None:
+    def test_cli_nonexistent_epic_exits_nonzero(self, runner: CliRunner, sprint_file: Path) -> None:
         """Specifying a non-existent epic should produce non-zero exit code."""
         from pf.sprint.story_add import story_add_command
 
-        result = runner.invoke(story_add_command, [
-            "--sprint-file", str(sprint_file),
-            "999", "Phantom story", "3",
-        ])
+        result = runner.invoke(
+            story_add_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "999",
+                "Phantom story",
+                "3",
+            ],
+        )
 
         assert result.exit_code != 0
 
@@ -789,10 +827,16 @@ class TestCLIIntegration:
         """Successful add should show the new story ID."""
         from pf.sprint.story_add import story_add_command
 
-        result = runner.invoke(story_add_command, [
-            "--sprint-file", str(sprint_file),
-            "76", "New story", "3",
-        ])
+        result = runner.invoke(
+            story_add_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76",
+                "New story",
+                "3",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "76-3" in result.output

@@ -1,0 +1,22 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers foundational CLI framework — extensive test coverage needed for all 10 ACs.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 9 | AC-1 (command groups, plural nouns, no server cmds), AC-2 (help rendering, examples, about text), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 12 | AC-3 (exit codes 1/3/4 mapping, Display, std::error::Error, never-zero) |
+| `tests/output_format.rs` | 12 | AC-4 (table/json/csv variants, default, metadata, CSV escaping, no-color, from_str) |
+| `tests/global_flags.rs` | 12 | AC-5 (--format, -v repeatable, --quiet, --tenant, --server, --config, --no-color, env var fallback, precedence, conflict) |
+| `tests/siem_client.rs` | 11 | AC-7 (tenant/auth headers, 401→AuthExpired, 403→Unauthorized, 404→NotFound, 429→RateLimited, 5xx→ServerError, connection refused) |
+| `tests/config_loading.rs` | 12 | AC-8 (defaults, TOML loading, env var overrides, missing file, malformed TOML, XDG path, validation) |
+| `tests/shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell generation, subcommand inclusion) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (stub messages, story references, stderr output, exit code 1) |
+| `tests/security.rs` | 12 | CWE-209 error exposure, CRLF header injection, null byte injection, silent error swallowing, URL validation, credential env var |
+
+**Tests Written:** 96 tests covering all 10 ACs
+**Status:** RED (failing — all test files fail to compile due to missing modules)
+
+**Handoff:** To Dev for implementation of `cli.rs`, `error.rs`, `output.rs`, `client.rs`, `config.rs`, `commands/` modules.

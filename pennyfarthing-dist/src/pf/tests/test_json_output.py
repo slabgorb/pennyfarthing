@@ -31,6 +31,7 @@ from pf.cli import cli
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _subprocess_env() -> dict:
     """Build env for subprocess calls with pf on sys.path."""
     src_dir = str(Path(__file__).resolve().parents[3] / "src")
@@ -108,6 +109,7 @@ SAMPLE_HANDOFF_STATUS = {
 # AC1: pf sprint story show STORY_ID --json
 # ===========================================================================
 
+
 class TestStoryShowJson:
     """AC1: pf sprint story show STORY_ID --json returns structured data."""
 
@@ -135,9 +137,7 @@ class TestStoryShowJson:
                 f"Missing keys: {required_keys - set(parsed.keys())}"
             )
 
-    def test_story_show_json_includes_session_data_when_active(
-        self, runner: CliRunner
-    ) -> None:
+    def test_story_show_json_includes_session_data_when_active(self, runner: CliRunner) -> None:
         """When a session file exists, JSON includes phase, phase_owner, branch, pr."""
         with patch("pf.sprint.loader.get_story_by_id") as mock:
             mock.return_value = SAMPLE_STORY_WITH_SESSION
@@ -148,9 +148,7 @@ class TestStoryShowJson:
                 f"Missing session keys: {session_keys - set(parsed.keys())}"
             )
 
-    def test_story_show_json_error_returns_json_to_stdout(
-        self, runner: CliRunner
-    ) -> None:
+    def test_story_show_json_error_returns_json_to_stdout(self, runner: CliRunner) -> None:
         """Story not found → exit 1 with JSON error to stdout (not stderr)."""
         with patch("pf.sprint.loader.get_story_by_id") as mock:
             mock.return_value = None
@@ -174,6 +172,7 @@ class TestStoryShowJson:
 # ===========================================================================
 # AC1: pf workflow phases [STORY_ID] --json
 # ===========================================================================
+
 
 class TestWorkflowPhasesJson:
     """AC1: pf workflow phases [STORY_ID] --json returns ordered phase list."""
@@ -344,6 +343,7 @@ class TestWorkflowPhasesJson:
 # AC1: pf persona current [AGENT] --json
 # ===========================================================================
 
+
 class TestPersonaCurrentJson:
     """AC1: pf persona current [AGENT] --json returns agent persona data."""
 
@@ -356,9 +356,7 @@ class TestPersonaCurrentJson:
         result = runner.invoke(cli, ["persona", "current", "--help"])
         assert result.exit_code == 0
 
-    def test_persona_current_json_produces_valid_json(
-        self, runner: CliRunner
-    ) -> None:
+    def test_persona_current_json_produces_valid_json(self, runner: CliRunner) -> None:
         """--json flag should output valid JSON."""
         with (
             patch("pf.prime.persona.load_persona") as mock_load,
@@ -375,9 +373,7 @@ class TestPersonaCurrentJson:
             parsed = json.loads(result.output)
             assert isinstance(parsed, dict)
 
-    def test_persona_current_json_has_required_fields(
-        self, runner: CliRunner
-    ) -> None:
+    def test_persona_current_json_has_required_fields(self, runner: CliRunner) -> None:
         """JSON output must have agent, character, theme, style, crew."""
         with (
             patch("pf.prime.persona.load_persona") as mock_load,
@@ -423,9 +419,7 @@ class TestPersonaCurrentJson:
                 assert "character" in member
                 assert "displayName" in member
 
-    def test_persona_current_json_no_theme_returns_error(
-        self, runner: CliRunner
-    ) -> None:
+    def test_persona_current_json_no_theme_returns_error(self, runner: CliRunner) -> None:
         """No theme configured → exit 1 with JSON error."""
         with patch("pf.prime.persona.load_persona") as mock_load:
             mock_load.return_value = (None, None)
@@ -441,6 +435,7 @@ class TestPersonaCurrentJson:
 # AC1: pf theme show [NAME] --json
 # ===========================================================================
 
+
 class TestThemeShowJson:
     """AC1: pf theme show [NAME] --json returns full parsed theme YAML."""
 
@@ -454,9 +449,7 @@ class TestThemeShowJson:
         assert result.exit_code == 0
         assert "--json" in result.output
 
-    def test_theme_show_json_produces_valid_json(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_theme_show_json_produces_valid_json(self, runner: CliRunner, tmp_path: Path) -> None:
         """--json flag should output valid JSON."""
         theme_yaml = tmp_path / "west-wing.yaml"
         theme_yaml.write_text(yaml.dump(SAMPLE_THEME_DATA))
@@ -472,9 +465,7 @@ class TestThemeShowJson:
             parsed = json.loads(result.output)
             assert isinstance(parsed, dict)
 
-    def test_theme_show_json_has_required_fields(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_theme_show_json_has_required_fields(self, runner: CliRunner, tmp_path: Path) -> None:
         """JSON output must have name, theme, agents keys."""
         theme_yaml = tmp_path / "west-wing.yaml"
         theme_yaml.write_text(yaml.dump(SAMPLE_THEME_DATA))
@@ -491,9 +482,7 @@ class TestThemeShowJson:
             assert "theme" in parsed
             assert "agents" in parsed
 
-    def test_theme_show_json_agents_have_character(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_theme_show_json_agents_have_character(self, runner: CliRunner, tmp_path: Path) -> None:
         """Each agent in the agents dict must have a character field."""
         theme_yaml = tmp_path / "west-wing.yaml"
         theme_yaml.write_text(yaml.dump(SAMPLE_THEME_DATA))
@@ -509,9 +498,7 @@ class TestThemeShowJson:
             for agent_name, agent_data in parsed["agents"].items():
                 assert "character" in agent_data, f"Agent {agent_name} missing character"
 
-    def test_theme_show_json_explicit_name(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_theme_show_json_explicit_name(self, runner: CliRunner, tmp_path: Path) -> None:
         """theme show THEME_NAME --json should work with explicit name."""
         theme_yaml = tmp_path / "west-wing.yaml"
         theme_yaml.write_text(yaml.dump(SAMPLE_THEME_DATA))
@@ -523,9 +510,7 @@ class TestThemeShowJson:
             parsed = json.loads(result.output)
             assert parsed["name"] == "west-wing"
 
-    def test_theme_show_json_not_found_returns_error(
-        self, runner: CliRunner
-    ) -> None:
+    def test_theme_show_json_not_found_returns_error(self, runner: CliRunner) -> None:
         """Theme not found → exit 1 with JSON error to stdout."""
         with (
             patch("pf.common.themes.resolve_theme_path") as mock_resolve,
@@ -540,9 +525,7 @@ class TestThemeShowJson:
             assert "code" in parsed
             assert parsed["code"] == "THEME_NOT_FOUND"
 
-    def test_theme_show_json_no_theme_configured_returns_error(
-        self, runner: CliRunner
-    ) -> None:
+    def test_theme_show_json_no_theme_configured_returns_error(self, runner: CliRunner) -> None:
         """No theme configured and no name given → exit 1 with JSON error."""
         with patch("pf.common.themes.get_current_theme") as mock_theme:
             mock_theme.return_value = None
@@ -556,6 +539,7 @@ class TestThemeShowJson:
 # AC1: pf handoff status --json
 # ===========================================================================
 
+
 class TestHandoffStatusJson:
     """AC1: pf handoff status --json returns current gate/handoff state."""
 
@@ -568,24 +552,25 @@ class TestHandoffStatusJson:
         result = runner.invoke(cli, ["handoff", "status", "--help"])
         assert result.exit_code == 0
 
-    def test_handoff_status_json_produces_valid_json(
-        self, runner: CliRunner
-    ) -> None:
+    def test_handoff_status_json_produces_valid_json(self, runner: CliRunner) -> None:
         """--json flag should output valid JSON."""
         result = runner.invoke(cli, ["handoff", "status", "--json"])
         assert result.exit_code == 0
         parsed = json.loads(result.output)
         assert isinstance(parsed, dict)
 
-    def test_handoff_status_json_has_required_fields(
-        self, runner: CliRunner
-    ) -> None:
+    def test_handoff_status_json_has_required_fields(self, runner: CliRunner) -> None:
         """JSON output must have all required keys."""
         result = runner.invoke(cli, ["handoff", "status", "--json"])
         parsed = json.loads(result.output)
         required_keys = {
-            "story_id", "phase", "workflow", "gate_type",
-            "next_phase", "next_agent", "status",
+            "story_id",
+            "phase",
+            "workflow",
+            "gate_type",
+            "next_phase",
+            "next_agent",
+            "status",
         }
         assert required_keys.issubset(parsed.keys()), (
             f"Missing keys: {required_keys - set(parsed.keys())}"
@@ -599,19 +584,13 @@ class TestHandoffStatusJson:
         # Even without a session, it should return the full shape
         assert parsed["status"] in ("active", "no_session")
 
-    def test_handoff_status_json_active_session(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_handoff_status_json_active_session(self, runner: CliRunner, tmp_path: Path) -> None:
         """With active session → status is 'active' and fields populated."""
         # Create mock session
         session_dir = tmp_path / ".session"
         session_dir.mkdir()
         session_file = session_dir / "141-16-session.md"
-        session_file.write_text(
-            "# Story 141-16\n\n"
-            "**Workflow:** tdd\n"
-            "**Phase:** red\n"
-        )
+        session_file.write_text("# Story 141-16\n\n**Workflow:** tdd\n**Phase:** red\n")
 
         with patch("pf.common.config.get_project_root") as mock_root:
             mock_root.return_value = tmp_path
@@ -642,6 +621,7 @@ class TestHandoffStatusJson:
 # ===========================================================================
 # AC2: Error Response Contract
 # ===========================================================================
+
 
 class TestErrorContract:
     """AC2: Consistent error response shape across all --json commands."""
@@ -709,6 +689,7 @@ class TestErrorContract:
 # AC3: Binary Resolution Strategy
 # ===========================================================================
 
+
 class TestBinaryResolution:
     """AC3: pf binary resolution for non-PATH contexts (IDE, GUI)."""
 
@@ -767,6 +748,7 @@ class TestBinaryResolution:
 # AC4: Integration - TypeScript replacement validation
 # ===========================================================================
 
+
 class TestTypescriptReplacementValidation:
     """AC4: Verify CLI output contains all fields TypeScript currently parses."""
 
@@ -774,9 +756,7 @@ class TestTypescriptReplacementValidation:
     def runner(self) -> CliRunner:
         return CliRunner()
 
-    def test_story_show_json_covers_story_info_interface(
-        self, runner: CliRunner
-    ) -> None:
+    def test_story_show_json_covers_story_info_interface(self, runner: CliRunner) -> None:
         """pf sprint story show --json must cover StoryInfo fields."""
         story = {
             "id": "141-1",
@@ -798,7 +778,12 @@ class TestTypescriptReplacementValidation:
             parsed = json.loads(result.output)
             # StoryInfo interface fields that TS currently computes
             story_info_fields = {
-                "id", "title", "points", "status", "workflow", "jira",
+                "id",
+                "title",
+                "points",
+                "status",
+                "workflow",
+                "jira",
             }
             assert story_info_fields.issubset(parsed.keys())
 
@@ -829,9 +814,7 @@ class TestTypescriptReplacementValidation:
             for phase in parsed["phases"]:
                 assert all(k in phase for k in ("name", "agent", "label", "status"))
 
-    def test_theme_show_json_covers_agent_map(
-        self, runner: CliRunner, tmp_path: Path
-    ) -> None:
+    def test_theme_show_json_covers_agent_map(self, runner: CliRunner, tmp_path: Path) -> None:
         """pf theme show --json must produce the full agent map."""
         theme_yaml = tmp_path / "west-wing.yaml"
         theme_yaml.write_text(yaml.dump(SAMPLE_THEME_DATA))

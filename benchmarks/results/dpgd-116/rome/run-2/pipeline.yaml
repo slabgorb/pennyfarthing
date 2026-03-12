@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: rome
+run_id: 2
+timestamp: '2026-03-08T05:56:53.608295+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-rome-run-2
+phases:
+  tea:
+    token_usage:
+      input: 12
+      output: 20026
+    duration_s: 352.77
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 35
+      output: 14342
+    duration_s: 306.96
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 13
+      output: 5264
+    duration_s: 109.69
+    exit_code: 0

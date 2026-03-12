@@ -1,0 +1,23 @@
+## Summary
+
+All **69 tests pass** across 6 test suites, clippy clean with `-D warnings`.
+
+### Files Changed
+
+| File | Description |
+|------|-------------|
+| `crates/axiathon-server/Cargo.toml` | Added `chrono` and `uuid` as regular dependencies |
+| `crates/axiathon-server/src/lib.rs` | `app()` function wiring router with auth/rate-limit middleware |
+| `crates/axiathon-server/src/response.rs` | `ApiEnvelope<T>` with `data`/`errors`/`meta` fields, `error_response` and `success_response` helpers |
+| `crates/axiathon-server/src/auth.rs` | Auth middleware — Bearer token + API key validation, scope checking, `AuthInfo` extraction |
+| `crates/axiathon-server/src/rate_limit.rs` | Per-tenant rate limiting with global shared state (100 req/tenant limit) |
+| `crates/axiathon-server/src/routes.rs` | Handlers for health, events (GET/POST), alerts, rules, queries, JWKS, 404 fallback |
+
+### Test Results
+
+- **api_auth.rs**: 16/16 passed (Bearer, API key, scope, tenant context, JWKS)
+- **api_envelope.rs**: 12/12 passed (data/errors/meta fields, RFC 9457, unique request_id)
+- **api_rate_limiting.rs**: 6/6 passed (429 + Retry-After, per-tenant isolation, health exemption)
+- **api_routes.rs**: 14/14 passed (5 route groups, POST events, 404 fallback)
+- **api_security.rs**: 13/13 passed (CWE-209, body size, content-type, `#![forbid(unsafe_code)]`)
+- **api_versioning.rs**: 8/8 passed (/api/v1/ prefix, v2 404, deprecation header)

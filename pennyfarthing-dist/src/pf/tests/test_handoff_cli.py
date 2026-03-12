@@ -164,9 +164,7 @@ def project(tmp_path: Path) -> Path:
         ("patch", PATCH_WORKFLOW),
         ("bdd", BDD_WORKFLOW),
     ]:
-        (workflows_dir / f"{name}.yaml").write_text(
-            yaml.dump(data, default_flow_style=False)
-        )
+        (workflows_dir / f"{name}.yaml").write_text(yaml.dump(data, default_flow_style=False))
 
     (tmp_path / ".session").mkdir()
     return tmp_path
@@ -236,9 +234,7 @@ class TestResolveGateReady:
         """AC1: TDD red phase (gate=tests_fail) → status: ready."""
         # Rewrite session to be in red phase with assessment
         session_file = project / ".session" / "105-1-session.md"
-        content = session_file.read_text().replace(
-            "**Phase:** green", "**Phase:** red"
-        )
+        content = session_file.read_text().replace("**Phase:** green", "**Phase:** red")
         session_file.write_text(content)
         result = resolve_gate("105-1", "tdd", "red", project_root=project)
         assert result["status"] == "ready"
@@ -255,9 +251,7 @@ class TestResolveGateReady:
         assert result["gate_type"] == "tests_pass"
         assert result["next_agent"] == "reviewer"
 
-    def test_bdd_design_returns_ready(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_bdd_design_returns_ready(self, project: Path, session_with_assessment: Path) -> None:
         """AC1: BDD design phase (gate=design_review) → ready."""
         result = resolve_gate("105-1", "bdd", "design", project_root=project)
         assert result["status"] == "ready"
@@ -265,9 +259,7 @@ class TestResolveGateReady:
         assert result["next_agent"] == "tea"
         assert result["next_phase"] == "red"
 
-    def test_assessment_found_is_true(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_assessment_found_is_true(self, project: Path, session_with_assessment: Path) -> None:
         """AC1: assessment_found should be True when assessment exists."""
         result = resolve_gate("105-1", "tdd", "green", project_root=project)
         assert result["assessment_found"] is True
@@ -288,9 +280,7 @@ class TestResolveGateReady:
                 "error": None,
             },
         ):
-            result = runner.invoke(
-                cli, ["handoff", "resolve-gate", "105-1", "tdd", "green"]
-            )
+            result = runner.invoke(cli, ["handoff", "resolve-gate", "105-1", "tdd", "green"])
             assert result.exit_code == 0
 
 
@@ -330,25 +320,19 @@ class TestResolveGateBlocked:
                 "error": None,
             },
         ):
-            result = runner.invoke(
-                cli, ["handoff", "resolve-gate", "105-1", "tdd", "green"]
-            )
+            result = runner.invoke(cli, ["handoff", "resolve-gate", "105-1", "tdd", "green"])
             assert result.exit_code == 1
 
 
 class TestResolveGateSkip:
     """AC1: resolve-gate returns 'skip' for manual gates."""
 
-    def test_manual_gate_returns_skip(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_manual_gate_returns_skip(self, project: Path, session_with_assessment: Path) -> None:
         """AC1: Patch fix phase (gate=manual) → status: skip."""
         result = resolve_gate("105-1", "patch", "fix", project_root=project)
         assert result["status"] == "skip"
 
-    def test_manual_gate_type_is_manual(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_manual_gate_type_is_manual(self, project: Path, session_with_assessment: Path) -> None:
         """AC1: Skip result should have gate_type: manual."""
         result = resolve_gate("105-1", "patch", "fix", project_root=project)
         assert result["gate_type"] == "manual"
@@ -367,9 +351,7 @@ class TestResolveGateSkip:
                 "error": None,
             },
         ):
-            result = runner.invoke(
-                cli, ["handoff", "resolve-gate", "105-1", "patch", "fix"]
-            )
+            result = runner.invoke(cli, ["handoff", "resolve-gate", "105-1", "patch", "fix"])
             assert result.exit_code == 0
 
 
@@ -423,31 +405,23 @@ class TestResolveGateOutputContract:
         for field in self.REQUIRED_FIELDS:
             assert field in result, f"Missing field: {field}"
 
-    def test_skip_result_has_all_fields(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_skip_result_has_all_fields(self, project: Path, session_with_assessment: Path) -> None:
         """AC1: Skip result must contain all RESOLVE_RESULT fields."""
         result = resolve_gate("105-1", "patch", "fix", project_root=project)
         for field in self.REQUIRED_FIELDS:
             assert field in result, f"Missing field: {field}"
 
-    def test_gate_file_is_null_for_mvp(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_gate_file_is_null_for_mvp(self, project: Path, session_with_assessment: Path) -> None:
         """AC1: gate_file should be None for MVP (populated in epic 106)."""
         result = resolve_gate("105-1", "tdd", "green", project_root=project)
         assert result["gate_file"] is None
 
-    def test_error_is_null_on_success(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_error_is_null_on_success(self, project: Path, session_with_assessment: Path) -> None:
         """AC1: error should be None when resolve succeeds."""
         result = resolve_gate("105-1", "tdd", "green", project_root=project)
         assert result["error"] is None
 
-    def test_status_is_valid_value(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_status_is_valid_value(self, project: Path, session_with_assessment: Path) -> None:
         """AC1: status must be one of: ready, blocked, skip."""
         result = resolve_gate("105-1", "tdd", "green", project_root=project)
         assert result["status"] in ("ready", "blocked", "skip")
@@ -470,9 +444,7 @@ class TestResolveGateCLIOutput:
                 "error": None,
             },
         ):
-            result = runner.invoke(
-                cli, ["handoff", "resolve-gate", "105-1", "tdd", "green"]
-            )
+            result = runner.invoke(cli, ["handoff", "resolve-gate", "105-1", "tdd", "green"])
             parsed = yaml.safe_load(result.output)
             assert "RESOLVE_RESULT" in parsed
 
@@ -490,9 +462,7 @@ class TestResolveGateCLIOutput:
                 "error": None,
             },
         ):
-            result = runner.invoke(
-                cli, ["handoff", "resolve-gate", "105-1", "tdd", "green"]
-            )
+            result = runner.invoke(cli, ["handoff", "resolve-gate", "105-1", "tdd", "green"])
             parsed = yaml.safe_load(result.output)
             assert parsed["RESOLVE_RESULT"]["status"] == "ready"
 
@@ -505,13 +475,9 @@ class TestResolveGateCLIOutput:
 class TestCompletePhaseUpdatesSession:
     """AC2: complete-phase updates session with phase transition."""
 
-    def test_updates_phase_line(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_updates_phase_line(self, project: Path, session_with_assessment: Path) -> None:
         """AC2: **Phase:** line should change to the new phase."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         content = session_with_assessment.read_text()
         # The Phase line in the Workflow Tracking section should be "review"
         assert "**Phase:** review" in content
@@ -520,14 +486,10 @@ class TestCompletePhaseUpdatesSession:
         self, project: Path, session_with_assessment: Path
     ) -> None:
         """AC2: Old phase value should not appear in **Phase:** line."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         content = session_with_assessment.read_text()
         # Should not have the old phase value on a Phase line
-        phase_lines = [
-            line for line in content.splitlines() if line.startswith("**Phase:**")
-        ]
+        phase_lines = [line for line in content.splitlines() if line.startswith("**Phase:**")]
         for line in phase_lines:
             assert "green" not in line
 
@@ -535,15 +497,11 @@ class TestCompletePhaseUpdatesSession:
         self, project: Path, session_with_assessment: Path
     ) -> None:
         """AC2: **Phase Started:** should have a new ISO timestamp."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         content = session_with_assessment.read_text()
         # Find Phase Started lines — at least one should NOT be the old timestamp
         started_lines = [
-            line
-            for line in content.splitlines()
-            if line.startswith("**Phase Started:**")
+            line for line in content.splitlines() if line.startswith("**Phase Started:**")
         ]
         assert len(started_lines) > 0
         # At least one should have a different timestamp than the original
@@ -553,17 +511,11 @@ class TestCompletePhaseUpdatesSession:
         self, project: Path, session_with_assessment: Path
     ) -> None:
         """AC2: Current phase row in Phase History should get Ended timestamp."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         content = session_with_assessment.read_text()
         # The green phase row should now have an Ended value (not just "- |")
         # Find the row that starts with "| green"
-        green_rows = [
-            line
-            for line in content.splitlines()
-            if line.strip().startswith("| green")
-        ]
+        green_rows = [line for line in content.splitlines() if line.strip().startswith("| green")]
         assert len(green_rows) > 0
         # The Ended column (3rd) should not be "-"
         green_row = green_rows[0]
@@ -576,43 +528,25 @@ class TestCompletePhaseUpdatesSession:
         self, project: Path, session_with_assessment: Path
     ) -> None:
         """AC2: Current phase row should get Duration calculated."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         content = session_with_assessment.read_text()
-        green_rows = [
-            line
-            for line in content.splitlines()
-            if line.strip().startswith("| green")
-        ]
+        green_rows = [line for line in content.splitlines() if line.strip().startswith("| green")]
         assert len(green_rows) > 0
         green_row = green_rows[0]
         cols = [c.strip() for c in green_row.split("|") if c.strip()]
         duration = cols[3]  # Phase | Started | Ended | Duration
         assert duration != "-", f"Duration should be filled, got: {duration}"
 
-    def test_adds_new_phase_row(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_adds_new_phase_row(self, project: Path, session_with_assessment: Path) -> None:
         """AC2: A new row for the next phase should appear in Phase History."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         content = session_with_assessment.read_text()
-        review_rows = [
-            line
-            for line in content.splitlines()
-            if line.strip().startswith("| review")
-        ]
+        review_rows = [line for line in content.splitlines() if line.strip().startswith("| review")]
         assert len(review_rows) > 0, "New 'review' phase row not found in Phase History"
 
-    def test_adds_handoff_history_row(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_adds_handoff_history_row(self, project: Path, session_with_assessment: Path) -> None:
         """AC2: A new row should be added to Handoff History table."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         content = session_with_assessment.read_text()
         # Should have a row mentioning green → review with tests_pass
         handoff_rows = [
@@ -626,9 +560,7 @@ class TestCompletePhaseUpdatesSession:
         self, project: Path, session_with_assessment: Path
     ) -> None:
         """AC2: Handoff History row should include PASSED status."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         content = session_with_assessment.read_text()
         # Find the new handoff row (should be the last one with "review")
         lines = content.splitlines()
@@ -650,9 +582,7 @@ class TestCompletePhaseUpdatesSession:
         self, project: Path, session_with_assessment: Path
     ) -> None:
         """AC2: Handoff History row should include an ISO timestamp."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         content = session_with_assessment.read_text()
         lines = content.splitlines()
         handoff_section = False
@@ -677,18 +607,12 @@ class TestCompletePhaseAtomicity:
         self, project: Path, session_with_assessment: Path
     ) -> None:
         """AC2: Session file should still exist after update."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         assert session_with_assessment.exists()
 
-    def test_no_temp_files_left_behind(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_no_temp_files_left_behind(self, project: Path, session_with_assessment: Path) -> None:
         """AC2: No .tmp or temporary files should remain in .session/."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         session_dir = project / ".session"
         temp_files = list(session_dir.glob("*.tmp")) + list(session_dir.glob("*.bak"))
         assert len(temp_files) == 0, f"Temp files left behind: {temp_files}"
@@ -697,9 +621,7 @@ class TestCompletePhaseAtomicity:
         self, project: Path, session_with_assessment: Path
     ) -> None:
         """AC2: Session file should still be valid markdown after update."""
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
         content = session_with_assessment.read_text()
         # Should still have required sections
         assert "# Story 105-1" in content
@@ -711,18 +633,14 @@ class TestCompletePhaseAtomicity:
 class TestCompletePhaseOutputContract:
     """AC2: COMPLETE_RESULT must contain all specified fields."""
 
-    def test_returns_success_status(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_returns_success_status(self, project: Path, session_with_assessment: Path) -> None:
         """AC2: Successful update should return status: success."""
         result = complete_phase(
             "105-1", "tdd", "green", "review", "tests_pass", project_root=project
         )
         assert result["status"] == "success"
 
-    def test_returns_session_file_path(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_returns_session_file_path(self, project: Path, session_with_assessment: Path) -> None:
         """AC2: Result should include the session file path."""
         result = complete_phase(
             "105-1", "tdd", "green", "review", "tests_pass", project_root=project
@@ -834,9 +752,7 @@ class TestCompletePhaseErrors:
 class TestStdoutOnlyCommunication:
     """AC4: No side-channel files created during execution."""
 
-    def test_resolve_gate_no_side_files(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_resolve_gate_no_side_files(self, project: Path, session_with_assessment: Path) -> None:
         """AC4: resolve-gate should not create any files."""
         files_before = set(project.rglob("*"))
         resolve_gate("105-1", "tdd", "green", project_root=project)
@@ -849,21 +765,11 @@ class TestStdoutOnlyCommunication:
     ) -> None:
         """AC4: complete-phase should only modify the session file."""
         # Record all files and their mtimes
-        files_before = {
-            p: p.stat().st_mtime for p in project.rglob("*") if p.is_file()
-        }
-        complete_phase(
-            "105-1", "tdd", "green", "review", "tests_pass", project_root=project
-        )
-        files_after = {
-            p: p.stat().st_mtime for p in project.rglob("*") if p.is_file()
-        }
+        files_before = {p: p.stat().st_mtime for p in project.rglob("*") if p.is_file()}
+        complete_phase("105-1", "tdd", "green", "review", "tests_pass", project_root=project)
+        files_after = {p: p.stat().st_mtime for p in project.rglob("*") if p.is_file()}
         # Only the session file should be modified
-        changed = {
-            p
-            for p, mtime in files_after.items()
-            if files_before.get(p) != mtime
-        }
+        changed = {p for p, mtime in files_after.items() if files_before.get(p) != mtime}
         new = set(files_after) - set(files_before)
         all_changes = changed | new
         allowed = {session_with_assessment}
@@ -925,9 +831,7 @@ class TestResolveGateMultipleWorkflows:
         assert result["next_agent"] == "sm"
         assert result["next_phase"] == "finish"
 
-    def test_last_phase_has_no_next(
-        self, project: Path, session_with_assessment: Path
-    ) -> None:
+    def test_last_phase_has_no_next(self, project: Path, session_with_assessment: Path) -> None:
         """Finish phase (last) should indicate no next phase/agent."""
         result = resolve_gate("105-1", "tdd", "finish", project_root=project)
         # Last phase has no gate and no next — should handle gracefully

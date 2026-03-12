@@ -1,0 +1,88 @@
+Now I have a complete picture. Here is my adversarial review.
+
+---
+
+# Story 6.1 CLI Framework & Structure — Adversarial Review
+
+## Findings
+
+**[HIGH] Missing binary entry point (`main.rs`) — AC-3 partially unverifiable** at `crates/axiathon-client/src/main.rs` (missing)
+
+The crate has no `main.rs` and no `[[bin]]` section in `Cargo.toml`. This means there is no `axiathon` binary produced. AC-3 requires exit codes to be set via `std::process::exit()` in `main.rs`; AC-9 says completion scripts go to stdout and instructions to stderr. Without a binary entry point, there is no dispatch logic connecting the parsed `Cli` struct to command handlers. The entire crate is library-only — it compiles but cannot be run as a CLI tool. This is the single most critical gap: the framework exists as disconnected pieces with no wiring.
+
+**[HIGH] Nightly `rustfmt` check fails** at `crates/axiathon-client/src/client.rs:67`, `crates/axiathon-client/src/config.rs:34`
+
+Per the reviewer gotchas (`gotchas.md`): "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The nightly fmt check produces diffs in `client.rs` and `config.rs`. This must be fixed before approval.
+
+**[HIGH] Workspace dependency declarations not used consistently** at `crates/axiathon-client/Cargo.toml:11-16`
+
+Several dependencies are declared inline with version strings instead of referencing workspace declarations: `clap_complete = "4"`, `comfy-table = "7"`, `csv = "1"`, `dirs = "6"`, `reqwest = { version = "0.12", ... }`, `toml = "0.8"`. The workspace `Cargo.toml` defines all of these as workspace dependencies (including `toml_crate` for toml). This defeats the purpose of workspace-level dependency management — version drift between crates becomes possible. Additionally, the workspace declares `toml_crate = { package = "toml", version = "0.8" }` but the client uses `toml = "0.8"` directly, bypassing the workspace alias entirely.
+
+**[MEDIUM] `init` command is a stub despite being in-scope** at `crates/axiathon-client/src/commands/init.rs:4`
+
+AC-9 says shell completion is functional (not stub), and the story scope says "Shell completion generation (functional, not stub)" and "`axiathon init` first-time setup (functional, not stub)". Completion is correctly implemented, but `init` returns `NotImplemented("not yet implemented (Story 6.1)")` — referencing *this* story. It should be functional in this story per the scope boundaries.
+
+**[MEDIUM] Vacuous test assertion — tautological check** at `crates/axiathon-client/tests/siem_client.rs:315-318`
+
+```rust
+assert!(
+    result.is_ok() || result.is_err(),
+    "empty body should be handled explicitly, not silently ignored"
+);
+```
+
+This assertion is always true (`is_ok() || is_err()` covers all cases of `Result`). It proves nothing. The test name claims to verify behavior on empty body but asserts nothing meaningful.
+
+**[MEDIUM] Vacuous token injection test** at `crates/axiathon-client/tests/siem_client.rs:287-295`
+
+The `siem_client_rejects_token_with_newlines` test catches a potential panic, then checks `!client.has_token() || { true }` — the `|| { true }` branch means this assertion can never fail. The implementation does sanitize (strips `\r\n`), but the test doesn't actually verify the sanitized value. Compare with the tenant test which properly asserts no newlines remain.
+
+**[MEDIUM] `RawConfig` silently ignores unknown fields** at `crates/axiathon-client/src/config.rs:13-14`
+
+`#[serde(default)]` combined with no `#[serde(deny_unknown_fields)]` means typos like `servar_url` are silently ignored. While there's a test asserting this is intentional for "forward compatibility," this is a common source of operator confusion. A warning log on unknown fields would be better practice. Noting this as a design decision, not a bug.
+
+**[MEDIUM] `OutputFormatter` uses `expect()` instead of returning `Result`** at `crates/axiathon-client/src/output.rs:81-93`
+
+Multiple `.expect()` calls in `format_as_json` and `format_as_csv`. The project's Rust rules state "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` messages are descriptive, so this technically satisfies the rule, but `format_table()` returning `String` instead of `Result<String, CliError>` means callers have no way to handle formatting failures gracefully. For a CLI tool, a panic on malformed data is harsh.
+
+**[LOW] `--server` flag has no `env` attribute in clap** at `crates/axiathon-client/src/cli.rs:25-26`
+
+AC-5 says `--server` supports `AXIATHON_SERVER` env var. The config module reads `AXIATHON_API_URL`, but the story context references `AXIATHON_SERVER` for the `--server` flag. Clap supports `#[arg(env = "AXIATHON_SERVER")]` to automatically populate from env vars. Currently, the `--server` CLI flag and the `AXIATHON_API_URL` config env var are handled separately with no integration — the `--server` flag value is not wired to anything since there's no `main.rs`.
+
+**[LOW] `Completion` shell type is `String` not an enum** at `crates/axiathon-client/src/cli.rs:83`
+
+The `Completion { shell: String }` variant accepts any string. Clap's `ValueEnum` with `clap_complete::Shell` would give compile-time validation and better help messages. The validation happens in `generate_completion()` at runtime instead.
+
+**[VERIFIED] CWE-113 header injection prevention** — `client.rs:23,29` strips `\r\n` from token and tenant values before storing them. Verified correct.
+
+**[VERIFIED] CWE-209 error information exposure** — `error.rs:40` `ServerError` Display suppresses the server body, showing only the HTTP status code. Verified correct.
+
+**[VERIFIED] `#[non_exhaustive]` on `CliError`** — `error.rs:7`. Correctly applied per architecture rules.
+
+**[VERIFIED] `#![forbid(unsafe_code)]` in `lib.rs:2`** — Present and correct.
+
+**[VERIFIED] Credential exclusion from config** — `RawConfig` has no token/secret fields. Test at `config_loading.rs:186` confirms tokens placed in config file are silently ignored rather than loaded.
+
+**[VERIFIED] clap derive-only approach (AC-6)** — No imperative `Command::new()` calls. All structure via `#[derive(Parser)]` and `#[derive(Subcommand)]`.
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 4 |
+| Low | 2 |
+| Verified | 5 |
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three High-severity findings block approval:
+
+1. **No `main.rs` / no binary** — The crate cannot produce the `axiathon` binary. Command dispatch, exit code mapping, stderr/stdout separation, and config→client wiring are entirely absent. This is the core deliverable of Story 6.1.
+2. **Nightly `rustfmt` failures** — Per project gotchas, this must pass before merge.
+3. **Workspace dependency drift** — 6 dependencies bypass workspace declarations, risking version inconsistency across crates.
+
+Additionally, the `init` command is documented as in-scope/functional for this story but is implemented as a stub referencing "Story 6.1" itself. Two test assertions are vacuous (always-true conditions that prove nothing).

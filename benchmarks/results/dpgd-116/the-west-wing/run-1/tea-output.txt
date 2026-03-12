@@ -1,0 +1,28 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 introduces new CLI framework with multiple public APIs requiring validation
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_commands.rs` | 17 | AC-1 (command groups), AC-2 (help rendering), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 14 | AC-3 (exit code mapping), CWE-209 security, error trait bounds |
+| `tests/output_format.rs` | 16 | AC-4 (table/json/csv formatting, metadata, escaping) |
+| `tests/global_flags.rs` | 18 | AC-5 (--format, -v, --quiet, --server, --tenant, --config, --no-color, global=true) |
+| `tests/siem_client.rs` | 14 | AC-7 (HTTP wrapper, headers, status code mapping, header injection, token leak) |
+| `tests/config_loading.rs` | 10 | AC-8 (TOML loading, env overrides, precedence, validation, token rejection) |
+| `tests/shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell generation) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (not-implemented messages, story references, exit code 1) |
+
+**Tests Written:** 105 tests covering 10 ACs
+**Status:** RED (failing — all tests fail to compile because target modules don't exist yet)
+
+**Security Tests Included:**
+- Header injection prevention (CWE-113) — newlines in token/tenant rejected
+- Error information disclosure (CWE-209) — server paths/stack traces not exposed
+- Token leak prevention — Debug output doesn't reveal auth tokens
+- Config security — token field in config file rejected/ignored
+- CSV injection protection — proper escaping of commas and quotes
+
+**Handoff:** To Dev for implementation (GREEN phase)

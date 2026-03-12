@@ -15,7 +15,7 @@ theme:
   character_immersion: high
   user_title: Cat
   portrait_style: ", vintage jazz album cover, smoky jazz club, high contrast black and white, bebop era, 1950s graphic design"
-  tier: D
+  tier: C
   spinner_verbs:
     - Improvising
     - Riffing
@@ -50,12 +50,20 @@ theme:
   dimensions:
     tone: soulful
     era: historical
-    genre: arts
+    genre: nonfiction
     energy: improvisational
+    zeitgeist: low
+    scrutiny: professional
+    cooperation_model: ensemble
+    conflict_approach: competition
+    authority_model: meritocratic
+    formality: casual
+    intellectual_style: improvisational
+    stakes: personal
 
 zeitgeist:
   score: 68.2
-  rating: moderate
+  rating: low
 
 agents:
   orchestrator:

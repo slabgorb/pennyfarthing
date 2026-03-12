@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: null
+run_id: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer verified observation 17 notes NotFound falls back to defaults
+    correctly, but never flags that ALL other error types (parse errors, permission
+    denied) are also swallowed. The from_file_or_default pattern is noted as verified,
+    not flagged.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: "Reviewer verified observation 14: 'ServerError display suppresses the\
+    \ raw body: write!(f, \"server error (HTTP {status})\") \u2014 the second field\
+    \ is ignored in Display.' However, the broader CliError Display with Io(#[error(transparent)])\
+    \ leaking OS details to stderr was not flagged. Partial catch \u2014 ServerError\
+    \ sanitized but Io variant still leaks."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote header injection tests (siem_client_test.rs:103-130) checking\
+    \ CRLF in tenant_id. Reviewer observation 11 also flags 'tenant field is Option<String>\
+    \ not TenantId'. However, the underlying type remains raw String \u2014 CRLF is\
+    \ stripped but TenantId newtype not used."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Dev added dependencies with direct version strings (clap_complete, comfy-table,
+    csv, dirs, reqwest, toml) to workspace Cargo.toml. Neither TEA, Dev, nor Reviewer
+    flagged that crate Cargo.toml should use workspace = true references instead of
+    direct versions.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer observation 4: ''RawConfig has no #[serde(deny_unknown_fields)].
+    A typo like api_ulr = "..." will be silently ignored, and the user will get the
+    default value with no warning. This is a usability trap.'''
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (assert!(config.server().is_none()
+    || ...)) in the test suite. TEA wrote the tests but included this logical flaw.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test (let _ = config with no assert).
+    TEA wrote the test but did not include meaningful assertions.

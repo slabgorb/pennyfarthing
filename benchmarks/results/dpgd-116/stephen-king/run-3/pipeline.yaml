@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: stephen-king
+run_id: 3
+timestamp: '2026-03-08T07:09:37.638347+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-stephen-king-run-3
+phases:
+  tea:
+    token_usage:
+      input: 121
+      output: 24743
+    duration_s: 429.7
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 57
+      output: 22004
+    duration_s: 435.99
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 15
+      output: 6961
+    duration_s: 158.8
+    exit_code: 0

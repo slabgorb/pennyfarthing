@@ -174,8 +174,7 @@ def _check_dist_subdirs(file_paths: set[str], manifest: dict) -> dict:
     """Check that required pennyfarthing-dist subdirectories are present and non-empty."""
     required = manifest.get("required_pennyfarthing_dist_subdirs", [])
     missing = [
-        d for d in required
-        if not any(f.startswith(f"pennyfarthing-dist/{d}/") for f in file_paths)
+        d for d in required if not any(f.startswith(f"pennyfarthing-dist/{d}/") for f in file_paths)
     ]
     if missing:
         return {

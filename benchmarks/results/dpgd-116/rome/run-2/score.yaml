@@ -1,0 +1,79 @@
+scenario_id: dpgd-116
+theme: rome
+run_id: 2
+judge_version: v2
+total_caught: 4
+total_findings: 7
+weighted_caught: 20
+total_weight: 37
+score_pct: 54.1
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors via
+    unwrap_or_default(). TEA mentions 'silent error swallowing' but only tests that
+    CliError Display variants are non-empty, not that config loading distinguishes
+    NotFound from parse/permission errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote security tests covering 'CWE-209: Error messages don't leak\
+    \ internal paths, tokens, stack traces' in tests/security.rs and tests/exit_codes.rs.\
+    \ Same vulnerability class. However, the reviewer reached the opposite conclusion,\
+    \ marking it as '[VERIFIED] CWE-209 error exposure \u2014 CliError Display impls\
+    \ are user-friendly', missing the Io(#[error(transparent)]) vector."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote tests in tests/siem_client.rs (15 tests) covering 'header injection
+    (Authorization, X-Tenant-ID)' and 'CRLF/null byte rejection in tokens and tenant
+    IDs'. Same vulnerability class (CWE-113), though the specific type-safety concern
+    (raw String vs TenantId) was not flagged.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that 6 dependencies use direct version strings instead
+    of workspace = true. TEA added deps to workspace Cargo.toml but the reviewer only
+    noted a toml version mismatch with spec, not the workspace = true pattern violation.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[HIGH] Config silently accepts unknown fields' recommending\
+    \ #[serde(deny_unknown_fields)], and '[MEDIUM] Config token field is parsed then\
+    \ discarded \u2014 silent security hazard' noting the secret is loaded into memory\
+    \ then discarded."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[LOW] config_rejects_non_https_server_url_in_production\
+    \ test is vacuous' \u2014 same category of vacuously true test, different specific\
+    \ instance than ground truth but demonstrates detection capability for vacuous\
+    \ assertions."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified that a test uses 'let _ = config;' with zero assertions.
+    TEA wrote config_loading tests but the specific zero-assertion test was not flagged
+    by any phase.

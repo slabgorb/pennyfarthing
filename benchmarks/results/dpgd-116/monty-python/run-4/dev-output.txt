@@ -1,0 +1,20 @@
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `crates/axiathon-client/Cargo.toml` — added production dependencies (clap, clap_complete, comfy-table, csv, dirs, reqwest, serde, serde_json, chrono, uuid, toml)
+- `crates/axiathon-client/src/lib.rs` — added module exports
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with exit code mapping (AC-3), CWE-209 safe Display impls
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct with `#[derive(Parser)]`, `Commands` enum with all 10 command groups (AC-1, AC-5, AC-6), global flags with `global = true`
+- `crates/axiathon-client/src/client.rs` — `SiemClient` HTTP wrapper with header injection, HTTP status mapping, CRLF sanitization (AC-7)
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` TOML loading with env/CLI overrides, XDG paths, validation, token rejection (AC-8)
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum, `OutputFormatter` trait, `TableFormatter`/`JsonFormatter`/`CsvFormatter` impls (AC-4)
+- `crates/axiathon-client/src/commands/mod.rs` — module re-exports
+- `crates/axiathon-client/src/commands/{query,rules,alerts,ingest,config,status,tenant,login}.rs` — stub handlers returning `NotImplemented` with story refs (AC-10)
+- `crates/axiathon-client/src/commands/completion.rs` — functional shell completion generation (AC-9)
+- `crates/axiathon-client/src/commands/init.rs` — functional first-time setup
+
+**Tests:** 95/95 passing (GREEN)
+**Clippy:** Clean (0 warnings)
+**Branch:** HEAD (ready for commit)

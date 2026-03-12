@@ -1,0 +1,42 @@
+All tests pass, clippy clean. Here's the summary:
+
+## Results
+
+**100/100 tests passing** across 9 test files. Zero clippy warnings.
+
+## Files Created (14 source files)
+
+| File | Purpose |
+|------|---------|
+| `src/lib.rs` | Barrel module with public re-exports |
+| `src/error.rs` | `CliError` enum (non_exhaustive, thiserror) with exit code mapping |
+| `src/output.rs` | `OutputFormat` enum + `OutputFormatter` (table/JSON/CSV) |
+| `src/config.rs` | `ClientConfig` with TOML loading, env override, validation |
+| `src/client.rs` | `SiemClient` HTTP wrapper with header injection prevention |
+| `src/cli.rs` | `Cli` parser struct with all 12 command groups (clap derive) |
+| `src/commands/mod.rs` | Command module re-exports |
+| `src/commands/query.rs` | Stub handler (Story 5.5) |
+| `src/commands/rules.rs` | Stub handler (Story 6.6) |
+| `src/commands/alerts.rs` | Stub handler (Story 6.5) |
+| `src/commands/ingest.rs` | Stub handler (Story 6.4) |
+| `src/commands/config.rs` | Stub handler (Story 6.3) |
+| `src/commands/status.rs` | Stub handler (Story 6.2) |
+| `src/commands/tenant.rs` | Stub handler (Story 6.7) |
+| `src/commands/login.rs` | Stub handler (Story 9.1) |
+| `src/commands/completion.rs` | Shell completion generation via clap_complete |
+| `src/commands/init.rs` | Stub handler (Story 6.1) |
+
+## Files Modified (2 test fixes for edition 2024)
+
+| File | Change |
+|------|--------|
+| `tests/config_test.rs` | Replaced `set_var`/`remove_var` (unsafe in ed. 2024) with `with_overrides()` |
+| `tests/global_flags_test.rs` | Fixed `get_env()` API usage (returns `Option<&OsStr>`, not iterator) |
+
+## Key Design Decisions
+
+- `CliError::Display` sanitizes internal details (CWE-209) - generic messages for `Internal`, `ServerError`, `NotFound`
+- `NotImplemented` variant carries the user-facing message for stub handlers
+- `SiemClient` validates headers for CR/LF/null injection (CWE-113)
+- `ClientConfig::with_overrides()` enables safe testing without `set_var`
+- `OutputFormatter` delegates to comfy-table (table), serde_json (JSON), csv crate (CSV)

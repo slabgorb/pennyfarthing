@@ -1,0 +1,150 @@
+I've completed my thorough read of all code. Time to deliver the verdict.
+
+---
+
+# Code Review: Story 6.1 — CLI Framework & Structure
+
+*General Burkhalter adjusts his monocle and sets down the dossier.*
+
+So. They tell me this is ready for review. Let us see if that is true, or if this is another one of Klink's "everything is under control" reports.
+
+---
+
+## Findings
+
+### [HIGH] Completion and Init commands are stubbed — violates AC-9 and story scope
+**`main.rs:29-30`**
+
+The story scope explicitly says: *"Shell completion generation (functional, not stub)"* and *"axiathon init first-time setup (functional, not stub)."* Yet both are wired as `NotImplemented` stubs in `main.rs`:
+```rust
+Commands::Completion(_) => Err(CliError::NotImplemented("Story 6.1".into())),
+Commands::Init(_) => Err(CliError::NotImplemented("Story 6.1".into())),
+```
+The `generate_completion()` function exists in `commands/completion.rs` and works — the tests prove it. But it is **never called from the dispatch**. AC-9 requires `axiathon completion <shell>` to actually output a script. This is dead code with a working implementation sitting right next to a stub that ignores it.
+
+---
+
+### [HIGH] Incorrect story references in stub handlers
+**`main.rs:24-25`**
+
+`Commands::Rules` maps to `"Story 6.5"` and `Commands::Tenant` also maps to `"Story 6.5"`. Story 6.5 is alerts. Rules and Tenant are separate stories. The stub test at `cli_stub_handlers.rs:38-55` enumerates story references but does NOT validate that the actual `run()` function uses the correct mapping — it just constructs `CliError::NotImplemented` directly with known-good strings. The test proves the error type works, not that `main.rs` uses correct references. This is a vacuous assertion for correctness of the dispatch table.
+
+---
+
+### [HIGH] `cargo +nightly fmt --all --check` fails
+Per `gotchas.md`: *"Always include cargo +nightly fmt --all --check in the preflight."* The nightly fmt check produces diffs in `cli_security.rs` and `cli_stub_handlers.rs`. This must be clean before merge.
+
+---
+
+### [MEDIUM] `OutputFormatter` is a struct, not a trait — contradicts architecture doc
+**`output.rs:28`**
+
+The architecture doc and AC-4 specify: *"The `OutputFormatter` trait provides consistent formatting across all command groups."* The implementation uses a concrete `struct OutputFormatter` with an `enum OutputFormat`. This prevents downstream command handlers from implementing custom formatting behavior. The architecture chose a trait for extensibility; the implementation collapsed it into a dispatch struct.
+
+---
+
+### [MEDIUM] `--format` flag is raw `String`, not `OutputFormat` — no clap-level validation
+**`cli.rs:36`**
+
+```rust
+pub format: Option<String>,
+```
+
+The `OutputFormat` enum has a perfectly good `FromStr` impl. Using `Option<String>` means invalid formats like `--format xml` are accepted at parse time and only fail later (if ever). Clap supports `value_parser` or `ValueEnum` for compile-time integration. This is a type safety gap at the CLI boundary.
+
+---
+
+### [MEDIUM] No `after_help` usage examples on any command — AC-2 violation
+**All command structs**
+
+AC-2 explicitly states: *"include `after_help` usage examples for each command group."* None of the command structs (`QueryArgs`, `RulesArgs`, `AlertsArgs`, etc.) have `#[command(after_help = "...")]` attributes. The help renders without panic (tested), but the content violates the acceptance criteria.
+
+---
+
+### [MEDIUM] `RawConfig` silently ignores unknown TOML fields
+**`config.rs:7-11`**
+
+Serde's default `Deserialize` ignores unknown fields. If an operator writes `server_ulr = "..."` (typo) or `token = "secret"` in the config file, it's silently ignored. The test `config_does_not_store_token_field` at `cli_config.rs:176` actually exercises this path but its assertion is weak — it only checks `cfg.server_url() != ""`, not that the unknown field was flagged. Consider `#[serde(deny_unknown_fields)]` on `RawConfig`.
+
+---
+
+### [MEDIUM] `CliError` missing `#[non_exhaustive]`
+**`error.rs:6`**
+
+Per project Rust rules: *"`#[non_exhaustive]` on enums that will grow."* `CliError` will absolutely grow as Stories 6.2–6.7, 9.1, etc. add new error variants. Missing this attribute now means adding variants later is a breaking change for any external match expressions.
+
+---
+
+### [MEDIUM] `--tenant` accepts raw strings — no `TenantId` validation
+**`cli.rs:32`**
+
+The `--tenant` flag is `Option<String>`. The core crate provides `TenantId` with UUID validation. While `HeaderValue::from_str` rejects CRLF (good — tested), it accepts any visible ASCII string. An operator passing `--tenant garbage` will send `X-Tenant-ID: garbage` to the server. Validation should happen at the CLI boundary using `TenantId::new()` before constructing the client.
+
+---
+
+### [LOW] `toml` version mismatch with story spec
+**`Cargo.toml:60`**
+
+Story spec says `toml 0.9`. Workspace declares `toml = "0.8"`. Version 0.9 doesn't exist yet (latest is 0.8.x), so the spec is wrong, but this should be noted and the spec corrected.
+
+---
+
+### [LOW] JSON `request_id` always empty string
+**`output.rs:69`**
+
+```rust
+"request_id": "",
+```
+
+AC-4 says JSON includes `ResponseMetadata (request_id, timestamp, api_version)`. The `request_id` is hardcoded empty. Acceptable for stubs, but a `uuid::Uuid::new_v4()` would be more useful for debugging even without a real API call.
+
+---
+
+### [VERIFIED] Header injection prevention (CWE-113)
+`SiemClient::build_headers` uses `HeaderValue::from_str` which rejects CRLF characters. Tests at `cli_security.rs:52-81` confirm both tenant_id and token with `\r\n` are rejected. The deferred-error pattern (storing `Result<HeaderMap, CliError>` in the struct) means invalid headers fail at request time, not construction time, but they DO fail.
+
+---
+
+### [VERIFIED] CWE-209 error information exposure
+`ServerError` Display is `"server returned an error"` — the inner string (containing `"HTTP {status}"`) is not exposed to users via Display. Auth errors use generic messages. Tests at `cli_security.rs:19-44` validate this.
+
+---
+
+### [VERIFIED] Exit code mapping completeness
+All 10 `CliError` variants are tested individually and collectively. No variant maps to exit code 0. Auth → 3, Authz → 4, everything else → 1.
+
+---
+
+### [VERIFIED] Dependency isolation
+`axiathon-client/Cargo.toml` depends on `axiathon-core` only. No server-side crate imports. The two-binary separation is maintained.
+
+---
+
+### [VERIFIED] `#![forbid(unsafe_code)]` in lib.rs
+Production code forbids unsafe. Integration tests downgrade to `deny` with documented rationale for `std::env::set_var` in edition 2024.
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 0 | — |
+| High | 3 | YES |
+| Medium | 5 | NO |
+| Low | 2 | NO |
+| Verified | 5 | — |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three High findings block this PR:
+
+1. **Completion and Init must be functional**, not stubbed. The code is written — just wire it into the dispatch.
+2. **Fix the stub story references** for Rules and Tenant (they're not "Story 6.5").
+3. **Run `cargo +nightly fmt --all`** to fix formatting.
+
+The Medium findings (no `after_help`, `OutputFormatter` not a trait, `CliError` missing `#[non_exhaustive]`, raw String for `--format` and `--tenant`, silent unknown field handling) should be addressed but do not individually block.
+
+*Burkhalter closes the folder.* I do not approve incomplete work, Klink. Fix it and bring it back. And this time, make sure the completion command actually *completes* something.

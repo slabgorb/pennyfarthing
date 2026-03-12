@@ -160,7 +160,9 @@ def skill(skill_name: str | None, report: bool):
         if result.status == "OK":
             success(f"{result.skill_name}: All tags present")
         elif result.status == "PARTIAL":
-            warn(f"{result.skill_name}: Missing recommended: {', '.join(result.missing_recommended)}")
+            warn(
+                f"{result.skill_name}: Missing recommended: {', '.join(result.missing_recommended)}"
+            )
         else:
             error(f"{result.skill_name}: Missing required: {', '.join(result.missing_required)}")
 
@@ -213,9 +215,13 @@ def step(workflow_name: str | None, report: bool):
                 if report:
                     success(f"  {result.step_name}: OK")
             elif result.status == "PARTIAL":
-                warn(f"  {result.step_name}: Missing recommended: {', '.join(result.missing_recommended)}")
+                warn(
+                    f"  {result.step_name}: Missing recommended: {', '.join(result.missing_recommended)}"
+                )
             else:
-                error(f"  {result.step_name}: Missing required: {', '.join(result.missing_required)}")
+                error(
+                    f"  {result.step_name}: Missing required: {', '.join(result.missing_required)}"
+                )
 
     # Print summary
     summary = results["summary"]
@@ -259,7 +265,11 @@ def validate(file_type: str, strict: bool):
 
     # Print results
     for result in summary.results:
-        rel_path = result.file_path.relative_to(root) if root in result.file_path.parents else result.file_path
+        rel_path = (
+            result.file_path.relative_to(root)
+            if root in result.file_path.parents
+            else result.file_path
+        )
         if result.status == "PASS":
             success(f"{rel_path}")
         elif result.status == "WARN":

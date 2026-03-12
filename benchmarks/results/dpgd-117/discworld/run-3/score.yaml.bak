@@ -1,0 +1,94 @@
+scenario_id: dpgd-117
+theme: discworld
+run_id: 2
+total_caught: 1
+total_findings: 10
+weighted_caught: 5
+total_weight: 52
+score_pct: 9.6
+findings:
+- finding_id: I1
+  title: Dependencies inline instead of workspace level
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer flagged unused dependencies but not the workspace = true issue.
+    Dev added chrono and uuid as 'workspace dependencies' but the other 6 inline dependencies
+    were not flagged as missing workspace = true.
+- finding_id: I2
+  title: 'FieldErrorCode missing #[non_exhaustive]'
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'No phase mentioned FieldErrorCode or #[non_exhaustive] on any enum in
+    the server crate.'
+- finding_id: I3
+  title: Hardcoded trace_id 'none'
+  weight: 5
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: TEA wrote a test for meta.trace_id presence but the reviewer noted health
+    generates its own UUID rather than extracting from request context. Neither phase
+    flagged the hardcoded 'none' default in ResponseMeta specifically.
+- finding_id: I4
+  title: Zero structured logging
+  weight: 5
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [HIGH] 'No structured logging or tracing \u2014 all\
+    \ src/ files. The tracing and tracing-subscriber crates are listed as dependencies\
+    \ but never used. There are zero tracing::info!(), tracing::error!(), or #[instrument]\
+    \ annotations.'"
+- finding_id: I5
+  title: Security comment claims tracing that doesn't exist
+  weight: 3
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: Reviewer noted missing tracing but did not specifically flag a SECURITY
+    comment claiming logging exists when it doesn't.
+- finding_id: I6
+  title: Non-ASCII tenant header silently treated as missing
+  weight: 8
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No test was written for non-ASCII tenant header handling. TEA tests cover
+    missing/invalid tokens but not non-ASCII header edge cases.
+- finding_id: I7
+  title: "CWE-209 test gap \u2014 no body assertion"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote CWE-209 tests (no stack traces leaked, no internal paths leaked,
+    auth errors use generic messages) but the finding specifically notes these check
+    status code without asserting on response body content.
+- finding_id: I8
+  title: CORS preflight test doesn't verify CORS headers
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No CORS preflight test was written by TEA, and no CORS middleware was
+    implemented or reviewed.
+- finding_id: I9
+  title: "Wrong log levels \u2014 error! for 4xx client errors"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: Since I4 (zero logging) was flagged but not fixed, I9 (wrong log levels
+    after fixing I4) was never reached.
+- finding_id: I10
+  title: CORS allows Any origin/method/header (CWE-942)
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No CORS middleware was implemented, tested, or reviewed. CORS configuration
+    was not addressed by any phase.

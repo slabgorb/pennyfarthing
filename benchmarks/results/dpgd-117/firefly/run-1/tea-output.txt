@@ -1,0 +1,32 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 is the REST API foundation — core infrastructure that everything in Epic 8 depends on. No chore bypass.
+
+**Test Files:**
+- `crates/axiathon-server/tests/api_endpoints.rs` — 12 tests: route registration for all 5 endpoint groups, POST support, JSON content-type, 404 fallback, health without auth
+- `crates/axiathon-server/tests/response_envelope.rs` — 13 tests: three-field envelope structure, data/errors mutual exclusivity, meta with request_id (UUID), timestamp (ISO 8601), trace_id, unique request IDs per request, 404 envelope conformance
+- `crates/axiathon-server/tests/auth_middleware.rs` — 14 tests: valid Bearer (200), missing token (401), expired token (401), wrong scope (403), valid API key (200), revoked key (401), key without scope (403), malformed headers (empty Bearer, no space, unknown scheme, empty header), CWE-209 info leak checks
+- `crates/axiathon-server/tests/rate_limiting.rs` — 5 tests: exceeding limit returns 429, Retry-After header present and positive, per-tenant independence, 429 uses envelope format, configurable limits
+- `crates/axiathon-server/tests/api_versioning.rs` — 7 tests: v1 prefix for all routes, v2 returns 404, unversioned returns 404, root /api returns 404, deprecation header mechanism, trailing slash handling
+- `crates/axiathon-server/tests/security.rs` — 10 tests: no stack traces in errors, no resource names leaked, generic internal error messages, long URI handling, oversized body (413), CORS OPTIONS, security headers, JSON content-type, `#![forbid(unsafe_code)]` assertion, method-not-allowed (405), request ID propagation
+
+**Tests Written:** 61 tests covering 5 ACs + security edge cases
+**Status:** RED (failing — compile errors on missing `create_app`, `create_app_with_config`, `ServerConfig`)
+
+**Handoff:** To Dev for implementation. The dev needs to export:
+1. `pub async fn create_app() -> Router` — builds the full app with default config
+2. `pub async fn create_app_with_config(config: ServerConfig) -> Router` — builds with custom config
+3. `pub struct ServerConfig` with `test_default()`, `test_with_rate_limit(n)`, `default_rate_limit()` methods
+
+The existing `ApiResponse<T>` in axiathon-core needs rework to match the AC:
+- Rename `error` to `errors` (Vec, always present, never Option)
+- `meta` must always be present with `request_id`, `timestamp`, `trace_id` (not pagination fields)
+
+## Delivery Findings
+
+- **Gap** (blocking): `ApiResponse<T>` in `crates/axiathon-core/src/types.rs` does not match AC specification. Current type has `error: Option<ApiError>` (singular) but AC requires `errors: Vec<ApiError>` (always-present array). Current `ApiMeta` has pagination fields but AC requires `request_id`, `timestamp`, `trace_id`. Affects `crates/axiathon-core/src/types.rs` (needs restructuring).
+  *Found by TEA during test design.*
+
+- **Gap** (non-blocking): `ApiResponse` uses `skip_serializing_if = "Option::is_none"` on all fields, but the AC requires `errors` and `meta` to always be present in the serialized JSON (even when empty/default). Affects `crates/axiathon-core/src/types.rs` (remove skip_serializing_if on errors and meta).
+  *Found by TEA during test design.*

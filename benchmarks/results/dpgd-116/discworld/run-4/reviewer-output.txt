@@ -1,0 +1,230 @@
+Right. I've seen enough. Here's my review. I don't do nice. I do RIGHT.
+
+---
+
+# Adversarial Code Review — Story 6.1: CLI Framework & Structure
+
+**Reviewer:** Granny Weatherwax
+**Status:** I've read every file in this crate with my own two eyes.
+
+---
+
+## Findings
+
+### `[CRITICAL]` F1 — main.rs is a dead stub; the binary does nothing — `main.rs:3-6`
+
+The entry point is:
+```rust
+fn main() {
+    eprintln!("axiathon: not yet implemented");
+    std::process::exit(1);
+}
+```
+
+No CLI parsing. No command dispatch. No config loading. No async runtime. The binary that AC-1 through AC-10 describe **does not exist**. Running `./axiathon --help` exits with code 1 and a useless message. Every other module — cli.rs, client.rs, config.rs, output.rs, error.rs — sits there like furniture in an empty house with no front door.
+
+This is the story's *primary deliverable*. A CLI framework story that doesn't wire up the CLI is not a framework.
+
+---
+
+### `[CRITICAL]` F2 — No command dispatch; all handler stubs missing — `commands/mod.rs:1`
+
+`commands/mod.rs` exports only `completion`. Per AC-10 and the story scope, the following command handler modules should exist and return `CliError::NotImplemented("Story X.Y")`:
+
+- `commands/query.rs`, `commands/rules.rs`, `commands/alerts.rs`, `commands/ingest.rs`, `commands/config.rs` (the command one), `commands/status.rs`, `commands/tenant.rs`, `commands/login.rs`, `commands/init.rs`
+
+None exist. There is no `match cli.command { ... }` anywhere. The `Commands` enum is defined but never matched on. The clap structure is a facade.
+
+---
+
+### `[CRITICAL]` F3 — Stub handler tests are vacuous (test the error type, not the command) — `tests/stub_handlers.rs:11-22`
+
+Every "stub handler" test does this:
+```rust
+let err = CliError::NotImplemented("Story 6.2".into());
+let display = format!("{err}");
+assert!(display.contains("not yet implemented"));
+```
+
+This tests that the `Display` impl on `CliError::NotImplemented` works. It does NOT test that running `axiathon status` actually returns this error. There is no stub handler to test — the tests construct the error themselves and verify their own construction. This is a tautology. It would pass even if the `status` command segfaulted, because the test never invokes the command.
+
+---
+
+### `[HIGH]` F4 — Env var URL override skips validation — `config.rs:91-93`
+
+```rust
+if let Some(url) = env_url {
+    config.server_url = url.to_string();  // No validate_url() call!
+}
+```
+
+File-sourced URLs go through `validate_url()` (line 82), but `AXIATHON_API_URL` env var values are accepted raw. An attacker or misconfigured environment can inject `javascript:`, `file:///etc/passwd`, or `ftp://evil.com` through the env var and bypass the scheme check entirely. This is an asymmetric validation bug — one trust boundary is guarded, the other is not.
+
+---
+
+### `[HIGH]` F5 — `keyring` dependency missing from workspace and crate — `Cargo.toml`, `crates/axiathon-client/Cargo.toml`
+
+AC-8 mandates: "Tokens in OS keychain, NOT config file." The architecture doc specifies `keyring` 3 as a key dependency. It appears in neither the workspace `[workspace.dependencies]` nor the client crate's `[dependencies]`. `ClientConfig::token()` returns `None` unconditionally (`config.rs:59-61`). The credential storage requirement is entirely unimplemented.
+
+---
+
+### `[HIGH]` F6 — `toml` version mismatch: workspace declares 0.8, story spec says 0.9 — `Cargo.toml:57`
+
+Workspace: `toml = "0.8"`. Story spec: `toml` 0.9. This may be intentional (0.9 not yet released), but it contradicts the documented technical guardrails. Needs explicit acknowledgment.
+
+---
+
+### `[HIGH]` F7 — FileConfig accepts unknown fields silently — `config.rs:8-19`
+
+```rust
+#[derive(Debug, Deserialize)]
+struct FileConfig {
+    server: Option<ServerConfig>,
+}
+```
+
+No `#[serde(deny_unknown_fields)]`. A config file with `[client]` or `[logging]` or a typo like `[sever]` is silently ignored. The user gets no warning that their config section is having no effect. This is a classic misconfiguration trap.
+
+---
+
+### `[HIGH]` F8 — Security tests for URL scheme validation are weak — `tests/security.rs:96-146`
+
+```rust
+let result = ClientConfig::from_file(file.path());
+if let Ok(config) = result {
+    let url = config.server_url();
+    assert!(url.starts_with("http://") || url.starts_with("https://"), ...);
+}
+```
+
+The `if let Ok(config)` means: if the function returns `Err`, the test *silently passes*. This is the correct behavior today (validate_url returns Err for bad schemes), but the assertion is a no-op. If someone later changes validate_url to silently default to a safe URL instead of erroring, this test would STILL pass because the Ok branch is what it checks. Should assert `result.is_err()` instead.
+
+---
+
+### `[MEDIUM]` F9 — `validate_timeout` silently coerces bad values — `config.rs:46-48`
+
+```rust
+fn validate_timeout(t: i64) -> u64 {
+    if t > 0 { t as u64 } else { DEFAULT_TIMEOUT }
+}
+```
+
+A timeout of -1 silently becomes 30. A timeout of 0 silently becomes 30. No warning, no error. The operator has no idea their explicit setting was ignored. This should at minimum log a warning, or better, return a `Result` and let the caller decide.
+
+---
+
+### `[MEDIUM]` F10 — Unused import warning in tests — `tests/cli_structure.rs:5`
+
+```
+warning: unused import: `Commands`
+```
+
+Test file imports `Commands` but doesn't use it. Clippy is clean on production code but tests have a warning. With `-D warnings` in CI, this will fail.
+
+Wait — clippy passed on production code but the *test compilation* shows a warning. Let me check if the test suite runs with warnings-as-errors... The workspace sets `[workspace.lints.clippy]` but the unused import is a `rustc` warning, not a clippy lint. In CI with `-D warnings`, this WILL fail.
+
+---
+
+### `[MEDIUM]` F11 — `ServerConfig::token` field has `#[allow(dead_code)]` — `config.rs:17-18`
+
+```rust
+#[allow(dead_code)]
+token: Option<String>,
+```
+
+The token field is deserialized from TOML but intentionally not used (comment on line 87 explains why). However, the `#[allow(dead_code)]` suppresses the very warning that would remind someone to remove this field. The field should either: (a) not exist in the deserialized struct (reject it with `deny_unknown_fields`), or (b) be used to emit a warning telling the user to move their token to the keychain.
+
+---
+
+### `[MEDIUM]` F12 — No `--server` env var integration tested for `AXIATHON_SERVER` — `cli.rs:23`
+
+```rust
+#[arg(long, global = true, env = "AXIATHON_SERVER")]
+pub server: Option<String>,
+```
+
+Clap will read `AXIATHON_SERVER` env var. But the config uses `AXIATHON_API_URL` (in `from_file_with_env`). There are now TWO different env vars for the server URL (`AXIATHON_SERVER` via clap, `AXIATHON_API_URL` via config). No test covers the precedence between them, and no integration code resolves which wins.
+
+---
+
+### `[MEDIUM]` F13 — `SiemClient::get()` leaks the full URL in NotFound error — `client.rs:70`
+
+```rust
+404 => Err(CliError::NotFound(url)),
+```
+
+The `url` includes the base URL and path. Combined with `CliError::NotFound`'s Display `"not found: {0}"`, this exposes the server's internal API URL to the operator. For the CLI context this may be acceptable, but it contradicts the `/// **SECURITY:**` comment on the error enum about sanitization.
+
+---
+
+### `[LOW]` F14 — `output.rs` uses `expect()` in three places — `output.rs:85,107-114`
+
+```rust
+serde_json::to_string_pretty(&output).expect("JSON serialization should not fail")
+```
+
+The Rust coding rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` messages are explanatory but not actionable. For an `OutputFormatter` trait that returns `String`, the signature would need to change to return `Result<String, CliError>` to use `?`. This is a design tension — noted, not blocking.
+
+---
+
+### `[VERIFIED]` V1 — Clap derive structure is correct and well-organized
+
+All command groups present per AC-1. Plural nouns (`rules`, `alerts`). Global flags with `global = true`. `FormatOption` as `ValueEnum`. Solid.
+
+---
+
+### `[VERIFIED]` V2 — Error types and exit code mapping are correct
+
+`CliError` is `#[non_exhaustive]`, uses `thiserror`, maps 401→3, 403→4, everything else→1. Display messages are sanitized. No exit code 0 for any error variant.
+
+---
+
+### `[VERIFIED]` V3 — SiemClient header injection prevention works
+
+`HeaderValue::from_str()` rejects newlines and control characters. Tests at `tests/siem_client.rs` explicitly verify CWE-113 prevention. Good.
+
+---
+
+### `[VERIFIED]` V4 — Output formatters (Table/JSON/CSV) are well-implemented
+
+All three formatters handle edge cases. JSON includes metadata wrapper. CSV handles escaping properly. Table supports color toggle.
+
+---
+
+### `[VERIFIED]` V5 — `#![forbid(unsafe_code)]` on both lib.rs and main.rs
+
+Per coding rules. Confirmed.
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| CRITICAL | 3 | YES |
+| HIGH | 5 | YES |
+| MEDIUM | 5 | NO |
+| LOW | 1 | NO |
+| VERIFIED | 5 | — |
+
+The individual components — cli.rs, error.rs, output.rs, client.rs, config.rs, completion.rs — are well-crafted in isolation. The error handling design is solid. The security posture on header injection is correct. The output formatters are production-quality.
+
+But **the binary doesn't work**. There is no main dispatch loop. There are no command handlers. The stub handler tests test the error type's Display impl, not any actual command execution. The `axiathon` binary prints "not yet implemented" and exits. This is not a CLI framework — it's a parts catalog.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three critical blockers must be resolved before approval:
+
+1. **Wire up main.rs**: Parse CLI, load config, create SiemClient, match on Commands enum, dispatch to handlers, map errors to exit codes via `CliError::exit_code()`. This is the story's reason for existing.
+
+2. **Create all command handler stubs**: Each command group gets a module file that returns `CliError::NotImplemented("Story X.Y")`. Wire them into the dispatch match.
+
+3. **Fix env var URL validation bypass** (`config.rs:91-93`): Apply `validate_url()` to env var URLs, same as file URLs.
+
+Additionally, before merge:
+- Add `#[serde(deny_unknown_fields)]` to `FileConfig` and `ServerConfig`
+- Fix the unused import warning in `tests/cli_structure.rs`
+- Resolve the dual env var confusion (`AXIATHON_SERVER` vs `AXIATHON_API_URL`)
+- Make stub handler tests actually invoke the command through the dispatch path (using `assert_cmd` on the binary)

@@ -138,7 +138,9 @@ def link(parent_key, child_key, link_type, dry_run):
 @click.option("--project", "-p", default=None, help="Jira project key (default: from config)")
 @click.option("--max-results", "-n", default=50, type=int, help="Maximum results (default: 50)")
 @click.option("--status", "-s", default=None, help="Filter by status (e.g. 'In Progress', 'Done')")
-@click.option("--type", "-t", "issue_type", default=None, help="Filter by issue type (e.g. Story, Epic, Bug)")
+@click.option(
+    "--type", "-t", "issue_type", default=None, help="Filter by issue type (e.g. Story, Epic, Bug)"
+)
 @click.option("--json-output", "--json", "json_out", is_flag=True, help="Output as JSON")
 def search(query, project, max_results, status, issue_type, json_out):
     """Search issues using plain text or JQL.
@@ -184,9 +186,20 @@ def search(query, project, max_results, status, issue_type, json_out):
 def _is_jql(query: str) -> bool:
     """Detect if a query string looks like JQL rather than plain text."""
     jql_keywords = [
-        " = ", " != ", " ~ ", " !~ ", " IN ", " NOT IN ",
-        " AND ", " OR ", " ORDER BY ", " >= ", " <= ",
-        " IS ", " WAS ", " CHANGED ",
+        " = ",
+        " != ",
+        " ~ ",
+        " !~ ",
+        " IN ",
+        " NOT IN ",
+        " AND ",
+        " OR ",
+        " ORDER BY ",
+        " >= ",
+        " <= ",
+        " IS ",
+        " WAS ",
+        " CHANGED ",
     ]
     upper = f" {query} ".upper()
     return any(kw.upper() in upper for kw in jql_keywords)
@@ -249,7 +262,7 @@ def _print_search_results(issues: list) -> None:
     click.echo("-" * len(header))
 
     for key, itype, summary, st, pts, assignee in rows:
-        trunc = (summary[:sum_w - 1] + "…") if len(summary) > sum_w else summary
+        trunc = (summary[: sum_w - 1] + "…") if len(summary) > sum_w else summary
         click.echo(
             f"{key:<{key_w}}  {itype:<{type_w}}  {trunc:<{sum_w}}  "
             f"{st:<{status_w}}  {pts:<{pts_w}}  {assignee}"

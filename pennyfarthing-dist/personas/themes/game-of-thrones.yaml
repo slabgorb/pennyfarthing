@@ -53,10 +53,18 @@ theme:
     era: medieval
     genre: fantasy
     energy: intense
+    zeitgeist: moderate
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: feudal
+    formality: ceremonial
+    intellectual_style: strategic
+    stakes: existential
 
 zeitgeist:
   score: 79.3
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Samwell Tarly

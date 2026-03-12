@@ -1,0 +1,73 @@
+I've now read every source file, every test file, the Cargo.toml, run tests/clippy/fmt. Here's my review.
+
+---
+
+# Story 6.1 Review — Thelonious Monk Finds the Wrong Notes
+
+*The strange note that doesn't resolve. Let me find it.*
+
+## Findings
+
+### `[HIGH]` main.rs wildcard match doesn't call stub handlers — violates AC-10 at `main.rs:22-25`
+
+The `_ => { eprintln!("not yet implemented"); std::process::exit(1); }` catch-all does **not** call the per-command `handle_stub()` functions. AC-10 requires stubs to print "not yet implemented **(Story X.Y)**" — the actual binary prints a bare "not yet implemented" with no story reference. The stub handlers exist and are tested, but they're **dead code in the binary**. The match should dispatch each unimplemented variant to its respective `handle_stub()` so operators know *which* story to track.
+
+Additionally, `let _ = cli;` on line 9 followed by `cli.command` on line 11 is suspicious — it moves `cli` into `_` then uses it. This compiles because `let _ = x` doesn't actually move, but it's confusing dead code.
+
+### `[HIGH]` `set_token` / `set_tenant` bypass header injection validation at `client.rs:25-38`
+
+There are *two* API surfaces: `set_token`/`set_tenant` (no validation) and `try_set_token`/`try_set_tenant` (validates for `\n`/`\r`). Nothing prevents callers from using the unsafe `set_*` variants. The safe `try_*` methods exist but are never actually called anywhere in the codebase. A future developer will naturally reach for `set_token` and bypass CWE-113 protection. The non-validating setters should be removed or made `pub(crate)` with the validating ones as the only public API.
+
+### `[HIGH]` `ServerError` Display leaks raw server response body — CWE-209 at `error.rs:17`
+
+`#[error("server error ({0}): {1}")]` passes the raw HTTP response body directly to the operator. The test `cli_error_server_error_display_does_not_leak_raw_body` at `error_exit_codes.rs:105-118` **does not actually assert this** — it only checks that the output contains "500" or "server error", which it always will since the format string starts with "server error ({0})". The test is vacuous; it passes even though a Java stack trace is fully exposed to the user. The `Unauthorized` and `NotFound` variants have the same issue.
+
+### `[MEDIUM]` `RawConfig` silently ignores unknown fields at `config.rs:5-9`
+
+`RawConfig` has no `#[serde(deny_unknown_fields)]`. A config file with `tokne = "secret"` (typo) will be silently accepted. The test `client_config_does_not_store_tokens` at `config_loading.rs:153-177` proves this — a `token = "..."` field is silently ignored with no warning. While the token doesn't leak into the config struct, the operator gets no feedback that they put a secret in the wrong place. At minimum, unknown fields should produce a warning.
+
+### `[MEDIUM]` `cargo +nightly fmt --all --check` fails — 326 lines of diff
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The code has nightly fmt violations in `client.rs` (import ordering, line wrapping) and likely other files. This must be fixed before merge.
+
+### `[MEDIUM]` `OutputFormatter` trait is functionally useless at `output.rs:1-3`
+
+The trait has a single method `fn name(&self) -> &str` which returns a static string. The actual formatting methods (`format_table`, `format_json`, `format_csv`) are inherent methods on the structs, not trait methods. This means you can't use `dyn OutputFormatter` to polymorphically format output — the trait provides no formatting capability. AC-4 specifies an `OutputFormatter` trait with Table/Json/CSV implementations, implying the formatting should be dispatched through the trait.
+
+### `[MEDIUM]` No TTY auto-detection for default output format at `cli.rs:9-10`, `output.rs`
+
+AC-4 requires "Table default for TTY, JSON for piped output" using `std::io::IsTerminal`. There is no `IsTerminal` usage anywhere. The `--format` flag is `Option<OutputFormat>` but nothing auto-selects based on whether stdout is a terminal. This is a missing AC-4 requirement.
+
+### `[MEDIUM]` `tenant` field is raw `String`, not `TenantId` newtype at `cli.rs:22`, `client.rs:7`
+
+Per Rust coding rules: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag and `SiemClient.tenant_id` both use raw `String`. `axiathon-core` exports `TenantId` — it should be used here, or at least documented why it's not.
+
+### `[LOW]` JSON output has duplicate metadata fields at `output.rs:49-58`
+
+`format_json` outputs both `metadata.request_id` nested under a `metadata` object AND a top-level `request_id` and `api_version`. This creates redundant fields in the JSON response, which is confusing for scripting consumers. Pick one structure.
+
+### `[LOW]` `expect()` calls in `CsvFormatter` and `JsonFormatter` at `output.rs:60,75-81`
+
+Per project rules: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` calls here have messages but could still panic on pathological input (e.g., a `Vec<u8>` writer failing). These formatting functions should return `Result` instead of panicking.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present in both `lib.rs:2` and `main.rs:1`
+
+### `[VERIFIED]` Exit codes 0/1/3/4 correctly mapped, clap handles exit code 2 for usage errors
+
+### `[VERIFIED]` Shell completion generation works for all four shells (bash/zsh/fish/PowerShell)
+
+### `[VERIFIED]` Config file loading with proper precedence (file → env → CLI flags)
+
+### `[VERIFIED]` All workspace dependencies correctly declared in root `Cargo.toml`
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three HIGH findings block this PR:
+
+1. **main.rs wildcard match** makes all stub `handle_stub()` functions dead code — the binary doesn't print story references per AC-10
+2. **Unguarded `set_token`/`set_tenant`** bypass header injection validation (CWE-113)
+3. **`ServerError` Display leaks raw response body** with a vacuous test that doesn't catch it (CWE-209)
+
+The nightly fmt failure is also a gate per project `gotchas.md`.

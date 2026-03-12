@@ -1,0 +1,173 @@
+Now I have all the information I need. Let me compile the review.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+*Ah, you see, there is only one constant — one universal. It is the only real truth: causality. Action, reaction. Cause and effect. Let me trace every cause to its effect in this code.*
+
+---
+
+## Findings
+
+### [CRITICAL] `cargo +nightly fmt --all --check` fails — 359 lines of diff
+
+**At:** multiple files across `crates/axiathon-client/src/`
+
+Nightly rustfmt enforces import ordering and line-width rules that stable does not. The codebase currently has 359 lines of formatting divergence. Per the reviewer gotchas sidecar: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."* This is a blocking gate.
+
+---
+
+### [HIGH] `toml` workspace dependency version is `0.8`, story spec requires `0.9`
+
+**At:** `Cargo.toml:50`
+
+The story's Technical Guardrails explicitly state: *"toml 0.9"*. The workspace declares `toml = "0.8"`. This is a spec violation. While `0.8` works functionally, the AC requires the specified version.
+
+---
+
+### [HIGH] Config silently accepts unknown fields (no `deny_unknown_fields`)
+
+**At:** `crates/axiathon-client/src/config.rs:24-28`
+
+`RawClientConfig` uses a custom `Deserialize` impl but never rejects unknown TOML keys. A user could write `tokne = "secret"` (typo of "token") and it would be silently ignored. More critically, a `token = "my-secret"` field is silently swallowed with no warning — the test `client_config_does_not_have_token_field` at `config_loading_test.rs:127-138` **has zero assertions** and would pass regardless of behavior. This is a vacuous test.
+
+---
+
+### [HIGH] `main.rs` is a no-op — no dispatch, no exit code handling
+
+**At:** `crates/axiathon-client/src/main.rs:1-5`
+
+The `main.rs` contains only an empty `fn main()` with a comment. There is no `Cli::parse()`, no command dispatch, no `std::process::exit()` with error codes. This means:
+- The binary `axiathon` does nothing when run
+- AC-3 (exit codes from process) is not verifiable end-to-end
+- AC-10 (stubs print "not yet implemented") is not wired — stubs exist as types but are never dispatched
+- AC-9 (completion to stdout) has no actual dispatch path
+
+The tests verify library-level behavior (struct construction, trait bounds) but the binary itself is non-functional.
+
+---
+
+### [MEDIUM] `SiemClient` header injection uses `assert!` (panics in production)
+
+**At:** `crates/axiathon-client/src/client.rs:38-43, 51-55`
+
+Header injection prevention via `assert!` means malformed input causes an uncontrolled panic in production. The Rust coding rules say *"No unwrap() in production code — use `?` or `expect()` with actionable message."* While `assert!` is slightly better than `unwrap`, this should return `Result<Self, CliError>` for graceful error handling. A malicious or corrupted token from keychain shouldn't crash the entire CLI.
+
+---
+
+### [MEDIUM] `SiemClient::new` uses `assert!` for empty URL — same panic concern
+
+**At:** `crates/axiathon-client/src/client.rs:19`
+
+Same issue. An empty base URL (e.g., from a misconfigured env var) panics instead of returning a meaningful error.
+
+---
+
+### [MEDIUM] `JsonFormatter` uses `unwrap_or_default` on serialization failures silently
+
+**At:** `crates/axiathon-client/src/output.rs:112, 126`
+
+`serde_json::to_value(rows).unwrap_or(Value::Array(vec![]))` — if serialization fails, the user gets an empty array with no error. Similarly `serde_json::to_string_pretty(&result).unwrap_or_default()` returns an empty string on failure. This is silent error swallowing.
+
+---
+
+### [MEDIUM] `CsvFormatter` silently drops write errors
+
+**At:** `crates/axiathon-client/src/output.rs:143, 149`
+
+`let _ = wtr.write_record(headers)` and `let _ = wtr.write_record(&fields)` discard I/O errors. If CSV writing fails for any reason, the output will be silently truncated.
+
+---
+
+### [MEDIUM] `TableFormatter` silently drops serialization errors
+
+**At:** `crates/axiathon-client/src/output.rs:88`
+
+`if let Ok(value) = serde_json::to_value(row)` — rows that fail serialization are silently skipped. The user would see an incomplete table with no indication that rows were dropped.
+
+---
+
+### [MEDIUM] Security tests for header injection are vacuous
+
+**At:** `security_test.rs:39-62`, `siem_client_test.rs:104-141`
+
+Tests like `siem_client_tenant_header_rejects_carriage_return` catch the panic but then in the `Ok(_)` branch do nothing — the comment says "Silently accepting is a vulnerability" but the test doesn't actually fail. If the `assert!` were removed from production code, these tests would still pass. Similarly for `siem_client_token_rejects_null_bytes`. These should explicitly `panic!("injection accepted")` in the `Ok` branch, or assert that the result is `Err`.
+
+---
+
+### [MEDIUM] `config.rs` env override for `AXIATHON_API_URL` bypasses validation
+
+**At:** `crates/axiathon-client/src/config.rs:87-92`
+
+`apply_env_overrides` accepts any non-empty URL from the environment variable without running the same validation (HTTPS check, credential check) that the TOML deserializer enforces. An attacker who can set `AXIATHON_API_URL=http://evil.com` bypasses the HTTPS requirement. The validation logic should be shared.
+
+---
+
+### [LOW] `OutputFormatter` trait is empty — marker trait with no methods
+
+**At:** `crates/axiathon-client/src/output.rs:52`
+
+`pub trait OutputFormatter {}` has no methods. The `format()` method is implemented directly on each struct with different signatures. The trait exists only for object safety testing but provides no actual polymorphism. This could mislead future developers.
+
+---
+
+### [LOW] `request_id` in JSON metadata is nanosecond timestamp, not a UUID
+
+**At:** `crates/axiathon-client/src/output.rs:120`
+
+`format!("{:x}", now.as_nanos())` produces a hex-encoded timestamp, not a proper request ID. It's deterministic (not unique across concurrent calls) and doesn't match the UUID format that API consumers typically expect.
+
+---
+
+### [LOW] `apply_cli_overrides` accepts zero timeout
+
+**At:** `crates/axiathon-client/src/config.rs:103-109`
+
+Unlike `apply_env_overrides` which checks `t > 0`, `apply_cli_overrides` accepts any `u64` including 0. A `--timeout 0` flag would create a zero-timeout client.
+
+---
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in both `lib.rs` and `main.rs`
+
+---
+
+### [VERIFIED] Dependency boundary respected — `axiathon-client` depends only on `axiathon-core`, no server crates
+
+---
+
+### [VERIFIED] Exit code mapping covers all documented codes (0/1/3/4), code 2 handled by clap automatically
+
+---
+
+### [VERIFIED] Shell completion generation works for all four shells (bash/zsh/fish/powershell)
+
+---
+
+### [VERIFIED] `CliError` is `#[non_exhaustive]` as required by Rust coding rules
+
+---
+
+### [VERIFIED] All tests pass (89 tests, 0 failures)
+
+---
+
+### [VERIFIED] Clippy passes with `-D warnings`
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 1 | YES |
+| High | 3 | YES |
+| Medium | 6 | NO |
+| Low | 3 | NO |
+| Verified | 6 | - |
+
+## Verdict: **CHANGES_REQUESTED**
+
+The critical blocker is the nightly fmt failure (359 lines of diff). The high findings are: mismatched `toml` version vs spec, config silently accepting unknown fields (with a vacuous test), and the non-functional `main.rs` meaning the binary does literally nothing. The medium findings around silent error swallowing in formatters and vacuous security tests are concerning but not blocking.
+
+*Causality, my dear. You do not truly know someone until you know what they want. And I want to know: why does `main.rs` parse nothing, dispatch nothing, and exit with code 0 for every invocation? The cause is incomplete — therefore the effect cannot be trusted.*

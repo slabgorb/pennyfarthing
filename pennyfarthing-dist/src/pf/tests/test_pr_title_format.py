@@ -44,30 +44,38 @@ class TestFormatPrTitle:
     def test_default_format_with_scope(self, project: Path) -> None:
         _write_repos_yaml(project)
         result = format_pr_title(
-            jira_key="MSSCI-16204", title="add gate extensions",
-            scope="gates", project_root=project,
+            jira_key="MSSCI-16204",
+            title="add gate extensions",
+            scope="gates",
+            project_root=project,
         )
         assert result == "MSSCI-16204 - feat(gates): add gate extensions"
 
     def test_default_format_no_scope(self, project: Path) -> None:
         _write_repos_yaml(project)
         result = format_pr_title(
-            jira_key="MSSCI-100", title="fix bug", project_root=project,
+            jira_key="MSSCI-100",
+            title="fix bug",
+            project_root=project,
         )
         assert result == "MSSCI-100 - feat: fix bug"
 
     def test_custom_type(self, project: Path) -> None:
         _write_repos_yaml(project)
         result = format_pr_title(
-            jira_key="MSSCI-100", title="fix bug",
-            pr_type="fix", project_root=project,
+            jira_key="MSSCI-100",
+            title="fix bug",
+            pr_type="fix",
+            project_root=project,
         )
         assert result == "MSSCI-100 - fix: fix bug"
 
     def test_custom_format(self, project: Path) -> None:
         _write_repos_yaml(project, {"pr_title_format": "[{jira_key}] {title}"})
         result = format_pr_title(
-            jira_key="PROJ-1", title="hello", project_root=project,
+            jira_key="PROJ-1",
+            title="hello",
+            project_root=project,
         )
         assert result == "[PROJ-1] hello"
 
@@ -75,7 +83,9 @@ class TestFormatPrTitle:
         """jira_key can be a story ID when no Jira key is available."""
         _write_repos_yaml(project)
         result = format_pr_title(
-            jira_key="31-10", title="do stuff",
-            scope="ui", project_root=project,
+            jira_key="31-10",
+            title="do stuff",
+            scope="ui",
+            project_root=project,
         )
         assert result == "31-10 - feat(ui): do stuff"

@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: mash
+run_id: 2
+judge_version: v2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors via
+    unwrap_or_default(). The reviewer flagged silent env var handling but not the
+    config file loading fallback. The reviewer even marked 'Config precedence is correct'
+    as VERIFIED.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA explicitly listed ''CWE-209: auth error messages don''t expose internals''
+    as a security test in exit_codes.rs. The reviewer also verified error types have
+    the security comment on Display.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote 'Header injection prevention (newlines in tenant ID / token)'
+    tests in siem_client.rs. The reviewer also flagged '[MEDIUM] tenant field uses
+    raw Option<String> instead of TenantId newtype' citing the Rust coding rules for
+    newtypes.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the 6 dependencies using direct version strings instead
+    of workspace = true. The reviewer mentioned missing keyring workspace dependency
+    but did not identify the existing deps failing to use workspace inheritance.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer explicitly flagged '[HIGH] RawConfig silently accepts unknown\
+    \ fields \u2014 security-sensitive fields ignored without warning' and recommended\
+    \ #[serde(deny_unknown_fields)], noting the token-on-disk scenario almost verbatim."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged '[HIGH] Two vacuous tests that can never fail (false
+    green)' identifying tests with assertions that never execute. Same category of
+    vacuous/always-passing test assertions.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged two vacuous tests including config_does_not_load_token_from_file
+    which ''asserts a constant. It can never fail regardless of what RawConfig does.''
+    Same category: tests with no meaningful assertions.'

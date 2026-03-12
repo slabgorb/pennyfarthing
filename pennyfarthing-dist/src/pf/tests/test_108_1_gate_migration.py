@@ -58,8 +58,7 @@ def _get_phase(workflow_data: dict, phase_name: str) -> dict:
         if phase["name"] == phase_name:
             return phase
     raise ValueError(
-        f"Phase '{phase_name}' not found in workflow "
-        f"'{workflow_data['workflow']['name']}'"
+        f"Phase '{phase_name}' not found in workflow '{workflow_data['workflow']['name']}'"
     )
 
 
@@ -126,9 +125,7 @@ class TestTestsFailGateFile:
     def test_purpose_mentions_failing_tests(self) -> None:
         """AC1: Purpose should describe checking for failing/RED tests."""
         content = _read_gate("tests-fail")
-        purpose = re.search(
-            r"<purpose>(.*?)</purpose>", content, re.DOTALL
-        )
+        purpose = re.search(r"<purpose>(.*?)</purpose>", content, re.DOTALL)
         assert purpose is not None
         purpose_text = purpose.group(1).lower()
         assert "fail" in purpose_text or "red" in purpose_text
@@ -201,9 +198,7 @@ class TestApprovalGateFile:
     def test_purpose_mentions_reviewer(self) -> None:
         """AC1: Purpose should describe checking reviewer verdict."""
         content = _read_gate("approval")
-        purpose = re.search(
-            r"<purpose>(.*?)</purpose>", content, re.DOTALL
-        )
+        purpose = re.search(r"<purpose>(.*?)</purpose>", content, re.DOTALL)
         assert purpose is not None
         purpose_text = purpose.group(1).lower()
         assert "review" in purpose_text or "verdict" in purpose_text
@@ -526,9 +521,7 @@ class TestResolveGateIntegration:
 
     def test_trivial_review_returns_gate_file(self, project: Path) -> None:
         """AC3: resolve_gate for trivial/review should return gate_file='gates/approval'."""
-        result = resolve_gate(
-            "108-1", "trivial", "review", project_root=project
-        )
+        result = resolve_gate("108-1", "trivial", "review", project_root=project)
         assert result["gate_file"] == "gates/approval", (
             f"Expected gate_file='gates/approval', got: {result}"
         )

@@ -1,0 +1,41 @@
+All **108 tests pass** across 8 test files. Clippy is clean with `-D warnings`.
+
+## Summary
+
+### Files Created (production code in `crates/axiathon-client/src/`)
+
+| File | Description |
+|------|-------------|
+| `src/lib.rs` | Updated — re-exports all modules |
+| `src/main.rs` | Binary entry point |
+| `src/cli.rs` | Cli struct (clap derive) with Commands enum, global flags |
+| `src/error.rs` | CliError enum (#[non_exhaustive]) with exit_code() mapping |
+| `src/client.rs` | SiemClient wrapping reqwest::Client, header injection, HTTP status mapping |
+| `src/config.rs` | ClientConfig with TOML loading, env var overrides, CLI flag merging |
+| `src/output.rs` | OutputFormat enum, OutputFormatter (table/JSON/CSV), ResponseMetadata |
+| `src/commands/mod.rs` | Re-exports all command modules |
+| `src/commands/query.rs` | Stub → NotImplemented (Story 5.5) |
+| `src/commands/rules.rs` | Stub → NotImplemented (Story 6.6) |
+| `src/commands/alerts.rs` | Stub → NotImplemented (Story 6.5) |
+| `src/commands/ingest.rs` | Stub → NotImplemented (Story 6.4) |
+| `src/commands/config.rs` | Stub → NotImplemented (Story 6.3) |
+| `src/commands/status.rs` | Stub → NotImplemented (Story 6.2) |
+| `src/commands/tenant.rs` | Stub → NotImplemented (Story 6.7) |
+| `src/commands/login.rs` | Stub → NotImplemented (Story 9.1) |
+| `src/commands/init.rs` | Functional (returns Ok) |
+| `src/commands/completion.rs` | Functional — generates shell completions via clap_complete |
+
+### Test Fix
+
+Fixed a turbofish type error in `tests/cli_commands.rs:144` — `<&[&str], &str>` → `<&[&str], &&str>` (slice iteration yields `&&str`, not `&str`).
+
+### Test Results
+
+- **cli_commands**: 17/17
+- **config_loading**: 10/10
+- **exit_codes**: 14/14
+- **global_flags**: 18/18
+- **output_format**: 16/16
+- **shell_completion**: 6/6
+- **siem_client**: 17/17
+- **stub_handlers**: 10/10

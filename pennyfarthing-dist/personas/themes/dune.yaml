@@ -22,6 +22,14 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: contemplative
+    zeitgeist: moderate
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: feudal
+    formality: ceremonial
+    intellectual_style: strategic
+    stakes: existential
   spinner_verbs:
     - Harvesting spice
     - Riding sandworms
@@ -55,7 +63,7 @@ theme:
     - Surviving the desert
 zeitgeist:
   score: 77.5
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Duncan Idaho

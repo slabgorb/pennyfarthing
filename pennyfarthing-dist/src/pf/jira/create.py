@@ -179,7 +179,12 @@ def create_epic_in_jira(
     for e in data.get("epics", []):
         eid = str(e.get("id", ""))
         epic_num = epic_id.replace("epic-", "")
-        if eid == epic_id or eid == f"epic-{epic_id}" or eid == epic_num or eid.replace("epic-", "") == epic_num:
+        if (
+            eid == epic_id
+            or eid == f"epic-{epic_id}"
+            or eid == epic_num
+            or eid.replace("epic-", "") == epic_num
+        ):
             epic_ruamel = e
             break
 
@@ -188,6 +193,7 @@ def create_epic_in_jira(
 
     # Validate epic shard before any Jira operations (ADR-0022)
     from pf.sprint.validator import validate_epic_shard
+
     validation = validate_epic_shard(dict(epic_ruamel))
     if not validation.valid:
         error_msgs = "; ".join(e.message for e in validation.errors)
@@ -232,6 +238,7 @@ def create_epic_in_jira(
                     }
                 elif existing and force:
                     import warnings
+
                     warnings.warn(
                         f"Duplicate epic title detected ({existing[0]['key']}), "
                         "proceeding with --force",
@@ -239,6 +246,7 @@ def create_epic_in_jira(
                     )
             except Exception as exc:
                 import warnings
+
                 warnings.warn(
                     f"Jira search for duplicate titles failed: {exc}",
                     stacklevel=2,
@@ -287,14 +295,14 @@ def create_epic_in_jira(
                 if e.get("jira") == epic_jira_key or e.get("id") == epic_ruamel.get("id"):
                     for s in e.get("stories", []):
                         if s.get("id") == sid and not s.get("jira"):
-                            result = create_story_in_jira(
-                                epic_jira_key, sid, sprint_path=path
-                            )
+                            result = create_story_in_jira(epic_jira_key, sid, sprint_path=path)
                             if result.get("success"):
-                                stories_created.append({
-                                    "id": sid,
-                                    "jira_key": result.get("jira_key"),
-                                })
+                                stories_created.append(
+                                    {
+                                        "id": sid,
+                                        "jira_key": result.get("jira_key"),
+                                    }
+                                )
                             else:
                                 print(
                                     f"  Error creating {sid}: {result.get('error')}",
