@@ -32,8 +32,8 @@ import yaml
 # Per ADR-0004: "the hub where all communication converges"
 BIKERACK_PORT_FILE = ".bikerack-port"
 
-# Default port if file not found (must match BikeRack entry.ts DEFAULT_PORT)
-DEFAULT_BIKERACK_PORT = 2898
+# Default port if file not found — now project-aware via launcher.port_for_project
+DEFAULT_BIKERACK_PORT = 2898  # legacy fallback only
 
 # HTTP timeout for WheelHub communication
 HTTP_TIMEOUT_SECONDS = 120
@@ -124,6 +124,14 @@ def get_bikerack_port(project_root: Path | None = None) -> int:
     port = read_port_file(BIKERACK_PORT_FILE, project_root)
     if port:
         return port
+
+    # Derive per-project port when no port file exists
+    if project_root:
+        try:
+            from pf.bikerack.launcher import port_for_project
+            return port_for_project(project_root)
+        except ImportError:
+            pass
 
     return DEFAULT_BIKERACK_PORT
 

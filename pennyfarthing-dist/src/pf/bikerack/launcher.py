@@ -6,6 +6,7 @@ Story 101-5: BikeRack launcher CLI (pf bikerack start/stop/status)
 from __future__ import annotations
 
 import atexit
+import hashlib
 import os
 import signal
 import subprocess
@@ -15,6 +16,24 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import NoReturn
+
+
+# --- Per-project port derivation ---
+_PORT_BASE = 2898
+_PORT_RANGE = 100  # 2898–2997
+
+
+def port_for_project(project_dir: Path) -> int:
+    """Derive a stable, unique WheelHub port from the project directory.
+
+    Hash the resolved path so each project gets its own port in the range
+    2898-2997.  WHEELHUB_PORT env-var overrides for manual control.
+    """
+    env = os.environ.get("WHEELHUB_PORT")
+    if env:
+        return int(env)
+    digest = hashlib.md5(str(project_dir.resolve()).encode()).hexdigest()
+    return _PORT_BASE + (int(digest, 16) % _PORT_RANGE)
 
 
 def is_process_alive(pid: int) -> bool:
@@ -95,8 +114,11 @@ def start_wheelhub(project_dir: Path) -> subprocess.Popen | dict:
     """
     log_path = _wheelhub_log_path(project_dir)
 
+    port = port_for_project(project_dir)
+
     env = os.environ.copy()
     env["WHEELHUB_PROJECT_DIR"] = str(project_dir)
+    env["WHEELHUB_PORT"] = str(port)
 
     # Forward session ID so WheelHub resolves the correct agent persona
     session_id = os.environ.get("SESSION_ID") or os.environ.get("CLAUDE_SESSION_ID")
@@ -108,7 +130,7 @@ def start_wheelhub(project_dir: Path) -> subprocess.Popen | dict:
         "pf.wheelhub.app:create_app",
         "--factory",
         "--host", "127.0.0.1",
-        "--port", str(_default_port()),
+        "--port", str(port),
     ]
     log_file = open(log_path, "w")  # noqa: SIM115
     return subprocess.Popen(
@@ -214,9 +236,14 @@ def _probe_wheelhub_project(port: int, project_dir: Path, timeout: float = 1.0) 
         return False
 
 
-def _default_port() -> int:
-    """Resolve default WheelHub port from WHEELHUB_PORT env or 2898."""
-    return int(os.environ.get("WHEELHUB_PORT", "2898"))
+def _default_port(project_dir: Path | None = None) -> int:
+    """Resolve default WheelHub port from WHEELHUB_PORT env or project hash."""
+    if project_dir is not None:
+        return port_for_project(project_dir)
+    env = os.environ.get("WHEELHUB_PORT")
+    if env:
+        return int(env)
+    return _PORT_BASE
 
 
 def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]:
@@ -249,7 +276,7 @@ def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]
 
     # Fall through: no valid files — probe default port to detect orphaned servers.
     # Only claim it if the server belongs to THIS project (project_dir match).
-    default = _default_port()
+    default = _default_port(project_dir)
     if _probe_wheelhub_project(default, project_dir):
         return (True, None, default)
 
