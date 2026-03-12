@@ -1,0 +1,35 @@
+No session file exists. That'th fine, marthter — the tetht are committed and in RED thtate.
+
+Here'th my TEA Athethment:
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a full implementation story with 10 acceptance criteria covering CLI framework, output formatting, HTTP client, config loading, and more.
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `cli_structure.rs` | 17 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive) |
+| `exit_codes.rs` | 13 | AC-3 (exit codes 0/1/2/3/4), CWE-209 error exposure |
+| `output_format.rs` | 12 | AC-4 (table/json/csv formatting, escaping, metadata) |
+| `siem_client.rs` | 14 | AC-7 (HTTP wrapper, status code mapping, header injection) |
+| `config_loading.rs` | 11 | AC-8 (TOML loading, env overrides, precedence, validation) |
+| `shell_completion.rs` | 5 | AC-9 (bash/zsh/fish/powershell generation) |
+| `stub_handlers.rs` | 9 | AC-10 (stub messages with story references) |
+
+**Tests Written:** 81 tests covering all 10 ACs
+**Status:** RED (failing to compile — implementation modules do not exist yet)
+
+**Security tests included:**
+- CRLF header injection in tenant ID and token (AC-7)
+- CWE-209: error messages must not leak internal paths/stack traces (AC-3, AC-7)
+- Config file token field must be ignored — tokens belong in keychain only (AC-8)
+- Negative/zero timeout rejection (AC-8)
+- Server error message sanitization (AC-7)
+
+**Workspace changes:**
+- Added workspace dependencies: `clap_complete`, `comfy-table`, `csv`, `dirs`, `keyring`, `reqwest`, `toml`
+- Updated `axiathon-client/Cargo.toml` with all required dependencies for Story 6.1
+
+**Handoff:** To Dev for implementation (GREEN phase)

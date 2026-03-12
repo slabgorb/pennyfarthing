@@ -37,8 +37,7 @@ def find_active_session(project_root: Path) -> Path | None:
 
     # Find *-session.md files (not context-*)
     session_files = [
-        f for f in session_dir.glob("*-session.md")
-        if not f.name.startswith("context-")
+        f for f in session_dir.glob("*-session.md") if not f.name.startswith("context-")
     ]
 
     if not session_files:
@@ -81,10 +80,10 @@ def parse_session_header(session_path: Path) -> dict[str, Any]:
             # We care about Story Context, Workflow Phase, and Workflow State sections
             section_name = line[3:].strip().lower()
             in_relevant_section = (
-                "story context" in section_name or
-                "workflow phase" in section_name or
-                "workflow state" in section_name or
-                "branch" in section_name
+                "story context" in section_name
+                or "workflow phase" in section_name
+                or "workflow state" in section_name
+                or "branch" in section_name
             )
             # Stop at assessment sections (too far down)
             if "assessment" in section_name:

@@ -114,12 +114,13 @@ def validate(ctx, names: tuple[str, ...], fix: bool, strict: bool):
     ctx.obj["strict"] = strict
 
     # Click's nargs=-1 consumes subcommand names into `names`.
-    # Detect when a subcommand was captured and re-invoke it.
-    if names and names[0] in validate.commands:
+    # Detect when a single subcommand was captured and re-invoke it.
+    # Multiple names are treated as positional validator names below.
+    if len(names) == 1 and names[0] in validate.commands:
         sub_cmd = validate.commands[names[0]]
         sub_ctx = click.Context(sub_cmd, parent=ctx, info_name=names[0])
         with sub_ctx:
-            return sub_cmd.parse_args(sub_ctx, list(names[1:]))  or sub_cmd.invoke(sub_ctx)
+            return sub_cmd.parse_args(sub_ctx, []) or sub_cmd.invoke(sub_ctx)
 
     if ctx.invoked_subcommand is None:
         # If names provided as positional args, run only those
@@ -268,7 +269,9 @@ def _validate_single_context(context_type: str, context_id: str) -> None:
     for w in result.warnings:
         warn(f"[WARN] {w.component}: {w.message}")
 
-    success(f"context-{context_type}-{context_id}: valid ({result.components_checked} components checked)")
+    success(
+        f"context-{context_type}-{context_id}: valid ({result.components_checked} components checked)"
+    )
     raise SystemExit(0)
 
 

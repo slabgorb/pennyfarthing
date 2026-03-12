@@ -143,7 +143,11 @@ def archive(story_id: str, jira_key: str | None) -> None:
     archive_dir = Path(".session") / "archive"
     result = archive_dialogue(dialogue_path, archive_dir, jira_key=jira_key, story_id=story_id)
     if result.success:
-        click.echo(f"Archived to {result.data.get('archivePath', archive_dir)}" if result.data else "Archived")
+        click.echo(
+            f"Archived to {result.data.get('archivePath', archive_dir)}"
+            if result.data
+            else "Archived"
+        )
     else:
         click.echo(f"Error: {result.error}", err=True)
         raise SystemExit(1)

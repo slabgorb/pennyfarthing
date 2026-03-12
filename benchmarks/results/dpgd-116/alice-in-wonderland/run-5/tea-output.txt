@@ -1,0 +1,28 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is the foundational CLI framework — every module needs tests.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|---|---|---|---|
+| `tests/cli_structure.rs` | 15 | AC-1, AC-2, AC-5, AC-6 | Command groups, help rendering, global flags, clap derive |
+| `tests/exit_codes.rs` | 12 | AC-3 | CliError exit code mapping (0/1/2/3/4) |
+| `tests/output_format.rs` | 10 | AC-4 | OutputFormatter trait, table/json/csv formatting |
+| `tests/siem_client.rs` | 12 | AC-7 | HTTP wrapper, header injection, status code mapping |
+| `tests/config_loading.rs` | 8 | AC-8 | TOML loading, env var overrides, precedence, token exclusion |
+| `tests/shell_completion.rs` | 7 | AC-9 | Bash/zsh/fish/PowerShell generation, command references |
+| `tests/stub_handlers.rs` | 7 | AC-10 | Story references, exit code 1, user-friendly Display |
+| `tests/security.rs` | 8 | Security | CWE-209, CRLF header injection, silent swallowing, URL scheme validation |
+
+**Tests Written:** 79 tests covering all 10 ACs
+**Status:** RED (all 8 test files fail to compile — modules don't exist yet)
+
+**Security coverage:**
+- CWE-209: Error Display must not expose internal server IPs/ports
+- Header injection: CRLF in tenant ID and auth token must be rejected
+- Silent error swallowing: Connection failures must propagate as errors
+- Config validation: Non-HTTP schemes rejected, typo fields don't affect behavior
+- Token leakage: Tokens must NOT be loaded from config files
+
+**Handoff:** To Dev for implementation (GREEN phase)

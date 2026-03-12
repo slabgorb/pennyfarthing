@@ -41,10 +41,14 @@ def sprint():
 
 
 @sprint.command()
-@click.argument("filter", required=False, type=click.Choice(
-    ["backlog", "todo", "in-progress", "in-review", "done"],
-    case_sensitive=False,
-))
+@click.argument(
+    "filter",
+    required=False,
+    type=click.Choice(
+        ["backlog", "todo", "in-progress", "in-review", "done"],
+        case_sensitive=False,
+    ),
+)
 def status(filter: str | None):
     """Show sprint status.
 
@@ -85,10 +89,7 @@ def backlog():
         if not isinstance(epic, dict):
             continue
 
-        stories = [
-            s for s in epic.get("stories", [])
-            if s.get("status") in available_statuses
-        ]
+        stories = [s for s in epic.get("stories", []) if s.get("status") in available_statuses]
         if not stories:
             continue
 
@@ -311,6 +312,7 @@ def archive(story_id: str, pr_number: str | None, apply: bool, dry_run: bool):
 
 # --- Story subgroup ---
 
+
 @sprint.group()
 def story():
     """Story operations (show, add, update, size, template, finish, claim)."""
@@ -336,11 +338,16 @@ def story_show(story_id: str, output_json: bool):
         if output_json:
             import json
 
-            click.echo(json.dumps({
-                "error": f"Story not found: {story_id}",
-                "code": "STORY_NOT_FOUND",
-                "detail": None,
-            }, indent=2))
+            click.echo(
+                json.dumps(
+                    {
+                        "error": f"Story not found: {story_id}",
+                        "code": "STORY_NOT_FOUND",
+                        "detail": None,
+                    },
+                    indent=2,
+                )
+            )
             raise SystemExit(1)
         raise click.ClickException(f"Story not found: {story_id}")
 
@@ -486,6 +493,7 @@ story.add_command(story_remove_command, "remove")
 
 
 # --- Epic subgroup ---
+
 
 @sprint.group()
 def epic():
@@ -670,7 +678,9 @@ def epic_cancel(epic_id: str, jira: bool, dry_run: bool):
                 click.echo(f"Stories: {story_count}")
 
                 if jira_key and not jira:
-                    click.echo(f"\nWarning: Epic has Jira key {jira_key} -- pass --jira to also cancel in Jira")
+                    click.echo(
+                        f"\nWarning: Epic has Jira key {jira_key} -- pass --jira to also cancel in Jira"
+                    )
 
                 if dry_run:
                     click.echo(f"\n[DRY-RUN] Would cancel {eid} and {story_count} stories")
@@ -755,10 +765,14 @@ def _cancel_epic_in_initiatives(epic_id: str, root, *, jira: bool, dry_run: bool
             click.echo(f"Stories: {story_count}")
 
             if jira_key and not jira:
-                click.echo(f"\nWarning: Epic has Jira key {jira_key} -- pass --jira to also cancel in Jira")
+                click.echo(
+                    f"\nWarning: Epic has Jira key {jira_key} -- pass --jira to also cancel in Jira"
+                )
 
             if dry_run:
-                click.echo(f"\n[DRY-RUN] Would cancel {epic_dict.get('id', epic_id)} and {story_count} stories")
+                click.echo(
+                    f"\n[DRY-RUN] Would cancel {epic_dict.get('id', epic_id)} and {story_count} stories"
+                )
                 return
 
             epic_dict["status"] = "canceled"
@@ -873,7 +887,9 @@ def epic_import(epics_file: str, initiative_name: str | None, marker: str, dry_r
             click.echo(f"  Epics: {result.get('epics_count')}")
             click.echo(f"  Stories: {result.get('stories_count')}")
             click.echo(f"  Points: {result.get('total_points')}")
-            click.echo(f"  Epic numbers: epic-{result.get('start_epic_num')} to epic-{result.get('next_epic_num') - 1}")
+            click.echo(
+                f"  Epic numbers: epic-{result.get('start_epic_num')} to epic-{result.get('next_epic_num') - 1}"
+            )
             click.echo("")
             click.echo("YAML Preview:")
             click.echo("-" * 60)
@@ -939,7 +955,9 @@ def epic_remove(epic_id: str, dry_run: bool):
 
                 result = sp.run(
                     [
-                        "yq", "eval", "-i",
+                        "yq",
+                        "eval",
+                        "-i",
                         f'del(.future.initiatives[].epics[] | select(.id == "{epic_id}"))',
                         str(future_path),
                     ],
@@ -953,9 +971,7 @@ def epic_remove(epic_id: str, dry_run: bool):
                 return
 
     if not found:
-        raise click.ClickException(
-            f"Epic {epic_id} not found in future.yaml"
-        )
+        raise click.ClickException(f"Epic {epic_id} not found in future.yaml")
 
 
 @epic.command("promote")
@@ -1031,7 +1047,9 @@ def epic_promote(epic_id: str, dry_run: bool):
     existing_ids = {str(e.get("id", "")) for e in sprint_data["epics"] if isinstance(e, dict)}
 
     # Normalize to numeric ID (ADR-0022: strip epic- prefix from values)
-    new_epic_id = new_epic_id.replace("epic-", "") if new_epic_id.startswith("epic-") else new_epic_id
+    new_epic_id = (
+        new_epic_id.replace("epic-", "") if new_epic_id.startswith("epic-") else new_epic_id
+    )
 
     if new_epic_id in existing_ids:
         max_num = 0
@@ -1042,11 +1060,15 @@ def epic_promote(epic_id: str, dry_run: bool):
             except ValueError:
                 pass
         new_epic_id = str(max_num + 1)
-        click.echo(f"Warning: Epic ID {original_id} already exists. Assigning new ID: {new_epic_id}")
+        click.echo(
+            f"Warning: Epic ID {original_id} already exists. Assigning new ID: {new_epic_id}"
+        )
 
     # Transform epic for current sprint
     old_id_num = original_id.replace("epic-", "")
-    new_id_num = new_epic_id.replace("epic-", "") if new_epic_id.startswith("epic-") else new_epic_id
+    new_id_num = (
+        new_epic_id.replace("epic-", "") if new_epic_id.startswith("epic-") else new_epic_id
+    )
 
     epic_data["id"] = new_epic_id
     epic_data["status"] = "backlog"
@@ -1076,11 +1098,14 @@ def epic_promote(epic_id: str, dry_run: bool):
     click.echo("")
 
     if dry_run:
-        click.echo(f"\n[DRY-RUN] Would promote {original_id} ({story_count} stories) to current sprint")
+        click.echo(
+            f"\n[DRY-RUN] Would promote {original_id} ({story_count} stories) to current sprint"
+        )
         return
 
     # Validate epic shard before writing (ADR-0022)
     from pf.sprint.validator import validate_epic_shard
+
     validation = validate_epic_shard(dict(epic_data))
     if not validation.valid:
         error_msgs = "; ".join(e.message for e in validation.errors)
@@ -1090,6 +1115,7 @@ def epic_promote(epic_id: str, dry_run: bool):
     sprint_data["epics"].append(epic_data)
 
     from pf.sprint.yaml_io import write_sprint
+
     write_sprint(sprint_file, sprint_data)
     click.echo(f"Added epic to {sprint_file}")
 
@@ -1103,7 +1129,8 @@ def epic_promote(epic_id: str, dry_run: bool):
     else:
         # Inline dict — remove matching entry
         init_data["epics"] = [
-            e for e in init_data.get("epics", [])
+            e
+            for e in init_data.get("epics", [])
             if not (isinstance(e, dict) and _epic_ref_matches(str(e.get("id", "")), epic_id))
         ]
 
@@ -1157,6 +1184,7 @@ epic.add_command(epic_reindex_command, "reindex")
 
 
 # --- Initiative subgroup ---
+
 
 @sprint.group()
 def initiative():
@@ -1316,12 +1344,16 @@ def initiative_cancel(name: str, jira: bool, dry_run: bool):
     click.echo(f"Stories: {story_count}")
 
     if jira_keys and not jira:
-        click.echo(f"\nWarning: {len(jira_keys)} epic(s) have Jira keys -- pass --jira to also cancel in Jira")
+        click.echo(
+            f"\nWarning: {len(jira_keys)} epic(s) have Jira keys -- pass --jira to also cancel in Jira"
+        )
         for k in jira_keys:
             click.echo(f"  {k}")
 
     if dry_run:
-        click.echo(f"\n[DRY-RUN] Would cancel initiative '{init_name}' ({epic_count} epics, {story_count} stories)")
+        click.echo(
+            f"\n[DRY-RUN] Would cancel initiative '{init_name}' ({epic_count} epics, {story_count} stories)"
+        )
         return
 
     # Cancel all epics
@@ -1362,6 +1394,7 @@ def initiative_cancel(name: str, jira: bool, dry_run: bool):
 
 
 # --- Check command (replaces check-story.sh) ---
+
 
 @sprint.command()
 @click.argument("id")
@@ -1416,8 +1449,7 @@ def check(id: str):
         if epic:
             available_statuses = {"backlog", "ready", "planning"}
             available = [
-                s for s in epic.get("stories", [])
-                if s.get("status") in available_statuses
+                s for s in epic.get("stories", []) if s.get("status") in available_statuses
             ]
             # Sort by priority
             priority_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
@@ -1467,11 +1499,16 @@ def check(id: str):
         return
 
     # Not found
-    click.echo(json.dumps({
-        "type": "not_found",
-        "id": id,
-        "message": "Story or epic not found in current sprint",
-    }, indent=2))
+    click.echo(
+        json.dumps(
+            {
+                "type": "not_found",
+                "id": id,
+                "message": "Story or epic not found in current sprint",
+            },
+            indent=2,
+        )
+    )
 
 
 def _find_epic_for_story(data: dict | None, story_id: str) -> str:
@@ -1488,6 +1525,7 @@ def _find_epic_for_story(data: dict | None, story_id: str) -> str:
 
 
 # --- Info command (replaces sprint-info.sh) ---
+
 
 @sprint.command()
 def info():
@@ -1508,13 +1546,9 @@ def info():
         for s in stories
         if s.get("status") in ("backlog", "planning", "ready", None)
     )
-    in_progress = sum(
-        s.get("points", 0) or 0
-        for s in stories
-        if s.get("status") == "in_progress"
-    )
+    in_progress = sum(s.get("points", 0) or 0 for s in stories if s.get("status") == "in_progress")
 
-    result = {str(k): str(v) if hasattr(v, 'isoformat') else v for k, v in sprint_data.items()}
+    result = {str(k): str(v) if hasattr(v, "isoformat") else v for k, v in sprint_data.items()}
     result["remaining"] = remaining
     result["inProgress"] = in_progress
 
@@ -1596,6 +1630,9 @@ def data(output_json: bool):
     in_progress_pts = sum(
         s.get("points", 0) or 0 for s in all_stories if s.get("status") == "in_progress"
     )
+    in_review_pts = sum(
+        s.get("points", 0) or 0 for s in all_stories if s.get("status") == "in_review"
+    )
     backlog_pts = sum(
         s.get("points", 0) or 0
         for s in all_stories
@@ -1607,10 +1644,9 @@ def data(output_json: bool):
         current_sprint_archived
     )
     wip_count = sum(1 for s in all_stories if s.get("status") == "in_progress")
+    in_review_count = sum(1 for s in all_stories if s.get("status") == "in_review")
     backlog_count = sum(
-        1
-        for s in all_stories
-        if s.get("status") in backlog_statuses or s.get("status") is None
+        1 for s in all_stories if s.get("status") in backlog_statuses or s.get("status") is None
     )
 
     # Detect orphan shards
@@ -1633,15 +1669,17 @@ def data(output_json: bool):
         "stories": stories,
         "standalone_stories": standalone_stories,
         "points": {
-            "total": completed_pts + in_progress_pts + backlog_pts,
+            "total": completed_pts + in_progress_pts + in_review_pts + backlog_pts,
             "completed": completed_pts,
             "in_progress": in_progress_pts,
+            "in_review": in_review_pts,
             "backlog": backlog_pts,
         },
         "stories_count": {
-            "total": done_count + wip_count + backlog_count,
+            "total": done_count + wip_count + in_review_count + backlog_count,
             "done": done_count,
             "in_progress": wip_count,
+            "in_review": in_review_count,
             "backlog": backlog_count,
         },
         "_orphans": orphans,
@@ -1655,6 +1693,7 @@ def data(output_json: bool):
 
 
 # --- Metrics command (replaces sprint-metrics.sh) ---
+
 
 @sprint.command()
 @click.option("--json", "output_json", is_flag=True, help="Output in JSON format")
@@ -1683,7 +1722,9 @@ def metrics(output_json: bool):
     # Count stories/points by status (from current-sprint.yaml)
     done_stories = [s for s in stories if s.get("status") in ("done", "completed")]
     wip_stories = [s for s in stories if s.get("status") == "in_progress"]
-    backlog_stories = [s for s in stories if s.get("status") in ("backlog", "planning", "ready", None)]
+    backlog_stories = [
+        s for s in stories if s.get("status") in ("backlog", "planning", "ready", None)
+    ]
 
     # Include archived stories from the current sprint in done counts
     current_archived = get_archived_stories(only_current=True)
@@ -1720,43 +1761,48 @@ def metrics(output_json: bool):
     expected_pts = (velocity_target * days_elapsed // total_days) if total_days > 0 else 0
 
     if output_json:
-        click.echo(json.dumps({
-            "sprint": sprint_name,
-            "dates": {
-                "start": str(start_date_str),
-                "end": str(end_date_str),
-                "today": str(today),
-            },
-            "points": {
-                "total": total_pts,
-                "completed": done_pts,
-                "in_progress": wip_pts,
-                "backlog": backlog_pts,
-                "velocity_target": velocity_target,
-                "archived": prior_archive_pts,
-                "all_completed": all_done_pts,
-            },
-            "stories": {
-                "total": len(stories) + len(current_archived),
-                "done": done_count,
-                "in_progress": len(wip_stories),
-                "backlog": len(backlog_stories),
-                "archived": len(prior_archived),
-                "all_done": done_count + len(prior_archived),
-            },
-            "progress": {
-                "percent_complete": pct_complete,
-                "percent_time": pct_time,
-                "days_elapsed": days_elapsed,
-                "days_remaining": days_remaining,
-                "total_days": total_days,
-            },
-            "velocity": {
-                "expected_points": expected_pts,
-                "actual_points": done_pts,
-                "on_track": done_pts >= expected_pts,
-            },
-        }, indent=2))
+        click.echo(
+            json.dumps(
+                {
+                    "sprint": sprint_name,
+                    "dates": {
+                        "start": str(start_date_str),
+                        "end": str(end_date_str),
+                        "today": str(today),
+                    },
+                    "points": {
+                        "total": total_pts,
+                        "completed": done_pts,
+                        "in_progress": wip_pts,
+                        "backlog": backlog_pts,
+                        "velocity_target": velocity_target,
+                        "archived": prior_archive_pts,
+                        "all_completed": all_done_pts,
+                    },
+                    "stories": {
+                        "total": len(stories) + len(current_archived),
+                        "done": done_count,
+                        "in_progress": len(wip_stories),
+                        "backlog": len(backlog_stories),
+                        "archived": len(prior_archived),
+                        "all_done": done_count + len(prior_archived),
+                    },
+                    "progress": {
+                        "percent_complete": pct_complete,
+                        "percent_time": pct_time,
+                        "days_elapsed": days_elapsed,
+                        "days_remaining": days_remaining,
+                        "total_days": total_days,
+                    },
+                    "velocity": {
+                        "expected_points": expected_pts,
+                        "actual_points": done_pts,
+                        "on_track": done_pts >= expected_pts,
+                    },
+                },
+                indent=2,
+            )
+        )
         return
 
     # Human-readable output
@@ -1764,13 +1810,21 @@ def metrics(output_json: bool):
     click.echo(f"  Sprint: {sprint_name}")
     click.echo(f"  Goal: {goal}")
     click.echo("")
-    click.echo(f"  Timeline: {start_date_str} to {end_date_str} (Day {days_elapsed}/{total_days}, {days_remaining} remaining)")
+    click.echo(
+        f"  Timeline: {start_date_str} to {end_date_str} (Day {days_elapsed}/{total_days}, {days_remaining} remaining)"
+    )
     click.echo("")
-    click.echo(f"  Points:  {done_pts} done / {wip_pts} WIP / {backlog_pts} backlog = {total_pts} total ({pct_complete}%)")
-    click.echo(f"  Stories: {done_count} done / {len(wip_stories)} WIP / {len(backlog_stories)} backlog = {len(stories) + len(current_archived)} total")
+    click.echo(
+        f"  Points:  {done_pts} done / {wip_pts} WIP / {backlog_pts} backlog = {total_pts} total ({pct_complete}%)"
+    )
+    click.echo(
+        f"  Stories: {done_count} done / {len(wip_stories)} WIP / {len(backlog_stories)} backlog = {len(stories) + len(current_archived)} total"
+    )
     click.echo("")
     if prior_archived:
-        click.echo(f"  Archive: {len(prior_archived)} stories / {prior_archive_pts} points (from prior sprints)")
+        click.echo(
+            f"  Archive: {len(prior_archived)} stories / {prior_archive_pts} points (from prior sprints)"
+        )
         click.echo(f"  All-time: {done_count + len(prior_archived)} done / {all_done_pts} points")
         click.echo("")
     click.echo(f"  Velocity: {done_pts}/{expected_pts} expected ({velocity_target} target)")
@@ -1781,6 +1835,7 @@ def metrics(output_json: bool):
 
 
 # --- Story field command (replaces get-story-field.sh) ---
+
 
 @story.command("field")
 @click.argument("story_id")
@@ -1826,6 +1881,7 @@ def story_field(story_id: str, field_name: str):
 
 # --- Epic field command (replaces get-epic-field.sh) ---
 
+
 @epic.command("field")
 @click.argument("epic_id")
 @click.argument("field_name")
@@ -1859,6 +1915,7 @@ def epic_field(epic_id: str, field_name: str):
 
 
 # --- Future command (replaces list-future.sh) ---
+
 
 @sprint.command()
 @click.argument("epic_id", required=False)
@@ -2029,7 +2086,9 @@ def _show_future_epic_detail(epic_id: str, init_files, sprint_dir):
             click.echo(f"# Epic Details: {eid}")
             click.echo("")
             click.echo(f"**Title:** {edata.get('title', '?')}")
-            click.echo(f"**Points:** {edata.get('points', '?')} | **Priority:** {edata.get('priority', 'P2')} | **Status:** {edata.get('status', 'planning')}")
+            click.echo(
+                f"**Points:** {edata.get('points', '?')} | **Priority:** {edata.get('priority', 'P2')} | **Status:** {edata.get('status', 'planning')}"
+            )
             click.echo("")
             desc = edata.get("description", "No description")
             if desc:
@@ -2048,7 +2107,9 @@ def _show_future_epic_detail(epic_id: str, init_files, sprint_dir):
                     stitle = s.get("title", "?")
                     if len(stitle) > 45:
                         stitle = stitle[:42] + "..."
-                    click.echo(f"| {s.get('id', '?')} | {stitle} | {s.get('points', '?')} | {s.get('priority', 'P1')} | {s.get('status', 'planning')} |")
+                    click.echo(
+                        f"| {s.get('id', '?')} | {stitle} | {s.get('points', '?')} | {s.get('priority', 'P1')} | {s.get('status', 'planning')} |"
+                    )
                 click.echo("")
 
             click.echo("---")
@@ -2060,6 +2121,7 @@ def _show_future_epic_detail(epic_id: str, init_files, sprint_dir):
 
 # --- New sprint command (replaces new-sprint.sh) ---
 
+
 @sprint.command("new")
 @click.argument("sprint_yyww")
 @click.argument("jira_id", type=int)
@@ -2067,7 +2129,9 @@ def _show_future_epic_detail(epic_id: str, init_files, sprint_dir):
 @click.argument("end_date")
 @click.argument("goal")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
-def new_sprint(sprint_yyww: str, jira_id: int, start_date: str, end_date: str, goal: str, dry_run: bool):
+def new_sprint(
+    sprint_yyww: str, jira_id: int, start_date: str, end_date: str, goal: str, dry_run: bool
+):
     """Initialize a new sprint.
 
     \b
@@ -2162,6 +2226,7 @@ completed:
 
 # --- Standalone command group ---
 
+
 @sprint.group(invoke_without_command=True)
 @click.pass_context
 def standalone(ctx):
@@ -2185,51 +2250,6 @@ def standalone(ctx):
 from pf.sprint.standalone_add import standalone_add_command  # noqa: E402
 
 standalone.add_command(standalone_add_command, "add")
-
-
-# --- Backwards compatibility aliases (hidden) ---
-
-# Hidden alias: sprint story-add -> sprint story add
-sprint.add_command(story_add_command, "story-add")
-sprint.commands["story-add"].hidden = True
-
-# Hidden alias: sprint story-update -> sprint story update
-sprint.add_command(story_update_command, "story-update")
-sprint.commands["story-update"].hidden = True
-
-# Hidden alias: sprint archive-epic -> sprint epic archive
-@sprint.command("archive-epic", hidden=True)
-@click.argument("epic_id", required=False)
-@click.option("--dry-run", is_flag=True)
-@click.option("--jira", is_flag=True)
-def archive_epic_compat(epic_id, dry_run, jira):
-    """(Deprecated) Use 'sprint epic archive' instead."""
-    ctx = click.get_current_context()
-    ctx.invoke(epic_archive, epic_id=epic_id, dry_run=dry_run, jira=jira)
-
-# Hidden alias: sprint import-epic -> sprint epic import
-@sprint.command("import-epic", hidden=True)
-@click.argument("epics_file")
-@click.argument("initiative_name", required=False)
-@click.option("--marker", default="imported")
-@click.option("--dry-run", is_flag=True)
-def import_epic_compat(epics_file, initiative_name, marker, dry_run):
-    """(Deprecated) Use 'sprint epic import' instead."""
-    ctx = click.get_current_context()
-    ctx.invoke(epic_import, epics_file=epics_file, initiative_name=initiative_name, marker=marker, dry_run=dry_run)
-
-# Hidden alias: sprint remove-epic -> sprint epic remove
-@sprint.command("remove-epic", hidden=True)
-@click.argument("epic_id")
-@click.option("--dry-run", is_flag=True)
-def remove_epic_compat(epic_id, dry_run):
-    """(Deprecated) Use 'sprint epic remove' instead."""
-    ctx = click.get_current_context()
-    ctx.invoke(epic_remove, epic_id=epic_id, dry_run=dry_run)
-
-# Hidden alias: sprint epic-add -> sprint epic add
-sprint.add_command(epic_add_command, "epic-add")
-sprint.commands["epic-add"].hidden = True
 
 
 # Register validate command from validate_cmd module

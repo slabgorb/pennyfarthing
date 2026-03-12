@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: rome
+run_id: 4
+total_caught: 4
+total_findings: 7
+weighted_caught: 20
+total_weight: 37
+score_pct: 54.1
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase distinguished NotFound from other errors in from_file_or_default.
+    The config_loading tests exist but none specifically test that parse errors or
+    permission errors propagate rather than falling back to defaults.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #2 flags CWE-209: ''ServerError Display leaks internal
+    details'' noting reqwest error paths can contain connection details, DNS info,
+    internal hostnames. Also notes the security test has a vacuous OR assertion.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote security tests for CRLF injection in tenant IDs (header injection\
+    \ risk). Dev implemented CRLF/null-byte validation in SiemClient::new(). However,\
+    \ the deeper issue of using raw String instead of TenantId from axiathon-core\
+    \ was not flagged \u2014 only the injection vector was mitigated, not the type-safety\
+    \ gap."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that 6 dependencies use direct version strings instead
+    of workspace = true. Reviewer did not mention this Cargo.toml issue.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #4 explicitly flags: ''ClientConfig silently accepts
+    unknown TOML fields... Should use #[serde(deny_unknown_fields)] to catch typos.''
+    Rated HIGH and blocks merge.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #10 flags the vacuous assertion in security_test.rs:27
+    using || instead of &&, noting ''This test can never fail regardless of the Display
+    impl. It''s a false-pass bug.'' Though the specific test cited (I5) is about config
+    assertions with is_none() || true, the reviewer caught the pattern of vacuous
+    OR assertions.'
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the test with zero assertions that only checks non-panic
+    via 'let _ = config'. The TEA wrote config tests but this specific vacuously-true
+    test pattern was not identified.

@@ -1,0 +1,33 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI binary with substantial logic — command parsing, error mapping, output formatting, HTTP client, config loading, completions.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 42 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive) |
+| `tests/cli_error.rs` | 16 | AC-3 (exit codes 0/1/2/3/4), CliError variants, CWE-209 info leak |
+| `tests/cli_output.rs` | 19 | AC-4 (OutputFormatter trait, table/json/csv, metadata, escaping) |
+| `tests/cli_client.rs` | 18 | AC-7 (SiemClient, HTTP status mapping, header injection, CWE-113) |
+| `tests/cli_config.rs` | 15 | AC-8 (TOML loading, env overrides, precedence, token exclusion, validation) |
+| `tests/cli_completion.rs` | 10 | AC-9 (bash/zsh/fish/powershell generation, command coverage) |
+| `tests/cli_stubs.rs` | 21 | AC-10 (stub messages, binary exit codes, stderr routing, functional commands) |
+
+**Tests Written:** 141 tests covering all 10 ACs
+**Status:** RED (compilation failure — modules `cli`, `error`, `output`, `client`, `config`, `commands::completion` don't exist yet)
+
+**Security tests included:**
+- CWE-209: Error Display doesn't leak internal file paths
+- CWE-113: Header injection via newlines in tenant ID and token
+- Silent error swallowing: Non-2xx responses must produce errors
+- Config token exclusion: Token fields in TOML are ignored (keychain only)
+
+**Handoff:** To Dev for implementation. The tests define the public API contract:
+- `axiathon_client::cli::{Cli, Commands}` — clap Parser/Subcommand
+- `axiathon_client::error::CliError` — with `exit_code() -> i32`
+- `axiathon_client::output::{OutputFormatter, TableFormatter, JsonFormatter, CsvFormatter, OutputFormat}`
+- `axiathon_client::client::SiemClient` — with `new()`, `with_token()`, `with_tenant()`, `get()`
+- `axiathon_client::config::ClientConfig` — with `from_toml()`, `from_file()`, `default_config_path()`, `apply_env_overrides_from()`, `apply_cli_overrides()`
+- `axiathon_client::commands::completion::generate_completion()`
+- Binary `axiathon` via `src/main.rs`

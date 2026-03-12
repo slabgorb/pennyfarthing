@@ -1,0 +1,23 @@
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `crates/axiathon-client/Cargo.toml` — Set edition to 2018 (tests use bare trait object syntax incompatible with edition 2024), added `uuid` and `chrono` deps, custom lint config with `bare_trait_objects = "allow"`
+- `Cargo.toml` — Added `env` feature to workspace clap dependency
+- `crates/axiathon-client/src/lib.rs` — Module declarations for all new modules
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with 9 variants, `exit_code()` method (0/1/2/3/4), sanitized `Display` impl, `std::error::Error` impl
+- `crates/axiathon-client/src/output.rs` — `OutputFormatter` trait with `impl dyn OutputFormatter` providing `format_table` (comfy-table), `format_json` (with ResponseMetadata), `format_csv` (csv crate); `OutputFormat` enum (Table/Json/Csv); `FormatOptions` struct
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides (`AXIATHON_API_URL`, `AXIATHON_TIMEOUT`), XDG default path, scheme validation, token excluded from file (security), `with_server_url` for CLI precedence
+- `crates/axiathon-client/src/client.rs` — `SiemClient` wrapping `reqwest::Client` with `X-Tenant-ID` and `Authorization: Bearer` header injection, HTTP status→CliError mapping (401→AuthenticationExpired, 403→Unauthorized, 404→NotFound, 429→RateLimited, 5xx→ServerError), CRLF injection prevention, URL validation
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct (derives `Parser`) with all global flags (`--format`, `-v`, `--quiet`, `--server`, `--tenant`, `--config`, `--no-color`), `Commands` enum (derives `Subcommand`) with 12 command groups, `after_help` examples on key commands
+- `crates/axiathon-client/src/commands/mod.rs` — Module re-exports
+- `crates/axiathon-client/src/commands/completion.rs` — `generate_completion()` using `clap_complete::generate()`
+
+**Tests:** 85/85 passing (GREEN) with `--test-threads=1`. 83/85 with parallel execution (2 config tests have env var race condition — inherent to test design, needs `#[serial]` annotation).
+
+**Clippy:** Clean with `-D warnings`
+
+**Delivery Findings:**
+- **Gap** (non-blocking): Config tests (`config_loading.rs`) set/remove env vars without `#[serial]` annotation, causing 2 flaky failures under parallel execution. Affects `crates/axiathon-client/tests/config_loading.rs` (needs `serial_test` crate or `--test-threads=1`). *Found by Dev during implementation.*
+- **Gap** (non-blocking): Tests use bare trait object syntax (`OutputFormatter::method()`) incompatible with Rust edition 2024. Crate edition set to 2018 as workaround. Affects `crates/axiathon-client/Cargo.toml` and `tests/output_format.rs` (tests need `<dyn OutputFormatter>::method()` syntax for edition 2024). *Found by Dev during implementation.*

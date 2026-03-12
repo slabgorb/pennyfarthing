@@ -41,15 +41,6 @@ INFRASTRUCTURE_HOOKS: dict = {
     ],
 }
 
-# Bootstrap hook for committed settings.json (not settings.local.json).
-# Uses a relative path so it works on any machine after clone.
-# When pf is already set up, bootstrap.sh exits in <50ms (fast path).
-BOOTSTRAP_HOOKS: dict = {
-    "SessionStart": [
-        {"hooks": [{"type": "command", "command": "bash .claude/hooks/bootstrap.sh"}]},
-    ],
-}
-
 
 def resolve_hook_paths(settings: dict, project_root: Path) -> dict:
     """Replace relative shim paths with absolute paths in a settings dict.
@@ -67,7 +58,7 @@ def resolve_hook_paths(settings: dict, project_root: Path) -> dict:
 
     def _resolve(cmd: str) -> str:
         if cmd.startswith(_SHIM_REL):
-            return abs_shim + cmd[len(_SHIM_REL):]
+            return abs_shim + cmd[len(_SHIM_REL) :]
         return cmd
 
     for _event, entries in settings.get("hooks", {}).items():

@@ -38,7 +38,7 @@ def _ensure_wheelhub(project_dir: Path) -> tuple[int, int, bool]:
     click.echo("Starting WheelHub server...", err=True)
     proc = start_wheelhub(project_dir)
     if isinstance(proc, dict):
-        raise RuntimeError(proc['error'])
+        raise RuntimeError(proc["error"])
     write_pid_file(project_dir, proc.pid)
     port = poll_for_port_file(project_dir, proc=proc)
     click.echo(f"WheelHub listening on http://localhost:{port}", err=True)
@@ -132,7 +132,9 @@ def gui(project_dir, no_open, dry_run):
     default=None,
     help="Project directory. Falls back to WHEELHUB_PROJECT_DIR env var, then cwd.",
 )
-@click.option("--foreground", "mode", flag_value="foreground", help="Force TUI in current terminal.")
+@click.option(
+    "--foreground", "mode", flag_value="foreground", help="Force TUI in current terminal."
+)
 @click.option("--detach", "mode", flag_value="detach", help="Force TUI in new Terminal.app window.")
 @click.option("--port", type=int, default=None, help="WheelHub port (skip auto-start).")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes.")

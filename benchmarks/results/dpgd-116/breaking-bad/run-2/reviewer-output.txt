@@ -1,0 +1,91 @@
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*Look, kid. I've been through every file. Twice. Here's what I found.*
+
+---
+
+## Findings
+
+### 1. `[HIGH]` main.rs is a dead binary — no clap dispatch, no exit codes at `main.rs:4-8`
+
+The `main.rs` just prints `"axiathon CLI — use --help for usage"`. It doesn't parse args with `Cli::parse()`, doesn't dispatch commands, doesn't map `CliError` to `std::process::exit()`. The entire clap structure, exit code mapping, and error-to-stderr behavior specified in AC-3 are untested at the binary level. All tests go through the library crate directly. The binary target produces a non-functional CLI.
+
+AC-3 explicitly requires: "main.rs catches errors and calls `std::process::exit()`." This is missing entirely.
+
+### 2. `[HIGH]` Silent failure on header injection — CWE-113 handling silently drops credentials at `client.rs:24-41`
+
+`with_token()` and `with_tenant()` silently set the value to `None` when newlines are detected. No error is returned, no warning is logged. An operator passing a malformed token gets a confusing 401 response instead of being told their token was rejected. This should return `Result<Self, CliError>` or at minimum log a `tracing::warn!`. Silent credential rejection is a usability and debuggability problem.
+
+### 3. `[HIGH]` Missing `tui` command — AC-1 violation at `cli.rs:44-88`
+
+AC-1 requires: "axiathon --help must show all command groups: query, rules, alerts, ingest, config, status, tenant, login/logout, **tui**, completion, init." The `Commands` enum has no `Tui` variant. The test at `cli_structure.rs:78` also omits `tui` from its expected list, making the test complicit in the gap.
+
+### 4. `[HIGH]` Missing `logout` command handler module
+
+`cli.rs:79` defines `Logout(LogoutArgs)` and it renders in help, but there is no `commands/logout.rs` file and `commands/mod.rs` does not export a `logout` module. No stub handler test exists for logout in `stub_handlers.rs`. If command dispatch is wired up, logout will have no handler.
+
+### 5. `[HIGH]` `init` command is a stub — story scope requires functional at `commands/init.rs:5-7`
+
+The story scope explicitly says: "axiathon init first-time setup (**functional, not stub**)". The implementation returns `Err(CliError::NotImplemented("init not yet implemented"))`. This directly violates the stated scope boundary.
+
+### 6. `[MEDIUM]` Nightly rustfmt check fails — `siem_client.rs:211-214,224-228`
+
+`cargo +nightly fmt --all --check` reports formatting diffs. Per the gotchas file: "Always include cargo +nightly fmt --all --check in the preflight. Nightly rustfmt enforces import ordering that stable does not." This must be clean before approval.
+
+### 7. `[MEDIUM]` `--server` flag missing `AXIATHON_SERVER` env var support — AC-5 violation at `cli.rs:24-25`
+
+AC-5 states: "`--server` supports `AXIATHON_SERVER` env var." The clap definition for `server` has no `env = "AXIATHON_SERVER"` attribute. The config uses `AXIATHON_API_URL` for a different purpose (file-level override). These are distinct per the ACs and the `--server` env var binding is missing.
+
+### 8. `[MEDIUM]` Vacuous test — `exit_code_success_is_zero` at `exit_codes.rs:6-9`
+
+The test body is empty. It's a comment with no assertions. A test that asserts nothing is worse than no test — it falsely inflates coverage and gives a false sense of security.
+
+### 9. `[MEDIUM]` `token_value()` public getter exposes raw credential at `client.rs:51-53`
+
+`SiemClient::token_value()` returns `Option<&str>` — a public API that exposes the raw bearer token. This exists only for test assertions but is public on the production type. Should be `#[cfg(test)]` or accessed through a test helper.
+
+### 10. `[LOW]` JSON metadata uses hardcoded placeholder values at `output.rs:77-79`
+
+`request_id` is `"00000000-0000-0000-0000-000000000000"` and `timestamp` is `"1970-01-01T00:00:00Z"`. AC-4 specifies `ResponseMetadata` with real request_id, timestamp, and api_version. While this is a stub, the test at `output_format.rs:82-93` validates only that the `metadata` key exists, not that it contains real values — making the test pass vacuously on the metadata content.
+
+### 11. `[VERIFIED]` CWE-209 error sanitization — `ServerError` Display is sanitized
+
+The `#[error("server error: the server encountered an internal error")]` format string does NOT include `{0}`, so the internal error string is stored but never displayed to users. Confirmed correct.
+
+### 12. `[VERIFIED]` `#![forbid(unsafe_code)]` enforced in both `lib.rs` and workspace lints
+
+### 13. `[VERIFIED]` Dependency boundary — `axiathon-client` depends only on `axiathon-core`, no server-side crates
+
+### 14. `[VERIFIED]` Token excluded from config deserialization via `#[serde(skip)]` at `config.rs:16`
+
+### 15. `[VERIFIED]` `CliError` is `#[non_exhaustive]` per Rust coding rules
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 5 |
+| Medium | 4 |
+| Low | 1 |
+| Verified Good | 5 |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Five High-severity issues block this PR:
+
+1. **main.rs** must wire clap dispatch and exit code handling — the binary is non-functional
+2. **Header injection** handling must not silently swallow — return an error or log a warning
+3. **`tui` command** must be present in the Commands enum per AC-1
+4. **`logout` handler** module must exist (even as a stub) to match the enum variant
+5. **`init` command** must be functional, not a stub, per explicit story scope
+
+The library code is well-structured and the test coverage on what IS implemented is solid. But the binary doesn't work, there are AC violations, and silent failures undermine debuggability. Fix these five, run `cargo +nightly fmt --all`, and we'll talk again.
+
+No half measures.

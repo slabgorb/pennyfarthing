@@ -56,9 +56,7 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
                     report.errors += 1
                 else:
                     report.warnings += 1
-                report.details.append(
-                    f"[FORMAT] {path.name}: {issue.message}"
-                )
+                report.details.append(f"[FORMAT] {path.name}: {issue.message}")
 
         if result.valid and not result.errors:
             report.passed += 1

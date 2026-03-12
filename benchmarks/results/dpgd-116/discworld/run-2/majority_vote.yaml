@@ -1,0 +1,84 @@
+judge_method: majority_vote
+n_judges: 3
+majority_threshold: 2
+judge_version: v2
+total_caught: 6
+total_findings: 7
+weighted_caught: 28
+total_weight: 37
+score_pct: 75.7
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: ''
+  votes: 0/3
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA explicitly lists ''CWE-209: Error messages don''t leak credentials
+    or stack traces'' as a security test in exit_codes.rs (12 tests covering ''CWE-209
+    checks'').'
+  votes: 3/3
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #9: 'Raw `String` for tenant ID instead of `TenantId`\
+    \ newtype at `cli.rs:35`, `client.rs:10`' \u2014 explicitly flags that axiathon-core\
+    \ exports TenantId but it's unused, losing type safety."
+  votes: 3/3
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #4: 'Workspace dependency declarations missing \u2014\
+    \ convention violation at Cargo.toml (workspace root)' \u2014 flags that clap_complete,\
+    \ comfy-table, csv, dirs, reqwest, toml all use direct version pins bypassing\
+    \ workspace management."
+  votes: 3/3
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #7: 'RawConfig silently accepts unknown fields at config.rs:16\
+    \ \u2014 No #[serde(deny_unknown_fields)]' and explicitly discusses the token\
+    \ field conflict and that operators won't get feedback on wrong field names."
+  votes: 3/3
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #10 flags a vacuous test in siem_client.rs that has\
+    \ no meaningful assertion \u2014 same category of vacuously true/insufficient\
+    \ test assertion (partial match rule #2: same category, adjacent location)."
+  votes: 3/3
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #10 identifies the token test as 'just says Should not\
+    \ panic during construction \u2014 that's not testing sanitization' and #13 flags\
+    \ stub tests that only verify API shape, not behavior. Same category of zero/insufficient\
+    \ assertions (partial match rule #2)."
+  votes: 3/3
+individual_scores:
+- 75.7
+- 75.7
+- 75.7

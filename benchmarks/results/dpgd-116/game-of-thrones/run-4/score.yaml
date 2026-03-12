@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: game-of-thrones
+run_id: 4
+judge_version: v2
+total_caught: 4
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors including
+    parse and permission failures. The reviewer flagged silent unknown fields but
+    not the error-swallowing in the fallback path.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote security tests for ''CWE-209: error Display must not expose
+    credentials, stack traces, or raw HTML''. Dev implemented CWE-209 safe Display.
+    Reviewer verified ''CWE-209 sanitization in CliError::Display''.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote tests for 'Header injection via CRLF in URLs, tokens, tenant
+    IDs (AC-7)'. Dev implemented CRLF validation in SiemClient builder. Reviewer verified
+    'CRLF header injection prevention in SiemClient builder'. Same vulnerability class
+    (CWE-113) addressed, though the pipeline used runtime validation rather than switching
+    to the TenantId type.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[HIGH] Workspace dependency hygiene violation \u2014\
+    \ 6 crate-pinned dependencies not declared in [workspace.dependencies]' listing\
+    \ clap_complete, comfy-table, csv, dirs, reqwest, toml as locally pinned."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] ClientConfig accepts unknown TOML fields silently\
+    \ \u2014 config.rs:15' and recommended adding '#[serde(deny_unknown_fields)]'.\
+    \ Directly addresses the silent token field issue."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...) in any test. The reviewer verified '79 tests pass' but did not examine test
+    assertion quality for this pattern.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test that only checks non-panic.
+    Despite TEA writing 89 tests, the quality of individual assertions was not audited
+    by the reviewer.

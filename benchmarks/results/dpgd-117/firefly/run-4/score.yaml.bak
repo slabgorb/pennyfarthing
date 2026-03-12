@@ -1,0 +1,99 @@
+scenario_id: dpgd-117
+theme: firefly
+run_id: 3
+total_caught: 2
+total_findings: 10
+weighted_caught: 10
+total_weight: 52
+score_pct: 19.2
+findings:
+- finding_id: I1
+  title: Dependencies inline instead of workspace level
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer noted '6 unused crate dependencies' but did not flag that dependencies
+    specify versions inline instead of workspace = true. The Cargo.toml added uuid
+    and chrono without workspace-level declarations.
+- finding_id: I2
+  title: 'FieldErrorCode missing #[non_exhaustive]'
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'No phase mentioned #[non_exhaustive] on FieldErrorCode. The rust rules
+    explicitly require it for enums that will grow, but reviewer did not flag its
+    absence.'
+- finding_id: I3
+  title: Hardcoded trace_id 'none'
+  weight: 5
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer verified envelope format including trace_id but did not flag
+    that ResponseMeta hardcodes trace_id to 'none' instead of deriving from request
+    context.
+- finding_id: I4
+  title: Zero structured logging
+  weight: 5
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer HIGH finding: 'No structured logging anywhere \u2014 errors\
+    \ sanitized then silently discarded... not a single tracing::error!(), tracing::warn!(),\
+    \ or tracing::info!() call in the entire crate despite tracing being a dependency.'"
+- finding_id: I5
+  title: Security comment claims tracing that doesn't exist
+  weight: 3
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: Reviewer flagged zero logging but did not specifically call out that a
+    SECURITY comment falsely claims errors are 'logged for debugging' when no logging
+    exists. The misleading documentation aspect was not identified.
+- finding_id: I6
+  title: Non-ASCII tenant header silently treated as missing
+  weight: 8
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote 7 tenant middleware tests covering empty, whitespace-only, non-UUID,
+    and oversized values, but no test for non-ASCII characters in X-Tenant-ID. Reviewer
+    verified tenant validation but did not flag the non-ASCII gap.
+- finding_id: I7
+  title: "CWE-209 test gap \u2014 no body assertion"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote CWE-209 tests (9 tests) but the ground truth states these check
+    status code without asserting on response body content. No phase flagged this
+    gap.
+- finding_id: I8
+  title: CORS preflight test doesn't verify CORS headers
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer MEDIUM finding: 'CORS middleware never sets Access-Control-Allow-Origin\
+    \ \u2014 browser requests will fail... The CORS implementation is non-functional\
+    \ for its stated purpose.' This catches that CORS headers aren't properly verified/present."
+- finding_id: I9
+  title: "Wrong log levels \u2014 error! for 4xx client errors"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: Reviewer flagged zero logging (I4) but since logging was never implemented,
+    the wrong-log-level issue never arose. No phase preemptively specified that 4xx
+    should use warn! and only 5xx should use error!.
+- finding_id: I10
+  title: CORS allows Any origin/method/header (CWE-942)
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer noted CORS middleware is missing Access-Control-Allow-Origin
+    but did not flag that the CORS configuration uses allow_origin(Any)/allow_methods(Any)/allow_headers(Any)
+    as a CWE-942 violation. The security classification was missed.

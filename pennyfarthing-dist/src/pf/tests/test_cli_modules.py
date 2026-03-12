@@ -133,5 +133,3 @@ class TestStoryCLIModule:
         result = _run_module("pf.story", "create", "--help")
 
         assert result.returncode in (0, 1, 2)
-
-

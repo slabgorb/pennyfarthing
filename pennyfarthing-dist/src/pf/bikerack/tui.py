@@ -281,9 +281,7 @@ class AgentHeader(Static):
             from pf.bikerack import portrait_resolver
 
             preferred = PORTRAIT_SIZE_CONFIG.get(effective, (effective,))[0]
-            return portrait_resolver.resolve_portrait_path(
-                theme, role, preferred_size=preferred
-            )
+            return portrait_resolver.resolve_portrait_path(theme, role, preferred_size=preferred)
         return None
 
     def _render_header(self) -> None:
@@ -325,7 +323,7 @@ class AgentHeader(Static):
 
         # Catchphrase subtitle
         if quote:
-            line += f"\n[italic dim]\"{quote}\"[/italic dim]"
+            line += f'\n[italic dim]"{quote}"[/italic dim]'
         elif role_desc:
             line += f"\n[dim]{role_desc}[/dim]"
 
@@ -335,9 +333,7 @@ class AgentHeader(Static):
         portrait = self._resolve_portrait(data)
         self.post_message(self.PortraitLayoutUpdate(portrait_path=portrait))
 
-    async def on_agent_header_portrait_layout_update(
-        self, event: PortraitLayoutUpdate
-    ) -> None:
+    async def on_agent_header_portrait_layout_update(self, event: PortraitLayoutUpdate) -> None:
         """Mount or remove Horizontal portrait layout with text beside image.
 
         Shows a skeleton placeholder immediately while the real image loads
@@ -428,9 +424,7 @@ class AgentHeader(Static):
 class ConnectionStatus(Static):
     """Displays WheelHub connection state with colored indicator."""
 
-    connection_state: reactive[ConnectionState] = reactive(
-        ConnectionState.DISCONNECTED
-    )
+    connection_state: reactive[ConnectionState] = reactive(ConnectionState.DISCONNECTED)
     port: int | None = None
 
     def watch_connection_state(self, state: ConnectionState) -> None:
@@ -553,6 +547,7 @@ class BikeRackApp(App):
         Binding("4", "switch_panel('audit-log')", "Audit Log", show=False),
         Binding("5", "switch_panel('debug')", "Debug", show=False),
         Binding("6", "switch_panel('progress')", "Progress", show=False),
+        Binding("7", "switch_panel('settings')", "Settings", show=False),
         Binding("bracketright", "next_panel", "Next panel", show=False),
         Binding("bracketleft", "prev_panel", "Prev panel", show=False),
         Binding("tab", "next_panel", show=False, priority=True),
@@ -593,12 +588,14 @@ class BikeRackApp(App):
         # Track portrait dock for change detection (avoid spurious recompose)
         try:
             from pf.common.config import load_pennyfarthing_config
+
             _cfg = load_pennyfarthing_config()
             self._portrait_dock: str = _cfg.get("portrait_dock", "top")
         except Exception:
             self._portrait_dock: str = "top"
         try:
             from pf.settings.settings import get_setting
+
             self._toasts_enabled: bool = bool(get_setting("tui.toasts"))
         except Exception:
             self._toasts_enabled: bool = False
@@ -617,9 +614,7 @@ class BikeRackApp(App):
         return _layout_order.get_layout_order(config)
 
     def compose(self) -> ComposeResult:
-        project_dir_name = Path(
-            os.environ.get("WHEELHUB_PROJECT_DIR") or os.getcwd()
-        ).name
+        project_dir_name = Path(os.environ.get("WHEELHUB_PROJECT_DIR") or os.getcwd()).name
         self._status_footer = StatusFooter(
             project_dir=project_dir_name,
             client=self._client,
@@ -666,7 +661,7 @@ class BikeRackApp(App):
         for panel_key in _PANEL_KEYS:
             try:
                 widget = self.query_one(f"#panel-{panel_key}")
-                widget.display = (panel_key == active)
+                widget.display = panel_key == active
             except Exception:
                 pass
 
@@ -704,6 +699,7 @@ class BikeRackApp(App):
         self._toasts_enabled = not self._toasts_enabled
         try:
             from pf.settings.settings import set_setting_typed
+
             set_setting_typed("tui.toasts", self._toasts_enabled)
         except Exception:
             pass
@@ -941,9 +937,7 @@ class BikeRackApp(App):
     # Live settings updates
     # ------------------------------------------------------------------
 
-    def on_settings_panel_setting_changed(
-        self, event: SettingsPanel.SettingChanged
-    ) -> None:
+    def on_settings_panel_setting_changed(self, event: SettingsPanel.SettingChanged) -> None:
         """Apply setting changes immediately without restart."""
         key, value = event.key, event.value
         try:
@@ -1072,7 +1066,7 @@ class BikeRackApp(App):
         for panel_key in _PANEL_KEYS:
             try:
                 p = self.query_one(f"#panel-{panel_key}")
-                p.display = (panel_key == self._focused_panel)
+                p.display = panel_key == self._focused_panel
             except Exception:
                 pass
 
@@ -1187,7 +1181,7 @@ class BikeRackApp(App):
             self._enter_split(left, right)
         elif focus is not None and focus.startswith("split:"):
             # Preset reference: {focus: "split:progress+debug"}
-            preset_name = focus[len("split:"):]
+            preset_name = focus[len("split:") :]
             self.action_apply_split_preset(preset_name)
         elif focus is not None and focus in _PANEL_KEYS:
             # Single panel focus — exit split if active

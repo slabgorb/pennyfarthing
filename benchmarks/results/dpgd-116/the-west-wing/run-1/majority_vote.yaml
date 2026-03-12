@@ -1,0 +1,83 @@
+judge_method: majority_vote
+n_judges: 3
+majority_threshold: 2
+judge_version: v2
+total_caught: 4
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: ''
+  votes: 0/3
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA explicitly listed 'Error information disclosure (CWE-209) \u2014\
+    \ server paths/stack traces not exposed' as a security test. Dev implemented ServerError\
+    \ display that omits internal details. Reviewer verified CWE-209 mitigation. Same\
+    \ vulnerability class addressed, though the specific Io(transparent) variant may\
+    \ not have been fully caught."
+  votes: 3/3
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote 'Header injection prevention (CWE-113) \u2014 newlines in token/tenant\
+    \ rejected' tests in siem_client.rs. Dev implemented try_with_tenant rejecting\
+    \ CRLF. Reviewer verified CWE-113 mitigation and flagged with_token bypassing\
+    \ validation as HIGH. Same vulnerability class (CWE-113) addressed, though the\
+    \ type-safety angle of using TenantId from axiathon-core was not raised."
+  votes: 3/3
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged '[MEDIUM] Dependencies not using workspace declarations'
+    listing clap_complete, comfy-table, csv, dirs, keyring, reqwest, toml as using
+    inline versions instead of workspace = true.
+  votes: 3/3
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] RawConfig silently accepts unknown fields\
+    \ including secrets' \u2014 explicitly noting 'An operator who writes token =\
+    \ \"my-secret\" in cli.toml gets zero feedback that the field is ignored' and\
+    \ recommending #[serde(deny_unknown_fields)]."
+  votes: 3/3
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: ''
+  votes: 0/3
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: ''
+  votes: 0/3
+individual_scores:
+- 48.6
+- 48.6
+- 48.6

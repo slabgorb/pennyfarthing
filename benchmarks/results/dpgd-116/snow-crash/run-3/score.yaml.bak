@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: snow-crash
+run_id: 3
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No mention of from_file_or_default distinguishing NotFound from parse/permission
+    errors. F7 flags silent env var ignoring but not the broader from_file_or_default
+    swallowing pattern.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: 'Dev implemented sanitized Display on CliError (CWE-209), and TEA wrote
+    tests for it in exit_codes.rs. Reviewer verified at V7: ''Display impl on ServerError
+    does not leak the inner string.'' However, the reviewer noted F8 that Debug could
+    still leak, and stderr printing via eprintln was not flagged as the specific vector.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA included CWE-113 header injection prevention tests in siem_client.rs,\
+    \ and Dev implemented CRLF validation. However, the finding is specifically about\
+    \ tenant_id using raw String instead of TenantId from axiathon-core \u2014 that\
+    \ type-safety gap was NOT caught. Reviewer flagged F4 (with_token bypass) but\
+    \ not the raw String tenant_id issue. Partially caught for header injection but\
+    \ not for the type-safety aspect."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer V9 says 'Workspace dependency declarations used correctly' but
+    the Dev phase output shows deps were added to workspace Cargo.toml with direct
+    versions. The actual Cargo.toml for axiathon-client likely uses direct version
+    strings instead of workspace = true. No phase flagged this.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F5 explicitly flags: ''RawConfig uses plain #[derive(Deserialize)]
+    without #[serde(deny_unknown_fields)]. Operators could accidentally put secrets
+    in the config file thinking they''re used, and they''d just be silently dropped
+    with no warning.'''
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...) in config tests. The tests were written by TEA and passed in Dev without
+    anyone noticing the logical tautology.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified a test with zero assertions that only checks non-panic.
+    The 'let _ = config' pattern was not flagged by TEA, Dev, or Reviewer.

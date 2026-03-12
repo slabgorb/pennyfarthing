@@ -1,0 +1,76 @@
+scenario_id: dpgd-116
+theme: the-matrix
+run_id: 1
+judge_version: v2
+judge_pass: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The pipeline defined from_file(), from_file_with_env(), from_file_with_overrides()
+    APIs but no evidence that error discrimination between NotFound and parse/permission
+    errors was tested or implemented. The Reviewer did not flag from_file_or_default
+    swallowing all errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote tests/security.rs with 8 tests covering ''CWE-209 error exposure''.
+    Dev implemented sanitize() function in error.rs. Reviewer verified: ''sanitize()
+    function truncates at control characters in Display''.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote header injection tests in siem_client.rs and security.rs (CWE-113).
+    Dev implemented try_new() with CRLF checks. Reviewer then flagged the remaining
+    gap: ''SiemClient::new() is public and unvalidated'' as a HIGH finding. The vulnerability
+    class was identified across all three phases.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the use of direct version strings instead of workspace
+    = true. The Reviewer noted a toml version mismatch but did not flag the broader
+    pattern of 6 dependencies using direct versions.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: "Dev implemented #[serde(deny_unknown_fields)] on RawConfig. Reviewer\
+    \ verified: 'RawConfig uses #[serde(deny_unknown_fields)] \u2014 rejects unknown\
+    \ TOML keys including token'."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (assert!(config.server().is_none()
+    || ...)). The Reviewer did not flag test quality issues in the pipeline's own
+    tests.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: 'No phase identified the zero-assertion test (let _ = config;). The Reviewer
+    did not flag this test quality issue despite SOUL.md principle #4 warning that
+    ''A vacuously true test is worse than no test''.'

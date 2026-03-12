@@ -76,11 +76,13 @@ def get_package_status(
     for name in THEME_PACKAGES:
         installed = is_package_installed(name, project_root)
         portraits = has_portraits(name, project_root) if installed else False
-        results.append({
-            "name": name,
-            "installed": installed,
-            "portraits": portraits,
-        })
+        results.append(
+            {
+                "name": name,
+                "installed": installed,
+                "portraits": portraits,
+            }
+        )
     return results
 
 

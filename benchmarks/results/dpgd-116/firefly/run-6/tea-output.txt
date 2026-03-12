@@ -1,0 +1,34 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is the foundational CLI framework — every subsequent CLI story depends on it.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 10 | AC-1 (command groups), AC-2 (help rendering), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 13 | AC-3 (exit codes 0/1/2/3/4 via CliError::exit_code()) |
+| `tests/output_format.rs` | 12 | AC-4 (OutputFormat enum, OutputFormatter trait, JSON metadata, CSV escaping) |
+| `tests/global_flags.rs` | 15 | AC-5 (all 7 global flags, -v repeatable, --quiet, --format validation) |
+| `tests/siem_client.rs` | 16 | AC-7 (construction, HTTP status mapping, header injection, URL construction) |
+| `tests/config_loading.rs` | 9 | AC-8 (TOML loading, env var overrides, XDG paths, precedence, no-token-in-config) |
+| `tests/shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell generation, command inclusion) |
+| `tests/stub_handlers.rs` | 6 | AC-10 (story references, exit code 1, correct story per stub) |
+| `tests/security.rs` | 10 | CWE-209 error exposure, CRLF header injection, silent error swallowing, config validation, credential handling |
+
+**Tests Written:** 97 tests covering all 10 ACs + security
+**Status:** RED (failing — all 9 test files fail to compile because modules `cli`, `error`, `client`, `output`, `config`, `commands` don't exist yet)
+
+**Public API contract defined by tests:**
+- `axiathon_client::cli::{Cli, Commands}` — clap Parser/Subcommand
+- `axiathon_client::error::CliError` — error enum with `exit_code()` method
+- `axiathon_client::output::{OutputFormat, OutputFormatter, TableFormatter, JsonFormatter, CsvFormatter}`
+- `axiathon_client::client::SiemClient` — HTTP wrapper with `map_status_code()`, `default_headers()`, `url()`
+- `axiathon_client::config::{ClientConfig, load_token}` — TOML config with env overrides
+- `axiathon_client::commands::{completion, status, config, ingest, alerts, query, tenant, login}` — command modules with `STORY_REF` constants
+
+**Handoff:** To Dev for implementation (GREEN phase)
+
+## Delivery Findings
+
+- No upstream findings during test design.

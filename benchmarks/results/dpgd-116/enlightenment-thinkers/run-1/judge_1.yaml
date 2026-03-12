@@ -1,0 +1,80 @@
+scenario_id: dpgd-116
+theme: enlightenment-thinkers
+run_id: 1
+judge_version: v2
+judge_pass: 1
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase addressed from_file_or_default swallowing all errors. TEA tests
+    config loading but no test distinguishes NotFound from parse/permission errors.
+    Reviewer F7 is about unknown serde fields, not about error-type discrimination
+    in file loading.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F3 flags CWE-209: ''ServerError Display leaks internal detail
+    via Debug... If any code path logs or prints via {:?}, the detail leaks.'' TEA
+    also wrote security.rs tests for ''CWE-209 error exposure''. Same vulnerability
+    class identified.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote siem_client.rs tests for 'header injection prevention'. Reviewer
+    F5 flags that header injection sanitization tests don't verify behavior. Same
+    vulnerability class (CWE-113 header injection) addressed, though focus was on
+    token rather than tenant_id specifically.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer F10 mentions toml version mismatch (0.8 vs 0.9) but does not
+    flag the broader issue of 6 dependencies using direct version strings instead
+    of workspace = true. The workspace dependency pattern violation was not identified.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F7 directly flags: ''RawConfig silently ignores unknown fields...
+    If an operator puts tokken = "secret" (typo) in their config, it''s silently ignored...
+    a token field in the TOML is silently accepted and ignored rather than warning
+    the user. Should use #[serde(deny_unknown_fields)]''.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer F4 flags a vacuous test: 'url.starts_with(\"http://\") || url.starts_with(\"\
+    https://\") || url == \"javascript:alert(1)\" \u2014 This is a vacuous test \u2014\
+    \ it literally allows the javascript: scheme in the success branch.' Same category\
+    \ (vacuously true assertion via OR logic) in adjacent test."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer F5 flags tests that 'asserts nothing about whether the injection
+    was stopped... tests would pass even if with_token() did nothing' and F11 flags
+    'Stub handler tests are tautological... tests thiserror's Display derive, not
+    actual command dispatch.' Same category of tests with zero meaningful assertions.

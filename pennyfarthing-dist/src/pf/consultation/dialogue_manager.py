@@ -63,9 +63,7 @@ class DialogueResult:
 def create_dialogue_content(header: DialogueHeader) -> str:
     """Create initial dialogue file content with header and empty summary."""
     leader_label = (
-        f"{header.leader} ({header.leader_character})"
-        if header.leader_character
-        else header.leader
+        f"{header.leader} ({header.leader_character})" if header.leader_character else header.leader
     )
     partner_label = (
         f"{header.partner} ({header.partner_character})"
@@ -248,9 +246,7 @@ def append_exchange_to_file(
     try:
         if not dialogue_path.exists():
             if not header:
-                return DialogueResult(
-                    success=False, error="Header required for new dialogue file"
-                )
+                return DialogueResult(success=False, error="Header required for new dialogue file")
             initial = create_dialogue_content(header)
             dialogue_path.parent.mkdir(parents=True, exist_ok=True)
             dialogue_path.write_text(initial, encoding="utf-8")
@@ -261,23 +257,15 @@ def append_exchange_to_file(
         # Insert exchange before summary section
         summary_idx = content.find(SUMMARY_MARKER)
         if summary_idx < 0:
-            dialogue_path.write_text(
-                content + "\n" + formatted, encoding="utf-8"
-            )
+            dialogue_path.write_text(content + "\n" + formatted, encoding="utf-8")
         else:
             before = content[:summary_idx]
             after = content[summary_idx:]
-            dialogue_path.write_text(
-                before + formatted + "\n" + after, encoding="utf-8"
-            )
+            dialogue_path.write_text(before + formatted + "\n" + after, encoding="utf-8")
 
-        return DialogueResult(
-            success=True, data={"exchangeNumber": exchange.number}
-        )
+        return DialogueResult(success=True, data={"exchangeNumber": exchange.number})
     except Exception as err:
-        return DialogueResult(
-            success=False, error=f"Failed to append exchange: {err}"
-        )
+        return DialogueResult(success=False, error=f"Failed to append exchange: {err}")
 
 
 def update_outcome_in_file(
@@ -320,13 +308,9 @@ def update_outcome_in_file(
             )
 
         dialogue_path.write_text("\n".join(lines), encoding="utf-8")
-        return DialogueResult(
-            success=True, data={"exchangeNum": exchange_num, "outcome": outcome}
-        )
+        return DialogueResult(success=True, data={"exchangeNum": exchange_num, "outcome": outcome})
     except Exception as err:
-        return DialogueResult(
-            success=False, error=f"Failed to update outcome: {err}"
-        )
+        return DialogueResult(success=False, error=f"Failed to update outcome: {err}")
 
 
 def refresh_summary(dialogue_path: Path) -> DialogueResult:
@@ -343,29 +327,21 @@ def refresh_summary(dialogue_path: Path) -> DialogueResult:
 
         # Extract startedAt from header
         started_match = re.search(r"\*\*Started:\*\*\s+(.+)", content)
-        started_at = (
-            started_match.group(1).strip() if started_match else ""
-        )
+        started_at = started_match.group(1).strip() if started_match else ""
 
         new_summary = generate_summary(exchanges, started_at)
 
         # Replace existing summary section
         summary_idx = content.find(SUMMARY_MARKER)
         if summary_idx < 0:
-            dialogue_path.write_text(
-                content + "\n" + new_summary, encoding="utf-8"
-            )
+            dialogue_path.write_text(content + "\n" + new_summary, encoding="utf-8")
         else:
             before = content[:summary_idx]
             dialogue_path.write_text(before + new_summary, encoding="utf-8")
 
-        return DialogueResult(
-            success=True, data={"totalExchanges": len(exchanges)}
-        )
+        return DialogueResult(success=True, data={"totalExchanges": len(exchanges)})
     except Exception as err:
-        return DialogueResult(
-            success=False, error=f"Failed to refresh summary: {err}"
-        )
+        return DialogueResult(success=False, error=f"Failed to refresh summary: {err}")
 
 
 def archive_dialogue(
@@ -390,13 +366,9 @@ def archive_dialogue(
 
         shutil.copy2(dialogue_path, archive_path)
 
-        return DialogueResult(
-            success=True, data={"archivePath": str(archive_path)}
-        )
+        return DialogueResult(success=True, data={"archivePath": str(archive_path)})
     except Exception as err:
-        return DialogueResult(
-            success=False, error=f"Failed to archive dialogue: {err}"
-        )
+        return DialogueResult(success=False, error=f"Failed to archive dialogue: {err}")
 
 
 # =============================================================================

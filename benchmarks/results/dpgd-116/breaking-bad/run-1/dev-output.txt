@@ -1,0 +1,26 @@
+All **108 tests passing**, 0 failures. Clippy clean.
+
+## Summary
+
+### Files Changed
+
+**Production code (new files in `crates/axiathon-client/src/`):**
+- `lib.rs` — Module re-exports
+- `error.rs` — `CliError` enum with 10 variants and `exit_code()` mapping (0-4)
+- `cli.rs` — `Cli` struct (clap derive), `Commands` enum with 12 subcommands, `RulesCommand` enum, global flags with `global = true`, server URL newline validation
+- `client.rs` — `SiemClient` wrapping reqwest with header injection (X-Tenant-ID, Authorization), HTTP status-to-error mapping (401/403/404/429/5xx/timeout/connection refused)
+- `config.rs` — `ClientConfig` with TOML loading, XDG default path via dirs, env var overrides, CLI flag overrides, no token storage
+- `output.rs` — `OutputFormat` enum (Table/Json/Csv) with `ValueEnum`+`FromStr`, `OutputFormatter` with comfy-table/serde_json/csv backends, TTY detection via `IsTerminal`
+- `commands/mod.rs` — Module re-exports
+- `commands/{query,rules,alerts,ingest,config,status,tenant,login}.rs` — Stub handlers returning `NotImplemented`
+- `commands/completion.rs` — Functional shell completion via clap_complete (bash/zsh/fish/powershell)
+- `commands/init.rs` — Functional first-time setup
+
+**Cargo.toml changes:**
+- Root workspace: Added `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml` deps; added `env` feature to clap; changed `unsafe_code` lint from `forbid` to `deny` (production lib.rs files retain `#![forbid(unsafe_code)]`)
+- `crates/axiathon-client/Cargo.toml` — Added all required dependencies
+
+**Test fixes (edition 2024 compatibility):**
+- `tests/global_flags.rs` — Wrapped `set_var`/`remove_var` in `unsafe` blocks, added `#![allow(unsafe_code)]`
+- `tests/config_loading.rs` — Same env var safety fixes
+- `tests/siem_client.rs` — Added missing type annotations on `get()` calls

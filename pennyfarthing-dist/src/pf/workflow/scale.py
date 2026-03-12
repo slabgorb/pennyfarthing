@@ -145,9 +145,7 @@ def get_required_artifacts(level: int) -> list[str]:
     return SCALE_LEVELS[level]["artifacts"]
 
 
-def determine_scale_level(
-    description: str, explicit_level: int | None = None
-) -> int:
+def determine_scale_level(description: str, explicit_level: int | None = None) -> int:
     """Determine scale level with optional user override.
 
     Args:
@@ -178,6 +176,12 @@ def get_scale_level_info(level: int) -> dict[str, Any]:
         Dict with level, scope, stories_min, stories_max, workflow, artifacts
     """
     if level not in SCALE_LEVELS:
-        return {"level": level, "scope": "unknown", "stories_min": 0,
-                "stories_max": 0, "workflow": "prd", "artifacts": []}
+        return {
+            "level": level,
+            "scope": "unknown",
+            "stories_min": 0,
+            "stories_max": 0,
+            "workflow": "prd",
+            "artifacts": [],
+        }
     return SCALE_LEVELS[level].copy()

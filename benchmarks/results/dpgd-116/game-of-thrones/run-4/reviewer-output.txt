@@ -1,0 +1,76 @@
+Now I have all the information I need. Let me compile my findings.
+
+---
+
+*leans forward, fingers steepled*
+
+Very well. I've read every file, run every check, traced the data flows. Here is what I found lurking beneath the surface. Olyvar did good work gathering intelligence.
+
+---
+
+## Review Findings: Story 6.1 — CLI Framework & Structure
+
+### [CRITICAL] Nightly `rustfmt` check fails — `cli.rs` formatting violations
+`cargo +nightly fmt --all --check` produces diffs in `crates/axiathon-client/src/cli.rs`. The long `#[command(after_help = ...)]` attributes need reformatting. Per `gotchas.md`, nightly fmt **must** pass before approval.
+
+### [HIGH] Hardcoded fake UUID and timestamp in `output.rs:134-148`
+`uuid_v4_string()` returns a static hex string `12345678-1234-4567-8901-234567890123` and `timestamp_now()` returns a hardcoded `"2026-03-08T00:00:00Z"`. This means **every** JSON response has the same `request_id` and `timestamp`. This is not "placeholder" behavior — AC-4 requires `ResponseMetadata` with `request_id` and `timestamp`. Every response being identical breaks auditability and is functionally wrong. Either use a real UUID crate (already in workspace deps) and `chrono::Utc::now()`, or document this is a known limitation and don't pretend to produce real metadata.
+
+### [HIGH] `--server` flag documents `env: AXIATHON_SERVER` but no `env = "AXIATHON_SERVER"` on the clap arg — `cli.rs:28`
+AC-5 says `--server` supports the `AXIATHON_SERVER` env var. The doc comment says `(env: AXIATHON_SERVER)` but the actual clap attribute lacks `env = "AXIATHON_SERVER"`. Clap won't read the env var. This is a silent behavior gap — operators will set the env var and it will be ignored.
+
+### [HIGH] Workspace dependency hygiene violation — 6 crate-pinned dependencies not declared in `[workspace.dependencies]`
+AC spec says to add `reqwest`, `comfy-table`, `keyring`, `clap_complete`, `dirs`, `csv`, `toml` to workspace deps. Currently `clap_complete = "4"`, `comfy-table = "7"`, `csv = "1"`, `dirs = "6"`, `keyring = "3"`, `reqwest = ...`, `toml = "0.8"` are all pinned locally in `crates/axiathon-client/Cargo.toml`. This violates the workspace dependency pattern used by every other crate and the story's own technical guardrails.
+
+### [HIGH] `toml` version mismatch — story spec says `0.9`, Cargo.toml has `0.8`
+Story spec says `toml 0.9`. `Cargo.toml:21` has `toml = "0.8"`. This could be intentional (0.9 may not exist), but it's an undocumented deviation from the spec.
+
+### [MEDIUM] `ClientConfig` accepts unknown TOML fields silently — `config.rs:15`
+`#[serde(default)]` without `#[serde(deny_unknown_fields)]` means typos in `cli.toml` (e.g., `servr_url` instead of `server_url`) are silently ignored. An operator could misconfigure the client and never know. This is a config safety concern.
+
+### [MEDIUM] `Completion` shell argument is a raw `String`, not `clap_complete::Shell` — `cli.rs:86`
+The `Completion` variant uses `shell: String` and then `completion.rs` manually matches on lowercase strings. If an unknown shell is passed, it silently returns an empty string instead of returning an error. This is a silent failure — the user gets no output and no error.
+
+### [MEDIUM] `init::handle()` creates the directory but not the default config file — `commands/init.rs`
+The `init` command creates `~/.config/axiathon/` but doesn't write a default `cli.toml` into it. AC-10 says init should be "functional, not stub" and the story scope says "first-time setup (functional, not stub)". Creating an empty directory is barely functional — it should scaffold a default config file.
+
+### [MEDIUM] Multiple `expect()` calls in `output.rs` — lines 97, 108, 125, 127, 129, 130
+Seven `expect()` calls in production code. Per `rust.md`: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` messages are descriptive, but the `OutputFormatter::format()` returns `String` not `Result`, so panics propagate. If a row has mismatched column counts or contains non-UTF-8 data, this panics instead of returning a graceful error. Consider changing the trait to return `Result<String, CliError>`.
+
+### [MEDIUM] `SiemClient` does not implement actual HTTP request methods
+`SiemClient` has `map_http_status()` and builder construction, but no `get()`, `post()`, etc. methods that actually inject `Authorization` and `X-Tenant-ID` headers. AC-7 requires header injection. The `_http` field (prefixed with `_` to suppress unused warnings) confirms this is essentially dead code. While stubs are expected for handlers, the `SiemClient` itself is listed as in-scope for this story.
+
+### [LOW] `CliError` does not derive `thiserror::Error` — `error.rs`
+The story specifies `thiserror` for error enums and it's in the dependencies. But `CliError` uses a manual `impl fmt::Display` and `impl std::error::Error`. This works but misses the point of having `thiserror` — it provides `#[from]` conversions and `source()` chaining. Since it's a dependency, it should be used.
+
+### [LOW] `NotImplemented` variant Display doesn't prefix the message — `error.rs:88`
+All other variants prefix with a category (`"server error: "`, `"not found: "`, etc.) but `NotImplemented` passes the raw `msg` through. While this works for "not yet implemented (Story X.Y)" messages, it's inconsistent with the pattern.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in `lib.rs:2`
+### [VERIFIED] CRLF header injection prevention in `SiemClient` builder — `client.rs:69-71, 97-116`
+### [VERIFIED] CWE-209 sanitization in `CliError::Display` — HTML and credential-like content filtered in `ServerError` variant
+### [VERIFIED] Token redacted in `SiemClient::Debug` impl — `client.rs:20`
+### [VERIFIED] No `unwrap()` in production code
+### [VERIFIED] All stub handlers return proper error with story reference
+### [VERIFIED] `#[non_exhaustive]` on `CliError` enum
+### [VERIFIED] All 79 tests pass, clippy clean
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+The nightly `rustfmt` failure is a hard gate per `gotchas.md`. The missing `env = "AXIATHON_SERVER"` clap attribute means a documented feature doesn't work. The hardcoded UUID/timestamp produces misleading metadata. And the workspace dependency violations need cleanup.
+
+**Blocking issues (must fix):**
+1. Run `cargo +nightly fmt --all` to fix formatting
+2. Add `env = "AXIATHON_SERVER"` to the `--server` clap arg
+3. Move crate-specific deps to `[workspace.dependencies]` in root `Cargo.toml`
+4. Either implement real UUID/timestamp generation or change the trait to not emit fake metadata
+
+**Recommended (non-blocking):**
+5. Add `#[serde(deny_unknown_fields)]` to `ClientConfig`
+6. Return an error for unknown shell in `completion.rs` instead of empty string
+7. Have `init` actually write a default config file
+8. Consider using `clap_complete::Shell` type directly in the CLI struct
+
+*In the game of code review, you either ship quality or you ship bugs. There is no middle ground.*

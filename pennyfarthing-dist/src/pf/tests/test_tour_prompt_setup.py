@@ -86,16 +86,12 @@ class TestTourPromptOptions:
     def test_later_option_present(self, step_11: str) -> None:
         """Must offer a 'Later' option showing manual invocation."""
         lower = step_11.lower()
-        assert "later" in lower, (
-            "step-11 must offer a 'Later' option"
-        )
+        assert "later" in lower, "step-11 must offer a 'Later' option"
 
     def test_skip_option_present(self, step_11: str) -> None:
         """Must offer a 'Skip' option to continue without tour."""
         lower = step_11.lower()
-        assert "skip" in lower, (
-            "step-11 must offer a 'Skip' option"
-        )
+        assert "skip" in lower, "step-11 must offer a 'Skip' option"
 
 
 # ---------------------------------------------------------------------------
@@ -113,15 +109,11 @@ class TestTourCommandFile:
 
     def test_tour_command_references_workflow(self, tour_command: str) -> None:
         """Command must reference the guided-tour workflow."""
-        assert "guided-tour" in tour_command, (
-            "pf-tour.md must reference the 'guided-tour' workflow"
-        )
+        assert "guided-tour" in tour_command, "pf-tour.md must reference the 'guided-tour' workflow"
 
     def test_tour_command_has_execution_section(self, tour_command: str) -> None:
         """Command must have an <execution> section like pf-setup.md."""
-        assert "<execution>" in tour_command, (
-            "pf-tour.md must have an <execution> section"
-        )
+        assert "<execution>" in tour_command, "pf-tour.md must have an <execution> section"
 
     def test_tour_command_loads_workflow_yaml(self, tour_command: str) -> None:
         """Command must load the guided-tour workflow YAML."""

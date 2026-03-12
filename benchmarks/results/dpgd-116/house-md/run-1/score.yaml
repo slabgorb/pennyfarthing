@@ -1,0 +1,81 @@
+scenario_id: dpgd-116
+theme: house-md
+run_id: 1
+judge_version: v2
+total_caught: 5
+total_findings: 7
+weighted_caught: 23
+total_weight: 37
+score_pct: 62.2
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that from_file_or_default uses unwrap_or_default() which
+    swallows parse errors, permission failures, and other non-NotFound errors. The
+    reviewer flagged F5 about env overrides being silently swallowed, but not the
+    config file loading path.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote '5 tests specifically targeting CWE-209 (error detail leakage)'.
+    Dev implemented CWE-209 safe Display. Reviewer verified ServerError and Unauthorized
+    Display don't leak details. Same vulnerability class (CWE-209) was systematically
+    addressed, though the specific Io(#[error(transparent)]) variant forwarding OS
+    details was not explicitly called out.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote tests for 'header injection via newlines in tenant/token' targeting
+    CWE-113. Dev implemented sanitize_header_value with CR/LF stripping. Reviewer
+    verified header injection prevention. Same CWE-113 class addressed via sanitization,
+    though the type-safety angle (using raw String instead of TenantId from axiathon-core)
+    was not flagged.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F7: ''clap_complete, comfy-table, csv, dirs, reqwest, and toml
+    are specified inline with version numbers rather than as workspace dependencies.
+    The story spec says to add these to [workspace.dependencies]. This means other
+    crates can''t share version pins, risking version fragmentation across the workspace.'''
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer F4: 'RawConfig uses default serde deserialization, which silently\
+    \ ignores unknown fields... If someone puts token = \"secret\" in the TOML, serde\
+    \ silently drops it \u2014 no warning, no error. This is a false sense of security.\
+    \ The #[serde(deny_unknown_fields)] attribute should be used.'"
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F4 identifies a vacuous test in config: ''the test is vacuous:
+    it checks has_token_from_file() which is hardcoded to false''. Same category of
+    vacuous/always-passing test assertion, though a different specific instance than
+    the ground truth''s is_none() || true pattern.'
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged a test with zero assertions that only checks for non-panic
+    via 'let _ = config;'. The reviewer identified other test quality issues but not
+    this zero-assertion test.

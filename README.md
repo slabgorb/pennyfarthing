@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.3.0** | *The outer loop goes once, the inner loop goes many times.*
+**v12.7.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -51,8 +51,9 @@ Three paths depending on who you are:
 Someone on your team already ran `/pf-setup`. You just need the CLI and to clone.
 
 ```bash
-# 1. Install the CLI
-brew install 1898andco/pf/pennyfarthing
+# 1. Install the CLI (pick one)
+pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
+# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
 
 # 2. Clone the project
 git clone git@github.com:your-org/your-project.git && cd your-project
@@ -63,7 +64,7 @@ claude
 
 That's it. The project's committed `bootstrap.sh` hook detects the first session, runs `pf init`, and sets everything up. You'll see agents, themes, and workflows immediately.
 
-If `pf` isn't installed when you start Claude Code, the bootstrap will attempt to install it via brew, uv, or pipx automatically.
+If `pf` isn't installed when you start Claude Code, the bootstrap will attempt to install it via uv, pipx, or pip automatically.
 
 ### Path B: Add Pennyfarthing to your own project
 
@@ -73,8 +74,10 @@ You're bringing Pennyfarthing into a repo for the first time.
 # 1. Authenticate with GitHub (required — private repo)
 gh auth login
 
-# 2. Install the CLI
-brew install 1898andco/pf/pennyfarthing
+# 2. Install the CLI (pick one)
+pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
+# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+# or: curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
 
 # 3. Initialize your project
 cd your-project
@@ -92,17 +95,6 @@ claude
 ```
 
 `pf init` creates the `.pennyfarthing/` and `.claude/` directories. `/pf-setup` configures them interactively — repo topology, project context, theme, and optional integrations. After setup, teammates can follow Path A.
-
-**Alternative installs** (if brew isn't available):
-
-```bash
-# Shell script — auto-detects best package manager (brew → uv → pipx → pip)
-curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
-
-# Manual with uv or pipx
-uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
-pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
-```
 
 ### Path C: Develop Pennyfarthing itself (dogfooding)
 
@@ -168,15 +160,15 @@ All panels are draggable, floatable, and splittable:
 
 ### Architecture
 
-BikeRack is powered by **WheelHub**, a local Express/WebSocket server that serves API endpoints, WebSocket channels, and the OTLP telemetry receiver:
+BikeRack is powered by **WheelHub**, a Python FastAPI/uvicorn server that serves API endpoints, WebSocket channels, and the OTLP telemetry receiver:
 
 ```mermaid
 graph TB
     subgraph "BikeRack"
-        BR["Node.js server"]
+        BR["Python FastAPI server"]
     end
 
-    BR --> WH["WheelHub<br/>(shared server)"]
+    BR --> WH["WheelHub<br/>(uvicorn)"]
 
     BR -- "writes" --> BP[".bikerack-port"]
 
@@ -297,7 +289,6 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | `pf doctor` | Check installation health |
 | `pf doctor --fix` | Auto-fix common issues |
 | `pf validate` | Run all validators |
-| `pf uninstall` | Remove for clean reinstall |
 | `pf theme list` | Show available themes |
 | `pf theme set <name>` | Change active theme |
 | `pf package list` | Show installable theme plugins |
@@ -328,7 +319,8 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | [Tandem Protocol](pennyfarthing-dist/guides/tandem-protocol.md) | Background observer pairing |
 | [Output Styles](pennyfarthing-dist/guides/output-styles.md) | Configurable response modes |
 | [Brownfield Tools](pennyfarthing-dist/guides/brownfield-tools.md) | Codebase analysis CLI tools |
-| [Benchmarks](packages/benchmark/docs/benchmarks-guide.md) | Persona evaluation system |
+| [Peloton Testing](pennyfarthing-dist/guides/peloton.md) | Pipeline replay benchmarks from real PR reviews |
+| [Benchmarks](packages/benchmark/docs/benchmarks-guide.md) | Persona evaluation system (JobFair) |
 
 ## Available Themes (100)
 
@@ -377,20 +369,17 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v12.3.0
+## What's New in v12.7.0
 
-- **Context Engineering System** — Schema-driven context documents for epics and stories with validation, templates, and tandem partner selection (`/pf-context`)
-- **Context Gates** — SM-setup exit gate validates context exists; TEA gate checks context before test phase; gate recovery auto-triggers context creation when missing
-- **Session Artifacts Pipeline** — Finding capture during agent exit, Delivery Findings, Impact Summary compilation, and boss-readable PR body generation
-- **Guided Tour** — Interactive stepped onboarding workflow with switch gates, deep-dives, and practice stories
-- **`pf dashboard`** — Terminal dashboard command for project status overview
-- **Discovery UX** — Welcome banner nudges, theme-based spinner verbs, and feature discovery tips
-- **Frontmatter Hooks** — Agent and skill files declare their own hooks; stale hook detection on session start
-- **21 Reference Workflows** — PRD, Sprint Planning, UX Design, Research, Code Review, Retrospective, and more
-- **Portrait Bundling** — Portraits included in wheel distribution with auto-pull on session start
+- **Judge versioning and partial-match rubrics** — Benchmark judges support version tracking and partial-match scoring
+- **Pipeline replay framework** — Replay benchmark pipelines from stored results for regression testing
+- **Theme YAML schema and git snapshot** — Structured theme validation plus `pf git snapshot` for point-in-time repo captures
+- **Kitchen-sink workflow** — Extended gate coverage with language-specific review checklists
 
 ### Previous Highlights
 
+- **v12.6** - Consumer E2E test suite, WheelHub Node 24 CJS fix, gold standard calibration, difficulty profiles
+- **v12.4** - SOUL.md bootstrap, PR title config, consumer gate extensions, in-review status, result objects
 - **v12.0** - Python-first installation, monorepo consolidation, workflow gates, handoff CLI, tandem consultation, output styles, codebase analysis tools
 - **v10.3** - BikeRack Dockview migration, BikeRack launcher CLI, repos topology system, BA agent
 - **v10.2** - Tandem backseat protocol, tandem workflows (TDD/BDD-tandem), CI quality gates, schema validation

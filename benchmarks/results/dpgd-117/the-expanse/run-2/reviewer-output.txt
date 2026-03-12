@@ -1,0 +1,127 @@
+---
+
+Right. Time to deliver the verdict. Let me be the last line of defense here.
+
+---
+
+# Story 8.1 Review: REST API Foundation
+
+*Well, well. Someone handed me a "foundation" to inspect. Let's see if it holds weight or crumbles the moment I poke it.*
+
+## Observations
+
+### `[HIGH]` Nightly `rustfmt` fails — import ordering violations across multiple files
+
+**Files:** `lib.rs`, `middleware/auth.rs`, all test files
+
+`cargo +nightly fmt --all --check` produces diffs in nearly every file. Import ordering does not match nightly `rustfmt` requirements. Per the gotchas sidecar: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."* This was either not run or its failures were ignored. **Blocks merge.**
+
+### `[HIGH]` No `FromRef` substate extraction — story guardrail explicitly violated
+
+**File:** `crates/axiathon-server/src/lib.rs:20-23`, `routes.rs:41-129`
+
+The story spec states: *"Handlers must declare domain-scoped substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`) — never full `AppState`. This is a compile-time least-privilege enforcement (CWE-653, OWASP API5:2023)."*
+
+Instead, every handler extracts either `State<AppState>` directly (health) or raw `Request` (everything else). There are zero `FromRef` impls. Zero domain substates. The entire architectural guardrail for least-privilege state access — the one validated in spike PR #29 — is absent. This isn't a "stub it for later" situation; the story AC says the foundation must establish this pattern. **Blocks merge.**
+
+### `[HIGH]` Auth middleware is hardcoded test-token matching, not JWT validation
+
+**File:** `crates/axiathon-server/src/middleware/auth.rs:72-106`
+
+The "authentication" is a `match` statement against literal strings: `"test-valid-token"`, `"test-tenant-a-token"`, `"test-wrong-scope-token"`. There is no JWT parsing, no signature verification, no expiry check, no JWKS. The AC says: *"JWT (EdDSA/Ed25519). JWKS endpoint at `/.well-known/jwks.json`."*
+
+I understand stubs are acceptable for handler business logic, but the story explicitly scopes auth middleware as in-scope. The auth middleware IS the deliverable. A hardcoded string match is not an authentication middleware — it's a test fixture dressed up as production code. At minimum this needs a clear architectural boundary (trait) with a test-double implementation, not literal token strings in production code paths. **Blocks merge.**
+
+### `[HIGH]` No permission enforcement — scope checks are fake
+
+**File:** `crates/axiathon-server/src/middleware/auth.rs:44, 63`
+
+Scope enforcement is done by checking if the token string literally equals `"test-wrong-scope-token"`. There is no actual permission checking against the `AuthContext.permissions` vector. If a token matches `validate_bearer()`, it is granted access regardless of what endpoint it's hitting. The `permissions` field is populated but never consulted. The AC requires: *"valid token but wrong scope (403)"* — this is faked, not implemented.
+
+### `[MEDIUM]` Rate limiting uses `Mutex<HashMap>` with no expiry — counters grow unbounded
+
+**File:** `crates/axiathon-server/src/lib.rs:16`, `middleware/rate_limit.rs:32-37`
+
+The rate limiter increments a counter per key but never resets or expires entries. In production this is a memory leak — every unique tenant+path combination adds an entry that is never removed. The AC says *"configurable per-tenant limits"* and mentions tower-governor, but this is a hand-rolled counter with no time windowing. For a stub, acceptable; but the static `TASK_COUNTERS` in `create_test_app_with_rate_limit` (lib.rs:48) is a `LazyLock<Mutex<HashMap>>` that leaks across the process lifetime. Not suitable for anything beyond test scaffolding. Acknowledged as stubs, so medium.
+
+### `[MEDIUM]` Zero structured logging / tracing instrumentation
+
+**Files:** All of `src/`
+
+The crate depends on `tracing` and `tracing-subscriber` but neither is used anywhere. No `#[instrument]` on handlers. No `tracing::info!()`, `tracing::warn!()`, or `tracing::error!()` calls. The story context says *"Include `tenant_id()` and `trace_id()` in all tracing spans"*. There is zero observability. When something goes wrong in production, you'll have nothing to look at.
+
+### `[MEDIUM]` `ResponseEnvelope` and `ErrorDetail` are not `#[non_exhaustive]`
+
+**File:** `crates/axiathon-server/src/response.rs:13, 21`
+
+Per rust.md: *"`#[non_exhaustive]` on enums that will grow"* — and the same principle applies to public structs in a library crate that will gain fields. `ResponseEnvelope` and `ErrorDetail` are `pub` and re-exported. Adding a field later (e.g., `instance` for RFC 9457 compliance) will be a breaking change for any downstream consumer doing struct literal construction.
+
+### `[MEDIUM]` `data` field uses `skip_serializing_if` — violates envelope contract
+
+**File:** `crates/axiathon-server/src/response.rs:14`
+
+`#[serde(skip_serializing_if = "Option::is_none")]` means error responses will omit the `data` field entirely rather than including `"data": null`. The AC says: *"`data`: success payload (null on error)"*. The test at `api_response_envelope.rs:166-167` even has to check `json.get("data").is_none() || json["data"].is_null()` — that `is_none()` branch is the bug compensator. The spec says `data` should always be present as `null`, not absent. Clients parsing the envelope will need to handle both absent and null, which is messy.
+
+### `[MEDIUM]` `expect()` calls in serialization and header parsing
+
+**Files:** `response.rs:85`, `routes.rs:145`, `security.rs:10-11`
+
+Multiple `.expect("...")` calls that will panic the server if they fail. `response.rs:85` — `serde_json::to_string(envelope).expect(...)` — if `T` contains non-serializable data, this panics and kills the connection. Per rust.md: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message"*. The `expect` messages exist but some of these should return error responses rather than panicking.
+
+### `[MEDIUM]` No request body size limit enforcement
+
+**File:** `crates/axiathon-server/src/lib.rs` (missing)
+
+There is no `DefaultBodyLimit` or equivalent configured on the router. The test `oversized_request_body_returns_413_or_400` passes only because the stub handler doesn't actually read the body. When real handlers consume bodies, there's no limit preventing a 1GB upload from being buffered into memory. The test assertion accepts `NOT_IMPLEMENTED` as a pass condition, which masks this gap.
+
+### `[LOW]` `body_json` helper duplicated across 5 test files
+
+**Files:** All test files
+
+The exact same `body_json` helper function is copy-pasted into every test file. A shared `tests/common/mod.rs` or `tests/helpers.rs` would eliminate this duplication.
+
+### `[LOW]` Unused first `app` binding in `all_routes_are_under_api_v1_prefix`
+
+**File:** `crates/axiathon-server/tests/api_versioning.rs:26`
+
+`let app = create_test_app().await;` is created but never used — each loop iteration creates its own `app`. Dead code in tests is sloppy.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present at crate root — `lib.rs:2`
+
+### `[VERIFIED]` Security headers (X-Content-Type-Options, X-Frame-Options, Server removal) — working and tested
+
+### `[VERIFIED]` Fallback handler returns 404 in envelope format — all unmatched routes get proper JSON error responses
+
+### `[VERIFIED]` Error messages do not leak tokens, paths, or stack traces — CWE-209 properly addressed
+
+### `[VERIFIED]` Health endpoint is correctly unprotected while all API endpoints require auth
+
+---
+
+## Data Flow Trace
+
+**Input:** `GET /api/v1/events` with `Authorization: Bearer test-valid-token`
+
+1. Request enters `build_router` → hits `security_headers_middleware` (adds headers on response)
+2. Hits `rate_limit_middleware` → checks `AppState.rate_limit` (None in default test app → passes through)
+3. Route matches `/api/v1/events` → in `protected_routes()` → `auth_middleware` runs
+4. Auth middleware extracts `Authorization` header → strips `Bearer ` prefix → calls `validate_bearer("test-valid-token")`
+5. Returns hardcoded `AuthContext` → inserted into `req.extensions_mut()`
+6. `events_handler` extracts `AuthContext` from extensions, uses `trace_id` → builds `ResponseEnvelope::success(json!({"events": []}))`
+7. Response serialized with `json_response` → security headers applied on way out
+
+**Gap identified:** No actual tenant isolation in handlers. The `AuthContext.tenant_id` is populated but never used to scope data. Acceptable for stubs, but the pattern isn't even established.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three High-severity findings block this PR:
+
+1. **Nightly fmt fails** — trivial fix, but a merge blocker per project standards
+2. **No `FromRef` substate pattern** — the core architectural requirement of this story is missing
+3. **Auth middleware is test fixtures, not an authentication layer** — needs at minimum a trait-based design with a test-double implementation, not hardcoded token strings in production code
+
+The code compiles, all 51 tests pass, clippy is clean, and the security headers / error sanitization are genuinely well done. But passing tests doesn't mean the architecture is right. The story's purpose is to establish the *foundation* — `FromRef` substates, proper auth middleware structure, structured logging — and those foundational patterns are absent. Shipping this means every subsequent story in Epic 8 builds on top of the wrong patterns.
+
+Fix the fmt, introduce the `FromRef` substate pattern (even with empty/stub substates), and restructure auth behind a trait so production code doesn't contain `"test-valid-token"` literals. Then we'll talk.

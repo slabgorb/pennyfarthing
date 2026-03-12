@@ -1,0 +1,129 @@
+---
+
+# Review Report: Story 6.1 — CLI Framework & Structure
+
+*General Burkhalter has finished inspecting every line of this submission. Klink would have stamped "APPROVED" after seeing the tests pass. I am not Klink.*
+
+---
+
+## Findings
+
+### [HIGH] F1 — Nightly `rustfmt` fails across 15+ files at `crates/axiathon-client/src/` and `tests/`
+
+`cargo +nightly fmt --all --check` produces extensive diffs in `cli.rs`, `client.rs`, all command modules, and most test files. Per the reviewer gotchas, nightly fmt must pass before approval. Import ordering and multi-line attribute formatting are the primary issues.
+
+**Blocks PR: YES**
+
+---
+
+### [HIGH] F2 — `init` command is a no-op, story requires it functional at `commands/mod.rs:55-58`
+
+The story scope says *"axiathon init first-time setup (functional, not stub)"*. The current handler just returns `Ok(StubResult)` without creating any config file. This should at minimum create the default `~/.config/axiathon/cli.toml` with documented defaults.
+
+```rust
+Commands::Init(_) => {
+    // Functional init — creates default config
+    Ok(StubResult)  // <-- does nothing
+}
+```
+
+**Blocks PR: YES**
+
+---
+
+### [MEDIUM] F3 — Config silently ignores missing file when explicitly specified at `config.rs:38-58`
+
+When a user passes `--config /path/that/doesnt/exist`, `ClientConfig::load()` silently falls back to defaults because `std::fs::read_to_string(path)` failure is swallowed with `if let Ok(contents)`. An explicitly-specified config path that doesn't exist is almost certainly an operator mistake that should surface as an error. Only the *default* path should tolerate missing files.
+
+---
+
+### [MEDIUM] F4 — `ConfigFile` silently ignores unknown fields at `config.rs:11-14`
+
+`ConfigFile` derives `Deserialize` without `#[serde(deny_unknown_fields)]`. The test `config_does_not_store_tokens_in_file` proves this: writing `token = "should-be-ignored"` in the config file is silently accepted. This means typos like `servel_url` instead of `server_url` are silently ignored, causing the default to apply without any feedback to the operator.
+
+---
+
+### [MEDIUM] F5 — No TTY auto-detection for default output format at `cli.rs:23`
+
+AC-4 specifies: *"Table default for TTY, JSON for piped output."* The current default is always `OutputFormat::Table` regardless of whether stdout is a terminal. The story specifically calls out using `std::io::IsTerminal` for this purpose.
+
+---
+
+### [MEDIUM] F6 — `--server` global flag is hidden from help at `cli.rs:35`
+
+The flag has `hide = true`, so it doesn't appear in `--help` output. AC-5 lists `--server` as a required global flag. Operators need to discover it. If hiding is intentional (env-var-only), the AC needs an update.
+
+---
+
+### [MEDIUM] F7 — Vacuous test assertions
+
+- `exit_codes.rs:16-17`: `assert_eq!(0i32, 0)` — tautology, tests nothing about the codebase
+- `config_loading.rs:219-222`: `assert!(config.is_ok() || config.is_err())` — always true, asserts nothing meaningful
+- `stub_handlers.rs:148`: `_story` parameter is accepted but never verified against the actual error message
+
+---
+
+### [LOW] F8 — Compiler warnings: unused imports in `stub_handlers.rs:7,80`
+
+`Commands` import at line 7 and `CliError` import at line 80 are unused. Clean compile output should have zero warnings.
+
+---
+
+### [LOW] F9 — Workspace `toml` version is `0.8`, story spec says `0.9` at `Cargo.toml:50`
+
+The workspace declares `toml = "0.8"` but the story technical guardrails specify `toml 0.9`. If `0.9` doesn't exist yet, that's fine — but the discrepancy should be documented.
+
+---
+
+### [VERIFIED] V1 — Header injection prevention (CWE-113)
+
+`validate_header_value()` at `client.rs:84-91` correctly rejects `\r`, `\n`, and `\0` in both tenant ID and token values. Tests in `security.rs:62-105` verify all three injection vectors. Solid.
+
+### [VERIFIED] V2 — CWE-209 error exposure prevention
+
+`CliError` Display impls use generic messages (`"server error"`, `"access denied"`) and do NOT echo inner String payloads for server-sourced errors. The `/// **SECURITY:**` comment is present. The test at `security.rs:17-33` confirms this.
+
+### [VERIFIED] V3 — Exit code mapping complete and correct
+
+All exit codes (0/1/2/3/4) are correctly mapped. All `CliError` variants produce non-zero exit codes. Comprehensive test coverage in `exit_codes.rs`.
+
+### [VERIFIED] V4 — Token never stored in config file
+
+`token()` always returns `None`. `token_from_env()` reads only from `AXIATHON_API_TOKEN`. Config deserialization ignores any `token` field in TOML (though see F4 about silent ignoring).
+
+### [VERIFIED] V5 — Shell completions functional for all 4 shells
+
+`generate_completions()` produces valid output for bash, zsh, fish, and PowerShell. Tests verify command presence in completion scripts.
+
+### [VERIFIED] V6 — `From<AxiathonError>` conversion correct
+
+All `AxiathonError` variants are mapped to appropriate `CliError` variants. `#[non_exhaustive]` on `AxiathonError` is handled by the catch-all `other =>` arm.
+
+### [VERIFIED] V7 — Dependency isolation
+
+`axiathon-client` depends only on `axiathon-core` (no server-side crates). Binary is named `axiathon`. Workspace dependencies are declared centrally.
+
+---
+
+## Summary
+
+| Severity | Count | Blocking |
+|----------|-------|----------|
+| Critical | 0 | — |
+| High | 2 | YES |
+| Medium | 5 | no |
+| Low | 2 | no |
+| Verified | 7 | — |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two High-severity issues block this PR:
+
+1. **Nightly `rustfmt` fails** — run `cargo +nightly fmt --all` and commit the result
+2. **`init` command is a no-op** — the story explicitly requires it functional, not stub
+
+The Medium findings (F3-F7) should be addressed or explicitly documented as deferred. The vacuous test assertions (F7) particularly concern me — tests that prove nothing give false confidence.
+
+*Klink would tell you "everything looks fine." I am telling you it does not. Fix the Highs, address the Mediums, and come back when the code is worthy of Berlin's standards.*

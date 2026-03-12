@@ -52,7 +52,9 @@ def validate_findings(session_path: str | Path) -> dict:
         return {
             "status": "fail",
             "findings_count": 0,
-            "errors": [{"line": 0, "finding": "", "field": "file", "message": f"File not found: {path}"}],
+            "errors": [
+                {"line": 0, "finding": "", "field": "file", "message": f"File not found: {path}"}
+            ],
         }
 
     content = path.read_text()
@@ -103,36 +105,80 @@ def _validate_finding(line_num: int, text: str) -> list[dict]:
     # Check bold type
     type_match = re.match(r"^-\s+\*\*([^*]*)\*\*", text)
     if not type_match:
-        errors.append({"line": line_num, "finding": text, "field": "type", "message": "Missing bold **Type** marker"})
+        errors.append(
+            {
+                "line": line_num,
+                "finding": text,
+                "field": "type",
+                "message": "Missing bold **Type** marker",
+            }
+        )
         return errors
 
     found_type = type_match.group(1)
     if not found_type:
-        errors.append({"line": line_num, "finding": text, "field": "type", "message": "Empty type value"})
+        errors.append(
+            {"line": line_num, "finding": text, "field": "type", "message": "Empty type value"}
+        )
         return errors
     if found_type not in VALID_TYPES:
-        errors.append({"line": line_num, "finding": text, "field": "type", "message": f"Invalid type '{found_type}'. Must be one of: {', '.join(sorted(VALID_TYPES))}"})
+        errors.append(
+            {
+                "line": line_num,
+                "finding": text,
+                "field": "type",
+                "message": f"Invalid type '{found_type}'. Must be one of: {', '.join(sorted(VALID_TYPES))}",
+            }
+        )
         return errors
 
     # Check urgency in parentheses
     urgency_match = re.search(r"\*\*\s+\(([^)]*)\)", text)
     if not urgency_match:
-        errors.append({"line": line_num, "finding": text, "field": "urgency", "message": "Missing (urgency) after type"})
+        errors.append(
+            {
+                "line": line_num,
+                "finding": text,
+                "field": "urgency",
+                "message": "Missing (urgency) after type",
+            }
+        )
         return errors
 
     found_urgency = urgency_match.group(1)
     if found_urgency not in VALID_URGENCIES:
-        errors.append({"line": line_num, "finding": text, "field": "urgency", "message": f"Invalid urgency '{found_urgency}'. Must be one of: {', '.join(sorted(VALID_URGENCIES))}"})
+        errors.append(
+            {
+                "line": line_num,
+                "finding": text,
+                "field": "urgency",
+                "message": f"Invalid urgency '{found_urgency}'. Must be one of: {', '.join(sorted(VALID_URGENCIES))}",
+            }
+        )
         return errors
 
     # Check Affects `path`
     if not re.search(r"Affects\s+`[^`]+`", text):
-        errors.append({"line": line_num, "finding": text, "field": "affects", "message": "Missing Affects `path` reference"})
+        errors.append(
+            {
+                "line": line_num,
+                "finding": text,
+                "field": "affects",
+                "message": "Missing Affects `path` reference",
+            }
+        )
         return errors
 
     # Check *Found by ... during ...*
     if not re.search(r"\*Found by\s+.+?\*", text):
-        errors.append({"line": line_num, "finding": text, "field": "attribution", "message": "Missing *Found by Agent during phase.* attribution"})
+        errors.append(
+            {
+                "line": line_num,
+                "finding": text,
+                "field": "attribution",
+                "message": "Missing *Found by Agent during phase.* attribution",
+            }
+        )
         return errors
 
     return errors

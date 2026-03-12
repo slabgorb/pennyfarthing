@@ -180,9 +180,7 @@ class TestGetArchivedStoriesOnlyCurrent:
         assert len(stories) == 2
         assert all(s["id"].startswith("136-") for s in stories)
 
-    def test_only_current_with_number_field_present(
-        self, archive_tree_with_numbers: Path
-    ):
+    def test_only_current_with_number_field_present(self, archive_tree_with_numbers: Path):
         """When number field exists, only_current should still work correctly."""
         with patch(
             "pf.sprint.loader.get_project_root",
@@ -197,9 +195,7 @@ class TestGetArchivedStoriesOnlyCurrent:
 class TestGetArchivedStoriesExcludeCurrent:
     """exclude_current=True must return stories from all sprints EXCEPT current."""
 
-    def test_exclude_current_removes_current_sprint_stories(
-        self, archive_tree: Path
-    ):
+    def test_exclude_current_removes_current_sprint_stories(self, archive_tree: Path):
         """When exclude_current=True, current sprint stories must be excluded.
 
         Same bug path: without number field, filter is bypassed and nothing
@@ -221,9 +217,7 @@ class TestGetArchivedStoriesExcludeCurrent:
 
         assert len(stories) == 3
 
-    def test_exclude_current_with_number_field_present(
-        self, archive_tree_with_numbers: Path
-    ):
+    def test_exclude_current_with_number_field_present(self, archive_tree_with_numbers: Path):
         """When number field exists, exclude_current should still work."""
         with patch(
             "pf.sprint.loader.get_project_root",
@@ -245,9 +239,7 @@ class TestGetArchivedStoriesNoFilter:
 
         assert len(stories) == 5
 
-    def test_no_filter_returns_all_with_numbers(
-        self, archive_tree_with_numbers: Path
-    ):
+    def test_no_filter_returns_all_with_numbers(self, archive_tree_with_numbers: Path):
         """Default call returns all stories regardless of number field presence."""
         with patch(
             "pf.sprint.loader.get_project_root",

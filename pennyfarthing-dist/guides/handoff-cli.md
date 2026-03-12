@@ -177,7 +177,13 @@ The handoff CLI is used in sequence during agent exit:
    └── ready → spawn gate subagent → GATE_RESULT
        ├── fail → fix issues, retry (max 3)
        │          If gate has recovery: config, auto-create missing context
-       └── pass → continue
+       └── pass → check gate_extensions (step 2b)
+2b. If RESOLVE_RESULT.gate_extensions is present:
+    For each extension gate ref:
+      parse_gate_file() → spawn subagent → extract_gate_result()
+      ├── fail → stop chain, merge_gate_results(), report combined failure
+      └── pass → merge_gate_results(), continue to next extension
+    All extensions pass → continue with combined result
 3. pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}
 4. pf handoff marker {next-agent}
    ├── relay: true → invoke the `invoke` skill via Skill tool (next agent starts)

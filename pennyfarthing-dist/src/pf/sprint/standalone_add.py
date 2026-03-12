@@ -92,8 +92,15 @@ def add_standalone_story(
 @click.argument("jira_key", type=str)
 @click.argument("title", type=str)
 @click.argument("points", type=int)
-@click.option("--status", type=click.Choice(["backlog", "ready", "in_progress", "done", "canceled"]), default="done", help="Story status (default: done)")
-@click.option("--repos", type=str, default="pennyfarthing", help="Target repo (default: pennyfarthing)")
+@click.option(
+    "--status",
+    type=click.Choice(["backlog", "ready", "in_progress", "done", "canceled"]),
+    default="done",
+    help="Story status (default: done)",
+)
+@click.option(
+    "--repos", type=str, default="pennyfarthing", help="Target repo (default: pennyfarthing)"
+)
 @click.option("--pr", type=int, default=None, help="PR number")
 @click.option("--branch", type=str, default=None, help="Branch name")
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
@@ -118,7 +125,9 @@ def standalone_add_command(
       pf sprint standalone add TEST-001 "Backlog item" 3 --status backlog
     """
     if dry_run:
-        click.echo(f"[DRY-RUN] Would add standalone story {jira_key}: {title} [{points}pts] (status: {status})")
+        click.echo(
+            f"[DRY-RUN] Would add standalone story {jira_key}: {title} [{points}pts] (status: {status})"
+        )
         if pr:
             click.echo(f"  PR: {pr}")
         if branch:

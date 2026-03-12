@@ -1,0 +1,76 @@
+scenario_id: dpgd-116
+theme: star-trek-tng
+run_id: 2
+judge_version: v2
+total_caught: 4
+total_findings: 7
+weighted_caught: 23
+total_weight: 37
+score_pct: 62.2
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: tea
+  evidence: "TEA Security Tests list: 'Silent error prevention (invalid TOML, bad\
+    \ env vars must error, not default)' \u2014 directly addresses the concern that\
+    \ parse/permission errors should not silently fall back to defaults."
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA Security Tests list: ''CWE-209: Token not exposed in Debug output.''
+    Same vulnerability class (CWE-209 information exposure) flagged, though on a different
+    instance (Debug vs Display). Per partial match rule 1, pipeline demonstrated awareness
+    of the CWE-209 risk class.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote header injection tests: 'CWE-113: Header injection via newline/CR/null\
+    \ in tenant ID.' Reviewer also flagged '[MEDIUM] validate_tenant_id() exists but\
+    \ is never called \u2014 at client.rs:51', noting validation is not enforced.\
+    \ However, neither phase flagged that raw String should be replaced with TenantId\
+    \ from axiathon-core."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer noted a toml version mismatch (0.9 vs 0.8) but did not flag the
+    broader issue of 6 dependencies using direct version strings instead of workspace
+    = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: "Dev implemented #[serde(deny_unknown_fields)] on ClientConfig. TEA wrote\
+    \ tests for 'Config token rejection (tokens belong in keychain, not config file).'\
+    \ Reviewer verified: '[VERIFIED] serde(deny_unknown_fields) on ClientConfig \u2014\
+    \ config with unknown fields (including token) is rejected.'"
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the vacuously true assertion pattern (is_none() || ...).
+    The pipeline wrote the tests but did not identify this logical flaw in its own
+    test assertions.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the zero-assertion test pattern (let _ = config). The
+    pipeline wrote the tests but did not identify this test quality issue.

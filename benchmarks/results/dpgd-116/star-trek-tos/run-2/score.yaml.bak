@@ -1,0 +1,73 @@
+scenario_id: dpgd-116
+theme: star-trek-tos
+run_id: 2
+total_caught: 1
+total_findings: 7
+weighted_caught: 5
+total_weight: 37
+score_pct: 13.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged from_file_or_default swallowing all errors. TEA wrote
+    config loading tests but none distinguish NotFound from parse/permission errors.
+    Dev likely implemented the unwrap_or_default pattern. Reviewer did not flag it.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[HIGH] CWE-209: ServerError Display leaks internal\
+    \ details' noting Debug would expose sensitive data and the security test is vacuous.\
+    \ However, the specific Io(transparent) forwarding and need for user_message()\
+    \ method were not called out \u2014 the finding covers ServerError but not the\
+    \ general stderr leaking via eprintln pattern (though no main.rs exists yet)."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: 'TEA wrote CRLF header injection tests and reviewer noted they rely on
+    catch_unwind rather than application-level validation, but neither phase flagged
+    the core issue: SiemClient.tenant_id is a raw String instead of using the validated
+    TenantId newtype from axiathon-core, bypassing type-safe tenant isolation.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer noted toml version mismatch (0.8 vs spec's 0.9) but did not flag
+    that 6 dependencies use direct version strings instead of workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer explicitly VERIFIED 'Config LenientConfig ignores unknown fields\
+    \ (including token)' as correct behavior. The ground truth identifies this as\
+    \ a security issue \u2014 a user putting token in config believes they're authenticated\
+    \ when they're not. The pipeline treated the bug as a feature."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (assert!(config.server().is_none()
+    || ...)) where the first branch is always true making the OR always pass.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the test with zero assertions that only checks for non-panic
+    via 'let _ = config;' without any assert_eq! on default config values.

@@ -1,0 +1,105 @@
+scenario_id: dpgd-117
+theme: null
+run_id: 2
+judge_version: v2
+total_caught: 3
+total_findings: 10
+weighted_caught: 15
+total_weight: 52
+score_pct: 28.8
+findings:
+- finding_id: I1
+  title: Dependencies inline instead of workspace level
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The reviewer flagged 10 unused dependencies but did not mention that dependencies
+    specify versions inline instead of using workspace = true. The issue is about
+    version drift from inline versioning, not about unused deps.
+- finding_id: I2
+  title: 'FieldErrorCode missing #[non_exhaustive]'
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'No phase mentions FieldErrorCode or #[non_exhaustive] on any enum in
+    the new server code.'
+- finding_id: I3
+  title: Hardcoded trace_id 'none'
+  weight: 5
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM]: 'trace_id in Meta is a random UUID, not correlated\
+    \ to distributed tracing at src/response.rs:48... Currently it's Uuid::new_v4()\
+    \ \u2014 completely independent from any OpenTelemetry or distributed tracing\
+    \ context.' This identifies the same core issue of trace_id not being derived\
+    \ from request context."
+- finding_id: I4
+  title: Zero structured logging
+  weight: 5
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged [MEDIUM]: ''No structured logging or tracing anywhere
+    in the crate... There are zero tracing::info!, tracing::warn!, or #[instrument]
+    calls in the entire crate. Auth failures, rate limit hits, and request handling
+    are completely silent.'''
+- finding_id: I5
+  title: Security comment claims tracing that doesn't exist
+  weight: 3
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: The reviewer noted no logging exists but did not specifically flag that
+    a SECURITY comment claims logging that doesn't exist, which is actively misleading
+    documentation.
+- finding_id: I6
+  title: Non-ASCII tenant header silently treated as missing
+  weight: 8
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase wrote a test for non-ASCII characters in X-Tenant-ID. The reviewer's
+    hard question about Authorization header mentions to_str() rejecting non-visible
+    ASCII, but this is about the auth header, not the tenant header, and the reviewer
+    concluded it was OK rather than flagging the silent failure pattern.
+- finding_id: I7
+  title: "CWE-209 test gap \u2014 no body assertion"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA mentions CWE-209 tests exist in api_security.rs, but the ground truth
+    says the test checks status code without asserting on response body content. No
+    phase flagged this gap in the CWE-209 test.
+- finding_id: I8
+  title: CORS preflight test doesn't verify CORS headers
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged [LOW]: ''CORS preflight test at api_security.rs:194-216
+    asserts 200 || 204 but... The test doesn''t actually verify CORS headers are returned.'''
+- finding_id: I9
+  title: "Wrong log levels \u2014 error! for 4xx client errors"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: The reviewer flagged the absence of logging (I4) but since no logging
+    was added, the issue of wrong log levels for 4xx vs 5xx was never encountered
+    or discussed.
+- finding_id: I10
+  title: CORS allows Any origin/method/header (CWE-942)
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "The reviewer noted the CORS layer uses an empty allowed origins list\
+    \ (AllowOrigin::list(Vec::<http::HeaderValue>::new())) and noted the test passes\
+    \ vacuously, but did not flag the lib.rs CORS configuration as using Any origin/method/header\
+    \ (CWE-942). The reviewer's description actually suggests origins are restricted\
+    \ (empty list), which contradicts the ground truth that Any is used \u2014 the\
+    \ reviewer may have examined different code, but did not flag CWE-942."

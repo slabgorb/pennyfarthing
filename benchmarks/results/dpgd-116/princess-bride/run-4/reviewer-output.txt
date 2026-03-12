@@ -1,0 +1,79 @@
+As you wish. I've inspected every board, rope, and cannon on this ship. Here is my review.
+
+---
+
+## Adversarial Code Review — Story 6.1: CLI Framework & Structure
+
+### Observations
+
+**1. [CRITICAL] Vacuous test assertions — 8 AC-1 tests verify nothing** at `cli_structure.rs:14-61`
+
+Tests like `cli_has_query_command_group` use `assert!(cli.is_err() || cli.is_ok())` which is a **tautology** — it is true for every `Result` regardless of what happened. These 8 tests would pass even if the commands didn't exist. The `--help` flag causes clap to return `Err(DisplayHelp)`, which means `is_err()` is always true, so the test passes vacuously without ever proving the command exists. This is the most dangerous class of test failure: tests that pass for the wrong reason.
+
+Tests affected: `cli_has_query_command_group`, `cli_has_rules_command_group`, `cli_has_alerts_command_group`, `cli_has_ingest_command_group`, `cli_has_config_command_group`, `cli_has_status_command_group`, `cli_has_tenant_command_group`, `cli_has_login_command`.
+
+**Fix:** Use `Cli::command().get_subcommands()` to verify presence by name, or parse without `--help` and assert `is_ok()` (as done correctly for `logout`, `init`, `tui`, `completion`).
+
+**2. [HIGH] No `main.rs` binary entry point** — missing file
+
+The story requires `main.rs` as the binary entry point for dispatch, tracing init, and exit code mapping via `std::process::exit()`. Without it, the `axiathon` binary cannot be built. AC-3 (exit codes via process exit), AC-10 (stubs print and exit with code 1), and AC-4 (TTY-dependent output format default) cannot be satisfied without a main that wires `Cli::parse()` to command dispatch and error-to-exit-code mapping. The crate currently only builds as a library.
+
+**3. [HIGH] `panic!` in production code** at `commands/completion.rs:11`
+
+`generate_completion()` calls `panic!("unsupported shell: {other}")` for unrecognized shell names. The Rust rules explicitly forbid `unwrap()` and `panic!()` in production code. While clap's `value_enum` prevents this path via normal CLI parsing, the function is `pub` and callable with arbitrary strings from other code. Should return `Result<String, CliError>` instead.
+
+**4. [HIGH] `SiemClient::new()` creates HTTP client without timeout** at `client.rs:17-25`
+
+`SiemClient::new()` uses `reqwest::Client::new()` which has **no timeout**. Only the builder path configures a timeout. Any code using `new()` will have requests that can hang indefinitely. This is a silent correctness bug — the `timeout` field is set to 30 but the actual `reqwest::Client` has no timeout enforcement.
+
+**5. [MEDIUM] Duplicate story reference — `rules.rs` says "Story 6.4"** at `commands/rules.rs:4`
+
+Both `rules.rs` and `ingest.rs` reference "Story 6.4". Rules management should have its own story number. AC-10 requires stubs to print "not yet implemented (Story X.Y)" — the story number must be correct.
+
+**6. [MEDIUM] `RawConfig` silently ignores unknown fields** at `config.rs:15-19`
+
+`RawConfig` lacks `#[serde(deny_unknown_fields)]`. A typo like `sever_url` instead of `server_url` in `cli.toml` will be silently ignored, and the default `http://localhost:8080` will be used instead. Operators will get confusing behavior with no warning.
+
+**7. [MEDIUM] `init` command only creates directory, doesn't write config** at `commands/init.rs:3-10`
+
+The story scope says "axiathon init first-time setup (functional, not stub)" but init only creates the config directory. It doesn't write a template `cli.toml` file. An operator running `axiathon init` gets an empty directory with no guidance on what to put in it.
+
+**8. [MEDIUM] `thiserror` dependency listed but unused** at `Cargo.toml:18`
+
+`thiserror` is in dependencies, and the Rust rules mandate "Use `thiserror` for error enums", but `CliError` manually implements `Display` and `Error`. Either use `thiserror` derive macros or remove the unused dependency.
+
+**9. [LOW] `toml` version mismatch** at `Cargo.toml:20`
+
+Cargo.toml specifies `toml = "0.8"` but the story guardrails specify `toml` 0.9. Several dependencies (`clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml`) are declared directly in the crate instead of in `[workspace.dependencies]` as the story guardrails specify.
+
+**10. [LOW] Nightly `rustfmt` check fails**
+
+`cargo +nightly fmt --all --check` reports formatting differences in `cli_structure.rs`. Per the gotchas, nightly fmt must pass before approval.
+
+### Data Flow Trace
+
+Traced: tenant ID from CLI `--tenant` flag → `Cli.tenant` (raw `Option<String>`) → would be passed to `SiemClient` builder → `validate_header_value()` checks for CRLF injection → injected as `x-tenant-id` header. **The header injection defense is present in the builder path.** However, `Cli.tenant` is `Option<String>` not `Option<TenantId>` — no newtype validation at the CLI boundary. This is acceptable for Story 6.1 since `TenantId` validation will come from `axiathon-core`, but worth noting.
+
+### Wiring Check
+
+No main.rs exists, so there is no wiring from CLI parse → command dispatch → error-to-exit-code. The library components exist in isolation but are not connected into a working binary.
+
+### Security Analysis
+
+- [VERIFIED] Token redacted in `Debug` impl at `client.rs:100`
+- [VERIFIED] CRLF injection prevention in `validate_header_value` at `client.rs:113-120`
+- [VERIFIED] URL scheme restriction (javascript:/file:) at `client.rs:158-160`
+- [VERIFIED] `CliError::Display` does not leak tokens or internal details at `error.rs:36-52`
+- [VERIFIED] `ServerError` display includes status code + message — verify message source is server-controlled, not user-controlled (acceptable for CLI)
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Blocking issues:
+1. **8 vacuous test assertions** (Critical) — tests prove nothing
+2. **No main.rs** (High) — binary can't be built, exit codes untested
+3. **`panic!` in production code** (High) — completion.rs
+4. **No timeout on `SiemClient::new()`** (High) — requests hang forever
+
+"As you wish" means I wish for these to be fixed. Good night, Westley will most likely kill you in the morning.

@@ -63,36 +63,38 @@ class LazyGroup(click.Group):
 # These modules are only imported when the user invokes the command.
 # ---------------------------------------------------------------------------
 _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
-    "sprint":       ("pf.sprint.cli", "sprint"),
-    "jira":         ("pf.jira.cli", "jira"),
-    "context":      ("pf.context.cli", "context"),
-    "bmad":         ("pf.bmad.cli", "bmad"),
-    "theme":        ("pf.theme.cli", "theme"),
-    "validate":     ("pf.validate.cli", "validate"),
-    "bikerack":     ("pf.bikerack.cli", "bikerack"),
-    "launch":       ("pf.launch.cli", "launch"),
-    "bc":           ("pf.bc.cli", "bc"),
-    "handoff":      ("pf.handoff.cli", "handoff"),
-    "persona":      ("pf.persona.cli", "persona"),
-    "git":          ("pf.git_group.cli", "git"),
-    "session":      ("pf.session.cli", "session"),
-    "epic":         ("pf.epic.cli", "epic"),
+    "sprint": ("pf.sprint.cli", "sprint"),
+    "jira": ("pf.jira.cli", "jira"),
+    "context": ("pf.context.cli", "context"),
+    "bmad": ("pf.bmad.cli", "bmad"),
+    "theme": ("pf.theme.cli", "theme"),
+    "validate": ("pf.validate.cli", "validate"),
+    "bikerack": ("pf.bikerack.cli", "bikerack"),
+    "launch": ("pf.launch.cli", "launch"),
+    "bc": ("pf.bc.cli", "bc"),
+    "handoff": ("pf.handoff.cli", "handoff"),
+    "persona": ("pf.persona.cli", "persona"),
+    "git": ("pf.git_group.cli", "git"),
+    "session": ("pf.session.cli", "session"),
+    "epic": ("pf.epic.cli", "epic"),
     "consultation": ("pf.consultation.cli", "consultation"),
-    "hooks":        ("pf.hooks.cli", "hooks"),
-    "settings":     ("pf.settings.cli", "settings"),
-    "workflow":     ("pf.workflow.cli", "workflow"),
-    "release":      ("pf.release.cli", "release"),
-    "hotspots":     ("pf.hotspots.cli", "hotspots"),
-    "deadcode":     ("pf.deadcode.cli", "deadcode"),
-    "healthscore":  ("pf.healthscore.cli", "healthscore"),
-    "package":      ("pf.package.cli", "package"),
-    "init":         ("pf.init.cli", "init"),
-    "setup":        ("pf.init.cli", "init"),
-    "prime":        ("pf.prime.cli", "prime_cmd"),
-    "upgrade":      ("pf.upgrade.cli", "upgrade"),
-    "docs":         ("pf.docs.cli", "docs"),
-    "doctor":       ("pf.doctor.cli", "doctor"),
-    "dashboard":    ("pf.dashboard.cli", "dashboard"),
+    "hooks": ("pf.hooks.cli", "hooks"),
+    "settings": ("pf.settings.cli", "settings"),
+    "workflow": ("pf.workflow.cli", "workflow"),
+    "release": ("pf.release.cli", "release"),
+    "hotspots": ("pf.hotspots.cli", "hotspots"),
+    "deadcode": ("pf.deadcode.cli", "deadcode"),
+    "healthscore": ("pf.healthscore.cli", "healthscore"),
+    "package": ("pf.package.cli", "package"),
+    "init": ("pf.init.cli", "init"),
+    "setup": ("pf.init.cli", "init"),
+    "prime": ("pf.prime.cli", "prime_cmd"),
+    "upgrade": ("pf.upgrade.cli", "upgrade"),
+    "docs": ("pf.docs.cli", "docs"),
+    "doctor": ("pf.doctor.cli", "doctor"),
+    "dashboard": ("pf.dashboard.cli", "dashboard"),
+    "benchmark": ("pf.benchmark.cli", "benchmark"),
+    "tmux": ("pf.tmux.cli", "tmux"),
 }
 
 
@@ -101,17 +103,17 @@ _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
 # ---------------------------------------------------------------------------
 _SUGAR_SHORTCUTS: dict[str, tuple[str, str, str]] = {
     # name → (parent_module, parent_attr, sub_command_name)
-    "status":  ("pf.sprint.cli", "sprint", "status"),
+    "status": ("pf.sprint.cli", "sprint", "status"),
     "backlog": ("pf.sprint.cli", "sprint", "backlog"),
-    "work":    ("pf.sprint.cli", "sprint", "work"),
-    "story":   ("pf.sprint.cli", "sprint", "story"),
-    "gui":     ("pf.launch.cli", "launch", "gui"),
-    "tui":     ("pf.launch.cli", "launch", "tui"),
+    "work": ("pf.sprint.cli", "sprint", "work"),
+    "story": ("pf.sprint.cli", "sprint", "story"),
+    "gui": ("pf.launch.cli", "launch", "gui"),
+    "tui": ("pf.launch.cli", "launch", "tui"),
 }
 
 # Hidden backward-compat aliases — these resolve via _LAZY_COMMANDS
 # but are excluded from help output
-_HIDDEN_ALIASES: set[str] = {"hotspots", "deadcode", "healthscore", "init"}
+_HIDDEN_ALIASES: set[str] = {"hotspots", "deadcode", "healthscore", "init", "hooks"}
 
 
 class PennyfarthingCLI(LazyGroup):
@@ -183,8 +185,8 @@ def cli():
 # ---------------------------------------------------------------------------
 
 _DEBUG_COMMANDS: dict[str, tuple[str, str]] = {
-    "hotspots":    ("pf.hotspots.cli", "hotspots"),
-    "deadcode":    ("pf.deadcode.cli", "deadcode"),
+    "hotspots": ("pf.hotspots.cli", "hotspots"),
+    "deadcode": ("pf.deadcode.cli", "deadcode"),
     "healthscore": ("pf.healthscore.cli", "healthscore"),
 }
 
@@ -222,7 +224,12 @@ def agent():
 @click.option("--minimal", is_flag=True, help="Skip all context (fastest)")
 @click.option("--full", is_flag=True, help="Include domain docs")
 @click.option("--quiet", is_flag=True, help="Suppress section headers")
-@click.option("--tier", type=click.Choice(["full", "refresh", "handoff", "minimal"], case_sensitive=False), help="Context tier level")
+@click.option("--greeting", is_flag=True, help="Emit agent greeting to stderr")
+@click.option(
+    "--tier",
+    type=click.Choice(["full", "refresh", "handoff", "minimal"], case_sensitive=False),
+    help="Context tier level",
+)
 def agent_start(
     name: str,
     session_id: str | None,
@@ -231,6 +238,7 @@ def agent_start(
     minimal: bool,
     full: bool,
     quiet: bool,
+    greeting: bool,
     tier: str | None,
 ):
     """Start an agent session with full context.
@@ -253,6 +261,7 @@ def agent_start(
         minimal=minimal,
         full=full,
         quiet=quiet,
+        greeting=greeting,
         tier=tier,
     )
     raise SystemExit(exit_code)
