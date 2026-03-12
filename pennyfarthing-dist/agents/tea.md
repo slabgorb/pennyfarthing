@@ -349,7 +349,9 @@ Append under a `### TEA (test design)` subheading:
 <assessment-template>
 ## TEA Assessment Template
 
-Write to session file BEFORE starting exit protocol:
+Write to session file BEFORE starting exit protocol.
+
+### Red Phase (test writing)
 
 ```markdown
 ## TEA Assessment
@@ -364,6 +366,36 @@ Write to session file BEFORE starting exit protocol:
 **Status:** RED (failing - ready for Dev)
 
 **Handoff:** To Dev for implementation
+```
+
+### Verify Phase (simplify + quality-pass)
+
+```markdown
+## TEA Assessment
+
+**Phase:** verify
+**Status:** GREEN confirmed
+
+### Simplify Report
+
+**Teammates:** reuse, quality, efficiency
+**Files Analyzed:** {N}
+
+| Teammate | Status | Findings |
+|----------|--------|----------|
+| simplify-reuse | clean / {N} findings | {summary} |
+| simplify-quality | clean / {N} findings | {summary} |
+| simplify-efficiency | clean / {N} findings | {summary} |
+
+**Applied:** {N} high-confidence fixes
+**Flagged for Review:** {N} medium-confidence findings
+**Noted:** {N} low-confidence observations
+**Reverted:** {N} (details: {which finding, which check failed})
+
+**Overall:** simplify: clean | simplify: applied {N} fixes | simplify: reverted
+
+**Quality Checks:** All passing
+**Handoff:** To Reviewer for code review
 ```
 
 ### Delivery Findings Capture
