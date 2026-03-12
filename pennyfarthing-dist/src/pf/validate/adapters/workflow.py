@@ -69,15 +69,11 @@ def _get_agent_stems(agents_dir: Path) -> set[str]:
     return {f.stem for f in agents_dir.glob("*.md") if f.name != "README.md"}
 
 
-def _check_agent_ref(
-    agent_name: str, agent_stems: set[str], context: str
-) -> list[str]:
+def _check_agent_ref(agent_name: str, agent_stems: set[str], context: str) -> list[str]:
     """Check if an agent reference exists. Returns warnings for unknown agents."""
     warnings: list[str] = []
     if agent_name and agent_name not in agent_stems:
-        warnings.append(
-            f"Agent '{agent_name}' referenced in {context} not found in agents/"
-        )
+        warnings.append(f"Agent '{agent_name}' referenced in {context} not found in agents/")
     return warnings
 
 
@@ -95,9 +91,7 @@ def validate_common(data: dict, path: Path) -> tuple[list[str], list[str]]:
 
     wtype = data.get("type")
     if wtype is not None and wtype not in VALID_TYPES:
-        errors.append(
-            f"Invalid type '{wtype}' (must be one of: {', '.join(sorted(VALID_TYPES))})"
-        )
+        errors.append(f"Invalid type '{wtype}' (must be one of: {', '.join(sorted(VALID_TYPES))})")
 
     if "description" not in data:
         warnings.append("Missing recommended field: description")
@@ -105,9 +99,7 @@ def validate_common(data: dict, path: Path) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def validate_phased(
-    data: dict, path: Path, agents_dir: Path
-) -> tuple[list[str], list[str]]:
+def validate_phased(data: dict, path: Path, agents_dir: Path) -> tuple[list[str], list[str]]:
     """Validate phased workflow structure.
 
     Returns:
@@ -154,45 +146,32 @@ def validate_phased(
                 f"missing required field: agent"
             )
         else:
-            warnings.extend(
-                _check_agent_ref(agent, agent_stems, f"phase '{phase_name or i}'")
-            )
+            warnings.extend(_check_agent_ref(agent, agent_stems, f"phase '{phase_name or i}'"))
 
         # Gate validation
         gate = phase.get("gate")
         if gate and isinstance(gate, dict):
             gate_type = gate.get("type")
             if gate_type is None:
-                errors.append(
-                    f"Phase '{phase_name or i}' gate missing required field: type"
-                )
+                errors.append(f"Phase '{phase_name or i}' gate missing required field: type")
             elif gate_type not in VALID_GATE_TYPES:
-                warnings.append(
-                    f"Phase '{phase_name or i}' has unknown gate type: "
-                    f"'{gate_type}'"
-                )
+                warnings.append(f"Phase '{phase_name or i}' has unknown gate type: '{gate_type}'")
 
         # Tandem validation
         tandem = phase.get("tandem")
         if tandem is not None:
             label = phase_name or i
             if not isinstance(tandem, dict):
-                errors.append(
-                    f"Phase '{label}' tandem must be a mapping"
-                )
+                errors.append(f"Phase '{label}' tandem must be a mapping")
             else:
                 # partner is required
                 partner = tandem.get("partner")
                 if not partner:
-                    errors.append(
-                        f"Phase '{label}' tandem missing required field: partner"
-                    )
+                    errors.append(f"Phase '{label}' tandem missing required field: partner")
                 else:
                     # Cross-reference partner against known agents
                     warnings.extend(
-                        _check_agent_ref(
-                            partner, agent_stems, f"phase '{label}' tandem partner"
-                        )
+                        _check_agent_ref(partner, agent_stems, f"phase '{label}' tandem partner")
                     )
 
                 # mode validation (optional for backward compat)
@@ -226,34 +205,25 @@ def validate_phased(
                 # triggers validation (must be list)
                 triggers = tandem.get("triggers")
                 if triggers is not None and not isinstance(triggers, list):
-                    errors.append(
-                        f"Phase '{label}' tandem triggers must be a list"
-                    )
+                    errors.append(f"Phase '{label}' tandem triggers must be a list")
 
         # next: directive (optional, must be string)
         next_target = phase.get("next")
         if next_target is not None:
             if not isinstance(next_target, str):
-                errors.append(
-                    f"Phase '{phase_name or i}' next must be a string"
-                )
+                errors.append(f"Phase '{phase_name or i}' next must be a string")
             elif phase_name:
                 next_refs.append((phase_name, next_target))
 
     # Cross-validate next: references point to existing phase names
     for source_phase, target_phase in next_refs:
         if target_phase not in seen_names:
-            errors.append(
-                f"Phase '{source_phase}' next references unknown phase: "
-                f"'{target_phase}'"
-            )
+            errors.append(f"Phase '{source_phase}' next references unknown phase: '{target_phase}'")
 
     return errors, warnings
 
 
-def validate_stepped(
-    data: dict, path: Path, agents_dir: Path
-) -> tuple[list[str], list[str]]:
+def validate_stepped(data: dict, path: Path, agents_dir: Path) -> tuple[list[str], list[str]]:
     """Validate stepped workflow structure.
 
     Returns:
@@ -287,9 +257,7 @@ def validate_stepped(
     return errors, warnings
 
 
-def validate_procedural(
-    data: dict, path: Path, agents_dir: Path
-) -> tuple[list[str], list[str]]:
+def validate_procedural(data: dict, path: Path, agents_dir: Path) -> tuple[list[str], list[str]]:
     """Validate procedural workflow structure.
 
     Returns:
@@ -306,9 +274,7 @@ def validate_procedural(
         warnings.extend(_check_agent_ref(agent, agent_stems, "workflow"))
 
     if "instructions" not in data and "checklist" not in data:
-        warnings.append(
-            "Missing recommended field: instructions or checklist"
-        )
+        warnings.append("Missing recommended field: instructions or checklist")
 
     return errors, warnings
 
@@ -346,18 +312,14 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
 
         if not isinstance(raw, dict) or "workflow" not in raw:
             report.errors += 1
-            report.details.append(
-                f"[ERROR] {path.name}: Missing 'workflow' top-level key"
-            )
+            report.details.append(f"[ERROR] {path.name}: Missing 'workflow' top-level key")
             continue
 
         data = raw["workflow"]
 
         if not isinstance(data, dict):
             report.errors += 1
-            report.details.append(
-                f"[ERROR] {path.name}: 'workflow' must be a mapping"
-            )
+            report.details.append(f"[ERROR] {path.name}: 'workflow' must be a mapping")
             continue
 
         file_errors: list[str] = []
@@ -372,17 +334,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         wtype = data.get("type", "phased")
 
         if wtype == "phased":
-            variant_errors, variant_warnings = validate_phased(
-                data, path, agents_dir
-            )
+            variant_errors, variant_warnings = validate_phased(data, path, agents_dir)
         elif wtype == "stepped":
-            variant_errors, variant_warnings = validate_stepped(
-                data, path, agents_dir
-            )
+            variant_errors, variant_warnings = validate_stepped(data, path, agents_dir)
         elif wtype == "procedural":
-            variant_errors, variant_warnings = validate_procedural(
-                data, path, agents_dir
-            )
+            variant_errors, variant_warnings = validate_procedural(data, path, agents_dir)
         else:
             variant_errors, variant_warnings = [], []
 

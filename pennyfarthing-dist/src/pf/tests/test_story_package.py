@@ -6,8 +6,6 @@ These tests verify the story/ package modules work correctly.
 """
 
 
-
-
 class TestStorySizeModule:
     """Tests for story/size.py module."""
 

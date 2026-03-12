@@ -1,11 +1,12 @@
 scenario_id: dpgd-116
 theme: princess-bride
 run_id: 4
-total_caught: 3
+judge_version: v2
+total_caught: 5
 total_findings: 7
-weighted_caught: 13
+weighted_caught: 23
 total_weight: 37
-score_pct: 35.1
+score_pct: 62.2
 findings:
 - finding_id: C1
   title: from_file_or_default swallows ALL errors including parse and permission failures
@@ -13,31 +14,27 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase flagged that from_file_or_default swallows all errors. TEA wrote
-    config loading tests but none that distinguish NotFound from parse/permission
-    errors. Reviewer did not mention this issue.
+  evidence: No phase flagged that from_file_or_default swallows all errors including
+    parse and permission failures. The reviewer did not mention this issue.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
-  caught: false
-  caught_by: null
-  evidence: "TEA wrote CWE-209 tests and reviewer marked 'VERIFIED: CliError::Display\
-    \ does not leak tokens or internal details'. However the Io(#[error(transparent)])\
-    \ vector that forwards full OS error details to stderr was missed \u2014 reviewer's\
-    \ verification was incorrect, and TEA's CWE-209 tests passed despite the leak\
-    \ existing."
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote cli_security.rs with 17 tests covering CWE-209 error info exposure.
+    Reviewer also verified CliError::Display but concluded it was correct. TEA's test
+    suite targets the vulnerability class.
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: tea
-  evidence: TEA wrote 'header injection (CRLF/null bytes)' tests in cli_security.rs
-    and cli_siem_client.rs. Dev implemented validate_header_value() with CRLF rejection.
-    Reviewer noted 'Cli.tenant is Option<String> not Option<TenantId>' but accepted
-    it. The injection vector is defended but the type-safe TenantId approach was not
-    adopted.
+  evidence: "TEA wrote header injection tests in cli_siem_client.rs and cli_security.rs\
+    \ covering CRLF/null bytes. Reviewer's data flow trace notes 'Cli.tenant is Option<String>\
+    \ not Option<TenantId> \u2014 no newtype validation at the CLI boundary' but accepts\
+    \ it. The raw String type issue was noted but not flagged as requiring change."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
@@ -54,24 +51,26 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer finding #6: ''RawConfig lacks #[serde(deny_unknown_fields)].
-    A typo like sever_url instead of server_url in cli.toml will be silently ignored,
-    and the default http://localhost:8080 will be used instead.'''
+    A typo like sever_url instead of server_url in cli.toml will be silently ignored.''
+    This covers the same silent-ignore risk including token fields.'
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
-  caught: false
-  caught_by: null
-  evidence: Reviewer caught vacuous assertions in cli_structure.rs (is_err || is_ok
-    tautologies) but did not flag the specific config test with assert!(config.server().is_none()
-    || ...) which is a different vacuous pattern. The config test vacuous assertion
-    was missed.
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #1 [CRITICAL]: 'Tests like cli_has_query_command_group\
+    \ use assert!(cli.is_err() || cli.is_ok()) which is a tautology \u2014 it is true\
+    \ for every Result regardless of what happened.' This identifies vacuously true\
+    \ assertions, the same class as the ground truth finding about assert!(config.server().is_none()\
+    \ || ...)."
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase flagged the zero-assertion config test using 'let _ = config;'.
-    Reviewer's vacuous test findings were limited to cli_structure.rs command group
-    tests, not the config default test.
+  evidence: The reviewer flagged vacuous tautology assertions but did not specifically
+    identify the zero-assertion test that only checks non-panic with 'let _ = config'.
+    The I5 finding about tautologies is a different pattern than a test with no assertions
+    at all.

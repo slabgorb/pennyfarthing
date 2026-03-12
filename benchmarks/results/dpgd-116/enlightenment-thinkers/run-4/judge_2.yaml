@@ -1,0 +1,78 @@
+scenario_id: dpgd-116
+theme: enlightenment-thinkers
+run_id: 4
+judge_version: v2
+judge_pass: 2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged from_file_or_default swallowing all errors. The config
+    loading tests and implementation don't distinguish NotFound from parse/permission
+    errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged: ''Config variant exposes its inner string in the Display
+    impl... could leak filesystem paths to the operator. Meanwhile, ServerError and
+    NotFound deliberately hide their inner strings in Display. The inconsistency means
+    config errors leak details while other errors don''t.'' TEA also wrote CWE-209
+    security tests.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote CWE-113 header injection tests for CRLF in tenant ID. Dev implemented
+    CRLF sanitization in client.rs:41-44. Same vulnerability class (CWE-113) addressed,
+    though via sanitization rather than using validated TenantId type.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "Reviewer explicitly marked '[VERIFIED] All workspace dependencies declared\
+    \ at workspace level' \u2014 the opposite conclusion from the ground truth. Examining\
+    \ the code and reaching the wrong conclusion means not caught."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged: 'RawConfig silently ignores unknown fields \u2014 deny_unknown_fields\
+    \ not set... an operator who puts their token in the config file thinking it works\
+    \ gets no warning that their secret is being ignored. Consider #[serde(deny_unknown_fields)]\
+    \ or detect and warn.'"
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged vacuous tests: 'token_rejects_newline_injection test\
+    \ has no assertion \u2014 vacuous test' and 'config_file_with_token_field_is_rejected_or_ignored\
+    \ test has no meaningful assertion.' Same category (vacuous/meaningless assertions),\
+    \ different test instances."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged 'token_rejects_newline_injection test has no assertion\
+    \ \u2014 vacuous test... There's no assert! in the function body.' Same category\
+    \ \u2014 test with zero assertions that only checks non-panic."

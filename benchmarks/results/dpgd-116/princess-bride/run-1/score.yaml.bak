@@ -1,0 +1,78 @@
+scenario_id: dpgd-116
+theme: princess-bride
+run_id: 1
+total_caught: 4
+total_findings: 7
+weighted_caught: 20
+total_weight: 37
+score_pct: 54.1
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors. The
+    reviewer flagged AXIATHON_TIMEOUT silent swallowing and vacuous config tests,
+    but never called out the broader from_file_or_default pattern that treats parse/permission
+    errors the same as NotFound.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: TEA wrote a test named 'error_messages_no_internal_details' in cli_security.rs,
+    but the reviewer flagged the doubled eprintln issue without addressing the CWE-209
+    Display leak. No phase implemented a user_message() sanitization method or flagged
+    that Io(transparent) forwards full OS error details to stderr.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged [MEDIUM]: ''--tenant accepts raw String with no validation''
+    at cli.rs:39, noting per rust.md newtypes should be used and validated constructors
+    at trust boundaries. However, the specific CRLF/header injection risk was partially
+    addressed by Dev (newline stripping in client.rs) rather than using TenantId from
+    axiathon-core.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that dependencies like clap_complete, comfy-table, csv,
+    dirs, reqwest, and toml use direct version strings instead of workspace = true.
+    The reviewer noted version divergence (dirs 5 vs spec 6, toml 0.8 vs spec 0.9)
+    but not the workspace = true pattern issue.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM]: 'ConfigFile silently accepts unknown fields\
+    \ (including token)' \u2014 noted missing #[serde(deny_unknown_fields)] and that\
+    \ a config with token = 'my-secret' parses without warning, with the related test\
+    \ being a tautology."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM]: 'config_does_not_store_tokens_in_file' test\
+    \ asserts 'result.is_ok() || result.is_err()' \u2014 a tautology that is always\
+    \ true, calling it a vacuous assertion that catches nothing."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM]: 'config_handles_nonexistent_file_path has\
+    \ vacuous assertion' \u2014 same pattern: assert!(result.is_ok() || result.is_err())\
+    \ is always true, test never verifies defaults or error, only checks non-panic."

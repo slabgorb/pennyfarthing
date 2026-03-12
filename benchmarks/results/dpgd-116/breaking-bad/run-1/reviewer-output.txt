@@ -1,0 +1,81 @@
+I've now completed a thorough review. Here's my structured findings:
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*Reviewed with exhausted thoroughness. No half measures.*
+
+## Observations
+
+### [HIGH] Nightly `cargo fmt` check fails — `client.rs:91`, `commands/init.rs:6`
+
+`cargo +nightly fmt --all --check` reports formatting diffs in two files. Per gotchas.md, nightly fmt must pass before approval. This is a blocking issue.
+
+### [HIGH] `ConfigFile` silently ignores unknown fields including `token` at `config.rs:7-16`
+
+The `ConfigFile` and `ServerConfig` structs use serde's default behavior which silently drops unknown fields. The test `config_does_not_store_tokens` (`config_loading.rs:172-198`) appears to validate that tokens aren't stored in config, but it's actually vacuous: it checks `has_token_field()` which is hardcoded to return `false` (`config.rs:107`). A user could put `token = "secret"` in their config file and it would be silently ignored — no warning, no error. This is a **security UX concern**: operators may believe their token is being used from config when it's silently dropped. Either `#[serde(deny_unknown_fields)]` should be on `ServerConfig` to reject it explicitly, or a warning should be emitted.
+
+### [HIGH] Missing `main.rs` binary entry point
+
+The story requires a `crates/axiathon-client/src/main.rs` as the binary entry point (AC-3 says main.rs catches errors and calls `std::process::exit()`). No `main.rs` exists. The crate is library-only. Without `main.rs`, there is no `axiathon` binary, which is the entire point of this story. The `[[bin]]` section is also missing from `Cargo.toml`.
+
+### [MEDIUM] `has_token_field()` is a no-op stub — `config.rs:106-108`
+
+`has_token_field()` always returns `false` regardless of what was in the config file. The test at `config_loading.rs:193` that uses it is vacuous — it can never fail. This method should actually detect if a token-like field was present in the parsed TOML and warn/reject.
+
+### [MEDIUM] Completion handler silently returns on invalid shell — `commands/completion.rs:20`
+
+`generate_completion()` does `return` (silently, no error) for unrecognized shell names. AC-9 doesn't require an error, but silent no-output is confusing for operators. The `Completion` variant in `cli.rs:122` takes `shell: String` — it should be a `clap::ValueEnum` (like `Shell` from `clap_complete`) or validated at parse time.
+
+### [MEDIUM] JSON metadata has hardcoded placeholder values — `output.rs:99-102`
+
+The `ResponseMetadata` in JSON output uses `"00000000-0000-0000-0000-000000000000"` as request_id and `"1970-01-01T00:00:00Z"` as timestamp. These are Unix epoch and nil UUID — real request tracking won't work. AC-4 says JSON includes `ResponseMetadata (request_id, timestamp, api_version)`. These should be generated dynamically or the approach documented as intentionally deferred.
+
+### [MEDIUM] CSV write errors silently swallowed — `output.rs:110-115`
+
+`let _ = wtr.write_record(headers)` and `let _ = wtr.write_record(row)` discard errors. If a write fails (e.g., invalid data), the output will be silently truncated. Per Rust rules in CLAUDE.md: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." `let _ =` is arguably worse than `unwrap()` — it actively hides failures.
+
+### [MEDIUM] `toml` version mismatch — workspace declares `0.8`, story spec says `0.9`
+
+`Cargo.toml:49` declares `toml = "0.8"` but the story Technical Guardrails specify `toml` 0.9. This could matter for TOML 1.0 features or API differences.
+
+### [LOW] Env var tests use `unsafe { std::env::set_var }` with only comment-based safety justification — `config_loading.rs:111`, `global_flags.rs:122`
+
+Tests use `unsafe { std::env::set_var(...) }` with `#![allow(unsafe_code)]` at file level. The safety comment says "test is single-threaded" but Rust tests run in parallel by default. These tests could race with each other if they share env var names. The `AXIATHON_SERVER` var is used in both `global_flags.rs` and potentially `config_loading.rs` via `with_env_overrides()`.
+
+### [LOW] `exit_code_success_is_zero` test is vacuous — `exit_codes.rs:14-18`
+
+`assert_eq!(0_i32, 0, "success exit code must be 0 (sanity check)")` asserts a literal equals itself. It tests nothing about the actual codebase.
+
+### [LOW] `config_handles_empty_file` assertion is vacuous — `config_loading.rs:85-88`
+
+`assert!(!config.server_url().is_empty() || config.server_url().is_empty(), ...)` is a tautology — `A || !A` is always true. This test can never fail.
+
+### [VERIFIED] CWE-113 header injection prevented at `cli.rs:8-13`
+
+`validate_no_newlines` correctly rejects `\n` and `\r` in `--server` flag. reqwest also rejects invalid header values at request time, providing defense in depth. The SiemClient CRLF test at `siem_client.rs:291-319` confirms reqwest blocks injection for tenant/token headers.
+
+### [VERIFIED] Exit code mapping complete at `error.rs:44-54`
+
+All `CliError` variants map to documented exit codes (0/1/2/3/4). Test coverage at `exit_codes.rs` is thorough for all variants.
+
+### [VERIFIED] Dependency isolation — no server-side crate imports
+
+`Cargo.toml` depends only on `axiathon-core`. No imports of storage, detection, ingestion, or query crates.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present at `lib.rs:2`
+
+Production code correctly forbids unsafe. Test files appropriately use `#![allow(unsafe_code)]` only where needed for env var manipulation.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three HIGH issues block approval:
+
+1. **Nightly fmt fails** — must pass per gotchas.md
+2. **No `main.rs`** — the story's primary deliverable (the `axiathon` binary) doesn't exist
+3. **Silent token field handling** — security concern with vacuous test coverage
+
+The missing binary entry point is the most critical: without `main.rs`, there is no CLI tool. The fmt fix is mechanical. The token field handling needs either `deny_unknown_fields` on `ServerConfig` or an explicit warning when token-like fields are detected in the config file.

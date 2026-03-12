@@ -75,7 +75,7 @@ def _sanitize_gate_name(gate_ref: str) -> str | None:
     name = gate_ref
     # Strip gates/ prefix
     if name.startswith("gates/"):
-        name = name[len("gates/"):]
+        name = name[len("gates/") :]
     # Strip .md suffix
     if name.endswith(".md"):
         name = name[: -len(".md")]
@@ -128,9 +128,7 @@ def resolve_gate_extensions(
         project_root = _find_project_root()
 
     config = load_repos_yaml_raw(project_root)
-    extensions = (
-        config.get("gates", {}).get("extensions", {}).get(gate_name, [])
-    )
+    extensions = config.get("gates", {}).get("extensions", {}).get(gate_name, [])
 
     if not extensions:
         return {"success": True, "data": [], "error": None}
@@ -143,8 +141,7 @@ def resolve_gate_extensions(
                 "success": False,
                 "data": [],
                 "error": (
-                    f"Extension gate '{ext_name}' for '{gate_name}' "
-                    f"not found: {result['error']}"
+                    f"Extension gate '{ext_name}' for '{gate_name}' not found: {result['error']}"
                 ),
             }
         resolved.append(f"gates/{_sanitize_gate_name(ext_name)}")

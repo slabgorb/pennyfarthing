@@ -94,7 +94,7 @@ def calculate_std_dev(values: list[float], mean: float) -> float:
 
 
 def _parse_directory_name(dir_name: str) -> tuple[str, str] | None:
-    match = re.match(r'^(.+)-(\d{8}(?:T\d{6}Z?|-\d{6})?)$', dir_name)
+    match = re.match(r"^(.+)-(\d{8}(?:T\d{6}Z?|-\d{6})?)$", dir_name)
     if not match:
         return None
     return match.group(1), match.group(2)
@@ -125,7 +125,11 @@ def _parse_summary_yaml(file_path: str, theme_name: str) -> dict[str, Any] | Non
         if not data:
             return None
         theme = (data.get("meta") or {}).get("theme") or data.get("theme") or theme_name
-        timestamp = (data.get("meta") or {}).get("timestamp") or data.get("timestamp") or datetime.now(UTC).isoformat()
+        timestamp = (
+            (data.get("meta") or {}).get("timestamp")
+            or data.get("timestamp")
+            or datetime.now(UTC).isoformat()
+        )
         scores: list[dict[str, Any]] = []
         matrix = data.get("matrix")
         if matrix:
@@ -135,7 +139,9 @@ def _parse_summary_yaml(file_path: str, theme_name: str) -> dict[str, Any] | Non
                     for role in roles:
                         score = row.get(role)
                         if isinstance(score, (int, float)):
-                            scores.append({"character": row["character"], "role": role, "score": float(score)})
+                            scores.append(
+                                {"character": row["character"], "role": role, "score": float(score)}
+                            )
             elif isinstance(matrix, dict):
                 for char, role_scores in matrix.items():
                     if char in ("headers", "rows"):
@@ -143,14 +149,23 @@ def _parse_summary_yaml(file_path: str, theme_name: str) -> dict[str, Any] | Non
                     if isinstance(role_scores, dict):
                         for role, score in role_scores.items():
                             if isinstance(score, (int, float)):
-                                scores.append({"character": char, "role": role, "score": float(score)})
+                                scores.append(
+                                    {"character": char, "role": role, "score": float(score)}
+                                )
         if not scores:
             rr = data.get("role_rankings")
             if rr:
                 for role, rankings in rr.items():
                     for entry in rankings:
-                        scores.append({"character": entry["character"], "role": role, "score": entry["score"]})
-        return {"theme": theme, "timestamp": timestamp, "champions": data.get("champions", {}), "scores": scores}
+                        scores.append(
+                            {"character": entry["character"], "role": role, "score": entry["score"]}
+                        )
+        return {
+            "theme": theme,
+            "timestamp": timestamp,
+            "champions": data.get("champions", {}),
+            "scores": scores,
+        }
     except Exception:
         return None
 
@@ -187,18 +202,31 @@ def aggregate_job_fair_results(results_dir: str) -> AggregateStats:
             mean_score=mean,
             std_dev=std_dev,
             baseline_comparison=mean - overall_mean,
-            top_performers=[Performer(character=e["character"], theme=e["theme"], score=e["score"]) for e in sorted_entries[:5]],
+            top_performers=[
+                Performer(character=e["character"], theme=e["theme"], score=e["score"])
+                for e in sorted_entries[:5]
+            ],
         )
 
     char_avgs: dict[str, dict[str, Any]] = {}
     for result in all_results:
         for s in result["scores"]:
             key = f"{s['character']}|{result['theme']}"
-            char_avgs.setdefault(key, {"theme": result["theme"], "scores": []})["scores"].append(s["score"])
+            char_avgs.setdefault(key, {"theme": result["theme"], "scores": []})["scores"].append(
+                s["score"]
+            )
 
     overall_champions = sorted(
-        [OverallChampion(character=k.split("|")[0], theme=v["theme"], avg_score=sum(v["scores"]) / len(v["scores"])) for k, v in char_avgs.items()],
-        key=lambda c: c.avg_score, reverse=True,
+        [
+            OverallChampion(
+                character=k.split("|")[0],
+                theme=v["theme"],
+                avg_score=sum(v["scores"]) / len(v["scores"]),
+            )
+            for k, v in char_avgs.items()
+        ],
+        key=lambda c: c.avg_score,
+        reverse=True,
     )[:10]
 
     historical_trend = _load_historical_trend(results_dir)
@@ -219,7 +247,9 @@ def get_baseline_comparison(role: str, results_dir: str) -> float | None:
 
 def get_role_statistics(role: str, results_dir: str) -> RoleStats:
     stats = aggregate_job_fair_results(results_dir)
-    return stats.by_role.get(role, RoleStats(mean_score=0, std_dev=0, baseline_comparison=None, top_performers=[]))
+    return stats.by_role.get(
+        role, RoleStats(mean_score=0, std_dev=0, baseline_comparison=None, top_performers=[])
+    )
 
 
 def get_top_performers(role: str, limit: int, results_dir: str) -> list[Performer]:
@@ -236,7 +266,10 @@ def _load_historical_trend(results_dir: str) -> list[TrendPoint]:
         return []
     try:
         data = yaml.safe_load(Path(history_path).read_text())
-        return [TrendPoint(date=s["date"], mean=s["mean"], variance=s["variance"], role=s.get("role")) for s in (data or {}).get("snapshots", [])]
+        return [
+            TrendPoint(date=s["date"], mean=s["mean"], variance=s["variance"], role=s.get("role"))
+            for s in (data or {}).get("snapshots", [])
+        ]
     except Exception:
         return []
 
@@ -252,9 +285,17 @@ def save_historical_snapshot(results_dir: str) -> None:
     stats = aggregate_job_fair_results(results_dir)
     role_means = [rs.mean_score for rs in stats.by_role.values()]
     overall_mean = sum(role_means) / len(role_means) if role_means else 0
-    overall_variance = sum((m - overall_mean) ** 2 for m in role_means) / len(role_means) if len(role_means) > 1 else 0
+    overall_variance = (
+        sum((m - overall_mean) ** 2 for m in role_means) / len(role_means)
+        if len(role_means) > 1
+        else 0
+    )
 
-    new_point = {"date": datetime.now(UTC).strftime("%Y-%m-%d"), "mean": overall_mean, "variance": overall_variance}
+    new_point = {
+        "date": datetime.now(UTC).strftime("%Y-%m-%d"),
+        "mean": overall_mean,
+        "variance": overall_variance,
+    }
 
     existing = _load_historical_trend(results_dir)
     snapshots = [{"date": t.date, "mean": t.mean, "variance": t.variance} for t in existing]
@@ -280,7 +321,9 @@ def _default_themes_dir() -> str:
     return os.path.join(os.path.dirname(__file__), "..", "..", "..", "personas", "themes")
 
 
-def aggregate_by_dimension(dimension: str, results_dir: str, themes_dir: str | None = None) -> DimensionStats:
+def aggregate_by_dimension(
+    dimension: str, results_dir: str, themes_dir: str | None = None
+) -> DimensionStats:
     themes_dir = themes_dir or _default_themes_dir()
     latest_runs = _get_latest_run_per_theme(results_dir)
 
@@ -301,7 +344,9 @@ def aggregate_by_dimension(dimension: str, results_dir: str, themes_dir: str | N
             continue
         result = _parse_summary_yaml(summary_path, theme)
         if result and result["scores"]:
-            theme_scores[theme] = [{"role": s["role"], "score": s["score"]} for s in result["scores"]]
+            theme_scores[theme] = [
+                {"role": s["role"], "score": s["score"]} for s in result["scores"]
+            ]
 
     values: list[DimensionValueStats] = []
     for value, themes in themes_by_value.items():
@@ -314,21 +359,44 @@ def aggregate_by_dimension(dimension: str, results_dir: str, themes_dir: str | N
         by_role: dict[str, dict[str, float]] = {}
         for role, scores in role_scores.items():
             mean = sum(scores) / len(scores)
-            by_role[role] = {"mean_score": mean, "std_dev": calculate_std_dev(scores, mean), "n": float(len(scores))}
+            by_role[role] = {
+                "mean_score": mean,
+                "std_dev": calculate_std_dev(scores, mean),
+                "n": float(len(scores)),
+            }
         overall_mean = sum(total_scores) / len(total_scores) if total_scores else 0
-        values.append(DimensionValueStats(value=value, themes=themes, sample_size=len(total_scores), by_role=by_role, overall_mean=overall_mean))
+        values.append(
+            DimensionValueStats(
+                value=value,
+                themes=themes,
+                sample_size=len(total_scores),
+                by_role=by_role,
+                overall_mean=overall_mean,
+            )
+        )
 
     comparisons: list[DimensionComparison] = []
     for i in range(len(values)):
         for j in range(i + 1, len(values)):
             a, b = values[i], values[j]
             delta = a.overall_mean - b.overall_mean
-            comparisons.append(DimensionComparison(
-                dimension=dimension, value_a=a.value, value_b=b.value,
-                delta=delta, significance="not_significant", by_role={},
-            ))
+            comparisons.append(
+                DimensionComparison(
+                    dimension=dimension,
+                    value_a=a.value,
+                    value_b=b.value,
+                    delta=delta,
+                    significance="not_significant",
+                    by_role={},
+                )
+            )
 
-    return DimensionStats(dimension=dimension, last_updated=datetime.now(UTC).isoformat(), values=values, comparisons=comparisons)
+    return DimensionStats(
+        dimension=dimension,
+        last_updated=datetime.now(UTC).isoformat(),
+        values=values,
+        comparisons=comparisons,
+    )
 
 
 def get_dimension_values(dimension: str, themes_dir: str | None = None) -> list[dict[str, Any]]:
@@ -344,12 +412,25 @@ def get_dimension_values(dimension: str, themes_dir: str | None = None) -> list[
         if dims and dims.get(dimension):
             val = dims[dimension]
             counts[val] = counts.get(val, 0) + 1
-    return sorted([{"value": v, "theme_count": c} for v, c in counts.items()], key=lambda x: x["theme_count"], reverse=True)
+    return sorted(
+        [{"value": v, "theme_count": c} for v, c in counts.items()],
+        key=lambda x: x["theme_count"],
+        reverse=True,
+    )
 
 
-def generate_differential_report(dimension: str, results_dir: str, themes_dir: str | None = None) -> str:
+def generate_differential_report(
+    dimension: str, results_dir: str, themes_dir: str | None = None
+) -> str:
     stats = aggregate_by_dimension(dimension, results_dir, themes_dir)
-    lines = [f"# Differential Report: {dimension}", "", f"Generated: {stats.last_updated}", "", "## Summary by Value", ""]
+    lines = [
+        f"# Differential Report: {dimension}",
+        "",
+        f"Generated: {stats.last_updated}",
+        "",
+        "## Summary by Value",
+        "",
+    ]
     sorted_values = sorted(stats.values, key=lambda v: v.overall_mean, reverse=True)
     for v in sorted_values:
         lines.append(f"### {v.value}")
@@ -360,13 +441,17 @@ def generate_differential_report(dimension: str, results_dir: str, themes_dir: s
         lines.append("| Role | Mean | Std Dev | N |")
         lines.append("|------|------|---------|---|")
         for role, rs in v.by_role.items():
-            lines.append(f"| {role} | {rs['mean_score']:.2f} | {rs['std_dev']:.2f} | {int(rs['n'])} |")
+            lines.append(
+                f"| {role} | {rs['mean_score']:.2f} | {rs['std_dev']:.2f} | {int(rs['n'])} |"
+            )
         lines.append("")
     lines.append("## Pairwise Comparisons")
     lines.append("")
     for comp in stats.comparisons:
         direction = ">" if comp.delta > 0 else "<" if comp.delta < 0 else "="
         lines.append(f"### {comp.value_a} {direction} {comp.value_b}")
-        lines.append(f"- Delta: {'+' if comp.delta > 0 else ''}{comp.delta:.2f} ({comp.significance})")
+        lines.append(
+            f"- Delta: {'+' if comp.delta > 0 else ''}{comp.delta:.2f} ({comp.significance})"
+        )
         lines.append("")
     return "\n".join(lines)

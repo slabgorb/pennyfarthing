@@ -39,7 +39,9 @@ def get_archive_path(project_root: Path | None = None) -> Path:
     sprint_info = sprint_data["sprint"]
 
     sprint_name = sprint_info.get("jira_sprint_name", "")
-    sprint_id = sprint_name.split()[-1] if sprint_name else str(sprint_info.get("number", "unknown"))
+    sprint_id = (
+        sprint_name.split()[-1] if sprint_name else str(sprint_info.get("number", "unknown"))
+    )
 
     archive_path = root / "sprint" / "archive" / f"sprint-{sprint_id}-completed.yaml"
     return archive_path
@@ -309,10 +311,12 @@ def get_completed_epics(project_root: Path | None = None) -> list[dict[str, Any]
     for epic in sprint_data["epics"]:
         is_complete, incomplete_stories = is_epic_complete(epic)
         if is_complete:
-            completed.append({
-                "epic": epic,
-                "incomplete_stories": incomplete_stories,
-            })
+            completed.append(
+                {
+                    "epic": epic,
+                    "incomplete_stories": incomplete_stories,
+                }
+            )
 
     return completed
 
@@ -436,13 +440,15 @@ def archive_epic(
     for story in epic.get("stories", []):
         story_id = story.get("id", "")
         if story_id and story_id not in existing_ids:
-            archive_data["completed_stories"].append({
-                "id": story_id,
-                "epic": epic_jira_ref,
-                "title": story.get("title", ""),
-                "points": story.get("points", 0),
-                "completed": story.get("completed", date.today().isoformat()),
-            })
+            archive_data["completed_stories"].append(
+                {
+                    "id": story_id,
+                    "epic": epic_jira_ref,
+                    "title": story.get("title", ""),
+                    "points": story.get("points", 0),
+                    "completed": story.get("completed", date.today().isoformat()),
+                }
+            )
 
     _write_archive_file(archive_path, archive_data)
 
@@ -466,6 +472,7 @@ def archive_epic(
                 new_epics.append(item)
 
     from ruamel.yaml.comments import CommentedSeq
+
     index_data["epics"] = CommentedSeq(new_epics)
     _write_yaml_file(sprint_path, index_data)
 
@@ -564,9 +571,7 @@ def main(args: list[str] | None = None) -> int:
     import argparse
     import sys
 
-    parser = argparse.ArgumentParser(
-        description="Archive completed epics from current sprint"
-    )
+    parser = argparse.ArgumentParser(description="Archive completed epics from current sprint")
     parser.add_argument(
         "epic_id",
         nargs="?",
@@ -622,4 +627,5 @@ def main(args: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

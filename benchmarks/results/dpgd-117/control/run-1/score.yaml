@@ -1,11 +1,12 @@
 scenario_id: dpgd-117
 theme: null
 run_id: 1
-total_caught: 3
+judge_version: v2
+total_caught: 2
 total_findings: 10
-weighted_caught: 15
+weighted_caught: 10
 total_weight: 52
-score_pct: 28.8
+score_pct: 19.2
 findings:
 - finding_id: I1
   title: Dependencies inline instead of workspace level
@@ -13,59 +14,64 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase mentioned workspace-level dependency declarations or flagged
-    inline version specifications.
+  evidence: The reviewer flagged 'six unused crate dependencies' but did not flag
+    that dependencies specify versions inline instead of using workspace = true. The
+    DEV phase added chrono, uuid, tower dependencies but no mention of workspace-level
+    declarations.
 - finding_id: I2
   title: 'FieldErrorCode missing #[non_exhaustive]'
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged: '#[non_exhaustive] not applied to any public enums/structs'\
-    \ \u2014 though it references DetectionServices/StorageServices rather than FieldErrorCode\
-    \ specifically, the general principle was caught."
+  evidence: "Reviewer finding [LOW]: '#[non_exhaustive] missing on public enums \u2014\
+    \ lib.rs:271-276' \u2014 mentions public structs without #[non_exhaustive] and\
+    \ references the rust.md rule. While this flags structs rather than FieldErrorCode\
+    \ specifically, it demonstrates awareness of the missing #[non_exhaustive] pattern\
+    \ on public types."
 - finding_id: I3
   title: Hardcoded trace_id 'none'
   weight: 5
   phase_ideal: dev
-  caught: true
-  caught_by: reviewer
-  evidence: "Reviewer flagged: 'trace_id is a random UUID unrelated to any actual\
-    \ distributed trace' and 'the trace_id field is misleading \u2014 it looks like\
-    \ it correlates with a span but doesn't.'"
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the hardcoded 'none' trace_id in ResponseMeta. The reviewer
+    mentioned trace_id in context of tracing spans but did not specifically call out
+    the hardcoded value in ResponseMeta.
 - finding_id: I4
   title: Zero structured logging
   weight: 5
   phase_ideal: dev
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged: 'No structured logging or tracing anywhere \u2014 tracing\
-    \ dependency unused. Neither is imported or used anywhere in the source.'"
+  evidence: "Reviewer finding [HIGH]: 'No structured logging / tracing anywhere \u2014\
+    \ lib.rs (entire file)' \u2014 explicitly states 'There is zero tracing instrumentation\
+    \ in the server \u2014 no #[instrument], no tracing::info!(), no span creation.'"
 - finding_id: I5
   title: Security comment claims tracing that doesn't exist
   weight: 3
   phase_ideal: reviewer
   caught: false
   caught_by: null
-  evidence: Reviewer noted missing SECURITY comments on error-facing code but did
-    not specifically flag that existing security comments claim logging that doesn't
-    exist.
+  evidence: No phase flagged the misleading SECURITY comment that claims errors are
+    'logged for debugging' when no logging exists. The reviewer flagged the absence
+    of logging but did not specifically call out the misleading comment.
 - finding_id: I6
   title: Non-ASCII tenant header silently treated as missing
   weight: 8
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: TEA's authentication tests cover missing/empty/malformed headers but no
-    test for non-ASCII characters in X-Tenant-ID header.
+  evidence: No test was written for non-ASCII characters in the X-Tenant-ID header.
+    TEA's security tests cover other edge cases but not this specific scenario.
 - finding_id: I7
   title: "CWE-209 test gap \u2014 no body assertion"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: TEA wrote CWE-209 tests in the security module but the ground truth states
-    the test only checks status code, not response body content. No phase flagged
+  evidence: TEA wrote a CWE-209 test in security.rs but the ground truth states it
+    only checks status code without asserting on response body content. No phase flagged
     this gap.
 - finding_id: I8
   title: CORS preflight test doesn't verify CORS headers
@@ -73,21 +79,22 @@ findings:
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No CORS preflight test appears in the TEA test list, and no phase flagged
-    missing CORS header assertions.
+  evidence: No CORS preflight test is mentioned in the TEA output. The test suites
+    listed do not include CORS header verification tests.
 - finding_id: I9
   title: "Wrong log levels \u2014 error! for 4xx client errors"
   weight: 5
   phase_ideal: reviewer
   caught: false
   caught_by: null
-  evidence: While the reviewer flagged the absence of logging entirely (I4), no phase
-    addressed the nuance of using warn! for 4xx vs error! for 5xx.
+  evidence: Since I4 (no logging at all) was flagged but no logging was added by Dev,
+    I9 (wrong log levels after adding logging) could not have been caught. No phase
+    discussed appropriate log levels for 4xx vs 5xx.
 - finding_id: I10
   title: CORS allows Any origin/method/header (CWE-942)
   weight: 8
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase flagged the CORS middleware using Any for origin/method/header,
-    which is a CWE-942 violation.
+  evidence: No phase flagged the CORS configuration using Any origin/method/header.
+    The CORS middleware with allow_origin(Any) was not mentioned in any review finding.

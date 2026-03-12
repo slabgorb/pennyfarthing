@@ -448,9 +448,7 @@ class TestFormatRecoveryOutcomeValidationFailed:
 
     def test_created_but_invalid_story_includes_story_path(self) -> None:
         """AC7: Story context warning includes story path."""
-        result = format_recovery_outcome(
-            "story", "131-2", created=True, validated=False
-        )
+        result = format_recovery_outcome("story", "131-2", created=True, validated=False)
         assert "sprint/context/context-story-131-2.md" in result["message"]
 
     def test_created_but_invalid_severity_is_warning(self) -> None:
@@ -475,9 +473,7 @@ class TestFormatRecoveryOutcomeCreationFailed:
 
     def test_creation_failed_story_includes_story_command(self) -> None:
         """AC8: Story creation failure includes story command."""
-        result = format_recovery_outcome(
-            "story", "131-2", created=False, validated=None
-        )
+        result = format_recovery_outcome("story", "131-2", created=False, validated=None)
         assert "/pf-context create story 131-2" in result["message"]
 
     def test_creation_failed_severity_is_error(self) -> None:

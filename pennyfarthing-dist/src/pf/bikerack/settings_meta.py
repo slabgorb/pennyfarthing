@@ -147,6 +147,27 @@ _SPECS: list[SettingSpec] = [
         description="Show Claude Code status line",
     ),
     SettingSpec(
+        key="workflow.startup_agent",
+        label="Startup Agent",
+        widget_type="select",
+        group="Workflow",
+        options=[
+            ("Scrum Master", "sm"),
+            ("Developer", "dev"),
+            ("Test Engineer", "tea"),
+            ("Reviewer", "reviewer"),
+            ("Architect", "architect"),
+            ("Product Manager", "pm"),
+            ("Tech Writer", "tech-writer"),
+            ("UX Designer", "ux-designer"),
+            ("DevOps", "devops"),
+            ("Business Analyst", "ba"),
+            ("Orchestrator", "orchestrator"),
+            ("None", "none"),
+        ],
+        description="Agent to auto-invoke when starting a new session",
+    ),
+    SettingSpec(
         key="tui.toasts",
         label="Toast Notifications",
         widget_type="switch",
@@ -170,9 +191,7 @@ for _spec in _SPECS:
 HIDDEN_KEYS: set[str] = {"last_panel", "layout", "split", "display.colorPreset"}
 
 
-def _flatten_defaults(
-    data: dict[str, Any], prefix: str = ""
-) -> list[tuple[str, Any]]:
+def _flatten_defaults(data: dict[str, Any], prefix: str = "") -> list[tuple[str, Any]]:
     """Walk a nested dict yielding (dot_path, value) pairs."""
     items: list[tuple[str, Any]] = []
     for key, value in data.items():

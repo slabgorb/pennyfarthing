@@ -1,0 +1,92 @@
+Now I have a comprehensive view of the implementation. Here is my adversarial review.
+
+---
+
+# Story 6.1 — Adversarial Code Review
+
+*"Causality, mon ami. I drink my wine, I smoke my cigarette, and I trace every cause to its effect."*
+
+## Observations
+
+### [HIGH] `main.rs` does not dispatch commands, call `exit_code()`, or write errors to stderr — `at crates/axiathon-client/src/main.rs:8-10`
+
+`main.rs` parses the CLI and discards the result: `let _cli = Cli::parse();`. There is:
+- No `match` on `cli.command` to dispatch to handlers or stubs
+- No `std::process::exit()` call with `CliError::exit_code()`
+- No printing of errors to stderr
+- No invocation of `generate_completion()` for the `Completion` variant
+
+AC-3 requires errors printed to stderr and exit codes used via `process::exit()`. AC-9 requires `axiathon completion <shell>` to actually generate output. AC-10 requires stubs to print "not yet implemented (Story X.Y)" and exit 1. **None of this is wired up.** The binary parses args then silently exits 0 for every command. The tests for stubs (stub_handlers.rs) only test `CliError` construction in isolation — they never exercise the actual binary behavior.
+
+### [HIGH] `SiemClient::new()` bypasses header injection validation — `at crates/axiathon-client/src/client.rs:17-24`
+
+`SiemClient::new()` is public and performs zero validation. `try_new()` exists with CRLF checks, but `new()` is the simpler constructor that callers will naturally reach for. Nothing prevents `new()` from being called with `\r\n`-injected tokens. The doc comment even says "Does not validate inputs." Since `new()` is public API, this is a CWE-113 risk. Either: (a) make `new()` private and force callers through `try_new()`, or (b) add validation to `new()` and remove `try_new()`.
+
+### [MEDIUM] `toml` version mismatch in workspace `Cargo.toml` — `at Cargo.toml:62`
+
+Workspace declares `toml = "0.8"` but the story spec says `toml` 0.9. This may or may not be intentional (0.9 may not exist yet), but it contradicts the technical guardrails document.
+
+### [MEDIUM] No TTY auto-detection for output format — `at crates/axiathon-client/src/output.rs:1-84`
+
+AC-4 requires: "Table default for TTY, JSON for piped output." The code defaults to `Table` unconditionally. There is no `std::io::IsTerminal` check anywhere. The story spec explicitly says "Use `std::io::IsTerminal` (not deprecated `atty` crate)." This is unimplemented.
+
+### [MEDIUM] `format_table()` returns empty string for JSON format — `at crates/axiathon-client/src/output.rs:41`
+
+When `OutputFormat::Json` is active and `format_table()` is called, it returns `String::new()`. This is a silent data loss — tabular commands in JSON mode would produce empty output instead of formatting their data as JSON. The formatter should convert the tabular data to JSON in this case.
+
+### [MEDIUM] `OutputFormatter` is not a trait — `at crates/axiathon-client/src/output.rs:28`
+
+AC-4 and the architecture spec require an `OutputFormatter` **trait** with Table/Json/Csv implementations. The current code is a concrete struct with a match-based dispatch. This means downstream command handlers can't use trait-based polymorphism and the design doesn't match the architecture doc.
+
+### [MEDIUM] Missing command group files per story spec — `at crates/axiathon-client/src/commands/mod.rs:1-3`
+
+The story spec lists 10 command module files under `commands/` (query.rs, rules.rs, alerts.rs, ingest.rs, config.rs, status.rs, tenant.rs, login.rs, completion.rs, init.rs). Only `completion.rs` exists. While the stubs could theoretically live elsewhere, `commands/mod.rs` only re-exports `completion`. The stub handler tests don't test actual command modules — they just construct `CliError::NotImplemented` directly.
+
+### [MEDIUM] `config.rs` timeout uses `i64` intermediary, allowing truncation — `at crates/axiathon-client/src/config.rs:64,83-84`
+
+The TOML `timeout` field is `Option<i64>`, which is then checked for negative values and cast to `u64`. When CLI override `cli_timeout: Option<u64>` is provided, it's cast back to `i64` via `t as i64` (line 84), which silently truncates values > `i64::MAX`. Use a consistent type throughout.
+
+### [LOW] `CliError` uses manual `Display` + `impl Error` instead of `thiserror` — `at crates/axiathon-client/src/error.rs:48-67`
+
+The project rules say "Use `thiserror` for error enums." `thiserror` is in the dependencies but not used — Display and Error are implemented manually. While the manual impl works and includes the `sanitize()` function (which is good), it deviates from the stated convention. The `sanitize()` call could also be done with `thiserror` via `#[error("server error: {}", sanitize(.0))]`.
+
+### [LOW] `axiathon-core` dependency unused — `at crates/axiathon-client/Cargo.toml:13`
+
+`axiathon-core` is declared as a dependency but never imported anywhere in the client crate. No `use axiathon_core::` appears in any source file. This is a dead dependency.
+
+### [LOW] Nightly `rustfmt` check shows formatting differences — preflight
+
+`cargo +nightly fmt --all --check` reports diffs in `client.rs`, `config.rs`, and `output.rs`. Per gotchas.md, nightly fmt must pass before approval.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in both `main.rs` and `lib.rs`
+### [VERIFIED] `SiemClient` Debug impl does not leak token — `at crates/axiathon-client/src/client.rs:105-112`
+### [VERIFIED] `RawConfig` uses `#[serde(deny_unknown_fields)]` — rejects unknown TOML keys including `token` — `at crates/axiathon-client/src/config.rs:11`
+### [VERIFIED] `CliError` is `#[non_exhaustive]` — `at crates/axiathon-client/src/error.rs:19`
+### [VERIFIED] Exit codes 3/4 correctly distinguished for auth/authz
+### [VERIFIED] `sanitize()` function truncates at control characters in Display — `at crates/axiathon-client/src/error.rs:9-13`
+### [VERIFIED] Command names use plural nouns (rules, alerts) per architecture doc
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0     |
+| High     | 2     |
+| Medium   | 5     |
+| Low      | 3     |
+
+The two **HIGH** findings are blocking:
+
+1. **`main.rs` is a no-op** — it parses CLI args and discards them. No command dispatch, no exit codes, no stderr output, no completion generation. The binary doesn't actually *do* anything. AC-3, AC-9, and AC-10 are unmet at the integration level.
+
+2. **`SiemClient::new()` is public and unvalidated** — the safe constructor `try_new()` exists but the unsafe `new()` is equally public and more discoverable. This is a header injection vector (CWE-113).
+
+## Verdict
+
+**CHANGES_REQUESTED**
+
+The main binary is a hollow shell — parsing with no dispatch makes AC-3/AC-9/AC-10 dead letters at runtime. The public unvalidated `SiemClient::new()` is a security gap. Fix both HIGHs and the nightly fmt diff before re-review.
+
+*Persephone whispers: "The stubs test file is the most telling — it creates `CliError::NotImplemented` by hand rather than calling the actual command handlers. That's a test that tests itself, not the system."*

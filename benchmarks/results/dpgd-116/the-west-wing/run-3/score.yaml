@@ -1,6 +1,7 @@
 scenario_id: dpgd-116
 theme: the-west-wing
 run_id: 3
+judge_version: v2
 total_caught: 5
 total_findings: 7
 weighted_caught: 23
@@ -13,9 +14,9 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase identified that from_file_or_default swallows all errors. The
-    TEA tests cover config loading but not the distinction between NotFound and other
-    error types. Dev implemented the pattern. Reviewer did not flag it.
+  evidence: No phase identified that from_file_or_default swallows all errors including
+    parse/permission failures. The config tests and reviewer comments don't address
+    the unwrap_or_default pattern catching non-NotFound errors.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
@@ -34,9 +35,8 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer flagged as [MEDIUM]: "tenant field uses raw Option<String> instead
-    of TenantId newtype" at cli.rs:19 and recommended using TenantId from axiathon-core.
-    TEA wrote header injection tests (CWE-113) but did not specifically test for TenantId
-    type usage.'
+    of TenantId newtype" at cli.rs:19, noting axiathon-core provides TenantId and
+    it should be used at the CLI boundary.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
@@ -44,9 +44,8 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer flagged as [HIGH]: \"Missing workspace dependency declarations\
-    \ for reqwest and toml\" \u2014 \"6 deps (clap_complete, comfy-table, csv, dirs,\
-    \ reqwest, toml) use direct versions instead of workspace = true.\" Listed as\
-    \ blocking required change."
+    \ for reqwest and toml\" \u2014 all 6 deps (reqwest, toml, comfy-table, csv, dirs,\
+    \ clap_complete) use direct version instead of workspace = true."
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
@@ -54,18 +53,18 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer flagged as [HIGH]: \"RawConfig silently accepts and discards\
-    \ unknown fields\" \u2014 noted the _ignored IgnoredAny pattern is a no-op and\
-    \ that a user putting token in config would believe it's being read. Called it\
-    \ a security concern."
+    \ unknown fields\" \u2014 noting the _ignored/IgnoredAny pattern is a no-op, users\
+    \ who put token in config believe it's being read when it isn't, and recommends\
+    \ #[serde(deny_unknown_fields)]."
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
-    ...) in config tests. The reviewer flagged a different vacuous test (siem_client_rejects_token_with_newlines)
-    but not this specific None || true pattern.
+  evidence: No phase identified the vacuously true assert!(config.server().is_none()
+    || ...) pattern. The reviewer flagged a different vacuous test (siem_client_rejects_token_with_newlines)
+    but not this specific None-OR-true assertion.
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
@@ -75,4 +74,4 @@ findings:
   evidence: "Reviewer flagged as [LOW]: \"siem_client_rejects_token_with_newlines\
     \ test is vacuous\" \u2014 \"the test creates a client with a newline-injected\
     \ token and then does nothing with it (let _ = client). It doesn't verify the\
-    \ token was sanitized.\" Recommended as strongly recommended fix #6."
+    \ token was sanitized.\" This is the same category of zero-assertion test."

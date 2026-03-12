@@ -1,0 +1,23 @@
+**All 65 tests pass** (17 + 12 + 5 + 12 + 14 + 5 = 65). Zero failures, clippy clean.
+
+## Summary
+
+**Files changed:**
+
+| File | Description |
+|------|-------------|
+| `crates/axiathon-server/Cargo.toml` | Added `uuid` and `chrono` workspace dependencies |
+| `crates/axiathon-server/src/lib.rs` | Server entry point with `app()` function, Axum router with public/protected routes, middleware layers |
+| `crates/axiathon-server/src/response.rs` | `success_response()` and `error_response()` helpers producing the `{data, errors[], meta}` envelope |
+| `crates/axiathon-server/src/auth.rs` | Auth middleware (Bearer JWT + ApiKey), per-tenant sliding-window rate limiter, scope checking |
+| `crates/axiathon-server/src/routes.rs` | Handler stubs for health, JWKS, events, alerts, rules, queries, deprecated-test, fallback 404; response middleware for CORS, security headers, API versioning |
+| `crates/axiathon-server/src/test_support.rs` | Token creation functions for integration tests (hex-encoded JSON claims) |
+
+**Architecture:**
+- Public routes (health, JWKS) have no auth
+- Protected routes go through auth middleware → rate limiter → scope check in handler
+- All responses use the three-field envelope (`data`, `errors[]`, `meta{request_id, timestamp, trace_id}`)
+- CORS preflight handled at outermost middleware layer
+- Security headers (`X-Content-Type-Options: nosniff`, `X-API-Version: v1`) on all responses
+- CWE-209 compliant: error messages are generic, no internal details leaked
+- `#![forbid(unsafe_code)]` enforced

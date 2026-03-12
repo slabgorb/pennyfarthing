@@ -165,6 +165,7 @@ workflow: "{WORKFLOW}"
 - **ID:** {STORY_ID}
 - **Jira Key:** {JIRA_KEY}
 - **Workflow:** {WORKFLOW}
+- **Stack Parent:** {DEPENDS_ON or "none"}
 
 ## Workflow Tracking
 **Workflow:** {WORKFLOW}
@@ -185,14 +186,58 @@ Each finding is one list item. Use "No upstream findings" if none.
 **Urgency:** blocking, non-blocking
 
 <!-- Agents: append findings below this line. Do not edit other agents' entries. -->
+
+## Design Deviations
+
+Agents log spec deviations as they happen — not after the fact.
+Each entry: what was changed, what the spec said, and why.
+
+<!-- Agents: append deviations below this line. Do not edit other agents' entries. -->
 ```
 
 ## Step 5: Create Branch
 
+Check if the repo uses stacked PRs (see ADR-0036):
+
+```bash
+# Read pr_strategy from repos.yaml for the target repo
+PR_STRATEGY=$(python3 -c "
+from pf.git.repos import get_repo_config
+rc = get_repo_config('{REPOS}')
+print(rc.pr_strategy if rc else 'standard')
+")
+```
+
+**Standard repos (default):**
 ```bash
 git checkout develop && git pull && \
 git checkout -b feat/{STORY_ID}-{SLUG}
 ```
+
+**Stacked repos (`pr_strategy: stacked`):**
+
+Check if the story has a `depends_on` field:
+```bash
+DEPENDS_ON=$(pf sprint story field {STORY_ID} depends_on 2>/dev/null || echo "")
+```
+
+If `depends_on` is set (stacking on a parent story):
+```bash
+PARENT_BRANCH=$(pf sprint story field "$DEPENDS_ON" branch)
+git checkout "$PARENT_BRANCH" && git pull
+gt create "feat/{STORY_ID}-{SLUG}"
+```
+
+If no `depends_on` (stack root):
+```bash
+gt create "feat/{STORY_ID}-{SLUG}"
+```
+
+Add stack metadata to session file:
+```markdown
+**Stack Parent:** {DEPENDS_ON} ({PARENT_BRANCH})
+```
+Or if stack root: `**Stack Parent:** none (stack root)`
 
 <workflow-type-detection>
 ## Step 6: Determine Workflow Type

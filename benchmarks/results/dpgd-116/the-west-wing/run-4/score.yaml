@@ -1,11 +1,12 @@
 scenario_id: dpgd-116
 theme: the-west-wing
 run_id: 4
-total_caught: 3
+judge_version: v2
+total_caught: 2
 total_findings: 7
-weighted_caught: 15
+weighted_caught: 10
 total_weight: 37
-score_pct: 40.5
+score_pct: 27.0
 findings:
 - finding_id: C1
   title: from_file_or_default swallows ALL errors including parse and permission failures
@@ -13,49 +14,48 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase identified that from_file_or_default swallows all errors. The
-    config loading tests and security tests don't specifically test that parse/permission
-    errors are distinguished from NotFound. The reviewer flagged deny_unknown_fields
-    but not the error-swallowing pattern.
+  evidence: TEA lists 'silent error swallowing' in security.rs but all 118 tests pass
+    while the issue persists, meaning the test does not actually fail when from_file_or_default
+    swallows parse/permission errors. Reviewer did not flag this.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
-  caught: true
-  caught_by: dev
-  evidence: "Dev implemented sanitized Display for ServerError and NotFound in error.rs\
-    \ \u2014 'server error' and 'resource not found' without leaking internal details.\
-    \ Reviewer verified: 'ServerError displays \"server error\" \u2014 internal details\
-    \ stored in the tuple field are not exposed via Display.'"
+  caught: false
+  caught_by: null
+  evidence: "Reviewer verified CWE-209 as handled ('ServerError displays server error\
+    \ \u2014 internal details not exposed via Display') but missed that Io(#[error(transparent)])\
+    \ forwards full OS error details. The Io variant leak was not flagged by any phase."
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: tea
-  evidence: "TEA wrote header injection tests in siem_client.rs and security.rs covering\
-    \ CRLF in tenant_id. Dev implemented sanitize_header_value rejecting \\r and \\\
-    n. However, the finding is about using raw String instead of TenantId from axiathon-core\
-    \ \u2014 the CRLF mitigation was caught but the type-safety aspect (using validated\
-    \ TenantId) was not flagged."
+  evidence: "TEA wrote header injection (CRLF) tests in siem_client.rs and security.rs\
+    \ covering CWE-113. Dev implemented sanitize_header_value rejecting \\r and \\\
+    n. Reviewer verified: 'Header injection (CWE-113) \u2014 properly mitigated at\
+    \ client.rs:15-21.' Same vulnerability class addressed via runtime sanitization\
+    \ rather than type-level TenantId."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase flagged that dependencies use direct version strings instead
-    of workspace = true. The reviewer did not mention this issue.
+  evidence: No phase flagged the use of direct version strings instead of workspace
+    = true. The reviewer noted the edition mismatch in Cargo.toml but not the dependency
+    declaration style.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged: '[HIGH] ConfigFile does not use #[serde(deny_unknown_fields)]\
-    \ \u2014 unknown fields silently accepted. More critically, if someone adds token\
-    \ = \"secret\" to the config file, it's silently parsed and ignored rather than\
-    \ rejected with a security warning.'"
+  evidence: "Reviewer explicitly flagged: '[HIGH] ConfigFile does not use #[serde(deny_unknown_fields)]\
+    \ \u2014 unknown fields silently accepted... if someone adds token = \"secret\"\
+    \ to the config file, it's silently parsed and ignored rather than rejected with\
+    \ a security warning.'"
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
@@ -63,14 +63,12 @@ findings:
   caught: false
   caught_by: null
   evidence: No phase identified the vacuously true assertion pattern (is_none() ||
-    ...). The TEA wrote config tests but this specific logical flaw was not caught
-    by any phase.
+    ...). All 118 tests pass, meaning the vacuous test was not caught or corrected.
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the zero-assertion test that only checks non-panic
-    with 'let _ = config'. Neither TEA, Dev, nor Reviewer flagged this test quality
-    issue.
+  evidence: No phase identified the zero-assertion test. The test with 'let _ = config;'
+    and no assert statements was not flagged by any phase.

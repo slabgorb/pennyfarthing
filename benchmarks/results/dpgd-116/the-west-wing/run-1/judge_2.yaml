@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: the-west-wing
+run_id: 1
+judge_version: v2
+judge_pass: 2
+total_caught: 4
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase addressed distinguishing NotFound from parse/permission errors
+    in from_file_or_default. TEA tests cover config loading but not error-type discrimination.
+    Reviewer did not flag this.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote CWE-209 security tests: 'Error information disclosure (CWE-209)\
+    \ \u2014 server paths/stack traces not exposed' in exit_codes.rs. Dev implemented\
+    \ ServerError display that omits internal details. Same vulnerability class was\
+    \ identified and tested, though the specific Io(transparent) variant was not called\
+    \ out."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote 'Header injection prevention (CWE-113) \u2014 newlines in token/tenant\
+    \ rejected' tests in siem_client.rs. Reviewer verified try_with_tenant rejects\
+    \ CRLF. However, the specific issue of using raw String instead of TenantId type\
+    \ was not flagged \u2014 only the injection vector was addressed, not the type-safety\
+    \ gap."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged '[MEDIUM] Dependencies not using workspace declarations'
+    listing clap_complete, comfy-table, csv, dirs, keyring, reqwest, toml as using
+    inline versions instead of workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] RawConfig silently accepts unknown fields\
+    \ including secrets' \u2014 explicitly mentions token = \"my-secret\" scenario,\
+    \ lack of #[serde(deny_unknown_fields)], and notes the test masks the gap by accepting\
+    \ both reject and ignore behaviors."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...). The pipeline wrote these tests but did not flag the logical flaw.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test. The pipeline wrote the test
+    with 'let _ = config;' but did not flag the lack of meaningful assertions.

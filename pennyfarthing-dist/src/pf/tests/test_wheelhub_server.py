@@ -114,9 +114,7 @@ class TestOTLPEndpoints:
                                                 "attributes": [
                                                     {
                                                         "key": "type",
-                                                        "value": {
-                                                            "stringValue": "input"
-                                                        },
+                                                        "value": {"stringValue": "input"},
                                                     }
                                                 ],
                                             }
@@ -207,9 +205,7 @@ class TestTokenStatsAggregation:
                                                 "attributes": [
                                                     {
                                                         "key": "type",
-                                                        "value": {
-                                                            "stringValue": "input"
-                                                        },
+                                                        "value": {"stringValue": "input"},
                                                     }
                                                 ],
                                             },
@@ -218,9 +214,7 @@ class TestTokenStatsAggregation:
                                                 "attributes": [
                                                     {
                                                         "key": "type",
-                                                        "value": {
-                                                            "stringValue": "output"
-                                                        },
+                                                        "value": {"stringValue": "output"},
                                                     }
                                                 ],
                                             },
@@ -229,9 +223,7 @@ class TestTokenStatsAggregation:
                                                 "attributes": [
                                                     {
                                                         "key": "type",
-                                                        "value": {
-                                                            "stringValue": "cacheRead"
-                                                        },
+                                                        "value": {"stringValue": "cacheRead"},
                                                     }
                                                 ],
                                             },
@@ -240,9 +232,7 @@ class TestTokenStatsAggregation:
                                                 "attributes": [
                                                     {
                                                         "key": "type",
-                                                        "value": {
-                                                            "stringValue": "cacheCreation"
-                                                        },
+                                                        "value": {"stringValue": "cacheCreation"},
                                                     }
                                                 ],
                                             },
@@ -278,9 +268,7 @@ class TestTokenStatsAggregation:
                                                 "attributes": [
                                                     {
                                                         "key": "type",
-                                                        "value": {
-                                                            "stringValue": "input"
-                                                        },
+                                                        "value": {"stringValue": "input"},
                                                     }
                                                 ],
                                             }
@@ -340,9 +328,7 @@ class TestOTLPLogParsing:
                             "logRecords": [
                                 {
                                     "timeUnixNano": "1709900000000000000",
-                                    "body": {
-                                        "stringValue": "claude_code.tool_result"
-                                    },
+                                    "body": {"stringValue": "claude_code.tool_result"},
                                     "attributes": [
                                         {
                                             "key": "tool_name",
@@ -517,11 +503,7 @@ class TestEdgeCases:
         """Metrics without sum field don't crash."""
         payload = {
             "resourceMetrics": [
-                {
-                    "scopeMetrics": [
-                        {"metrics": [{"name": "claude_code.token.usage"}]}
-                    ]
-                }
+                {"scopeMetrics": [{"metrics": [{"name": "claude_code.token.usage"}]}]}
             ]
         }
         result = parse_otlp_metrics(payload)

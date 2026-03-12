@@ -1,0 +1,28 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 is core API foundation — every AC is testable behavior.
+
+**Test Files:**
+- `crates/axiathon-server/tests/api_endpoints.rs` — 13 tests: route existence for all 5 groups (health, events, alerts, rules, queries), health uptime/version, envelope on all routes
+- `crates/axiathon-server/tests/api_response_envelope.rs` — 11 tests: success data populated, empty errors array, meta with request_id (UUID), timestamp (ISO 8601), trace_id; error data null, populated errors, RFC 9457 structure, unique request_ids, POST envelope
+- `crates/axiathon-server/tests/authentication.rs` — 18 tests: 4 endpoints require auth, health does not, missing/malformed/empty Bearer, non-Bearer scheme, expired JWT, wrong scope (403), API key missing/invalid, 401 envelope format, tenant context, JWKS endpoint exists + returns valid JSON + no auth required
+- `crates/axiathon-server/tests/rate_limiting.rs` — 5 tests: exceeding limit → 429, Retry-After header, 429 envelope format, independent per-tenant limits, rate limit on protected endpoints
+- `crates/axiathon-server/tests/api_versioning.rs` — 9 tests: v1 prefix exists, no-version 404, v2/v0 404, deprecation header absent on current routes, version discoverable in response
+- `crates/axiathon-server/tests/security.rs` — 13 tests: CWE-209 no internal details in 401/404, generic error messages, long URI handling, null bytes, oversized body, method restrictions (405), no framework in Server header, Content-Type enforcement, request ID propagation, `#![forbid(unsafe_code)]` structural check
+
+**Tests Written:** 69 tests covering 5 ACs + security edge cases
+**Status:** RED (47 failing, 22 passing on empty router assertions)
+**Commit:** `684d237`
+
+**Handoff:** To Dev for implementation
+
+## Delivery Findings
+
+- **Gap** (non-blocking): `ApiResponse<T>` in axiathon-core uses `error: Option<ApiError>` (singular) but AC specifies `errors` as always-present array. Dev needs to either evolve the core type or create a server-layer response wrapper.
+  Affects `crates/axiathon-core/src/types.rs` (ApiResponse struct fields).
+  *Found by TEA during test design.*
+
+- **Gap** (non-blocking): `ApiMeta` in axiathon-core has pagination fields (`total`, `limit`, `offset`) but AC requires `request_id`, `timestamp`, `trace_id`. These may need to be separate types or the existing type needs expansion.
+  Affects `crates/axiathon-core/src/types.rs` (ApiMeta struct fields).
+  *Found by TEA during test design.*

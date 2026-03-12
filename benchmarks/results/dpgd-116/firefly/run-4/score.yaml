@@ -1,11 +1,12 @@
 scenario_id: dpgd-116
 theme: firefly
 run_id: 4
-total_caught: 2
+judge_version: v2
+total_caught: 3
 total_findings: 7
-weighted_caught: 10
+weighted_caught: 15
 total_weight: 37
-score_pct: 27.0
+score_pct: 40.5
 findings:
 - finding_id: C1
   title: from_file_or_default swallows ALL errors including parse and permission failures
@@ -13,62 +14,65 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No test or implementation detail addresses distinguishing NotFound from
-    parse/permission errors in from_file_or_default. TEA mentions 'CliError carries
-    context (no silent swallowing)' but no specific test for from_file_or_default
-    error discrimination is described.
+  evidence: TEA mentions 'CliError carries context (no silent swallowing)' but this
+    is about CliError generally, not about from_file_or_default using unwrap_or_default()
+    to swallow parse/permission errors. No test specifically asserts that TOML parse
+    errors or permission errors propagate rather than falling back to defaults.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: tea
-  evidence: 'TEA wrote security tests for ''CWE-209: server error display doesn''t
-    leak stack traces or internal paths'' in tests/security.rs. However, the implementation
-    still uses eprintln!("error: {e}") with transparent IO errors, so the test may
-    not fully catch the stderr leak issue.'
+  evidence: 'TEA explicitly lists ''CWE-209: server error display doesn''t leak stack
+    traces or internal paths'' as a key security test, and security.rs includes 12
+    tests covering ''CWE-209 error exposure.'' Same vulnerability class directly targeted.'
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: tea
-  evidence: TEA wrote 'Header injection prevention (newlines, CR, LF, null bytes in
-    tokens/tenant IDs)' tests in tests/siem_client.rs and tests/security.rs. Dev implemented
-    header value validation that prevents CRLF/null injection. However, the underlying
-    issue of using raw String instead of TenantId from axiathon-core was not addressed.
+  evidence: TEA wrote tests for 'Header injection prevention (newlines, CR, LF, null
+    bytes in tokens/tenant IDs)' in both siem_client.rs and security.rs. Dev implemented
+    'header value validation (prevents CRLF/null injection).' Same vulnerability class
+    (CWE-113 header injection via tenant_id) was caught, though the type-safety fix
+    of using TenantId instead of String was not specifically flagged.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase flagged that dependencies use direct version strings instead
-    of workspace = true. The code changes summary shows Cargo.toml was modified but
-    only for edition and feature changes.
+  evidence: No mention anywhere in TEA, Dev, or Reviewer output about workspace dependency
+    declarations or version string consistency. The Cargo.toml diff shows only 4 lines
+    changed with no reference to workspace = true.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
-  caught: false
-  caught_by: null
-  evidence: TEA mentions 'Config file must NOT load tokens (OS keychain only)' but
-    does not test for unknown field rejection via serde(deny_unknown_fields). A user
-    putting token in config would have it silently ignored with no warning.
+  caught: true
+  caught_by: tea
+  evidence: TEA explicitly lists 'Config file must NOT load tokens (OS keychain only)'
+    as a key security test, and Dev implemented 'token rejection from config files.'
+    This directly addresses the core concern that a user putting token in config would
+    have it silently ignored. However, the broader deny_unknown_fields fix was not
+    mentioned.
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
-    ...) in config tests. TEA wrote 13 config_loading tests but the specific vacuous
-    assertion was not flagged.
+  evidence: The pipeline wrote 13 config_loading tests but neither TEA nor Reviewer
+    flagged the vacuously true assertion pattern (is_none() || ... always true). The
+    pipeline likely authored the vacuous test itself.
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the zero-assertion test that only checks non-panic
-    via 'let _ = config'. TEA wrote config tests but did not flag this pattern.
+  evidence: The pipeline wrote config tests but neither TEA nor Reviewer flagged the
+    zero-assertion test that only checks non-panic with 'let _ = config'. The pipeline
+    likely authored this test itself.

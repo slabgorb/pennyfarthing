@@ -1,6 +1,7 @@
 scenario_id: dpgd-116
 theme: rome
 run_id: 4
+judge_version: v2
 total_caught: 4
 total_findings: 7
 weighted_caught: 20
@@ -13,9 +14,9 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase distinguished NotFound from other errors in from_file_or_default.
-    The config_loading tests exist but none specifically test that parse errors or
-    permission errors propagate rather than falling back to defaults.
+  evidence: No phase flagged that from_file_or_default swallows all errors. TEA config
+    tests exist but none distinguish NotFound from parse/permission errors. Reviewer
+    did not mention this issue.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
@@ -23,53 +24,49 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer finding #2 flags CWE-209: ''ServerError Display leaks internal
-    details'' noting reqwest error paths can contain connection details, DNS info,
-    internal hostnames. Also notes the security test has a vacuous OR assertion.'
+    details'' noting reqwest error chains can contain connection details, DNS info,
+    internal hostnames. TEA also wrote security_test.rs tests for CWE-209.'
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
-  caught_by: tea
-  evidence: "TEA wrote security tests for CRLF injection in tenant IDs (header injection\
-    \ risk). Dev implemented CRLF/null-byte validation in SiemClient::new(). However,\
-    \ the deeper issue of using raw String instead of TenantId from axiathon-core\
-    \ was not flagged \u2014 only the injection vector was mitigated, not the type-safety\
-    \ gap."
+  caught_by: dev
+  evidence: Dev implemented CRLF and null-byte validation in SiemClient::new(), and
+    TEA wrote security tests for CRLF injection in tenant IDs. Same vulnerability
+    class (CWE-113) addressed with runtime validation, though not via TenantId type.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase flagged that 6 dependencies use direct version strings instead
-    of workspace = true. Reviewer did not mention this Cargo.toml issue.
+  evidence: No phase mentioned that dependencies use direct version strings instead
+    of workspace = true. Reviewer did not flag workspace dependency consistency.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: 'Reviewer finding #4 explicitly flags: ''ClientConfig silently accepts
-    unknown TOML fields... Should use #[serde(deny_unknown_fields)] to catch typos.''
-    Rated HIGH and blocks merge.'
+  evidence: 'Reviewer finding #4 (HIGH): ''ClientConfig silently accepts unknown TOML
+    fields... An operator who types servr_url (typo) gets the default with zero feedback.
+    Should use #[serde(deny_unknown_fields)]''.'
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: 'Reviewer finding #10 flags the vacuous assertion in security_test.rs:27
-    using || instead of &&, noting ''This test can never fail regardless of the Display
-    impl. It''s a false-pass bug.'' Though the specific test cited (I5) is about config
-    assertions with is_none() || true, the reviewer caught the pattern of vacuous
-    OR assertions.'
+  evidence: 'Reviewer finding #10 flags a vacuous assertion with || instead of &&:
+    ''This test can never fail regardless of the Display impl. It''s a false-pass
+    bug.'' Same category (vacuous test assertion) in adjacent test file.'
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase flagged the test with zero assertions that only checks non-panic
-    via 'let _ = config'. The TEA wrote config tests but this specific vacuously-true
-    test pattern was not identified.
+  evidence: No phase flagged the zero-assertion test with 'let _ = config'. Reviewer
+    did not identify this test as having no meaningful assertions on the default config
+    values.

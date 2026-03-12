@@ -1,11 +1,12 @@
 scenario_id: dpgd-116
 theme: gilligans-island
 run_id: 4
-total_caught: 3
+judge_version: v2
+total_caught: 5
 total_findings: 7
-weighted_caught: 15
+weighted_caught: 25
 total_weight: 37
-score_pct: 40.5
+score_pct: 67.6
 findings:
 - finding_id: C1
   title: from_file_or_default swallows ALL errors including parse and permission failures
@@ -13,65 +14,70 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase identified that from_file_or_default swallows all errors. The
-    config loading tests and implementation don't distinguish NotFound from parse/permission
-    errors.
+  evidence: No phase flagged from_file_or_default swallowing all errors via unwrap_or_default().
+    Reviewer flagged adjacent silent-failure issues (set_api_url silently rejects,
+    env var parsing silently falls back) but never identified the core from_file_or_default
+    pattern that treats parse/permission errors the same as NotFound.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
   phase_ideal: reviewer
   caught: true
-  caught_by: reviewer
-  evidence: 'Reviewer flagged ServerError body capture as CWE-209 risk: ''Any future
-    code that logs {err:?} (Debug), or pattern-matches to surface the body, will leak
-    internal server error details.'' TEA also wrote security tests for CWE-209 error
-    exposure. However, the specific CliError Display leaking to stderr via eprintln
-    was not directly called out.'
+  caught_by: dev
+  evidence: Dev implemented 'security-safe Display' on CliError. TEA wrote security
+    tests for CWE-209 error exposure. Reviewer flagged ServerError body capture as
+    CWE-209 risk at client.rs:72-74. Same vulnerability class addressed across multiple
+    phases.
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: tea
-  evidence: "TEA wrote security tests for header injection (CRLF) in tenant ID values.\
-    \ However, the deeper issue \u2014 that SiemClient.tenant_id uses raw String instead\
-    \ of validated TenantId from axiathon-core \u2014 was not flagged. The CRLF rejection\
-    \ is caught via HeaderValue::from_str, but the type-safety gap remains uncaught."
+  evidence: "TEA wrote security tests for 'header injection (\\r\\n)' in siem_client.rs\
+    \ and security.rs. Dev implemented HeaderValue::from_str validation at client.rs:37-45.\
+    \ Reviewer verified 'Header injection prevention via HeaderValue::from_str \u2014\
+    \ correctly rejects \\r\\n in tenant ID.' Same vulnerability class (CWE-113) caught,\
+    \ though the type-safety improvement (using TenantId instead of raw String) was\
+    \ not flagged."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase flagged that dependencies like clap_complete, comfy-table, csv,
-    dirs, reqwest, toml use direct version strings instead of workspace = true. TEA
-    added them to workspace deps but the crate-level Cargo.toml apparently uses direct
-    versions.
+  evidence: No phase flagged that dependencies use direct version strings instead
+    of workspace = true. The workspace Cargo.toml changes are listed but the version
+    drift issue from not using workspace inheritance was never mentioned.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: reviewer
-  evidence: 'Reviewer flagged: ''Serde''s default is to ignore unknown fields. This
-    means a typo like api_rul = "..." is silently ignored.'' Also noted the security
-    test for unknown fields is vacuous as it accepts EITHER behavior. However, the
-    specific token-left-on-disk security angle was not mentioned.'
+  evidence: "Reviewer flagged: 'ConfigFile uses default serde behavior... it ignores\
+    \ them. This means a typo like api_rul = \"...\" is silently ignored \u2014 the\
+    \ operator thinks they set the URL but got the default.' Also noted the security\
+    \ test for unknown fields 'accepts EITHER behavior, which means the test is vacuous.'\
+    \ Directly addresses the deny_unknown_fields concern."
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
-  caught: false
-  caught_by: null
-  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
-    ... always passes). The reviewer flagged different vacuous tests (cli_error_is_not_copy,
-    unknown fields test) but not this specific None-OR-true pattern.
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged vacuous tests: security.rs unknown fields test 'passes\
+    \ regardless of whether unknown fields are rejected or accepted' and 'cli_error_is_not_copy\
+    \ test is vacuous \u2014 function body is empty... it's a no-op.' Same category\
+    \ (vacuous test) flagged in adjacent locations."
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
-  caught: false
-  caught_by: null
-  evidence: No phase identified the zero-assertion test that only checks non-panic
-    with 'let _ = config'. The reviewer flagged a different vacuous test (cli_error_is_not_copy)
-    but not this one.
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged multiple no-op/vacuous test patterns: 'assert_not_copy\
+    \ function that does literally nothing \u2014 it doesn't actually assert' and\
+    \ the unknown fields test that 'passes regardless.' Same category of ineffective\
+    \ tests with no meaningful assertions, flagged at adjacent locations per partial\
+    \ match rule 2."

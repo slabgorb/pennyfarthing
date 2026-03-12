@@ -1,6 +1,7 @@
 scenario_id: dpgd-116
 theme: firefly
 run_id: 5
+judge_version: v2
 total_caught: 5
 total_findings: 7
 weighted_caught: 23
@@ -13,9 +14,9 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase addressed the from_file_or_default swallowing all errors. The
-    config implementation uses from_file with unwrap_or_default pattern. No test distinguishes
-    NotFound from parse/permission errors.
+  evidence: No phase addressed distinguishing NotFound from parse/permission errors
+    in from_file_or_default. Config tests cover loading and validation but not error-type
+    discrimination on file read failures.
 - finding_id: I1
   title: CliError Display leaks internal details to stderr (CWE-209)
   weight: 5
@@ -23,52 +24,52 @@ findings:
   caught: true
   caught_by: tea
   evidence: TEA wrote exit_codes.rs tests covering 'security (error display leakage)'
-    and CWE-209. Reviewer verified ServerError Display does not leak response body.
-    However, the broader CliError Display leaking OS error details via Io(transparent)
-    was not explicitly flagged.
+    for CWE-209. Same vulnerability class flagged, even though the specific Io(transparent)
+    forwarding wasn't called out by name.
 - finding_id: I2
   title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: tea
-  evidence: TEA wrote siem_client.rs tests for 'header injection prevention' (CWE-113).
-    Dev implemented CRLF checks in client.rs:27-39. Reviewer verified. However, the
-    deeper issue of using raw String instead of TenantId newtype was only noted as
-    LOW by Reviewer.
+  evidence: 'TEA wrote siem_client.rs tests for ''Header injection (CWE-113)'' and
+    ''header injection prevention''. Reviewer also flagged LOW: ''tenant field is
+    Option<String>, not TenantId newtype''. Dev implemented CRLF checks in client.rs:27-39
+    but kept raw String instead of TenantId.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3
   phase_ideal: dev
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged as [MEDIUM]: 'Dependencies not declared at workspace\
-    \ level as specified \u2014 clap_complete, comfy-table, csv, dirs, reqwest, and\
-    \ toml are declared inline in the crate's Cargo.toml, not at workspace level.'"
+  evidence: "Reviewer flagged MEDIUM: 'Dependencies not declared at workspace level\
+    \ as specified \u2014 clap_complete, comfy-table, csv, dirs, reqwest, and toml\
+    \ are declared inline in the crate's Cargo.toml, not at workspace level.'"
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"
   weight: 5
   phase_ideal: reviewer
   caught: true
   caught_by: dev
-  evidence: "Dev implemented #[serde(deny_unknown_fields)] on RawConfig. Reviewer\
-    \ verified: 'deny_unknown_fields on RawConfig \u2014 prevents arbitrary fields\
-    \ in config TOML'. TEA wrote config_loading tests for token rejection."
+  evidence: "Dev implemented #[serde(deny_unknown_fields)] on RawConfig, which prevents\
+    \ unknown fields like token from being silently ignored. Reviewer verified: 'deny_unknown_fields\
+    \ on RawConfig \u2014 prevents arbitrary fields in config TOML.'"
 - finding_id: I5
   title: "Vacuously true test \u2014 assertion is None || true"
   weight: 5
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged as [MEDIUM]: 'config_toml_ignores_token_field does not\
-    \ assert error IS raised \u2014 since parsing errors, it silently skips the assertion\
-    \ body. The test passes vacuously. It should assert!(config.is_err())'"
+  evidence: "Reviewer flagged MEDIUM: 'Vacuous test: config_toml_ignores_token_field\
+    \ does not assert error IS raised \u2014 since parsing errors, it silently skips\
+    \ the assertion body. The test passes vacuously.' Same category (vacuous test),\
+    \ adjacent location per partial match rules."
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5
   phase_ideal: tea
   caught: false
   caught_by: null
-  evidence: No phase identified the zero-assertion test that only checks non-panic
-    with 'let _ = config'. The reviewer's vacuous test finding was about a different
-    test (config_toml_ignores_token_field), not the default config test with no assertions.
+  evidence: No phase identified a test with zero assertions that only checks for non-panic.
+    The reviewer caught a different vacuous test pattern but not this zero-assertion
+    issue.

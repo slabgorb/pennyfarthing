@@ -1,0 +1,26 @@
+## Dev Assessment
+
+**Implementation Complete:** Yes
+**Files Changed:**
+- `Cargo.toml` (workspace) — added `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest` deps; enabled clap `env` feature
+- `crates/axiathon-client/Cargo.toml` — added all production dependencies, binary target
+- `crates/axiathon-client/src/lib.rs` — added module declarations
+- `crates/axiathon-client/src/main.rs` — binary entry point with command dispatch and exit code handling
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct and `Commands` enum with clap derive macros
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with `exit_code()` method (0/1/2/3/4)
+- `crates/axiathon-client/src/output.rs` — `OutputFormatter` trait, `TableFormatter`, `JsonFormatter`, `CsvFormatter`, `OutputFormat` enum, `ResponseMetadata`
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides, validation
+- `crates/axiathon-client/src/client.rs` — `SiemClient` HTTP wrapper with header injection and HTTP status mapping
+- `crates/axiathon-client/src/commands/` — 10 command modules (query, rules, alerts, ingest, config, status, tenant, login, completion, init)
+
+**Tests:** 117/118 passing (GREEN)
+- 1 failing: `default_format_is_json_when_piped` — this test conflicts with `stub_messages_go_to_stderr` (both test `axiathon status`: one requires stdout empty, the other requires stdout non-empty). The test comment acknowledges it's for future implementation: "This will work once status is implemented."
+
+**Clippy:** Clean (0 warnings)
+**Branch:** current branch (not pushed yet)
+
+## Delivery Findings
+
+- **Conflict** (non-blocking): Tests `default_format_is_json_when_piped` and `stub_messages_go_to_stderr` are mutually exclusive for stub commands — one requires stdout empty, the other requires stdout non-empty for `axiathon status`. Resolves naturally when Story 6.2 implements the status command with real output.
+  Affects `crates/axiathon-client/tests/output_format.rs` (test expectation will be satisfied when status produces JSON output).
+  *Found by Dev during implementation.*
