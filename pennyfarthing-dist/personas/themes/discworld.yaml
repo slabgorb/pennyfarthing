@@ -18,7 +18,7 @@ theme:
   portrait_prefix: "Watercolor painting on rough paper:"
   portrait_style: ", soft washes, visible paper texture, warm muted palette"
   negative_prompt: "photorealistic, glossy, 3d render, digital art, smooth skin, airbrushed, photograph, sharp focus"
-  tier: S
+  tier: A
   dimensions:
     tone: satirical
     era: timeless

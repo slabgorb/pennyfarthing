@@ -74,7 +74,7 @@ async def broadcast(channel: str, data: dict) -> None:
 
 def _resolve_port() -> int:
     """Resolve the server port from WHEELHUB_PORT env or default."""
-    return int(os.environ.get("WHEELHUB_PORT", "1898"))
+    return int(os.environ.get("WHEELHUB_PORT", "2898"))
 
 
 def _resolve_project_dir() -> Path | None:
@@ -195,7 +195,7 @@ def cleanup_port_file(project_dir: Path) -> None:
         pass
 
 
-def get_server_command(port: int = 1898, host: str = "127.0.0.1") -> list[str]:
+def get_server_command(port: int = 2898, host: str = "127.0.0.1") -> list[str]:
     """Return the command to start the WheelHub server via uvicorn."""
     return [
         sys.executable,

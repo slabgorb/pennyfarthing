@@ -461,7 +461,52 @@ def validate_full_sprint(data: dict[str, Any]) -> ValidationResult:
                     if story_id:
                         all_story_ids.add(story_id)
 
+    # Validate depends_on references and detect cycles
+    if all_story_ids:
+        _validate_depends_on(data, all_story_ids, result)
+
     return result
+
+
+def _validate_depends_on(
+    data: dict[str, Any], all_story_ids: set[str], result: ValidationResult
+) -> None:
+    """Validate depends_on references: targets exist and no cycles."""
+    deps: dict[str, str] = {}  # story_id -> depends_on target
+
+    for epic in data.get("epics", []):
+        if isinstance(epic, str):
+            continue
+        for story in epic.get("stories", []):
+            sid = str(story.get("id", ""))
+            dep = story.get("depends_on")
+            if dep is None:
+                continue
+            dep = str(dep)
+            if dep not in all_story_ids:
+                result.add_error(
+                    f"depends_on '{dep}' references non-existent story. "
+                    f"To fix: Use an existing story ID or remove depends_on",
+                    f"{sid}.depends_on",
+                )
+            else:
+                deps[sid] = dep
+
+    # Cycle detection via visited set
+    for start in deps:
+        visited: set[str] = set()
+        current = start
+        while current in deps:
+            if current in visited:
+                cycle = " -> ".join(list(visited) + [current])
+                result.add_error(
+                    f"Circular dependency detected: {cycle}. "
+                    "To fix: Remove one depends_on to break the cycle",
+                    f"{start}.depends_on",
+                )
+                break
+            visited.add(current)
+            current = deps[current]
 
 
 def validate_archived_sprint(data: dict[str, Any]) -> ValidationResult:

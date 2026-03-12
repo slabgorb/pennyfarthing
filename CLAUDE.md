@@ -1,6 +1,10 @@
 # CLAUDE.md — Pennyfarthing Framework
 
+<<<<<<< HEAD
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 12.7.0. Python runtime + React GUI. Python (≥3.11) for CLI, server, and hooks. Node (≥18) for GUI build only. pnpm monorepo.
+=======
 Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 13.0.0-alpha.0. Python-first architecture.
+>>>>>>> origin/develop
 
 <critical>
 ## Implementation Rules
@@ -40,11 +44,21 @@ pf validate                                          # Framework validation
 <info>
 ## Directory Structure
 
+**Architecture:** Python runtime + React GUI. See ADR-0034.
+
 | Directory | Purpose |
 |-----------|---------|
 | `pennyfarthing-dist/` | Published package (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
+<<<<<<< HEAD
+| `pennyfarthing-dist/src/pf/` | Python package — CLI, WheelHub server (FastAPI), hooks, jira, sprint, workflow, prime |
+| `pennyfarthing-dist/src/pf/wheelhub/` | Python FastAPI server — OTLP receiver, WebSocket channels, API routes |
+| `packages/core/` | `@pennyfarthing/core` — React GUI components, workflow engine, shared utilities |
+| `packages/cyclist/` | React entry points (minimal — 3 files) |
+| `tests/` | Framework tests (Python + TypeScript) |
+=======
 | `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime, wheelhub, bikerack) |
 | `tests/` | Framework tests |
+>>>>>>> origin/develop
 | `scripts/` | Framework dev only (NOT distributed) |
 
 **Display:** BikeRack TUI — `pf bikerack start` launches Textual terminal panels alongside Claude Code CLI.
@@ -69,7 +83,11 @@ BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (pro
 
 **Handoff:** Agent writes assessment → `pf handoff resolve-gate` → `complete-phase` → `marker` → next agent activates.
 
+<<<<<<< HEAD
+**Codenames:** WheelHub (Python FastAPI server), JobFair (benchmarking), BikeRack (panel viewer), Peloton (pipeline replay benchmarks)
+=======
 **Codenames:** WheelHub (server), TirePump (context clearing), JobFair (benchmarking), BikeRack (TUI dashboard), Peloton (pipeline replay benchmarks)
+>>>>>>> origin/develop
 
 **Glossary:**
 
@@ -95,7 +113,6 @@ Read guides for detailed behavior, key files, and APIs. All paths relative to `p
 | Handoff CLI | `guides/handoff-cli.md` | Gate resolution, session transitions, markers |
 | Hooks | `guides/hooks.md` | Claude Code hooks — session, pre/post tool use |
 | Relay Mode | `guides/relay-mode.md` | Auto-handoff execution |
-| TirePump | `guides/tirepump.md` | Context clearing and session reload |
 | Prime | `guides/prime.md` | Agent activation with tiered context |
 | Tandem | `guides/tandem-protocol.md` | Background observer pairing |
 | Output Styles | `guides/output-styles.md` | Response modes (terse, verbose, teaching) |
@@ -111,6 +128,7 @@ Read guides for detailed behavior, key files, and APIs. All paths relative to `p
 | Workflow Step | `schemas/workflow-step-schema.md` | Step file XML tag schema |
 | Skill | `schemas/skill-schema.md` | Skill file structure and XML tags |
 | Context | `schemas/context-schema.md` | Context document sections and validation |
+| Handoff Document | `schemas/handoff-document-schema.md` | Inter-agent handoff contract for native subagents |
 
 ### Patterns (`patterns/`)
 

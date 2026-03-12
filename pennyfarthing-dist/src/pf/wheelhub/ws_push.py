@@ -11,7 +11,6 @@ import os
 from pathlib import Path
 from typing import Any
 
-
 POLL_INTERVAL_S = 5.0
 
 
@@ -81,7 +80,7 @@ def fetch_diffs() -> dict[str, Any]:
                 continue
 
             # Also get untracked file contents
-            status_result = subprocess.run(
+            subprocess.run(
                 [git_bin, "--no-optional-locks", "status", "--porcelain"],
                 capture_output=True, text=True, timeout=5,
             )
@@ -93,19 +92,19 @@ def fetch_diffs() -> dict[str, Any]:
             deletions = 0
             file_status = "M"
 
-            def flush_file():
-                if current_file:
+            def _flush(f, lines, status, add, del_):
+                if f:
                     diffs.append({
-                        "path": current_file,
-                        "diff": "\n".join(current_diff_lines),
-                        "status": file_status,
-                        "additions": additions,
-                        "deletions": deletions,
+                        "path": f,
+                        "diff": "\n".join(lines),
+                        "status": status,
+                        "additions": add,
+                        "deletions": del_,
                     })
 
             for line in result.stdout.split("\n"):
                 if line.startswith("diff --git"):
-                    flush_file()
+                    _flush(current_file, current_diff_lines, file_status, additions, deletions)
                     parts = line.split(" b/", 1)
                     current_file = parts[1] if len(parts) > 1 else ""
                     current_diff_lines = [line]
@@ -122,7 +121,7 @@ def fetch_diffs() -> dict[str, Any]:
                         file_status = "A"
                     elif line.startswith("deleted file"):
                         file_status = "D"
-            flush_file()
+            _flush(current_file, current_diff_lines, file_status, additions, deletions)
 
         except Exception:
             pass
@@ -355,7 +354,6 @@ async def send_initial_data(websocket: Any, channel: str) -> None:
 
 async def poll_and_broadcast(broadcast_fn: Any) -> None:
     """Periodically fetch data for poll channels and broadcast to clients."""
-    import json
 
     from pf.wheelhub.app import _ws_clients
 

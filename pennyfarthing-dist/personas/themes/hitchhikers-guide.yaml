@@ -17,7 +17,8 @@ theme:
   character_immersion: high
   user_title: Hoopy Frood
   portrait_style: ", 1970s sci-fi book cover, bold geometric shapes, cosmic absurdist, friendly retro lettering, British vintage"
-  tier: A
+  tier: B
+  optimized: true
   dimensions:
     tone: satirical
     era: futuristic
