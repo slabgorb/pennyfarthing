@@ -1,0 +1,32 @@
+*The rest is silence — until these tests find their voices in RED.*
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a foundational feature delivering the CLI binary, command structure, error handling, output formatting, HTTP client, config loading, and shell completions.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure_test.rs` | 35 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (derive macros) |
+| `error_exit_codes_test.rs` | 22 | AC-3 (exit codes 0/1/2/3/4), CliError variants, display safety |
+| `output_formatter_test.rs` | 16 | AC-4 (table/JSON/CSV formatting, metadata, escaping) |
+| `siem_client_test.rs` | 15 | AC-7 (HTTP wrapper, header injection, status→error mapping) |
+| `config_test.rs` | 11 | AC-8 (TOML loading, env overrides, validation, XDG paths) |
+| `security_test.rs` | 11 | CWE-209 (error exposure), CWE-113 (header injection), token redaction |
+| `stub_commands_test.rs` | 7 | AC-10 (stub message format, story references) |
+| `shell_completion_test.rs` | 5 | AC-9 (bash/zsh/fish/powershell generation) |
+
+**Tests Written:** 122 tests covering all 10 ACs
+**Status:** RED (compilation failure — types `Cli`, `Commands`, `CliError`, `OutputFormatter`, `SiemClient`, `ClientConfig`, `generate_completions` do not exist yet)
+
+**Public API contract the tests expect:**
+- `Cli` (clap `Parser`), `Commands` (clap `Subcommand`), `OutputFormat` enum
+- `CliError` with variants: `AuthenticationExpired`, `Unauthorized`, `NotFound(String)`, `RateLimited`, `ServerError(String)`, `ConnectionTimeout`, `ServerUnavailable`, `ConfigError(String)`, `NotImplemented(String)` + `exit_code() -> i32` + `from_http_status(u16, &str) -> CliError`
+- `OutputFormatter` trait with `format_table(&self, &[String], &[Vec<String>]) -> String`
+- `TableFormatter::new(bool)`, `JsonFormatter::new()`, `CsvFormatter::new()`
+- `SiemClient::new(&str)` with `.with_token(String)`, `.with_tenant(String)`, `.base_url()`, `.has_token()`, `.tenant_id() -> Option<&str>`
+- `ClientConfig::default()`, `::from_file(Path)`, `::from_file_with_env(Path, &[(&str, &str)])`, `::default_path()`, `.api_url()`, `.timeout_secs()`, `.has_token()`
+- `generate_completions(&str) -> String`
+
+**Handoff:** To Dev for implementation (GREEN phase)

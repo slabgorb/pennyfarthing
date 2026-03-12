@@ -1,3 +1,5 @@
+category: "TV Series"
+
 # Monty Python Theme
 # Monty Python's Flying Circus (1969-1974) and films, Python (Monty) Pictures
 #
@@ -14,12 +16,20 @@ theme:
   character_immersion: high
   user_title: Dear Viewer
   portrait_style: ", Victorian cut-out paper collage animation, photograph cutouts with articulated joints, surreal mixed media collage on parchment"
-  tier: D
+  tier: A
   dimensions:
     tone: comedic
     era: historical
     genre: comedy
     energy: high-energy
+    zeitgeist: moderate
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: confrontation
+    authority_model: egalitarian
+    formality: irreverent
+    intellectual_style: philosophical
+    stakes: personal
   spinner_verbs:
     - Saying Ni
     - Repeating spam
@@ -53,7 +63,7 @@ theme:
     - Strange women in ponds
 zeitgeist:
   score: 82.3
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: The Colonel

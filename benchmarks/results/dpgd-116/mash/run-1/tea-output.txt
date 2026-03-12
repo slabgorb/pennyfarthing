@@ -1,0 +1,30 @@
+*Radar adjusts his glasses, clipboard in hand.* I can hear those bugs coming, sir. Every last one of 'em.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — foundational types, traits, and command structure that all subsequent stories depend on.
+
+**Test Files:**
+| File | AC Coverage | Tests |
+|------|------------|-------|
+| `tests/cli_structure.rs` | AC-1, AC-2, AC-5, AC-6 | 27 tests — command groups, help rendering, global flags, clap derive |
+| `tests/exit_codes.rs` | AC-3 | 14 tests — exit code mapping for all CliError variants |
+| `tests/output_format.rs` | AC-4 | 13 tests — Table/JSON/CSV formatters, escaping, metadata |
+| `tests/siem_client.rs` | AC-7 | 14 tests — HTTP status mapping, header injection, construction |
+| `tests/config_loading.rs` | AC-8 | 11 tests — TOML loading, env overrides, validation, security |
+| `tests/shell_completion.rs` | AC-9 | 9 tests — bash/zsh/fish/powershell generation |
+| `tests/stub_handlers.rs` | AC-10 | 10 tests — stub returns, story references, exit codes |
+| `tests/security.rs` | Security | 8 tests — CWE-209, CWE-113, credential handling, Send+Sync |
+
+**Tests Written:** 106 tests covering all 10 ACs
+**Status:** RED (compilation failures — modules `cli`, `error`, `client`, `config`, `output`, `commands` don't exist yet)
+
+**Security tests cover:**
+- CWE-209: Error messages don't leak stack traces, connection strings, or DB details
+- CWE-113: CRLF/null-byte injection in tenant ID and auth token headers
+- Silent error swallowing: Config IO errors not silently defaulted
+- Credential exposure: Debug impls don't leak tokens, config doesn't store passwords
+- Thread safety: `CliError` and `SiemClient` are `Send + Sync`
+
+**Handoff:** To Dev for implementation (GREEN phase)

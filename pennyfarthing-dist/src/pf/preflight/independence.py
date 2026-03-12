@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import re
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -68,9 +67,7 @@ class IndependenceResult:
         }
 
         if self.overlaps:
-            result["overlaps"] = [
-                {"file": o.file, "units": o.units} for o in self.overlaps
-            ]
+            result["overlaps"] = [{"file": o.file, "units": o.units} for o in self.overlaps]
 
         if self.error:
             result["error"] = self.error
@@ -126,9 +123,11 @@ def check_independence(units: list[UnitDefinition]) -> IndependenceResult:
     if independent:
         message = f"All {len(units)} units are independent. {len(all_files)} files, zero overlaps."
     else:
+        overlap_details = "; ".join(f"`{o.file}` in [{', '.join(o.units)}]" for o in overlaps[:5])
         message = (
             f"{len(overlaps)} file(s) shared across units. "
-            f"Re-decompose or confirm override before fan-out."
+            f"To fix: Assign each overlapping file to exactly one unit, or extract shared code "
+            f"into a separate module. Overlaps: {overlap_details}"
         )
 
     return IndependenceResult(
@@ -186,9 +185,7 @@ def parse_units_from_session(
     content = session_path.read_text()
 
     # Extract <unit> elements
-    unit_pattern = re.compile(
-        r'<unit\s+id="([^"]+)"[^>]*>([^<]*)</unit>', re.MULTILINE
-    )
+    unit_pattern = re.compile(r'<unit\s+id="([^"]+)"[^>]*>([^<]*)</unit>', re.MULTILINE)
 
     units = []
     for match in unit_pattern.finditer(content):

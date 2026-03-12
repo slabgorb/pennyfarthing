@@ -2,7 +2,7 @@
 #
 # Machine-readable schema defining required and optional sections
 # for context documents in sprint/context/. Used by:
-#   - pf context-docs validate (129-3: Context Validator)
+#   - pf validate context (129-3: Context Validator)
 #   - pf-context create skill (130-1, 130-2: Context Creation)
 #   - pennyfarthing-dist/templates/context-*-template.md (Templates)
 #

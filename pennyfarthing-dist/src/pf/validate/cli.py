@@ -24,6 +24,10 @@ VALIDATORS = {
     "skill-command": "pf.validate.adapters.skill_command",
     "tandem-awareness": "pf.validate.adapters.tandem_awareness",
     "context": "pf.validate.adapters.context",
+    "adr": "pf.validate.adapters.adr",
+    "prd": "pf.validate.adapters.prd",
+    "architecture": "pf.validate.adapters.architecture",
+    "theme": "pf.validate.adapters.theme",
 }
 
 
@@ -73,15 +77,23 @@ def _print_reports(reports: list[ValidateReport]) -> None:
 
 
 @click.group(invoke_without_command=True)
+@click.argument("names", nargs=-1)
 @click.option("--fix", is_flag=True, help="Auto-fix format issues where supported")
 @click.option("--strict", is_flag=True, help="Treat warnings as errors")
 @click.pass_context
-def validate(ctx, fix: bool, strict: bool):
+def validate(ctx, names: tuple[str, ...], fix: bool, strict: bool):
     """Run project validators.
 
     \b
-    With no subcommand, runs ALL validators.
-    Specify a validator name to run only that one.
+    With no arguments, runs ALL validators.
+    Pass one or more validator names to run only those.
+    Also supports subcommands for individual validators.
+
+    \b
+    Usage:
+      pf validate                           # Run all
+      pf validate agent theme               # Run specific validators
+      pf validate agent --fix               # Run with auto-fix
 
     \b
     Validators:
@@ -91,14 +103,39 @@ def validate(ctx, fix: bool, strict: bool):
       workflow           - Workflow definitions (phased/stepped/procedural structure)
       skill-command      - Skill registry and command files (prefix, deprecated, cross-ref)
       tandem-awareness   - Agent tandem consultation sections (ADR-0012 pairings)
+      context            - Context sources and schema validation
+      adr                - Architecture Decision Records (format, status, sections)
+      prd                - Product Requirements Documents (structure, density, measurability)
+      architecture       - Architecture documents (sections, diagrams, references)
+      theme              - Theme persona YAML (roles, OCEAN scores, dimensions)
     """
     ctx.ensure_object(dict)
     ctx.obj["fix"] = fix
     ctx.obj["strict"] = strict
 
+    # Click's nargs=-1 consumes subcommand names into `names`.
+    # Detect when a single subcommand was captured and re-invoke it.
+    # Multiple names are treated as positional validator names below.
+    if len(names) == 1 and names[0] in validate.commands:
+        sub_cmd = validate.commands[names[0]]
+        sub_ctx = click.Context(sub_cmd, parent=ctx, info_name=names[0])
+        with sub_ctx:
+            return sub_cmd.parse_args(sub_ctx, []) or sub_cmd.invoke(sub_ctx)
+
     if ctx.invoked_subcommand is None:
+        # If names provided as positional args, run only those
+        if names:
+            bad = [n for n in names if n not in VALIDATORS]
+            if bad:
+                error(f"Unknown validator(s): {', '.join(bad)}")
+                info(f"Available: {', '.join(sorted(VALIDATORS))}")
+                raise SystemExit(1)
+            to_run = list(names)
+        else:
+            to_run = list(VALIDATORS)
+
         reports = []
-        for name in VALIDATORS:
+        for name in to_run:
             reports.append(_run_validator(name, fix=fix, strict=strict))
         _print_reports(reports)
         if any(not r.success for r in reports):
@@ -168,8 +205,111 @@ def validate_tandem_awareness(ctx):
 @validate.command("context")
 @click.pass_context
 def validate_context(ctx):
-    """Validate context sources against context schema (components, tiers, assembly)."""
+    """Validate context sources against context schema (components, tiers, assembly).
+
+    \b
+    Usage:
+      pf validate context                 # Validate all context sources
+      pf validate context --story 6-1     # Validate story context file (see note)
+      pf validate context --epic 6        # Validate epic context file (see note)
+
+    \b
+    Note: Due to Click argument parsing, --story/--epic options must be
+    placed BEFORE 'context': pf validate --story 6-1 context
+    Or use the group-level options: pf validate context-story 6-1
+    """
     report = _run_validator("context", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("context-story")
+@click.argument("story_id")
+def validate_context_story(story_id: str):
+    """Validate a specific story context file.
+
+    \b
+    Usage:
+      pf validate context-story 6-1
+    """
+    _validate_single_context("story", story_id)
+
+
+@validate.command("context-epic")
+@click.argument("epic_id")
+def validate_context_epic(epic_id: str):
+    """Validate a specific epic context file.
+
+    \b
+    Usage:
+      pf validate context-epic 6
+    """
+    _validate_single_context("epic", epic_id)
+
+
+def _validate_single_context(context_type: str, context_id: str) -> None:
+    """Validate a single epic or story context file."""
+    from pf.context.validator import validate_context_file
+
+    root = get_project_root()
+    path = root / "sprint" / "context" / f"context-{context_type}-{context_id}.md"
+
+    if not path.exists():
+        error(f"Context file not found: {path.relative_to(root)}")
+        raise SystemExit(2)
+
+    result = validate_context_file(path)
+
+    if result.errors:
+        for err in result.errors:
+            error(f"[ERROR] {err.component}: {err.message}")
+        raise SystemExit(1)
+
+    for w in result.warnings:
+        warn(f"[WARN] {w.component}: {w.message}")
+
+    success(
+        f"context-{context_type}-{context_id}: valid ({result.components_checked} components checked)"
+    )
+    raise SystemExit(0)
+
+
+@validate.command("adr")
+@click.pass_context
+def validate_adr(ctx):
+    """Validate Architecture Decision Records (format, status, sections)."""
+    report = _run_validator("adr", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("prd")
+@click.pass_context
+def validate_prd(ctx):
+    """Validate Product Requirements Documents (structure, density, measurability)."""
+    report = _run_validator("prd", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("architecture")
+@click.pass_context
+def validate_architecture(ctx):
+    """Validate architecture documents (sections, diagrams, references)."""
+    report = _run_validator("architecture", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("theme")
+@click.pass_context
+def validate_theme(ctx):
+    """Validate theme persona YAML (roles, OCEAN scores, dimensions)."""
+    report = _run_validator("theme", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
     _print_reports([report])
     if not report.success:
         raise SystemExit(1)

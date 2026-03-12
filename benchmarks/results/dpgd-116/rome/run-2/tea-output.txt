@@ -1,0 +1,33 @@
+No session file exists. The RED phase is complete. Here's the TEA Assessment:
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the foundational CLI framework — every AC requires testable behavior.
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `tests/cli_structure.rs` | 22 | AC-1 (command groups), AC-2 (subcommand help), AC-5 (global flags), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 14 | AC-3 (exit codes 0/1/2/3/4), CliError mapping, CWE-209 error exposure |
+| `tests/output_format.rs` | 17 | AC-4 (--format table\|json\|csv), OutputFormatter trait, CSV escaping, JSON metadata |
+| `tests/siem_client.rs` | 15 | AC-7 (SiemClient), header injection (Authorization, X-Tenant-ID), HTTP status mapping |
+| `tests/config_loading.rs` | 11 | AC-8 (config loading), env var overrides, precedence, token-not-in-file security |
+| `tests/shell_completion.rs` | 7 | AC-9 (bash/zsh/fish/PowerShell completion generation) |
+| `tests/stub_handlers.rs` | 18 | AC-10 (stub "not yet implemented" messages, exit code 1) |
+| `tests/security.rs` | 9 | CWE-209, header injection, silent error swallowing, dependency boundary |
+
+**Tests Written:** 113 tests covering all 10 ACs
+**Status:** RED (failing — all 7 test files fail to compile: modules `cli`, `error`, `client`, `config`, `output`, `commands` do not exist)
+
+**Security tests cover:**
+- CWE-209: Error messages don't leak internal paths, tokens, stack traces
+- Header injection: CRLF/null byte rejection in tokens and tenant IDs
+- Silent error swallowing: All CliError variants have non-empty Display
+- Config security: Tokens not stored in config file, XDG paths, HTTPS enforcement
+
+**Cargo.toml changes:**
+- Workspace: added `clap_complete`, `comfy-table`, `csv`, `dirs`, `keyring`, `reqwest`, `toml`
+- axiathon-client: added all story-specified dependencies + `tempfile` dev-dependency
+
+**Handoff:** To Dev for implementation (GREEN phase)

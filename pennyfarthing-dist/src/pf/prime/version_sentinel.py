@@ -70,9 +70,7 @@ def get_package_version(project_root: Path) -> str:
         if version:
             return version
 
-    raise FileNotFoundError(
-        f"No VERSION file or package.json found in {project_root}"
-    )
+    raise FileNotFoundError(f"No VERSION file or package.json found in {project_root}")
 
 
 def check_version_mismatch(

@@ -1,0 +1,157 @@
+All code read, tests run, clippy clean. Now I render my judgment.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+**OFF WITH THEIR HEADS!** I have inspected every line, traced every data flow, and I am NOT pleased. The code compiles and tests pass — *so what?* Let me show you what the tests DON'T catch.
+
+---
+
+## Findings
+
+### `[HIGH]` Logout dispatches to Login handler — `main.rs:30`
+
+```rust
+Commands::Logout => axiathon_client::commands::login::handle_login(),
+```
+
+Both `Login` and `Logout` route to the identical `handle_login()` stub. When Story 9.1 implements login, this will silently perform *login* when the user types `axiathon logout`. This is a logic error waiting to happen. There must be a separate `handle_logout()` function, even if it's a stub. The stub message should say "Story 9.1" for logout specifically.
+
+---
+
+### `[HIGH]` Vacuous header injection test — `siem_client.rs:113-119`
+
+```rust
+assert!(
+    !client.has_auth() || true, // reqwest handles this at send time
+    "newlines in token must be rejected or sanitized"
+);
+```
+
+The expression `!x || true` is **always true**. This test can never fail. It claims to test header injection prevention (CWE-113) but actually tests nothing. The companion test for tenant ID newlines (`siem_client.rs:128-142`) has the same problem — the match arms accept both Ok and Err, asserting nothing meaningful. The `SiemClient` itself performs zero validation on token or tenant values containing CRLF. Defense is deferred entirely to reqwest at send time, but that's undocumented and untested.
+
+---
+
+### `[HIGH]` Nightly `rustfmt` check fails — gotchas requirement
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The check currently **fails** with formatting diffs in `siem_client.rs` and `stub_handlers.rs`. This blocks approval per gotchas policy.
+
+---
+
+### `[MEDIUM]` `with_env_override` silently swallows invalid timeout — `config.rs:86-89`
+
+```rust
+"AXIATHON_TIMEOUT" => {
+    if let Ok(t) = value.parse::<u64>() {
+        self.timeout_secs = t;
+    }
+}
+```
+
+If `AXIATHON_TIMEOUT=garbage` is set, it's silently ignored — the operator gets default timeout with no warning. Worse, `AXIATHON_TIMEOUT=0` is accepted via env override even though the TOML parser correctly rejects `timeout = 0`. Inconsistent validation between the two paths.
+
+---
+
+### `[MEDIUM]` `has_token_field()` test is vacuous — `config.rs:97-99` / `config_loading.rs:159-171`
+
+```rust
+pub fn has_token_field(&self) -> bool {
+    false  // hardcoded
+}
+```
+
+The test `client_config_does_not_store_tokens_in_file` passes a TOML with `token = "should-not-be-here"`, parses it successfully, then checks `has_token_field()` which is always `false`. The test proves nothing — the token field IS silently accepted and ignored by serde. The real question (does the config *parse* and *store* a token?) is never actually tested. If someone adds a `token` field to `RawConfig` later, this test still passes.
+
+---
+
+### `[MEDIUM]` ANSI sanitization incomplete and inconsistently applied — `output.rs:82-84`
+
+```rust
+fn sanitize_ansi(input: &str) -> String {
+    input.replace('\x1b', "")
+}
+```
+
+1. Only strips the ESC character (`\x1b`), not the full escape sequence. `"\x1b[31m"` becomes `"[31m"` — visible garbage in output.
+2. Only applied to table format. JSON and CSV output pass user data unsanitized. A downstream JSON consumer rendering in a terminal is still vulnerable.
+3. Other control characters (BEL `\x07`, backspace `\x08`) are not stripped.
+
+---
+
+### `[MEDIUM]` Missing story reference tests for rules and tenant stubs — `stub_handlers.rs`
+
+Story reference verification tests exist for status(6.2), config(6.3), ingest(6.4), alerts(6.5), query(5.5), login(9.1) — but NOT for `rules` (should be 6.6) or `tenant` (should be 6.7). These are coverage gaps in the test suite that could allow story references to drift.
+
+---
+
+### `[MEDIUM]` `init` command creates directory but no default config file — `init.rs:5-13`
+
+The "first-time setup" command creates `~/.config/axiathon/` but doesn't write a skeleton `cli.toml`. An operator running `axiathon init` gets an empty directory with no guidance on config format. AC-9 says init should be "functional, not stub" — creating only a directory is barely functional.
+
+---
+
+### `[LOW]` Workspace declares `toml = "0.8"` but story spec says `0.9` — `Cargo.toml:60`
+
+Minor: the story technical guardrails specify `toml 0.9` but the workspace uses `0.8`. Not blocking but diverges from the spec.
+
+---
+
+### `[LOW]` JSON metadata uses hardcoded epoch timestamp — `output.rs:87-90`
+
+`chrono_now()` always returns `"1970-01-01T00:00:00Z"`. The JSON envelope `metadata.timestamp` will mislead any consumer. A real timestamp using `std::time::SystemTime` would be trivial and accurate.
+
+---
+
+### `[VERIFIED]` Exit code mapping is correct
+
+All exit codes verified: 1=general, 3=auth, 4=authz. Clap handles 2 for usage errors. Tests cover all variants exhaustively.
+
+---
+
+### `[VERIFIED]` CWE-209 error sanitization on `ServerError` and `Config`
+
+`ServerError` Display intentionally omits the response body. `Config` Display omits config content. Both have `/// **SECURITY:**` comments. Tests verify the sanitized output.
+
+---
+
+### `[VERIFIED]` Command naming uses plurals per architecture doc
+
+Tests explicitly verify `rules` (not `rule`) and `alerts` (not `alert`). Negative tests confirm singular forms are rejected.
+
+---
+
+### `[VERIFIED]` No server-side crate imports in axiathon-client
+
+`Cargo.toml` depends only on `axiathon-core` and external crates. No imports from axiathon-server, axiathon-storage, axiathon-detection, axiathon-ingestion, or axiathon-query.
+
+---
+
+### `[VERIFIED]` Clap derive macros only (AC-6)
+
+All CLI structures use `#[derive(Parser)]` and `#[derive(Subcommand)]`. No imperative `Command::new()` building.
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| HIGH     | 3     | YES     |
+| MEDIUM   | 5     | no      |
+| LOW      | 2     | no      |
+| VERIFIED | 4     | —       |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+*Consider, my dear...* the King whispers. But NO. Three HIGH findings block this PR:
+
+1. **Logout→Login dispatch bug** will cause real harm when Story 9.1 lands
+2. **Vacuous header injection test** (`!x || true`) is the textbook definition of a false-pass test
+3. **Nightly fmt failure** violates explicit gotchas policy
+
+Fix the three HIGHs. The MEDIUMs should ideally be addressed too — especially the inconsistent env var timeout validation and the vacuous `has_token_field` test — but I won't block on them alone.
+
+**Off with their heads!** Come back when the code is worthy of my kingdom.

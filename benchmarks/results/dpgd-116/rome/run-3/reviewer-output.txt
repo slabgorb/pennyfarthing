@@ -1,0 +1,82 @@
+The test passes because it only checks that headers contain "Name", "Value", "Status" — but it doesn't verify the *data* columns align with the headers. The `serde_json::to_value(row).as_object()` returns a `BTreeMap` with alphabetical key ordering (`name`, `status`, `value`), while headers are passed as `["Name", "Value", "Status"]`. This is a real data corruption bug in Table and CSV output — columns will be silently shuffled.
+
+Now I have everything. Here is my review.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*Cicero rises, scrolls in hand, and addresses the Senate.*
+
+Senators, I have examined this code with the thoroughness that Rome demands. My Tiro has documented every finding. Let me deliver my judgment.
+
+## Findings
+
+### [HIGH] Table and CSV column ordering is silently wrong — `output.rs:79-88`, `output.rs:100-110`
+
+The `format_table` and `format_csv` methods serialize each row via `serde_json::to_value(row).as_object()`, which returns a `BTreeMap<String, Value>` — keys sorted **alphabetically**, not in struct field declaration order. When headers are `["Name", "Value", "Status"]`, data columns will actually be `name, status, value` (alphabetical). This silently misaligns columns with headers. For a struct with fields `{name, value, status}`, "Value" header will show "status" data and "Status" header will show "value" data. This is **data corruption in the presentation layer** — an operator reading the table will see wrong values under wrong column headers. The tests don't catch this because they only assert `output.contains("alpha")` rather than verifying column alignment.
+
+### [HIGH] `ConfigToml` silently accepts unknown fields — `config.rs:9-15`
+
+The `ConfigToml` struct uses `#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]`. A user who typos `api_ur = "..."` instead of `api_url = "..."` will get the **default** value silently with no warning. For a security-sensitive config file, this is dangerous — misconfigured URLs or timeouts will be silently ignored.
+
+### [HIGH] Nightly `cargo fmt` check fails — 211 lines of diff
+
+Per the project's `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval."* The codebase has import ordering issues in `client.rs` and likely other files. This is a blocking finding per project rules.
+
+### [MEDIUM] `--format` flag is `Option<String>` instead of typed enum — `cli.rs:25`
+
+The `--format` global flag is `Option<String>`, meaning `--format xml` is accepted at parse time and only fails later (if at all — currently stubs don't use it). Clap supports `ValueEnum` derive on `OutputFormat` to reject invalid values at parse time with proper error messages. As-is, the TTY auto-detection (table for TTY, JSON for piped — AC-4) is not implemented anywhere.
+
+### [MEDIUM] `keyring` dependency declared in `Cargo.toml` but not used — `Cargo.toml`
+
+Wait — actually `keyring` is NOT in the Cargo.toml. The story's Technical Guardrails specify "OS keychain via `keyring` crate. Load token at CLI startup in sync context BEFORE entering Tokio runtime." The `keyring` dependency is missing entirely. While `token()` returns `None` (acceptable for a stub), neither `keyring` nor `dirs` (though `dirs` IS present) is wired for credential loading. The story scope says keyring integration is for Story 9.1, so this may be acceptable as a stub, but the guardrail's "load token at CLI startup" pattern isn't even scaffolded.
+
+### [MEDIUM] `SiemClient` has no timeout configuration — `client.rs:52-55`
+
+The `reqwest::Client::builder()` is called without `.timeout()`. The `ClientConfig` has `timeout_seconds` but it's never passed to `SiemClient::new()` and never applied. The AC-7 requirement for "timeout -> ConnectionTimeout" mapping exists, but timeouts will use reqwest's defaults (which may be infinite for some operations). The test `siem_client_connection_refused_is_server_unavailable` works because connection refused is immediate, but a hanging server would block forever.
+
+### [MEDIUM] `--server` env var declared on clap but also on config — potential double-source conflict — `cli.rs:29`, `config.rs:65`
+
+The `--server` flag has `env = "AXIATHON_SERVER"` in clap, meaning clap will auto-populate it from the env var. But `ClientConfig::apply_env_override` also handles `AXIATHON_SERVER`. This creates a confusing precedence: clap reads the env var at parse time and treats it as if the CLI flag was provided, while the config layer also reads it. Neither layer knows the other did. This should be one or the other, not both.
+
+### [LOW] `toml` version mismatch — `Cargo.toml:20` says `0.8`, story says `0.9`
+
+The story's Technical Guardrails specify `toml 0.9`, but the Cargo.toml uses `toml = "0.8"`. Minor, but indicates the implementation diverged from spec.
+
+### [LOW] `main.rs` doesn't use `ClientConfig` or `SiemClient` — `main.rs:6-43`
+
+The `run()` function destructures `Cli` but discards all global flags (verbose, quiet, format, server, tenant, config, no_color). No config is loaded, no client is created, no verbosity is configured. While this is a stub story, the wiring between global flags and the config/client infrastructure is entirely absent — a future story will need to retrofit all of this.
+
+### [VERIFIED] CWE-113 header injection protection — `client.rs:20-33`
+
+CRLF in token and tenant ID is correctly rejected before `HeaderValue::from_str`. Good defense-in-depth since `HeaderValue::from_str` also rejects these, but the explicit check with a clear error message is better.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present — `main.rs:2`, `lib.rs:2`
+
+Both the binary and library crate forbid unsafe code.
+
+### [VERIFIED] Exit code mapping is complete and tested — `error.rs:46-58`
+
+All variants map to correct exit codes. Tests cover every variant including exhaustiveness.
+
+### [VERIFIED] Shell completion generation works — `completion.rs`
+
+Functional implementation using `clap_complete::generate()`, tested for all four shells.
+
+### [VERIFIED] Stub handlers correctly return `NotImplemented` with story references
+
+All 8 stub handlers tested, all reference story numbers, all return exit code 1.
+
+## Summary
+
+The CLI framework is structurally sound — clap derive structure, command groups, exit codes, error types, and shell completions all work correctly. The test suite is thorough for what it covers.
+
+However, there are three blocking issues:
+1. **Table/CSV column ordering bug** silently misaligns data with headers — this is data corruption
+2. **Unknown config fields silently ignored** — dangerous for a security tool's configuration
+3. **Nightly fmt fails** — per project gotchas, this blocks approval
+
+## Verdict: **CHANGES_REQUESTED**
+
+The three HIGH findings must be addressed before this can merge. The column ordering bug is particularly insidious — it will produce wrong output that *looks* correct at a glance, and the tests don't catch it because they only check for presence of values rather than positional correctness.

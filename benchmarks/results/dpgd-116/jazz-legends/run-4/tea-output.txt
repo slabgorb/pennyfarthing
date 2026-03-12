@@ -1,0 +1,26 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the entire CLI framework — foundational binary, clap structure, HTTP client, output formatting, config loading, error handling, shell completions, and stub handlers. All require test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure_test.rs` | 21 | AC-1 (command groups), AC-2 (help), AC-6 (clap derive) |
+| `exit_codes_test.rs` | 14 | AC-3 (CliError exit codes 0/1/2/3/4) |
+| `output_format_test.rs` | 15 | AC-4 (table/json/csv formatting, ResponseMetadata) |
+| `global_flags_test.rs` | 17 | AC-5 (--format, -v, --quiet, --server, --tenant, --config, --no-color) |
+| `siem_client_test.rs` | 12 | AC-7 (HTTP headers, status code mapping) |
+| `config_loading_test.rs` | 11 | AC-8 (TOML loading, env overrides, precedence) |
+| `shell_completion_test.rs` | 6 | AC-9 (bash/zsh/fish/powershell generation) |
+| `stub_handlers_test.rs` | 10 | AC-10 (NotImplemented with story references) |
+| `security_test.rs` | 11 | CWE-209 error exposure, header injection, config validation |
+
+**Tests Written:** 117 tests covering all 10 ACs
+**Status:** RED (failing — all tests fail with unresolved import errors because `cli`, `error`, `output`, `client`, `config`, and `commands` modules don't exist yet)
+
+**Handoff:** To Dev for implementation
+
+## Delivery Findings
+
+- No upstream findings during test design.

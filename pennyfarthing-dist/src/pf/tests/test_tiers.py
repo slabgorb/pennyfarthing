@@ -278,25 +278,28 @@ class TestTierComponentLoading:
         # Theme file
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
-        (themes_dir / "test-theme.yaml").write_text(yaml.dump({
-            "theme": {"name": "Test Theme", "user_title": "Developer"},
-            "agents": {
-                "dev": {
-                    "character": "Test Developer",
-                    "style": "Practical and efficient",
-                    "role": "Implementation specialist",
-                    "quote": "Ship it!",
+        (themes_dir / "test-theme.yaml").write_text(
+            yaml.dump(
+                {
+                    "theme": {"name": "Test Theme", "user_title": "Developer"},
+                    "agents": {
+                        "dev": {
+                            "character": "Test Developer",
+                            "style": "Practical and efficient",
+                            "role": "Implementation specialist",
+                            "quote": "Ship it!",
+                        }
+                    },
                 }
-            }
-        }))
+            )
+        )
 
         # Sprint
         sprint_dir = tmp_path / "sprint"
         sprint_dir.mkdir()
-        (sprint_dir / "current-sprint.yaml").write_text(yaml.dump({
-            "sprint": {"number": 12, "goal": "Test sprint"},
-            "epics": []
-        }))
+        (sprint_dir / "current-sprint.yaml").write_text(
+            yaml.dump({"sprint": {"number": 12, "goal": "Test sprint"}, "epics": []})
+        )
 
         # Session
         session_dir = tmp_path / ".session"
@@ -698,17 +701,16 @@ class TestTierLoadingPaths:
         (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test"}))
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
-        (themes_dir / "test.yaml").write_text(yaml.dump({
-            "agents": {"dev": {"character": "Dev", "style": "s", "role": "r"}}
-        }))
+        (themes_dir / "test.yaml").write_text(
+            yaml.dump({"agents": {"dev": {"character": "Dev", "style": "s", "role": "r"}}})
+        )
 
         # Sprint
         sprint_dir = tmp_path / "sprint"
         sprint_dir.mkdir()
-        (sprint_dir / "current-sprint.yaml").write_text(yaml.dump({
-            "sprint": {"number": 12, "goal": "Test"},
-            "epics": []
-        }))
+        (sprint_dir / "current-sprint.yaml").write_text(
+            yaml.dump({"sprint": {"number": 12, "goal": "Test"}, "epics": []})
+        )
 
         # Session
         session_dir = tmp_path / ".session"
@@ -744,7 +746,9 @@ class TestTokenReduction:
         captured = capsys.readouterr()
 
         # ~600 tokens ≈ 2400 chars, allow up to 800 tokens ≈ 3200 chars
-        assert len(captured.out) < 3200, f"REFRESH tier too large: {len(captured.out)} chars (~{len(captured.out)//4} tokens)"
+        assert len(captured.out) < 3200, (
+            f"REFRESH tier too large: {len(captured.out)} chars (~{len(captured.out) // 4} tokens)"
+        )
 
     def test_handoff_tier_under_900_tokens(self, tmp_path: Path, capsys) -> None:
         """Test HANDOFF tier output is under 900 tokens (~3600 chars)."""
@@ -766,7 +770,9 @@ class TestTokenReduction:
         captured = capsys.readouterr()
 
         # ~700 tokens ≈ 2800 chars, allow up to 900 tokens ≈ 3600 chars
-        assert len(captured.out) < 3600, f"HANDOFF tier too large: {len(captured.out)} chars (~{len(captured.out)//4} tokens)"
+        assert len(captured.out) < 3600, (
+            f"HANDOFF tier too large: {len(captured.out)} chars (~{len(captured.out) // 4} tokens)"
+        )
 
     def test_minimal_tier_under_300_tokens(self, tmp_path: Path, capsys) -> None:
         """Test MINIMAL tier output is under 300 tokens (~1200 chars)."""
@@ -788,7 +794,9 @@ class TestTokenReduction:
         captured = capsys.readouterr()
 
         # ~200 tokens ≈ 800 chars, allow up to 300 tokens ≈ 1200 chars
-        assert len(captured.out) < 1200, f"MINIMAL tier too large: {len(captured.out)} chars (~{len(captured.out)//4} tokens)"
+        assert len(captured.out) < 1200, (
+            f"MINIMAL tier too large: {len(captured.out)} chars (~{len(captured.out) // 4} tokens)"
+        )
 
     def test_full_tier_approximately_4000_tokens(self, tmp_path: Path, capsys) -> None:
         """Test FULL tier output is approximately 4000 tokens (~16000 chars)."""
@@ -832,16 +840,19 @@ class TestTokenReduction:
             sizes[tier] = len(capsys.readouterr().out)
 
         # REFRESH should be <20% of FULL
-        assert sizes["REFRESH"] < sizes["FULL"] * 0.20, \
-            f"REFRESH not reduced enough: {sizes['REFRESH']}/{sizes['FULL']} = {sizes['REFRESH']/sizes['FULL']:.1%}"
+        assert sizes["REFRESH"] < sizes["FULL"] * 0.20, (
+            f"REFRESH not reduced enough: {sizes['REFRESH']}/{sizes['FULL']} = {sizes['REFRESH'] / sizes['FULL']:.1%}"
+        )
 
         # HANDOFF should be <25% of FULL
-        assert sizes["HANDOFF"] < sizes["FULL"] * 0.25, \
-            f"HANDOFF not reduced enough: {sizes['HANDOFF']}/{sizes['FULL']} = {sizes['HANDOFF']/sizes['FULL']:.1%}"
+        assert sizes["HANDOFF"] < sizes["FULL"] * 0.25, (
+            f"HANDOFF not reduced enough: {sizes['HANDOFF']}/{sizes['FULL']} = {sizes['HANDOFF'] / sizes['FULL']:.1%}"
+        )
 
         # MINIMAL should be <10% of FULL
-        assert sizes["MINIMAL"] < sizes["FULL"] * 0.10, \
-            f"MINIMAL not reduced enough: {sizes['MINIMAL']}/{sizes['FULL']} = {sizes['MINIMAL']/sizes['FULL']:.1%}"
+        assert sizes["MINIMAL"] < sizes["FULL"] * 0.10, (
+            f"MINIMAL not reduced enough: {sizes['MINIMAL']}/{sizes['FULL']} = {sizes['MINIMAL'] / sizes['FULL']:.1%}"
+        )
 
     def _setup_realistic_project(self, tmp_path: Path) -> None:
         """Set up a realistic project with typical content sizes."""
@@ -851,7 +862,8 @@ class TestTokenReduction:
         # Agent definition (~400 tokens = ~1600 chars)
         agents_dir = pf_dir / "agents"
         agents_dir.mkdir()
-        (agents_dir / "dev.md").write_text("""# Developer Agent
+        (agents_dir / "dev.md").write_text(
+            """# Developer Agent
 
 <role>
 Feature implementation, bug fixes, code quality
@@ -874,12 +886,15 @@ Feature implementation, bug fixes, code quality
 - `/testing` - Run tests
 - `/dev-patterns` - Common patterns
 </skills>
-""" + ("Additional context. " * 50))
+"""
+            + ("Additional context. " * 50)
+        )
 
         # Behavior guide (~800 tokens = ~3200 chars)
         guides_dir = pf_dir / "guides"
         guides_dir.mkdir()
-        (guides_dir / "agent-behavior.md").write_text("""# Agent Behavior Guide
+        (guides_dir / "agent-behavior.md").write_text(
+            """# Agent Behavior Guide
 
 <critical>
 Session file is source of truth.
@@ -902,12 +917,15 @@ Standard: SM → TEA → Dev → Reviewer → SM
 - Parallelize independent operations
 - Use subagents for specialized tasks
 - Batch bash commands with &&
-""" + ("Detailed behavior guidance. " * 80))
+"""
+            + ("Detailed behavior guidance. " * 80)
+        )
 
         # Sidecars (~1200 tokens = ~4800 chars)
         sidecar_dir = pf_dir / "sidecars" / "dev"
         sidecar_dir.mkdir(parents=True)
-        (sidecar_dir / "patterns.md").write_text("""# Dev Patterns
+        (sidecar_dir / "patterns.md").write_text(
+            """# Dev Patterns
 
 ## Common Patterns
 
@@ -929,41 +947,56 @@ describe('Component', () => {
   });
 });
 ```
-""" + ("Pattern documentation. " * 100))
+"""
+            + ("Pattern documentation. " * 100)
+        )
 
-        (sidecar_dir / "gotchas.md").write_text("""# Dev Gotchas
+        (sidecar_dir / "gotchas.md").write_text(
+            """# Dev Gotchas
 
 1. Always read before write
 2. Check symlinks before git add
 3. Run tests before handoff
-""" + ("Gotcha details. " * 50))
+"""
+            + ("Gotcha details. " * 50)
+        )
 
         # Theme (~300 tokens = ~1200 chars for full persona)
         (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test-theme"}))
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
-        (themes_dir / "test-theme.yaml").write_text(yaml.dump({
-            "theme": {"name": "Test Theme", "user_title": "Developer"},
-            "agents": {
-                "dev": {
-                    "character": "Rosie the Riveter",
-                    "style": "Can-do wartime spirit, practical, determined, efficient, never gives up",
-                    "role": "The implementation specialist who gets things done",
-                    "quote": "We Can Do It!",
-                    "trait": "Unwavering determination",
-                    "motto": "Victory through effort and teamwork",
-                },
-                "sm": {"character": "Commander", "style": "s", "role": "r"},
-            }
-        }))
+        (themes_dir / "test-theme.yaml").write_text(
+            yaml.dump(
+                {
+                    "theme": {"name": "Test Theme", "user_title": "Developer"},
+                    "agents": {
+                        "dev": {
+                            "character": "Rosie the Riveter",
+                            "style": "Can-do wartime spirit, practical, determined, efficient, never gives up",
+                            "role": "The implementation specialist who gets things done",
+                            "quote": "We Can Do It!",
+                            "trait": "Unwavering determination",
+                            "motto": "Victory through effort and teamwork",
+                        },
+                        "sm": {"character": "Commander", "style": "s", "role": "r"},
+                    },
+                }
+            )
+        )
 
         # Sprint (~150 tokens)
         sprint_dir = tmp_path / "sprint"
         sprint_dir.mkdir()
-        (sprint_dir / "current-sprint.yaml").write_text(yaml.dump({
-            "sprint": {"number": 12, "goal": "Complete tier implementation"},
-            "epics": [{"id": "epic-1", "stories": [{"id": "1-1", "status": "in_progress"}]}]
-        }))
+        (sprint_dir / "current-sprint.yaml").write_text(
+            yaml.dump(
+                {
+                    "sprint": {"number": 12, "goal": "Complete tier implementation"},
+                    "epics": [
+                        {"id": "epic-1", "stories": [{"id": "1-1", "status": "in_progress"}]}
+                    ],
+                }
+            )
+        )
 
         # Session (~200 tokens)
         session_dir = tmp_path / ".session"
@@ -1029,10 +1062,9 @@ class TestTierIntegration:
 
         sprint_dir = tmp_path / "sprint"
         sprint_dir.mkdir()
-        (sprint_dir / "current-sprint.yaml").write_text(yaml.dump({
-            "sprint": {"number": 12},
-            "epics": []
-        }))
+        (sprint_dir / "current-sprint.yaml").write_text(
+            yaml.dump({"sprint": {"number": 12}, "epics": []})
+        )
 
         with patch("pf.prime.cli.get_project_root", return_value=tmp_path):
             with patch("pf.prime.loader.get_project_root", return_value=tmp_path):
@@ -1062,11 +1094,9 @@ class TestTierIntegration:
         # Workflow pointing to dev phase
         workflows_dir = tmp_path / "pennyfarthing-dist" / "workflows"
         workflows_dir.mkdir(parents=True)
-        (workflows_dir / "tdd.yaml").write_text(yaml.dump({
-            "workflow": {
-                "phases": [{"name": "green", "agent": "dev"}]
-            }
-        }))
+        (workflows_dir / "tdd.yaml").write_text(
+            yaml.dump({"workflow": {"phases": [{"name": "green", "agent": "dev"}]}})
+        )
 
         session_dir = tmp_path / ".session"
         session_dir.mkdir()

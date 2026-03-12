@@ -1,0 +1,29 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers core CLI framework — multiple public types, traits, and behaviors requiring validation.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure.rs` | 39 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (derive macros) |
+| `exit_codes.rs` | 24 | AC-3 (CliError enum, exit_code() mapping: 0/1/2/3/4) |
+| `output_format.rs` | 22 | AC-4 (OutputFormatter trait, Table/JSON/CSV, ResponseMetadata) |
+| `siem_client.rs` | 16 | AC-7 (HTTP wrapper, header injection, status code mapping) |
+| `config_loading.rs` | 13 | AC-8 (TOML loading, env overrides, precedence, validation) |
+| `shell_completion.rs` | 9 | AC-9 (bash/zsh/fish/powershell generation) |
+| `stub_handlers.rs` | 14 | AC-10 (stub messages reference correct story numbers) |
+| `security.rs` | 12 | CWE-209 error exposure, CWE-113 header injection, token exclusion, silent error swallowing |
+
+**Tests Written:** 149 tests covering all 10 ACs
+**Status:** RED (compilation failures — all modules referenced by tests are unimplemented)
+**Verification:** `cargo test -p axiathon-client` produces 40 compilation errors across all 8 test files. Zero tests pass.
+
+**Handoff:** To Dev for implementation.
+
+### Key test design decisions:
+- **SiemClient tests** use `wiremock` mock server for HTTP status code mapping (401→AuthenticationExpired, 403→Unauthorized, etc.)
+- **Config tests** use `tempfile` for TOML file loading without touching real filesystem
+- **Security tests** cover header injection via newline chars in tenant ID/token, token exclusion from config files, and silent error swallowing on non-2xx responses
+- **Stub tests** verify each stub references the correct downstream story number (e.g., status→6.2, config→6.3)
+- **CLI structure tests** enforce plural command names (`rules` not `rule`) per architecture doc

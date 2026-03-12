@@ -31,9 +31,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     Returns:
         Parsed arguments namespace
     """
-    parser = argparse.ArgumentParser(
-        description="Create Jira epic from Pennyfarthing sprint YAML"
-    )
+    parser = argparse.ArgumentParser(description="Create Jira epic from Pennyfarthing sprint YAML")
     parser.add_argument("epic_id", help="Epic ID (e.g., epic-63 or 63)")
     parser.add_argument("--dry-run", action="store_true", help="Show changes without applying")
 

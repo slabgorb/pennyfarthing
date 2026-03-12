@@ -48,13 +48,15 @@ def _parse_outdated_output(output: str) -> list[OutdatedPackage]:
 
     packages = []
     for name, info in data.items():
-        packages.append(OutdatedPackage(
-            name=name,
-            current=info.get("current", ""),
-            wanted=info.get("wanted", ""),
-            latest=info.get("latest", ""),
-            type=info.get("type", ""),
-        ))
+        packages.append(
+            OutdatedPackage(
+                name=name,
+                current=info.get("current", ""),
+                wanted=info.get("wanted", ""),
+                latest=info.get("latest", ""),
+                type=info.get("type", ""),
+            )
+        )
     return packages
 
 
@@ -80,10 +82,7 @@ def _parse_audit_output(output: str) -> list[SecurityAdvisory]:
         sev = info.get("severity", "unknown")
         severity_counts[sev] += 1
 
-    return [
-        SecurityAdvisory(severity=sev, count=count)
-        for sev, count in severity_counts.items()
-    ]
+    return [SecurityAdvisory(severity=sev, count=count) for sev, count in severity_counts.items()]
 
 
 async def _run_npm_outdated(npm_bin: Path, target_path: Path) -> tuple[str, str, int]:

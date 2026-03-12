@@ -1,0 +1,65 @@
+All tests pass, clippy is clean. Now I have the full picture. Time to deliver the verdict.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*"As you wish"... but I found problems. And I will not let them pass.*
+
+---
+
+## Findings
+
+### CRITICAL
+
+**[CRITICAL] `cargo +nightly fmt --all --check` fails** — `cli.rs` has formatting differences (multi-line `#[command()]` attributes). Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval." This blocks merge.
+
+### HIGH
+
+**[HIGH] `--config` flag is accepted but never wired to config loading** at `main.rs:25-74`. The `Cli` struct has `pub config: Option<String>` but `dispatch()` never calls `ClientConfig::load()`. The config subsystem is entirely disconnected from the binary. An operator passing `--config /path/to/cli.toml` gets a false sense that it's being used. This is a broken contract per AC-8.
+
+**[HIGH] `logout` command missing from AC-1** — AC-1 explicitly lists `login`/`logout` as required command groups. The `Commands` enum has `Login` but no `Logout` variant. `--help` will not show `logout`.
+
+**[HIGH] Stub error message printed twice to stderr** at `main.rs:17-22` + `main.rs:77-84`. The `stub()` function does `eprintln!("{command}: not yet implemented ({story})")` then returns `Err(CliError::General(...))`. The caller in `main()` then does `eprintln!("error: {e}")`. Result: two error lines for every stub command. This is user-facing noise and incorrect per AC-10 which says stubs should print "not yet implemented" — singular, not doubled.
+
+**[HIGH] `AXIATHON_TIMEOUT` parse failure silently swallowed** at `config.rs:94-98`. If the env var is set to `"abc"`, the inner `parse()` fails and the timeout silently falls back to the file/default value. An operator debugging timeout behavior gets no feedback that their env var is malformed. This violates the no-silent-failure principle.
+
+### MEDIUM
+
+**[MEDIUM] No concrete `OutputFormatter` implementation exists** — `output.rs` declares the `OutputFormatter` trait but provides zero implementations. The test `table_formatter_implementation_exists` at `cli_output_formatting.rs:73-87` defines `assert_output_formatter()` but **never calls it** — it's a dead function. This is a vacuous test that proves nothing. AC-4 requires table/JSON/CSV implementations. While stubs may be acceptable, the test claiming to verify this is misleading.
+
+**[MEDIUM] `ConfigFile` silently accepts unknown fields (including `token`)** at `config.rs:18-25`. The `#[serde(default)]` attribute without `#[serde(deny_unknown_fields)]` means a config file containing `token = "my-secret"` parses without warning. The test `config_does_not_store_tokens_in_file` at `cli_config.rs:196-223` asserts `result.is_ok() || result.is_err()` — a tautology that is **always true**. This is a vacuous assertion that catches nothing.
+
+**[MEDIUM] `config_handles_nonexistent_file_path` has vacuous assertion** at `cli_config.rs:85-88`. Same pattern: `assert!(result.is_ok() || result.is_err())` — always true. The test never verifies whether defaults are returned or an error is produced; it only checks the program doesn't panic, which `.expect()` would already surface.
+
+**[MEDIUM] Workspace dependency versions diverge from story spec** — Story specifies `dirs` 6 and `toml` 0.9; workspace has `dirs = "5"` and `toml = "0.8"`. Also `keyring` 3 is listed in the story spec as a workspace dependency to add but is entirely absent. While keychain integration is Story 9.1's concern, the workspace dependency was explicitly scoped to this story.
+
+**[MEDIUM] Missing command module files** — Story spec says to create individual command modules (`commands/query.rs`, `commands/rules.rs`, etc.). Instead, all command dispatch lives in `main.rs` and `commands/mod.rs` is an empty barrel. This deviates from the documented crate layout.
+
+**[MEDIUM] `--tenant` accepts raw `String` with no validation** at `cli.rs:39`. Per `rust.md`: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types" and "Validated constructors at trust boundaries." The tenant flag should validate format before passing to `SiemClient`.
+
+### LOW
+
+**[LOW] `stdout().flush().ok()` silently discards flush error** at `main.rs:96`. A write failure to stdout (e.g., broken pipe) is silently ignored. Should use `?` or at minimum log.
+
+**[LOW] `json_output_includes_*` tests are vacuous when stdout is empty** at `cli_output_formatting.rs:151-199`. The `if !stdout.trim().is_empty()` guard means these tests pass trivially since stub commands produce no stdout. The assertion is never reached.
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 1 |
+| High | 4 |
+| Medium | 6 |
+| Low | 2 |
+| **Total** | **13** |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+The nightly fmt failure alone blocks this per project policy. Beyond that, the disconnected `--config` flag, missing `logout` command, doubled error output, and silent env var parse failure are all real operator-facing defects that must be addressed. The vacuous test assertions (`is_ok() || is_err()`) should be replaced with meaningful checks or removed — they provide false confidence.
+
+*"Good night, Westley. Good work. Sleep well. I'll most likely kill you in the morning."* Fix these, and we'll talk again.

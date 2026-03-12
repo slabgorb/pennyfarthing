@@ -1,3 +1,5 @@
+category: "Film"
+
 # Princess Bride Theme
 # The Princess Bride (1987)
 #
@@ -13,7 +15,8 @@ theme:
   default_humor: enabled
   user_title: Dear Reader
   portrait_style: ", fairy tale storybook watercolor illustration, warm romantic lighting, Renaissance Faire, enchanted forest backdrop"
-  tier: B
+  tier: S
+  optimized: true
   spinner_verbs:
     - Inconceivable
     - As you wish
@@ -45,10 +48,23 @@ theme:
     - Fezzik rhyming
     - Westley dashing
     - Truly dizzying intellect
+  dimensions:
+    tone: whimsical
+    era: timeless
+    genre: fantasy
+    energy: swashbuckling
+    zeitgeist: high
+    scrutiny: trusting
+    cooperation_model: found-family
+    conflict_approach: competition
+    authority_model: meritocratic
+    formality: conversational
+    intellectual_style: pragmatic
+    stakes: personal
 
 zeitgeist:
   score: 91.0
-  rating: exceptional
+  rating: high
 agents:
   orchestrator:
     character: The Grandfather

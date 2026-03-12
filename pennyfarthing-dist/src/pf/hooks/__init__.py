@@ -143,6 +143,7 @@ class PennySettings:
     statusbar: bool = True
     theme: str | None = None
     discovery_nudge: bool = True
+    startup_agent: str = "sm"
 
 
 def load_settings(project_root: Path | None = None) -> PennySettings:
@@ -216,6 +217,10 @@ def load_settings(project_root: Path | None = None) -> PennySettings:
     if "discovery_nudge" in workflow and isinstance(workflow["discovery_nudge"], bool):
         settings.discovery_nudge = workflow["discovery_nudge"]
 
+    # Handle startup_agent
+    if "startup_agent" in workflow and isinstance(workflow["startup_agent"], str):
+        settings.startup_agent = workflow["startup_agent"]
+
     return settings
 
 
@@ -229,7 +234,6 @@ def is_relay_mode_enabled(project_root: Path | None = None) -> bool:
         True if relay mode is enabled
     """
     return load_settings(project_root).relay_mode
-
 
 
 # =============================================================================
@@ -251,7 +255,7 @@ class ContextState:
 def get_context_state(project_root: Path | None = None) -> ContextState:
     """Get current context usage from WheelHub API.
 
-    Calls WheelHub's /api/context endpoint which runs check-context.sh.
+    Calls WheelHub's /api/context endpoint which runs pf context.
 
     Args:
         project_root: Project root directory (auto-detected if not provided)

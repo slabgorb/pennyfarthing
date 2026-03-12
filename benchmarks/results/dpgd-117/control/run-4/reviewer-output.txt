@@ -1,0 +1,93 @@
+---
+
+# Adversarial Code Review: Story 8.1 — REST API Foundation
+
+## Preflight Results
+
+- `cargo test -p axiathon-server`: **69/69 pass**
+- `cargo clippy -p axiathon-server -- -D warnings`: **clean**
+- `cargo +nightly fmt --all --check`: **FAILS** (formatting diffs in `api_versioning.rs`)
+
+---
+
+## Findings
+
+### 1. `[HIGH]` Nightly fmt check fails — `tests/api_versioning.rs`
+
+The reviewer gotchas document (`gotchas.md`) explicitly states: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."* Nightly fmt reports formatting diffs in `api_versioning.rs` (multi-line `assert!` formatting). This must be fixed before merge.
+
+### 2. `[HIGH]` 10 unused production dependencies — `Cargo.toml:9-22`
+
+`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber`, and `tokio` are declared as production dependencies but **zero imports** from any of them exist in `src/`. This bloats compile time, inflates the dependency graph, and increases attack surface for no benefit. Only `axum`, `chrono`, `serde`, `serde_json`, and `uuid` are actually used.
+
+### 3. `[HIGH]` Rate limiter is permanently blocking — no time window — `rate_limit.rs:18-34`
+
+The rate limiter is a monotonically incrementing counter with no reset mechanism. Once a tenant exceeds 100 requests, they are **permanently blocked** for the lifetime of the process. There is no sliding window, no token bucket, no expiry. The AC says "configurable per-tenant limits" and the story specifies "tower-governor" — this is a hand-rolled implementation that doesn't match either requirement. The counter also grows unbounded in memory (HashMap entries never evicted).
+
+### 4. `[MEDIUM]` No structured logging or tracing anywhere — all `src/*.rs`
+
+The `tracing` crate is a dependency (unused, per finding #2) and zero `tracing::info!()`, `tracing::error!()`, `tracing::warn!()`, or `#[tracing::instrument]` calls exist. No request logging, no error tracing, no span creation. The story's Technical Guardrails reference observability and the Rust rules require `tenant_id()` and `trace_id()` in all tracing spans. There is no observability surface at all.
+
+### 5. `[MEDIUM]` Response type named `ApiEnvelope` instead of `ApiResponse` — `response.rs:14`
+
+The story, epic context, and architecture docs consistently refer to `ApiResponse<T>`. The implementation names it `ApiEnvelope<T>`. Every downstream story in Epic 8 will reference `ApiResponse<T>` and find a type mismatch. This naming divergence should be resolved now before it propagates.
+
+### 6. `[MEDIUM]` `AppState` is empty — no `FromRef` substates — `auth.rs:23`
+
+The story explicitly requires `FromRef<AppState>` substate extraction with domain-scoped substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`). `AppState` is currently `struct AppState;` with no fields. Even as stubs, the substate structure should be present so subsequent stories can build on it — that's the whole point of the foundation story.
+
+### 7. `[MEDIUM]` `#[non_exhaustive]` missing on public types — `response.rs:14,21,29`
+
+`ApiEnvelope<T>`, `EnvelopeError`, and `EnvelopeMeta` are public types exported from the crate. Per the Rust coding rules: *"#[non_exhaustive] on enums that will grow."* These structs will grow as the API evolves (e.g., pagination in meta, additional error fields for RFC 9457 compliance). Without `#[non_exhaustive]`, adding fields is a breaking change for external constructors.
+
+### 8. `[MEDIUM]` `AuthInfo` has public fields on a security-critical type — `auth.rs:16-19`
+
+Per Rust rules: *"Private fields with getters on security-critical types (TenantContext, SystemContext)."* `AuthInfo` carries `tenant_id` and `scopes` with `pub` visibility, allowing any code to mutate them after extraction. These should be private with accessor methods.
+
+### 9. `[LOW]` Rate limiter generates its own `trace_id` instead of reusing the auth middleware's — `rate_limit.rs:24`
+
+The auth middleware already creates a `TraceId` and inserts it into request extensions (`auth.rs:101,156`). The rate limiter generates a second, unrelated `trace_id`. If a rate-limited response is returned, its `trace_id` won't match any prior trace context, breaking correlation.
+
+### 10. `[VERIFIED]` `#![forbid(unsafe_code)]` present — `lib.rs:2`
+
+Confirmed at compile-time and via `include_str!` test.
+
+### 11. `[VERIFIED]` Envelope format consistency — all error and success paths return `{data, errors, meta}`
+
+Traced through `error_response()`, `success_response()`, 401/403/404/429 paths. All return the three-field envelope. `meta.request_id` is UUID, `meta.timestamp` is RFC 3339, `meta.trace_id` is present.
+
+### 12. `[VERIFIED]` Error messages are sanitized — no internal details leak
+
+Checked all error strings in auth, rate_limit, and routes modules. None contain crate names, DB references, stack traces, or user enumeration hints.
+
+### 13. `[VERIFIED]` Health endpoint is outside auth/rate-limit middleware
+
+`health_routes()` is merged at the top-level router, not inside the `authed_routes` nest. Confirmed by the `health_endpoint_exempt_from_rate_limiting` test passing.
+
+### 14. `[VERIFIED]` JWKS endpoint exists and returns `{"keys": []}` — `routes.rs:38-46`
+
+Correctly placed outside auth middleware at `/.well-known/jwks.json`.
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 0 | — |
+| High | 3 | YES |
+| Medium | 5 | No |
+| Low | 1 | No |
+| Verified | 5 | — |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three HIGH findings block approval:
+
+1. **Fix nightly fmt** — run `cargo +nightly fmt --all` and commit.
+2. **Remove unused dependencies** — strip `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber`, `tokio` from `[dependencies]` (keep the ones that are actually imported).
+3. **Rate limiter needs a time window** — either use `tower-governor` as the story specifies, or at minimum implement a sliding window with expiry so tenants aren't permanently blocked. The current design is a production DoS on your own tenants.
+
+The MEDIUM findings (naming, `#[non_exhaustive]`, empty `AppState`, tracing, `AuthInfo` visibility) should be addressed but are not individually blocking.

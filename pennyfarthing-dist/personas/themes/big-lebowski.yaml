@@ -1,3 +1,5 @@
+category: "Film"
+
 # Big Lebowski Theme
 # The Big Lebowski (1998), Coen Brothers
 #
@@ -14,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Man
   portrait_style: ", bowling alley neon warmth, noir comedy aesthetic"
-  tier: B
+  tier: U
+  optimized: true
   spinner_verbs:
     - Abiding
     - Bowling
@@ -46,9 +49,22 @@ theme:
     - Following the lead
     - Keeping it together man
     - New information has come to light
+  dimensions:
+    tone: comedic
+    era: contemporary
+    genre: comedy
+    energy: laid-back
+    zeitgeist: moderate
+    scrutiny: trusting
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: egalitarian
+    formality: irreverent
+    intellectual_style: improvisational
+    stakes: personal
 zeitgeist:
   score: 84.1
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: The Stranger (Sam Elliott)

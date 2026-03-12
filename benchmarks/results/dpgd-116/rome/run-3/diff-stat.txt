@@ -1,0 +1,17 @@
+ CLAUDE.md                                         | 315 +++++++++++++++++++---
+ crates/axiathon-client/src/cli.rs                 | 100 ++++++-
+ crates/axiathon-client/src/client.rs              |  91 ++++++-
+ crates/axiathon-client/src/commands/alerts.rs     |   2 +-
+ crates/axiathon-client/src/commands/completion.rs |   7 +-
+ crates/axiathon-client/src/commands/config.rs     |   2 +-
+ crates/axiathon-client/src/commands/ingest.rs     |   2 +-
+ crates/axiathon-client/src/commands/login.rs      |   2 +-
+ crates/axiathon-client/src/commands/query.rs      |   2 +-
+ crates/axiathon-client/src/commands/rules.rs      |   2 +-
+ crates/axiathon-client/src/commands/status.rs     |   2 +-
+ crates/axiathon-client/src/commands/tenant.rs     |   2 +-
+ crates/axiathon-client/src/config.rs              |  92 +++++--
+ crates/axiathon-client/src/error.rs               |  24 +-
+ crates/axiathon-client/src/main.rs                |  39 ++-
+ crates/axiathon-client/src/output.rs              |  89 +++++-
+ 16 files changed, 684 insertions(+), 89 deletions(-)

@@ -1,0 +1,28 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the foundational CLI framework — every AC defines testable behavior.
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `tests/cli_structure.rs` | 16 | AC-1 (command groups), AC-2 (help rendering), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 14 | AC-3 (exit codes 0-4), CWE-209 (error info leakage) |
+| `tests/output_format.rs` | 14 | AC-4 (table/JSON/CSV formatting, metadata, escaping) |
+| `tests/global_flags.rs` | 17 | AC-5 (--format, -v, --quiet, --server, --config, --no-color) |
+| `tests/siem_client.rs` | 18 | AC-7 (HTTP wrapper, header injection, status mapping, token safety) |
+| `tests/config_loading.rs` | 12 | AC-8 (TOML loading, precedence, validation, token rejection) |
+| `tests/shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell completion generation) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (stub messages, story references, exit code 1) |
+
+**Tests Written:** 107 tests covering all 10 ACs
+**Status:** RED (all 8 test files fail to compile — expected modules don't exist yet)
+
+**Security tests included:**
+- Header injection prevention (CRLF in tenant ID / server URL)
+- Token not exposed in `Debug` output
+- CWE-209: error Display must not leak internal paths or connection strings
+- Config file must not honor `token` field (tokens belong in OS keychain)
+- Non-HTTP(S) server URLs rejected
+
+**Handoff:** To Dev for implementation (GREEN phase)

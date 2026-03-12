@@ -74,9 +74,7 @@ class WheelHubClient:
         for cb in self._state_callbacks:
             cb(new_state)
 
-    def _set_channel_state(
-        self, channel: str, new_state: ConnectionState
-    ) -> None:
+    def _set_channel_state(self, channel: str, new_state: ConnectionState) -> None:
         """Update per-channel state and recompute aggregate.
 
         The aggregate state is CONNECTED if at least one channel is
@@ -107,16 +105,12 @@ class WheelHubClient:
                 try:
                     return int(text)
                 except ValueError as err:
-                    raise RuntimeError(
-                        f"Invalid port in {port_file}: {text!r}"
-                    ) from err
+                    raise RuntimeError(f"Invalid port in {port_file}: {text!r}") from err
             raise FileNotFoundError(
                 f"No .bikerack-port file in {self._project_dir}. "
                 "Is WheelHub running? Start it with: pf bikerack start"
             )
-        raise RuntimeError(
-            "No port source available: no explicit port and no project_dir set"
-        )
+        raise RuntimeError("No port source available: no explicit port and no project_dir set")
 
     def subscribe(self, channel: str, handler: MessageHandler) -> None:
         """Register a handler for messages on a channel."""
@@ -136,22 +130,19 @@ class WheelHubClient:
         """
         self._stopped = False
         port = self.discover_port()
+        self._port = port
 
         if not self._handlers:
             self._set_state(ConnectionState.CONNECTED)
             return
 
-        async def channel_loop(
-            channel: str, handlers: list[MessageHandler]
-        ) -> None:
+        async def channel_loop(channel: str, handlers: list[MessageHandler]) -> None:
             while not self._stopped:
                 try:
                     url = f"ws://localhost:{port}/ws/{channel}"
                     ws = await websockets.connect(url)
                     self._connections[channel] = ws
-                    self._set_channel_state(
-                        channel, ConnectionState.CONNECTED
-                    )
+                    self._set_channel_state(channel, ConnectionState.CONNECTED)
                     while True:
                         raw = await ws.recv()
                         try:
@@ -165,12 +156,8 @@ class WheelHubClient:
                 except Exception:
                     if self._stopped:
                         break
-                    self._set_channel_state(
-                        channel, ConnectionState.RECONNECTING
-                    )
-                    _sleep = asyncio.create_task(
-                        asyncio.sleep(RECONNECT_DELAY)
-                    )
+                    self._set_channel_state(channel, ConnectionState.RECONNECTING)
+                    _sleep = asyncio.create_task(asyncio.sleep(RECONNECT_DELAY))
                     try:
                         await _sleep
                     except asyncio.CancelledError:
@@ -178,8 +165,7 @@ class WheelHubClient:
                         raise
 
         self._tasks = [
-            asyncio.create_task(channel_loop(ch, hs))
-            for ch, hs in self._handlers.items()
+            asyncio.create_task(channel_loop(ch, hs)) for ch, hs in self._handlers.items()
         ]
 
         results = await asyncio.gather(*self._tasks, return_exceptions=True)

@@ -66,8 +66,17 @@ def healthy_project(tmp_path: Path) -> Path:
     (pf_dir / "config.local.yaml").write_text("theme: discworld\n")
 
     # Symlink targets (as real directories for testing)
-    for name in ("agents", "commands", "guides", "personas", "scripts",
-                 "skills", "workflows", "templates", "output-styles"):
+    for name in (
+        "agents",
+        "commands",
+        "guides",
+        "personas",
+        "scripts",
+        "skills",
+        "workflows",
+        "templates",
+        "output-styles",
+    ):
         target = pf_dir / name
         target.mkdir()
         (target / ".gitkeep").touch()
@@ -93,7 +102,10 @@ def healthy_project(tmp_path: Path) -> Path:
             "SessionStart": [{"hooks": [{"type": "command", "command": "pf hooks session-start"}]}],
             "Stop": [{"hooks": [{"type": "command", "command": "pf hooks session-stop"}]}],
             "PreToolUse": [
-                {"matcher": "Edit|Write", "hooks": [{"type": "command", "command": "pf hooks pre-edit-check"}]},
+                {
+                    "matcher": "Edit|Write",
+                    "hooks": [{"type": "command", "command": "pf hooks pre-edit-check"}],
+                },
             ],
         }
     }
@@ -108,22 +120,9 @@ def healthy_project(tmp_path: Path) -> Path:
     (root / "node_modules").mkdir()
     (root / "node_modules" / ".package-lock.json").write_text("{}")
 
-    # Bootstrap hook (required by check_bootstrap)
+    # .claude/hooks directory (may be needed by other checks)
     hooks_dir = claude_dir / "hooks"
     hooks_dir.mkdir(parents=True)
-    bootstrap_sh = hooks_dir / "bootstrap.sh"
-    bootstrap_sh.write_text("#!/bin/bash\n# bootstrap hook\n")
-    bootstrap_sh.chmod(0o755)
-
-    # settings.json with bootstrap SessionStart hook (required by check_bootstrap)
-    settings_json_data = {
-        "hooks": {
-            "SessionStart": [
-                {"hooks": [{"type": "command", "command": ".claude/hooks/bootstrap.sh"}]}
-            ]
-        }
-    }
-    (claude_dir / "settings.json").write_text(json.dumps(settings_json_data))
 
     return root
 
@@ -151,9 +150,7 @@ class TestCheckRegistry:
 
     def test_checks_count_approximately_10(self):
         """Should have approximately 10 checks (8-12 range)."""
-        assert 8 <= len(CHECKS) <= 12, (
-            f"Expected ~10 checks, got {len(CHECKS)}"
-        )
+        assert 8 <= len(CHECKS) <= 12, f"Expected ~10 checks, got {len(CHECKS)}"
 
     def test_each_check_has_name_and_description(self):
         """Each entry in CHECKS must be a (name, description) tuple."""
@@ -441,9 +438,7 @@ class TestReduction:
 
     def test_fewer_than_15_checks(self):
         """Must have strictly fewer checks than the old TS doctor (~14 functions)."""
-        assert len(CHECKS) < 15, (
-            f"Doctor has {len(CHECKS)} checks — should be reduced from old ~14"
-        )
+        assert len(CHECKS) < 15, f"Doctor has {len(CHECKS)} checks — should be reduced from old ~14"
 
     def test_no_legacy_checks(self):
         """No check names should reference 'legacy' — those are removed."""
@@ -470,9 +465,7 @@ class TestCLIRegistration:
         """'doctor' should appear in the main CLI lazy commands."""
         from pf.cli import _LAZY_COMMANDS
 
-        assert "doctor" in _LAZY_COMMANDS, (
-            "doctor not registered in _LAZY_COMMANDS in cli.py"
-        )
+        assert "doctor" in _LAZY_COMMANDS, "doctor not registered in _LAZY_COMMANDS in cli.py"
 
     def test_lazy_command_points_to_correct_module(self):
         """Lazy command should point to pf.doctor.cli:doctor."""

@@ -1,3 +1,5 @@
+category: "TV Series"
+
 # Star Trek TOS Theme
 # Star Trek: The Original Series (1966-1969)
 #
@@ -14,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Captain
   portrait_style: ", 1960s Starfleet, bold primary uniforms, retro-futuristic lighting, Kirk-era heroic"
-  tier: B
+  tier: D
+  optimized: true
   spinner_verbs:
     - Beaming up
     - Boldly going
@@ -46,9 +49,22 @@ theme:
     - Guardian consulting
     - Yeoman assisting
     - 47 logical inconsistencies finding
+  dimensions:
+    tone: dramatic
+    era: futuristic
+    genre: sci-fi
+    energy: bold
+    zeitgeist: moderate
+    scrutiny: professional
+    cooperation_model: unified
+    conflict_approach: debate
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: analytical
+    stakes: institutional
 zeitgeist:
   score: 84.75
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

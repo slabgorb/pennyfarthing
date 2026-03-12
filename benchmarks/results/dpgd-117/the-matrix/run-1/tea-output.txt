@@ -1,0 +1,26 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 is the foundational REST API — every AC requires behavioral verification.
+
+**Test Files:**
+| File | Tests | Description |
+|------|-------|-------------|
+| `tests/rest_endpoints.rs` | 8 | Route registration, health endpoint, events/alerts/rules/queries stubs, unknown routes 404 |
+| `tests/api_response_envelope.rs` | 10 | Three-field envelope (data/errors/meta), request_id UUID, timestamp ISO 8601, trace_id, unique IDs, JSON content-type |
+| `tests/authentication.rs` | 16 | JWT Bearer (valid/missing/expired/malformed/wrong-scope/empty/case-insensitive), API key (valid/revoked/wrong-scope/empty), tenant context extraction, CWE-209 info leak, JWKS endpoint |
+| `tests/rate_limiting.rs` | 5 | 429 status, Retry-After header, envelope on 429, per-tenant isolation, health exempt from rate limiting |
+| `tests/api_versioning.rs` | 5 | v1 prefix, v2 returns 404, unversioned returns 404, deprecation header mechanism, 404 uses envelope |
+| `tests/security_edge_cases.rs` | 8 | Stack trace exposure, internal path exposure, CORS preflight, malformed JSON, empty body, oversized body, header injection, method not allowed, `#![forbid(unsafe_code)]` check |
+
+**Tests Written:** 52 tests covering all 5 ACs
+**Status:** RED (compilation failure — `axiathon_server::router()` does not exist)
+
+**Key design decisions in test contract:**
+- Tests expect `axiathon_server::router()` as the public API entry point returning an Axum `Router`
+- The AC requires `errors` as an always-present **array** (not the current `error: Option<ApiError>` singular) — tests enforce this
+- The AC requires `meta` with `request_id`, `timestamp`, `trace_id` (not the current pagination-focused `ApiMeta`) — tests enforce this
+- Health endpoint is public (no auth required), all other routes require authentication
+- Rate limiting is per-tenant with `Retry-After` header
+
+**Handoff:** To Dev for implementation (GREEN phase)

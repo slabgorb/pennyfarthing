@@ -1,0 +1,35 @@
+**All 99 tests pass. Zero failures. Zero clippy warnings.**
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `Cargo.toml` (workspace) — added `env` feature to clap
+- `crates/axiathon-client/Cargo.toml` — custom lint config (downgrade `unsafe_code` from `forbid` to `deny` for edition 2024 env var tests)
+- `crates/axiathon-client/src/lib.rs` — module declarations
+- `crates/axiathon-client/src/main.rs` — binary entry point with stub dispatch
+- `crates/axiathon-client/src/cli.rs` — `Cli` (Parser) + `Commands` (Subcommand) with all 12 command groups
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with exit code mapping (0/1/2/3/4)
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` TOML loading with env var overrides
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` + `OutputFormatter` (Table/JSON/CSV)
+- `crates/axiathon-client/src/client.rs` — `SiemClient` HTTP wrapper with header injection + status code mapping
+- `crates/axiathon-client/src/commands/mod.rs` — module re-exports
+- `crates/axiathon-client/src/commands/query.rs` — QueryArgs with `run` subcommand
+- `crates/axiathon-client/src/commands/rules.rs` — RulesArgs with `list` subcommand
+- `crates/axiathon-client/src/commands/alerts.rs` — AlertsArgs with `list`/`acknowledge` subcommands
+- `crates/axiathon-client/src/commands/ingest.rs` — IngestArgs stub
+- `crates/axiathon-client/src/commands/config.rs` — ConfigArgs stub
+- `crates/axiathon-client/src/commands/status.rs` — StatusArgs stub
+- `crates/axiathon-client/src/commands/tenant.rs` — TenantArgs stub
+- `crates/axiathon-client/src/commands/login.rs` — LoginArgs stub
+- `crates/axiathon-client/src/commands/completion.rs` — `CompletionArgs` + `generate_completion()` (functional)
+- `crates/axiathon-client/src/commands/init.rs` — InitArgs stub
+- `crates/axiathon-client/tests/cli_global_flags.rs` — added `#![allow(unsafe_code)]` + `unsafe` blocks for env var ops (edition 2024)
+- `crates/axiathon-client/tests/cli_config.rs` — added `#![allow(unsafe_code)]` + `unsafe` blocks for env var ops (edition 2024)
+
+**Tests:** 99/99 passing (GREEN) — must run with `--test-threads=1` due to env var test isolation
+**Clippy:** Clean, zero warnings
+**Branch:** HEAD (not yet pushed)
+
+**Note:** The env var tests (`cli_config`, `cli_global_flags`) are inherently racy when run in parallel because `std::env::set_var`/`remove_var` modifies global process state. They pass reliably with `--test-threads=1`. This is a known limitation of the test design, not the implementation.

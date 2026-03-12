@@ -1,0 +1,96 @@
+I've completed my thorough review. Here's the full findings report.
+
+---
+
+# Story 6.1 Review — Mike Ehrmantraut
+
+Look, I've been through every line. Twice. Here's what I found. No half measures.
+
+## Observations
+
+### [HIGH] `cargo +nightly fmt --all --check` fails — 325 lines of diff at `cli.rs:3`, `config.rs:1`, and others
+
+Nightly rustfmt enforces import ordering that stable does not. Per the gotchas sidecar, this **must pass before approval**. Currently 325 lines of formatting divergence. This will fail CI.
+
+### [HIGH] `--format` flag is `Option<String>` not `OutputFormat` enum at `cli.rs:24`
+
+AC-4 specifies `--format table|json|csv`. The flag is typed as `Option<String>`, meaning the CLI will accept `--format garbage` without complaint at the parsing layer. clap's `value_enum` derive on `OutputFormat` would enforce valid values at parse time. As-is, there's no validation of the format string anywhere in main.rs — the flag is accepted, stubs return errors, and the format value is never used. When real commands land, this will be a latent bug.
+
+### [HIGH] `NotFound` variant leaks full URL in Display at `error.rs:13` / `client.rs:81`
+
+`CliError::NotFound(String)` stores the URL (set at `client.rs:81` as the full constructed URL), but the `#[error("resource not found")]` Display impl hides it. The inner string is there in debug output. However — the `main.rs:15` does `eprintln!("{e}")` which uses Display, so the URL doesn't leak to the user. But the inner data is still accessible via pattern matching on the `pub` enum. More importantly, the CWE-209 test at `cli_error.rs:91` tests `ServerError` not `NotFound` — and `ServerError` Display also hides its inner string correctly. This is borderline — the data is stored but not displayed. Marking HIGH because the inner URL containing server hostname is accessible to downstream consumers of the public API.
+
+### [MEDIUM] `axiathon-core` dependency declared but never used at `Cargo.toml:13`
+
+`axiathon-core` is listed as a dependency, but `grep -r "use axiathon_core"` across all source files returns zero hits. The crate compiles but carries a phantom dependency. It won't cause a build failure, but it's dead weight and signals the dependency rule ("depends on axiathon-core ONLY for shared types") is aspirational rather than actual.
+
+### [MEDIUM] `output.rs` uses `expect()` 6 times in production code at `output.rs:64-95`
+
+The Rust rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` calls have messages, so technically compliant — but the `OutputFormatter::format()` method returns `String`, not `Result<String, _>`. A CSV write to a `Vec<u8>` buffer is infallible in practice, and `serde_json::to_value` on `Vec<Map>` won't fail. These `expect()`s are defensible but tightly coupled to implementation details. If the trait signature ever changes to return `Result`, these become proper error paths.
+
+### [MEDIUM] No TTY auto-detection for output format at `main.rs` / `output.rs`
+
+AC-4 requires "Table default for TTY, JSON for piped output" using `std::io::IsTerminal`. The code defaults to `OutputFormat::Table` always. There is no `IsTerminal` check anywhere. The story spec explicitly calls out `std::io::IsTerminal` (not deprecated `atty`). This AC requirement is unmet.
+
+### [MEDIUM] `config.rs:88-96` `validate()` silently replaces invalid values with defaults
+
+Empty `server_url` becomes the default. Zero `timeout` becomes the default. This is not validation — it's silent correction. An operator who sets `timeout = 0` intending "no timeout" gets 30 seconds. The test at `cli_config.rs:159` accepts either behavior, so the test is technically passing, but the semantics are questionable. A real validator would return `Err`.
+
+### [MEDIUM] `config.rs` uses `#[serde(default)]` without `#[serde(deny_unknown_fields)]`
+
+Unknown fields in the TOML config file are silently ignored. The test `client_config_handles_unknown_fields_gracefully` at `cli_config.rs:195-203` explicitly accepts this, but it's a smell — a typo like `servr_url` would be silently ignored and the default used. The test is also vacuous: `let _ = ClientConfig::from_toml(...)` — it doesn't even check the result.
+
+### [MEDIUM] `main.rs:39` silently drops `create_dir_all` error
+
+`let _ = std::fs::create_dir_all(parent)` — if directory creation fails (permissions, disk full), the init command reports success with the config path. The operator thinks init succeeded but the directory doesn't exist.
+
+### [LOW] `toml` version mismatch: spec says 0.9, `Cargo.toml` uses 0.8 at `Cargo.toml:26`
+
+The story Technical Guardrails specify `toml 0.9`. The actual dependency is `toml = "0.8"`. Not a functional issue (0.9 may not exist yet), but a spec deviation.
+
+### [LOW] `cli_config.rs:141-152` token-in-config test is vacuous
+
+The test loads config with `token = "should-be-ignored"` then only asserts `server_url()`. It never checks that there's no `token()` accessor or that the token value is inaccessible. Since `ClientConfig` uses `#[serde(default)]` without `deny_unknown_fields`, the token field is silently ignored by serde. The assertion doesn't prove anything about token security.
+
+### [LOW] `SiemClient` only has `get()` — no `post()`, `put()`, `delete()`
+
+Only GET is implemented. Every future story (rules create, alerts acknowledge, etc.) will need other HTTP methods. This is technically fine for a framework story, but the method limitation means AC-7's header injection/error mapping is only tested for GET.
+
+### [VERIFIED] Header injection prevention (CWE-113) — `client.rs:52,58` uses `HeaderValue::from_str()` which rejects `\r\n`. Tests at `cli_client.rs:253,267` confirm.
+
+### [VERIFIED] Exit codes 0/1/2/3/4 correctly mapped — `error.rs:42-47`, tested at `cli_error.rs` and `cli_stubs.rs`.
+
+### [VERIFIED] All command groups present in help — tested at `cli_structure.rs:80-93`.
+
+### [VERIFIED] Stub handlers return proper error with story references — `main.rs:47-51`, tested at `cli_stubs.rs`.
+
+### [VERIFIED] Shell completions functional for bash/zsh/fish/PowerShell — tested at `cli_completion.rs`.
+
+### [VERIFIED] No `unsafe` code — `#![forbid(unsafe_code)]` at `lib.rs`, workspace lints forbid it too.
+
+### [VERIFIED] No `unwrap()` in production code.
+
+### [VERIFIED] `#[non_exhaustive]` on `CliError` enum at `error.rs:7`.
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 5 |
+| Low | 3 |
+| Verified | 8 |
+
+The HIGH findings:
+1. **Nightly fmt fails** — CI will reject this. Must fix.
+2. **`--format` is unvalidated `String`** — violates AC-4's `table|json|csv` constraint at the type level.
+3. **`NotFound` stores full URL** — inner data accessible on public enum; CWE-209 adjacent.
+
+## Verdict: **CHANGES_REQUESTED**
+
+The nightly fmt failure alone blocks this. The unvalidated `--format` flag is a design flaw that will compound when real commands land. The TTY auto-detection gap means AC-4 is only partially met.
+
+Fix the fmt, type the format flag properly, and add the IsTerminal check. Then we'll talk.

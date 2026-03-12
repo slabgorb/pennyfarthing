@@ -87,9 +87,7 @@ def audit_step_file(file_path: Path) -> StepAuditResult:
 
     content = file_path.read_text()
 
-    result = StepAuditResult(
-        workflow_name=workflow_name, step_name=step_name, file_path=file_path
-    )
+    result = StepAuditResult(workflow_name=workflow_name, step_name=step_name, file_path=file_path)
 
     # Check required tags
     for tag in REQUIRED_TAGS:
@@ -175,9 +173,7 @@ class WorkflowAuditResult:
         return sum(1 for r in self.step_results if not r.is_valid)
 
 
-def audit_workflow_steps(
-    root: Path, *, workflow_name: str | None = None
-) -> dict[str, list | dict]:
+def audit_workflow_steps(root: Path, *, workflow_name: str | None = None) -> dict[str, list | dict]:
     """Audit workflow step files in a project.
 
     Args:

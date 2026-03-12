@@ -1,0 +1,25 @@
+All **116 tests pass** and **clippy is clean**.
+
+## Summary
+
+**Files created** (all under `crates/axiathon-client/src/`):
+
+| File | Purpose |
+|------|---------|
+| `error.rs` | `CliError` enum with 10 variants, `exit_code()` mapping (1/3/4), thiserror derive |
+| `cli.rs` | `Cli` struct with `#[derive(Parser)]`, `Commands` enum with all 10 command groups, global flags with `global = true` |
+| `client.rs` | `SiemClient` wrapping `reqwest::Client`, header injection (`X-Tenant-ID`, `Authorization: Bearer`), HTTP status mapping |
+| `config.rs` | `ClientConfig` with TOML loading, env var overrides, validation (timeout range, URL scheme) |
+| `output.rs` | `OutputFormat` enum with `FromStr`, `OutputFormatter` with table (comfy-table), JSON (with metadata), CSV formatting |
+| `commands/mod.rs` | Module re-exports |
+| `commands/{query,rules,alerts,ingest,config,status,tenant,login,init}.rs` | Stub handlers returning `CliError::NotImplemented` with story references |
+| `commands/completion.rs` | `generate_completion()` using `clap_complete` for bash/zsh/fish/powershell |
+
+**Files modified:**
+- `src/lib.rs` — added module declarations
+- `Cargo.toml` (workspace) — added `env` feature to clap
+- `Cargo.toml` (axiathon-client) — added `uuid`, `chrono` dependencies
+- `tests/global_flags.rs` — fixed `.get_env().map().collect()` → added `.into_iter()` (clap 4.x API)
+
+**Tests:** 116/116 passing (GREEN)
+**Clippy:** 0 warnings

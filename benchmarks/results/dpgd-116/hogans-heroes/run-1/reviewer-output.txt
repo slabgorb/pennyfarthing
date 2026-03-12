@@ -1,0 +1,113 @@
+Good. I now have everything I need. Here is my full adversarial review.
+
+---
+
+# Story 6.1 CLI Framework — Adversarial Code Review
+
+*General Burkhalter speaking. I have inspected every line. Let me be clear: there is good engineering here buried under critical integration failures.*
+
+---
+
+## Findings
+
+### CRITICAL
+
+**[CRITICAL] `main.rs` is a dead stub — the binary does nothing** at `crates/axiathon-client/src/main.rs:1-5`
+
+The entire `main.rs` is:
+```rust
+fn main() {
+    eprintln!("axiathon CLI - use --help for usage");
+}
+```
+No `Cli::parse()`, no command dispatch, no exit code mapping, no config loading, no `SiemClient` construction. Running `cargo run -p axiathon-client` ignores all arguments. Every AC (1-10) is structurally unmet at the binary level. Tests only pass because they test library functions directly — they never exercise the actual binary. This is the single largest gap: **the deliverable binary is non-functional**.
+
+**[CRITICAL] `cargo +nightly fmt --all --check` fails** (per `gotchas.md` requirement)
+
+Nightly rustfmt reports import ordering violations in `cli.rs`, `client.rs`, `completion.rs`, and line-wrapping differences in `alerts.rs`, `config.rs`, `init.rs`, `ingest.rs`, `login.rs`, `query.rs`, `rules.rs`, `status.rs`, `tenant.rs`. The gotchas doc is explicit: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."*
+
+### HIGH
+
+**[HIGH] Test `client_config_handles_missing_optional_fields` FAILS due to env var pollution** at `crates/axiathon-client/tests/config_loading.rs:234`
+
+The test expects `server_url()` to be `"https://axiathon.example.com"` but gets `"https://from-env.example.com"` — leftover from a prior test's `AXIATHON_API_URL` env var. The `EnvVarGuard` relies on `--test-threads=1` (stated in comments) but the test binary doesn't enforce this. Tests using `unsafe { std::env::set_var(...) }` are inherently racy without `#[serial]` or guaranteed single-threading. **A test is failing right now in the current codebase.**
+
+**[HIGH] `with_tenant()` and `with_token()` bypass header validation — only `try_with_*` validates** at `crates/axiathon-client/src/client.rs:49-57`
+
+`SiemClient::with_tenant("evil\r\nX-Admin: true")` silently succeeds — no `validate_header_value()` call. Only `try_with_tenant()` validates. If future code calls `with_tenant()` with user-supplied input (e.g., from `--tenant` CLI flag), header injection (CWE-113) is possible. The safe path exists but the unsafe path is equally accessible and has a more convenient API.
+
+**[HIGH] Workspace dependency declarations missing for 6 crates** at `Cargo.toml` (root) and `crates/axiathon-client/Cargo.toml:15-25`
+
+The story spec says: *"Add to `[workspace.dependencies]`: `reqwest` 0.12, `comfy-table` 7, `keyring` 3, `clap_complete` 4, `dirs` 6, `csv` 1, `toml` 0.9."* None of these appear in the workspace `[workspace.dependencies]` section. They're declared directly in the crate `Cargo.toml` with inline versions. This violates the workspace pattern (`rust.md`: *"Workspace-level dependency declarations in root `Cargo.toml`"*) and creates version drift risk across crates.
+
+**[HIGH] `toml` version is 0.8, spec requires 0.9** at `crates/axiathon-client/Cargo.toml:25`
+
+The story spec explicitly states `toml` 0.9. The Cargo.toml declares `toml = "0.8"`. This is a spec deviation.
+
+**[HIGH] `RawConfig` silently ignores unknown fields (including `[auth] token = "..."`)** at `crates/axiathon-client/src/config.rs:16-19`
+
+`#[derive(Deserialize)]` with default serde behavior silently drops unknown fields. A config file with `[auth]\ntoken = "super-secret-token"` is silently accepted. The test at `config_loading.rs:136-169` verifies `config.token()` returns `None` — but the *security concern* is that operators may believe their token is being used when it's silently ignored. Should use `#[serde(deny_unknown_fields)]` or at minimum warn on unknown sections.
+
+### MEDIUM
+
+**[MEDIUM] `SiemClient::new()` uses `expect()` — panics on empty URL** at `crates/axiathon-client/src/client.rs:25-27`
+
+`SiemClient::new("")` panics with `"valid base URL"`. Production code rule from `rust.md`: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message."* The message `"valid base URL"` is arguably actionable, but a `new()` that can panic on user input is a footgun. `try_new()` exists but isn't the default constructor name.
+
+**[MEDIUM] `ResponseMetadata::request_id` is timestamp-based, not unique** at `crates/axiathon-client/src/output.rs:42-51`
+
+`request_id` is `format!("{:x}-{:x}", secs, nanos)`. Two calls within the same nanosecond produce identical IDs. For a field named `request_id`, collisions undermine traceability. Should use `uuid::Uuid::now_v7()` (already in workspace deps).
+
+**[MEDIUM] `init` command handler is a stub returning "not yet implemented (Story 6.1)"** at `crates/axiathon-client/src/commands/init.rs:1-7`
+
+The story scope says *"`axiathon init` first-time setup (functional, not stub)"*. The current implementation is a stub identical to all other commands. This is a scope miss per AC.
+
+**[MEDIUM] `completion` command — `generate_completion` writes to a buffer but `main.rs` never calls it** at `crates/axiathon-client/src/commands/completion.rs`
+
+Shell completion generation works correctly in library tests (AC-9 verified). But since `main.rs` has no dispatch, `axiathon completion bash` does nothing. This is subsumed by the CRITICAL main.rs finding but worth noting as a separate AC-9 delivery gap.
+
+**[MEDIUM] Config env var override skips URL validation** at `crates/axiathon-client/src/config.rs:70-71`
+
+When `AXIATHON_API_URL` env var is set, the value is assigned directly without calling `validate_url()`. An env var like `AXIATHON_API_URL=ftp://evil.com` bypasses the scheme check that `from_file()` applies to the TOML value.
+
+### LOW
+
+**[LOW] `EnvVarGuard` is duplicated across two test files** at `tests/config_loading.rs:268-294` and `tests/security.rs:212-238`
+
+Identical implementation copy-pasted. Should be a shared test utility.
+
+**[LOW] `help_lower` variable unused** at `tests/cli_structure.rs:44`
+
+`let help_lower = help.to_lowercase();` is computed but never read.
+
+---
+
+## Verified Good
+
+- **[VERIFIED]** `CliError::exit_code()` mapping is correct: 0/1/2/3/4 per AC-3
+- **[VERIFIED]** Header injection prevention via `validate_header_value()` checks CR/LF/NUL — CWE-113 mitigated on the `try_with_*` path
+- **[VERIFIED]** HTTP status code mapping in `SiemClient::get()` covers 401/403/404/429/5xx/timeout/connection-refused — no silent error swallowing
+- **[VERIFIED]** `OutputFormatter` produces valid JSON with `data` array and `metadata`, proper CSV escaping (commas, quotes, newlines), and comfy-table rendering
+- **[VERIFIED]** Shell completion generation works for all 4 shells (bash/zsh/fish/PowerShell) with correct binary name
+- **[VERIFIED]** All 8 stub handlers return `Err(CliError::Internal(...))` with story references and exit code 1
+- **[VERIFIED]** `#![forbid(unsafe_code)]` in `lib.rs` and `main.rs`
+- **[VERIFIED]** `CliError` is `Send + Sync` and implements `std::error::Error`
+- **[VERIFIED]** Clap derive macros used exclusively (no imperative builder) — AC-6 met
+- **[VERIFIED]** All command groups present with plural nouns (`rules`, `alerts`) — AC-1 met at library level
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+4 Critical/High issues block merge:
+
+1. **`main.rs` must implement CLI parsing, command dispatch, and exit code mapping** — the binary is non-functional
+2. **Nightly fmt must pass** — gotchas.md is explicit
+3. **Test failure must be fixed** — `client_config_handles_missing_optional_fields` fails due to env var leakage
+4. **`with_tenant()`/`with_token()` must validate or be removed** — unsafe path bypasses header injection protection
+5. **Workspace dependencies must be declared in root `Cargo.toml`** per project conventions
+6. **`toml` version must match spec (0.9 not 0.8)**
+7. **Config `AXIATHON_API_URL` env var override must validate URL scheme**
+8. **Unknown config fields should warn or error, not silently drop** (especially `[auth] token`)
+
+The library modules are well-engineered. The `SiemClient`, `OutputFormatter`, `CliError`, and `ClientConfig` are solid. But **a CLI that cannot execute commands is not a CLI**. Fix `main.rs`, fix the test, fix the validation gaps, and this will be ready for re-review.

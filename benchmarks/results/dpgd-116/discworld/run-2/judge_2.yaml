@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: discworld
+run_id: 2
+judge_version: v2
+judge_pass: 2
+total_caught: 6
+total_findings: 7
+weighted_caught: 28
+total_weight: 37
+score_pct: 75.7
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'No phase identified that from_file_or_default swallows all errors including
+    parse/permission failures. TEA wrote config_loading tests but focused on env var
+    overrides and token rejection, not error discrimination. Reviewer flagged silent
+    AXIATHON_TIMEOUT parse failures (finding #8) but not the broader from_file_or_default
+    issue.'
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA explicitly listed ''CWE-209: Error messages don''t leak credentials
+    or stack traces'' as a security test and exit_codes.rs includes ''CWE-209 checks''.
+    Same vulnerability class addressed.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #9: 'Raw `String` for tenant ID instead of `TenantId`\
+    \ newtype at `cli.rs:35`, `client.rs:10`' \u2014 explicitly flags that axiathon-core\
+    \ exports TenantId but it's unused, losing type safety."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #4: ''Workspace dependency declarations missing... The
+    crate''s Cargo.toml pins these directly (clap_complete = "4", comfy-table = "7",
+    etc.), bypassing workspace version management.'''
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #7: ''RawConfig silently accepts unknown fields... No
+    #[serde(deny_unknown_fields)]... A typo like api_rul is silently ignored.'' Also
+    mentions the token field being ''intentionally accepted-but-ignored'' as problematic.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #10 flags a vacuous test in siem_client.rs with no meaningful\
+    \ assertion. Same category (vacuous test) in a different file \u2014 per partial\
+    \ match rule #2, pipeline demonstrated detection capability for this issue class."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #10 flags a test that 'does... nothing. No assertion\
+    \ on the sanitized value' \u2014 same category as a test with zero assertions.\
+    \ Finding #13 also flags stub tests that 'don't test actual dispatch' \u2014 testing\
+    \ API surface rather than behavior."

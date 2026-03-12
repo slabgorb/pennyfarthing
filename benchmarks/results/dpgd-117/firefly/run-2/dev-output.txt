@@ -1,0 +1,28 @@
+## Dev Assessment
+
+**Implementation Complete:** Yes (58/59 tests GREEN, 1 test defect)
+
+**Files Changed:**
+- `crates/axiathon-server/Cargo.toml` — added `chrono` and `uuid` dependencies
+- `crates/axiathon-server/src/lib.rs` — app builder, router setup, fallback/405 handling
+- `crates/axiathon-server/src/config.rs` — `ServerConfig` with `test_config_with_rate_limit()`
+- `crates/axiathon-server/src/response.rs` — `Envelope<T>` response type matching AC `{data, errors[], meta{request_id, timestamp, trace_id}}`
+- `crates/axiathon-server/src/auth.rs` — Bearer token + API key auth middleware with scope checking
+- `crates/axiathon-server/src/rate_limit.rs` — per-tenant rate limiting with global state
+- `crates/axiathon-server/src/handlers.rs` — health, events, alerts, rules, queries handlers + deprecated-test endpoint
+
+**Tests:** 58/59 passing (GREEN)
+- `api_auth.rs`: 14/14
+- `api_endpoints.rs`: 11/11
+- `api_envelope.rs`: 10/10
+- `api_rate_limiting.rs`: 6/6
+- `api_versioning.rs`: 6/6
+- `api_security.rs`: 11/12
+
+**Clippy:** Clean (`-D warnings`)
+
+**1 Test Defect:** `response_headers_do_not_reflect_user_input` — the test constructs an `http::Request` with `\r\n` (CRLF) bytes in a header value. The `http` crate v1.4.0 correctly rejects this as `InvalidHeaderValue`, and the test's `.unwrap()` panics before our server code runs. The http crate already prevents CRLF header injection at the protocol level, which is the correct security behavior. This test needs the `\r\n` replaced with a non-CRLF injection attempt to be valid.
+
+## Delivery Findings
+
+- **Gap** (non-blocking): Test `response_headers_do_not_reflect_user_input` in `api_security.rs` panics at request construction — `http` crate v1.4.0 rejects CRLF in header values. Affects `crates/axiathon-server/tests/api_security.rs` (header value needs to use a non-CRLF injection payload). *Found by Dev during implementation.*

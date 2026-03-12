@@ -1,0 +1,29 @@
+This parrot is *definitely* deceased. I've systematically proven it with 7 test files, and every single one refuses to compile — exactly as a dead parrot should behave in the RED phase. Here's the Norwegian Blue Verification report:
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a foundational feature crate — every AC needs test coverage.
+
+**Test Files:**
+| File | AC Coverage | Tests | Description |
+|------|-------------|-------|-------------|
+| `cli_structure.rs` | AC-1, AC-2, AC-5, AC-6 | 28 | Command groups, help rendering, global flags, clap derive |
+| `exit_codes.rs` | AC-3 | 11 | CliError → exit code mapping (0/1/2/3/4), CWE-209 checks |
+| `output_format.rs` | AC-4 | 14 | OutputFormatter trait, table/JSON/CSV, TTY auto-detection |
+| `siem_client.rs` | AC-7 | 14 | SiemClient construction, header injection, HTTP→CliError mapping |
+| `config_loading.rs` | AC-8 | 10 | TOML loading, env overrides, XDG paths, token rejection |
+| `shell_completion.rs` | AC-9 | 7 | bash/zsh/fish/PowerShell generation, subcommand coverage |
+| `stub_handlers.rs` | AC-10 | 11 | All 8 stub handlers return NotImplemented with story refs |
+
+**Tests Written:** ~95 tests covering all 10 ACs
+**Status:** RED (fails to compile — no implementation exists)
+
+**Security tests included:**
+- CWE-209: `CliError::Display` must not expose internal server details
+- Header injection: CRLF in tenant ID and auth tokens must be rejected
+- Token in config: `cli.toml` must not store/expose tokens
+- Silent error swallowing: connection failures must return `Err`, not `Ok`
+- Config validation: invalid URLs, negative timeouts, malformed TOML rejected
+
+**Handoff:** To Dev for implementation (GREEN phase)

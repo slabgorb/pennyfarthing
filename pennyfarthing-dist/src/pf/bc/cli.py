@@ -145,13 +145,22 @@ def save_layout(name: str, dry_run: bool):
     layout_data = _get_current_layout()
     if not layout_data:
         click.echo(
-            json.dumps({"success": False, "error": "No running Cyclist/BikeRack server found, or layout is empty"}),
+            json.dumps(
+                {
+                    "success": False,
+                    "error": "No running Cyclist/BikeRack server found, or layout is empty",
+                }
+            ),
             err=True,
         )
         sys.exit(1)
     if dry_run:
         panel_count = len(layout_data.get("panels", {}))
-        click.echo(json.dumps({"dry_run": True, "action": "save_layout", "name": name, "panels": panel_count}))
+        click.echo(
+            json.dumps(
+                {"dry_run": True, "action": "save_layout", "name": name, "panels": panel_count}
+            )
+        )
         return
     result = save_named_layout(name, layout_data)
     if result["success"]:
@@ -199,7 +208,9 @@ def clear_layout(name: str, dry_run: bool):
         return
     result = clear_named_layout(name)
     if result["success"]:
-        click.echo(json.dumps({"success": True, "message": result.get("message", "layout cleared")}))
+        click.echo(
+            json.dumps({"success": True, "message": result.get("message", "layout cleared")})
+        )
     else:
         click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
         sys.exit(1)
@@ -251,7 +262,9 @@ def clear_all_layouts(dry_run: bool):
         return
     result = clear_all_named_layouts()
     if result["success"]:
-        click.echo(json.dumps({"success": True, "message": result.get("message", "all layouts cleared")}))
+        click.echo(
+            json.dumps({"success": True, "message": result.get("message", "all layouts cleared")})
+        )
     else:
         click.echo(json.dumps({"success": False, "error": result["error"]}), err=True)
         sys.exit(1)

@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: house-md
+run_id: 4
+timestamp: '2026-03-08T08:38:06.995369+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-house-md-run-4
+phases:
+  tea:
+    token_usage:
+      input: 49
+      output: 32143
+    duration_s: 602.14
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 38
+      output: 34091
+    duration_s: 634.87
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 13
+      output: 5829
+    duration_s: 181.86
+    exit_code: 0

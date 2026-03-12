@@ -1,0 +1,79 @@
+scenario_id: dpgd-116
+theme: shakespeare
+run_id: 3
+judge_version: v2
+total_caught: 2
+total_findings: 7
+weighted_caught: 10
+total_weight: 37
+score_pct: 27.0
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified the from_file_or_default pattern swallowing all errors.
+    TEA wrote config tests but the API contract includes from_file (which returns
+    Result) without testing the unwrap_or_default fallback behavior for parse/permission
+    errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote security_test.rs covering 'CWE-209 (error exposure)'. Reviewer\
+    \ also flagged '[LOW] NotFound Display leaks resource identifier \u2014 error.rs:68'\
+    \ citing the same CWE-209 class. Dev sanitized ServerError and ConfigError Display\
+    \ impls (verified by reviewer). Same vulnerability class addressed."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] `--tenant` accepts raw `String`, not validated\
+    \ `TenantId` \u2014 cli.rs:37' stating 'axiathon-core provides TenantId with validation...\
+    \ tenant IDs from user input should be validated before being passed to SiemClient.'\
+    \ TEA also wrote CWE-113 header injection tests for SiemClient."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer stated '[VERIFIED] Workspace dependencies properly declared at
+    root level' but did not flag that 6 individual crate dependencies use direct version
+    strings instead of workspace = true. The verification checked root declaration,
+    not per-crate usage.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer flagged deny_unknown_fields for RawConfig (adjacent concern)\
+    \ but explicitly verified 'Token not loaded from config file \u2014 config.rs:19-21'\
+    \ as GOOD behavior. The ground truth says this is the problem \u2014 user believes\
+    \ they're authenticated when they're not, with secret left on disk. Opposite conclusion\
+    \ on the specific token concern."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion (assert!(config.server().is_none()
+    || ...)). The TEA created the test suite containing this pattern, and neither
+    Dev nor Reviewer flagged it.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test (let _ = config). The TEA
+    created the test suite containing this pattern, and neither Dev nor Reviewer flagged
+    it.

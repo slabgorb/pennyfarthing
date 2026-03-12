@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: gilligans-island
+run_id: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: tea
+  evidence: "TEA security.rs tests include 'silent error swallowing' and config_loading.rs\
+    \ tests cover 'missing/invalid file errors'. However, the dev implementation likely\
+    \ still uses unwrap_or_default \u2014 TEA wrote the test but without seeing the\
+    \ actual test code, the coverage of distinguishing NotFound from parse/permission\
+    \ errors is uncertain."
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA security.rs explicitly lists 'CWE-209 error exposure' as one of 11
+    security tests. Dev implemented CliError with thiserror derive, but no mention
+    of a user_message() sanitization method.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA security.rs includes 'header injection (CRLF in tenant/token)' tests.\
+    \ Dev client.rs implements 'header injection prevention'. However, the finding\
+    \ is specifically about using raw String instead of TenantId from axiathon-core\
+    \ \u2014 no evidence the type-level fix was applied."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Dev added chrono, uuid deps to client Cargo.toml and the workspace Cargo.toml
+    was modified, but no phase flagged the use of direct version strings instead of
+    workspace = true for the 6 identified dependencies.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'No mention of #[serde(deny_unknown_fields)], unknown field warnings,
+    or token field handling in any phase. Config tests cover loading and env overrides
+    but not unrecognized field detection.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: This is a defect in the TEA-written tests themselves. The vacuously true
+    assertion pattern (is_none() || ...) would not be caught by the pipeline since
+    TEA authored it and no subsequent phase audits test assertion quality.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: This is a defect in the TEA-written tests themselves. A test with 'let
+    _ = config' and zero assertions would pass in the dev phase without being flagged.
+    No phase audits test assertion coverage.

@@ -1,0 +1,28 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 introduces the entire CLI framework - binary structure, command parsing, error handling, output formatting, config loading, and HTTP client wrapper. All need thorough test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 17 | AC-1 (command groups), AC-2 (help rendering), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 13 | AC-3 (exit codes 0/1/2/3/4 via CliError) |
+| `tests/output_format.rs` | 12 | AC-4 (table/JSON/CSV formatting, no-color, escaping) |
+| `tests/global_flags.rs` | 13 | AC-5 (--format, -v, --quiet, --server, --config, --no-color, env vars) |
+| `tests/siem_client.rs` | 15 | AC-7 (SiemClient, headers, HTTP status mapping, header injection) |
+| `tests/config_loading.rs` | 11 | AC-8 (TOML loading, env overrides, validation, no token storage) |
+| `tests/shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell completion generation) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (stub handlers, story references, exit code 1) |
+| `tests/security.rs` | 8 | CWE-209 error exposure, config validation, error exhaustiveness |
+
+**Tests Written:** 105 tests covering all 10 ACs
+**Status:** RED (failing to compile - modules `cli`, `error`, `output`, `client`, `config`, `commands` don't exist yet)
+
+**Security tests include:**
+- Header injection via newlines in tenant ID and auth token (CWE-113)
+- Error message information leakage (CWE-209) - no stack traces, no tokens in display
+- Config validation - negative/zero/extreme timeouts, empty URLs, non-HTTP schemes
+- Token storage prohibition in config files (keychain only)
+
+**Handoff:** To Dev for implementation (GREEN phase)

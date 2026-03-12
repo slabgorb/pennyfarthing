@@ -164,9 +164,7 @@ def panel(mock_client: MagicMock) -> SprintPanel:
 class TestProvenanceIndicator:
     """AC2: Header shows [type:name] when non-default sprint is active."""
 
-    def test_header_includes_provenance_for_non_default_sprint(
-        self, panel: SprintPanel
-    ) -> None:
+    def test_header_includes_provenance_for_non_default_sprint(self, panel: SprintPanel) -> None:
         """Header should include [spike:ocsf-rs1] when registry is present."""
         panel._mounted = True
 
@@ -191,13 +189,10 @@ class TestProvenanceIndicator:
             mock_header.update.assert_called_once()
             header_text: Text = mock_header.update.call_args[0][0]
             assert "[spike:ocsf-rs1]" in header_text.plain, (
-                f"Header should include provenance [spike:ocsf-rs1], "
-                f"got: {header_text.plain}"
+                f"Header should include provenance [spike:ocsf-rs1], got: {header_text.plain}"
             )
 
-    def test_provenance_with_research_type(
-        self, panel: SprintPanel
-    ) -> None:
+    def test_provenance_with_research_type(self, panel: SprintPanel) -> None:
         """Header should show [research:auth-deep-dive] for research sprints."""
         panel._mounted = True
 
@@ -221,8 +216,7 @@ class TestProvenanceIndicator:
             mock_header.update.assert_called_once()
             header_text: Text = mock_header.update.call_args[0][0]
             assert "[research:auth-deep-dive]" in header_text.plain, (
-                f"Header should include [research:auth-deep-dive], "
-                f"got: {header_text.plain}"
+                f"Header should include [research:auth-deep-dive], got: {header_text.plain}"
             )
 
 
@@ -234,9 +228,7 @@ class TestProvenanceIndicator:
 class TestNoProvenanceForDefault:
     """AC3: No provenance indicator for default sprint."""
 
-    def test_no_provenance_when_registry_absent(
-        self, panel: SprintPanel
-    ) -> None:
+    def test_no_provenance_when_registry_absent(self, panel: SprintPanel) -> None:
         """Header should NOT include provenance when registry key is absent."""
         panel._mounted = True
 
@@ -267,9 +259,7 @@ class TestNoProvenanceForDefault:
             assert "[research:" not in plain
             assert "[project:" not in plain
 
-    def test_no_provenance_when_registry_is_default(
-        self, panel: SprintPanel
-    ) -> None:
+    def test_no_provenance_when_registry_is_default(self, panel: SprintPanel) -> None:
         """Header should NOT include provenance when isDefault is true."""
         panel._mounted = True
 
@@ -305,9 +295,7 @@ class TestNoProvenanceForDefault:
 class TestRichMarkupEscaping:
     """Sprint names with brackets must be escaped before Rich rendering."""
 
-    def test_bracket_name_does_not_break_rich_markup(
-        self, panel: SprintPanel
-    ) -> None:
+    def test_bracket_name_does_not_break_rich_markup(self, panel: SprintPanel) -> None:
         """Names like 'test[brackets]' should be escaped to avoid Rich parse errors."""
         panel._mounted = True
 
@@ -337,9 +325,7 @@ class TestRichMarkupEscaping:
                 f"Escaped bracket name should appear in header, got: {plain}"
             )
 
-    def test_empty_type_renders_gracefully(
-        self, panel: SprintPanel
-    ) -> None:
+    def test_empty_type_renders_gracefully(self, panel: SprintPanel) -> None:
         """Registry with empty type should not crash or show malformed indicator."""
         payload = {
             **SAMPLE_PAYLOAD_NO_REGISTRY,
@@ -376,9 +362,7 @@ class TestRichMarkupEscaping:
             # Should still contain the sprint name in provenance
             assert "unnamed" in header_text.plain
 
-    def test_safe_dict_access_for_missing_fields(
-        self, panel: SprintPanel
-    ) -> None:
+    def test_safe_dict_access_for_missing_fields(self, panel: SprintPanel) -> None:
         """Registry dict missing 'type' or 'name' should use safe .get() defaults."""
         payload = {
             **SAMPLE_PAYLOAD_NO_REGISTRY,
@@ -418,9 +402,7 @@ class TestRichMarkupEscaping:
 class TestProvenanceSwitching:
     """AC4: Consecutive _rebuild_tree calls update provenance correctly."""
 
-    def test_provenance_appears_on_switch_to_non_default(
-        self, panel: SprintPanel
-    ) -> None:
+    def test_provenance_appears_on_switch_to_non_default(self, panel: SprintPanel) -> None:
         """Switching from default to non-default should add provenance."""
         panel._mounted = True
 
@@ -451,9 +433,7 @@ class TestProvenanceSwitching:
             second_text: Text = mock_header.update.call_args[0][0]
             assert "[spike:ocsf-rs1]" in second_text.plain
 
-    def test_provenance_disappears_on_switch_to_default(
-        self, panel: SprintPanel
-    ) -> None:
+    def test_provenance_disappears_on_switch_to_default(self, panel: SprintPanel) -> None:
         """Switching from non-default to default should remove provenance."""
         panel._mounted = True
 
