@@ -1,0 +1,19 @@
+All **118 tests pass** (0 failures) and **clippy is clean**.
+
+## Summary
+
+### Files Changed
+
+**New production files** (all under `crates/axiathon-client/src/`):
+- `lib.rs` — Updated with public module re-exports
+- `error.rs` — `CliError` enum with `#[non_exhaustive]`, exit code mapping (1/3/4), sanitized Display for `ServerError`
+- `cli.rs` — `Cli` struct (clap derive Parser) with all global flags (`--format`, `-v`, `--quiet`, `--server`, `--tenant`, `--config`, `--no-color`), `Commands` enum with 12 variants (query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init)
+- `client.rs` — `SiemClient` wrapping `reqwest::Client` with header injection (Authorization, X-Tenant-ID), HTTP status→CliError mapping, CRLF sanitization
+- `config.rs` — `ClientConfig` with TOML loading, env var overrides, validation (empty URL, negative timeout, file:// scheme rejection), token exclusion from config
+- `output.rs` — `OutputFormat` (Table/Json/Csv), `OutputFormatter` with comfy-table/serde_json/csv implementations, `ResponseMetadata`
+- `commands/mod.rs` — `stub_message()` returning `CliError::NotImplemented`
+- `commands/completion.rs` — `generate_completion()` via `clap_complete`
+
+**Modified config files:**
+- `Cargo.toml` (workspace) — Added `env` feature to clap
+- `crates/axiathon-client/Cargo.toml` — Added `chrono`, `uuid` deps; set edition to 2021 (required because test files use `std::env::set_var` without unsafe blocks, which is unsafe in edition 2024)

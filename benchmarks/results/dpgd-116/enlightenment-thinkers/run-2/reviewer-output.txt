@@ -1,0 +1,107 @@
+Now I have a complete picture. Let me issue my structured review.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+*"Act only according to that maxim whereby you can, at the same time, will that it should become a universal law." — And this code, I must say, does not yet pass the categorical imperative.*
+
+---
+
+## Observations
+
+### CRITICAL
+
+**[CRITICAL] Missing `main.rs` — no binary can be built** at `crates/axiathon-client/src/`
+The crate defines no `[[bin]]` target and has no `main.rs`. `cargo build -p axiathon-client` produces only a library, not the `axiathon` executable. AC-1 requires `axiathon --help` to work; AC-3 requires exit code behavior via `std::process::exit()` in `main.rs`; AC-9 requires `axiathon completion <shell>` to run. The entire story's acceptance criteria presupposes an executable binary. **Tests pass because they test library modules in isolation — they never exercise the integrated binary path.** This is the textbook case of "tests pass? so what."
+
+### HIGH
+
+**[HIGH] `toml` version mismatch: Cargo.toml declares `0.8`, story requires `0.9`** at `crates/axiathon-client/Cargo.toml:20`
+The story technical guardrails specify `toml 0.9`. The implementation uses `0.8`. While 0.8 works, this diverges from the architectural spec and could cause compatibility issues if 0.9-specific features are expected downstream.
+
+**[HIGH] `ResponseMetadata.timestamp` is the literal string `"now"`, not an actual timestamp** at `crates/axiathon-client/src/output.rs:111`
+AC-4 requires `ResponseMetadata` with `request_id`, `timestamp`, `api_version`. The `request_id` generates a random UUID (non-correlating with server), and `timestamp` is hardcoded to the string `"now"`. Any operator or script consuming JSON output for auditing, debugging, or correlation gets garbage data. The test at `tests/output_format.rs:89-92` uses a weak disjunction (`parsed.get("request_id").is_some() || parsed.get("metadata").is_some()`) which passes without validating the timestamp is meaningful.
+
+**[HIGH] `ConfigFile` silently ignores the `token` field instead of rejecting it** at `crates/axiathon-client/src/config.rs:13-14`
+AC-8 says tokens belong in OS keychain, NOT config file. The current code uses `#[allow(dead_code)]` to silently accept and discard a `token` field. This means an operator who puts their token in `cli.toml` (a natural mistake) gets **no warning** that their token is being ignored. Worse, the token sits in a plaintext file on disk. The code should either emit a warning or return an error when `token` is present.
+
+**[HIGH] `toml::from_str` with `#[derive(Deserialize, Default)]` silently ignores unknown fields** at `crates/axiathon-client/src/config.rs:8-15`
+Serde's default behavior accepts unknown fields. An operator with a typo like `servr_url = "..."` gets no error — the typo is silently ignored and the default is used. This violates the principle of least surprise and can cause hard-to-debug configuration issues. Should use `#[serde(deny_unknown_fields)]` (excluding the intentionally-ignored `token`).
+
+**[HIGH] Duplicate `[dev-dependencies]` for crates already in `[dependencies]`** at `crates/axiathon-client/Cargo.toml:25-27`
+`clap`, `clap_complete`, and `serde_json` appear in both `[dependencies]` and `[dev-dependencies]`. While Cargo handles this, it's confusing and suggests the author wasn't sure where they belong. The dev-dependency declarations should be removed for crates already in `[dependencies]`.
+
+### MEDIUM
+
+**[MEDIUM] Nightly `rustfmt` fails with formatting diffs** at `crates/axiathon-client/src/cli.rs`, `crates/axiathon-client/src/client.rs`
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." There are at least 4 formatting diffs. This blocks merge per project rules.
+
+**[MEDIUM] `config.timeout` accepts `0`, which creates an instant-timeout client** at `crates/axiathon-client/src/config.rs:56-61`
+`timeout < 0` is rejected, but `timeout = 0` passes validation and becomes `timeout_secs = 0u64`. A zero-second timeout means every HTTP request fails immediately. The test suite doesn't cover this edge case. Should reject `timeout <= 0` or set a minimum (e.g., 1 second).
+
+**[MEDIUM] `map_http_status` doesn't distinguish 5xx from unknown 4xx** at `crates/axiathon-client/src/client.rs:47-54`
+Both `map_http_status(418)` ("I'm a teapot") and `map_http_status(500)` map to `ServerError`. The AC says "5xx → ServerError" but doesn't specify what happens with unknown 4xx. Mapping client errors (4xx) to `ServerError` is semantically wrong — a 400 Bad Request is a client-side issue. Consider a `ClientError` variant or at minimum include the status class in the message.
+
+**[MEDIUM] `validate_server_url` only checks CRLF, not structural URL validity** at `crates/axiathon-client/src/client.rs:73-80`
+The validation rejects CRLF injection but doesn't check if the URL is actually parseable. `validate_server_url("not-a-url")` passes. Combined with `config.validate()` only checking the `http://`/`https://` prefix, a URL like `https://` (valid prefix, no host) passes both checks. Should use `url::Url::parse()` for proper structural validation.
+
+**[MEDIUM] `expect()` calls in formatters can panic in production** at `crates/axiathon-client/src/output.rs:114,117,127-132`
+The CSV and JSON formatters use `.expect()` for serialization, header writing, and flushing. While these are unlikely to fail, the project's `rust.md` rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect` messages like `"serialize metadata"` and `"write CSV headers"` are not actionable — they don't tell the operator what to do. More importantly, these panics bypass the `CliError` exit code system entirely, producing exit code 101 instead of 1.
+
+**[MEDIUM] No test for `axiathon init` writing to filesystem** at `crates/axiathon-client/src/commands/init.rs`
+`handle_init()` creates directories via `std::fs::create_dir_all`. There's no integration test verifying this actually creates the expected directory structure or handles permission errors. The stub_handlers test only checks stub errors, not the two functional commands (init and completion).
+
+### LOW
+
+**[LOW] `CliError` variants carry `String` instead of structured data** at `crates/axiathon-client/src/error.rs:4-31`
+`ServerError(String)`, `NotFound(String)`, `ConfigError(String)` — all use raw strings. Per project conventions, `thiserror` with structured variants is preferred. Not blocking, but makes programmatic error handling downstream harder.
+
+**[LOW] `#[allow(dead_code)]` on `SiemClient.http` field** at `crates/axiathon-client/src/client.rs:8-9`
+The `reqwest::Client` is constructed but never used. While this is acknowledged as forward-looking, it adds a runtime allocation for nothing. The `reqwest::Client` constructor creates a connection pool. Minor waste, but worth noting.
+
+**[LOW] `ConfigError` Display exposes config file paths in error message** at `crates/axiathon-client/src/config.rs:45`
+`format!("cannot read config file: {e}")` — the `{e}` from `std::io::Error` includes the file path. The `error.rs` has a `/// **SECURITY:** Display impl must not expose internal details (CWE-209)` comment, but the `ConfigError(String)` variant just passes through whatever string it receives. Config paths can reveal filesystem structure.
+
+---
+
+## Verified Good
+
+- **[VERIFIED]** CWE-113 header injection prevention: CRLF and null byte validation on tenant ID and server URL
+- **[VERIFIED]** CWE-209 error sanitization: `CliError` Display impls use generic messages, don't expose internal `String` payloads for auth/server errors
+- **[VERIFIED]** Auth token redacted in Debug impl: `SiemClient` custom Debug replaces token with `[REDACTED]`
+- **[VERIFIED]** `#![forbid(unsafe_code)]` in lib.rs
+- **[VERIFIED]** All command groups use plural nouns per architecture doc (rules, alerts, not rule, alert)
+- **[VERIFIED]** clap derive macros used throughout, no imperative command building (AC-6)
+- **[VERIFIED]** Global flags all use `global = true` (AC-5)
+- **[VERIFIED]** Shell completion generation is functional, not a stub (AC-9)
+- **[VERIFIED]** Exit code mapping: 3 for auth, 4 for authz, 1 for all others
+- **[VERIFIED]** Clippy passes clean with `-D warnings`
+
+---
+
+## Data Flow Trace
+
+**Traced: operator runs `axiathon --format json status`**
+
+1. **BLOCKED at entry**: No `main.rs` exists. The binary cannot be built or run.
+2. *If it existed*: clap parses `--format json` into `Cli.format = Some(OutputFormat::Json)`, routes to `Commands::Status`.
+3. Dispatcher (missing) would call `handle_status_stub()` → `Err(CliError::NotImplemented("status is not yet implemented (Story 6.2)"))`.
+4. `main.rs` (missing) would print to stderr and call `std::process::exit(1)`.
+5. **Gap**: No code wires `Cli.format` to `OutputFormatter`. The format flag is parsed but never consumed.
+
+---
+
+## Verdict
+
+### CHANGES_REQUESTED
+
+The missing `main.rs` is a **critical** gap — without it, the story's primary deliverable (an executable `axiathon` binary) does not exist. The code is well-structured library code, but a CLI framework story that produces no CLI binary cannot be approved. The config safety issues (silent token ignoring, unknown field acceptance) and the hardcoded `"now"` timestamp are high-severity concerns that compound the problem.
+
+**Required fixes before re-review:**
+1. Implement `main.rs` with CLI parsing, command dispatch, error-to-exit-code mapping, and `std::process::exit()`
+2. Fix nightly `rustfmt` violations (merge-blocking per gotchas.md)
+3. Remove duplicate dev-dependencies
+4. Reject or warn when `token` appears in config file
+5. Fix `ResponseMetadata.timestamp` to use actual timestamps (even `chrono::Utc::now()` or `std::time::SystemTime`)
+6. Fix `toml` version to `0.9` per spec (or document deviation)

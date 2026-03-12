@@ -1,0 +1,36 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the CLI framework — every AC has testable behavior.
+
+**Test Files:**
+| File | AC Coverage | Tests | Failed | Passed |
+|------|------------|-------|--------|--------|
+| `tests/cli_structure.rs` | AC-1, AC-2, AC-5, AC-6 | 18 | 13 | 5 |
+| `tests/cli_exit_codes.rs` | AC-3 | 12 | 11 | 1 |
+| `tests/cli_output.rs` | AC-4 | 14 | 6 | 8 |
+| `tests/siem_client.rs` | AC-7 | 16 | 11 | 5 |
+| `tests/config_loading.rs` | AC-8 | 9 | 4 | 5 |
+| `tests/shell_completion.rs` | AC-9 | 6 | 4 | 2 |
+| `tests/stub_handlers.rs` | AC-10 | 11 | 10 | 1 |
+| `tests/security.rs` | Security | 10 | 5 | 5 |
+| **Total** | | **96** | **64** | **32** |
+
+**Status:** RED (64 failing — ready for Dev)
+
+**What the stubs provide:**
+- `src/error.rs` — `CliError` enum with all variants, `exit_code()` returns 0 (wrong)
+- `src/cli.rs` — `Cli` struct with Parser derive, no commands/flags
+- `src/client.rs` — `SiemClient` with builder methods, `map_http_status()` returns `General` (wrong)
+- `src/config.rs` — `ClientConfig` with `load()` returning `Err` (not implemented)
+- `src/output.rs` — `Formatter` with empty `format_rows()`/`format_value()`
+- `src/main.rs` — Minimal binary entry point using Cli::parse()
+
+**Security tests cover:**
+- CWE-209: Error messages must not expose credentials or sensitive paths
+- Header injection: CRLF and null bytes in tenant IDs and tokens
+- Embedded credentials in base URLs
+- Silent error swallowing: Config parse errors must not be silently ignored
+- Config validation: Negative timeouts, empty URLs
+
+**Handoff:** To Dev for implementation (GREEN phase)

@@ -1,15 +1,31 @@
 ---
-description: Repository operations - status, cleanup, branches, and release management
-args: "[status|cleanup|branches|release] [args...]"
+description: Repository operations - status, cleanup, branches, snapshot, and release management
+args: "[status|cleanup|branches|snapshot|release] [args...]"
 ---
 
 # Git Operations
 
 <purpose>
-Manage git operations across all configured repos. Consolidates repository status, git cleanup, branch creation, and release management into a single resource group.
+Manage git operations across all configured repos. Consolidates repository status, git cleanup, branch creation, snapshots, and release management into a single resource group.
 </purpose>
 
 ## Commands
+
+### `/pf-git snapshot`
+
+Create safety branches and commit all dirty changes across all repos. Use before risky operations (rebases, branch switches) to ensure nothing is lost.
+
+```bash
+pf git snapshot [--label TEXT]
+```
+
+Creates a `snapshot/{repo}-{label}-{date}` branch in each dirty repo, stages everything, and commits. Clean repos are skipped.
+
+**Examples:**
+```bash
+pf git snapshot                          # snapshot/orchestrator-2026-03-08
+pf git snapshot --label benchmark-work   # snapshot/orchestrator-benchmark-work-2026-03-08
+```
 
 ### `/pf-git status`
 
@@ -56,6 +72,7 @@ Starts the release stepped workflow — an 11-step process with gates at each st
 | Command | Description |
 |---------|-------------|
 | `/pf-git status` | Check all repo status |
+| `/pf-git snapshot` | Safety-branch + commit all dirty repos |
 | `/pf-git cleanup` | Organize changes into commits/branches |
 | `/pf-git branches <id>` | Create feature branches from story |
 | `/pf-git release` | Interactive release workflow |

@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: alice-in-wonderland
+run_id: 1
+judge_version: v2
+judge_pass: 1
+total_caught: 4
+total_findings: 7
+weighted_caught: 20
+total_weight: 37
+score_pct: 54.1
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged from_file_or_default swallowing all errors. Config tests
+    cover TOML parsing and env overrides but not error discrimination between NotFound
+    and other error types.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote tests for 'CWE-209 error exposure' in error_exit_codes.rs and
+    dev implemented 'security-sanitized Display'. However, the reviewer verified CWE-209
+    as correct on ServerError and Config, missing the Io(transparent) variant that
+    forwards full OS details. Credit given for demonstrating awareness of the vulnerability
+    class per partial match rule 1.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [HIGH] 'Vacuous header injection test \u2014 siem_client.rs:113-119'\
+    \ noting '!x || true is always true' and 'SiemClient itself performs zero validation\
+    \ on token or tenant values containing CRLF.' TEA also wrote tests for 'header\
+    \ injection (CRLF in token/tenant)' though the tests were vacuous."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that 6 dependencies use direct version strings instead
+    of workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged [MEDIUM] 'has_token_field() test is vacuous' stating
+    'the token field IS silently accepted and ignored by serde. The real question
+    (does the config parse and store a token?) is never actually tested.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged [HIGH] vacuous test with '!x || true is always true.
+    This test can never fail.' Same category of vacuous assertion (always-true OR
+    expression) per partial match rule 2, though in siem_client.rs rather than config
+    test.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the zero-assertion test that only checks non-panic with
+    'let _ = config;'. The reviewer flagged has_token_field as vacuous but not the
+    separate zero-assertion default config test.

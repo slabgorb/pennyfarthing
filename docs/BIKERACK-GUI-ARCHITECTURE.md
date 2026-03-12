@@ -6,10 +6,9 @@ BikeRack GUI is the browser-based visual interface for Claude Code with Pennyfar
 
 As of v9.0, BikeRack GUI uses a **React-based UI** with **Dockview panels** (see ADR-0019). It uses:
 
-- **Express** for serving the UI and handling API requests
+- **Python FastAPI** (uvicorn) for serving the UI and handling API requests
 - **React 19** for the UI layer (`src/public/components/`)
 - **Dockview** for panel management (floating, splitting, dragging)
-- **Express** for serving the UI and handling API requests
 - **WebSocket** for real-time communication
 - **TipTap** for rich text editing
 
@@ -40,7 +39,7 @@ BikeRack GUI uses bicycle-themed internal codenames for major subsystems:
 
 | Codename | Component | Description |
 |----------|-----------|-------------|
-| **WheelHub** | `src/server.ts` | Central coordination server - the hub where all communication converges (API endpoints, WebSocket servers, OTLP receiver, hook approval handling, cache invalidation) |
+| **WheelHub** | `pennyfarthing-dist/src/pf/wheelhub/app.py` | Central coordination server (Python FastAPI) - the hub where all communication converges (API endpoints, WebSocket channels, OTLP receiver, hook approval handling) |
 | **TirePump** | Context clearing system | Reinflates the session when context runs low - clears Claude session, resets stats, reloads current agent while preserving workflow state |
 | **JobFair** | Character benchmarking | Runs every character in a theme against benchmarks to discover which personas excel at each role, producing talent matrices for theme optimization |
 

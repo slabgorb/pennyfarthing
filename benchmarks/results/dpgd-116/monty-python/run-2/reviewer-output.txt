@@ -1,0 +1,105 @@
+Now I have everything. Here's my review.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+*"No it isn't."* — The Argument Professional
+
+I've read every file. I've traced the data flows. I've run the tests. I've run nightly fmt. Here are my findings.
+
+---
+
+## Findings
+
+### [CRITICAL] Missing `tui` command variant — AC-1 violation at `cli.rs:44-79`
+
+AC-1 explicitly states: *"`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."* The `Commands` enum has no `Tui` variant. The help output test at `cli_command_structure.rs:89` also conspicuously omits `tui` from the `required_groups` list — the test was crafted to pass despite the missing variant. This is a spec violation.
+
+### [HIGH] `cargo +nightly fmt --all --check` fails — 26 diff locations
+
+Per gotchas.md: *"Always include `cargo +nightly fmt --all --check` in the preflight."* Nightly fmt reports 26 formatting violations across the codebase (primarily in `output.rs`). This blocks approval per project rules.
+
+### [HIGH] `RawConfig` silently ignores unknown fields at `config.rs:11-14`
+
+`RawConfig` uses `#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]`. A user who puts `token = "my-secret"` or `pasword = "typo"` in their config file will get zero feedback. The `config_does_not_store_token_field` test at `cli_config.rs:138-153` actually passes silently — it proves the token is *ignored*, but the user gets no warning that they put a secret in a plaintext file. This is a security concern (secrets left in config files without warning) and a usability bug (typos silently ignored).
+
+### [HIGH] Missing `commands/` module directory — AC scope violation
+
+The story spec says to create `commands/mod.rs` plus 10 command modules (`query.rs`, `rules.rs`, `alerts.rs`, `ingest.rs`, `config.rs`, `status.rs`, `tenant.rs`, `login.rs`, `completion.rs`, `init.rs`). The entire `commands/` directory does not exist. All command arg structs are inlined in `cli.rs`, which means the architectural separation required by the story is absent. This also means there is no `main.rs` binary entry point — the crate is library-only with no actual `axiathon` binary being produced.
+
+### [HIGH] No `main.rs` — no binary produced
+
+There is no `src/main.rs` or `[[bin]]` target. The `axiathon` binary specified by the story cannot be built. The `exit_code()` method exists but is never called from a process entry point. The error-to-stderr, output-to-stdout separation (AC-3) cannot be verified because there is no dispatch loop.
+
+### [HIGH] `SiemClient` does not wrap `reqwest::Client` — AC-7 violation at `client.rs:1-63`
+
+AC-7 requires: *"SiemClient wraps reqwest::Client. Injects X-Tenant-ID and Authorization: Bearer <token> headers."* The current `SiemClient` is a plain struct with `String` fields. It has no `reqwest::Client`, no HTTP methods, no header injection, no timeout handling. It's a data holder, not an HTTP client. The `reqwest` dependency in `Cargo.toml` is unused dead weight.
+
+### [MEDIUM] `toml` version mismatch — `Cargo.toml:20` says `0.8`, story specifies `0.9`
+
+Story guardrails specify `toml` 0.9. The Cargo.toml pins `0.8`. While functionally similar, this contradicts the spec.
+
+### [MEDIUM] Non-workspace dependencies — `Cargo.toml:11-20`
+
+`clap_complete`, `comfy-table`, `csv`, `dirs`, `toml`, `tempfile` are all pinned directly in the crate's `Cargo.toml` instead of being declared in `[workspace.dependencies]` as the story requires. The story says: *"Add to `[workspace.dependencies]`: reqwest 0.12, comfy-table 7, keyring 3, clap_complete 4, dirs 6, csv 1, toml 0.9."*
+
+### [MEDIUM] `env_overrides_from` skips validation on API URL at `config.rs:86-88`
+
+`from_toml()` validates that `api_url` starts with `http://` or `https://`, but `apply_env_overrides_from()` accepts any string without validation. An env var like `AXIATHON_API_URL=ftp://evil.com` would be silently accepted. The CLI override method has the same issue.
+
+### [MEDIUM] `CompletionArgs.shell` is a raw `String` — type safety gap at `cli.rs:164-167`
+
+The `shell` field should use `clap_complete::Shell` or a custom enum with `ValueEnum` derive, not a raw `String`. The `generate_completions()` function at `completion.rs:14-19` panics on invalid input, which is a poor UX for an operator typo. Using `ValueEnum` would give a proper clap error message with suggestions.
+
+### [MEDIUM] `no_color` flag stored but never used for table formatting at `output.rs:17`
+
+The `no_color` field in `OutputFormatter` is marked `#[allow(dead_code)]`. The table formatter at `output.rs:34-49` does not consult `no_color` — comfy-table will emit ANSI codes based on its own detection. The `table_format_no_color_when_disabled` test at `cli_output_format.rs:75-84` only passes by accident because comfy-table doesn't emit colors by default in non-TTY test contexts.
+
+### [LOW] `generate_completions` panics on bad input — `completion.rs:19`
+
+Should return `Result<String, CliError>` instead of panicking. Panics in CLI tools produce ugly output and stack traces.
+
+### [LOW] `format_table` uses `unwrap_or_default()` for serde failure at `output.rs:40`
+
+If serialization fails (unlikely but possible with custom `Serialize` impls), rows silently become `null` JSON values and render as empty cells. This is a silent failure.
+
+### [VERIFIED] CWE-209: `ServerError` Display does not leak internal details — `error.rs:15-16`
+
+The `#[error("server error")]` Display impl correctly suppresses the inner string. The `_message` parameter in `from_http_status` is correctly discarded. Tests at `cli_security.rs:11-28` and `cli_exit_codes.rs:91-103` confirm this.
+
+### [VERIFIED] Header injection prevention — `client.rs:31-52`
+
+`with_token()` and `with_tenant()` both assert against `\r`, `\n`, and `\0`. Tests at `cli_security.rs:33-60` and `cli_siem_client.rs:36-64` verify this with `catch_unwind`.
+
+### [VERIFIED] `#[non_exhaustive]` on `CliError` — `error.rs:11`
+
+Correctly applied, allowing future variants without breaking downstream.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` — `lib.rs:2`
+
+Present as required.
+
+### [VERIFIED] Exit code mapping is complete and correct — `error.rs:59-70`
+
+All variants map to documented codes. Tests at `cli_exit_codes.rs` cover every variant.
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 1     |
+| High     | 5     |
+| Medium   | 4     |
+| Low      | 2     |
+| Verified | 4     |
+
+The implementation provides good error handling design (CWE-209, exit codes, header injection), but it is fundamentally incomplete: no binary entry point, no `commands/` module structure, no actual HTTP client functionality in `SiemClient`, missing `tui` command, and nightly fmt failures. The library structure is sound scaffolding, but the story's acceptance criteria require a working binary, not just a library.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+The 1 Critical (missing `tui` command) and 5 High findings (nightly fmt, unknown config fields, missing commands directory, missing main.rs, SiemClient not wrapping reqwest) block approval. Fix these, then I'll argue about the rest.

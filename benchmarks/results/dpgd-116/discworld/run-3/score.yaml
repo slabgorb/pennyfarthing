@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: discworld
+run_id: 3
+judge_version: v2
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase distinguished NotFound from other error types in from_file_or_default.
+    TEA tested 'TOML parse failures' but no test specifically asserts that parse/permission
+    errors propagate rather than falling back to defaults. Dev summary mentions validation
+    but not error-type discrimination in config loading. Reviewer did not flag this.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote security tests for 'CWE-209: Error messages must not leak internal\
+    \ paths/details'. Dev implemented sanitized Display: 'Display sanitizes internal\
+    \ details (CWE-209)'. Reviewer verified: 'CWE-209: CliError::Display sanitizes\
+    \ output \u2014 ServerError Display doesn't expose internal message'. Pipeline\
+    \ demonstrated awareness of the vulnerability class and actively mitigated it,\
+    \ though the Io transparent variant may remain incomplete."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer explicitly flagged: '[MEDIUM] tenant field is raw String, not\
+    \ TenantId newtype' \u2014 'axiathon-core exports TenantId. Both cli.rs:27 and\
+    \ client.rs:7 use raw strings. This defeats the type safety the project invested\
+    \ in building.'"
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase mentioned workspace = true vs direct version strings. Dependencies
+    were added but the workspace inheritance pattern was never discussed or tested.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer explicitly flagged: '[MEDIUM] Config silently ignores unknown\
+    \ fields \u2014 no deny_unknown_fields' and specifically called out 'A config\
+    \ file with [server]\\ntoken = \"secret\" silently ignores the token key' and\
+    \ recommended deny_unknown_fields or detect-and-warn."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ... always true). TEA wrote the tests but the vacuous assertion was not flagged
+    by any subsequent phase.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test. The test with 'let _ = config;'
+    and no assert statements was not flagged by any phase.

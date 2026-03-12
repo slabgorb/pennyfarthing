@@ -34,6 +34,7 @@ BAND_LEVELS = ["1-2", "3-4", "5-6", "7-8", "9-10"]
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def skill_md() -> str:
     assert _SKILL_MD.exists(), f"SKILL.md not found at {_SKILL_MD}"
@@ -128,9 +129,7 @@ class TestAC1SoloGenericAnchors:
 
         for dim in DIMENSIONS:
             for band in BAND_LEVELS:
-                assert band in section, (
-                    f"Solo generic missing band level {band} for {dim}"
-                )
+                assert band in section, f"Solo generic missing band level {band} for {dim}"
 
 
 # ===========================================================================
@@ -259,14 +258,9 @@ class TestAC4PhaseAnchors:
         has_anchor = (
             expected_keyword.lower() in section.lower()
             or "rubric-anchors" in section.lower()
-            or any(
-                band in section
-                for band in BAND_LEVELS
-            )
+            or any(band in section for band in BAND_LEVELS)
         )
-        assert has_anchor, (
-            f"Phase {phase} prompt has no behavioral anchor reference"
-        )
+        assert has_anchor, f"Phase {phase} prompt has no behavioral anchor reference"
 
     @pytest.mark.parametrize(
         "phase_rubric",
@@ -280,9 +274,7 @@ class TestAC4PhaseAnchors:
         # Phase rubrics should include band-level descriptions or anchor references
         has_bands = any(band in section for band in BAND_LEVELS)
         has_ref = "rubric-anchors" in section.lower() or "behavioral anchor" in section.lower()
-        assert has_bands or has_ref, (
-            f"{phase_rubric} has no behavioral anchors or anchor reference"
-        )
+        assert has_bands or has_ref, f"{phase_rubric} has no behavioral anchors or anchor reference"
 
 
 # ===========================================================================
@@ -306,17 +298,23 @@ class TestAC5AnchorSourceReference:
         assert idx >= 0, "rubric-anchors.md reference not found"
 
         # It should be near dimension/rubric content, not just in a random comment
-        context = skill_md[max(0, idx - 500):idx + 500]
-        rubric_terms = ["dimension", "correctness", "depth", "quality", "persona", "anchor", "rubric"]
+        context = skill_md[max(0, idx - 500) : idx + 500]
+        rubric_terms = [
+            "dimension",
+            "correctness",
+            "depth",
+            "quality",
+            "persona",
+            "anchor",
+            "rubric",
+        ]
         matches = sum(1 for term in rubric_terms if term.lower() in context.lower())
         assert matches >= 2, (
             f"rubric-anchors.md reference appears isolated from rubric content "
             f"(only {matches} rubric-related terms nearby)"
         )
 
-    def test_anchor_text_matches_source(
-        self, skill_md: str, anchor_snippets: dict
-    ) -> None:
+    def test_anchor_text_matches_source(self, skill_md: str, anchor_snippets: dict) -> None:
         """Anchor text in SKILL.md must match what's in rubric-anchors.md (no drift)."""
         # For each dimension, check that any anchor text present in SKILL.md
         # matches the source file exactly (using snippet fingerprints)
@@ -326,7 +324,6 @@ class TestAC5AnchorSourceReference:
                 if snippet not in skill_md:
                     missing.append(f"{dimension} band {band}: '{snippet}'")
 
-        assert not missing, (
-            f"Anchor text in SKILL.md drifted from rubric-anchors.md:\n"
-            + "\n".join(missing)
+        assert not missing, "Anchor text in SKILL.md drifted from rubric-anchors.md:\n" + "\n".join(
+            missing
         )

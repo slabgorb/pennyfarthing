@@ -24,13 +24,15 @@ except ImportError:
 
 class DepthLevel(Enum):
     """Discovery depth levels."""
-    QUICK = "quick"        # Surface scan - just package files
+
+    QUICK = "quick"  # Surface scan - just package files
     STANDARD = "standard"  # Typical scan - package + key dirs
-    DEEP = "deep"         # Comprehensive - full directory tree
+    DEEP = "deep"  # Comprehensive - full directory tree
 
 
 class ProjectType(Enum):
     """Detected project types."""
+
     MONOREPO = "monorepo"
     SINGLE_PACKAGE = "single_package"
     MULTI_LANGUAGE = "multi_language"
@@ -40,6 +42,7 @@ class ProjectType(Enum):
 @dataclass
 class TechStackItem:
     """A detected technology in the stack."""
+
     name: str
     version: str | None = None
     category: str = "unknown"  # runtime, dev, test, build, etc.
@@ -48,6 +51,7 @@ class TechStackItem:
 @dataclass
 class DirectoryNode:
     """A node in the directory tree."""
+
     path: Path
     name: str
     is_dir: bool
@@ -58,6 +62,7 @@ class DirectoryNode:
 @dataclass
 class ArchitecturePattern:
     """A detected architecture pattern."""
+
     name: str
     description: str
     evidence: list[str] = field(default_factory=list)
@@ -66,6 +71,7 @@ class ArchitecturePattern:
 @dataclass
 class DiscoveryResult:
     """Complete brownfield discovery result."""
+
     project_path: Path
     project_type: ProjectType
     project_name: str
@@ -83,9 +89,21 @@ class DiscoveryResult:
 
 # Directories to always exclude from scanning
 EXCLUDED_DIRS = {
-    "node_modules", ".git", "__pycache__", ".venv", "venv",
-    ".pytest_cache", ".mypy_cache", ".tox", "dist", "build",
-    ".eggs", "*.egg-info", ".cache", ".idea", ".vscode",
+    "node_modules",
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".tox",
+    "dist",
+    "build",
+    ".eggs",
+    "*.egg-info",
+    ".cache",
+    ".idea",
+    ".vscode",
 }
 
 # Common directory annotations
@@ -202,8 +220,7 @@ async def detect_project_type(path: Path) -> ProjectType:
 
 
 async def detect_tech_stack(
-    path: Path,
-    depth: DepthLevel = DepthLevel.STANDARD
+    path: Path, depth: DepthLevel = DepthLevel.STANDARD
 ) -> list[TechStackItem]:
     """Detect technology stack from manifest files.
 
@@ -310,7 +327,7 @@ async def scan_directory_structure(
     depth: DepthLevel = DepthLevel.STANDARD,
     max_depth: int = 5,
     _current_depth: int = 0,
-    _visited: set[Path] | None = None
+    _visited: set[Path] | None = None,
 ) -> DirectoryNode:
     """Scan directory structure with annotations.
 
@@ -379,19 +396,20 @@ async def scan_directory_structure(
             )
             children.append(child)
         elif entry.is_file():
-            children.append(DirectoryNode(
-                path=entry,
-                name=entry.name,
-                is_dir=False,
-            ))
+            children.append(
+                DirectoryNode(
+                    path=entry,
+                    name=entry.name,
+                    is_dir=False,
+                )
+            )
 
     node.children = children
     return node
 
 
 async def detect_architecture_patterns(
-    path: Path,
-    depth: DepthLevel = DepthLevel.STANDARD
+    path: Path, depth: DepthLevel = DepthLevel.STANDARD
 ) -> list[ArchitecturePattern]:
     """Detect common architecture patterns.
 
@@ -427,41 +445,49 @@ async def detect_architecture_patterns(
                 evidence.append("workspaces field in package.json")
 
         if evidence:
-            patterns.append(ArchitecturePattern(
-                "monorepo",
-                "Monorepo with multiple packages/apps",
-                evidence,
-            ))
+            patterns.append(
+                ArchitecturePattern(
+                    "monorepo",
+                    "Monorepo with multiple packages/apps",
+                    evidence,
+                )
+            )
 
     # Check for MVC pattern
     mvc_dirs = {"models", "views", "controllers"}
     if mvc_dirs.issubset(dirs):
-        patterns.append(ArchitecturePattern(
-            "mvc",
-            "Model-View-Controller architecture",
-            [f"{d}/ directory present" for d in mvc_dirs],
-        ))
+        patterns.append(
+            ArchitecturePattern(
+                "mvc",
+                "Model-View-Controller architecture",
+                [f"{d}/ directory present" for d in mvc_dirs],
+            )
+        )
 
     # Check for layered architecture
     layered_indicators = {"api", "services", "repositories"}
     matches = layered_indicators.intersection(dirs)
     if len(matches) >= 2:
-        patterns.append(ArchitecturePattern(
-            "layered",
-            "Layered architecture with service separation",
-            [f"{d}/ directory present" for d in matches],
-        ))
+        patterns.append(
+            ArchitecturePattern(
+                "layered",
+                "Layered architecture with service separation",
+                [f"{d}/ directory present" for d in matches],
+            )
+        )
 
     # Check for TypeScript pattern
     if (path / "tsconfig.json").exists():
         evidence = ["tsconfig.json present"]
         if (path / "src").is_dir():
             evidence.append("src/ directory present")
-        patterns.append(ArchitecturePattern(
-            "typescript",
-            "TypeScript project with compilation",
-            evidence,
-        ))
+        patterns.append(
+            ArchitecturePattern(
+                "typescript",
+                "TypeScript project with compilation",
+                evidence,
+            )
+        )
 
     # Check for src/lib pattern
     if "src" in dirs or "lib" in dirs:
@@ -471,11 +497,13 @@ async def detect_architecture_patterns(
         if "lib" in dirs:
             evidence.append("lib/ directory present")
         if evidence and not any(p.name == "typescript" for p in patterns):
-            patterns.append(ArchitecturePattern(
-                "source-separation",
-                "Source code separated into dedicated directory",
-                evidence,
-            ))
+            patterns.append(
+                ArchitecturePattern(
+                    "source-separation",
+                    "Source code separated into dedicated directory",
+                    evidence,
+                )
+            )
 
     return patterns
 
@@ -506,10 +534,12 @@ def generate_project_overview(result: DiscoveryResult) -> str:
     ]
 
     if result.patterns:
-        lines.extend([
-            "## Architecture Patterns",
-            "",
-        ])
+        lines.extend(
+            [
+                "## Architecture Patterns",
+                "",
+            ]
+        )
         for pattern in result.patterns:
             lines.append(f"### {pattern.name.title()}")
             lines.append("")
@@ -631,10 +661,12 @@ def generate_ai_guidance_doc(result: DiscoveryResult) -> str:
     ]
 
     if result.patterns:
-        lines.extend([
-            "## Detected Patterns",
-            "",
-        ])
+        lines.extend(
+            [
+                "## Detected Patterns",
+                "",
+            ]
+        )
         for pattern in result.patterns:
             lines.append(f"- **{pattern.name}**: {pattern.description}")
         lines.append("")
@@ -642,29 +674,31 @@ def generate_ai_guidance_doc(result: DiscoveryResult) -> str:
     if result.tech_stack:
         # Get unique tech names
         tech_names = sorted({item.name.lower() for item in result.tech_stack})[:10]
-        lines.extend([
-            "## Key Technologies",
-            "",
-            f"The project uses: {', '.join(tech_names)}",
-            "",
-        ])
+        lines.extend(
+            [
+                "## Key Technologies",
+                "",
+                f"The project uses: {', '.join(tech_names)}",
+                "",
+            ]
+        )
 
-    lines.extend([
-        "## Recommendations",
-        "",
-        "- Follow existing code patterns and conventions",
-        "- Check for existing tests before modifying code",
-        "- Review the tech stack documentation for version constraints",
-        "",
-    ])
+    lines.extend(
+        [
+            "## Recommendations",
+            "",
+            "- Follow existing code patterns and conventions",
+            "- Check for existing tests before modifying code",
+            "- Review the tech stack documentation for version constraints",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 
 
 async def discover(
-    path: Path,
-    depth: DepthLevel = DepthLevel.STANDARD,
-    output_dir: Path | None = None
+    path: Path, depth: DepthLevel = DepthLevel.STANDARD, output_dir: Path | None = None
 ) -> DiscoveryResult:
     """Run complete brownfield discovery.
 

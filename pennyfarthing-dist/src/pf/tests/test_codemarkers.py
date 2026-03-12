@@ -49,8 +49,14 @@ class TestCodeMarkerModel:
         from pf.codemarkers.models import CodeMarker
 
         m = CodeMarker(
-            path="old.py", line=10, marker_type="TODO", text="TODO: old",
-            author="dev", date="2025-01-01T00:00:00", age_days=120.0, is_stale=True,
+            path="old.py",
+            line=10,
+            marker_type="TODO",
+            text="TODO: old",
+            author="dev",
+            date="2025-01-01T00:00:00",
+            age_days=120.0,
+            is_stale=True,
         )
         assert m.is_stale is True
         assert m.age_days == 120.0
@@ -83,7 +89,8 @@ class TestMarkerSummaryModel:
         from pf.codemarkers.models import MarkerSummary
 
         s = MarkerSummary(
-            total_markers=10, stale_markers=3,
+            total_markers=10,
+            stale_markers=3,
             by_type={"TODO": 6, "FIXME": 4},
         )
         assert s.total_markers == 10
@@ -98,7 +105,9 @@ class TestCodeMarkersResultModel:
         from pf.codemarkers.models import CodeMarker, CodeMarkersResult
 
         r = CodeMarkersResult(
-            success=True, repo_name="test", repo_path="/tmp/test",
+            success=True,
+            repo_name="test",
+            repo_path="/tmp/test",
             stale_threshold_days=90,
             markers=[CodeMarker(path="a.py", line=1, marker_type="TODO", text="TODO: x")],
         )
@@ -111,8 +120,11 @@ class TestCodeMarkersResultModel:
         from pf.codemarkers.models import CodeMarkersResult
 
         r = CodeMarkersResult(
-            success=False, repo_name="bad", repo_path="/nonexistent",
-            stale_threshold_days=90, error="Path not found",
+            success=False,
+            repo_name="bad",
+            repo_path="/nonexistent",
+            stale_threshold_days=90,
+            error="Path not found",
         )
         assert r.success is False
         assert "not found" in r.error
@@ -126,7 +138,9 @@ class TestCodeMarkersResultModel:
         )
 
         r = CodeMarkersResult(
-            success=True, repo_name="repo", repo_path="/tmp",
+            success=True,
+            repo_name="repo",
+            repo_path="/tmp",
             stale_threshold_days=90,
             markers=[CodeMarker(path="b.py", line=2, marker_type="XXX", text="XXX: bad")],
             summary=MarkerSummary(total_markers=1, by_type={"XXX": 1}),
@@ -318,9 +332,7 @@ class TestBatchBlame:
             new_callable=AsyncMock,
             return_value=(blame_output, "", 0),
         ):
-            results = await _batch_blame_file(
-                Path("/repo"), "test.py", [1, 2]
-            )
+            results = await _batch_blame_file(Path("/repo"), "test.py", [1, 2])
             assert 1 in results
             assert 2 in results
             assert results[1]["author"] == "Alice"
@@ -379,6 +391,7 @@ class TestAnalyzeRepo:
 
         # Mock blame: author Alice, time = 90 days ago
         import time
+
         ninety_days_ago = int(time.time()) - (90 * 86400)
 
         async def mock_blame(repo_path, file_path, lines):
@@ -405,6 +418,7 @@ class TestAnalyzeRepo:
         (tmp_path / "old.py").write_text("# TODO: ancient code\n")
 
         import time
+
         old_time = int(time.time()) - (200 * 86400)  # 200 days ago
 
         async def mock_blame(repo_path, file_path, lines):
@@ -427,6 +441,7 @@ class TestAnalyzeRepo:
         (tmp_path / "mix.py").write_text("# TODO: one\n# FIXME: two\n# TODO: three\n")
 
         import time
+
         recent = int(time.time()) - (10 * 86400)
 
         async def mock_blame(repo_path, file_path, lines):
@@ -455,6 +470,7 @@ class TestAnalyzeRepo:
         (tmp_path / "src.py").write_text("# TODO: real code\n")
 
         import time
+
         recent = int(time.time()) - 86400
 
         async def mock_blame(repo_path, file_path, lines):
@@ -514,8 +530,14 @@ class TestTableFormatter:
         from pf.codemarkers.models import CodeMarker
 
         markers = [
-            CodeMarker(path="a.py", line=1, marker_type="TODO", text="TODO: test",
-                       author="Dev", age_days=10.0),
+            CodeMarker(
+                path="a.py",
+                line=1,
+                marker_type="TODO",
+                text="TODO: test",
+                author="Dev",
+                age_days=10.0,
+            ),
         ]
         out = format_marker_table(markers)
         assert "Type" in out
@@ -549,7 +571,9 @@ class TestJsonExport:
         )
 
         r = CodeMarkersResult(
-            success=True, repo_name="test", repo_path="/tmp",
+            success=True,
+            repo_name="test",
+            repo_path="/tmp",
             stale_threshold_days=90,
             markers=[CodeMarker(path="x.py", line=1, marker_type="TODO", text="TODO: x")],
             summary=MarkerSummary(total_markers=1, by_type={"TODO": 1}),
@@ -635,20 +659,21 @@ class TestCLI:
         from pf.codemarkers.cli import codemarkers
 
         runner = CliRunner()
-        with patch(
-            "pf.codemarkers.cli._run_analysis"
-        ) as mock_run:
+        with patch("pf.codemarkers.cli._run_analysis") as mock_run:
             from pf.codemarkers.models import CodeMarkersResult, MarkerSummary
+
             mock_run.return_value = CodeMarkersResult(
-                success=True, repo_name="test", repo_path="/tmp",
-                stale_threshold_days=90, markers=[],
+                success=True,
+                repo_name="test",
+                repo_path="/tmp",
+                stale_threshold_days=90,
+                markers=[],
                 summary=MarkerSummary(),
             )
             result = runner.invoke(codemarkers, ["analyze", "--path", "/tmp", "--format", "json"])
             assert result.exit_code == 0
             parsed = json.loads(result.output)
             assert parsed["success"] is True
-
 
 
 # ---------------------------------------------------------------------------
@@ -664,9 +689,11 @@ class TestModuleExports:
             CodeMarker,
             CodeMarkersResult,
         )
+
         assert CodeMarker is not None
         assert CodeMarkersResult is not None
 
     def test_exports_analyze(self) -> None:
         from pf.codemarkers import analyze_repo
+
         assert callable(analyze_repo)

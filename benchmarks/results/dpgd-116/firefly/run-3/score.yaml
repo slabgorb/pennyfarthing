@@ -1,0 +1,73 @@
+scenario_id: dpgd-116
+theme: firefly
+run_id: 3
+judge_version: v2
+total_caught: 2
+total_findings: 7
+weighted_caught: 10
+total_weight: 37
+score_pct: 27.0
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Config loading tests cover TOML loading, env overrides, and precedence,
+    but no test distinguishes NotFound from parse/permission errors in from_file_or_default.
+    Dev implemented config.rs but no mention of error differentiation.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA explicitly lists 'CWE-209 error exposure' and 'error message length
+    bounds' in exit_codes.rs security tests. Dev implemented CliError with structured
+    error handling.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote siem_client.rs tests including 'header injection (newlines in
+    token/tenant)' and 'Header injection security' tests (CWE-113 same class). Dev
+    implemented 'header injection prevention' in SiemClient. However, the root cause
+    (raw String vs TenantId type) was not addressed.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the use of direct version strings instead of workspace
+    = true. The Cargo.toml changes shown don't address this issue.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: TEA's 'token-not-in-file security' test validates that tokens shouldn't
+    be stored in config, which is the opposite concern. No test or review flagged
+    that serde silently ignores unknown fields, leaving users unaware their config
+    keys are being dropped.
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ... always passes). The pipeline wrote the problematic test and the reviewer phase
+    produced no output flagging it.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test. The pipeline wrote the problematic
+    test with 'let _ = config' and the empty reviewer phase did not flag it.

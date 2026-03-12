@@ -40,7 +40,7 @@ def mock_dist(tmp_path: Path) -> Path:
         "# Framework recipes — auto-generated\n"
         "# DO NOT EDIT\n"
         "\n"
-        "root := justfile_directory() / \"..\"\n"
+        'root := justfile_directory() / ".."\n'
         "\n"
         "wheelhub *args:\n"
         "    pf launch gui --no-open\n"
@@ -54,7 +54,7 @@ def mock_dist(tmp_path: Path) -> Path:
         "claude:\n"
         "    exec claude\n"
         "\n"
-        'tmux-dev:\n'
+        "tmux-dev:\n"
         '    exec "{{root}}/tmux-dev"\n'
         "\n"
         "tmux dir=invocation_directory():\n"
@@ -203,13 +203,13 @@ class TestExistingJustfileWithoutImport:
 
         content = (target_dir / "justfile").read_text()
         lines = content.splitlines()
-        import_idx = next(i for i, line in enumerate(lines) if "import" in line and "justfile.pf" in line)
+        import_idx = next(
+            i for i, line in enumerate(lines) if "import" in line and "justfile.pf" in line
+        )
         env_idx = next(i for i, line in enumerate(lines) if "env :=" in line)
         assert import_idx > env_idx
 
-    def test_does_not_create_justfile_created_flag(
-        self, target_dir: Path, mock_dist: Path
-    ) -> None:
+    def test_does_not_create_justfile_created_flag(self, target_dir: Path, mock_dist: Path) -> None:
         from pf.init.justfile import update_framework_justfile
 
         (target_dir / "justfile").write_text("default:\n    @just --list\n")
@@ -500,9 +500,7 @@ class TestEdgeCases:
         assert result["success"] is False
         assert "Template not found" in result["error"]
 
-    def test_justfile_with_import_already_present(
-        self, target_dir: Path, mock_dist: Path
-    ) -> None:
+    def test_justfile_with_import_already_present(self, target_dir: Path, mock_dist: Path) -> None:
         from pf.init.justfile import update_framework_justfile
 
         (target_dir / "justfile").write_text(
@@ -523,10 +521,7 @@ class TestEdgeCases:
     def test_comment_only_justfile(self, target_dir: Path, mock_dist: Path) -> None:
         from pf.init.justfile import update_framework_justfile
 
-        (target_dir / "justfile").write_text(
-            "# My project\n"
-            "# Under construction\n"
-        )
+        (target_dir / "justfile").write_text("# My project\n# Under construction\n")
 
         result = update_framework_justfile(target_dir, mock_dist)
 
@@ -534,9 +529,7 @@ class TestEdgeCases:
         content = (target_dir / "justfile").read_text()
         assert "import '.pennyfarthing/justfile.pf'" in content
 
-    def test_pennyfarthing_dir_created_if_missing(
-        self, tmp_path: Path, mock_dist: Path
-    ) -> None:
+    def test_pennyfarthing_dir_created_if_missing(self, tmp_path: Path, mock_dist: Path) -> None:
         from pf.init.justfile import update_framework_justfile
 
         target = tmp_path / "no-pf-dir"
@@ -682,9 +675,7 @@ class TestUpdateReportsStaleness:
         assert result["success"] is True
         assert result["data"]["was_stale"] is False
 
-    def test_reports_not_stale_on_fresh_init(
-        self, target_dir: Path, mock_dist: Path
-    ) -> None:
+    def test_reports_not_stale_on_fresh_init(self, target_dir: Path, mock_dist: Path) -> None:
         from pf.init.justfile import update_framework_justfile
 
         # No prior justfile.pf — fresh init is not "stale"

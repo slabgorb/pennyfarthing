@@ -1,0 +1,104 @@
+Fascinating. All 125 tests pass, clippy is clean, but nightly fmt fails. Now let me deliver my analysis with Vulcan precision.
+
+---
+
+## Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+*"One does not approve code based on the absence of evidence. One approves based on evidence of absence — of defects."* — Mr. Spock
+
+### Preflight Results
+
+| Check | Result |
+|-------|--------|
+| `cargo test -p axiathon-client` | 125 passed |
+| `cargo clippy -p axiathon-client -- -D warnings` | Clean |
+| `cargo +nightly fmt --all --check` | **FAILED** |
+
+---
+
+### Findings
+
+**1. [HIGH] Nightly fmt check fails — multiple files have import ordering and formatting issues**
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." Formatting diffs in `completion.rs`, `config.rs`, `cli_config.rs`, `cli_error_exit_codes.rs`, `cli_output_format.rs`, `cli_security.rs`, `cli_structure.rs`, and `cli_siem_client.rs`. This is a blocking finding per project policy.
+
+**2. [HIGH] `with_token()` and `with_tenant()` bypass header injection validation (CWE-113)** at `client.rs:33` and `client.rs:47`
+
+`SiemClient` has two public code paths: `with_token()` (no validation) and `with_token_validated()` (validates). Both are `pub`. The unvalidated path accepts `\r\n` sequences, enabling header injection. The comment says "for trusted internal use" but this is a public method on a public struct — any consumer of the library can call it. A malicious or careless caller could inject headers. The validated path should be the only public API; the unvalidated path should be `pub(crate)` at minimum.
+
+**3. [HIGH] `AXIATHON_TIMEOUT=0` env var bypasses zero-timeout validation** at `config.rs:63-68`
+
+`from_toml()` correctly rejects `timeout = 0` (line 43: `Some(t) if t <= 0`). But `from_toml_with_env()` parses the env var as `u64` directly — `"0".parse::<u64>()` succeeds and sets `timeout_secs = 0`, bypassing the validation. A zero timeout means no request can ever succeed. The env var path needs the same `> 0` guard.
+
+**4. [HIGH] Missing `tui` command in Commands enum — AC-1 violation** at `cli.rs:43`
+
+AC-1 explicitly requires: "`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, **`tui`**, `completion`, `init`." The `Commands` enum has no `Tui` variant. This is a direct AC violation.
+
+**5. [MEDIUM] No `main.rs` / no binary target — story deliverable gap**
+
+The story requires "the `axiathon-client` crate producing the `axiathon` binary." The crate has only `lib.rs` and no `[[bin]]` section in `Cargo.toml`. There is no binary entry point, no `std::process::exit()` call, no tracing initialization. The entire dispatch-and-exit-code flow described in the story (AC-3) cannot be exercised end-to-end.
+
+**6. [MEDIUM] Invalid shell name produces silent empty output instead of error** at `completion.rs:15`
+
+`generate_completion("invalid_shell")` returns `String::new()` silently. Per AC-10, unimplemented/invalid operations should print an error and exit with code 1. An invalid shell name should return a `CliError` or at least a descriptive message, not an empty string that could confuse operators.
+
+**7. [MEDIUM] `RawConfig` silently ignores unknown fields — typos go undetected** at `config.rs:11`
+
+Serde's default `Deserialize` ignores unknown keys. A config file with `api_ulr` (typo) or `timout` is silently accepted with defaults applied. The comment says "allows unknown fields to be silently ignored" — this is a deliberate choice but a risky one. Consider `#[serde(deny_unknown_fields)]` to catch operator typos early.
+
+**8. [MEDIUM] Missing `keyring` dependency — story spec requirement unmet**
+
+The story spec requires `keyring` 3 for OS keychain credential storage and specifies: "Load token at CLI startup in sync context BEFORE entering Tokio runtime to avoid deadlocks." The workspace `Cargo.toml` doesn't declare `keyring`, the crate doesn't depend on it, and there's no keyring integration. `ClientConfig::token()` returns `None` unconditionally at `config.rs:99`.
+
+**9. [MEDIUM] `toml` version mismatch — workspace uses 0.8, spec requires 0.9** at `Cargo.toml:49`
+
+The story technical guardrails specify `toml` 0.9 but the workspace declares `toml = "0.8"`. This may cause compatibility issues if 0.9-specific features are needed later.
+
+**10. [MEDIUM] Misleading test name: `siem_client_rejects_non_https_in_production`** at `cli_siem_client.rs:140`
+
+The test name says "rejects" but the test body asserts the URL is *accepted*: `assert_eq!(client.base_url(), "http://localhost:8080")`. This is the opposite of what the name claims. Either the test name is wrong or the implementation is missing HTTPS enforcement.
+
+**11. [LOW] `default_path` tilde fallback won't expand** at `config.rs:85`
+
+When `dirs::config_dir()` returns `None`, the fallback `PathBuf::from("~/.config")` produces a literal path containing `~`. Most Rust file I/O does not expand tilde — this path would look for a directory literally named `~` under the current directory.
+
+**12. [LOW] Missing individual command modules — consolidated approach**
+
+The story spec lists 10 individual command files (`commands/query.rs`, `commands/rules.rs`, etc.). Implementation uses a consolidated `commands/stubs.rs` approach. This is arguably cleaner but deviates from the specified file structure. Acceptable for stubs, but future stories expecting those module paths will need to create them.
+
+**13. [VERIFIED] `#[non_exhaustive]` on `CliError` — correctly applied** at `error.rs:15`
+
+**14. [VERIFIED] `#![forbid(unsafe_code)]` in lib.rs — correctly applied** at `lib.rs:2`
+
+**15. [VERIFIED] CWE-209 mitigation — `ServerError` Display omits response body** at `error.rs:29`. `#[error("server returned HTTP {0}")]` only formats the status code, not the second `String` field. Security tests at `cli_error_exit_codes.rs:105` and `cli_security.rs:12` confirm this.
+
+**16. [VERIFIED] Header injection validation covers `\r`, `\n`, `\0`, empty, whitespace-only** at `client.rs:92-103`. Comprehensive guard against CWE-113.
+
+**17. [VERIFIED] Token never stored in config file — `RawConfig` has no `token` field** at `config.rs:14`, and `ClientConfig::token()` returns `None`.
+
+---
+
+### Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 0 | — |
+| High | 4 | YES |
+| Medium | 6 | No |
+| Low | 2 | No |
+| Verified Good | 5 | — |
+
+---
+
+### Verdict: **CHANGES_REQUESTED**
+
+Four High-severity issues block approval:
+
+1. **Nightly fmt fails** — run `cargo +nightly fmt --all` to fix
+2. **Unvalidated `with_token()`/`with_tenant()` are public** — restrict to `pub(crate)` or remove
+3. **`AXIATHON_TIMEOUT=0` env var bypass** — add `> 0` guard after parsing
+4. **Missing `tui` command** — add `Tui` variant to `Commands` enum per AC-1
+
+The Medium findings (no binary, silent completion failures, unknown field handling, missing keyring, toml version, misleading test name) should also be addressed but are not individually blocking.
+
+*Dr. McCoy would say "Dammit Jim, there's no binary!" — and for once, the doctor's emotional outburst would be logically justified.*

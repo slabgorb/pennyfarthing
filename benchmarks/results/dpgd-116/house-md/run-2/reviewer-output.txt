@@ -1,0 +1,72 @@
+Alright. I've read every source file, every test file, verified compilation, clippy, and nightly fmt. Time to deliver the diagnosis.
+
+---
+
+# Code Review: Story 6.1 — CLI Framework & Structure
+
+*"Everybody lies. Especially code that doesn't have a `main.rs`."*
+
+## Findings
+
+### [CRITICAL] No `main.rs` — no binary produced at `cli.rs`
+The story's primary deliverable is the `axiathon` binary. There is no `main.rs`, no `[[bin]]` section in `Cargo.toml`. The crate is library-only. AC-3 explicitly requires `main.rs` to catch errors and call `std::process::exit()` with the mapped exit codes. Without this, there is no CLI binary — the entire raison d'etre of the story is missing.
+
+### [HIGH] Missing `logout` and `tui` commands at `cli.rs:47-68`
+AC-1 states: *"`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."* The `Commands` enum has neither `Logout` nor `Tui`. Two required command groups are absent.
+
+### [HIGH] `build_request` silently drops invalid headers at `client.rs:99-108`
+When `HeaderValue::from_str()` fails (e.g., token contains non-visible ASCII), the `if let Ok(val)` silently skips header insertion. A request proceeds *without* the `Authorization` header, and the caller has no idea. This is a silent authentication bypass — the operator thinks they're authenticated, but the request goes out unauthenticated. The validated methods exist but aren't enforced as the only path.
+
+### [HIGH] `RawConfig` silently accepts unknown fields at `config.rs:13-18`
+No `#[serde(deny_unknown_fields)]` on `RawConfig`. A typo like `server_ur = "https://..."` (missing 'l') is silently ignored. The operator thinks they've configured a server URL; the CLI uses the default. This is exactly the class of "silent failure" that causes production incidents.
+
+### [MEDIUM] `--server` flag missing `AXIATHON_SERVER` env var support at `cli.rs:26-27`
+AC-5 states: *"`--server` supports `AXIATHON_SERVER` env var."* The clap definition has no `env = "AXIATHON_SERVER"` attribute. The env var override only exists for `AXIATHON_API_URL` via the manual `apply_env_override` method, but `AXIATHON_SERVER` is not wired at all.
+
+### [MEDIUM] Nightly `rustfmt` check fails at `client.rs:37,82`
+`cargo +nightly fmt --all --check` produces diffs. Per the gotchas doc: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."* It fails.
+
+### [MEDIUM] Vacuous assertion in test at `config_loading.rs:19`
+```rust
+assert!(config.server_url().is_some() || config.server_url().is_none(), ...)
+```
+This is `assert!(true)`. It literally cannot fail. It's a tautology masquerading as a test. The test name says "has reasonable defaults" but asserts nothing about what those defaults actually are.
+
+### [MEDIUM] `toml` version mismatch — workspace `Cargo.toml:49`
+Story spec requires `toml` 0.9. Workspace declares `toml = "0.8"`. While 0.8 works, this deviates from the spec and may cause issues when other stories expect 0.9 features.
+
+### [MEDIUM] `#[non_exhaustive]` missing on `CliError` at `error.rs:10`
+The Rust coding rules state: *"#[non_exhaustive] on enums that will grow."* `CliError` will absolutely grow as Stories 6.2-6.7 add new error variants. Missing this now means downstream consumers can do exhaustive matches that will break when new variants are added.
+
+### [MEDIUM] `with_token_validated`/`with_tenant_validated` silently replace the HTTP client at `client.rs:68-73,87-92`
+Both methods construct `reqwest::Client::new()` instead of cloning `self.http`. Any custom configuration (timeouts, connection pools, TLS settings) on the original client is silently discarded. When timeout configuration is added in a future story, this will be a subtle bug.
+
+### [LOW] No `after_help` usage examples on any command group
+AC-2 states: *"every `axiathon <cmd> --help` must include `after_help` usage examples for each command group."* None of the command structs have `#[command(after_help = "...")]`. The help renders, but without the required examples.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present at `lib.rs:2`
+### [VERIFIED] CWE-209 error display sanitization — `ServerError` and `NotFound` do not leak internal strings
+### [VERIFIED] CWE-113 CRLF injection validation exists on validated paths
+### [VERIFIED] Exit code mapping is correct (1/3/4)
+### [VERIFIED] Token never stored in config file — `token()` always returns `None`
+### [VERIFIED] Output formatters (Table/JSON/CSV) produce correct output
+### [VERIFIED] Shell completion generation works for all 4 shells
+### [VERIFIED] Clippy clean with `-D warnings`
+### [VERIFIED] All 100+ tests pass
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 1 |
+| High | 3 |
+| Medium | 6 |
+| Low | 1 |
+
+The implementation quality of what *exists* is solid — good error sanitization, proper CWE-113 handling on validated paths, clean tests. But the story's primary deliverable (the binary) doesn't exist, two required commands are missing, and there's a silent auth bypass path. The bones are good; the skeleton is incomplete.
+
+## Verdict
+
+**CHANGES_REQUESTED**
+
+The Critical (no binary) and High (missing commands, silent header drop, config unknown field swallowing) issues must be resolved before approval. The nightly fmt failure also needs fixing per project conventions.

@@ -25,20 +25,49 @@ JIRA_PATTERN = re.compile(r"^MSSCI-\d{5}$")
 
 # Canonical key ordering derived from sprint-template.yaml
 SPRINT_KEY_ORDER: list[str] = [
-    "name", "jira_sprint_id", "jira_sprint_name", "goal",
-    "start_date", "end_date", "status",
+    "name",
+    "jira_sprint_id",
+    "jira_sprint_name",
+    "goal",
+    "start_date",
+    "end_date",
+    "status",
 ]
 
 EPIC_KEY_ORDER: list[str] = [
-    "id", "type", "title", "description", "priority", "status",
-    "repos", "jira", "points", "marker", "stories",
+    "id",
+    "type",
+    "title",
+    "description",
+    "priority",
+    "status",
+    "repos",
+    "jira",
+    "points",
+    "marker",
+    "stories",
 ]
 
 STORY_KEY_ORDER: list[str] = [
-    "id", "jira", "title", "description", "points", "priority",
-    "refs", "status", "in_sprint", "assigned_to", "started", "repos",
-    "workflow", "acceptance_criteria", "completed", "pr",
-    "delivered_in", "notes",
+    "id",
+    "jira",
+    "title",
+    "description",
+    "points",
+    "priority",
+    "refs",
+    "status",
+    "in_sprint",
+    "assigned_to",
+    "started",
+    "repos",
+    "workflow",
+    "depends_on",
+    "acceptance_criteria",
+    "completed",
+    "pr",
+    "delivered_in",
+    "notes",
 ]
 
 # Top-level key ordering
@@ -195,9 +224,7 @@ def _canonicalize(data: Any) -> Any:
         new_epics = CommentedSeq()
         for epic in result["epics"]:
             if isinstance(epic, Mapping):
-                epic_cm = (
-                    epic if isinstance(epic, CommentedMap) else _to_commented_map(epic)
-                )
+                epic_cm = epic if isinstance(epic, CommentedMap) else _to_commented_map(epic)
                 sorted_epic = _sort_mapping(epic_cm, EPIC_KEY_ORDER)
 
                 # Reorder stories within epic
@@ -212,9 +239,7 @@ def _canonicalize(data: Any) -> Any:
                                 if isinstance(story, CommentedMap)
                                 else _to_commented_map(story)
                             )
-                            new_stories.append(
-                                _sort_mapping(story_cm, STORY_KEY_ORDER)
-                            )
+                            new_stories.append(_sort_mapping(story_cm, STORY_KEY_ORDER))
                         else:
                             new_stories.append(story)
                     sorted_epic["stories"] = new_stories

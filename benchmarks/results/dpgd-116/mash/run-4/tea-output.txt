@@ -1,0 +1,31 @@
+*Sir, I can hear those bugs coming from three choppers away. The test perimeter is set up and waiting.*
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a foundational feature story with 10 acceptance criteria spanning CLI structure, HTTP client, config management, and output formatting.
+
+**Test Files:**
+
+| File | AC Coverage | Tests |
+|------|-------------|-------|
+| `tests/cli_commands.rs` | AC-1, AC-2, AC-5, AC-6 | 18 tests — command groups in help, plural nouns, subcommand help rendering, global flags (format/verbose/quiet/server/tenant/no-color/config), derive macro verification |
+| `tests/exit_codes.rs` | AC-3 | 17 tests — CliError variant → exit code mapping (1/3/4), stderr/stdout separation, Display/Debug impls, clap usage error → exit 2 |
+| `tests/output_format.rs` | AC-4 | 14 tests — OutputFormatter trait, Table (columns, color, no-color, empty), JSON (valid JSON, metadata, empty), CSV (headers, comma escaping, quote escaping, row count, empty), piped-output auto-detection |
+| `tests/siem_client.rs` | AC-7 | 14 tests — construction, Authorization/X-Tenant-ID header injection, HTTP status mapping (401→AuthExpired, 403→Unauthorized, 404→NotFound, 429→RateLimited, 5xx→ServerError), connection refused, timeout |
+| `tests/config_loading.rs` | AC-8 | 13 tests — TOML loading, defaults, missing file, invalid TOML, unknown fields, env var overrides (AXIATHON_API_URL, AXIATHON_TIMEOUT), precedence, token-not-in-file, URL/timeout validation |
+| `tests/shell_completion.rs` | AC-9 | 9 tests — bash/zsh/fish/PowerShell generation, stdout vs stderr separation, invalid shell, missing arg, command names in completions |
+| `tests/stub_handlers.rs` | AC-10 | 6 tests — "not yet implemented" message, exit code 1, story reference, nonempty output, stderr routing |
+| `tests/security.rs` | Security | 9 tests — CWE-209 (no token leaks in Display/Debug), CRLF header injection prevention, silent error swallowing, config token rejection, CliError→AxiathonError conversion |
+
+**Tests Written:** 100 tests covering all 10 ACs
+**Status:** RED (failing — compilation errors due to missing modules: `error`, `client`, `config`, `output`)
+
+**Handoff:** To Dev for implementation (GREEN phase). Dev needs to create:
+- `src/main.rs` — binary entry point with exit code dispatch
+- `src/cli.rs` — clap derive Cli struct + Commands enum
+- `src/error.rs` — CliError enum with `exit_code()` method
+- `src/client.rs` — SiemClient HTTP wrapper
+- `src/config.rs` — ClientConfig with TOML loading + env overrides
+- `src/output.rs` — OutputFormatter trait + Table/JSON/CSV impls
+- `src/commands/*.rs` — stub handlers for all command groups

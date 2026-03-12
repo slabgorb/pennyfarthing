@@ -1,0 +1,78 @@
+scenario_id: dpgd-116
+theme: the-matrix
+run_id: 3
+judge_version: v2
+judge_pass: 2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged from_file_or_default swallowing all error types. Reviewer
+    flagged silent error swallowing in formatters (unwrap_or_default in JsonFormatter,
+    CsvFormatter) but never mentioned the config loading fallback that collapses permission/parse
+    errors into defaults.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA explicitly listed ''CWE-209: Error messages don''t leak file paths,
+    connection strings, or stack traces'' in security_test.rs (11 tests). Same vulnerability
+    class as the ground truth finding about CliError Display leaking internal details.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote tests for ''CWE-113: Header injection prevention (newlines,
+    null bytes in tokens/tenant IDs)'' in both security_test.rs and siem_client_test.rs.
+    Same vulnerability class (CWE-113) as the ground truth, though the pipeline tested
+    for injection characters rather than flagging the raw String vs TenantId type
+    issue.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase mentioned workspace dependency consistency. The reviewer checked
+    Cargo.toml but only flagged the toml version mismatch (0.8 vs 0.9), not the use
+    of direct version strings instead of workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer explicitly flagged ''[HIGH] Config silently accepts unknown
+    fields (no deny_unknown_fields)'' and described the token scenario: ''a token
+    = "my-secret" field is silently swallowed with no warning.'''
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged vacuous tests: ''the test client_config_does_not_have_token_field...
+    has zero assertions and would pass regardless of behavior. This is a vacuous test.''
+    Same category (vacuous test/assertion) as I5''s always-true OR pattern.'
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged the same config test as having 'zero assertions' that
+    'would pass regardless of behavior.' Same category as I6's zero-assertion test
+    pattern, and the reviewer's finding about vacuous security tests ('in the Ok(_)
+    branch do nothing') also demonstrates detection of assertion-free tests.

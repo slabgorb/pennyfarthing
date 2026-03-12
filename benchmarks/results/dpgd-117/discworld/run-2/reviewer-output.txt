@@ -1,0 +1,91 @@
+Right. Now I have everything I need. Here's my review.
+
+---
+
+# Story 8.1 Review — Granny Weatherwax Has Her Review Face On
+
+*"I don't hold with giving folks what they want. I give them what they need."*
+
+And what this PR needs is a serious talking-to.
+
+---
+
+## Findings
+
+### CRITICAL
+
+**[CRITICAL] Response envelope does not match spec — `error` (singular) instead of `errors` (array)** at `response.rs:19`
+
+The AC explicitly states: *"errors: always present array (empty on success, RFC 9457-aligned on error)"*. The implementation uses `"error": { object }` (singular, absent on success). This is a spec violation in the foundational contract that every subsequent story in Epic 8 builds upon. Furthermore, `axiathon-core` already defines `ApiResponse<T>` with proper structure — but the server **completely ignores it** and constructs ad-hoc JSON instead. The `axiathon-core` dependency is declared in Cargo.toml but never imported.
+
+**[CRITICAL] Handlers extract full `AppState` — violates CWE-653 least-privilege mandate** at `handlers.rs:10`
+
+The story spec is unambiguous: *"Handlers must declare domain-scoped substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`) — never full `AppState`."* and *"This is a compile-time least-privilege enforcement (CWE-653, OWASP API5:2023)."* `get_health` takes `State<AppState>`. No `FromRef` substates exist. The test `handlers_do_not_accept_full_app_state` at `api_security_integration.rs:318-326` claims to verify this but actually just constructs an `AppState::default()` — it verifies nothing about handler signatures.
+
+### HIGH
+
+**[HIGH] `post_events` missing `events:write` scope check** at `handlers.rs:33`
+
+`get_events` checks `events:read`, `get_alerts` checks `alerts:read`, etc. But `post_events` accepts any authenticated user regardless of permissions. A token with zero scopes can write events. This is an authorization bypass.
+
+**[HIGH] Rate limiter never resets — permanent denial of service** at `state.rs:22-24`, `lib.rs:84-104`
+
+The `RateLimiter` is a `HashMap<String, u64>` counter that only increments. There is no time window, no decay, no reset mechanism. Once a tenant hits 100 requests in the lifetime of the server, they are permanently rate-limited. This is not rate limiting — it's a request quota with no replenishment. The AC says "configurable per-tenant limits" and "tower-governor" — neither is implemented.
+
+**[HIGH] Rate limit key uses raw bearer token, not tenant identity** at `lib.rs:110-124`
+
+`extract_rate_limit_key` uses the literal bearer token string as the hash key. Two different tokens for the same tenant get independent limits. The same token used by different users shares a limit. The spec says "per-tenant" — this is "per-credential-string".
+
+**[HIGH] Six unused production dependencies** at `Cargo.toml:9-14,19-21`
+
+`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber` are declared but never used in any source file. This bloats compile times, increases attack surface, and violates dependency hygiene. The `axiathon-core` non-use is especially damning since the whole point of Story 8.1 is to use its `ApiResponse<T>` type.
+
+### MEDIUM
+
+**[MEDIUM] Zero observability — `tracing` declared but never used** at `Cargo.toml:21`
+
+No `tracing::info!`, no `tracing::error!`, no spans, no structured logging anywhere in the server. The story spec calls for "trace correlation" and the Rust rules require `tenant_id()` and `trace_id()` in all tracing spans. Authentication failures, rate limit hits, and request handling are all silent.
+
+**[MEDIUM] `RateLimitConfig` is dead code — not wired to the actual limiter** at `config.rs:1-4`
+
+`RateLimitConfig` exists with `requests_per_second` and `burst_size` fields, but the actual `RateLimiter` in `state.rs` hardcodes `limit: 100` and ignores the config type entirely. The test `rate_limit_config_is_loadable` at `api_rate_limit_integration.rs:161-173` just constructs the struct — it doesn't verify the config actually controls behavior. The AC says "Rate limit configuration should be loadable from TOML/YAML."
+
+**[MEDIUM] Health endpoint shares the anonymous rate limit bucket** at `lib.rs:51-54`
+
+The rate limit middleware runs before route matching. Health checks hit the "anonymous" bucket. An attacker sending 100 anonymous requests blocks all unauthenticated health probes (used by load balancers, Kubernetes liveness checks). Health should be exempt from rate limiting.
+
+**[MEDIUM] `Auth` struct fields are all `pub` — no encapsulation** at `auth.rs:8-12`
+
+The Rust rules state: *"Private fields with getters on security-critical types."* `Auth` exposes `tenant_id`, `trace_id`, and `permissions` as public fields. Any handler can mutate these after extraction.
+
+**[MEDIUM] Deprecated endpoint test is a no-op** at `api_versioning_integration.rs:106-125`
+
+The test hits `/api/v1/deprecated-test`, gets a 404 (route doesn't exist), and the `if` branch that checks for the `Deprecation` header is never entered. This test always passes regardless of whether the deprecation mechanism works. The AC explicitly asks to "test the mechanism."
+
+### LOW
+
+**[LOW] Test helper duplication across 6 files**
+
+`body_json()`, `authed_get()`, and `unauthenticated_get()` are copy-pasted across all test files. Should be extracted to a shared test helper module.
+
+**[LOW] `body_json` 64KB limit may mask large error responses** at multiple test files
+
+`to_bytes(response.into_body(), 1024 * 64)` silently truncates responses over 64KB, which could mask test failures on large error payloads.
+
+### VERIFIED
+
+- `[VERIFIED]` `#![forbid(unsafe_code)]` is present at `lib.rs:2`
+- `[VERIFIED]` Security headers (X-Content-Type-Options, X-Frame-Options, Server removal) implemented at `lib.rs:59-75`
+- `[VERIFIED]` Error responses do not echo back tokens or API keys (CWE-209) — confirmed by security tests
+- `[VERIFIED]` All five route groups registered under `/api/v1/`
+- `[VERIFIED]` 404 fallback returns structured JSON, not Axum's default plaintext
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two critical findings (envelope spec violation, full AppState extraction), three high findings (missing scope check, broken rate limiter, unused deps). This is a foundation story — every subsequent story in Epic 8 builds on these patterns. Getting the envelope wrong here means getting it wrong everywhere.
+
+The bones are decent. Routes exist, auth extractor pattern is sound, security headers are in place, tests are thorough in what they cover. But the implementation diverges from the spec in ways that will compound across the epic.
+
+*"It's not enough to be good. You have to be right."*

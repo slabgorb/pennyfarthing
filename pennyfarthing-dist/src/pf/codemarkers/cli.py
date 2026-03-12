@@ -31,12 +31,24 @@ def codemarkers():
 def _common_options(fn):
     """Shared options for all codemarkers commands."""
     fn = click.option("--repo", help="Analyze a single named repo from repos.yaml")(fn)
-    fn = click.option("--path", "repo_path", type=click.Path(), help="Analyze a standalone repo path")(fn)
+    fn = click.option(
+        "--path", "repo_path", type=click.Path(), help="Analyze a standalone repo path"
+    )(fn)
     fn = click.option("--days", default=90, show_default=True, help="Stale threshold in days")(fn)
-    fn = click.option("--top", default=20, show_default=True, help="Number of top results to show")(fn)
-    fn = click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]), default="table", show_default=True)(fn)
+    fn = click.option("--top", default=20, show_default=True, help="Number of top results to show")(
+        fn
+    )
+    fn = click.option(
+        "--format",
+        "fmt",
+        type=click.Choice(["table", "json", "csv"]),
+        default="table",
+        show_default=True,
+    )(fn)
     fn = click.option("--output", "output_file", type=click.Path(), help="Write output to file")(fn)
-    fn = click.option("--exclude", multiple=True, help="Additional exclude patterns (repeatable)")(fn)
+    fn = click.option("--exclude", multiple=True, help="Additional exclude patterns (repeatable)")(
+        fn
+    )
     return fn
 
 
@@ -53,13 +65,12 @@ def _run_analysis(repo: str | None, repo_path: str | None, days: int, exclude: t
     elif repo:
         project_root = get_project_root()
         from pf.common.config import load_yaml_config
+
         repos_yaml = load_yaml_config(project_root / ".pennyfarthing" / "repos.yaml")
         if repos_yaml and repo in repos_yaml:
             cfg = repos_yaml[repo]
             rpath = cfg.get("path", repo) if isinstance(cfg, dict) else str(cfg)
-            return asyncio.run(
-                analyze_repo(repo, project_root / rpath, days, excludes)
-            )
+            return asyncio.run(analyze_repo(repo, project_root / rpath, days, excludes))
         else:
             candidate = project_root / repo
             if candidate.exists():
@@ -67,9 +78,7 @@ def _run_analysis(repo: str | None, repo_path: str | None, days: int, exclude: t
             raise click.ClickException(f"Repo not found: {repo}")
     else:
         project_root = get_project_root()
-        return asyncio.run(
-            analyze_repo(project_root.name, project_root, days, excludes)
-        )
+        return asyncio.run(analyze_repo(project_root.name, project_root, days, excludes))
 
 
 def _output_result(result, fmt: str, output_file: str | None, top: int, mode: str):
@@ -123,9 +132,11 @@ def summary(repo, repo_path, days, top, fmt, output_file, exclude):
     result = _run_analysis(repo, repo_path, days, exclude)
     if fmt == "json":
         from pf.codemarkers.formatters import export_json
+
         click.echo(export_json(result))
     else:
         from pf.codemarkers.formatters import format_summary
+
         format_summary(result, file=click.get_text_stream("stdout"))
 
 
@@ -138,6 +149,7 @@ def _run_deprecation_analysis(repo_path, exclude):
         p = Path(repo_path).resolve()
     else:
         from pf.common.config import get_project_root
+
         p = get_project_root()
 
     return asyncio.run(analyze_deprecations(p, excludes))

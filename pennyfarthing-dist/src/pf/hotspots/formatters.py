@@ -52,7 +52,9 @@ def format_dir_table(hotspots: list[DirectoryHotspot], top_n: int = 20) -> str:
     items = hotspots[:top_n]
 
     hdr = f"{'Score':>6}  {'Files':>6}  {'Changes':>8}  {'Fixes':>6}  {'Avg Auth':>9}  Directory"
-    sep = f"{'------':>6}  {'------':>6}  {'--------':>8}  {'------':>6}  {'---------':>9}  ---------"
+    sep = (
+        f"{'------':>6}  {'------':>6}  {'--------':>8}  {'------':>6}  {'---------':>9}  ---------"
+    )
 
     lines = [hdr, sep]
     for d in items:
@@ -83,27 +85,31 @@ def export_csv(hotspots: list[FileHotspot]) -> str:
     """Export file hotspots as CSV."""
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow([
-        "path",
-        "change_count",
-        "bug_fix_count",
-        "author_count",
-        "lines_added",
-        "lines_deleted",
-        "churn",
-        "last_changed",
-        "hotspot_score",
-    ])
+    writer.writerow(
+        [
+            "path",
+            "change_count",
+            "bug_fix_count",
+            "author_count",
+            "lines_added",
+            "lines_deleted",
+            "churn",
+            "last_changed",
+            "hotspot_score",
+        ]
+    )
     for h in hotspots:
-        writer.writerow([
-            h.path,
-            h.change_count,
-            h.bug_fix_count,
-            h.author_count,
-            h.lines_added,
-            h.lines_deleted,
-            h.churn,
-            h.last_changed,
-            h.hotspot_score,
-        ])
+        writer.writerow(
+            [
+                h.path,
+                h.change_count,
+                h.bug_fix_count,
+                h.author_count,
+                h.lines_added,
+                h.lines_deleted,
+                h.churn,
+                h.last_changed,
+                h.hotspot_score,
+            ]
+        )
     return buf.getvalue()

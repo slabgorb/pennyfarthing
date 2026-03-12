@@ -109,12 +109,14 @@ def transition_story(
     if target_status == "done":
         story["completed"] = date.today().isoformat()
     write_sprint(sprint_path, data)
-    steps.append({
-        "step": 1,
-        "action": "yaml_update",
-        "success": True,
-        "status": f"{from_status}\u2192{target_status}",
-    })
+    steps.append(
+        {
+            "step": 1,
+            "action": "yaml_update",
+            "success": True,
+            "status": f"{from_status}\u2192{target_status}",
+        }
+    )
 
     # Step 2: Jira transition
     if jira_key:
@@ -123,38 +125,45 @@ def transition_story(
             client = get_client()
             jira_result = client.transition_sync(jira_key, jira_target)
             if jira_result.get("success"):
-                steps.append({
-                    "step": 2,
-                    "action": "jira_transition",
-                    "success": True,
-                })
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "jira_transition",
+                        "success": True,
+                    }
+                )
             else:
-                steps.append({
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "jira_transition",
+                        "success": False,
+                        "error": jira_result.get("error", "Jira transition failed"),
+                    }
+                )
+        except Exception as exc:
+            steps.append(
+                {
                     "step": 2,
                     "action": "jira_transition",
                     "success": False,
-                    "error": jira_result.get("error", "Jira transition failed"),
-                })
-        except Exception as exc:
-            steps.append({
+                    "error": str(exc),
+                }
+            )
+    else:
+        steps.append(
+            {
                 "step": 2,
                 "action": "jira_transition",
-                "success": False,
-                "error": str(exc),
-            })
-    else:
-        steps.append({
-            "step": 2,
-            "action": "jira_transition",
-            "skipped": True,
-        })
+                "skipped": True,
+            }
+        )
 
     # Check for any step failures
     failed = [s for s in steps if s.get("success") is False]
     if failed:
         jira_failed = any(
-            s.get("action") == "jira_transition" and s.get("success") is False
-            for s in steps
+            s.get("action") == "jira_transition" and s.get("success") is False for s in steps
         )
         result: dict[str, Any] = {
             "success": False,

@@ -42,6 +42,9 @@ cart/
 benchmarks/cart/
 go.mod
 
+# Benchmark results (live in orchestrator repo, not framework)
+internal/
+
 # Test output files
 *-test-output.txt
 test-output.txt

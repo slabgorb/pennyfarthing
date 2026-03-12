@@ -84,6 +84,7 @@ def reindex_epic(
 
     # Re-read raw index to append string ref (sharded format)
     from ruamel.yaml import YAML
+
     yml = YAML()
     yml.preserve_quotes = True
     with open(sprint_path) as f:
@@ -94,6 +95,7 @@ def reindex_epic(
         # Sharded format: append ref string
         epics_list.append(shard_ref)
         from pf.sprint.yaml_io import _write_yaml_file
+
         _write_yaml_file(sprint_path, index_data)
     else:
         # Monolithic format: append full epic data
@@ -125,6 +127,7 @@ def epic_reindex_command(
     """
     if sprint_file is None:
         from pf.common.config import get_project_root
+
         path = get_project_root() / "sprint" / "current-sprint.yaml"
     else:
         path = Path(sprint_file)

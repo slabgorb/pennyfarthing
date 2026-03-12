@@ -57,16 +57,12 @@ def temp_git_repo(tmp_path: Path) -> Path:
     subprocess.run(
         ["git", "config", "user.email", "test@test.com"], cwd=repo_path, capture_output=True
     )
-    subprocess.run(
-        ["git", "config", "user.name", "Test User"], cwd=repo_path, capture_output=True
-    )
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo_path, capture_output=True)
 
     # Create initial commit
     (repo_path / "README.md").write_text("# Test Repo")
     subprocess.run(["git", "add", "."], cwd=repo_path, capture_output=True)
-    subprocess.run(
-        ["git", "commit", "-m", "Initial commit"], cwd=repo_path, capture_output=True
-    )
+    subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=repo_path, capture_output=True)
 
     # Create develop branch
     subprocess.run(["git", "branch", "develop"], cwd=repo_path, capture_output=True)
@@ -216,9 +212,7 @@ class TestGetAllRepoStatus:
     """Tests for get_all_repo_status function."""
 
     @pytest.mark.asyncio
-    async def test_returns_list_of_statuses(
-        self, sample_repos: list[tuple[str, Path]]
-    ) -> None:
+    async def test_returns_list_of_statuses(self, sample_repos: list[tuple[str, Path]]) -> None:
         """get_all_repo_status should return list of RepoStatus objects."""
         results = await get_all_repo_status(sample_repos)
 
@@ -235,9 +229,7 @@ class TestGetAllRepoStatus:
             assert results[i].name == name
 
     @pytest.mark.asyncio
-    async def test_uses_asyncio_gather(
-        self, sample_repos: list[tuple[str, Path]]
-    ) -> None:
+    async def test_uses_asyncio_gather(self, sample_repos: list[tuple[str, Path]]) -> None:
         """get_all_repo_status should use asyncio.gather for parallelism."""
         with patch(
             "pf.git.status_all.get_repo_status",
@@ -422,18 +414,14 @@ class TestCreateOrCheckoutBranch:
     @pytest.mark.asyncio
     async def test_returns_branch_result(self, temp_git_repo: Path) -> None:
         """create_or_checkout_branch should return a BranchResult."""
-        result = await create_or_checkout_branch(
-            "test-repo", temp_git_repo, "feature/test"
-        )
+        result = await create_or_checkout_branch("test-repo", temp_git_repo, "feature/test")
 
         assert isinstance(result, BranchResult)
 
     @pytest.mark.asyncio
     async def test_creates_new_branch_from_develop(self, temp_git_repo: Path) -> None:
         """create_or_checkout_branch should create new branch from develop."""
-        result = await create_or_checkout_branch(
-            "test-repo", temp_git_repo, "feature/new-branch"
-        )
+        result = await create_or_checkout_branch("test-repo", temp_git_repo, "feature/new-branch")
 
         # Should create branch (no remote in test repo, so creates locally)
         assert result.action in (BranchAction.CREATED, BranchAction.ERROR)
@@ -457,9 +445,7 @@ class TestCreateOrCheckoutBranch:
             capture_output=True,
         )
 
-        result = await create_or_checkout_branch(
-            "test-repo", temp_git_repo, "existing-branch"
-        )
+        result = await create_or_checkout_branch("test-repo", temp_git_repo, "existing-branch")
 
         assert result.action in (
             BranchAction.CHECKED_OUT_LOCAL,
@@ -470,9 +456,7 @@ class TestCreateOrCheckoutBranch:
     @pytest.mark.asyncio
     async def test_tracks_remote_branch(self, temp_git_repo: Path) -> None:
         """create_or_checkout_branch should track remote if branch exists there."""
-        result = await create_or_checkout_branch(
-            "test-repo", temp_git_repo, "remote-branch"
-        )
+        result = await create_or_checkout_branch("test-repo", temp_git_repo, "remote-branch")
 
         # In test repo without remote, should either create or error
         assert result.action in (
@@ -493,21 +477,15 @@ class TestCreateOrCheckoutBranch:
     @pytest.mark.asyncio
     async def test_fetches_before_branching(self, temp_git_repo: Path) -> None:
         """create_or_checkout_branch should fetch from origin before creating."""
-        result = await create_or_checkout_branch(
-            "test-repo", temp_git_repo, "feature/test"
-        )
+        result = await create_or_checkout_branch("test-repo", temp_git_repo, "feature/test")
 
         # Should not error (fetch happens internally)
-        assert result.action != BranchAction.ERROR or "fetch" not in (
-            result.error or ""
-        ).lower()
+        assert result.action != BranchAction.ERROR or "fetch" not in (result.error or "").lower()
 
     @pytest.mark.asyncio
     async def test_includes_commit_info(self, temp_git_repo: Path) -> None:
         """create_or_checkout_branch should include latest commit info."""
-        result = await create_or_checkout_branch(
-            "test-repo", temp_git_repo, "feature/test"
-        )
+        result = await create_or_checkout_branch("test-repo", temp_git_repo, "feature/test")
 
         # commit_info should be populated on success
         if result.action != BranchAction.SKIPPED:
@@ -518,9 +496,7 @@ class TestCreateFeatureBranches:
     """Tests for create_feature_branches function."""
 
     @pytest.mark.asyncio
-    async def test_returns_list_of_results(
-        self, sample_repos: list[tuple[str, Path]]
-    ) -> None:
+    async def test_returns_list_of_results(self, sample_repos: list[tuple[str, Path]]) -> None:
         """create_feature_branches should return list of BranchResult objects."""
         results = await create_feature_branches(sample_repos, "feature/test")
 
@@ -529,9 +505,7 @@ class TestCreateFeatureBranches:
         assert all(isinstance(r, BranchResult) for r in results)
 
     @pytest.mark.asyncio
-    async def test_uses_asyncio_gather(
-        self, sample_repos: list[tuple[str, Path]]
-    ) -> None:
+    async def test_uses_asyncio_gather(self, sample_repos: list[tuple[str, Path]]) -> None:
         """create_feature_branches should use asyncio.gather for parallelism."""
         with patch(
             "pf.git.create_branches.create_or_checkout_branch",
@@ -549,9 +523,7 @@ class TestCreateFeatureBranches:
             assert mock_create.call_count == len(sample_repos)
 
     @pytest.mark.asyncio
-    async def test_preserves_order(
-        self, sample_repos: list[tuple[str, Path]]
-    ) -> None:
+    async def test_preserves_order(self, sample_repos: list[tuple[str, Path]]) -> None:
         """create_feature_branches should preserve input order."""
         results = await create_feature_branches(sample_repos, "feature/test")
 
@@ -593,9 +565,7 @@ class TestDetectWorktree:
 class TestFilterRepos:
     """Tests for filter_repos function."""
 
-    def test_filter_all_returns_all(
-        self, sample_repos: list[tuple[str, Path]]
-    ) -> None:
+    def test_filter_all_returns_all(self, sample_repos: list[tuple[str, Path]]) -> None:
         """filter_repos with 'all' should return all repos."""
         result = filter_repos(sample_repos, "all")
 
@@ -645,9 +615,7 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_branch_handles_git_command_failure(self) -> None:
         """create_or_checkout_branch should handle git command failures."""
-        result = await create_or_checkout_branch(
-            "test", Path("/nonexistent"), "feature/test"
-        )
+        result = await create_or_checkout_branch("test", Path("/nonexistent"), "feature/test")
 
         assert result.action in (BranchAction.SKIPPED, BranchAction.ERROR)
 
@@ -817,9 +785,7 @@ class TestAsyncPerformance:
 
             call_times.append(time.time())
             await asyncio.sleep(0.01)  # Small delay
-            return RepoStatus(
-                name=name, path=path, branch="main", changes=[], unpushed_commits=[]
-            )
+            return RepoStatus(name=name, path=path, branch="main", changes=[], unpushed_commits=[])
 
         repos = [(f"repo-{i}", Path(f"/repo-{i}")) for i in range(3)]
 
@@ -839,16 +805,12 @@ class TestAsyncPerformance:
         """create_feature_branches should run git commands in parallel."""
         call_times = []
 
-        async def mock_create_branch(
-            name: str, path: Path, branch: str
-        ) -> BranchResult:
+        async def mock_create_branch(name: str, path: Path, branch: str) -> BranchResult:
             import time
 
             call_times.append(time.time())
             await asyncio.sleep(0.01)
-            return BranchResult(
-                name=name, path=path, branch=branch, action=BranchAction.CREATED
-            )
+            return BranchResult(name=name, path=path, branch=branch, action=BranchAction.CREATED)
 
         repos = [(f"repo-{i}", Path(f"/repo-{i}")) for i in range(3)]
 

@@ -60,7 +60,9 @@ def _render_workflow_dots(workflow: str, current_phase: str, status: str = "") -
     line.append("  ")
 
     # Completed stories: all phases done
-    all_done = status in ("done", "canceled") or (not current_phase and status not in ("backlog", "ready"))
+    all_done = status in ("done", "canceled") or (
+        not current_phase and status not in ("backlog", "ready")
+    )
     current_idx = phases.index(current_phase) if current_phase in phases else -1
 
     for i, phase in enumerate(phases):
@@ -120,9 +122,7 @@ class StoryDetailScreen(Screen):
         try:
             from pf.bikerack.story_detail_data import fetch_story_detail
 
-            enriched = fetch_story_detail(
-                story_id, jira_key=ws_data.get("jiraKey", "")
-            )
+            enriched = fetch_story_detail(story_id, jira_key=ws_data.get("jiraKey", ""))
         except Exception:
             return ws_data
 
@@ -262,9 +262,7 @@ class StoryDetailScreen(Screen):
             yield _MarkdownPreview(*children, id="dossier-preview")
 
         # Keybinding hint
-        hint = Text.from_markup(
-            "\n[dim][Escape] Back  [Enter] Open PR[/dim]"
-        )
+        hint = Text.from_markup("\n[dim][Escape] Back  [Enter] Open PR[/dim]")
         yield Static(hint, id="dossier-hint")
 
     def action_pop_screen(self) -> None:

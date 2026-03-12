@@ -330,13 +330,9 @@ async def execute_sync_plan(
         tasks = []
         for change in jira_updates:
             if change.field == "status":
-                tasks.append(
-                    client.transition_async(change.key, change.target_value)
-                )
+                tasks.append(client.transition_async(change.key, change.target_value))
             elif change.field == "points":
-                tasks.append(
-                    client.sync_story_points_async(change.key, change.target_value)
-                )
+                tasks.append(client.sync_story_points_async(change.key, change.target_value))
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -347,9 +343,7 @@ async def execute_sync_plan(
             elif isinstance(res, dict) and res.get("success"):
                 result.changes_applied += 1
             elif isinstance(res, dict):
-                result.errors.append(
-                    f"{jira_updates[i].key}: {res.get('reason', 'Unknown error')}"
-                )
+                result.errors.append(f"{jira_updates[i].key}: {res.get('reason', 'Unknown error')}")
 
     # Execute YAML updates (sequential, file-based)
     if yaml_updates:

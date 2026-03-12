@@ -1,0 +1,80 @@
+Right. Now I have everything I need for my review.
+
+---
+
+# Story 6.1 Code Review — Chrisjen Avasarala speaking
+
+Well, darling, let me tell you what I found while tearing through this code like it owes me money.
+
+---
+
+## Review Findings
+
+### [HIGH] Nightly rustfmt check FAILS — `stub_handlers.rs` formatting violations
+Two lines in `crates/axiathon-client/tests/stub_handlers.rs` (lines 18 and 102) fail `cargo +nightly fmt --all --check`. Long `.stdout()` and `.stderr()` predicate chains need to be wrapped per nightly import-ordering rules. Per the gotchas doc, this is a pre-approval gate.
+
+### [HIGH] `RawConfig` silently ignores unknown fields — no `#[serde(deny_unknown_fields)]` at `config.rs:11`
+The `RawConfig` struct happily accepts any TOML key without complaint. A user who types `api_rul` instead of `api_url` gets zero feedback — their typo is silently ignored and defaults are used. This is a classic config-file foot-gun. Add `#[serde(deny_unknown_fields)]` or at minimum document why it's intentionally permissive.
+
+### [HIGH] `SiemClient` never applies the configured timeout at `client.rs:36`
+`ClientConfig` loads a `timeout` field, has a `timeout()` getter, and the story spec says timeouts matter for CLI responsiveness. But `SiemClient::new()` constructs `reqwest::Client::new()` with no timeout configuration. The timeout is checked in error mapping (`is_timeout()`) but reqwest's default is *no timeout at all*. A hung server means the CLI hangs forever. The `SiemClient` constructor should accept a timeout and pass it to `reqwest::Client::builder().timeout(Duration::from_secs(t)).build()`.
+
+### [MEDIUM] Edition mismatch: crate uses `edition = "2021"` vs workspace `edition = "2024"` at `crates/axiathon-client/Cargo.toml:2`
+The workspace declares `edition = "2024"` and `rust-version = "1.85"` but the client crate overrides to `edition = "2021"`. The crate should use `edition.workspace = true` to match the project standard, or there needs to be an explicit rationale for the divergence.
+
+### [MEDIUM] `ServerError` Display leaks raw server response body — CWE-209 risk at `error.rs:29`
+`#[error("server error ({0}): {1}")]` for `ServerError(u16, String)` prints the raw body from the server response directly to the user. The security comment at the top of the file says "Do not include internal paths, stack traces, or connection strings" — but the server body could contain any of those. The body should be truncated or sanitized before inclusion in the Display output.
+
+### [MEDIUM] CRLF injection tests are vacuous — they accept success at `siem_client.rs:246-271`
+Both `siem_client_rejects_crlf_in_tenant_id` and `siem_client_rejects_crlf_in_token` check `SiemClient::new()` but if construction succeeds, they just `let _ = client;` and pass. The implementation *does* reject CRLF (returns `Err`), so the test happens to work, but the assertion is weak — if someone removes the CRLF check, the test still passes. These should `assert!(result.is_err())`.
+
+### [MEDIUM] Config env var tests are not thread-safe — `set_var`/`remove_var` without synchronization at `config_loading.rs:72-74`
+Tests `env_axiathon_api_url_overrides_config` and `env_axiathon_timeout_overrides_config` call `std::env::set_var` which mutates global state. Cargo runs tests in parallel by default. If another test reads these env vars concurrently, results are non-deterministic. On Rust 2024 edition these are actually `unsafe` — further reason to fix the edition mismatch.
+
+### [MEDIUM] `env_axiathon_timeout_rejects_non_numeric` test is also vacuous at `config_loading.rs:102-112`
+The test sets `AXIATHON_TIMEOUT` to `"not-a-number"`, calls `from_file`, then on `Ok` asserts timeout > 0. But the implementation returns `Err` for non-numeric values — the `Ok` branch is never reached, so the assertion never fires. The test should explicitly `assert!(result.is_err())`.
+
+### [LOW] `OutputFormat` exists twice — `OutputFormatArg` in `cli.rs:60` and `OutputFormat` in `output.rs:9`
+Two parallel enums for the same concept. There's no conversion between them and the code never bridges them. This means the clap-parsed `--format` flag is never actually used to select the output formatter. The wiring is incomplete.
+
+### [LOW] `stub_messages_include_story_reference` test checks for "Story" or "story" but the actual format is "Story {num}" at `stub_handlers.rs:121`
+The Display impl outputs `not yet implemented (Story {0})` which contains "Story" — so the test passes. But it's checking for the string "Story" in a case-insensitive way without verifying the actual story number is present (except for login). A typo like "Story " (no number) would pass.
+
+### [VERIFIED] CRLF injection prevention logic is present and correct at `client.rs:25-33`
+The `SiemClient::new()` constructor checks for `\r` and `\n` in both tenant_id and token values, rejecting them with an error.
+
+### [VERIFIED] Exit code mapping covers all error variants at `error.rs:51-57`
+Auth -> 3, Authz -> 4, everything else -> 1. The wildcard `_ => 1` with `#[non_exhaustive]` is correct.
+
+### [VERIFIED] Errors go to stderr, output to stdout at `main.rs:39-43`
+The `writeln!(std::io::stderr(), "{e}")` followed by `std::process::exit(e.exit_code())` correctly separates error output.
+
+### [VERIFIED] Token never loaded from config file at `config.rs:86-88`
+`token()` returns `None` unconditionally. The `RawConfig` struct does deserialize a `token` field but it's never propagated to `ClientConfig`.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in both `lib.rs:2` and `main.rs:2`
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 4 |
+| Low | 2 |
+| Verified Good | 5 |
+
+The three HIGH findings are:
+1. **Nightly fmt failure** — the gotchas doc says this blocks approval
+2. **Silent unknown field acceptance** in config — operator typos vanish into the void
+3. **Timeout never applied** — the CLI can hang forever on an unresponsive server
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+The nightly fmt failure alone blocks this per the gotchas doc. The timeout not being wired is a real operational hazard — you built the plumbing but didn't connect it. And those vacuous CRLF tests are the kind of thing that makes me want to fire someone into the sun.
+
+Fix the three HIGHs. The MEDIUMs should be addressed but I won't hold the PR hostage over them — except the edition mismatch, which I want explained or fixed.
