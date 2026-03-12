@@ -140,6 +140,33 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 </severity-levels>
 
 
+<deviation-review>
+## Deviation Audit
+
+**Review the `## Design Deviations` section in the session file.** For each logged deviation:
+
+1. **ACCEPTED** — The deviation is sound. Stamp it:
+   ```markdown
+   - **{original entry}** → ✓ ACCEPTED by Reviewer: {brief rationale or "agrees with author reasoning"}
+   ```
+
+2. **FLAGGED** — The deviation needs discussion or reversal. Add as a finding:
+   ```markdown
+   - **{original entry}** → ✗ FLAGGED by Reviewer: {why this is problematic}
+   ```
+   Also add to your severity table as a finding.
+
+3. **UNDOCUMENTED** — You spot a spec deviation that TEA/Dev didn't log. Add it:
+   ```markdown
+   ### Reviewer (audit)
+   - **{what diverged}:** Spec said {X}, code does {Y}. Not documented by TEA/Dev. Severity: {H/M/L}.
+   ```
+
+**The goal:** After review, every spec deviation is either explicitly accepted or explicitly flagged. Nothing slips through undocumented.
+
+Append your audit under `### Reviewer (audit)` in the Design Deviations section.
+</deviation-review>
+
 <assessment-templates>
 ## Assessment Templates
 
@@ -202,15 +229,17 @@ Append your findings under a `### Reviewer (code review)` subheading after the m
 
 <exit>
 ### If APPROVED:
-1. Capture delivery findings (see <finding-capture>)
-2. Write Reviewer Assessment (verdict: APPROVED)
-3. Update story: `pf sprint story update {STORY_ID} --review-verdict approved`
-4. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
+1. Audit design deviations (gate: `gates/deviations-audited`) — stamp every entry ACCEPTED or FLAGGED
+2. Capture delivery findings (see <finding-capture>)
+3. Write Reviewer Assessment (verdict: APPROVED)
+4. Update story: `pf sprint story update {STORY_ID} --review-verdict approved`
+5. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
 5. **DO NOT merge PRs** — SM handles PR creation and merge in the finish phase.
 
 ### If REJECTED:
-1. Capture delivery findings (see <finding-capture>)
-2. Write Reviewer Assessment (verdict: REJECTED, with severity table)
+1. Audit design deviations (gate: `gates/deviations-audited`) — stamp every entry ACCEPTED or FLAGGED
+2. Capture delivery findings (see <finding-capture>)
+3. Write Reviewer Assessment (verdict: REJECTED, with severity table)
 3. Update story: `pf sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
 4. If findings are testable (logic bugs, missing edge cases):
    - Follow <agent-exit-protocol> (resolve-gate → complete-phase → marker tea)

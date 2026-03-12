@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: My Lord
   portrait_style: ", art noveau style, vintage illustration, Klimt-inspired"
-  tier: C
+  tier: B
+  optimized: true
   spinner_verbs:
     - Vor maneuvering
     - Galactic politicking

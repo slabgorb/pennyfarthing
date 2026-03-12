@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Sire
   portrait_style: ", medieval fantasy,  gritty lighting, ice and fire"
-  tier: S
+  tier: B
+  optimized: true
   spinner_verbs:
     - Winter is coming
     - Iron Throne claiming

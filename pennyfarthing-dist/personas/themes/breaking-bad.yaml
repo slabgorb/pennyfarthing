@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Partner
   portrait_style: ", hand-rubbed etching style, harsh New Mexico desert sunlight, chemical yellow-green hazmat tint"
-  tier: S
+  tier: B
+  optimized: true
   spinner_verbs:
     - Cooking
     - Say my name
