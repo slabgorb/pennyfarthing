@@ -1,0 +1,28 @@
+No session file exists. Here's the TEA Assessment summary:
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — every acceptance criterion needs test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure.rs` | 30 | AC-1 (command groups), AC-2 (help), AC-5 (global flags), AC-6 (clap derive) |
+| `error_exit_codes.rs` | 16 | AC-3 (exit codes 0/1/2/3/4), security (CWE-209) |
+| `output_format.rs` | 14 | AC-4 (table/json/csv formatting, ResponseMetadata) |
+| `siem_client.rs` | 15 | AC-7 (HTTP wrapper, header injection, status mapping) |
+| `config_loading.rs` | 11 | AC-8 (TOML loading, env overrides, validation, no token storage) |
+| `shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell generation) |
+| `stub_handlers.rs` | 11 | AC-10 (story references, exit code 1) |
+
+**Tests Written:** 103 tests covering all 10 ACs
+**Status:** RED (fails to compile — modules `cli`, `error`, `output`, `client`, `config`, `commands` don't exist yet)
+
+**Security tests included:**
+- Header injection prevention (newlines in tenant ID and token)
+- CWE-209: error messages don't leak internal details
+- Tokens not stored in config files
+- No silent error swallowing on connection failures
+
+**Handoff:** To Dev for implementation (GREEN phase)

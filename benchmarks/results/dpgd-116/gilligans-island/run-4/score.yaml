@@ -1,0 +1,83 @@
+scenario_id: dpgd-116
+theme: gilligans-island
+run_id: 4
+judge_version: v2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged from_file_or_default swallowing all errors via unwrap_or_default().
+    Reviewer flagged adjacent silent-failure issues (set_api_url silently rejects,
+    env var parsing silently falls back) but never identified the core from_file_or_default
+    pattern that treats parse/permission errors the same as NotFound.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: Dev implemented 'security-safe Display' on CliError. TEA wrote security
+    tests for CWE-209 error exposure. Reviewer flagged ServerError body capture as
+    CWE-209 risk at client.rs:72-74. Same vulnerability class addressed across multiple
+    phases.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote security tests for 'header injection (\\r\\n)' in siem_client.rs\
+    \ and security.rs. Dev implemented HeaderValue::from_str validation at client.rs:37-45.\
+    \ Reviewer verified 'Header injection prevention via HeaderValue::from_str \u2014\
+    \ correctly rejects \\r\\n in tenant ID.' Same vulnerability class (CWE-113) caught,\
+    \ though the type-safety improvement (using TenantId instead of raw String) was\
+    \ not flagged."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that dependencies use direct version strings instead
+    of workspace = true. The workspace Cargo.toml changes are listed but the version
+    drift issue from not using workspace inheritance was never mentioned.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged: 'ConfigFile uses default serde behavior... it ignores\
+    \ them. This means a typo like api_rul = \"...\" is silently ignored \u2014 the\
+    \ operator thinks they set the URL but got the default.' Also noted the security\
+    \ test for unknown fields 'accepts EITHER behavior, which means the test is vacuous.'\
+    \ Directly addresses the deny_unknown_fields concern."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged vacuous tests: security.rs unknown fields test 'passes\
+    \ regardless of whether unknown fields are rejected or accepted' and 'cli_error_is_not_copy\
+    \ test is vacuous \u2014 function body is empty... it's a no-op.' Same category\
+    \ (vacuous test) flagged in adjacent locations."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged multiple no-op/vacuous test patterns: 'assert_not_copy\
+    \ function that does literally nothing \u2014 it doesn't actually assert' and\
+    \ the unknown fields test that 'passes regardless.' Same category of ineffective\
+    \ tests with no meaningful assertions, flagged at adjacent locations per partial\
+    \ match rule 2."

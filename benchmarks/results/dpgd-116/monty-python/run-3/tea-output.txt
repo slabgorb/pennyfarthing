@@ -1,0 +1,29 @@
+This parrot is thoroughly, comprehensively, and undeniably dead. Let me provide the assessment.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI binary with substantial new code — command structure, error types, HTTP client, config loading, output formatting, and shell completions. Every AC demands test coverage.
+
+**Test Files:**
+| File | AC | Tests | Description |
+|---|---|---|---|
+| `cli_structure.rs` | AC-1, AC-2, AC-6 | 13 | Command groups in help, plural nouns, subcommand help rendering, no-panic guarantee, usage examples, clap derive verification |
+| `exit_codes.rs` | AC-3 | 14 | Exit code mapping (0/1/2/3/4), all CliError variants, CWE-209 error exposure checks, std::error::Error impl |
+| `output_format.rs` | AC-4 | 16 | OutputFormat enum, string parsing, table/JSON/CSV formatting, JSON metadata fields (request_id, timestamp, api_version), CSV escaping (commas, quotes, newlines) |
+| `global_flags.rs` | AC-5 | 15 | `--format`, `-v` (repeatable), `--quiet`, `--server`, `--tenant`, `--config`, `--no-color`, defaults verification |
+| `siem_client.rs` | AC-7 | 13 | SiemClient construction, HTTP error mapping (401→AuthExpired, 403→Unauthorized, 404→NotFound, 429→RateLimited, 5xx→ServerError), header injection prevention (CWE-113) |
+| `config_loading.rs` | AC-8 | 12 | TOML loading, defaults, malformed file handling, env var overrides (AXIATHON_API_URL, AXIATHON_TIMEOUT), precedence chain, XDG paths, token-not-in-file security check |
+| `shell_completion.rs` | AC-9 | 6 | Bash/zsh/fish/PowerShell generation, subcommand inclusion, invalid shell handling |
+| `stub_handlers.rs` | AC-10 | 5 | "not yet implemented" message, story references, exit code 1, silent-success prevention |
+
+**Tests Written:** 94 tests covering 10 ACs
+**Status:** RED (failing to compile — modules `cli`, `error`, `output`, `client`, `config`, `commands::completion` do not exist yet)
+
+**Security tests included:**
+- CWE-113: Header injection via newline in tenant ID and auth token
+- CWE-209: Error display doesn't leak internal paths
+- Token-not-in-config-file: Auth tokens must use OS keychain, not TOML files
+- Silent stub success: Unimplemented commands must never return Ok(())
+
+**Handoff:** To Dev for implementation (GREEN phase)

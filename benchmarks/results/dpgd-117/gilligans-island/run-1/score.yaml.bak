@@ -1,0 +1,93 @@
+scenario_id: dpgd-117
+theme: gilligans-island
+run_id: 1
+total_caught: 1
+total_findings: 10
+weighted_caught: 5
+total_weight: 52
+score_pct: 9.6
+findings:
+- finding_id: I1
+  title: Dependencies inline instead of workspace level
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Dev added chrono and uuid dependencies inline in Cargo.toml. Reviewer
+    flagged unused dependencies but not the inline-vs-workspace issue.
+- finding_id: I2
+  title: 'FieldErrorCode missing #[non_exhaustive]'
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'No phase mentioned FieldErrorCode or #[non_exhaustive] on any enum in
+    the server response types.'
+- finding_id: I3
+  title: Hardcoded trace_id 'none'
+  weight: 5
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: TEA noted the envelope needs trace_id in Meta, but no phase flagged that
+    the implementation hardcodes 'none' instead of deriving from request context.
+    Reviewer flagged missing tracing infrastructure but not the hardcoded trace_id
+    specifically.
+- finding_id: I4
+  title: Zero structured logging
+  weight: 5
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer MEDIUM finding: 'No structured logging or tracing \u2014 tracing\
+    \ is listed as a dependency but never imported. There are zero tracing::info!,\
+    \ tracing::error!, or #[instrument] calls.'"
+- finding_id: I5
+  title: Security comment claims tracing that doesn't exist
+  weight: 3
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: Reviewer flagged absence of logging but did not specifically call out
+    misleading SECURITY comments claiming logging exists.
+- finding_id: I6
+  title: Non-ASCII tenant header silently treated as missing
+  weight: 8
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No test was written for non-ASCII tenant header values. TEA auth tests
+    focus on token validation, not header encoding edge cases.
+- finding_id: I7
+  title: "CWE-209 test gap \u2014 no body assertion"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: "TEA wrote CWE-209 security tests and reviewer verified 'Auth error messages\
+    \ are generic \u2014 no oracle attack surface (CWE-209 check)', but no phase noted\
+    \ the test only checks status code without asserting on response body content."
+- finding_id: I8
+  title: CORS preflight test doesn't verify CORS headers
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that CORS preflight tests only check status code without
+    verifying CORS headers in the response.
+- finding_id: I9
+  title: "Wrong log levels \u2014 error! for 4xx client errors"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: Since I4 (zero logging) was flagged but not yet fixed, I9 (wrong log levels
+    after fixing I4) was never reached.
+- finding_id: I10
+  title: CORS allows Any origin/method/header (CWE-942)
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged CORS middleware using Any origin/method/header. No CORS-specific
+    security tests were written by TEA, and reviewer did not mention CWE-942.

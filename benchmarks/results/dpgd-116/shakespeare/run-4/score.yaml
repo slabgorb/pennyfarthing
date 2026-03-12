@@ -1,0 +1,81 @@
+scenario_id: dpgd-116
+theme: shakespeare
+run_id: 4
+judge_version: v2
+total_caught: 4
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors including
+    parse/permission failures. The reviewer verified config loading behavior but did
+    not flag the unwrap_or_default pattern as problematic.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Opposite conclusion. The reviewer explicitly marked '[VERIFIED] Error\
+    \ message security (CWE-209) \u2014 error.rs:8-44 Error Display implementations\
+    \ are concise and don't leak internal paths, stack traces, or permission details.'\
+    \ TEA wrote CWE-209 tests focused on auth errors, but these passed without catching\
+    \ the Io(#[error(transparent)]) forwarding full OS error details to stderr."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: dev
+  evidence: Dev implemented CRLF sanitization in client.rs:39-42,47-51 and TEA wrote
+    header injection tests. However, the type safety aspect (using raw String instead
+    of TenantId from axiathon-core) was not flagged. The header injection vulnerability
+    class was addressed via sanitization.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged as [HIGH]: ''these six dependencies are pinned directly
+    in the crate Cargo.toml with hardcoded versions... The root Cargo.toml [workspace.dependencies]
+    section is untouched. This violates the workspace dependency management architecture.'''
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer noted RawConfig uses #[serde(flatten)] to silently swallow unknowns
+    but did not flag the security implication of a token field being silently ignored
+    with a secret left on disk. The reviewer''s fix suggestion (''assert the result
+    is Ok and the known fields loaded correctly despite unknown keys'') validates
+    the wrong behavior rather than recommending #[serde(deny_unknown_fields)] or a
+    warning.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged vacuous test 'client_config_handles_unreadable_file'\
+    \ with 'is_ok() || is_err() is a tautology \u2014 always true. This tests nothing.'\
+    \ Same category (vacuous assertion pattern) as the ground truth finding about\
+    \ config.server().is_none() || true."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged 'client_config_rejects_unknown_keys_gracefully \u2014\
+    \ let _result = ClientConfig::load_from(&config_path); The result is discarded\
+    \ without assertion. The test verifies doesn't panic but doesn't verify what happened.'\
+    \ Same category as ground truth finding about let _ = config with zero assertions."

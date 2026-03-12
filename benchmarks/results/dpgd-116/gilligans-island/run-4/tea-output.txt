@@ -1,0 +1,35 @@
+---
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is the foundational CLI framework — every module needs test coverage.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `cli_structure.rs` | 42 | AC-1, AC-2, AC-5, AC-6 | Command groups, help rendering, global flags, clap derive |
+| `error_exit_codes.rs` | 17 | AC-3 | CliError enum, exit_code() mapping (0/1/2/3/4), Display traits |
+| `output_formatting.rs` | 13 | AC-4 | OutputFormatter trait, Table/JSON/CSV, ResponseMetadata, escaping |
+| `siem_client.rs` | 13 | AC-7 | SiemClient headers (X-Tenant-ID, Authorization), HTTP status mapping (401/403/404/429/5xx), connection failure |
+| `config_loading.rs` | 13 | AC-8 | TOML loading, env var overrides (AXIATHON_API_URL, AXIATHON_TIMEOUT), validation, default path |
+| `shell_completion.rs` | 10 | AC-9 | Bash/zsh/fish/PowerShell completion generation, command group coverage |
+| `stub_handlers.rs` | 10 | AC-10 | "not yet implemented (Story X.Y)" messages, exit code 1 |
+| `security.rs` | 11 | Security | CWE-209 error exposure, header injection (\r\n), token redaction in Debug/Display, config validation |
+
+**Tests Written:** 119 tests covering 10 ACs + security
+**Status:** RED (failing — all tests fail to compile because modules `cli`, `client`, `commands`, `config`, `error`, `output` don't exist yet)
+
+**Dependency Changes:**
+- Workspace: added `clap_complete`, `comfy-table`, `csv`, `dirs`, `keyring`, `reqwest`, `tempfile`, `toml`; added `env` feature to `clap`
+- axiathon-client: added all Story 6.1 runtime deps + `tempfile` as dev-dep
+
+**Handoff:** To Dev for implementation (GREEN phase)
+
+### Delivery Findings
+
+- **Gap** (non-blocking): Story context says `toml` 0.9 but latest available crate is 0.8.x. Used `toml = "0.8"` in workspace. Dev should verify.
+  Affects `Cargo.toml` (workspace dependency version).
+  *Found by TEA during test design.*
+
+- No other upstream findings during test design.

@@ -1,0 +1,101 @@
+Now I have a thorough understanding. Let me deliver my review.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+*As Kant would say: "Act only according to that maxim whereby you can, at the same time, will that it should become a universal law." Let us test whether this code could serve as universal law.*
+
+## Preflight Status
+
+- `cargo check -p axiathon-client`: **PASS**
+- `cargo clippy -p axiathon-client -- -D warnings`: **PASS**
+- `cargo test -p axiathon-client`: **PASS** (107 tests across 9 files)
+- `cargo +nightly fmt --all --check`: **FAIL** — formatting differences in `cli.rs`
+
+---
+
+## Findings
+
+### [CRITICAL] F1: Nightly fmt check fails — `cli.rs` formatting
+
+`cargo +nightly fmt --all --check` reports diffs in `crates/axiathon-client/src/cli.rs:53`. Per gotchas.md, nightly rustfmt enforcement is mandatory before approval. Multi-line `#[command(after_help = ...)]` attributes need reformatting to single-line. This is a CI-blocking issue.
+
+### [HIGH] F2: Missing `main.rs` — no binary entry point
+
+AC-3 requires `main.rs` to catch errors and call `std::process::exit()` with the correct exit code. AC-1 requires the `axiathon` binary. There is **no `main.rs`** anywhere in the crate. The `Cargo.toml` declares no `[[bin]]` target. Without `main.rs`, the binary `axiathon` cannot be built. This is a fundamental structural omission — the entire CLI cannot be invoked as a binary.
+
+### [HIGH] F3: CWE-209 — `ServerError` Display leaks internal detail via `Debug`
+
+The `Display` impl for `ServerError` is `#[error("server error")]` which is correctly sanitized for user-facing output. However, the `Debug` impl (auto-derived) **includes the full inner string**: `ServerError("connection pool exhausted at db.rs:42")`. The security test at `security.rs:13` only checks `to_string()` (Display), not `format!("{err:?}")` (Debug). If any code path logs or prints via `{:?}`, the detail leaks. The `Debug` derive should be reviewed or the inner string should be scrubbed at construction time.
+
+### [HIGH] F4: `SiemClient` does not validate base URL scheme
+
+`security.rs:103-113` tests that `javascript:alert(1)` is rejected as a base URL. But look at the assertion:
+
+```rust
+url.starts_with("http://") || url.starts_with("https://") || url == "javascript:alert(1)"
+```
+
+This is a **vacuous test** — it literally allows the `javascript:` scheme in the success branch. The `SiemClient::new()` constructor performs zero URL validation. Any scheme (`file:`, `ftp:`, `javascript:`) is silently accepted. The test passes but asserts nothing useful about security.
+
+### [HIGH] F5: Header injection sanitization is silent — tests don't verify behavior
+
+`siem_client.rs:132-148` tests header injection by constructing a client with `\r\n` in the token, then asserts... `!client.base_url().is_empty()`. This asserts nothing about whether the injection was stopped. The implementation does `token.replace(['\r', '\n'], "")` which silently strips newlines. The test should verify the sanitized value doesn't contain the injection payload, not just that `base_url()` is non-empty. As written, these tests would pass even if `with_token()` did nothing.
+
+### [MEDIUM] F6: Missing `tui` command in CLI enum
+
+AC-1 explicitly requires: *"`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, login/logout, **tui**, completion, init"*. The `Commands` enum has no `Tui` variant. The `cli_help_contains_all_command_groups` test in `cli_structure.rs:17-26` does **not** include "tui" in the required groups list. This is an AC violation.
+
+### [MEDIUM] F7: `RawConfig` silently ignores unknown fields
+
+`config.rs` uses `serde::Deserialize` on `RawConfig` without `#[serde(deny_unknown_fields)]`. If an operator puts `tokken = "secret"` (typo) in their config, it's silently ignored. This is a usability footgun. The security test `client_config_does_not_store_token_field` at `config_loading.rs:149` actually demonstrates this — a `token` field in the TOML is silently accepted and ignored rather than warning the user.
+
+### [MEDIUM] F8: `output.rs` uses `expect()` in production code
+
+Per the project's Rust rules: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message."* The rule allows `expect()` with an actionable message. The `expect()` calls in `format_as_json` and `format_as_csv` have descriptive messages, but these are in a formatter that could theoretically be called with adversarial data. `serde_json` serialization of `String` values won't fail, and CSV writing to a `Vec<u8>` won't fail, so these are acceptable under the "actionable message" rule — but worth noting that `?`-propagation would be more defensive.
+
+### [MEDIUM] F9: No `#[non_exhaustive]` on `CliError` enum
+
+Per Rust coding rules: *"`#[non_exhaustive]` on enums that will grow."* `CliError` will clearly grow as more stories are implemented (e.g., new error types for ingestion, query, etc.). The `exit_codes.rs:100` exhaustiveness test manually lists all variants but cannot detect if a new variant is added without a corresponding test.
+
+### [MEDIUM] F10: `toml` workspace dependency version mismatch
+
+The workspace `Cargo.toml` declares `toml = "0.8"` but the story spec says `toml` 0.9. The implementation will use 0.8.x. This should be documented as an intentional deviation or updated to match the spec.
+
+### [LOW] F11: Stub handler tests are tautological
+
+`stub_handlers.rs` tests construct `CliError::NotImplemented("Story 6.2".into())` and then check if the string contains "6.2". This tests `thiserror`'s Display derive, not actual command dispatch. There's no test that running `axiathon status` actually produces the `NotImplemented` error. Without `main.rs` and command dispatch, there's no way to verify that stub handlers are wired to the correct story references.
+
+### [LOW] F12: `completion.rs` silently returns empty on invalid shell
+
+`generate_completions()` with an invalid shell string (e.g., "nushell") silently returns without writing anything to the buffer. No error is returned. This could be confusing for operators.
+
+### [VERIFIED] V1: `#![forbid(unsafe_code)]` present in `lib.rs`
+### [VERIFIED] V2: No server-side crate imports — dependency rule respected
+### [VERIFIED] V3: Clap derive macros used (AC-6) — no imperative command building
+### [VERIFIED] V4: `ClientConfig` has no token field — OS keychain separation correct
+### [VERIFIED] V5: Exit codes 3 (auth) and 4 (authz) are distinct and correct
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 1 |
+| High | 3 |
+| Medium | 5 |
+| Low | 2 |
+| Verified | 5 |
+
+## Verdict: **CHANGES_REQUESTED**
+
+The critical nightly fmt failure and three high-severity findings (missing `main.rs`, vacuous security tests, untested header injection sanitization) block approval. The categorical imperative demands: if every CLI crate shipped without a binary entry point and with security tests that assert nothing, the maxim would be self-defeating.
+
+**Required before re-review:**
+1. Fix nightly fmt (F1)
+2. Add `main.rs` with error-to-exit-code dispatch (F2)
+3. Fix the vacuous security test for URL scheme validation (F4)
+4. Make header injection tests actually verify sanitization (F5)
+5. Add `Tui` command variant or document intentional omission from AC-1 (F6)

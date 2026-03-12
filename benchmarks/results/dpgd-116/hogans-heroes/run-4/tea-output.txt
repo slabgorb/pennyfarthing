@@ -1,0 +1,32 @@
+*Ach!* I, Major Hochstetter, have completed my investigation. Every suspicious corner of this Stalag 13 CLI framework has been tagged for inspection. Here is my assessment:
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is the foundational CLI framework — core infrastructure requiring comprehensive test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 18 | AC-1 (command groups), AC-2 (help), AC-5 (global flags), AC-6 (derive) |
+| `tests/error_exit_codes.rs` | 14 | AC-3 (exit codes 0/1/2/3/4), CliError variants |
+| `tests/output_formatting.rs` | 13 | AC-4 (table/json/csv), TTY auto-detection |
+| `tests/client_http.rs` | 13 | AC-7 (SiemClient headers, HTTP status mapping) |
+| `tests/config_loading.rs` | 12 | AC-8 (TOML config, env overrides, validation) |
+| `tests/completion_generation.rs` | 5 | AC-9 (bash/zsh/fish/powershell completions) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (not-yet-implemented stubs) |
+| `tests/security.rs` | 9 | CWE-113 header injection, CWE-209 error exposure, credential leaks |
+
+**Tests Written:** 94 tests covering all 10 ACs
+**Status:** RED (all 6 test files fail to compile — modules don't exist yet)
+**Handoff:** To Dev for implementation
+
+### Security Tests Included
+- **Header injection** (CWE-113): tenant ID and auth token with `\r\n` and `\x00` must be rejected
+- **Error exposure** (CWE-209): internal connection strings must not leak through Display
+- **Credential leaks**: config file must not accept `token` field (use OS keychain)
+- **URL safety**: empty base URL rejection, double-slash prevention
+
+### Cargo Changes
+- Added workspace dependencies: `clap_complete`, `comfy-table`, `csv`, `dirs`, `keyring`, `reqwest`, `toml`
+- Updated `crates/axiathon-client/Cargo.toml` with all required deps + `tempfile` for dev-dependencies

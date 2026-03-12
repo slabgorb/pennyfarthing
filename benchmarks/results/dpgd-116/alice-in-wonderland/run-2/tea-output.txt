@@ -1,0 +1,33 @@
+*Exhales a cloud of interrogative smoke*
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is the foundational CLI framework — every type, trait, and command group must be proven to exist and behave correctly.
+
+**Test Files:**
+| File | Tests | ACs Covered | Focus |
+|------|-------|-------------|-------|
+| `cli_structure.rs` | 31 | AC-1, AC-2, AC-5, AC-6 | Command groups, help text, global flags, derive macros |
+| `error_exit_codes.rs` | 12 | AC-3 | Exit code mapping (0/1/2/3/4), CliError Display |
+| `output_formatting.rs` | 14 | AC-4 | Table/JSON/CSV formatting, ResponseMetadata, escaping |
+| `siem_client.rs` | 15 | AC-7 | HTTP headers, status code mapping, header injection |
+| `config_loading.rs` | 13 | AC-8 | TOML loading, env var overrides, validation |
+| `shell_completion.rs` | 8 | AC-9 | bash/zsh/fish/PowerShell generation |
+| `stub_handlers.rs` | 14 | AC-10 | "not yet implemented" messages, story references |
+| `security.rs` | 8 | Cross-cutting | CWE-209, CRLF injection, URL scheme validation |
+
+**Tests Written:** ~115 tests covering all 10 ACs
+**Status:** RED (all 7 test files fail to compile — modules `cli`, `error`, `output`, `client`, `config`, `commands` don't exist yet)
+
+**Handoff:** To Dev for implementation. The tests define the exact public API surface:
+- `axiathon_client::cli::{Cli, Commands, GlobalFlags}`
+- `axiathon_client::error::CliError` with `exit_code() -> i32`
+- `axiathon_client::output::{OutputFormat, OutputFormatter, TableFormatter, JsonFormatter, CsvFormatter, ResponseMetadata}`
+- `axiathon_client::client::SiemClient` with `new()`, `build_request()`, `map_http_error()`
+- `axiathon_client::config::ClientConfig` with `from_file()`, `from_file_with_env()`, `default_config_path()`
+- `axiathon_client::commands::{query, rules, alerts, config, ingest, status, tenant, login, completion}` each with `handle_stub()`
+
+## Delivery Findings
+
+- No upstream findings during test design.

@@ -112,6 +112,7 @@ def get_dist_root(project_root: Path | None = None) -> Path | None:
     # pennyfarthing-dist/ directory or node_modules.
     try:
         from pf._dist import get_root, is_populated
+
         if is_populated():
             return get_root()
     except (ImportError, ModuleNotFoundError):
@@ -150,9 +151,7 @@ def load_pennyfarthing_config(project_root: Path | None = None) -> dict[str, Any
     return load_yaml_config(config_path) or {}
 
 
-def save_pennyfarthing_config_key(
-    key: str, value: Any, project_root: Path | None = None
-) -> None:
+def save_pennyfarthing_config_key(key: str, value: Any, project_root: Path | None = None) -> None:
     """Set a top-level key in .pennyfarthing/config.local.yaml.
 
     Creates the file if it doesn't exist. Preserves existing keys.

@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: null
+run_id: 3
+judge_version: v2
+judge_pass: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged from_file_or_default swallowing all errors. Config loading
+    tests exist but none test error discrimination between NotFound and parse/permission
+    errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote security tests for CWE-209 error exposure. Dev implemented
+    sanitized Display for ServerError showing ''server error: please try again later''.
+    Reviewer verified CWE-209 sanitization. Same vulnerability class addressed, though
+    the specific Io(transparent) stderr leakage path was not called out.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote header injection prevention tests (CWE-113) in siem_client.rs
+    and security.rs. Dev implemented CRLF rejection in with_tenant(). Reviewer verified
+    header injection defense. Same vulnerability class (CWE-113) caught, though the
+    root cause of using raw String instead of TenantId type was not flagged.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase mentioned workspace dependency declarations or flagged direct
+    version strings vs workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #4 [MEDIUM]: ''RawConfig uses default serde behavior
+    (ignore unknown fields)... there''s no #[serde(deny_unknown_fields)] to catch
+    typos in other fields.'' Adding deny_unknown_fields would also surface the token
+    field issue. However, the reviewer also marked token exclusion as [VERIFIED] correct,
+    reaching the opposite conclusion on the token-specific aspect.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...) in config tests.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the zero-assertion test that only checks non-panic via
+    'let _ = config'.

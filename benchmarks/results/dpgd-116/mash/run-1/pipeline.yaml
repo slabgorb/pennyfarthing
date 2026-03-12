@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: mash
+run_id: 1
+timestamp: '2026-03-08T00:45:06.725553+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-mash-run-1
+phases:
+  tea:
+    token_usage:
+      input: 19
+      output: 20189
+    duration_s: 342.32
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 43
+      output: 14450
+    duration_s: 325.15
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 11
+      output: 4684
+    duration_s: 123.48
+    exit_code: 0

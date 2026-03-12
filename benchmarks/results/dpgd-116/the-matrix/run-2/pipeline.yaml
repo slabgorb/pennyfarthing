@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: the-matrix
+run_id: 2
+timestamp: '2026-03-08T20:12:56.224423+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-the-matrix-run-2
+phases:
+  tea:
+    token_usage:
+      input: 18
+      output: 21691
+    duration_s: 389.31
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 31
+      output: 13820
+    duration_s: 308.03
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 14
+      output: 5545
+    duration_s: 137.79
+    exit_code: 0

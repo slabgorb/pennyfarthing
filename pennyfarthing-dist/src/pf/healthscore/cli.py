@@ -30,14 +30,18 @@ def healthscore():
 
 def _common_options(fn):
     """Shared options for healthscore commands."""
-    fn = click.option("--path", "target_path", type=click.Path(exists=True),
-                       help="Directory to analyze")(fn)
-    fn = click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]),
-                       default="table", show_default=True)(fn)
-    fn = click.option("--output", "output_file", type=click.Path(),
-                       help="Write output to file")(fn)
-    fn = click.option("--no-cache", is_flag=True,
-                       help="Bypass cache, force fresh analysis")(fn)
+    fn = click.option(
+        "--path", "target_path", type=click.Path(exists=True), help="Directory to analyze"
+    )(fn)
+    fn = click.option(
+        "--format",
+        "fmt",
+        type=click.Choice(["table", "json", "csv"]),
+        default="table",
+        show_default=True,
+    )(fn)
+    fn = click.option("--output", "output_file", type=click.Path(), help="Write output to file")(fn)
+    fn = click.option("--no-cache", is_flag=True, help="Bypass cache, force fresh analysis")(fn)
     return fn
 
 

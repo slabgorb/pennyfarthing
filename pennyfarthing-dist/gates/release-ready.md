@@ -28,6 +28,12 @@ CHANGELOG.md comparison links are correct.
 Run `pennyfarthing-dist/scripts/git/changelog-links.sh --validate`. Exit code 0 = pass.
 </check>
 
+<check name="e2e-consumer-tests">
+Consumer E2E test suite passes. Tests pf init, WheelHub startup,
+content preservation, and idempotency in isolated environments.
+Run `./tests/e2e/run.sh --local`. Exit code 0 = pass.
+</check>
+
 <pass>
 Run all checks from `gates/tests-pass` (test-suite, working-tree, branch-status),
 then run build-succeeds, version-bumped, changelog-updated, and changelog-links-valid.
@@ -61,6 +67,9 @@ GATE_RESULT:
     - name: changelog-links-valid
       status: pass
       detail: "Comparison links correct ({count} versions)"
+    - name: e2e-consumer-tests
+      status: pass
+      detail: "6/6 consumer E2E scenarios passed"
 ```
 </pass>
 
@@ -101,6 +110,7 @@ GATE_RESULT:
     - "Run: npm version patch|minor|major"
     - "Add changelog entry for v{version}"
     - "Run: pennyfarthing-dist/scripts/git/changelog-links.sh --fix"
+    - "Run: ./tests/e2e/run.sh --local (if e2e-consumer-tests fails)"
 ```
 </fail>
 

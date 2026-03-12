@@ -1,0 +1,127 @@
+Now I have a complete picture. Let me compile my findings.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+*"I am a trafficker of information. I know everything I can. The question is, do you know why?"*
+
+## Review Observations
+
+### [CRITICAL] `panic!()` in production code — `generate_completion()` at `commands/completion.rs:26`
+
+```rust
+other => panic!("unsupported shell: {other}"),
+```
+
+The `generate_completion()` function panics on unsupported shell names. This is production code reachable from user input (`axiathon completion garbage`). The Rust coding rules explicitly state: **"No `unwrap()` in production code — use `?` or `expect()` with actionable message."** A `panic!` is worse than `unwrap()`. This should return `Result<String, CliError>` and map the unknown shell to `CliError::General`.
+
+### [HIGH] Missing `logout` and `tui` command groups — AC-1 violation at `cli.rs:47-87`
+
+AC-1 requires `axiathon --help` to show `login`/`logout` and `tui`. The `Commands` enum has neither a `Logout` nor a `Tui` variant. The tests (`help_contains_all_command_groups` at `cli_structure.rs:77`) don't check for `logout` or `tui` either, which masks this gap. These are explicitly listed in the AC:
+
+> "query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init"
+
+### [HIGH] `ServerError` Display leaks raw server message — CWE-209 at `error.rs:26`
+
+```rust
+#[error("server error ({0})")]
+ServerError(u16, String),
+```
+
+The `Display` impl echoes the second field verbatim. The test `cli_error_display_does_not_leak_internal_paths` at `security.rs:15` is **vacuous** — it only asserts `!display.is_empty()`, which proves nothing about information leakage. If the server responds with `"Internal: /var/lib/axiathon/db panicked at query.rs:42"`, that entire string appears in the user-facing error message. The error type's own doc comment says `"Display impls must not leak internal paths"`, but the implementation contradicts this.
+
+### [HIGH] `expect()` in `OutputFormatter` production code — `output.rs:57,62-67`
+
+```rust
+serde_json::to_string_pretty(&response).expect("JSON serialization should not fail")
+// ...
+writer.write_record(headers).expect("CSV header write");
+writer.write_record(row).expect("CSV row write");
+writer.flush().expect("CSV flush");
+String::from_utf8(writer.into_inner().expect("CSV inner")).expect("CSV UTF-8")
+```
+
+Five `expect()` calls in production formatting code. While these are arguably infallible, the project rules say to use `?` in production. If `format_table` returned `Result<String, CliError>`, these could propagate cleanly.
+
+### [MEDIUM] `apply_env_override` silently ignores invalid `AXIATHON_TIMEOUT` — `config.rs:105`
+
+```rust
+if let Ok(t) = value.parse::<u64>() {
+    self.timeout_seconds = t;
+}
+```
+
+If `AXIATHON_TIMEOUT=banana`, it silently keeps the default. An operator debugging "why is my timeout not working" gets zero feedback. Same issue in `apply_cli_override` at line 118. The `from_toml` path validates (rejects zero/negative timeout) but the env/CLI override paths don't apply the same validation — zero timeout via `AXIATHON_TIMEOUT=0` would succeed.
+
+### [MEDIUM] `apply_env_override` doesn't validate URL — `config.rs:103`
+
+```rust
+"AXIATHON_API_URL" => self.server_url = value.to_string(),
+```
+
+`from_toml` calls `validate_server_url()` which checks for empty, length, and HTTP(S) scheme. But `apply_env_override` accepts any value — `AXIATHON_API_URL=ftp://evil.com` bypasses validation. `apply_cli_override` has the same issue.
+
+### [MEDIUM] `toml` version mismatch: story spec says 0.9, workspace has 0.8 — `Cargo.toml:49`
+
+The story Technical Guardrails specify `toml 0.9`, but the workspace declares `toml = "0.8"`. Either the spec is wrong or the implementation is behind.
+
+### [MEDIUM] `keyring` dependency missing — AC-7/AC-8 at `Cargo.toml`
+
+The story explicitly lists `keyring 3` as a required dependency and specifies workspace addition. Neither the workspace `Cargo.toml` nor `axiathon-client/Cargo.toml` includes `keyring`. The `SiemClient` has no keyring integration for token loading. While `keyring` usage overlaps with Story 9.1 (login), the story's Technical Guardrails say to add it to workspace deps now. The story also says to load the token from keychain at startup in sync context before Tokio runtime.
+
+### [MEDIUM] Nightly `rustfmt` check fails — `commands/mod.rs`, `cli_structure.rs`
+
+Import ordering in `commands/mod.rs` and array formatting in `cli_structure.rs:75` fail `cargo +nightly fmt --all --check`. Per the reviewer gotchas, this must be flagged before approval.
+
+### [LOW] `CompletionArgs.shell` is `String` not `ValueEnum` — `commands/completion.rs:15`
+
+The `shell` field is a raw `String`, parsed manually in `generate_completion()`. Clap supports `Shell` as a `ValueEnum` directly, which would give automatic validation, help text, and tab completion for the shell argument — and eliminate the `panic!` entirely.
+
+### [LOW] `stubs_reference_unique_stories` test doesn't actually verify uniqueness — `stub_handlers.rs:121`
+
+The test name says "unique stories" but only asserts messages are non-empty. It collects all messages but never checks that story references differ. A copy-paste bug where two stubs reference the same story number would pass.
+
+### [VERIFIED] Header injection prevention — `client.rs:28-29,43,49`
+
+CRLF stripping via `.replace(['\r', '\n'], "")` on base_url, token, and tenant values. `HeaderValue::from_str` also rejects non-visible ASCII. Double defense is correct.
+
+### [VERIFIED] `#[non_exhaustive]` on `CliError` — `error.rs:9`
+
+Present and tested at `exit_codes.rs:131`.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` — `lib.rs:2`
+
+Present.
+
+### [VERIFIED] `#[serde(deny_unknown_fields)]` on `RawConfig` — `config.rs:13`
+
+Typos in config keys are caught. Test at `security.rs:132` confirms.
+
+### [VERIFIED] Dependency isolation — `Cargo.toml`
+
+`axiathon-client` depends only on `axiathon-core` for internal crates. No server-side crate imports.
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 1 |
+| High | 3 |
+| Medium | 5 |
+| Low | 2 |
+| Verified | 4 |
+
+**Blocking issues:**
+1. `panic!()` in `generate_completion` — production crash on bad input
+2. Missing `logout` and `tui` command groups per AC-1
+3. `ServerError` Display leaks raw server messages (CWE-209), security test is vacuous
+4. Multiple `expect()` calls in production formatting code
+
+## Verdict: **CHANGES_REQUESTED**
+
+*"Choice is an illusion created between those with power and those without. You have the choice to fix these — or not. But the consequences... those are non-negotiable."*
+
+Fix the Critical and High items. The Medium items should be addressed but don't block individually. The nightly fmt failure **must** also be resolved per project policy.

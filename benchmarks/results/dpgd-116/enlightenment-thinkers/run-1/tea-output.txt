@@ -1,0 +1,30 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 introduces the entire CLI framework — foundational types, parsing, output formatting, HTTP client, config loading, and shell completions all need test coverage.
+
+**Test Files:**
+| File | AC | Tests | Description |
+|---|---|---|---|
+| `cli_structure.rs` | AC-1, AC-2, AC-6 | 15 | Command groups, subcommand help rendering, clap derive validation |
+| `exit_codes.rs` | AC-3 | 12 | `CliError::exit_code()` mapping for all variants (0/1/2/3/4) |
+| `output_format.rs` | AC-4 | 10 | Table/JSON/CSV formatting, CSV escaping, metadata in JSON |
+| `global_flags.rs` | AC-5 | 14 | `-v`/`-vv`, `--quiet`, `--server`, `--tenant`, `--config`, `--no-color`, defaults |
+| `siem_client.rs` | AC-7 | 12 | HTTP status→CliError mapping, base URL handling, header injection prevention |
+| `config_loading.rs` | AC-8 | 11 | TOML loading, env var overrides, CLI precedence, XDG paths, validation |
+| `shell_completion.rs` | AC-9 | 8 | bash/zsh/fish/PowerShell generation, subcommand completeness |
+| `stub_handlers.rs` | AC-10 | 7 | "not yet implemented (Story X.Y)" messages with exit code 1 |
+| `security.rs` | Security | 5 | CWE-209 error exposure, token leak prevention, credential storage |
+
+**Tests Written:** ~94 tests covering all 10 ACs + security
+**Status:** RED (failing — compilation errors due to missing modules: `cli`, `error`, `output`, `client`, `config`, `commands::completion`)
+
+**Expected public API surface tested:**
+- `axiathon_client::cli::Cli` (Parser struct with `Commands` enum)
+- `axiathon_client::error::CliError` (with `exit_code()` method)
+- `axiathon_client::output::{OutputFormat, OutputFormatter}` (with `format_table()`)
+- `axiathon_client::client::SiemClient` (with `new()`, `with_token()`, `with_tenant()`, `map_http_status()`)
+- `axiathon_client::config::ClientConfig` (with `from_toml()`, `from_file()`, `default_path()`, `server_url()`, `timeout_secs()`)
+- `axiathon_client::commands::completion::generate_completions()`
+
+**Handoff:** To Dev for implementation (GREEN phase)

@@ -1,0 +1,31 @@
+**120/121 tests passing**, 0 clippy warnings.
+
+## Dev Assessment
+
+**Implementation Complete:** Yes (120/121 tests GREEN)
+
+**Files Changed:**
+- `crates/axiathon-client/Cargo.toml` — added dependencies: chrono, clap_complete, comfy-table, csv, dirs, reqwest, serde, serde_json, toml, uuid
+- `crates/axiathon-client/src/lib.rs` — module declarations for cli, client, commands, config, error, output
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with `#[non_exhaustive]`, exit code mapping, CWE-209 safe Display
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct (clap Parser derive) with `Commands` enum, all global flags with `global = true`
+- `crates/axiathon-client/src/client.rs` — `SiemClient` HTTP wrapper with header sanitization, status code mapping, custom Debug (no token leak)
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env/CLI override precedence, validation, XDG paths
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum + `OutputFormatter` with Table (comfy-table), JSON (with metadata), CSV (proper escaping)
+- `crates/axiathon-client/src/commands/mod.rs` — re-exports all command modules
+- `crates/axiathon-client/src/commands/query.rs` — QueryArgs with Run subcommand, stub handler
+- `crates/axiathon-client/src/commands/rules.rs` — RulesArgs with List subcommand, stub handler
+- `crates/axiathon-client/src/commands/alerts.rs` — AlertsArgs with List subcommand, stub handler
+- `crates/axiathon-client/src/commands/ingest.rs` — IngestArgs with Status subcommand, stub handler
+- `crates/axiathon-client/src/commands/config.rs` — ConfigArgs with Show subcommand, stub handler
+- `crates/axiathon-client/src/commands/status.rs` — StatusArgs, stub handler
+- `crates/axiathon-client/src/commands/tenant.rs` — TenantArgs with List subcommand, stub handler
+- `crates/axiathon-client/src/commands/login.rs` — LoginArgs, stub handler
+- `crates/axiathon-client/src/commands/completion.rs` — CompletionArgs, functional `generate_completion` using clap_complete
+- `crates/axiathon-client/src/commands/init.rs` — InitArgs
+
+**Tests:** 120/121 passing (GREEN), 0 clippy warnings
+
+## Delivery Findings
+
+- **Gap** (non-blocking): Test `siem_client_url_no_double_slash` in `crates/axiathon-client/tests/siem_client.rs` has a false-positive assertion. It checks `!url.contains("//api")` but the test URL `https://api.axiathon.local` naturally contains the substring `//api` in the protocol+domain portion (`https://api`). The constructed URL is correct (single slash between host and path), but the assertion matches the protocol. This contradicts the exact-match assertion in `siem_client_builds_correct_api_url` which requires `https://api.axiathon.local/api/v1/status`. Affects `crates/axiathon-client/tests/siem_client.rs` (assertion should use a domain not starting with `api`, or check only the path portion). *Found by Dev during implementation.*

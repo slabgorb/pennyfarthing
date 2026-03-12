@@ -30,16 +30,19 @@ def complexity():
 
 def _common_options(fn):
     """Shared options for complexity commands."""
-    fn = click.option("--path", "target_path", type=click.Path(exists=True),
-                       help="Directory to analyze")(fn)
-    fn = click.option("--format", "fmt", type=click.Choice(["table", "json", "csv"]),
-                       default="table", show_default=True)(fn)
-    fn = click.option("--top", default=20, show_default=True,
-                       help="Number of top results")(fn)
-    fn = click.option("--output", "output_file", type=click.Path(),
-                       help="Write output to file")(fn)
-    fn = click.option("--exclude", multiple=True,
-                       help="Exclude patterns (repeatable)")(fn)
+    fn = click.option(
+        "--path", "target_path", type=click.Path(exists=True), help="Directory to analyze"
+    )(fn)
+    fn = click.option(
+        "--format",
+        "fmt",
+        type=click.Choice(["table", "json", "csv"]),
+        default="table",
+        show_default=True,
+    )(fn)
+    fn = click.option("--top", default=20, show_default=True, help="Number of top results")(fn)
+    fn = click.option("--output", "output_file", type=click.Path(), help="Write output to file")(fn)
+    fn = click.option("--exclude", multiple=True, help="Exclude patterns (repeatable)")(fn)
     return fn
 
 

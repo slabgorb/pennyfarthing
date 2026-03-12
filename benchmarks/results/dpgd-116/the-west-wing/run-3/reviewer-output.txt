@@ -1,0 +1,90 @@
+I've now read all source files and test files thoroughly. Here is my structured review.
+
+---
+
+# Story 6.1: CLI Framework & Structure — Code Review
+
+## Preflight Status
+- **Tests:** All 77 tests pass
+- **Clippy:** Clean, no warnings
+- **Nightly fmt:** **FAILS** — `cli.rs` has formatting violations (long `#[command(...)]` attributes need line-breaking)
+
+---
+
+## Findings
+
+### [CRITICAL] Nightly rustfmt check fails — `cli.rs` formatting violations
+`cargo +nightly fmt --all --check` reports diffs in `crates/axiathon-client/src/cli.rs`. Per gotchas.md, nightly fmt must pass before approval. Multiple `#[command(...)]` attribute macros exceed line width and need reformatting.
+
+### [HIGH] Missing workspace dependency declarations for `reqwest` and `toml`
+The story spec requires adding `reqwest` and `toml` to `[workspace.dependencies]` in root `Cargo.toml`. Currently `crates/axiathon-client/Cargo.toml` declares `reqwest = { version = "0.12", ... }` and `toml = "0.9"` as direct version pins instead of using `workspace = true`. This violates the workspace dependency management pattern used by all other dependencies (`clap`, `serde`, `thiserror`, etc.) and means version drift between crates is possible.
+
+**At:** `crates/axiathon-client/Cargo.toml:11-20` (reqwest, toml, comfy-table, csv, dirs, clap_complete all use direct version instead of workspace)
+
+### [HIGH] `RawConfig` silently accepts and discards unknown fields via `_ignored: IgnoredAny`
+At `config.rs:12`, the `_ignored` field with `serde(default)` and `IgnoredAny` is a no-op pattern — serde already ignores unknown fields by default unless `#[serde(deny_unknown_fields)]` is set. This gives a false sense of safety. A user who typos `server_url` as `sever_url` will silently get defaults with no warning. The config test `config_file_does_not_contain_token_field` at `cli_config.rs:47-75` explicitly verifies that a `token` field in TOML is silently accepted — this is a security concern since it means users might believe their token is being read from the file when it isn't.
+
+### [MEDIUM] No `main.rs` — binary entry point missing
+The story spec requires producing the `axiathon` binary. There is no `main.rs` in `crates/axiathon-client/src/`. Without it, there's no binary crate, no `std::process::exit()` with exit codes, and the AC-3 exit code contract cannot be verified end-to-end. The `[[bin]]` section is also absent from `Cargo.toml`.
+
+### [MEDIUM] `OutputFormatter` uses `expect()` extensively in production code
+At `output.rs:105-121`, there are 7 `expect()` calls in `format_as_json` and `format_as_csv`. The project's Rust rules (`.claude/rules/rust.md`) say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." While `expect()` is technically allowed, these are in output formatting paths that could receive arbitrary user data. The messages like `"data serializes"` are not actionable. If `format_table` returned `Result`, callers could handle errors gracefully.
+
+### [MEDIUM] `generate_completions` silently falls back to Bash for unknown shell strings
+At `commands/completion.rs:14`, the `_ => Shell::Bash` arm means any invalid shell string (e.g., `"nushell"`) silently generates bash completions. The `Completion` variant in `cli.rs:74` restricts via `value_parser`, but the public function `generate_completions` could be called directly with an invalid shell. Should return `Result` or `unreachable!()` since the CLI already validates.
+
+### [MEDIUM] `tenant` field uses raw `Option<String>` instead of `TenantId` newtype
+At `cli.rs:19`, `--tenant` is `Option<String>`. The project's Rust rules mandate newtypes for IDs (`TenantId(String)` prevents mixing ID types). The `SiemClient::with_tenant` at `client.rs:23` also takes `&str`. `axiathon-core` provides `TenantId` — it should be used at the CLI boundary.
+
+### [MEDIUM] JSON output has hardcoded empty metadata fields
+At `output.rs:108`, `ResponseMetadata::new("", "", "v1")` creates metadata with empty `request_id` and `timestamp`. This means JSON output always has `"request_id": ""` and `"timestamp": ""`, which is misleading for consumers and makes the metadata field useless.
+
+### [MEDIUM] `Init` command is a no-op — does nothing
+At `cli.rs:117-118`, `Commands::Init => { Ok(()) }` silently succeeds without doing anything. AC-10 says init should be "functional, not stub." A proper init should at minimum create the config directory and write a default `cli.toml`.
+
+### [LOW] `SiemClient` only implements `get()` — no `post`, `put`, `delete`
+At `client.rs:37`, only HTTP GET is implemented. Future stories will need other methods. Not blocking, but the stub infrastructure is incomplete for subsequent stories.
+
+### [LOW] `config_rejects_dangerous_server_url` test has weak assertion
+At `cli_config.rs:188-198`, the test accepts `Ok(c)` for a `javascript:alert(1)` URL and only checks the scheme *after* loading. The actual validation in `config.rs:83-89` does reject it, so the test's fallback `Ok(c)` branch is dead code, but the assertion structure is confusing.
+
+### [LOW] `siem_client_rejects_token_with_newlines` test is vacuous
+At `cli_siem_client.rs:222-232`, the test creates a client with a newline-injected token and then does nothing with it (`let _ = client`). It doesn't verify the token was sanitized. The sanitization at `client.rs:14` does work, but the test doesn't assert it.
+
+### [VERIFIED] CWE-209 — `ServerError` Display hides internal details
+`error.rs:17`: `#[error("server error")]` — the inner `String` is not exposed in Display output. Verified good.
+
+### [VERIFIED] CWE-113 — Header injection prevention
+`client.rs:14` and `client.rs:24` sanitize `\r\n` from tokens and tenant IDs. Verified good.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` is set in `lib.rs:2`
+
+### [VERIFIED] `#[non_exhaustive]` on `CliError` enum at `error.rs:8`
+
+### [VERIFIED] All AC-10 stubs return correct story references, tested individually
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 1 | YES |
+| High | 2 | YES |
+| Medium | 5 | NO |
+| Low | 3 | NO |
+| Verified | 4 | — |
+
+**Total observations: 15** (11 issues + 4 verified good)
+
+## Verdict: **CHANGES_REQUESTED**
+
+### Required before approval:
+1. **Fix nightly fmt** — run `cargo +nightly fmt --all` 
+2. **Move `reqwest`, `toml`, `comfy-table`, `csv`, `dirs`, `clap_complete` to `[workspace.dependencies]`** in root `Cargo.toml` and use `workspace = true` in the crate's `Cargo.toml`
+3. **Add `main.rs`** with proper exit code handling via `std::process::exit(err.exit_code())` — without this, the binary doesn't exist and AC-3 is unverifiable end-to-end
+
+### Strongly recommended (Medium):
+4. Make `Init` actually functional (create config dir + default file) per AC scope "functional, not stub"
+5. Use `TenantId` newtype from `axiathon-core` for the `--tenant` flag
+6. Fix vacuous `siem_client_rejects_token_with_newlines` test to actually assert sanitization

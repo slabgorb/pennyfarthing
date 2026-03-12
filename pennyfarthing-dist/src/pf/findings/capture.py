@@ -28,7 +28,9 @@ _R1_RE = re.compile(
     r"\*Found by (?P<agent>\w+) during (?P<phase>[^.]+)\.\*$"
 )
 
-_MARKER_COMMENT = "<!-- Agents: append findings below this line. Do not edit other agents' entries. -->"
+_MARKER_COMMENT = (
+    "<!-- Agents: append findings below this line. Do not edit other agents' entries. -->"
+)
 _SECTION_HEADER = "## Delivery Findings"
 
 
@@ -92,7 +94,10 @@ def parse_delivery_findings(content: str) -> list[dict]:
                 current_agent = agent_match.group(1)
 
         # No-findings entry
-        elif stripped.lower().startswith("- no upstream findings") or stripped.lower() == "- no upstream findings.":
+        elif (
+            stripped.lower().startswith("- no upstream findings")
+            or stripped.lower() == "- no upstream findings."
+        ):
             if current_agent:
                 findings.append({"type": "none", "agent": current_agent})
 
@@ -100,15 +105,17 @@ def parse_delivery_findings(content: str) -> list[dict]:
         elif stripped.startswith("- **"):
             m = _R1_RE.match(stripped)
             if m:
-                findings.append({
-                    "type": m.group("type"),
-                    "urgency": m.group("urgency"),
-                    "description": m.group("description"),
-                    "path": m.group("path"),
-                    "what_changes": m.group("what"),
-                    "agent": m.group("agent"),
-                    "phase": m.group("phase"),
-                })
+                findings.append(
+                    {
+                        "type": m.group("type"),
+                        "urgency": m.group("urgency"),
+                        "description": m.group("description"),
+                        "path": m.group("path"),
+                        "what_changes": m.group("what"),
+                        "agent": m.group("agent"),
+                        "phase": m.group("phase"),
+                    }
+                )
 
     return findings
 

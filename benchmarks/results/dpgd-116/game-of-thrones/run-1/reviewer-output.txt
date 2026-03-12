@@ -1,0 +1,110 @@
+Now I have the complete picture. Time to deliver my verdict.
+
+---
+
+*leans back, steepling fingers*
+
+Ah, what a fine tapestry of code. Most would call it clean. Most would approve it. But I am not most people. Let me tell you what I see — every thread that might unravel.
+
+---
+
+## Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+### Observations
+
+**1. [HIGH] Test suite fails — env var pollution between tests** at `tests/config_loading.rs:85-87,107-109`
+
+The tests `client_config_env_var_overrides_api_url` and `client_config_env_var_overrides_timeout` use `std::env::set_var` / `std::env::remove_var` which is **not thread-safe** in Rust's parallel test runner. The test `client_config_loads_from_toml_file` fails because `AXIATHON_TIMEOUT=60` leaks from the prior test. This is a **confirmed test failure** — I reproduced it:
+
+```
+---- client_config_loads_from_toml_file stdout ----
+assertion `left == right` failed
+  left: 60
+ right: 30
+```
+
+The env var tests need `#[serial]` (from `serial_test` crate) or must use a temp-env guard pattern. **Tests are actively broken.**
+
+**2. [HIGH] `cargo +nightly fmt --all --check` fails** at `src/cli.rs`
+
+Import ordering (std before crate-local) and attribute formatting don't pass nightly rustfmt. Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." This must be fixed before merge.
+
+**3. [MEDIUM] `ServerError` Display leaks raw server response body (CWE-209)** at `error.rs:18`
+
+```rust
+#[error("server error (HTTP {0}): {1}")]
+ServerError(u16, String),
+```
+
+The `{1}` is the raw HTTP response body from `client.rs:88` (`response.text().await.unwrap_or_default()`). The SECURITY comment on the error module says "Do not include internal paths, stack traces, or token values" — but the server body could contain stack traces, internal paths, or debug info. The Display impl should sanitize or truncate this.
+
+**4. [MEDIUM] `RawConfig` silently accepts unknown fields** at `config.rs:8`
+
+`RawConfig` deserializes with serde's default behavior: unknown fields are silently ignored. A user who typos `api_urll` or `tiemout` will get no warning. Adding `#[serde(deny_unknown_fields)]` would catch misconfigurations early.
+
+**5. [MEDIUM] `toml` version mismatch with story spec** at `Cargo.toml:20`
+
+Story spec says `toml 0.9`, but `Cargo.toml` declares `toml = "0.8"`. The workspace `[workspace.dependencies]` doesn't declare `toml` at all, meaning this is a local version pin that deviates from the spec. Minor, but inconsistent.
+
+**6. [MEDIUM] No `main.rs` — binary cannot be built**
+
+The story requires producing the `axiathon` binary, and the Cargo.toml has no `[[bin]]` section. There is no `main.rs`. The crate currently only builds as a library. AC-1 requires `axiathon --help` to show command groups — impossible without a binary entry point.
+
+**7. [MEDIUM] `NotImplemented` variant missing from `cli_error_is_not_silently_swallowed` test** at `tests/security.rs:179`
+
+The test enumerates all `CliError` variants to verify non-empty Display — but omits `CliError::NotImplemented`. Since the enum is `#[non_exhaustive]`, this is exactly the kind of gap that will go unnoticed.
+
+**8. [LOW] `expect()` in output formatters** at `output.rs:88,105,107,109,110`
+
+Five `expect()` calls in production code. Per project rules: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` messages aren't actionable ("CSV header write should not fail" doesn't tell an operator what to do). Since `OutputFormatter::format()` returns `String` rather than `Result<String>`, the trait signature prevents proper error propagation. This is a design tension — the trait should probably return `Result<String>`.
+
+**9. [LOW] `--tenant` flag accepts raw `String` instead of `TenantId`** at `cli.rs:32`
+
+Per project rules: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag is `Option<String>`, and `SiemClient::new()` takes `Option<String>` for tenant. This should use `TenantId` from `axiathon-core` at the boundary where it enters the system.
+
+**10. [LOW] Unused import warnings** at `tests/shell_completion.rs:8`, `tests/cli_structure.rs:9`
+
+`use clap::CommandFactory` is imported but unused in two test files. Clean warnings = clean code.
+
+**11. [VERIFIED] Header injection prevention is correctly implemented** at `client.rs:15-22`
+
+`validate_header_value()` checks for `\n`, `\r`, and `\0` in both token and tenant values before constructing headers. Good.
+
+**12. [VERIFIED] Config token field is accepted but never exposed** at `config.rs:12,97-99`
+
+The `token` field in TOML is deserialized into `RawConfig` but `ClientConfig::token()` always returns `None`. Tokens stay in the OS keychain. Correct design.
+
+**13. [VERIFIED] Dependency boundary is enforced** at `Cargo.toml:8-23`
+
+`axiathon-client` depends only on `axiathon-core`. No server-side crate imports. Compile-time test at `tests/security.rs:218-238` reinforces this.
+
+**14. [VERIFIED] Exit code mapping is correct** at `error.rs:43-49`
+
+Auth errors → 3, authz errors → 4, all others → 1. Matches AC-3.
+
+**15. [VERIFIED] clap derive macros used throughout** — no imperative command building. Satisfies AC-6.
+
+---
+
+### Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 0     | —       |
+| High     | 2     | YES     |
+| Medium   | 5     | No      |
+| Low      | 3     | No      |
+| Verified | 5     | —       |
+
+---
+
+### Verdict: **CHANGES_REQUESTED**
+
+Two High-severity issues block this PR:
+
+1. **Tests are actively failing** due to env var pollution. The test suite must pass green.
+2. **Nightly fmt check fails** — per `gotchas.md`, this is a pre-merge requirement.
+
+The Medium findings (server error body leakage, silent unknown fields, missing binary, version mismatch, incomplete test coverage) should be addressed but are not individually blocking.
+
+*Chaos is a ladder, but a failing test suite is a pit. Fix it before it swallows you.*

@@ -1,0 +1,27 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the entire CLI framework — multiple modules, traits, and command structure requiring comprehensive coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure.rs` | 37 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive) |
+| `error_exit_codes.rs` | 16 | AC-3 (exit codes 0/1/2/3/4), security (CWE-209 error exposure) |
+| `output_format.rs` | 20 | AC-4 (table/json/csv formatting, escaping, metadata) |
+| `siem_client.rs` | 18 | AC-7 (HTTP headers, status code mapping, header injection prevention) |
+| `config_loading.rs` | 15 | AC-8 (TOML loading, env overrides, precedence, token exclusion) |
+| `shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell generation) |
+| `stub_handlers.rs` | 11 | AC-10 (stub messages, exit code 1, story references) |
+
+**Tests Written:** 123 tests covering all 10 ACs
+**Status:** RED (fails to compile — modules `cli`, `client`, `commands`, `config`, `error`, `output` do not exist)
+
+**Security tests included:**
+- CWE-209: Server error display must not leak internal IPs/ports
+- CWE-113: Header injection via newlines in tenant ID / token
+- Token exclusion from config files (credentials belong in keychain only)
+- Silent error swallowing detection
+- Auth error credential leakage prevention
+
+**Handoff:** To Dev for implementation (GREEN phase)

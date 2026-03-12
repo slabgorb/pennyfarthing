@@ -22,8 +22,16 @@ from pf.prime.models import CrewMember, Persona
 
 # Standard agent roles for crew manifest
 AGENT_ROLES = [
-    "sm", "tea", "dev", "reviewer", "architect",
-    "pm", "tech-writer", "ux-designer", "devops", "orchestrator",
+    "sm",
+    "tea",
+    "dev",
+    "reviewer",
+    "architect",
+    "pm",
+    "tech-writer",
+    "ux-designer",
+    "devops",
+    "orchestrator",
     "ba",
 ]
 
@@ -79,7 +87,9 @@ def load_theme(theme: str, project_root: Path | None = None) -> dict[str, Any] |
         return None
 
 
-def load_persona(agent_name: str, project_root: Path | None = None) -> tuple[Persona | None, str | None]:
+def load_persona(
+    agent_name: str, project_root: Path | None = None
+) -> tuple[Persona | None, str | None]:
     """Load persona for an agent from the current theme.
 
     Args:

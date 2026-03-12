@@ -38,7 +38,8 @@ def scan(args: list[str]) -> int:
         help="Scan depth level",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         help="Output directory for generated docs",
     )
 

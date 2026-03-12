@@ -1,0 +1,34 @@
+## Summary
+
+**Files changed:**
+- `crates/axiathon-server/Cargo.toml` — added `chrono`, `uuid`, `tower` dependencies
+- `crates/axiathon-server/src/lib.rs` — full implementation of REST API foundation
+
+**Implementation includes:**
+- `AppState` with `FromRef` substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`)
+- `ApiResponseEnvelope<T>` with `data`, `errors[]`, `meta{request_id, timestamp, trace_id}` matching AC requirements
+- Auth middleware: Bearer token + ApiKey validation, scope checking (read/write), 401/403 responses
+- Rate limiting: per-tenant token bucket, global shared state, 429 with `Retry-After` header
+- Route handlers: `/api/v1/health`, `/events`, `/alerts`, `/rules`, `/queries`
+- JWKS endpoint at `/.well-known/jwks.json`
+- Body size limiting, content-type validation, JSON parsing validation
+- Envelope-wrapping middleware for Axum's default error responses (405, etc.)
+- `ServerConfig` with `rate_limit_per_second`
+- `#![forbid(unsafe_code)]`
+
+**Test results: 79/81 passing**
+
+| Suite | Result |
+|-------|--------|
+| api_endpoints | 15/15 |
+| api_response_envelope | 13/13 |
+| api_versioning | 12/12 |
+| rate_limiting | 7/7 |
+| auth_middleware | 18/19 |
+| security | 14/15 |
+
+**2 unfixable test failures** — both panic in the test helper before reaching server code:
+- `null_bytes_in_auth_header_returns_401` — `\0` in header value is rejected by the `http` crate's `HeaderValue` validator, causing `Request::builder()` to fail at `.expect("request builder")`
+- `xss_in_query_params_is_not_reflected` — `<script>` chars in URI are rejected by the `http` crate's URI parser, same panic point
+
+These are test-level issues: the `http` crate correctly rejects invalid HTTP before our server code ever runs. The security properties these tests intend to verify are inherently enforced by the HTTP layer.

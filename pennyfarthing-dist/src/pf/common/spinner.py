@@ -67,9 +67,7 @@ def _parse_tips(path: Path) -> list[str]:
     return []
 
 
-def load_theme_spinner_verbs(
-    theme_name: str, project_root: Path | None = None
-) -> list[str]:
+def load_theme_spinner_verbs(theme_name: str, project_root: Path | None = None) -> list[str]:
     """Load spinner_verbs from a theme YAML.
 
     Args:

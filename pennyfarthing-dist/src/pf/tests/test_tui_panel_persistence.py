@@ -197,13 +197,9 @@ class TestSaveLastPanel:
 
         result = save_last_panel("nonexistent", project_dir=project_dir)
 
-        assert result["success"] is False, (
-            "Invalid panel name should be rejected"
-        )
+        assert result["success"] is False, "Invalid panel name should be rejected"
         config = _read_config(project_dir)
-        assert "last_panel" not in config, (
-            "Invalid panel should not be written to config"
-        )
+        assert "last_panel" not in config, "Invalid panel should not be written to config"
 
     def test_overwrites_existing_last_panel(self, tmp_path: Path) -> None:
         """Should overwrite existing last_panel value."""
@@ -239,11 +235,13 @@ class TestTuiRestore:
 
         loop = asyncio.new_event_loop()
         try:
-            with patch.object(BikeRackApp, "run_worker"), \
-                 patch(
-                     "pf.bikerack.tui.get_last_panel",
-                     return_value={"success": True, "last_panel": "git"},
-                 ):
+            with (
+                patch.object(BikeRackApp, "run_worker"),
+                patch(
+                    "pf.bikerack.tui.get_last_panel",
+                    return_value={"success": True, "last_panel": "git"},
+                ),
+            ):
                 loop.run_until_complete(app.on_mount())
         finally:
             loop.close()
@@ -268,11 +266,13 @@ class TestTuiRestore:
 
         loop = asyncio.new_event_loop()
         try:
-            with patch.object(BikeRackApp, "run_worker"), \
-                 patch(
-                     "pf.bikerack.tui.get_last_panel",
-                     return_value={"success": True, "last_panel": None},
-                 ):
+            with (
+                patch.object(BikeRackApp, "run_worker"),
+                patch(
+                    "pf.bikerack.tui.get_last_panel",
+                    return_value={"success": True, "last_panel": None},
+                ),
+            ):
                 loop.run_until_complete(app.on_mount())
         finally:
             loop.close()
@@ -291,11 +291,13 @@ class TestTuiRestore:
 
         loop = asyncio.new_event_loop()
         try:
-            with patch.object(BikeRackApp, "run_worker"), \
-                 patch(
-                     "pf.bikerack.tui.get_last_panel",
-                     return_value={"success": False, "error": "File not found"},
-                 ):
+            with (
+                patch.object(BikeRackApp, "run_worker"),
+                patch(
+                    "pf.bikerack.tui.get_last_panel",
+                    return_value={"success": False, "error": "File not found"},
+                ),
+            ):
                 loop.run_until_complete(app.on_mount())
         finally:
             loop.close()
@@ -323,9 +325,7 @@ class TestTuiPersist:
 
         app = make_app()
 
-        with patch(
-            "pf.bikerack.tui.save_last_panel"
-        ) as mock_save:
+        with patch("pf.bikerack.tui.save_last_panel") as mock_save:
             mock_save.return_value = {"success": True, "data": "git"}
             event = BikeRackApp.FocusUpdate("git")
             app.on_bike_rack_app_focus_update(event)
@@ -336,14 +336,13 @@ class TestTuiPersist:
         """Reset (null focus) should NOT overwrite saved last_panel."""
         app = make_app()
 
-        with patch(
-            "pf.bikerack.tui.save_last_panel"
-        ) as mock_save:
+        with patch("pf.bikerack.tui.save_last_panel") as mock_save:
             event = BikeRackApp.FocusUpdate(None)
             app.on_bike_rack_app_focus_update(event)
 
-        mock_save.assert_not_called(), (
-            "Null focus (reset) should not overwrite the saved last_panel"
+        (
+            mock_save.assert_not_called(),
+            ("Null focus (reset) should not overwrite the saved last_panel"),
         )
 
     def test_sequential_changes_update_last_panel(self) -> None:
@@ -354,9 +353,7 @@ class TestTuiPersist:
         """
         app = make_app()
 
-        with patch(
-            "pf.bikerack.tui.save_last_panel"
-        ) as mock_save:
+        with patch("pf.bikerack.tui.save_last_panel") as mock_save:
             mock_save.return_value = {"success": True}
             app.on_bike_rack_app_focus_update(BikeRackApp.FocusUpdate("sprint"))
             app.on_bike_rack_app_focus_update(BikeRackApp.FocusUpdate("git"))
@@ -378,14 +375,10 @@ class TestTuiPersist:
         app = make_app()
         app.post_message = MagicMock()
 
-        with patch(
-            "pf.bikerack.tui.save_last_panel"
-        ) as mock_save:
+        with patch("pf.bikerack.tui.save_last_panel") as mock_save:
             app._handle_focus_message(focus_msg("sprint", msg_type="init"))
 
-        mock_save.assert_not_called(), (
-            "Init messages should not trigger persistence"
-        )
+        mock_save.assert_not_called(), ("Init messages should not trigger persistence")
 
 
 # ---------------------------------------------------------------------------

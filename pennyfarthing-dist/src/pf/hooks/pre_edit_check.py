@@ -64,18 +64,29 @@ def main() -> None:
             print("BLOCKED: Cannot edit managed pennyfarthing files.", file=sys.stderr)
             print(f"File: {file_path}", file=sys.stderr)
             print("", file=sys.stderr)
-            print("These files are managed by pennyfarthing and will be overwritten on update.", file=sys.stderr)
+            print(
+                "These files are managed by pennyfarthing and will be overwritten on update.",
+                file=sys.stderr,
+            )
             print("Instead:", file=sys.stderr)
             print("  - Put project-specific customizations in .claude/project/", file=sys.stderr)
-            print("  - For framework changes, edit the pennyfarthing repo and run 'pennyfarthing update'", file=sys.stderr)
+            print(
+                "  - For framework changes, edit the pennyfarthing repo and run 'pennyfarthing update'",
+                file=sys.stderr,
+            )
             sys.exit(2)
 
         # Check protected patterns
         for pattern in PROTECTED_PATTERNS:
             if fnmatch.fnmatch(file_path, pattern):
-                print(f"BLOCKED: Cannot edit protected file matching pattern: {pattern}", file=sys.stderr)
+                print(
+                    f"BLOCKED: Cannot edit protected file matching pattern: {pattern}",
+                    file=sys.stderr,
+                )
                 print(f"File: {file_path}", file=sys.stderr)
-                fix = _PATTERN_FIX_HINTS.get(pattern, "To fix: Use an alternative file path outside the protected pattern.")
+                fix = _PATTERN_FIX_HINTS.get(
+                    pattern, "To fix: Use an alternative file path outside the protected pattern."
+                )
                 print(f"\n{fix}", file=sys.stderr)
                 sys.exit(2)
 

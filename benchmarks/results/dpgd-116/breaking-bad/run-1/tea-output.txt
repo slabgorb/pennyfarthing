@@ -1,0 +1,27 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a feature story with 10 acceptance criteria covering CLI framework structure, output formatting, HTTP client, config loading, and shell completions.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `cli_structure.rs` | 9 | AC-1, AC-2, AC-6 | Command groups, help rendering, clap derive, plural nouns |
+| `exit_codes.rs` | 14 | AC-3 | CliError exit codes (0-4), Display, CWE-209 checks |
+| `output_format.rs` | 12 | AC-4 | Table/JSON/CSV formatting, TTY detection, escaping |
+| `global_flags.rs` | 14 | AC-5 | -v repeatable, --quiet, --server env var, --no-color, flag injection |
+| `siem_client.rs` | 15 | AC-7 | Header injection, HTTP→CliError mapping (401-503), timeout, CRLF prevention |
+| `config_loading.rs` | 12 | AC-8 | TOML loading, env var overrides, precedence, no-token-in-config |
+| `shell_completion.rs` | 7 | AC-9 | bash/zsh/fish/powershell generation, all commands present |
+| `stub_handlers.rs` | 12 | AC-10 | Stub handlers return NotImplemented with story refs |
+
+**Tests Written:** 95 tests covering all 10 ACs
+**Status:** RED (failing — all 8 test files fail to compile because `axiathon_client` modules don't exist yet)
+
+**Security Tests Included:**
+- CWE-209: Error messages don't leak internal paths/stack traces
+- CRLF header injection prevention on tenant ID and token
+- Token/secret exclusion from config files and help text
+- Input validation on format flags
+
+**Handoff:** To Dev for implementation (GREEN phase)

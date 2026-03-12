@@ -1,0 +1,30 @@
+All **96 tests pass** (+ 0 failures) across 9 test files. Clippy is clean.
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `Cargo.toml` (workspace) — added `env` feature to `clap`
+- `crates/axiathon-client/Cargo.toml` — edition 2021 (tests use `set_var` without unsafe)
+- `crates/axiathon-client/src/lib.rs` — module re-exports
+- `crates/axiathon-client/src/main.rs` — binary entry point, clap dispatch, exit codes
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct (Parser), `Commands` enum (Subcommand), global flags
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with `exit_code()` mapping (1/3/4), safe Display
+- `crates/axiathon-client/src/output.rs` — `OutputFormat`, `OutputFormatter`, `ResponseMetadata`
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` TOML loading, env overrides, `token_from_env()`
+- `crates/axiathon-client/src/client.rs` — `SiemClient` with header injection, HTTP status mapping, validation
+- `crates/axiathon-client/src/commands/mod.rs` — module barrel
+- `crates/axiathon-client/src/commands/completion.rs` — functional shell completion generation
+- `crates/axiathon-client/src/commands/init.rs` — functional first-time setup
+- `crates/axiathon-client/src/commands/{query,rules,alerts,ingest,config,status,tenant,login}.rs` — stub handlers
+
+**Test fixes** (minimal changes to make tests compile):
+- `tests/cli_structure.rs` — type annotation for unused Vec, `mut` for cloned command
+
+**Tests:** 96/96 passing (GREEN)
+
+**Delivery Findings:**
+- **Gap** (non-blocking): Test file `cli_structure.rs` had compile issues — unused `help_buf` Vec without type annotation and missing `mut` on `cloned` for `render_help()`. Fixed with minimal annotations. *Found by Dev during implementation.*
+- **Gap** (non-blocking): Workspace edition is 2024 but tests use `std::env::set_var` without unsafe blocks (unsafe in edition 2024). Client crate edition set to 2021 to match test expectations. *Found by Dev during implementation.*
+- **Gap** (non-blocking): Config loading tests with env var mutations (`set_var`/`remove_var`) have race conditions when run in parallel. Pass reliably with `--test-threads=1`. *Found by Dev during implementation.*

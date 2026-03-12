@@ -1,0 +1,29 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI binary — every AC requires behavioral verification.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 10 | AC-1 (command groups), AC-2 (help rendering), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 13 | AC-3 (exit codes 0/1/2/3/4, CliError mapping) |
+| `tests/output_format.rs` | 14 | AC-4 (table/json/csv, escaping, metadata, empty data) |
+| `tests/global_flags.rs` | 17 | AC-5 (--format, -v repeatable, --quiet, --server, --tenant, --config, --no-color, env vars) |
+| `tests/siem_client.rs` | 16 | AC-7 (HTTP status mapping, header injection, connection errors, token/tenant headers) |
+| `tests/config_loading.rs` | 11 | AC-8 (TOML loading, env overrides, precedence, invalid config, empty file) |
+| `tests/shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell generation, determinism) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (story references, exit code 1 for all stubs) |
+| `tests/security.rs` | 11 | CWE-209 error exposure, header injection CRLF, token redaction, Send+Sync |
+
+**Tests Written:** 108 tests covering all 10 ACs
+**Status:** RED (66 compilation errors — all modules unresolved)
+
+**Handoff:** To Dev for implementation
+
+### Security Tests Included
+- **CWE-209:** Auth error messages don't leak stack traces, file paths, or internal details
+- **Header injection:** CRLF in tenant ID and token values rejected/sanitized
+- **Token redaction:** `Debug` output of `SiemClient` never exposes auth tokens
+- **Config validation:** Empty URLs, negative timeouts, extremely large timeouts rejected
+- **Thread safety:** `CliError`, `SiemClient`, `ClientConfig` all `Send + Sync`

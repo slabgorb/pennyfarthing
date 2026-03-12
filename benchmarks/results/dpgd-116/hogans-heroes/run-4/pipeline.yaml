@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: hogans-heroes
+run_id: 4
+timestamp: '2026-03-08T16:49:45.973363+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-hogans-heroes-run-4
+phases:
+  tea:
+    token_usage:
+      input: 32
+      output: 19803
+    duration_s: 445.39
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 63
+      output: 21096
+    duration_s: 546.21
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 14
+      output: 6306
+    duration_s: 119.83
+    exit_code: 0

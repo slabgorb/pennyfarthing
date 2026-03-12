@@ -1,0 +1,19 @@
+All 135 tests GREEN. Clippy clean. My name is Inigo Montoya. I have implemented your CLI framework. Prepare to ship.
+
+## Summary
+
+**Tests:** 135/135 passing (GREEN)
+**Clippy:** Clean (0 warnings)
+
+### Files Changed
+
+| File | Description |
+|------|-------------|
+| `Cargo.toml` | Added `env` feature to clap workspace dependency |
+| `crates/axiathon-client/src/error.rs` | Implemented `exit_code()` mapping: 1=general, 2=usage, 3=auth, 4=authz |
+| `crates/axiathon-client/src/cli.rs` | Full clap 4.x derive structure: `Commands` enum with all 11 subcommands, global flags (`--format`, `-v`, `--quiet`, `--server`, `--tenant`, `--config`, `--no-color`), sub-subcommands for query/rules/alerts/ingest/config/tenant |
+| `crates/axiathon-client/src/output.rs` | Added `clap::ValueEnum` derive to `OutputFormat` for `--format` flag validation |
+| `crates/axiathon-client/src/config.rs` | TOML loading via serde, `default_path()` using `dirs::config_dir()`, env var overrides (`AXIATHON_API_URL`, `AXIATHON_TIMEOUT`) |
+| `crates/axiathon-client/src/client.rs` | `SiemClient` with `reqwest::Client`, header injection (Authorization/X-Tenant-ID), HTTP status code mapping (401→AuthExpired, 403→Unauthorized, 404→NotFound, 429→RateLimited, 5xx→ServerError, connect fail→ServerUnavailable), input sanitization (newline stripping), empty URL defaulting |
+| `crates/axiathon-client/src/commands/mod.rs` | Minimal module declaration |
+| `crates/axiathon-client/src/main.rs` | Command dispatch, stub handlers printing "not yet implemented (Story X.Y)" to stderr with exit code 1, shell completion generation via `clap_complete`, init handler |

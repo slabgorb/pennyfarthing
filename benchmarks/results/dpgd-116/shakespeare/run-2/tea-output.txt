@@ -1,0 +1,24 @@
+*"The rest is silence"* — until the Dev gives these ghosts their flesh.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — foundational code requiring thorough coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 11 | AC-1, AC-2, AC-6: command groups, help rendering, derive macros |
+| `tests/exit_codes.rs` | 9 | AC-3: exit code mapping (0/1/2/3/4) |
+| `tests/output_format.rs` | 13 | AC-4: table/json/csv formatting, escaping, metadata |
+| `tests/global_flags.rs` | 17 | AC-5: all 7 global flags, parsing, env var annotation |
+| `tests/siem_client.rs` | 14 | AC-7: HTTP status mapping, header injection, auth/tenant headers |
+| `tests/config_loading.rs` | 9 | AC-8: TOML loading, env overrides, validation, no-token-in-file |
+| `tests/shell_completion.rs` | 5 | AC-9: bash/zsh/fish/powershell generation |
+| `tests/stub_handlers.rs` | 10 | AC-10: "not yet implemented" messages with story references |
+| `tests/security.rs` | 7 | CWE-209 error exposure, header injection, config security |
+
+**Tests Written:** 95 tests covering all 10 ACs
+**Status:** RED (failing — all 8 test files fail to compile, modules don't exist yet)
+
+**Handoff:** To Dev for implementation (GREEN phase)

@@ -68,19 +68,11 @@ def mock_dist(tmp_path: Path) -> Path:
     # Commands
     commands_dir = dist / "commands"
     commands_dir.mkdir()
-    (commands_dir / "pf-sprint.md").write_text(
-        "---\nname: pf-sprint\n---\n# Sprint command\n"
-    )
-    (commands_dir / "pf-dev.md").write_text(
-        "---\nname: pf-dev\n---\n# Dev command\n"
-    )
-    (commands_dir / "pf-tea.md").write_text(
-        "---\nname: pf-tea\n---\n# Tea command\n"
-    )
+    (commands_dir / "pf-sprint.md").write_text("---\nname: pf-sprint\n---\n# Sprint command\n")
+    (commands_dir / "pf-dev.md").write_text("---\nname: pf-dev\n---\n# Dev command\n")
+    (commands_dir / "pf-tea.md").write_text("---\nname: pf-tea\n---\n# Tea command\n")
     # Non-pf command — must NOT be copied
-    (commands_dir / "internal-only.md").write_text(
-        "---\nname: internal\n---\n# Internal\n"
-    )
+    (commands_dir / "internal-only.md").write_text("---\nname: internal\n---\n# Internal\n")
 
     # Skills
     skills_dir = dist / "skills"
@@ -532,14 +524,10 @@ class TestIdempotency:
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist)
-        first_settings = json.loads(
-            (target_dir / ".claude" / "settings.local.json").read_text()
-        )
+        first_settings = json.loads((target_dir / ".claude" / "settings.local.json").read_text())
 
         init_project(target_dir=target_dir, dist_root=mock_dist)
-        second_settings = json.loads(
-            (target_dir / ".claude" / "settings.local.json").read_text()
-        )
+        second_settings = json.loads((target_dir / ".claude" / "settings.local.json").read_text())
 
         assert first_settings == second_settings
 
@@ -716,9 +704,7 @@ class TestInitManifest:
 
         init_project(target_dir=target_dir, dist_root=mock_dist)
 
-        manifest = json.loads(
-            (target_dir / ".pennyfarthing" / "init-manifest.json").read_text()
-        )
+        manifest = json.loads((target_dir / ".pennyfarthing" / "init-manifest.json").read_text())
         assert manifest["pf_version"] == __version__
 
     def test_manifest_has_timestamp(self, target_dir: Path, mock_dist: Path) -> None:
@@ -727,9 +713,7 @@ class TestInitManifest:
 
         init_project(target_dir=target_dir, dist_root=mock_dist)
 
-        manifest = json.loads(
-            (target_dir / ".pennyfarthing" / "init-manifest.json").read_text()
-        )
+        manifest = json.loads((target_dir / ".pennyfarthing" / "init-manifest.json").read_text())
         assert "initialized_at" in manifest
         # Should be a valid ISO timestamp
         assert "T" in manifest["initialized_at"]
@@ -740,9 +724,7 @@ class TestInitManifest:
 
         init_project(target_dir=target_dir, dist_root=mock_dist)
 
-        manifest = json.loads(
-            (target_dir / ".pennyfarthing" / "init-manifest.json").read_text()
-        )
+        manifest = json.loads((target_dir / ".pennyfarthing" / "init-manifest.json").read_text())
         assert manifest["commands_copied"] == 3
         assert manifest["skills_copied"] == 2
 

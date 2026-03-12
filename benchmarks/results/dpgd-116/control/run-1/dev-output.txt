@@ -1,0 +1,27 @@
+All **85 tests pass** (0 failures), clippy is clean.
+
+## Summary
+
+### Production files created (`crates/axiathon-client/src/`):
+
+| File | Description |
+|------|-------------|
+| `lib.rs` | Module declarations (updated) |
+| `error.rs` | `CliError` enum with 9 variants and `exit_code()` mapping (0→n/a, 1→general/not-found/connection/timeout/rate-limit/server/config, 3→auth, 4→authz) |
+| `output.rs` | `OutputFormat` enum with `FromStr`, `OutputFormatter` trait, `TableFormatter` (comfy-table), `JsonFormatter` (with metadata), `CsvFormatter` (csv crate) |
+| `config.rs` | `ClientConfig` with TOML loading, env var overrides (`AXIATHON_API_URL`, `AXIATHON_TIMEOUT`), XDG default path, validation |
+| `client.rs` | `SiemClient` wrapping `reqwest::Client` with `Authorization`/`X-Tenant-ID` header injection and HTTP status→`CliError` mapping |
+| `cli.rs` | `Cli` (derive `Parser`) with all global flags (`--format`, `-v`, `--quiet`, `--server`, `--tenant`, `--config`, `--no-color`) and `Commands` enum with 12 subcommands |
+| `commands/mod.rs` | Re-exports all command modules |
+| `commands/{query,rules,alerts,ingest,config,status,tenant,login,init}.rs` | Stub handlers returning `CliError::General("not yet implemented (Story X.Y)")` |
+| `commands/completion.rs` | `generate_completion(Shell)` using `clap_complete::generate()` |
+
+### Config changes:
+- `Cargo.toml` (workspace): Added `env` feature to `clap`
+- `crates/axiathon-client/Cargo.toml`: Added `uuid` dep, overrode `unsafe_code` lint to `deny` (lib.rs keeps `#![forbid(unsafe_code)]`) to allow `unsafe` blocks in test code for edition 2024's `set_var`
+
+### Test file fixes (edition 2024 compatibility):
+- `config_loading.rs`: Wrapped `set_var`/`remove_var` in `unsafe` blocks, added `Mutex` for env var test serialization
+- `stub_handlers.rs`: Added explicit type annotation for array
+
+### Test results: 85/85 passing (GREEN)
