@@ -12,6 +12,7 @@ from pathlib import Path
 
 try:
     import yaml
+
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
@@ -20,6 +21,7 @@ except ImportError:
 @dataclass
 class ContextConfig:
     """Configuration for context thresholds."""
+
     imminent_threshold: int = 65
     warning_threshold: int = 60
     critical_threshold: int = 85
@@ -32,6 +34,7 @@ class ContextConfig:
 @dataclass
 class ContextResult:
     """Result of context check."""
+
     # Token counts
     tokens: int = 0
     baseline: int = 0
@@ -103,7 +106,9 @@ class ContextResult:
         ]
 
         if self.warning == "Critical":
-            lines.append(f"CONTEXT_WARNING: Critical ({self.usable_percent}%) - checkpoint and handoff recommended")
+            lines.append(
+                f"CONTEXT_WARNING: Critical ({self.usable_percent}%) - checkpoint and handoff recommended"
+            )
         elif self.warning == "High":
             lines.append(f"CONTEXT_WARNING: High ({self.usable_percent}%) - consider handoff soon")
 
@@ -118,10 +123,10 @@ def load_config(project_dir: str | None = None) -> ContextConfig:
     """
     config = ContextConfig()
     project_dir = (
-        project_dir or
-        os.environ.get("CLAUDE_PROJECT_DIR") or
-        os.environ.get("PROJECT_ROOT") or
-        os.getcwd()
+        project_dir
+        or os.environ.get("CLAUDE_PROJECT_DIR")
+        or os.environ.get("PROJECT_ROOT")
+        or os.getcwd()
     )
 
     # Try .pennyfarthing/config.local.yaml first
@@ -172,10 +177,10 @@ def get_claude_project_path(project_dir: str | None = None) -> Path:
     The path format is: -Users-name-Projects-project (leading dash, slashes become dashes)
     """
     project_dir = (
-        project_dir or
-        os.environ.get("CLAUDE_PROJECT_DIR") or
-        os.environ.get("PROJECT_ROOT") or
-        os.getcwd()
+        project_dir
+        or os.environ.get("CLAUDE_PROJECT_DIR")
+        or os.environ.get("PROJECT_ROOT")
+        or os.getcwd()
     )
     path_with_dashes = project_dir.replace("/", "-").replace(".", "-")
     return Path.home() / ".claude" / "projects" / path_with_dashes
@@ -251,9 +256,9 @@ def parse_transcript(transcript_path: Path) -> tuple[int | None, int | None]:
                 if "message" in data and "usage" in data["message"]:
                     usage = data["message"]["usage"]
                     total = (
-                        usage.get("input_tokens", 0) +
-                        usage.get("cache_read_input_tokens", 0) +
-                        usage.get("cache_creation_input_tokens", 0)
+                        usage.get("input_tokens", 0)
+                        + usage.get("cache_read_input_tokens", 0)
+                        + usage.get("cache_creation_input_tokens", 0)
                     )
                     if first_total is None:
                         first_total = total
@@ -277,10 +282,10 @@ def detect_gui(project_dir: str | None = None) -> bool:
 
     # Port file check - verify BikeRack is actually running
     project_dir = (
-        project_dir or
-        os.environ.get("WHEELHUB_PROJECT_DIR") or
-        os.environ.get("PROJECT_ROOT") or
-        os.getcwd()
+        project_dir
+        or os.environ.get("WHEELHUB_PROJECT_DIR")
+        or os.environ.get("PROJECT_ROOT")
+        or os.getcwd()
     )
 
     port_file = Path(project_dir) / ".bikerack-port"
@@ -288,6 +293,7 @@ def detect_gui(project_dir: str | None = None) -> bool:
         try:
             port = int(port_file.read_text().strip())
             import socket
+
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(0.5)
                 result = s.connect_ex(("127.0.0.1", port))
@@ -363,9 +369,8 @@ def check_context(
 
     # TirePump
     result.use_tirepump = (
-        (config.relay_mode or config.permission_mode == "turbo") and
-        usable_pct > config.tirepump_threshold
-    )
+        config.relay_mode or config.permission_mode == "turbo"
+    ) and usable_pct > config.tirepump_threshold
 
     # GUI detection
     result.is_gui = detect_gui(project_dir)

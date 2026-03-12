@@ -1,0 +1,87 @@
+Now I have everything I need. Here is my review.
+
+---
+
+# Story 6.1 Code Review — Petyr Baelish's Assessment
+
+*"Chaos isn't a pit. Chaos is a ladder."* And this code has several rungs missing. Let me show you where the fall happens.
+
+## Findings
+
+### **[HIGH] Missing `main.rs` binary — the entire CLI cannot run** at `crates/axiathon-client/src/main.rs` (absent)
+
+There is no `main.rs` and no `[[bin]]` section in `Cargo.toml`. The story requires producing an `axiathon` binary. Without `main.rs`, there is no entry point — no command dispatch, no `std::process::exit()` with exit codes, no tracing initialization. The `lib.rs` exposes modules but nothing wires them together. This is the most critical gap: **the binary literally does not exist**.
+
+### **[HIGH] Nightly `rustfmt` check fails** at `crates/axiathon-client/src/cli.rs`
+
+`cargo +nightly fmt --all --check` reports import ordering diffs in `cli.rs`. Per the gotchas sidecar, this must pass before approval. The nightly fmt enforces import ordering that stable does not.
+
+### **[HIGH] Edition mismatch: `2021` instead of `2024`** at `crates/axiathon-client/Cargo.toml:2`
+
+The workspace declares `edition = "2024"` in `[workspace.package]`, but `axiathon-client` hard-codes `edition = "2021"`. The crate should use `edition.workspace = true` to inherit the workspace edition. This breaks the MSRV/edition consistency requirement.
+
+### **[HIGH] Missing `logout` and `tui` command groups** at `crates/axiathon-client/src/cli.rs`
+
+AC-1 explicitly requires: *"`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init."* Neither `Logout` nor `Tui` variants exist in the `Commands` enum. These should be present as stubs.
+
+### **[MEDIUM] `init` and `completion` are stubs, but AC says they should be functional** at `crates/axiathon-client/src/commands/init.rs`
+
+AC-9 says shell completion generation should be *functional, not stub*. AC scope says *"`axiathon init` first-time setup (functional, not stub)"*. The `completion.rs` does have a functional `generate_completion()` function, but `init.rs` returns `NotImplemented`. The `init` command should be functional per the story scope.
+
+### **[MEDIUM] Config `ConfigFile` silently accepts unknown fields** at `crates/axiathon-client/src/config.rs:8-11`
+
+The `ConfigFile` and `ServerSection` structs lack `#[serde(deny_unknown_fields)]`. If a user puts `token = "secret"` in the config file, it's silently ignored without warning. The test `config_file_does_not_store_tokens` verifies `token()` returns `None`, but the user gets **no warning** that their `token` field was ignored — a silent misconfiguration. Combined with the fact that serde will happily accept any unknown key, this is a usability and security concern.
+
+### **[MEDIUM] Workspace dependencies not used for several crates** at `crates/axiathon-client/Cargo.toml:12-21`
+
+The story spec says to add `clap_complete`, `comfy-table`, `keyring`, `dirs`, `csv`, `toml` to `[workspace.dependencies]`. Instead, these are declared directly in the crate's `Cargo.toml` with pinned versions (e.g., `clap_complete = "4"`, `toml = "0.8"` instead of the spec's `"0.9"`). This deviates from workspace dependency management rules and the `toml` version `0.8` differs from the spec's `0.9`.
+
+### **[MEDIUM] `expect()` calls in production code** at `crates/axiathon-client/src/output.rs:39,45-50`
+
+The Rust coding rules say: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message."* The `expect()` calls in `format_csv` and `format_json` have messages but are writing to in-memory buffers, so they're unlikely to fail. However, `format_json` and `format_csv` return `String` instead of `Result<String, _>`, which means callers can't handle formatting errors gracefully. This is borderline acceptable for in-memory operations but worth noting.
+
+### **[MEDIUM] `tenant` field uses raw `String` instead of `TenantId` newtype** at `crates/axiathon-client/src/cli.rs:30`
+
+The Rust coding rules emphasize newtypes for IDs: `TenantId(String)`. The `--tenant` flag accepts a raw `Option<String>`. While `axiathon-core` exports `TenantId`, the CLI should parse/validate it into the newtype at the boundary.
+
+### **[LOW] `SiemClient` stores token as plain `Option<String>`** at `crates/axiathon-client/src/client.rs:9`
+
+The token is stored in-memory as a plain `String`. While this is standard for runtime use, `Debug` is derived on `SiemClient`, meaning `{:?}` output will print the token in logs/debug output. The `Debug` impl should redact the token field.
+
+### **[LOW] Config env var override silently ignores parse failures** at `crates/axiathon-client/src/config.rs:77-79`
+
+If `AXIATHON_TIMEOUT` is set to a non-numeric value (e.g., `"abc"`), the `parse::<u64>()` failure is silently ignored and the file value is kept. This should at minimum log a warning or return an error, per the "no silent error swallowing" principle.
+
+### **[VERIFIED] Header injection prevention (CWE-113)** — `sanitize_header_value` strips CR/LF from base_url, token, and tenant_id. Tests verify this.
+
+### **[VERIFIED] CWE-209 error exposure** — `Display` impl on `CliError` sanitizes all output. Server error reasons, config details, and paths are not leaked. Tests verify this.
+
+### **[VERIFIED] `#![forbid(unsafe_code)]`** in `lib.rs`.
+
+### **[VERIFIED] `#[non_exhaustive]`** on `CliError` enum for future-proofing.
+
+### **[VERIFIED] Exit code mapping** — 0/1/3/4 correctly implemented and tested. Clap handles exit code 2 for usage errors.
+
+### **[VERIFIED] Shell completion** — `generate_completion()` is functional and tested for all 4 shells.
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| High     | 4     | YES     |
+| Medium   | 4     | No      |
+| Low      | 2     | No      |
+| Verified | 5     | —       |
+
+## Verdict: **CHANGES_REQUESTED**
+
+The four High findings block approval:
+
+1. **No `main.rs`** — the binary cannot be built or run. This is the fundamental deliverable of Story 6.1.
+2. **Nightly fmt fails** — per gotchas, this must pass before approval.
+3. **Edition `2021` instead of workspace `2024`** — breaks workspace consistency.
+4. **Missing `logout` and `tui` command stubs** — AC-1 explicitly requires them.
+
+*"I did warn you not to trust me."* Fix these, and we'll talk again.

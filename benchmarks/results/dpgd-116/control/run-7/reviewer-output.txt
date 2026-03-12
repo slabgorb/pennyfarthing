@@ -1,0 +1,116 @@
+Now I have a complete picture. Here is my review.
+
+---
+
+# Story 6.1 Code Review — CLI Framework & Structure
+
+## Findings
+
+### `[HIGH]` 1. Test failure: false-positive assertion in `siem_client_url_no_double_slash` — `siem_client.rs:150`
+
+The test asserts `!url.contains("//api")`, but the URL `https://api.example.com/api/v1/status` contains `://api` in the scheme, matching `//api`. The test FAILS on every run. This is a shipped broken test.
+
+```
+assert!(!url.contains("//api"), ...)  // matches "https://api..."
+```
+
+---
+
+### `[HIGH]` 2. Missing `main.rs` — no binary entry point exists
+
+Story 6.1 AC explicitly requires the `axiathon` binary. There is no `main.rs` and no `[[bin]]` target in `crates/axiathon-client/Cargo.toml`. The crate is library-only. Without `main.rs`, there is no:
+- Binary dispatch to command handlers
+- Exit code propagation via `std::process::exit()`
+- Tracing initialization
+- Config loading + SiemClient construction at startup
+
+This is the central deliverable of the story and it's absent.
+
+---
+
+### `[HIGH]` 3. SiemClient uses `assert!` (panic) for input validation — `client.rs:19,31,42`
+
+`SiemClient::new()`, `with_token()`, and `with_tenant()` use `assert!()` which panics on invalid input. The Rust coding rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." Panicking on user-supplied data (e.g., a token from env var containing `\r\n`) is unacceptable in production. These should return `Result<Self, CliError>`.
+
+---
+
+### `[MEDIUM]` 4. `RawConfig` silently accepts unknown fields — `config.rs:18-23`
+
+`RawConfig` uses default serde behavior (ignore unknown fields). A typo like `servr_url` will be silently ignored and the default URL used instead. The `token` field is intentionally ignored, but there's no `#[serde(deny_unknown_fields)]` to catch typos in other fields. This is a usability trap for operators.
+
+---
+
+### `[MEDIUM]` 5. `generate_completion` returns error message as a normal `String` — `completion.rs:22-24`
+
+When an unsupported shell is provided, the function returns `format!("unsupported shell: {other}")` as a regular `String` — not an error type. The caller has no way to distinguish success from failure without string-matching. Should return `Result<String, CliError>`.
+
+---
+
+### `[MEDIUM]` 6. `OutputFormatter` uses `expect()` / `panic!` in CSV/JSON paths — `output.rs:80,85-90`
+
+Multiple `.expect()` calls in `format_as_csv` and `format_as_json`. If CSV serialization fails (e.g., a row has a different column count than headers), this panics rather than returning an error. Per Rust rules: no `unwrap()` in production code.
+
+---
+
+### `[MEDIUM]` 7. No `main.rs` means no `after_help` examples — violates AC-2
+
+AC-2 requires every subcommand to include `after_help` usage examples. None of the command structs have `#[command(after_help = "...")]` attributes. The `--help` tests only verify no panic, not that examples are present.
+
+---
+
+### `[LOW]` 8. `siem_client.rs` tests use `#[tokio::test]` unnecessarily — `siem_client.rs:42-104`
+
+The HTTP status mapping tests (`siem_client_maps_401_to_authentication_expired`, etc.) call `SiemClient::map_status_code()` which is a synchronous function. Marking them `#[tokio::test]` is misleading — they don't use async at all.
+
+---
+
+### `[LOW]` 9. `init.rs` has no stub handler or implementation — `commands/init.rs`
+
+The `init` command has only a struct definition — no `execute_stub()` function and no functional implementation. AC-9 says init should be "functional, not stub," but there is nothing here. AC-10 says unimplemented commands should print "not yet implemented" — init doesn't even have that.
+
+---
+
+### `[LOW]` 10. `tui.rs` has no stub handler — `commands/tui.rs`
+
+Same as init — no `execute_stub()` function. No "not yet implemented" message for the `tui` command.
+
+---
+
+### `[VERIFIED]` Config does not store tokens — `config.rs:88-89`, `config_loading.rs:141-153`
+
+`token()` always returns `None`. The `token` field in TOML is silently ignored via serde. Test confirms this. Good.
+
+### `[VERIFIED]` CWE-209 error sanitization — `error.rs:13`
+
+`ServerError` Display shows "server error: please try again later" regardless of the internal string. The internal detail is preserved only in `Debug`. Security test at `security.rs:9-16` confirms this.
+
+### `[VERIFIED]` Header injection defense — `client.rs:30-33,40-43`
+
+Newline characters in tokens and tenant IDs are rejected (though via panic, see finding #3). Tests verify this at `siem_client.rs:108-135`.
+
+### `[VERIFIED]` Exit code mapping is correct — `error.rs:54-60`
+
+Auth=3, Authz=4, everything else=1. All tests pass.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present — `lib.rs:2`
+
+### `[VERIFIED]` No server-side crate imports — dependency rule respected
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 0 | — |
+| High | 3 | YES |
+| Medium | 4 | NO |
+| Low | 3 | NO |
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three High-severity issues block approval:
+
+1. **Failing test** (`siem_client_url_no_double_slash`) — ships broken, must fix the assertion pattern.
+2. **Missing `main.rs`** — the binary entry point, command dispatch, exit code propagation, and tracing init are all absent. This is the core deliverable.
+3. **Panics on user input** in `SiemClient` — `assert!` on token/tenant/URL is a production crash risk; must use `Result`.

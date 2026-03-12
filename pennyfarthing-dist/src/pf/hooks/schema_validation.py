@@ -37,6 +37,7 @@ def _is_skill_file(file_path: str) -> bool:
 
 def _is_step_file(file_path: str) -> bool:
     from pathlib import Path
+
     path = Path(file_path)
     return (
         path.name.startswith("step-")
@@ -66,12 +67,12 @@ def _validate_session(content: str) -> list[str]:
         return []  # Old markdown format — warn but don't block
     if not re.search(r'<session\s+story="[^"]+"', content):
         errors.append(
-            'Missing story attribute on <session>. '
+            "Missing story attribute on <session>. "
             'To fix: Use `<session story="X-Y" workflow="...">`'
         )
     if not re.search(r'<session[^>]+workflow="[^"]+"', content):
         errors.append(
-            'Missing workflow attribute on <session>. '
+            "Missing workflow attribute on <session>. "
             'To fix: Use `<session story="X-Y" workflow="tdd">`'
         )
     if not _has_tag(content, "meta"):
@@ -82,8 +83,7 @@ def _validate_session(content: str) -> list[str]:
     else:
         if "<jira>" not in content:
             errors.append(
-                "Missing <jira> in <meta>. "
-                "To fix: Add `<jira>PROJ-123</jira>` inside <meta>"
+                "Missing <jira> in <meta>. To fix: Add `<jira>PROJ-123</jira>` inside <meta>"
             )
         if "<started>" not in content:
             errors.append(
@@ -92,8 +92,7 @@ def _validate_session(content: str) -> list[str]:
             )
     if not _has_tag(content, "status"):
         errors.append(
-            "Missing <status> element. "
-            'To fix: Add `<status phase="setup">in_progress</status>`'
+            'Missing <status> element. To fix: Add `<status phase="setup">in_progress</status>`'
         )
     elif 'phase="' not in content:
         errors.append(
@@ -138,8 +137,7 @@ def _validate_step(content: str) -> list[str]:
     for tag in STEP_REQUIRED_TAGS:
         if not _has_tag(content, tag):
             errors.append(
-                f"Missing <{tag}> tag. "
-                f"To fix: Add `<{tag}>content here</{tag}>` to the step file"
+                f"Missing <{tag}> tag. To fix: Add `<{tag}>content here</{tag}>` to the step file"
             )
     if _has_tag(content, "step-meta"):
         meta_match = re.search(r"<step-meta>(.+?)</step-meta>", content, re.DOTALL)
@@ -178,39 +176,47 @@ def main() -> None:
         tool_input = tool_data.get("tool_input", {})
 
         if tool_name not in ("Write", "Edit"):
-            output_hook_response(HookResponse(
-                event_name="PreToolUse",
-                decision="allow",
-                reason="Not a Write/Edit operation",
-            ))
+            output_hook_response(
+                HookResponse(
+                    event_name="PreToolUse",
+                    decision="allow",
+                    reason="Not a Write/Edit operation",
+                )
+            )
             sys.exit(0)
 
         file_path = tool_input.get("file_path", "")
         if not file_path:
-            output_hook_response(HookResponse(
-                event_name="PreToolUse",
-                decision="allow",
-                reason="No file path",
-            ))
+            output_hook_response(
+                HookResponse(
+                    event_name="PreToolUse",
+                    decision="allow",
+                    reason="No file path",
+                )
+            )
             sys.exit(0)
 
         file_type = _get_file_type(file_path)
         if not file_type:
-            output_hook_response(HookResponse(
-                event_name="PreToolUse",
-                decision="allow",
-                reason="Not a session/skill/step file",
-            ))
+            output_hook_response(
+                HookResponse(
+                    event_name="PreToolUse",
+                    decision="allow",
+                    reason="Not a session/skill/step file",
+                )
+            )
             sys.exit(0)
 
         if tool_name == "Write":
             content = tool_input.get("content", "")
         else:
-            output_hook_response(HookResponse(
-                event_name="PreToolUse",
-                decision="allow",
-                reason="Edit operations validated post-hoc",
-            ))
+            output_hook_response(
+                HookResponse(
+                    event_name="PreToolUse",
+                    decision="allow",
+                    reason="Edit operations validated post-hoc",
+                )
+            )
             sys.exit(0)
 
         errors = _validate_content(file_path, content)
@@ -218,18 +224,22 @@ def main() -> None:
             error_msg = f"Schema validation failed for {file_type} file:\n"
             error_msg += "\n".join(f"  - {e}" for e in errors)
             error_msg += f"\n\nFile: {file_path}"
-            output_hook_response(HookResponse(
-                event_name="PreToolUse",
-                decision="deny",
-                reason=error_msg,
-            ))
+            output_hook_response(
+                HookResponse(
+                    event_name="PreToolUse",
+                    decision="deny",
+                    reason=error_msg,
+                )
+            )
             sys.exit(0)
 
-        output_hook_response(HookResponse(
-            event_name="PreToolUse",
-            decision="allow",
-            reason=f"Schema validation passed for {file_type} file",
-        ))
+        output_hook_response(
+            HookResponse(
+                event_name="PreToolUse",
+                decision="allow",
+                reason=f"Schema validation passed for {file_type} file",
+            )
+        )
         sys.exit(0)
 
     except Exception as e:

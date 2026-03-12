@@ -1,0 +1,27 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 introduces the entire CLI framework — foundational types, patterns, and contracts needed by all subsequent CLI stories.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 28 | AC-1 (command groups), AC-2 (help), AC-5 (global flags, env vars), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 13 | AC-3 (exit code mapping 0/1/2/3/4), security (error info leakage) |
+| `tests/output_format.rs` | 13 | AC-4 (table/json/csv formatting, TTY detection, CSV escaping, JSON metadata) |
+| `tests/siem_client.rs` | 16 | AC-7 (HTTP wrapper, header injection, status code mapping, CRLF prevention) |
+| `tests/config_loading.rs` | 12 | AC-8 (TOML loading, env overrides, precedence, token-in-config rejection, validation) |
+| `tests/shell_completion.rs` | 7 | AC-9 (bash/zsh/fish/powershell generation, command group coverage) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (stub handlers return NotImplemented, include story references) |
+
+**Tests Written:** 99 tests covering all 10 ACs
+**Status:** RED (compilation failure — modules `cli`, `error`, `output`, `client`, `config`, `commands` don't exist yet)
+
+**Security tests included:**
+- CWE-113: Header injection via CRLF in token/tenant values
+- CWE-209: Error messages leaking internal server details/file paths
+- Token-in-config-file rejection (credentials belong in keychain)
+- Null byte injection in config paths and tokens
+- Invalid URL validation
+
+**Handoff:** To Dev for implementation (GREEN phase)

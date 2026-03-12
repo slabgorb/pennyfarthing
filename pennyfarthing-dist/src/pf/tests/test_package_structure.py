@@ -60,7 +60,6 @@ class TestCommonPackage:
         assert hasattr(config, "load_pennyfarthing_config")
 
 
-
 class TestJiraPackage:
     """Tests for jira/ library package."""
 
@@ -310,5 +309,3 @@ class TestStoryCLI:
         result = _run_module("pf.story", "--help")
         assert result.returncode == 0
         assert "usage" in result.stdout.lower() or "Usage" in result.stdout
-
-

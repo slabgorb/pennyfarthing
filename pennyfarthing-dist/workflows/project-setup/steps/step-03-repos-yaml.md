@@ -29,7 +29,8 @@ repos:
     path: {relative_path}           # Path from project root
     type: {api|ui|cli|library|orchestrator|framework}
     description: {brief_description}
-    language: {typescript|python|rust|go|java}
+    language: {typescript|python|rust|go|java}  # Primary language
+    languages: [typescript, python]              # All languages (polyglot repos)
 
     # Commands (optional - omit if not applicable)
     test_command: {command}

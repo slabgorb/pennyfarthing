@@ -1,0 +1,168 @@
+I have all the data. Here's my review.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+*Nanny Ogg's had a look first, but Our Esme's got her Review Face on now.*
+
+*I don't do nice. I do RIGHT.*
+
+---
+
+## Observations
+
+### `[CRITICAL]` No `main.rs` binary entry point — crate cannot produce an executable
+
+**At:** `crates/axiathon-client/` (missing `src/main.rs`, no `[[bin]]` in `Cargo.toml`)
+
+The story's first sentence says this crate produces the `axiathon` binary. There is no `main.rs`. There is no `[[bin]]` section in `Cargo.toml`. This is a library, not a CLI tool. Operators cannot run `axiathon --help`. AC-1 through AC-3 are structurally untestable at the binary level.
+
+The tests only exercise library modules via `use axiathon_client::cli::Cli` — they never invoke a binary. They prove the structs compile, not that the tool works.
+
+### `[CRITICAL]` No command dispatch — framework is wired but never connected
+
+**At:** Missing `main.rs` / no dispatch anywhere in codebase
+
+There is zero code that:
+- Calls `Cli::parse()` 
+- Matches on `cli.command` to call handlers
+- Catches errors and calls `std::process::exit(err.exit_code())`
+- Loads config and constructs `SiemClient`
+
+The stub handlers exist. The error types exist. The config loader exists. Nothing calls any of them in an integrated flow. This isn't a CLI framework — it's a bag of parts.
+
+### `[HIGH]` `SiemClient` has no HTTP request methods — `_http` field is dead code
+
+**At:** `src/client.rs:10`
+
+The `_http: reqwest::Client` field is underscore-prefixed to silence the compiler warning. There are no `get()`, `post()`, or any request methods. The client can be *constructed* but cannot *do anything*. AC-7 says "SiemClient wraps reqwest::Client. Injects X-Tenant-ID and Authorization: Bearer headers." — there's no code that injects headers because there's no code that makes requests.
+
+### `[HIGH]` `output.rs` silently swallows serialization failures via `unwrap_or_default()`
+
+**At:** `src/output.rs:62`, `src/output.rs:108`, `src/output.rs:113`, `src/output.rs:116`, `src/output.rs:131`, `src/output.rs:135`
+
+Six instances of `unwrap_or_default()` that silently produce empty strings or `{}` on serialization failure. The Rust rules (`.claude/rules/rust.md`) explicitly state: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message."* `unwrap_or_default()` is worse than `unwrap()` — at least `unwrap()` panics loudly. These silently drop data, producing empty output with no error indication.
+
+Specific cases:
+- `serde_json::to_value(row).unwrap_or_default()` — row becomes `null`, silently skipped
+- `serde_json::to_string_pretty(&output).unwrap_or_else(|_| "{}".into())` — entire JSON output becomes `{}`
+- `wtr.write_record(&fields).unwrap_or_default()` — CSV write failure silently ignored
+- `wtr.into_inner().unwrap_or_default()` — buffer flush failure produces empty Vec
+
+### `[HIGH]` Clippy fails — `uninlined_format_args` violation in test
+
+**At:** `tests/exit_codes.rs:138`
+
+`cargo clippy -p axiathon-client --all-targets -- -D warnings` fails. The project rules state "warnings are errors." This code doesn't pass the project's own quality gate.
+
+### `[MEDIUM]` `keyring` dependency declared in workspace but never used in crate
+
+**At:** `Cargo.toml` workspace root line 47 declares `keyring = "3"`, but `crates/axiathon-client/Cargo.toml` never imports it. AC-8 specifies token loading from OS keychain. `ClientConfig::token()` returns `None` unconditionally with a comment "security: use keychain" — but the keychain is never integrated. The env var fallback (`AXIATHON_API_TOKEN`) is also missing.
+
+### `[MEDIUM]` `RawConfig` silently accepts unknown fields — no `#[serde(deny_unknown_fields)]`
+
+**At:** `src/config.rs:8-14`
+
+A TOML file with `api_url = "..."` and `sevrer_timeout = 30` (typo) silently ignores the mistyped key and uses the default timeout. Operators get no feedback that their config has a typo. Adding `#[serde(deny_unknown_fields)]` would catch this. The intentionally-ignored `token` field would need `#[serde(skip)]` or be handled differently if this attribute is added.
+
+### `[MEDIUM]` `--quiet` and `--verbose` are not mutually exclusive
+
+**At:** `src/cli.rs:15-20`
+
+`axiathon --quiet -vv status` parses successfully with `quiet: true` and `verbose: 2`. These are contradictory. clap supports `conflicts_with` to enforce mutual exclusion. Since there's no dispatch code, this contradiction is never resolved at runtime.
+
+### `[MEDIUM]` JSON metadata uses hardcoded dummy values
+
+**At:** `src/output.rs:102-104`
+
+```rust
+request_id: "00000000-0000-0000-0000-000000000000".into(),
+timestamp: "1970-01-01T00:00:00Z".into(),
+```
+
+AC-4 says JSON includes `ResponseMetadata (request_id, timestamp, api_version)`. These are all zeros/epoch. A UUID should be generated per-request and timestamp should be `now()`. This makes the metadata useless for debugging or scripting.
+
+### `[MEDIUM]` `cargo +nightly fmt --all --check` fails — import ordering violations
+
+**At:** `src/cli.rs`, `src/config.rs`, multiple test files
+
+Per project gotchas (`gotchas.md`): "Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval." It fails. Import ordering in `cli.rs` doesn't match nightly rustfmt expectations.
+
+### `[LOW]` `apply_cli_override` silently ignores invalid timeout values and unknown keys
+
+**At:** `src/config.rs:119-128`
+
+```rust
+"timeout" => {
+    if let Ok(t) = value.parse::<u64>() {
+        self.timeout = t;
+    }
+}
+_ => {}
+```
+
+Invalid timeout strings are silently ignored (no error). Unknown keys are silently ignored. A timeout of `0` bypasses the validation that `from_file_with_env` enforces. This creates an inconsistency: `timeout = 0` in TOML is rejected, but `apply_cli_override("timeout", "0")` succeeds.
+
+### `[LOW]` `SiemClient::with_token` silently drops CRLF tokens without error
+
+**At:** `src/client.rs:25-31`
+
+When a token contains CRLF, `self.token` is set to `None` with no error or warning. The caller has no way to know the token was rejected. A `Result` return type or logging would be better. The test asserts `!client.has_token()` but in production, the operator would proceed unauthenticated without knowing why.
+
+### `[VERIFIED]` CWE-209 error exposure — error Display impls are generic, don't leak internals
+
+**At:** `src/error.rs:6-34`
+
+`ServerError` Display says "server error: request failed" regardless of the inner string. The inner `String` is only accessible via `Debug`, not `Display`. Tests in `exit_codes.rs` verify this.
+
+### `[VERIFIED]` CRLF header injection prevention (CWE-113) implemented
+
+**At:** `src/client.rs:25-41`
+
+Both `with_token` and `with_tenant` check for `\r` and `\n`. Tests verify rejection.
+
+### `[VERIFIED]` Config file token field correctly ignored for security
+
+**At:** `src/config.rs:12-13`, `src/config.rs:114-116`
+
+`RawConfig.token` is deserialized but never used. `ClientConfig::token()` always returns `None`. Test `config_file_with_token_field_is_ignored` verifies this.
+
+### `[VERIFIED]` Exit code mapping is semantically correct
+
+**At:** `src/error.rs:36-46`
+
+Auth=3, Authz=4, all others=1. Comprehensive test coverage in `exit_codes.rs`.
+
+### `[VERIFIED]` CLI structure implements AC-1 — all command groups present with correct plural naming
+
+**At:** `src/cli.rs:44-90`
+
+`rules`, `alerts` (not `rule`, `alert`). All groups present: query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init.
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 2 | YES |
+| High | 3 | YES |
+| Medium | 5 | NO |
+| Low | 2 | NO |
+| Verified | 5 | — |
+
+The library components are structurally sound — the clap structs, error types, config loader, and output formatter are well-designed. But this is a CLI tool story that doesn't produce a CLI tool. The `main.rs` binary entry point, command dispatch, and SiemClient HTTP methods are all missing. The clippy failure also means the code doesn't pass the project's own quality gate.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+*"I can't be having with this. The parts are good. The whole don't exist."*
+
+Required before re-review:
+1. **Create `src/main.rs`** with `Cli::parse()`, command dispatch, error-to-exit-code mapping, and `std::process::exit()`
+2. **Add HTTP request methods to `SiemClient`** (at minimum `get`/`post` with header injection)
+3. **Fix clippy failure** in `exit_codes.rs:138`
+4. **Run `cargo +nightly fmt --all`** to fix import ordering
+5. **Replace `unwrap_or_default()` in `output.rs`** with proper error propagation

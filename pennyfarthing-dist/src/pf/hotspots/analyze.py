@@ -89,9 +89,7 @@ DEFAULT_EXCLUDES = [
 ]
 
 # Regex for identifying bug-fix commits
-BUG_FIX_PATTERN = re.compile(
-    r"\b(fix|bug|patch|hotfix|regression|resolve[ds]?)\b", re.IGNORECASE
-)
+BUG_FIX_PATTERN = re.compile(r"\b(fix|bug|patch|hotfix|regression|resolve[ds]?)\b", re.IGNORECASE)
 
 
 async def _run_git_command(args: list[str], cwd: Path) -> tuple[str, str, int]:
@@ -183,9 +181,7 @@ def _parse_git_log(output: str) -> list[dict]:
                 # Binary files show "-" for numstat
                 added = int(added_str) if added_str != "-" else 0
                 deleted = int(deleted_str) if deleted_str != "-" else 0
-                current_commit["files"].append(
-                    {"path": path, "added": added, "deleted": deleted}
-                )
+                current_commit["files"].append({"path": path, "added": added, "deleted": deleted})
 
     # Don't forget the last commit
     if current_commit is not None:
@@ -282,13 +278,9 @@ def _aggregate_by_directory(file_hotspots: list[FileHotspot]) -> list[DirectoryH
     result = []
     for path, data in dir_data.items():
         avg_authors = (
-            sum(data["author_counts"]) / len(data["author_counts"])
-            if data["author_counts"]
-            else 0
+            sum(data["author_counts"]) / len(data["author_counts"]) if data["author_counts"] else 0
         )
-        avg_score = (
-            sum(data["scores"]) / len(data["scores"]) if data["scores"] else 0
-        )
+        avg_score = sum(data["scores"]) / len(data["scores"]) if data["scores"] else 0
         result.append(
             DirectoryHotspot(
                 path=path,
@@ -395,8 +387,11 @@ async def _analyze_repo_pydriller(
 
     loop = asyncio.get_event_loop()
     commit_count = await loop.run_in_executor(None, _collect)
-    logger.info("[hotspots] PyDriller: %d commits, %d files after filtering",
-                commit_count, len(file_metrics))
+    logger.info(
+        "[hotspots] PyDriller: %d commits, %d files after filtering",
+        commit_count,
+        len(file_metrics),
+    )
 
     if not file_metrics:
         return HotspotResult(
@@ -494,9 +489,7 @@ def _build_hotspot_result(
     max_changes = max(m["change_count"] for m in file_metrics.values())
     max_bugs = max(m["bug_fix_count"] for m in file_metrics.values()) or 1
     max_authors = max(len(m["authors"]) for m in file_metrics.values())
-    max_churn = max(
-        m["lines_added"] + m["lines_deleted"] for m in file_metrics.values()
-    ) or 1
+    max_churn = max(m["lines_added"] + m["lines_deleted"] for m in file_metrics.values()) or 1
 
     file_hotspots = []
     for fpath, m in file_metrics.items():

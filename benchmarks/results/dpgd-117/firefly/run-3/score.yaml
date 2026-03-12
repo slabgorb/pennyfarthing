@@ -1,0 +1,99 @@
+scenario_id: dpgd-117
+theme: firefly
+run_id: 2
+judge_version: v2
+total_caught: 1
+total_findings: 10
+weighted_caught: 3
+total_weight: 52
+score_pct: 5.8
+findings:
+- finding_id: I1
+  title: Dependencies inline instead of workspace level
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged [MEDIUM] http-body-util, tower, and hyper dev-dependencies
+    not workspace-managed at Cargo.toml:25,26,29. Same category of inline dependencies
+    instead of workspace-level.
+- finding_id: I2
+  title: 'FieldErrorCode missing #[non_exhaustive]'
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer verified AxiathonError has #[non_exhaustive] but never examined
+    or flagged FieldErrorCode specifically.'
+- finding_id: I3
+  title: Hardcoded trace_id 'none'
+  weight: 5
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer flagged ApiMeta missing trace_id field entirely (CRITICAL) but
+    never identified the hardcoded 'none' string pattern in ResponseMeta. Dev output
+    was truncated.
+- finding_id: I4
+  title: Zero structured logging
+  weight: 5
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the absence of structured logging (tracing::error!/warn!
+    calls). No tests or review comments address logging.
+- finding_id: I5
+  title: Security comment claims tracing that doesn't exist
+  weight: 3
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: Reviewer verified the security Display doc-comment exists but did not
+    check whether the claimed logging actually exists. The misleading comment was
+    not flagged.
+- finding_id: I6
+  title: Non-ASCII tenant header silently treated as missing
+  weight: 8
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote tenant context extraction tests (AC5) but none specifically
+    test non-ASCII characters in X-Tenant-ID header. No phase flagged silent failure
+    on non-ASCII input.
+- finding_id: I7
+  title: "CWE-209 test gap \u2014 no body assertion"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA describes CWE-209 tests as checking 'no internal details leaked' but
+    the ground truth confirms the actual test only checks status code, not response
+    body content. Reviewer verified tests exist but didn't flag the body assertion
+    gap.
+- finding_id: I8
+  title: CORS preflight test doesn't verify CORS headers
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: "Reviewer explicitly marked '[VERIFIED] CORS preflight test includes both\
+    \ origin and methods headers' \u2014 opposite conclusion from ground truth which\
+    \ says only status code is checked. Per strict rules, examining code and reaching\
+    \ wrong conclusion is not caught."
+- finding_id: I9
+  title: "Wrong log levels \u2014 error! for 4xx client errors"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: No phase addressed log levels. Since zero structured logging (I4) was
+    also missed, the wrong-level issue was never in scope.
+- finding_id: I10
+  title: CORS allows Any origin/method/header (CWE-942)
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged CWE-942 permissive CORS configuration. TEA wrote CORS
+    tests but only for preflight status/headers, not for restrictive origin policy.
+    Reviewer did not flag allow_origin(Any).

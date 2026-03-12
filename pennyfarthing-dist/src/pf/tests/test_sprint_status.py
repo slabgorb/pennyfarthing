@@ -43,10 +43,13 @@ class TestSprintStatusIncludesArchivedStories:
         mock_info.return_value = {"name": "Test Sprint", "number": 9999}
         mock_load.return_value = _make_sprint_data(
             epics=[
-                _make_epic("100", [
-                    _make_story("100-1", 3, "done"),
-                    _make_story("100-2", 2, "backlog"),
-                ]),
+                _make_epic(
+                    "100",
+                    [
+                        _make_story("100-1", 3, "done"),
+                        _make_story("100-2", 2, "backlog"),
+                    ],
+                ),
             ],
         )
 
@@ -69,10 +72,13 @@ class TestSprintStatusIncludesArchivedStories:
         mock_info.return_value = {"name": "Test Sprint", "number": 9999}
         mock_load.return_value = _make_sprint_data(
             epics=[
-                _make_epic("100", [
-                    _make_story("100-1", 3, "done"),
-                    _make_story("100-2", 2, "backlog"),
-                ]),
+                _make_epic(
+                    "100",
+                    [
+                        _make_story("100-1", 3, "done"),
+                        _make_story("100-2", 2, "backlog"),
+                    ],
+                ),
             ],
         )
 
@@ -93,10 +99,13 @@ class TestSprintStatusIncludesArchivedStories:
         mock_info.return_value = {"name": "Test Sprint", "number": 9999}
         mock_load.return_value = _make_sprint_data(
             epics=[
-                _make_epic("100", [
-                    _make_story("100-1", 3, "done"),
-                    _make_story("100-2", 2, "in_progress"),
-                ]),
+                _make_epic(
+                    "100",
+                    [
+                        _make_story("100-1", 3, "done"),
+                        _make_story("100-2", 2, "in_progress"),
+                    ],
+                ),
             ],
         )
 
@@ -119,9 +128,12 @@ class TestSprintStatusIncludesArchivedStories:
         mock_info.return_value = {"name": "Test Sprint", "number": 9999}
         mock_load.return_value = _make_sprint_data(
             epics=[
-                _make_epic("100", [
-                    _make_story("100-1", 3, "done"),
-                ]),
+                _make_epic(
+                    "100",
+                    [
+                        _make_story("100-1", 3, "done"),
+                    ],
+                ),
             ],
         )
 
@@ -142,10 +154,13 @@ class TestSprintStatusIncludesArchivedStories:
         mock_info.return_value = {"name": "Test Sprint", "number": 9999}
         mock_load.return_value = _make_sprint_data(
             epics=[
-                _make_epic("100", [
-                    _make_story("100-1", 3, "done"),
-                    _make_story("100-2", 2, "backlog"),
-                ]),
+                _make_epic(
+                    "100",
+                    [
+                        _make_story("100-1", 3, "done"),
+                        _make_story("100-2", 2, "backlog"),
+                    ],
+                ),
             ],
         )
 
@@ -164,10 +179,13 @@ class TestSprintStatusIncludesArchivedStories:
         mock_info.return_value = {"name": "Test Sprint", "number": 9999}
         mock_load.return_value = _make_sprint_data(
             epics=[
-                _make_epic("100", [
-                    _make_story("100-1", 3, "done"),
-                    _make_story("100-2", 2, "backlog"),
-                ]),
+                _make_epic(
+                    "100",
+                    [
+                        _make_story("100-1", 3, "done"),
+                        _make_story("100-2", 2, "backlog"),
+                    ],
+                ),
             ],
         )
 

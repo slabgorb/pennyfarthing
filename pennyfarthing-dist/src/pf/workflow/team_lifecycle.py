@@ -100,12 +100,14 @@ async def spawn_teammates(
         }
         if adapter:
             try:
-                await adapter.spawn_teammate({
-                    "teamName": handle["teamName"],
-                    "agent": member["agent"],
-                    "prompt": f'pf agent start "{member["agent"]}"',
-                    "model": config.get("model"),
-                })
+                await adapter.spawn_teammate(
+                    {
+                        "teamName": handle["teamName"],
+                        "agent": member["agent"],
+                        "prompt": f'pf agent start "{member["agent"]}"',
+                        "model": config.get("model"),
+                    }
+                )
             except Exception:
                 teammate["status"] = "crashed"
         teammates.append(teammate)
@@ -131,10 +133,12 @@ async def shutdown_all_teammates(
             continue
         if adapter:
             try:
-                await adapter.shutdown_teammate({
-                    "teamName": handle["teamName"],
-                    "agent": teammate["agent"],
-                })
+                await adapter.shutdown_teammate(
+                    {
+                        "teamName": handle["teamName"],
+                        "agent": teammate["agent"],
+                    }
+                )
             except Exception:
                 pass  # Graceful degradation — swallow adapter errors
         teammate["status"] = "shutdown"

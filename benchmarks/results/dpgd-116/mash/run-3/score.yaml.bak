@@ -1,0 +1,78 @@
+scenario_id: dpgd-116
+theme: mash
+run_id: 3
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase distinguished NotFound from other errors in from_file_or_default.
+    The config loading tests and implementation use unwrap_or_default pattern without
+    differentiating error types.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: 'Dev implemented safe Display impl on CliError with generic messages.
+    Reviewer verified under V3: ''Error messages are generic and don''t leak internal
+    paths, stack traces, or token details. The SECURITY doc comment is present on
+    the error type.'' However, eprintln!(''error: {e}'') in main still prints Display
+    directly to stderr, and Io uses transparent forwarding, so the fix is partial
+    at best.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote header injection prevention tests for CRLF and null bytes in\
+    \ tenant/token values. Dev implemented validate_header_value() checking for \\\
+    r, \\n, \\0. Reviewer verified under V1. However, the structural issue of using\
+    \ raw String instead of TenantId was only noted as F10 (LOW) by reviewer \u2014\
+    \ the type-safety gap remains."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that dependencies use direct version strings instead
+    of workspace = true. The code changes summary shows Cargo.toml was modified but
+    the reviewer did not flag this pattern for the 6 affected deps.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding F3: 'RawConfig silently swallows unknown fields in TOML\
+    \ \u2014 config.rs:19-25. The RawConfig struct uses #[derive(Deserialize, Default)]\
+    \ without #[serde(deny_unknown_fields)]. An operator with a typo in their config\
+    \ will get zero feedback.' Directly addresses the token field being silently ignored."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...) in config tests. The TEA wrote config tests but did not flag or fix this
+    logical tautology.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test that only checks non-panic
+    via 'let _ = config'. TEA wrote config_loading tests but did not flag this specific
+    pattern.

@@ -1,0 +1,26 @@
+*Exhales a long plume of smoke, forming the shape of a question mark*
+
+"Who are you NOW?" I ask the crate. "Nothing. But these tests will tell you exactly who you MUST become."
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a feature story delivering the CLI framework — needs comprehensive test coverage across all 10 ACs.
+
+**Test Files:**
+
+| File | Tests | Acceptance Criteria | Coverage |
+|------|-------|---------------------|----------|
+| `cli_structure.rs` | 30 | AC-1, AC-2, AC-5, AC-6 | Command groups, help rendering, global flags, clap derive, naming conventions |
+| `error_exit_codes.rs` | 18 | AC-3 | Exit code mapping (0/1/2/3/4), error Display, CWE-209 sanitization |
+| `output_format.rs` | 14 | AC-4 | Table/JSON/CSV formatting, metadata, CSV escaping, ANSI injection |
+| `siem_client.rs` | 14 | AC-7 | HTTP status mapping, header injection prevention, builder pattern |
+| `config_loading.rs` | 12 | AC-8 | TOML parsing, env overrides, XDG paths, validation, token-in-file rejection |
+| `shell_completion.rs` | 9 | AC-9 | bash/zsh/fish/powershell generation, non-empty output |
+| `stub_handlers.rs` | 22 | AC-10 | Module existence, NotImplemented returns, correct story references |
+
+**Tests Written:** ~119 tests covering all 10 ACs
+**Status:** RED (failing — compilation errors because modules don't exist yet)
+**Security Tests:** CWE-209 error exposure, header injection (CRLF in token/tenant), config token-in-file rejection, ANSI escape injection, non-HTTP URL rejection
+
+**Handoff:** To Dev for implementation (GREEN phase)

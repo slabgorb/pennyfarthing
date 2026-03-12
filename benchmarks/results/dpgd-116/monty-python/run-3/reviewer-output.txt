@@ -1,0 +1,84 @@
+I have all the information I need. Let me compile the review.
+
+---
+
+# Story 6.1 CLI Framework & Structure — Adversarial Review
+
+*"Ah yes, well I'd like to have an argument, please."*
+
+I have read every implementation file and test file. I have compiled, run clippy, run tests (all pass), and checked nightly fmt. Here are my findings.
+
+---
+
+## Findings
+
+### [CRITICAL] No `main.rs` binary entry point — `axiathon` binary cannot be built
+**`crates/axiathon-client/src/main.rs`** does not exist, and `Cargo.toml` has no `[[bin]]` section. The story explicitly requires producing the `axiathon` binary. Without it, there is no executable, no `std::process::exit()` dispatch, no tracing init, and no error-to-exit-code wiring. Every AC that mentions "exit with code N" or "print to stderr" is untestable at the integration level because the binary doesn't exist.
+
+This is *the* entry point for the entire operator CLI. It's not a nice-to-have; it's the core deliverable.
+
+### [HIGH] `SiemClient` has unvalidated `with_token`/`with_tenant` alongside validated variants — unsafe path is the default
+**`crates/axiathon-client/src/client.rs:32-40`** — `with_token()` and `with_tenant()` accept arbitrary strings without CWE-113 validation. The validated variants (`with_token_validated`, `with_tenant_validated`) exist but are *opt-in*. Nothing prevents callers (including future `main.rs`) from using the unvalidated path. The safe path should be the default; the unsafe path should require an explicit escape hatch, not the reverse.
+
+### [HIGH] `SiemClient::new()` silently normalizes non-HTTP URLs instead of rejecting them
+**`crates/axiathon-client/src/client.rs:17-21`** — `SiemClient::new("ftp://evil.com")` silently converts to `"https://ftp://evil.com"` (prepends `https://`). This is nonsensical. The test `base_url_must_be_http_or_https` passes only because the normalization happens to prepend `https://`, but the resulting URL `"https://ftp://evil.com"` is garbage. Non-HTTP(S) inputs should be rejected with an error, not silently mangled.
+
+### [HIGH] `OutputFormatter` methods use `expect()` in production code — panics on malformed input
+**`crates/axiathon-client/src/output.rs:70-82`** — Six `expect()` calls in `format_json`, `format_csv`. The Rust coding rules say: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message"*. The `expect()` with messages is technically allowed by the letter of the rules, but these are in formatting functions that receive arbitrary user data. A CSV writer writing to a `Vec<u8>` won't fail in practice, but JSON serialization *can* fail on certain values. More importantly, this violates the spirit of "no panics in production" — these should return `Result<String, CliError>`.
+
+### [MEDIUM] `ConfigFile` silently ignores unknown TOML fields — no `deny_unknown_fields`
+**`crates/axiathon-client/src/config.rs:10-15`** — `ConfigFile` uses `#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]`. A typo like `server_rl = "..."` is silently ignored and the default is used instead. For security-critical configuration, this is a foot-gun. The test `config_ignores_token_field` even relies on this behavior (the `token` field is silently dropped), but this conflates "intentionally ignoring a known-bad field" with "silently ignoring any unknown field."
+
+### [MEDIUM] `toml` version mismatch — Cargo.toml specifies `0.8`, story spec says `0.9`
+**`crates/axiathon-client/Cargo.toml:21`** — Story specifies `toml` 0.9, but `Cargo.toml` declares `toml = "0.8"`. Minor, but it's a deviation from the spec.
+
+### [MEDIUM] `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml` are NOT workspace dependencies
+**`crates/axiathon-client/Cargo.toml:12-16,21`** — The story explicitly says: *"Add to `[workspace.dependencies]`: `reqwest` 0.12, `comfy-table` 7, `clap_complete` 4, `dirs` 6, `csv` 1, `toml` 0.9."* These are declared directly in the crate's `Cargo.toml` instead of the workspace root. This violates the workspace dependency management pattern used by all other dependencies (`workspace = true`).
+
+### [MEDIUM] Nightly `rustfmt` check fails — formatting violations in test files
+`cargo +nightly fmt --check` shows diffs in `siem_client.rs:155` and `stub_handlers.rs:52`. Per the gotchas doc: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."*
+
+### [MEDIUM] `SiemClient` has no actual HTTP methods — it's a dead struct
+**`crates/axiathon-client/src/client.rs`** — `SiemClient` wraps `reqwest::Client` but has zero methods that make HTTP requests. The `_client` field is even prefixed with `_` (unused). AC-7 specifies: *"Maps HTTP status codes to `CliError` variants: 401 -> AuthenticationExpired, 403 -> Unauthorized..."* — none of this mapping logic exists. The HTTP error mapping tests in `siem_client.rs` are vacuous — they construct `CliError` variants directly and check exit codes, never testing any actual HTTP→error mapping.
+
+### [MEDIUM] Test vacuity in `siem_client.rs` — HTTP mapping tests don't test HTTP mapping
+**`crates/axiathon-client/tests/siem_client.rs:50-97`** — All seven `#[tokio::test]` "HTTP mapping" tests (401→AuthenticationExpired, 403→Unauthorized, etc.) simply construct the expected `CliError` variant and assert its exit code. They never make an HTTP request, never use `wiremock`, and never test the mapping logic. The comments even admit: *"For RED phase, we just verify the types exist."* But this is the GREEN/implementation phase — the mapping should be implemented and tested.
+
+### [LOW] `exit_code_success_is_zero` test is vacuous
+**`crates/axiathon-client/tests/exit_codes.rs:14-19`** — `assert_eq!(0i32, 0)` asserts a literal equals itself. This test proves nothing about the system's behavior.
+
+### [LOW] `CompletionArgs.shell` is `Option<String>` — should use `clap_complete::Shell` enum
+**`crates/axiathon-client/src/cli.rs:222-224`** — The shell argument is a raw `Option<String>` parsed manually in `completion.rs`. Clap supports `Shell` as a `ValueEnum` directly, which would give free validation and help text.
+
+### [LOW] `OutputFormatter` is not a trait — story spec says "OutputFormatter trait"
+**`crates/axiathon-client/src/output.rs:40`** — AC-4 specifies: *"`OutputFormatter` trait with Table/Json/Csv implementations."* The implementation is a struct, not a trait. This means there's no polymorphism or alternative implementations possible.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in `lib.rs:2`
+### [VERIFIED] Exit codes 0/1/3/4 correctly mapped in `CliError::exit_code()`
+### [VERIFIED] CWE-113 header injection validation exists in `with_token_validated`/`with_tenant_validated`
+### [VERIFIED] Config file does not store tokens — `has_token_from_file()` always returns `false`
+### [VERIFIED] Shell completions generate for bash/zsh/fish/powershell
+### [VERIFIED] All command groups present: query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init
+### [VERIFIED] Plural noun convention (rules, alerts) followed
+### [VERIFIED] Global flags (`--format`, `--verbose`, `--quiet`, `--server`, `--tenant`, `--config`, `--no-color`) all use `global = true`
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 1 | YES |
+| High | 3 | YES |
+| Medium | 5 | NO |
+| Low | 3 | NO |
+
+The implementation is missing its binary entry point (`main.rs`), has a security-bypassing API design in `SiemClient` (unsafe path is the default), silently corrupts non-HTTP URLs, and uses `expect()` where it should use `Result`. The HTTP error mapping — a core AC-7 requirement — is entirely unimplemented, and the tests claiming to verify it are vacuous. Workspace dependency management rules are violated.
+
+*"Look, I came here for a good argument!" "No you didn't; no, you came here for an argument." "An argument isn't just contradiction." "Well, it CAN be."*
+
+No. An argument is a connected series of findings leading to a conclusion. And the conclusion is:
+
+## Verdict: **CHANGES_REQUESTED**
+
+The Critical finding (no binary) and three High findings (unvalidated-by-default headers, silent URL mangling, production panics) must be resolved before approval.

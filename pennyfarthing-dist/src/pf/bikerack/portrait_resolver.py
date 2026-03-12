@@ -177,7 +177,9 @@ def resolve_portrait_path(
     if pnpm_cyclist.is_dir():
         for entry in pnpm_cyclist.iterdir():
             if entry.name.startswith("@pennyfarthing+cyclist@"):
-                candidate = entry / "node_modules" / "@pennyfarthing" / "cyclist" / "portraits" / theme
+                candidate = (
+                    entry / "node_modules" / "@pennyfarthing" / "cyclist" / "portraits" / theme
+                )
                 cyclist_portrait_dirs.append(candidate)
                 break
 
@@ -200,14 +202,16 @@ def detect_image_protocol() -> str | None:
     """
     import os
 
-    # Kitty: TERM=xterm-kitty or KITTY_WINDOW_ID present
+    # Kitty graphics protocol: kitty, Ghostty (native support)
     term = os.environ.get("TERM", "")
+    term_program = os.environ.get("TERM_PROGRAM", "")
     if "kitty" in term or os.environ.get("KITTY_WINDOW_ID"):
+        return "kitty"
+    if "ghostty" in term or term_program.lower() == "ghostty":
         return "kitty"
 
     # Sixel: some terminals advertise via TERM or COLORTERM
     # WezTerm, foot, mlterm support sixel
-    term_program = os.environ.get("TERM_PROGRAM", "")
     if term_program.lower() in ("wezterm", "foot", "mlterm"):
         return "sixel"
 

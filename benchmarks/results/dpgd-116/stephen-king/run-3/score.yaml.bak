@@ -1,0 +1,73 @@
+scenario_id: dpgd-116
+theme: stephen-king
+run_id: 3
+total_caught: 2
+total_findings: 7
+weighted_caught: 10
+total_weight: 37
+score_pct: 27.0
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: TEA mentions 'Silent error swallowing' in security tests but those tests
+    target HTTP/parse error propagation in SiemClient, not the from_file_or_default
+    pattern in ClientConfig. No phase flags the unwrap_or_default swallowing permission/parse
+    errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F1 flags CWE-209: ''CliError::Generic leaks raw error strings
+    to stderr... reqwest error strings can contain full URLs, internal DNS resolution
+    details, and TLS certificate details.'' Marked CRITICAL and blocking.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F9: ''tenant field uses raw String instead of validated TenantId
+    newtype at cli.rs:29, client.rs:10... axiathon-core crate exports TenantId. Yet
+    both Cli.tenant and SiemClient.tenant use raw Option<String>.'''
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Dev added deps to workspace Cargo.toml but no phase verifies the crate
+    Cargo.toml uses workspace = true references. Reviewer F8 flags a version mismatch
+    for toml but not the workspace = true pattern for the other 6 dependencies.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer F7 examines deny_unknown_fields but concludes 'Verified good\
+    \ \u2014 this is intentional' for forward compatibility. The security risk of\
+    \ a user believing their token is loaded from config is not identified."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identifies the vacuously true assert!(config.server().is_none()
+    || ...) pattern. TEA wrote config tests but this specific assertion logic flaw
+    was not flagged by any phase.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identifies the zero-assertion test using let _ = config. Despite
+    SOUL.md principle 4 ('A vacuously true test is worse than no test'), neither TEA
+    nor Reviewer caught this.

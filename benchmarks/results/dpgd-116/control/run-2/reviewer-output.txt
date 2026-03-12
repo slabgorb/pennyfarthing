@@ -1,0 +1,103 @@
+All tests pass, clippy clean, but **nightly fmt fails**. Now I have a complete picture. Here is my adversarial review.
+
+---
+
+# Story 6.1 Review: CLI Framework & Structure
+
+## Review Checklist Completion
+
+- [x] Find at least 5 observations
+- [x] Trace data flow (tenant ID → header → HTTP request)
+- [x] Wiring (CLI struct → commands → handlers)
+- [x] Identify patterns (good and bad)
+- [x] Verify error handling
+- [x] Security analysis
+- [x] Hard questions (malformed input, silent failures)
+- [x] Make judgment
+
+---
+
+## Findings
+
+### `[CRITICAL]` No `main.rs` — binary cannot be built
+
+The story's core deliverable is the `axiathon` binary. There is no `src/main.rs` and no `[[bin]]` section in `Cargo.toml`. This crate produces only a library. `cargo run -p axiathon-client` would fail. The story spec explicitly lists `main.rs` as "Binary entry point, tracing init, dispatch, exit codes" under Key Files to Create. Without it, there is no CLI — every AC that involves actually running `axiathon <command>` is untestable at the binary level.
+
+### `[HIGH]` `SiemClient::new` silently drops invalid headers — at `client.rs:24,30`
+
+When `HeaderValue::from_str(tid)` returns `Err` (e.g., for a non-ASCII tenant ID), the header is silently not added. This means:
+- A malformed tenant ID produces requests **without tenant isolation** — no X-Tenant-ID header, no error, no warning.
+- A malformed auth token produces **unauthenticated** requests silently.
+
+This is a silent failure that could cause tenant data leakage. The function should return `Result<Self, CliError>` and propagate the error.
+
+### `[HIGH]` Header injection tests are vacuous — at `siem_client.rs:209-230`
+
+`siem_client_rejects_tenant_id_with_newlines` creates a client with `"evil\r\nX-Injected: true"` as tenant ID. `HeaderValue::from_str` silently drops the invalid value (see finding above), so the header is simply absent. The test then connects to `localhost:9999` which isn't listening, gets `ServerUnavailable`, and declares success. The test would **pass identically** even if header injection were NOT prevented — it's testing connection refusal, not header validation. Same for `siem_client_rejects_token_with_newlines`.
+
+### `[HIGH]` `ClientConfig` silently accepts unknown fields including `token` — at `config.rs:11-17`
+
+`#[serde(default)]` without `#[serde(deny_unknown_fields)]` means a config file containing `token = "my-secret"` or `password = "foo"` is silently accepted and ignored. AC-8 says "Tokens in OS keychain, NOT config file." The test at `config_loading.rs:162` checks that `token` doesn't appear in `Debug` output, which it won't because the field doesn't exist on the struct — but the user gets no warning that they're putting secrets in a plaintext file. Should either deny unknown fields or at minimum warn on `token`/`api_token`/`password`/`secret` field names.
+
+### `[MEDIUM]` `init` command is a stub, not functional — at `commands/init.rs:3`
+
+AC scope says "axiathon init first-time setup (functional, not stub)". The implementation returns `NotImplemented("not yet implemented")`. This violates the in-scope requirement.
+
+### `[MEDIUM]` Nightly `cargo fmt` check fails — at `siem_client.rs`
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The check shows formatting diffs in `siem_client.rs`. This is flagged as a mandatory pre-approval check.
+
+### `[MEDIUM]` `Completion` shell argument is raw `String`, not `Shell` enum — at `cli.rs:88`
+
+The `shell` field is `String`, so `axiathon completion garbage` parses successfully at the clap level but returns an empty string at runtime (`completion.rs:12`). Using `clap_complete::Shell` directly as the clap value type would give immediate validation with proper error messages. Current behavior is a silent failure for invalid shell names.
+
+### `[MEDIUM]` `OutputFormatter` is a struct, not a trait — at `output.rs:18`
+
+AC-4 specifies "OutputFormatter trait with Table/Json/Csv impls." The implementation is a struct with an internal `OutputFormat` enum dispatching in a single `format()` method. This prevents downstream code (e.g., TUI, plugins) from implementing custom formatters. The architecture doc and AC are explicit about a trait.
+
+### `[MEDIUM]` `toml` version is 0.8, spec says 0.9 — at `Cargo.toml:22`
+
+Technical guardrails specify `toml 0.9`. The crate uses `toml = "0.8"`. While 0.9 may not exist yet (explaining the deviation), this should be documented.
+
+### `[LOW]` `rules` and `tenant` stubs both reference Story 6.6 — at `commands/rules.rs:4`, `commands/tenant.rs:4`
+
+Both return `"not yet implemented (Story 6.6)"`. Rules management is likely a different story than tenant management. One of these references is wrong.
+
+### `[LOW]` `timeout` is `i64` when only positive values are valid — at `config.rs:15`
+
+Using `i64` for timeout allows negative deserialization, then `.max(1) as u64` clamps it. A `u64` field with serde validation would be cleaner and prevent the type mismatch entirely.
+
+### `[VERIFIED]` CWE-209 error Display messages do not leak internals — `error.rs:13-49`
+
+`ServerError(String)` Display shows "server error — contact your administrator" and does NOT include the inner string. `ConfigError(String)` shows generic message. `NotFound(String)` shows generic "resource not found". Tests at `error_exit_codes.rs:82-119` properly verify this. Good.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` in production code — `lib.rs:2`
+
+Library crate forbids unsafe. Test crate downgrades to `deny` with documented rationale for `env::set_var`. Good separation.
+
+### `[VERIFIED]` Exit code mapping is correct — `error.rs:53-59`
+
+Auth→3, Authz→4, everything else→1. Matches AC-3.
+
+### `[VERIFIED]` clap derive macros used throughout, no imperative building — `cli.rs`
+
+Parser/Subcommand derives only. Matches AC-6.
+
+### `[VERIFIED]` Global flags use `global = true` — `cli.rs:14-39`
+
+All seven global flags (`format`, `verbose`, `quiet`, `server`, `tenant`, `config`, `no_color`) correctly use `global = true`. Tests verify they work both before and after subcommands.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+### Blocking issues (must fix):
+1. **No `main.rs`** — the story's primary deliverable (the binary) does not exist
+2. **Silent header drops in `SiemClient::new`** — tenant isolation can be silently bypassed
+3. **Vacuous header injection tests** — tests pass for the wrong reason
+4. **Unknown config fields silently accepted** — secrets can be placed in config without warning
+
+### Should fix before merge:
+5. Nightly fmt failures (per gotchas.md, this blocks approval)
+6. `init` command is a stub, not functional per scope
+7. `Completion` shell argument should use `Shell` enum for validation

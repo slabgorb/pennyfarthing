@@ -24,11 +24,7 @@ from pf.context.templates import (
 
 @pytest.fixture
 def schema_path() -> Path:
-    return (
-        Path(__file__).resolve().parents[3]
-        / "schemas"
-        / "context-schema.yaml"
-    )
+    return Path(__file__).resolve().parents[3] / "schemas" / "context-schema.yaml"
 
 
 @pytest.fixture
@@ -346,9 +342,7 @@ class TestCLICommand:
 
     def test_template_with_tier(self, runner: CliRunner, tmp_path: Path) -> None:
         """--tier flag should filter components."""
-        result = runner.invoke(
-            context, ["template", "--tier", "MINIMAL", "-o", str(tmp_path)]
-        )
+        result = runner.invoke(context, ["template", "--tier", "MINIMAL", "-o", str(tmp_path)])
 
         assert result.exit_code == 0
         files = list(tmp_path.iterdir())
@@ -357,9 +351,7 @@ class TestCLICommand:
     def test_template_overwrite(self, runner: CliRunner, tmp_path: Path) -> None:
         """--overwrite should regenerate files."""
         runner.invoke(context, ["template", "-o", str(tmp_path)])
-        result = runner.invoke(
-            context, ["template", "-o", str(tmp_path), "--overwrite"]
-        )
+        result = runner.invoke(context, ["template", "-o", str(tmp_path), "--overwrite"])
 
         assert result.exit_code == 0
         assert "Generated" in result.output
@@ -374,9 +366,7 @@ class TestCLICommand:
 
     def test_template_invalid_tier(self, runner: CliRunner, tmp_path: Path) -> None:
         """Invalid tier should be rejected by Click choice."""
-        result = runner.invoke(
-            context, ["template", "--tier", "BOGUS", "-o", str(tmp_path)]
-        )
+        result = runner.invoke(context, ["template", "--tier", "BOGUS", "-o", str(tmp_path)])
 
         assert result.exit_code != 0
 

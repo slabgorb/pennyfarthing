@@ -1,0 +1,19 @@
+All **60 tests pass** and **clippy is clean**.
+
+## Summary
+
+**Files created:**
+- `crates/axiathon-server/src/response.rs` — `ApiEnvelope<T>` with `data`/`meta`/`errors` fields, `Meta` with UUID request_id + ISO 8601 timestamp + trace_id, RFC 9457 `ErrorEntry`, and `IntoResponse` impl that sets `x-request-id` header
+- `crates/axiathon-server/src/middleware/mod.rs` — module declarations
+- `crates/axiathon-server/src/middleware/auth.rs` — Bearer token + API key auth middleware with CWE-209 compliant generic error messages
+- `crates/axiathon-server/src/middleware/rate_limit.rs` — per-tenant in-memory rate limiter with `Retry-After` header on 429
+- `crates/axiathon-server/src/middleware/body_limit.rs` — body size limit (1MB), content-type validation, JSON parse validation (runs before auth)
+- `crates/axiathon-server/src/routes/mod.rs` — module declarations
+- `crates/axiathon-server/src/routes/health.rs` — health endpoint with version + uptime
+- `crates/axiathon-server/src/routes/stubs.rs` — stub handlers for events/alerts/rules/queries + deprecated-test endpoint
+
+**Files modified:**
+- `crates/axiathon-server/Cargo.toml` — added `chrono` and `uuid` dependencies
+- `crates/axiathon-server/src/lib.rs` — `app()` function wiring router, middleware layers, and state
+
+**Test results:** 60/60 passing (17 auth + 12 envelope + 4 rate limit + 9 routes + 12 security + 6 versioning)

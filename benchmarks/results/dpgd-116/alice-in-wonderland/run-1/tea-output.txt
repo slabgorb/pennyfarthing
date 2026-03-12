@@ -1,0 +1,32 @@
+*Exhales a long plume of smoke.* 
+
+---
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is the foundational CLI framework — every module needs test coverage.
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `tests/cli_structure.rs` | 30 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (declarative clap) |
+| `tests/error_exit_codes.rs` | 14 | AC-3 (exit codes 0/1/2/3/4), CliError variants, Display safety |
+| `tests/output_formatting.rs` | 13 | AC-4 (table/json/csv), metadata, escaping, edge cases |
+| `tests/siem_client.rs` | 11 | AC-7 (HTTP status mapping, headers, token secrecy) |
+| `tests/config_loading.rs` | 10 | AC-8 (TOML parsing, env overrides, validation, no-token-storage) |
+| `tests/shell_completion.rs` | 5 | AC-9 (bash/zsh/fish/powershell generation) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (stub messages reference Story numbers) |
+| `tests/security.rs` | 7 | CWE-113 header injection, CWE-209 error disclosure, CWE-522 credential storage |
+
+**Tests Written:** 100 tests covering all 10 ACs
+**Status:** RED (compilation failures — modules `cli`, `error`, `output`, `client`, `config`, `commands` do not exist yet)
+
+**Security tests demand:**
+- CRLF/null-byte rejection in HTTP headers (header injection)
+- No token leakage in Debug output
+- No server stack traces in Display output
+- No token/password fields in ClientConfig
+- Config validation rejects empty URLs, negative timeouts
+
+**Handoff:** To Dev for implementation (GREEN phase).

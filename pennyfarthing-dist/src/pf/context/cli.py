@@ -24,9 +24,14 @@ def context():
 
 @context.command("validate")
 @click.argument("file", required=False, type=click.Path(exists=False))
-@click.option("--tier", type=click.Choice(
-    ["FULL", "REFRESH", "HANDOFF", "MINIMAL"], case_sensitive=False,
-), help="Validate for a specific tier")
+@click.option(
+    "--tier",
+    type=click.Choice(
+        ["FULL", "REFRESH", "HANDOFF", "MINIMAL"],
+        case_sensitive=False,
+    ),
+    help="Validate for a specific tier",
+)
 @click.option("--strict", is_flag=True, help="Treat warnings as errors")
 def validate_cmd(file: str | None, tier: str | None, strict: bool) -> None:
     """Validate context files against the context schema.
@@ -69,6 +74,7 @@ def validate_cmd(file: str | None, tier: str | None, strict: bool) -> None:
     else:
         try:
             from pf.common.config import get_project_root
+
             root = get_project_root()
         except Exception:
             root = Path.cwd()
@@ -84,11 +90,21 @@ def validate_cmd(file: str | None, tier: str | None, strict: bool) -> None:
 
 
 @context.command("template")
-@click.option("--tier", type=click.Choice(
-    ["FULL", "REFRESH", "HANDOFF", "MINIMAL"], case_sensitive=False,
-), help="Generate templates for a specific tier only")
-@click.option("--output", "-o", type=click.Path(), default="./context-templates",
-              help="Output directory (default: ./context-templates/)")
+@click.option(
+    "--tier",
+    type=click.Choice(
+        ["FULL", "REFRESH", "HANDOFF", "MINIMAL"],
+        case_sensitive=False,
+    ),
+    help="Generate templates for a specific tier only",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(),
+    default="./context-templates",
+    help="Output directory (default: ./context-templates/)",
+)
 @click.option("--overwrite", is_flag=True, help="Overwrite existing template files")
 def template_cmd(tier: str | None, output: str, overwrite: bool) -> None:
     """Generate blank context document templates from the schema.

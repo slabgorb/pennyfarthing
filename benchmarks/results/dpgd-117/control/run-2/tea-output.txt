@@ -1,0 +1,43 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 establishes the REST API foundation — all ACs require functional verification.
+
+**Test Files:**
+- `crates/axiathon-server/tests/api_endpoints.rs` — 14 tests covering route existence and basic responses
+- `crates/axiathon-server/tests/api_response_envelope.rs` — 12 tests covering the ApiResponse envelope contract
+- `crates/axiathon-server/tests/api_authentication.rs` — 16 tests covering JWT, API key, and auth error formatting
+- `crates/axiathon-server/tests/api_rate_limiting.rs` — 6 tests covering rate limiting, 429/Retry-After, per-tenant isolation
+- `crates/axiathon-server/tests/api_versioning.rs` — 8 tests covering URL versioning, 404 for unknown versions
+- `crates/axiathon-server/tests/api_security.rs` — 12 tests covering CWE-209, XSS, CORS, path traversal, input validation
+
+**Tests Written:** 68 tests covering 5 ACs
+**Status:** RED (failing — `build_router` and `ServerConfig` do not exist yet)
+
+**AC Coverage:**
+
+| AC | Tests | File |
+|----|-------|------|
+| REST endpoints exist | 14 | `api_endpoints.rs` |
+| ApiResponse envelope | 12 | `api_response_envelope.rs` |
+| Authentication (JWT + API key) | 16 | `api_authentication.rs` |
+| Rate limiting | 6 | `api_rate_limiting.rs` |
+| API versioning | 8 | `api_versioning.rs` |
+| Security edge cases | 12 | `api_security.rs` |
+
+**Key test patterns:**
+- All tests call `axiathon_server::build_router()` which doesn't exist yet — pure RED
+- Tests assert the AC-required envelope shape (`data`, `errors` array, `meta` with `request_id`/`timestamp`/`trace_id`) which differs from the current `ApiResponse<T>` in axiathon-core (needs `errors: Vec` instead of `error: Option`, and always-present meta with request_id/timestamp/trace_id)
+- Security tests verify CWE-209 (no stack traces, source paths, or DB details in errors), XSS (no input echoing), and CORS (no wildcard origin)
+
+**Handoff:** To Dev for implementation
+
+## Delivery Findings
+
+- **Gap** (non-blocking): Current `ApiResponse<T>` in axiathon-core uses `error: Option<ApiError>` (singular) but AC requires `errors: Vec<ApiError>` (always-present array). Dev must either update the core type or create a server-layer wrapper.
+  Affects `crates/axiathon-core/src/types.rs` (envelope structure needs `errors` array and always-present `meta` with `request_id`, `timestamp`, `trace_id`).
+  *Found by TEA during test design.*
+
+- **Gap** (non-blocking): Current `ApiMeta` has pagination fields (`total`, `limit`, `offset`) but AC requires `request_id` (UUID), `timestamp` (ISO 8601), and `trace_id`. These are different concerns.
+  Affects `crates/axiathon-core/src/types.rs` (ApiMeta needs request_id, timestamp, trace_id fields).
+  *Found by TEA during test design.*

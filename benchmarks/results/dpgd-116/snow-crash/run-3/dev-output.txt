@@ -1,0 +1,27 @@
+All **113 tests pass**, clippy is clean.
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `Cargo.toml` (workspace) — added workspace deps: `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml`; enabled `env` feature for clap
+- `crates/axiathon-client/Cargo.toml` — added all required dependencies
+- `crates/axiathon-client/src/lib.rs` — barrel re-exports for all public types
+- `crates/axiathon-client/src/cli.rs` — `Cli` struct with `#[derive(Parser)]`, `Commands` enum with all 10 subcommands, global flags with `global = true`
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with 10 variants, `exit_code()` mapping (1/3/4), sanitized Display (CWE-209)
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum, `OutputFormatter` with table/JSON/CSV formatting, `ResponseMetadata`
+- `crates/axiathon-client/src/client.rs` — `SiemClient` wrapping `reqwest::Client`, header injection prevention (CWE-113), HTTP status code mapping
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides, XDG path, timeout validation
+- `crates/axiathon-client/src/commands/mod.rs` — module barrel
+- `crates/axiathon-client/src/commands/{status,config,ingest,alerts,query,rules,tenant,login,init}.rs` — stub handlers returning `NotImplemented` with story references
+- `crates/axiathon-client/src/commands/completion.rs` — `generate_completion()` for bash/zsh/fish/powershell
+
+**Tests:** 113/113 passing (GREEN)
+**Clippy:** Clean (0 warnings)
+
+## Delivery Findings
+
+- **Gap** (non-blocking): Test helper `get_long_help()` in `cli_structure.rs` used `let cmd` (immutable) to call `Command::render_long_help(&mut self)`. Fixed by adding `mut` to the binding. clap 4.5.60 requires `&mut self` for this method.
+  Affects `crates/axiathon-client/tests/cli_structure.rs` (line 356: `let cmd` → `let mut cmd`).
+  *Found by Dev during implementation.*

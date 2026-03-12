@@ -129,9 +129,7 @@ class TestSprintLoader:
             "epics": [
                 {
                     "id": "epic-63",
-                    "stories": [
-                        {"id": "63-1", "status": "in_progress", "points": 3}
-                    ],
+                    "stories": [{"id": "63-1", "status": "in_progress", "points": 3}],
                 }
             ]
         }

@@ -1,0 +1,196 @@
+Good. I have all the information needed for a thorough review. Let me now render my findings.
+
+---
+
+# Adversarial Code Review — Story 6.1: CLI Framework & Structure
+
+*Reviewer: Immanuel Kant*
+
+> "Act only according to that maxim whereby you can at the same time will that it should become a universal law." Let us test whether this code could serve as universal law for CLI frameworks.
+
+---
+
+## Preflight Results
+
+- **`cargo test -p axiathon-client`**: 35 passed, 0 failed
+- **`cargo clippy -p axiathon-client -- -D warnings`**: Clean
+- **`cargo +nightly fmt --all --check`**: **FAILS** — 3 formatting diffs in `config.rs` and `output.rs`
+
+---
+
+## Findings
+
+### 1. `[CRITICAL]` main.rs is a dead-end — no command dispatch at `main.rs:8-10`
+
+```rust
+fn main() {
+    let _cli = Cli::parse();
+}
+```
+
+The parsed CLI is bound to `_cli` (underscore prefix = deliberately unused) and immediately dropped. **No command handler is ever called.** The binary parses arguments and exits 0 regardless. AC-2 requires subcommand help to render; AC-3 requires exit codes; AC-9 requires `axiathon completion bash` to emit shell scripts; AC-10 requires stubs to print "not yet implemented." None of this happens because `main()` dispatches nothing.
+
+The existing `commands::completion::generate_completions()` and `commands::stubs::run_stub()` functions are implemented but **dead code** — unreachable from `main()`.
+
+**Blocks:** AC-2, AC-3, AC-9, AC-10.
+
+---
+
+### 2. `[CRITICAL]` Tests verify modules in isolation but never test the binary — test gap masks the dispatch void
+
+Every test file imports library modules directly (`axiathon_client::cli::Cli`, `axiathon_client::commands::stubs::run_stub()`). No test exercises `main()` or runs the `axiathon` binary as a subprocess. This means:
+
+- `run_stub("query")` returns the right string — but `main()` never calls `run_stub()`
+- `generate_completions("bash", &mut buf)` works — but `main()` never calls it
+- `CliError::exit_code()` returns 1 — but `main()` never calls `std::process::exit()`
+
+The tests create the illusion of completeness. They test *components* but never the *integration*. The categorical imperative demands: can this testing pattern be universalized? No — it would produce binaries that compile and "pass tests" but do nothing when run.
+
+---
+
+### 3. `[HIGH]` `cargo +nightly fmt --all --check` fails — 3 diffs
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."
+
+Failing files:
+- `config.rs:42-44` — closure formatting
+- `config.rs:58-60` — closure formatting  
+- `output.rs:7` — import ordering (`presets, Table` → `Table, presets`)
+
+This is a blocking CI check.
+
+---
+
+### 4. `[HIGH]` `Commands::Query` has no subcommand structure — `cli.rs:54`
+
+```rust
+Query,  // bare variant, no QueryArgs
+```
+
+All other command groups (`Rules`, `Alerts`, `Ingest`, `Config`, `Status`, `Tenant`) have associated `*Args` structs with `#[command(subcommand)]`. `Query` is a bare enum variant. This means `axiathon query run "SELECT ..."` would fail to parse.
+
+The test `command_groups_with_verbs_have_subcommands()` explicitly excludes `query` from its checks — it only verifies `["rules", "alerts", "ingest", "config", "status", "tenant"]`. This is a deliberate test blind spot.
+
+AC-1 requires all command groups to be present with subcommand structure per the architecture doc's plural-noun + verb pattern.
+
+---
+
+### 5. `[HIGH]` `SiemClient::from_config()` skips URL validation — `client.rs:53-65`
+
+`SiemClient::new()` validates the URL via `reqwest::Url::parse()` and validates header values. `SiemClient::from_config()` does neither — it directly uses `config.server_url` without parsing/validating it, and hardcodes `tenant_id: None` without validation of the token parameter.
+
+If a config file contains `server_url = "not-a-url"`, `from_config()` will happily construct a client that will fail at request time with an opaque reqwest error instead of a clear `CliError::InvalidInput`.
+
+**Inconsistent security boundary**: one constructor validates, the other doesn't. This cannot be universalized as law.
+
+---
+
+### 6. `[HIGH]` `output.rs:108` uses `.expect()` in production code
+
+```rust
+serde_json::to_string_pretty(&envelope).expect("JSON serialization should not fail")
+```
+
+Per Rust coding rules in `.claude/rules/rust.md`: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `.expect()` messages here ("should not fail") are not actionable. More critically, `CsvFormatter::format()` has **five** `.expect()` calls at lines 125-133.
+
+The `OutputFormatter::format()` trait returns `String`, not `Result<String, _>`, making error propagation impossible. The trait signature forces panic-on-error. This is a design issue — the trait should return `Result<String, CliError>`.
+
+---
+
+### 7. `[MEDIUM]` `toml` version mismatch — workspace declares `0.8`, story spec says `0.9` — `Cargo.toml:50`
+
+The workspace `Cargo.toml` declares `toml = "0.8"` but the story technical guardrails specify `toml 0.9`. This is a spec deviation. `toml 0.9` doesn't exist yet on crates.io, so `0.8` is correct in practice, but the deviation should be documented.
+
+---
+
+### 8. `[MEDIUM]` Config silently accepts unknown TOML fields — `config.rs:10-15`
+
+```rust
+#[derive(Deserialize, Default)]
+#[serde(default)]
+struct RawConfig {
+    server_url: Option<String>,
+    timeout_seconds: Option<i64>,
+}
+```
+
+Missing `#[serde(deny_unknown_fields)]`. If a user writes `server_ur1 = "..."` (typo), the field is silently ignored and the default is used. This is a common source of operator confusion. The categorical imperative: should all config parsers silently ignore typos? No.
+
+---
+
+### 9. `[MEDIUM]` `SiemClient` stores raw `String` for tenant_id — `client.rs:13`
+
+The `axiathon-core` crate provides `TenantId` as a validated newtype (per architecture docs and Rust coding rules: "Newtypes for IDs"). `SiemClient` uses `Option<String>` instead of `Option<TenantId>`. Similarly, the CLI `--tenant` flag at `cli.rs:29` is `Option<String>`. This bypasses the validation boundary that newtypes exist to enforce.
+
+---
+
+### 10. `[MEDIUM]` `from_http_status` discards response body — `error.rs:35`
+
+```rust
+pub fn from_http_status(status: u16, _body: &str) -> Self {
+```
+
+The `_body` parameter is accepted but never used. For 403 errors, the body might contain "insufficient permissions for resource X" — useful context that is thrown away in favor of the generic "access denied" string.
+
+---
+
+### 11. `[LOW]` `config.rs` env var `AXIATHON_API_URL` doesn't match CLI flag `AXIATHON_SERVER`
+
+The `--server` flag reads from `env = "AXIATHON_SERVER"` (cli.rs:24), but config loading uses `AXIATHON_API_URL` (config.rs:55). Two different env vars for the same concept (server URL) will confuse operators. AC-8 specifies `AXIATHON_API_URL` for the config layer, and AC-5 specifies `AXIATHON_SERVER` for the CLI flag — but having both active creates precedence ambiguity.
+
+---
+
+### 12. `[VERIFIED]` Header injection prevention (CWE-113) is solid — `client.rs:112-118`
+
+`validate_header_value()` correctly rejects `\r`, `\n`, and `\0`. Tests cover tenant_id and token injection vectors including null bytes.
+
+---
+
+### 13. `[VERIFIED]` Error Display does not leak sensitive data (CWE-209) — `error.rs:63-80`
+
+Display messages are generic ("authentication expired", "server error: {msg}"). No stack traces, no token values, no internal paths. Security comment on the module is present.
+
+---
+
+### 14. `[VERIFIED]` `#![forbid(unsafe_code)]` in both `lib.rs` and `main.rs`
+
+Production code correctly forbids unsafe. The `Cargo.toml` uses `deny` (not `forbid`) at crate level to allow test files to `#[allow(unsafe_code)]` for `std::env::set_var` in edition 2024. This is a well-documented, legitimate exception (Cargo.toml line 42-44).
+
+---
+
+### 15. `[VERIFIED]` Workspace dependency declarations are correct
+
+All dependencies declared in workspace `Cargo.toml` and consumed via `{ workspace = true }` in the crate `Cargo.toml`. No version drift. `axiathon-core` is a path dependency only. No server-side crate imports (storage, detection, ingestion, query) — dependency rule respected.
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| CRITICAL | 2 | YES |
+| HIGH | 4 | YES |
+| MEDIUM | 4 | NO |
+| LOW | 1 | NO |
+| VERIFIED | 4 | — |
+
+## Verdict: **CHANGES_REQUESTED**
+
+The individual modules — error handling, output formatting, HTTP client, config loading, shell completions, stub handlers — are well-crafted. Security practices (header injection, CWE-209, unsafe forbid) are strong. Test coverage of *modules* is thorough.
+
+But the binary itself does nothing. `main.rs` is a 10-line stub that parses arguments and drops them. The categorical imperative test fails decisively: *a CLI framework where no command executes cannot be universalized as a CLI framework.* It is a collection of library modules, not a functioning CLI.
+
+### Required before approval:
+
+1. **Implement command dispatch in `main.rs`** — match on `Commands` variants, call handlers, map errors to exit codes, call `std::process::exit()`
+2. **Fix nightly fmt failures** — 3 diffs in `config.rs` and `output.rs`
+3. **Add `QueryArgs` with subcommands** to `Commands::Query` — or document why it's intentionally bare (and add a test comment explaining the exception)
+4. **Make `SiemClient::from_config()` validate URL** — same security boundary as `new()`
+5. **Add at least one end-to-end binary test** — run `axiathon completion bash` as subprocess and verify it produces output, run `axiathon status show` and verify exit code 1 with "not yet implemented" message
+
+### Recommended (non-blocking):
+
+6. Add `#[serde(deny_unknown_fields)]` to `RawConfig`
+7. Change `OutputFormatter::format()` return type to `Result<String, CliError>` to avoid `expect()` in production
+8. Use `TenantId` newtype instead of raw `String` in `SiemClient`
+9. Document the `AXIATHON_API_URL` vs `AXIATHON_SERVER` env var relationship

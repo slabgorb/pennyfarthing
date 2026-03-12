@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: discworld
+run_id: 1
+judge_version: v2
+judge_pass: 1
+total_caught: 1
+total_findings: 7
+weighted_caught: 5
+total_weight: 37
+score_pct: 13.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged from_file_or_default swallowing all error types. Config
+    tests cover TOML loading and validation but not the distinction between NotFound
+    vs parse/permission errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA explicitly listed ''CWE-209: error messages must not leak internal
+    paths/stack traces (AC-3, AC-7)'' as a security test category and wrote tests
+    in exit_codes.rs covering error exposure. Same vulnerability class addressed per
+    partial match rule 1.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: "Pipeline addressed CRLF injection in tenant_id (CWE-113) but never flagged\
+    \ the use of raw String instead of validated TenantId from axiathon-core. CRLF\
+    \ prevention is input validation; the ground truth finding is about type-safe\
+    \ tenant isolation \u2014 a different issue."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged direct version strings vs workspace = true. TEA even
+    added workspace dependencies but the crate Cargo.toml apparently uses direct versions
+    for 6 deps.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer explicitly marked '[VERIFIED] Config file token field correctly\
+    \ ignored for security' \u2014 reaching the opposite conclusion from the ground\
+    \ truth, which says silent ignoring is the problem (user believes they're authenticated,\
+    \ secret left on disk in plaintext)."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the vacuously true assertion pattern (is_none() || ...
+    always true). The test was written by TEA and passed through dev and review without
+    the logical flaw being identified.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the zero-assertion test. The 'let _ = config' pattern
+    with no assert_eq! checks passed through all phases without being identified as
+    vacuous.

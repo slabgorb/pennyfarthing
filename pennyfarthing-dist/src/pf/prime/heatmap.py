@@ -85,18 +85,31 @@ HEADER_CATEGORIES: dict[str, str] = {
 
 # Primary agents (ordered by typical workflow position)
 PRIMARY_AGENTS = [
-    "sm", "tea", "dev", "reviewer", "architect",
-    "pm", "tech-writer", "ux-designer", "devops",
-    "orchestrator", "ba",
+    "sm",
+    "tea",
+    "dev",
+    "reviewer",
+    "architect",
+    "pm",
+    "tech-writer",
+    "ux-designer",
+    "devops",
+    "orchestrator",
+    "ba",
 ]
 
 SUBAGENTS = [
-    "sm-setup", "sm-finish", "sm-file-summary",
-    "reviewer-preflight", "testing-runner", "tandem-backseat",
+    "sm-setup",
+    "sm-finish",
+    "sm-file-summary",
+    "reviewer-preflight",
+    "testing-runner",
+    "tandem-backseat",
 ]
 
 
 # ── Data Model ──────────────────────────────────────────────────────
+
 
 @dataclass
 class Section:
@@ -122,6 +135,7 @@ class AgentHeatmap:
 
 
 # ── Attention Model ─────────────────────────────────────────────────
+
 
 def attention_score(position_pct: float) -> float:
     """U-shaped attention model based on "Lost in the Middle" (Liu et al. 2023).
@@ -158,6 +172,7 @@ def size_bar(tokens: int, max_tokens: int, width: int = 15) -> str:
 
 
 # ── Parser ──────────────────────────────────────────────────────────
+
 
 def _estimate_tokens(text: str) -> int:
     """Estimate tokens using ~4 characters per token."""
@@ -210,15 +225,17 @@ def parse_sections(raw_output: str) -> list[Section]:
         chars = len(text)
         tokens = _estimate_tokens(text)
         if tokens > 0 and current_section_name != "preamble":
-            sections.append(Section(
-                name=current_section_name,
-                start_line=current_section_start,
-                end_line=end_line,
-                chars=chars,
-                tokens=tokens,
-                category=current_section_category,
-                component=current_component,
-            ))
+            sections.append(
+                Section(
+                    name=current_section_name,
+                    start_line=current_section_start,
+                    end_line=end_line,
+                    chars=chars,
+                    tokens=tokens,
+                    category=current_section_category,
+                    component=current_component,
+                )
+            )
 
     tag_open_re = re.compile(r"^<([a-z][-a-z0-9]*)(?:\s[^>]*)?>$")
 
@@ -346,6 +363,7 @@ def _pretty_tag(tag: str) -> str:
 
 # ── Runner ──────────────────────────────────────────────────────────
 
+
 def capture_agent_output(agent_name: str) -> str:
     """Run pf agent start and capture raw output."""
     result = subprocess.run(
@@ -373,6 +391,7 @@ def build_heatmap(agent_name: str) -> AgentHeatmap:
 
 # ── Renderers ───────────────────────────────────────────────────────
 
+
 def render_detail(hm: AgentHeatmap) -> str:
     """Render detailed section-by-section heat map for one agent."""
     out: list[str] = []
@@ -380,7 +399,9 @@ def render_detail(hm: AgentHeatmap) -> str:
 
     out.append("=" * w)
     out.append(f"  {hm.agent.upper()} AGENT HEAT MAP — Section-by-Section with Attention Model")
-    out.append(f"  Total: ~{hm.total_tokens:,} tokens across {hm.sections[-1].end_line if hm.sections else 0} lines")
+    out.append(
+        f"  Total: ~{hm.total_tokens:,} tokens across {hm.sections[-1].end_line if hm.sections else 0} lines"
+    )
     out.append("=" * w)
     out.append("")
     out.append('  Attention model: U-shaped ("Lost in the Middle" — Liu et al. 2023)')
@@ -427,9 +448,20 @@ def render_detail(hm: AgentHeatmap) -> str:
 
     out.append("  CATEGORY SUMMARY:")
     out.append("  " + "─" * 75)
-    out.append(f"  {'Category':<14} {'Icon':>4}  {'Tokens':>6}  {'% Total':>7}  {'Sections':>8}  {'Avg Attn':>8}  {'Verdict'}")
+    out.append(
+        f"  {'Category':<14} {'Icon':>4}  {'Tokens':>6}  {'% Total':>7}  {'Sections':>8}  {'Avg Attn':>8}  {'Verdict'}"
+    )
 
-    cat_order = ["routing", "identity", "guardrail", "procedure", "reference", "persona", "shared", "learned"]
+    cat_order = [
+        "routing",
+        "identity",
+        "guardrail",
+        "procedure",
+        "reference",
+        "persona",
+        "shared",
+        "learned",
+    ]
     for cat in cat_order:
         if cat not in cats:
             continue
@@ -443,7 +475,9 @@ def render_detail(hm: AgentHeatmap) -> str:
             verdict = "attention dip ⚠️"
         else:
             verdict = "LOST IN MIDDLE ❌"
-        out.append(f"  {cat:<14} {icon:>4}  {d['tokens']:>6}  {pct:>6.1f}%  {d['sections']:>8}  {avg_attn:>8.2f}  {verdict}")
+        out.append(
+            f"  {cat:<14} {icon:>4}  {d['tokens']:>6}  {pct:>6.1f}%  {d['sections']:>8}  {avg_attn:>8.2f}  {verdict}"
+        )
 
     out.append("")
 
@@ -455,7 +489,9 @@ def render_detail(hm: AgentHeatmap) -> str:
     # Check for exit protocol duplication
     if any("exit" in n for n in agent_def_sections) and any("exit" in n for n in bg_sections):
         dups.append(("Exit protocol (agent def)", "BG: Agent Exit Protocol"))
-    if any("phase" in n for n in agent_def_sections) and any("phase" in n or "wrong" in n for n in bg_sections):
+    if any("phase" in n for n in agent_def_sections) and any(
+        "phase" in n or "wrong" in n for n in bg_sections
+    ):
         dups.append(("Phase Check (agent def)", "BG: Wrong Phase Detection"))
 
     if dups:
@@ -482,7 +518,16 @@ def render_summary(heatmaps: list[AgentHeatmap]) -> str:
     out.append("")
 
     # Gather per-agent category totals
-    components = ["routing", "identity", "guardrail", "procedure", "reference", "persona", "shared", "learned"]
+    components = [
+        "routing",
+        "identity",
+        "guardrail",
+        "procedure",
+        "reference",
+        "persona",
+        "shared",
+        "learned",
+    ]
     comp_labels = ["Route", "Ident", "Guard", "Proced", "Refer", "Perso", "Shared", "Learn"]
 
     # Find max per category across all agents
@@ -549,9 +594,17 @@ def render_summary(heatmaps: list[AgentHeatmap]) -> str:
             emoji = "🟡"
         else:
             emoji = "🔴"
-        ad = agent_cats[hm.agent].get("identity", 0) + agent_cats[hm.agent].get("guardrail", 0) + agent_cats[hm.agent].get("procedure", 0) + agent_cats[hm.agent].get("reference", 0) + agent_cats[hm.agent].get("routing", 0)
+        ad = (
+            agent_cats[hm.agent].get("identity", 0)
+            + agent_cats[hm.agent].get("guardrail", 0)
+            + agent_cats[hm.agent].get("procedure", 0)
+            + agent_cats[hm.agent].get("reference", 0)
+            + agent_cats[hm.agent].get("routing", 0)
+        )
         sc = agent_cats[hm.agent].get("learned", 0)
-        out.append(f"    {emoji} {hm.agent:<14} {unique:>4}/{total:>4} = {pct:>5.1f}%  (agent_def≈{ad}, sidecars={sc})")
+        out.append(
+            f"    {emoji} {hm.agent:<14} {unique:>4}/{total:>4} = {pct:>5.1f}%  (agent_def≈{ad}, sidecars={sc})"
+        )
 
     out.append("")
     out.append("  KEY: 🟢 >65% unique  🟡 55-65%  🔴 <55% (diluted by boilerplate)")
@@ -562,7 +615,9 @@ def render_summary(heatmaps: list[AgentHeatmap]) -> str:
     if shared_tokens:
         avg_shared = sum(shared_tokens) // len(shared_tokens)
         min_total = min(hm.total_tokens for hm in heatmaps)
-        out.append(f"  BOILERPLATE: ~{avg_shared} shared tokens per agent = {avg_shared/min_total*100:.0f}% of smallest ({min_total} tok)")
+        out.append(
+            f"  BOILERPLATE: ~{avg_shared} shared tokens per agent = {avg_shared / min_total * 100:.0f}% of smallest ({min_total} tok)"
+        )
 
     return "\n".join(out)
 
@@ -572,11 +627,14 @@ def render_csv(heatmaps: list[AgentHeatmap]) -> str:
     rows = ["agent,section,component,category,tokens,start_line,end_line"]
     for hm in heatmaps:
         for s in hm.sections:
-            rows.append(f"{hm.agent},{s.name},{s.component},{s.category},{s.tokens},{s.start_line},{s.end_line}")
+            rows.append(
+                f"{hm.agent},{s.name},{s.component},{s.category},{s.tokens},{s.start_line},{s.end_line}"
+            )
     return "\n".join(rows)
 
 
 # ── CLI Entry Point ─────────────────────────────────────────────────
+
 
 def run_heatmap(
     agent_name: str | None = None,
@@ -599,21 +657,23 @@ def run_heatmap(
             elif json_output:
                 data = []
                 for hm in heatmaps:
-                    data.append({
-                        "agent": hm.agent,
-                        "total_tokens": hm.total_tokens,
-                        "sections": [
-                            {
-                                "name": s.name,
-                                "component": s.component,
-                                "category": s.category,
-                                "tokens": s.tokens,
-                                "start_line": s.start_line,
-                                "end_line": s.end_line,
-                            }
-                            for s in hm.sections
-                        ],
-                    })
+                    data.append(
+                        {
+                            "agent": hm.agent,
+                            "total_tokens": hm.total_tokens,
+                            "sections": [
+                                {
+                                    "name": s.name,
+                                    "component": s.component,
+                                    "category": s.category,
+                                    "tokens": s.tokens,
+                                    "start_line": s.start_line,
+                                    "end_line": s.end_line,
+                                }
+                                for s in hm.sections
+                            ],
+                        }
+                    )
                 print(json.dumps(data, indent=2))
             else:
                 print(render_summary(heatmaps))
@@ -633,7 +693,8 @@ def run_heatmap(
                             "end_line": s.end_line,
                             "attention": round(
                                 attention_score(
-                                    (sum(ss.tokens for ss in hm.sections[:j]) + s.tokens / 2) / hm.total_tokens
+                                    (sum(ss.tokens for ss in hm.sections[:j]) + s.tokens / 2)
+                                    / hm.total_tokens
                                 ),
                                 3,
                             ),

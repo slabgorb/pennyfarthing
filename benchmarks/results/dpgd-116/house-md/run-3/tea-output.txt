@@ -1,0 +1,28 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI binary with substantial logic across command parsing, output formatting, HTTP client, config loading, and error handling.
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `tests/cli_structure.rs` | 22 | AC-1 (command groups), AC-2 (help), AC-5 (global flags), AC-6 (derive) |
+| `tests/exit_codes.rs` | 13 | AC-3 (exit codes 0/1/2/3/4 via `CliError::exit_code()`) |
+| `tests/output_format.rs` | 16 | AC-4 (`OutputFormatter` trait, table/json/csv, ANSI, metadata) |
+| `tests/siem_client.rs` | 12 | AC-7 (`SiemClient` headers, HTTP status mapping) |
+| `tests/config_loading.rs` | 11 | AC-8 (TOML loading, env overrides, defaults, validation) |
+| `tests/shell_completion.rs` | 7 | AC-9 (bash/zsh/fish/powershell, stdout/stderr split) |
+| `tests/stub_handlers.rs` | 3 | AC-10 (stub messages with story references) |
+| `tests/security.rs` | 9 | CWE-209, header injection, credential safety, URL validation |
+
+**Tests Written:** 93 tests covering all 10 ACs
+**Status:** RED (6 of 8 test files fail to compile; 2 compile but fail at runtime)
+
+**Security coverage:**
+- Header injection via CRLF in tenant ID and token
+- CWE-209 error exposure (paths, stack traces in Display)
+- Token not stored in config file
+- Non-HTTP URL rejection
+- Empty base URL handling
+
+**Handoff:** To Dev for implementation of `cli.rs`, `error.rs`, `output.rs`, `client.rs`, `config.rs`, `commands/*`, and `main.rs`.

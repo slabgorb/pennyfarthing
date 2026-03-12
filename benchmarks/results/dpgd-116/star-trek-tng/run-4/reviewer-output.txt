@@ -1,0 +1,100 @@
+Now I have a complete picture. Let me compile the review.
+
+---
+
+# Story 6.1 Code Review — Commander Spock's Analysis
+
+*Fascinating. I have applied rigorous Vulcan logic to every line of this implementation. Let me present my findings.*
+
+## Preflight Status
+
+- **Tests:** 126/126 passing across 7 test suites
+- **Clippy:** Clean, zero warnings
+- **Nightly fmt:** **FAILING** — multiple formatting differences detected
+
+---
+
+## Findings
+
+### `[HIGH]` Nightly rustfmt check fails — `config.rs`, `output.rs`, multiple test files
+
+Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." The nightly fmt check shows ~20 formatting differences across `config.rs`, `output.rs`, `cli_structure_tests.rs`, `config_tests.rs`, `exit_code_tests.rs`, `output_format_tests.rs`, and `siem_client_tests.rs`. This will fail CI.
+
+### `[HIGH]` Missing files: `main.rs`, `commands/completion.rs`, `commands/init.rs` — at `crates/axiathon-client/src/`
+
+The story spec explicitly requires these files. AC-9 says `axiathon completion <shell>` must be functional (not a stub), and AC-1 says `init` must be functional. Currently:
+- No `main.rs` binary entry point exists — the crate has no `[[bin]]` target and cannot produce the `axiathon` binary
+- No `commands/completion.rs` — completion logic is in `lib.rs::generate_completions()` but there's no command handler to wire it
+- No `commands/init.rs` — no first-time setup handler exists
+- `commands/mod.rs` does not re-export `completion` or `init` modules
+
+Without `main.rs`, the entire CLI is a library with no runnable binary. This is a critical structural gap — AC-3 (exit codes via `std::process::exit()` in main), AC-10 (stub dispatch), and AC-9 (completion to stdout, instructions to stderr) all require `main.rs` to function.
+
+### `[MEDIUM]` `--server` flag missing `env = "AXIATHON_SERVER"` annotation — at `cli.rs:27`
+
+AC-5 requires: "`--server` supports `AXIATHON_SERVER` env var." The test file at `cli_structure_tests.rs:437` even documents this requirement in a comment but then does NOT test it, noting it would require subprocess testing. The actual `cli.rs:27` `--server` field has no `env = "AXIATHON_SERVER"` attribute on the clap arg. This means the env var integration described in AC-5 is simply missing.
+
+### `[MEDIUM]` `validate_tenant_id()` exists but is never called — at `client.rs:51`
+
+`SiemClient::validate_tenant_id()` is a standalone public method that validates against header injection (CWE-113), but it is never invoked during `SiemClient::new()` or anywhere else in the codebase. A malicious tenant ID can be passed to the constructor without validation. The validation should be called in `new()` or at the point where `--tenant` is consumed. *Dr. McCoy would say: "Dammit Jim, what good is a safety check nobody uses!"*
+
+### `[MEDIUM]` `toml` version mismatch: spec says 0.9, workspace has 0.8 — at `Cargo.toml:49`
+
+The story spec states `toml 0.9` as a key dependency. The workspace `Cargo.toml` declares `toml = "0.8"`. While 0.8 works functionally, this diverges from the documented architecture. Either update the dependency or update the spec.
+
+### `[MEDIUM]` `keyring` dependency missing from workspace and crate — at `Cargo.toml`
+
+AC-8 specifies: "Tokens in OS keychain, NOT config file" and the story's Technical Guardrails list `keyring 3` as a key dependency. It is absent from both the workspace `Cargo.toml` and `axiathon-client/Cargo.toml`. While login implementation is deferred to Story 9.1, the dependency should at minimum be declared in the workspace for forward compatibility, as the story spec lists it as a required dependency.
+
+### `[MEDIUM]` `CliError` and `Commands` enums lack `#[non_exhaustive]` — at `error.rs:7`, `cli.rs:43`
+
+Per `rust.md` rules: "`#[non_exhaustive]` on enums that will grow — forces callers to handle future variants." Both `CliError` and `Commands` will certainly grow as new stories add error variants and commands. Missing this annotation means downstream consumers won't be forced to handle wildcards.
+
+### `[LOW]` `expect()` calls in output formatters — at `output.rs:33`, `output.rs:82`, `output.rs:86`, `output.rs:108-114`
+
+Per `rust.md`: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` calls in `output.rs` have messages, which is acceptable, but they are not truly actionable: `"completion script should be valid UTF-8"` (lib.rs:33), `"CSV header write"` (output.rs:108). These should either propagate errors via `Result` or have messages that tell the operator what to do. This is a minor concern given they represent "should never fail" invariants.
+
+### `[LOW]` `CsvFormatter` has redundant `Default` impl — at `output.rs:93-97`
+
+`CsvFormatter` manually implements `Default` when `#[derive(Default)]` would suffice (it's a unit struct). Minor style issue.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present at `lib.rs:2`
+
+### `[VERIFIED]` `serde(deny_unknown_fields)` on `ClientConfig` — config with unknown fields (including `token`) is rejected at `config.rs:11`
+
+### `[VERIFIED]` Token not exposed in `Debug` output — custom `Debug` impl on `SiemClient` shows `has_token` boolean, not the actual value at `client.rs:14-22`
+
+### `[VERIFIED]` HTTP status code mapping covers all specified codes (401/403/404/429/5xx) at `error.rs:54-63`
+
+### `[VERIFIED]` Exit codes 3 (auth) and 4 (authz) correctly mapped at `error.rs:47-48`
+
+### `[VERIFIED]` All stub handlers return `NotImplemented` with correct Story references — cross-checked each module
+
+### `[VERIFIED]` No server-side crate imports — `axiathon-client` depends only on `axiathon-core` per the dependency rule
+
+### `[VERIFIED]` Plural noun naming (`rules`, `alerts`) correctly used per architecture doc at `cli.rs:49,54`
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 0 | — |
+| High | 2 | YES |
+| Medium | 5 | No |
+| Low | 2 | No |
+| Verified | 8 | — |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two High-severity findings block approval:
+
+1. **Nightly fmt fails** — must be clean per gotchas sidecar policy
+2. **No `main.rs` binary entry point** — the crate cannot produce the `axiathon` binary, and several ACs (exit code dispatch, stderr routing, completion output routing) are structurally impossible without it. Missing `completion.rs` and `init.rs` command handlers compound this.
+
+The implementation quality of what *is* present is solid — the clap structure, output formatters, error types, config loading, and security measures (header injection prevention, token redaction, `deny_unknown_fields`) are well-crafted. But the missing binary entry point means this is a library, not a CLI tool. Fix the two High issues and address the Medium findings, and this will be ready for approval.
+
+*As I have often observed, Captain: the needs of the codebase outweigh the convenience of a quick approval.*

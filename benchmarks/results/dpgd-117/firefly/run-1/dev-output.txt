@@ -1,0 +1,17 @@
+## Summary
+
+All 55 tests pass, clippy is clean. Here's what I built:
+
+**Files Created/Modified:**
+
+| File | Purpose |
+|------|---------|
+| `crates/axiathon-server/Cargo.toml` | Added `chrono` and `uuid` dependencies |
+| `crates/axiathon-server/src/lib.rs` | App state, router construction, `create_app()` / `create_app_with_config()` |
+| `crates/axiathon-server/src/config.rs` | `ServerConfig` with configurable rate limits |
+| `crates/axiathon-server/src/envelope.rs` | `Envelope<T>` with exactly 3 fields (`data`, `errors`, `meta`), RFC 9457 error entries, UUID request IDs, ISO 8601 timestamps |
+| `crates/axiathon-server/src/auth.rs` | Bearer token + API key authentication with test fixtures for valid/expired/wrong-scope/revoked/per-tenant tokens |
+| `crates/axiathon-server/src/rate_limit.rs` | Per-tenant rate limiter with configurable limits |
+| `crates/axiathon-server/src/handlers.rs` | Route handlers: health (no auth), healthcheck (deprecated), events (GET/POST), alerts, rules, queries, 404 fallback |
+
+**Test Results:** 55/55 passing across 6 test files (api_endpoints, response_envelope, auth_middleware, rate_limiting, api_versioning, security)

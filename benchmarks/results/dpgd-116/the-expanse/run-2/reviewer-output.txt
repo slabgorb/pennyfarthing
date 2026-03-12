@@ -1,0 +1,100 @@
+Right. Now I have the full picture. Let me deliver the review.
+
+---
+
+# Story 6.1 Code Review — Chrisjen Avasarala
+
+*"Let me be very clear about what I found, because I don't have time for pleasantries and neither does this codebase."*
+
+## Observations
+
+### [HIGH] `main.rs` is a placeholder — no dispatch, no exit codes, no error handling at `main.rs:1-6`
+
+The `main.rs` is literally `println!("axiathon CLI")`. There is no clap parsing, no command dispatch, no `std::process::exit()` with `CliError::exit_code()`, no tracing init. AC-3 requires `main.rs` to catch errors and call `std::process::exit()`. AC-10 requires stubs to print "not yet implemented (Story X.Y)" and exit with code 1. None of this works because `main()` doesn't call into `Cli::parse()` or dispatch to any command handler. The binary is a dead end.
+
+**Impact:** The `axiathon` binary does literally nothing. Running `axiathon status` prints "axiathon CLI" and exits 0. Every AC that involves running the actual binary is unverifiable through the binary itself.
+
+### [HIGH] Missing command module files — 10 of 11 command modules absent at `commands/mod.rs:1`
+
+The story spec requires: `query.rs`, `rules.rs`, `alerts.rs`, `ingest.rs`, `config.rs`, `status.rs`, `tenant.rs`, `login.rs`, `completion.rs`, `init.rs`. Only `completion.rs` exists. The `mod.rs` only exports `completion`. There are no stub handler functions for any command group. AC-10 cannot be satisfied — there are no stub handlers to call, only a `CliError::NotImplemented` variant that exists in a vacuum.
+
+**Impact:** No command dispatch exists. The tests for stub handlers (AC-10) only test that `CliError::NotImplemented` formats correctly — they never test that running `axiathon status` actually produces a stub error. These are unit tests of the error type, not integration tests of the command flow.
+
+### [HIGH] `cargo +nightly fmt --all --check` fails — 13 formatting diffs across 7 files
+
+Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." It fails. Import ordering issues in `client.rs`, `completion.rs`, `config.rs`, and multiple test files.
+
+### [MEDIUM] CWE-209: `ServerError` passes through arbitrary strings with no sanitization at `error.rs:8-9`
+
+`CliError::ServerError(String)` uses `#[error("server error: {0}")]` which passes through whatever string was given. The test `server_error_display_does_not_include_stack_traces` at `exit_codes.rs:111-119` is **vacuous** — it only asserts `!display.is_empty()`, not that the panic trace is absent from the display. The comment says "Display should wrap or sanitize" but the test doesn't verify that. An attacker-controlled 5xx response body would be printed verbatim to the operator.
+
+### [MEDIUM] Config silently accepts unknown fields — no `#[serde(deny_unknown_fields)]` at `config.rs:8`
+
+`RawConfig` uses `#[derive(Deserialize, Default)]` without `#[serde(deny_unknown_fields)]`. A typo like `sever_url` instead of `server_url` would silently use the default. This is a classic configuration footgun. The test suite has no test for this case.
+
+### [MEDIUM] Config `with_env_override` silently ignores invalid timeout values at `config.rs:72-73`
+
+If `AXIATHON_TIMEOUT` is set to "abc", the `parse::<u64>()` fails and the value is silently ignored. Same for `with_cli_override`. No warning, no error. An operator could set an env var and wonder why it has no effect.
+
+### [MEDIUM] `OutputFormatter` uses `expect()` in production code at `output.rs:56,61-62,65-66`
+
+Four `expect()` calls in `format_json` and `format_csv`. The rust rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` messages like `"write CSV headers"` are not actionable — they don't tell an operator what to do. More importantly, these methods return `String` instead of `Result<String, CliError>`, making error propagation impossible.
+
+### [MEDIUM] `--tenant` accepts raw `String` instead of validated `TenantId` at `cli.rs:29`
+
+The rust rules require "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag accepts `Option<String>` and `SiemClient::with_tenant` takes `&str`. No validation, no type safety. `axiathon-core` has a `TenantId` type that should be used.
+
+### [MEDIUM] JSON output includes random UUID as `request_id` at `output.rs:50`
+
+`Uuid::new_v4()` generates a random request ID that has no correlation to any actual server request. This is misleading — it suggests the output is tracking a real request. Tests don't verify the metadata structure has `request_id`, `timestamp`, AND `api_version` — the test at `output_format.rs:74-77` uses `||` so finding either `request_id` or `metadata` passes.
+
+### [LOW] No `after_help` usage examples on any command struct — AC-2 partially unmet at `cli.rs:4-84`
+
+AC-2 requires "include `after_help` usage examples for each command group." None of the `#[command(...)]` attributes include `after_help`. The help tests only verify output is non-empty, not that examples are present.
+
+### [LOW] `AXIATHON_SERVER` env var not wired — AC-5 requires it at `cli.rs:24-25`
+
+AC-5 says "`--server` supports `AXIATHON_SERVER` env var." The `--server` arg has no `env = "AXIATHON_SERVER"` attribute. Clap supports this natively via `#[arg(long, global = true, env = "AXIATHON_SERVER")]`.
+
+### [LOW] `init` command has no handler, even though story says it should be functional at `cli.rs:83`
+
+The story says "Shell completion generation (functional, not stub)" and "`axiathon init` first-time setup (functional, not stub)." Completion is functional. Init has zero implementation — not even a stub error handler.
+
+### [VERIFIED] Token redaction in `Debug` impl — `client.rs:14` correctly replaces token with `[REDACTED]`
+
+### [VERIFIED] Header injection prevention — `client.rs:76-83` checks for `\r`, `\n`, `\0`
+
+### [VERIFIED] Config token field intentionally ignored — `config.rs:11-12` captures and discards, `config.rs:64-66` always returns `None`
+
+### [VERIFIED] `#[non_exhaustive]` on `CliError` — `error.rs:7`
+
+### [VERIFIED] `#![forbid(unsafe_code)]` on both `lib.rs:2` and `main.rs:1`
+
+### [VERIFIED] Workspace dependencies properly declared — `Cargo.toml` uses workspace refs for all deps
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| HIGH     | 3     | YES     |
+| MEDIUM   | 5     | NO      |
+| LOW      | 3     | NO      |
+| VERIFIED | 5     | —       |
+
+The HIGH findings are:
+1. **`main.rs` is empty** — no dispatch, no exit code handling, the binary doesn't work
+2. **10 of 11 command modules missing** — no stub handlers, AC-10 is decorative
+3. **Nightly fmt fails** — per project gotchas, this blocks approval
+
+*"The library code is reasonable — the types are right, the security patterns are there, the tests are thorough for what they test. But nobody wired it together. You've built the engine and left it on the shop floor. The car has no ignition."*
+
+Arjun would note: the test quality is genuinely good for unit-level coverage, and the architecture is clean. This is close — but the dispatch gap means the binary is non-functional.
+
+## Verdict: **CHANGES_REQUESTED**
+
+The three HIGH findings must be addressed:
+1. Wire `main.rs` to parse CLI args, dispatch commands, and map errors to exit codes
+2. Add stub handler modules (even minimal ones returning `CliError::NotImplemented`)
+3. Fix nightly fmt — `cargo +nightly fmt --all`

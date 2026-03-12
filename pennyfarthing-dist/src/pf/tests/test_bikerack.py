@@ -557,27 +557,32 @@ class TestAlreadyRunning:
         (tmp_path / "bikerack-pid").write_text("12345")
 
         with patch("pf.bikerack.launcher.is_process_alive", return_value=True):
-            running, pid, port = is_already_running(tmp_path)
+            with patch("pf.bikerack.launcher._probe_wheelhub", return_value=True):
+                running, pid, port = is_already_running(tmp_path)
 
         assert running is True
         assert pid == 12345
         assert port == 2898
 
     def test_not_running_when_no_files(self, tmp_path: Path) -> None:
-        """is_already_running should return False when no files exist."""
-        running, pid, port = is_already_running(tmp_path)
+        """is_already_running should return False when no files and default port dead."""
+        with patch("pf.bikerack.launcher._probe_wheelhub", return_value=False):
+            running, pid, port = is_already_running(tmp_path)
 
         assert running is False
         assert pid is None
         assert port is None
 
     def test_not_running_when_stale_pid(self, tmp_path: Path) -> None:
-        """is_already_running should return False when PID is dead (stale)."""
+        """is_already_running should return False when PID is dead and default port dead."""
         (tmp_path / ".bikerack-port").write_text("2898")
         (tmp_path / "bikerack-pid").write_text("99999")
 
+        # is_process_alive=False short-circuits the both-files check (no probe for 2898),
+        # then falls through to default port probe
         with patch("pf.bikerack.launcher.is_process_alive", return_value=False):
-            running, pid, port = is_already_running(tmp_path)
+            with patch("pf.bikerack.launcher._probe_wheelhub", return_value=False):
+                running, pid, port = is_already_running(tmp_path)
 
         assert running is False
 
@@ -589,7 +594,8 @@ class TestAlreadyRunning:
         pid_file.write_text("99999")
 
         with patch("pf.bikerack.launcher.is_process_alive", return_value=False):
-            is_already_running(tmp_path)
+            with patch("pf.bikerack.launcher._probe_wheelhub", return_value=False):
+                is_already_running(tmp_path)
 
         assert not port_file.exists(), "Stale port file should be cleaned up"
         assert not pid_file.exists(), "Stale PID file should be cleaned up"
@@ -609,8 +615,7 @@ class TestExitCodes:
         (tmp_path / "bikerack-pid").write_text("12345")
 
         with patch("pf.bikerack.launcher.is_process_alive", return_value=True):
-            with patch("pf.bikerack.launcher.is_already_running",
-                       return_value=(True, 12345, 2898)):
+            with patch("pf.bikerack.launcher.is_already_running", return_value=(True, 12345, 2898)):
                 # The start flow should detect already-running and exit 2
                 # This tests the logic, not the full CLI flow
                 running, pid, port = is_already_running(tmp_path)

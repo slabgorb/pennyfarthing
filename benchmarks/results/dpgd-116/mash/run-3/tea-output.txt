@@ -1,0 +1,28 @@
+RED confirmed. Here's the TEA Assessment.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a feature story with 10 acceptance criteria requiring behavioral validation.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_framework_integration.rs` | 30 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (derive macros) |
+| `tests/error_exit_codes.rs` | 14 | AC-3 (exit codes 0-4), CWE-209 error info disclosure |
+| `tests/output_formatting.rs` | 14 | AC-4 (table/json/csv), CSV escaping, edge cases |
+| `tests/siem_client.rs` | 16 | AC-7 (headers, HTTP mapping), header injection prevention |
+| `tests/config_loading.rs` | 11 | AC-8 (TOML loading, env overrides, XDG path, validation) |
+| `tests/shell_completion.rs` | 7 | AC-9 (bash/zsh/fish/powershell generation) |
+| `tests/stub_handlers.rs` | 12 | AC-10 (NotImplemented with story refs) |
+
+**Tests Written:** 104 tests covering 10 ACs
+**Status:** RED (failing — compile errors, all expected modules missing)
+
+**Security tests included:**
+- Header injection via CRLF in tenant/token values
+- Null byte injection in tenant ID
+- CWE-209: error Display leaking paths/stack traces
+- Token storage in config files (must use OS keychain)
+
+**Handoff:** To Dev for implementation (GREEN phase)

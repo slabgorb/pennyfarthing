@@ -1,0 +1,109 @@
+I have now examined every line of every file. Let me deliver the verdict.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*"The quality of mercy is not strained; it droppeth as the gentle rain from heaven." Yet today, mercy must wait while justice examines the evidence.*
+
+## Preflight
+
+- `cargo test -p axiathon-client`: **All 72 tests pass**
+- `cargo clippy -p axiathon-client -- -D warnings`: **Clean**
+- `cargo +nightly fmt --all --check`: **3 formatting diffs** (import ordering in config.rs, fn signature in completion.rs, string wrapping in output.rs)
+
+---
+
+## Findings
+
+### [HIGH] Nightly `rustfmt` check fails — 3 files have formatting violations
+
+Per `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."* Three files fail:
+- `crates/axiathon-client/src/config.rs` — import ordering (std before crate)
+- `crates/axiathon-client/src/commands/completion.rs` — fn signature formatting
+- `crates/axiathon-client/src/output.rs` — long string wrapping
+
+This is an explicit gotcha rule. Must be fixed before merge.
+
+### [HIGH] No `main.rs` — binary entry point is missing
+
+The story scope says to create `main.rs` with "binary entry point, tracing init, dispatch, exit codes." No `main.rs` exists. The `Cargo.toml` also has no `[[bin]]` section. The crate is library-only — it cannot produce the `axiathon` binary. This means:
+- No exit code dispatch (`std::process::exit(err.exit_code())`)
+- No tracing initialization
+- No credential loading from keychain before Tokio runtime (AC-7/AC-8 requirement)
+- The crate doesn't actually build a binary
+
+This is a fundamental deliverable gap — AC-3 (exit codes actually applied) and AC-7 (SiemClient wiring) depend on it.
+
+### [MEDIUM] `--format` flag is `Option<String>` instead of `Option<OutputFormat>` — type safety gap
+
+At `cli.rs:24`, the format flag is `Option<String>`. The `OutputFormat` enum exists with a proper `FromStr` implementation. Clap supports `value_parser` with `FromStr` types natively. Using raw `String` means invalid values like `--format xml` are accepted at parse time and only fail later (if at all). This defeats clap's built-in validation and produces worse help text (no enumerated values shown).
+
+### [MEDIUM] `RawConfig` silently ignores unknown fields — config typos go undetected
+
+At `config.rs:8`, `RawConfig` lacks `#[serde(deny_unknown_fields)]`. A user who writes `api_Url` (capitalized) or `timout` (typo) gets silent default behavior instead of an error. The test `config_does_not_store_tokens` at `config_loading.rs:157` demonstrates this: writing `token = "secret"` to the config succeeds silently. While the `has_file_token()` method returns `false`, the token value is parsed and discarded without warning, which could confuse operators who think their token is being used.
+
+### [MEDIUM] `SiemClient::new()` accepts arbitrary URL schemes without validation
+
+At `client.rs:14`, `new()` takes any string as `base_url` with no scheme validation. The security test at `security.rs:125` (`siem_client_rejects_non_http_schemes`) is **vacuous** — it catches a panic, ignores the result with `let _ = result`, and passes regardless of outcome. The `SiemClient` happily accepts `file:///etc/passwd` as a base URL. While `reqwest` won't read local files, this is a defense-in-depth miss per AC-7.
+
+### [MEDIUM] `output.rs` uses `.expect()` in production code — violates Rust rules
+
+At `output.rs:60,67,68,69,70`, the `as_json` and `as_csv` methods use `.expect()` four times. The project's `rust.md` rules state: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message."* While `expect()` with a message is allowed, these are in infallible-looking paths. The bigger concern: `as_json` at line 58 uses `.unwrap_or_default()` on `SystemTime::now()` which silently produces `0` if the system clock is before UNIX epoch — not a real-world issue, but `expect()` would be clearer about intent.
+
+### [MEDIUM] `toml` version mismatch — workspace declares `0.8`, story specifies `0.9`
+
+The workspace `Cargo.toml` declares `toml = "0.8"` but the story's Technical Guardrails specify `toml` 0.9. Either the story or the implementation needs to be reconciled. Using 0.8 may lack features expected by later stories.
+
+### [LOW] `tenant` flag is `Option<String>` — should use `TenantId` newtype
+
+At `cli.rs:36`, the `--tenant` flag is `Option<String>`. The project's `rust.md` rules mandate newtypes for IDs: *"Newtypes for IDs: `TenantId(String)`."* `axiathon-core` exports `TenantId`. Using raw `String` here bypasses validation at the trust boundary (CLI input).
+
+### [LOW] `init.rs` has no functionality — story says it should be functional
+
+AC-10 says *"Shell completion generation (functional, not stub)"* and *"`axiathon init` first-time setup (functional, not stub)."* The `completion.rs` is functional, but `init.rs` is just an empty struct with no `stub_message()` or `stub_error()`, and no actual init logic. It's neither a proper stub (no message/error) nor functional.
+
+### [VERIFIED] CWE-209 defense is correctly implemented
+
+`ServerError(String)` stores the raw detail but `#[error("server error")]` displays a generic message. Tests at `security.rs:12-52` and `exit_codes.rs:122-133` confirm internal paths, stack traces, and SQL are never leaked via `Display`.
+
+### [VERIFIED] Header injection prevention (CWE-113) is handled
+
+`SiemClient::get()` at `client.rs:42-49` uses `HeaderValue::from_str()` which rejects values containing `\r\n`. Tests at `siem_client.rs:226-255` verify CRLF injection in both token and tenant ID produces errors.
+
+### [VERIFIED] Exit code mapping is correct and complete
+
+`CliError::exit_code()` maps AuthenticationExpired→3, Unauthorized→4, all others→1. Tests are thorough with full variant coverage.
+
+### [VERIFIED] `#[non_exhaustive]` is present on `CliError`
+
+Correctly applied at `error.rs:11`, tested at `security.rs:57-73`.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` is present in `lib.rs`
+
+Test code correctly uses `#![allow(unsafe_code)]` only where needed for `set_var`.
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 2 |
+| Medium | 5 |
+| Low | 2 |
+| Verified | 5 |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two High findings block approval:
+
+1. **Nightly fmt failures** — explicit gotcha rule violation, trivially fixable with `cargo +nightly fmt --all`
+2. **Missing `main.rs`** — the crate cannot produce a binary. Without it, exit code dispatch, tracing init, and credential loading are untested end-to-end. This is a core deliverable of Story 6.1.
+
+The Medium findings (format type safety, unknown field handling, URL scheme validation, `expect()` usage, toml version) should be addressed but do not individually block.
+
+*"I am not bound to please thee with my answer."* Fix the two High issues, run `cargo +nightly fmt`, and return for re-review.

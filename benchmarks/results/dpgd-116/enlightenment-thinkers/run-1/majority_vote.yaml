@@ -1,0 +1,87 @@
+judge_method: majority_vote
+n_judges: 3
+majority_threshold: 2
+judge_version: v2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: ''
+  votes: 0/3
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F3 flags CWE-209: ''ServerError Display leaks internal detail
+    via Debug... If any code path logs or prints via {:?}, the detail leaks.'' Same
+    vulnerability class (CWE-209 information exposure). TEA also wrote security.rs
+    tests for ''CWE-209 error exposure.'''
+  votes: 3/3
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote siem_client.rs tests including 'header injection prevention.'
+    Dev implemented token.replace(['\r', '\n'], "") sanitization. Reviewer flagged
+    F5 about header injection tests not verifying behavior. Same vulnerability class
+    CWE-113, though the specific instance flagged was token rather than tenant_id.
+  votes: 3/3
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: ''
+  votes: 0/3
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F7 explicitly flags: ''RawConfig silently ignores unknown fields...
+    If an operator puts tokken = "secret" (typo) in their config, it''s silently ignored...
+    Should use #[serde(deny_unknown_fields)]'' and specifically notes ''a token field
+    in the TOML is silently accepted and ignored rather than warning the user.'''
+  votes: 3/3
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer F4 flags a vacuous test: 'url.starts_with(\"http://\") || url.starts_with(\"\
+    https://\") || url == \"javascript:alert(1)\" \u2014 This is a vacuous test \u2014\
+    \ it literally allows the javascript: scheme in the success branch.' Same category\
+    \ (vacuous test with always-true assertion), different instance."
+  votes: 3/3
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged multiple instances of tests with no meaningful assertions:
+    F4 (vacuous security test), F5 (''asserts nothing about whether the injection
+    was stopped... tests would pass even if with_token() did nothing''), F11 (''tests
+    construct CliError... and then check if string contains "6.2". This tests thiserror''s
+    Display derive, not actual command dispatch''). Same category of inadequate/zero-value
+    test assertions.'
+  votes: 3/3
+individual_scores:
+- 67.6
+- 67.6
+- 67.6

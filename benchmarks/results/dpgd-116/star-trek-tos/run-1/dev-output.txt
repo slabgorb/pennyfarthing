@@ -1,0 +1,25 @@
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `crates/axiathon-client/src/lib.rs` — module declarations and public API re-exports
+- `crates/axiathon-client/src/main.rs` — binary entry point (placeholder)
+- `crates/axiathon-client/src/cli.rs` — `Cli` (Parser), `Commands` (Subcommand), `OutputFormat` (ValueEnum), subcommand arg types
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with `#[non_exhaustive]`, exit code mapping, thiserror Display
+- `crates/axiathon-client/src/output.rs` — `OutputFormatter` trait, `TableFormatter` (comfy-table), `JsonFormatter` (serde_json + metadata), `CsvFormatter` (csv crate)
+- `crates/axiathon-client/src/client.rs` — `SiemClient` HTTP wrapper with CRLF sanitization, status code mapping, builder pattern
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML parsing, env var overrides, validation, `deny_unknown_fields`
+- `crates/axiathon-client/src/stubs.rs` — stub message functions with story references
+- `crates/axiathon-client/src/completion.rs` — shell completion generation via `clap_complete`
+- `Cargo.toml` — added `env` feature to clap, changed workspace lint `unsafe_code` from `forbid` to `deny` (production code retains `#![forbid(unsafe_code)]`)
+- `crates/axiathon-client/tests/cli_parsing.rs` — added `#![allow(unsafe_code)]` and `unsafe` blocks for `set_var`/`remove_var` (Rust 2024 edition)
+- `crates/axiathon-client/tests/config_loading.rs` — added `#![allow(unsafe_code)]`, `unsafe` blocks, and `ENV_LOCK` mutex to prevent env var race conditions
+
+**Tests:** 127/127 passing (GREEN)
+**Clippy:** Clean (0 warnings)
+**Branch:** HEAD (not yet committed)
+
+**Notes:**
+- Workspace lint changed from `forbid` to `deny` for `unsafe_code` because `std::env::set_var` is unsafe in Rust 2024 edition. Production source files retain `#![forbid(unsafe_code)]` for the same security guarantee.
+- Env var tests required a static Mutex to prevent race conditions when running in parallel.

@@ -1,0 +1,33 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is core CLI framework — foundational code requiring full test coverage across all 10 ACs.
+
+**Test Files:**
+- `crates/axiathon-client/tests/cli_structure.rs` — AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive)
+- `crates/axiathon-client/tests/error_exit_codes.rs` — AC-3 (exit codes 0-4), CWE-209 security
+- `crates/axiathon-client/tests/output_formatting.rs` — AC-4 (table/json/csv, metadata, escaping)
+- `crates/axiathon-client/tests/siem_client.rs` — AC-7 (HTTP wrapper, header injection, token safety)
+- `crates/axiathon-client/tests/config_loading.rs` — AC-8 (TOML loading, env overrides, precedence, token rejection)
+- `crates/axiathon-client/tests/completion_and_stubs.rs` — AC-9 (shell completions), AC-10 (stub handlers)
+
+**Tests Written:** 87 tests covering all 10 ACs
+**Status:** RED (failing to compile — modules `cli`, `error`, `output`, `client`, `config`, `commands` don't exist yet)
+
+**Test coverage by AC:**
+| AC | Count | What's tested |
+|----|-------|--------------|
+| AC-1 | 14 | All 10 command groups parse, help lists all, plural nouns, no server commands |
+| AC-2 | 10 | Each subcommand `--help` renders without panic |
+| AC-3 | 14 | Exit codes for all CliError variants, range validation, trait impls |
+| AC-4 | 13 | Format enum, JSON metadata (request_id/timestamp/api_version), CSV escaping, empty data |
+| AC-5 | 9 | --format, -vv, --quiet, --server, --tenant, --no-color, --config, post-subcommand position |
+| AC-6 | 2 | Parser/Subcommand derive structural tests |
+| AC-7 | 14 | Construction, URL building, HTTP status mapping (401/403/404/429/5xx), header injection, token in Debug |
+| AC-8 | 11 | TOML parse, file load, env overrides, precedence, validation, token rejection, XDG path |
+| AC-9 | 5 | bash/zsh/fish/powershell generation, subcommand presence |
+| AC-10 | 10 | All 8 stub handlers return "not yet implemented", story reference, exit code 1 |
+
+**Security tests:** 5 tests specifically targeting CWE-209 (error detail leakage), header injection via newlines in tenant/token, token exposure in Debug output, and token/api_key rejection in config files.
+
+**Handoff:** To Dev for implementation (GREEN phase).

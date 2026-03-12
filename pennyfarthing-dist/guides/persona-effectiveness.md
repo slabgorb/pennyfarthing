@@ -1,12 +1,13 @@
+<!-- markdownlint-disable MD052 — citation references [N][M] are not link refs -->
 # Persona Effectiveness: What the Research Says
 
 > A synthesis of academic research (2023-2026) on measuring the effect of role-playing and persona prompting in LLM agents. Informs Pennyfarthing's persona framework design.
 >
 > **Related Pennyfarthing docs:**
 > - [`measurement-framework.md`](measurement-framework.md) — Four-level Wallach evaluation framework (foundation for all measurement)
-> - [`personas/ZEITGEIST-ANALYSIS.md`](../../personas/ZEITGEIST-ANALYSIS.md) — Persona articulation depth scoring rubric
-> - [`personas/TRAIL-OCEAN-MAPPING.md`](../../personas/TRAIL-OCEAN-MAPPING.md) — OCEAN personality × error-detection hypotheses
-> - [`personas/attributes.yaml`](../../personas/attributes.yaml) — Personality attribute definitions (verbosity, formality, humor, emoji)
+> - [`personas/ZEITGEIST-ANALYSIS.md`](../personas/ZEITGEIST-ANALYSIS.md) — Persona articulation depth scoring rubric
+> - [`personas/TRAIL-OCEAN-MAPPING.md`](../personas/TRAIL-OCEAN-MAPPING.md) — OCEAN personality × error-detection hypotheses
+> - [`personas/attributes.yaml`](../personas/attributes.yaml) — Personality attribute definitions (verbosity, formality, humor, emoji)
 > - `/benchmark` command — Automated A/B comparison with Cohen's d effect sizes
 > - `/job-fair` command — Cross-role persona discovery across themes
 
@@ -14,7 +15,7 @@
 
 The research presents a **paradox**: persona prompting is widely recommended by major AI providers yet produces inconsistent empirical results. Simple, static persona assignment rarely improves objective task performance and can degrade it. However, **multi-persona collaboration**, **interactive/subjective tasks**, and **structured persona-to-behavior translation** show genuine benefits — which maps closely to how Pennyfarthing uses personas.
 
-**Bottom line for Pennyfarthing:** Our multi-agent, role-differentiated architecture aligns with the conditions where persona prompting demonstrably works. Our existing measurement infrastructure (Zeitgeist scoring, OCEAN mapping, JobFair benchmarks) already operationalizes much of what the literature recommends — but gaps remain in bias auditing, context collapse tracking, and irrelevant detail isolation.
+**Bottom line for Pennyfarthing:** Our multi-agent, role-differentiated architecture aligns with the conditions where persona prompting demonstrably works. Internal DPGD-116 pipeline replay data (34 themes, 152 runs) confirms: 64% of persona themes beat the no-persona control, with specific findings showing +13-23pp detection improvements. Role definition determines *which phase* catches a finding, but persona presence affects *whether* it gets caught. Job Fair character-swapping within a theme shows no correlation with outcomes — the benefit comes from having a persona at all, not from which character fills which role. Our existing measurement infrastructure (Zeitgeist scoring, OCEAN mapping, JobFair benchmarks) already operationalizes much of what the literature recommends — but gaps remain in bias auditing, context collapse tracking, and irrelevant detail isolation.
 
 ## Key Findings
 
