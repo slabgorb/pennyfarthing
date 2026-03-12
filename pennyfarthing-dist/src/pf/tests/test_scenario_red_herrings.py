@@ -11,10 +11,7 @@ Acceptance Criteria:
 
 from __future__ import annotations
 
-import pytest
-
 from pf.benchmark.scenario_validator import validate_red_herrings, validate_scenario
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -17,7 +17,6 @@ import yaml
 
 from pf.benchmark.events import generate_events_summary
 
-
 # ---------------------------------------------------------------------------
 # Fixtures: synthetic OTEL JSONL data
 # ---------------------------------------------------------------------------
@@ -277,7 +276,7 @@ class TestSaveResultWritesEventsSummary:
 
     def test_events_summary_yaml_created(self, tmp_path: Path):
         """After save_result(), events-summary.yaml should exist in run_dir."""
-        from pf.benchmark.pipeline_replay import PipelineResult, PhaseResult, save_result
+        from pf.benchmark.pipeline_replay import PhaseResult, PipelineResult, save_result
 
         # Create minimal OTEL data
         otel_records = [
@@ -314,7 +313,7 @@ class TestSaveResultWritesEventsSummary:
 
     def test_events_summary_yaml_parseable(self, tmp_path: Path):
         """events-summary.yaml should be valid YAML."""
-        from pf.benchmark.pipeline_replay import PipelineResult, PhaseResult, save_result
+        from pf.benchmark.pipeline_replay import PhaseResult, PipelineResult, save_result
 
         otel_records = [
             _make_tool_decision_record("Bash", 1),
@@ -348,12 +347,11 @@ class TestSaveResultWritesEventsSummary:
         reconstruct_pipeline_result (preserves pre-142-8 re-scoring).
         """
         from pf.benchmark.pipeline_replay import (
-            PipelineResult,
             PhaseResult,
+            PipelineResult,
             Scenario,
-            Finding,
-            save_result,
             reconstruct_pipeline_result,
+            save_result,
         )
 
         pr = PipelineResult(

@@ -22,7 +22,6 @@ from pf.benchmark.narrate import (
     truncate_events_to_budget,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures: reuse OTEL helpers from test_events_summary
 # ---------------------------------------------------------------------------

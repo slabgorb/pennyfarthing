@@ -19,7 +19,6 @@ from pf.benchmark.variance import (
     compute_score_variance,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures — deterministic data for reproducibility (AC3)
 # ---------------------------------------------------------------------------

@@ -253,7 +253,6 @@ def check_stack_tool_health(project_root: Path | None = None) -> dict[str, Any]:
         Dict with success, checks list, and any errors.
     """
     import shutil
-    import subprocess
 
     repos = load_repos_config(project_root)
     stacked = {n: r for n, r in repos.items() if r.is_stacked}

@@ -13,7 +13,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 _CHARS_PER_TOKEN = 4
 
 

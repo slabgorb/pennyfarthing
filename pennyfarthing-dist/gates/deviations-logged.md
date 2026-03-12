@@ -18,8 +18,8 @@ Used by: tea-exit (after red phase), dev-exit (after green phase).
 <pass>
 Check that the session file contains the expected subheading with at least one entry.
 
-**For AGENT=tea:** Look for `### TEA (test design)` followed by at least one `- ` line.
-**For AGENT=dev:** Look for `### Dev (implementation)` followed by at least one `- ` line.
+**For AGENT=tea:** Look for `### TEA (test design)` followed by at least one `-` line.
+**For AGENT=dev:** Look for `### Dev (implementation)` followed by at least one `-` line.
 
 ```bash
 # Extract the relevant section
