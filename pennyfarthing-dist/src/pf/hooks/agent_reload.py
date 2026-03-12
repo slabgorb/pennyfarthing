@@ -96,10 +96,12 @@ def main() -> None:
             f'"Agent `{agent}` reloaded after {source_label}. Resuming work."'
         )
 
-        output_hook_response(HookResponse(
-            event_name="SessionStart",
-            additional_context=context,
-        ))
+        output_hook_response(
+            HookResponse(
+                event_name="SessionStart",
+                additional_context=context,
+            )
+        )
 
     except Exception:
         pass

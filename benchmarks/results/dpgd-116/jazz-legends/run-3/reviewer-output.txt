@@ -1,0 +1,152 @@
+I have now verified all claims independently. Here is my review.
+
+---
+
+# Story 6.1: CLI Framework & Structure — Adversarial Review
+
+*Reviewer: Thelonious Monk finds the dissonant notes.*
+
+## Preflight Verification
+
+- `cargo test -p axiathon-client`: **108 tests pass** (0 failures)
+- `cargo clippy -p axiathon-client -- -D warnings`: **clean**
+- `cargo +nightly fmt --all --check`: **FAILS** — 12+ formatting diffs across source and test files
+
+---
+
+## Findings
+
+### Blocking Issues
+
+**1. [CRITICAL] Nightly `rustfmt` fails across 9 files — `cli.rs`, `client.rs`, `completion.rs`, `init.rs`, `query.rs`, `security.rs`, `siem_client.rs`**
+
+Per gotchas.md: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval — don't let it slip to post-merge."*
+
+Key issues: import ordering in `completion.rs` (std must come before external crates under nightly), long `#[command(after_help = ...)]` attributes need multi-line formatting in `cli.rs`, builder chains reformatted in test files. 12+ diffs total.
+
+**Fix:** Run `cargo +nightly fmt --all`.
+
+---
+
+**2. [HIGH] `uuid_v4_simple()` generates non-UUID strings — `output.rs:136-141`**
+
+```rust
+fn uuid_v4_simple() -> String {
+    format!("req-{}-{}", d.as_secs(), d.subsec_nanos())
+}
+```
+
+This produces `"req-1741427200-123456789"`, not an RFC 4122 UUID. AC-4 specifies `ResponseMetadata` with `request_id`. The `uuid` crate is already a workspace dependency but not used here. This is a semantic bug — downstream consumers expecting UUID format will break. Tests only check field presence, not format validity.
+
+**Fix:** Use `uuid::Uuid::new_v4().to_string()` or at minimum rename the function to not imply UUID.
+
+---
+
+**3. [HIGH] `chrono_now()` returns raw epoch seconds, not ISO 8601 — `output.rs:144-150`**
+
+```rust
+fn chrono_now() -> String {
+    format!("{}Z", d.as_secs())
+}
+```
+
+Produces `"1741427200Z"` instead of `"2025-03-08T12:00:00Z"`. The `timestamp` field in `ResponseMetadata` should be human-readable ISO 8601. `chrono` is a workspace dependency but unused.
+
+**Fix:** Use `chrono::Utc::now().to_rfc3339()` or similar.
+
+---
+
+### Non-Blocking Issues
+
+**4. [MEDIUM] `dirs` version mismatch: workspace declares `"5"`, story specifies `"6"` — `Cargo.toml:46`**
+
+The story's Technical Guardrails say `dirs 6`. The workspace has `dirs = "5"`. Both work, but this is a spec deviation. Not blocking since `dirs` 5 is functional and the API is the same.
+
+---
+
+**5. [MEDIUM] `toml` version mismatch: workspace declares `"0.8"`, story specifies `"0.9"` — `Cargo.toml:50`**
+
+Same as above. Story says `toml 0.9`, workspace has `toml = "0.8"`. Both parse TOML 1.0. Non-blocking.
+
+---
+
+**6. [MEDIUM] `AXIATHON_TIMEOUT` env override silently ignores invalid values — `config.rs:59-62`**
+
+```rust
+if let Ok(secs) = timeout.parse::<u64>() {
+    self.timeout_secs = Some(secs);
+}
+```
+
+If a user sets `AXIATHON_TIMEOUT=banana`, it's silently ignored with no warning. An operator debugging connection issues could be misled. Consider logging a warning via `tracing::warn!` or returning an error.
+
+---
+
+**7. [MEDIUM] `NotFound` error doesn't sanitize URLs — `error.rs:60`**
+
+```rust
+Self::NotFound(msg) => write!(f, "not found: {msg}"),
+```
+
+`General`, `Unauthorized`, and `ServerError` all pass through `sanitize_message()`, but `NotFound` and `Config` display `msg` raw. If a 404 error message contains a URL with embedded credentials, it would be exposed. Should use `sanitize_message(msg)` for consistency.
+
+---
+
+**8. [LOW] `format_value` uses `unwrap_or` for JSON serialization — `output.rs:94-95`**
+
+```rust
+let data = serde_json::to_value(value).unwrap_or(serde_json::Value::Null);
+```
+
+If serialization fails, the user gets `null` with no indication of failure. This is silent data loss. Acceptable for a framework story but worth noting for future handlers that pass complex types.
+
+---
+
+### Verified Good
+
+**9. [VERIFIED]** Header injection prevention (CWE-113) — `client.rs:16-19` strips CR/LF/null from tenant and token values before storage. Tested in `security.rs` and `siem_client.rs`.
+
+**10. [VERIFIED]** URL credential stripping — `client.rs:22-36` removes `user:pass@` from base URLs. Error display uses `sanitize_message()` to redact credentials (CWE-209). Both tested.
+
+**11. [VERIFIED]** `#[serde(deny_unknown_fields)]` on `ClientConfig` — `config.rs:11`. Unknown TOML keys cause parse errors rather than silent acceptance. Good defense against typo-based misconfig.
+
+**12. [VERIFIED]** `#![forbid(unsafe_code)]` in both `main.rs:1` and `lib.rs:2`.
+
+**13. [VERIFIED]** Exit code mapping correct per AC-3: 1=general, 3=auth, 4=authz. clap handles 2 for usage. All stub commands return exit 1.
+
+**14. [VERIFIED]** All 13 command groups present in `Commands` enum per AC-1. Plural nouns (`rules`, `alerts`) correct per architecture doc. No server-side commands in client binary.
+
+**15. [VERIFIED]** Shell completion is functional (not stub) — generates real scripts for all 4 shells using `clap_complete::generate()`.
+
+**16. [VERIFIED]** `axiathon init` is functional — creates config directory and default config file. Handles pre-existing files gracefully.
+
+**17. [VERIFIED]** No server-side crate imports. `axiathon-client` depends only on `axiathon-core` + external crates. Dependency boundary is clean.
+
+---
+
+## Data Flow Trace
+
+Traced `axiathon --format json rules list`:
+1. `Cli::parse()` in `main.rs:9` — clap parses global flag `--format json` and subcommand
+2. `dispatch()` matches `Commands::Rules(args)` → calls `args.run()`
+3. `RulesArgs::run()` returns `Err(CliError::NotImplemented("Story 6.6"))`
+4. `main.rs:13-15` catches error → `eprintln!` to stderr → `exit(1)`
+
+Flow is correct. Errors to stderr, output to stdout. Exit code matches spec.
+
+---
+
+## Verdict
+
+### CHANGES_REQUESTED
+
+**Blocking issues (must fix):**
+1. **[CRITICAL]** Run `cargo +nightly fmt --all` — 12+ formatting violations fail the mandatory preflight check
+2. **[HIGH]** `uuid_v4_simple()` doesn't produce UUIDs — use `uuid::Uuid::new_v4()` or rename
+3. **[HIGH]** `chrono_now()` returns epoch seconds not ISO 8601 — use proper timestamp formatting
+
+**Recommended (non-blocking):**
+4. Apply `sanitize_message()` consistently to `NotFound` and `Config` error variants
+5. Warn on unparseable `AXIATHON_TIMEOUT` env var instead of silently ignoring
+
+The architecture is solid — 108 passing tests, clean clippy, correct security controls, proper crate boundaries. These are fixable issues, not design problems. Fix the three blocking items and this is ready to ship.

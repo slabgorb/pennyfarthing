@@ -1,0 +1,99 @@
+Now I have everything I need for the review.
+
+---
+
+# Review: Story 8.1 — REST API Foundation
+
+## Preflight
+
+- All 48 tests pass
+- `cargo clippy -p axiathon-server -- -D warnings` clean
+- `cargo +nightly fmt --all --check` **FAILS** (3 formatting diffs in `lib.rs`)
+
+---
+
+## Findings
+
+### `[CRITICAL]` CORS policy allows any origin — `lib.rs:450-453`
+
+```rust
+let cors = CorsLayer::new()
+    .allow_origin(Any)
+    .allow_methods(Any)
+    .allow_headers(Any);
+```
+
+This is a wide-open CORS policy. For a security platform with JWT auth, `allow_origin(Any)` combined with `allow_headers(Any)` means any website can make authenticated cross-origin requests. The story's AC and technical guardrails specify JWT/API-key auth — an `Any` origin policy defeats the purpose. At minimum, origins should be configurable. Combined with credential-bearing requests, this is a security vulnerability (CWE-942).
+
+### `[CRITICAL]` Authentication is hardcoded string matching, not JWT verification — `lib.rs:163-196`
+
+The story AC specifies "JWT (EdDSA/Ed25519)" and "Bearer token validation." The implementation is a match on hardcoded magic strings (`"test-valid-token"`, `"test-expired-token"`, etc.) with no actual JWT parsing, signature verification, or claim extraction. This is not a stub that returns 501 — it actively pretends to authenticate, returning success for magic values. There is no `jsonwebtoken`, `jwt-simple`, or any JWT crate in dependencies. A real attacker-crafted token would be rejected only because it doesn't match a hardcoded string, but there is zero cryptographic verification.
+
+While stubs are acceptable per the story scope, authentication stubs should fail-closed (reject all) or be clearly marked as test-only behind a feature flag — not silently pass for magic strings in the main code path.
+
+### `[HIGH]` `ServerApiResponse` duplicates `ApiResponse` from axiathon-core — divergent envelopes — `lib.rs:22-44` vs `types.rs:220-278`
+
+The story AC says "all responses use `ApiResponse<T>` from axiathon-core." Instead, a completely separate `ServerApiResponse<T>` type was created in `axiathon-server` with a different structure:
+- `ServerApiResponse`: `data`, `errors: Vec<ErrorEntry>`, `meta` (always present)
+- Core `ApiResponse`: `data`, `error: Option<ApiError>`, `meta: Option<ApiMeta>` (all optional, skip_serializing_if)
+
+The server type has `errors` (array); the core type has `error` (singular, optional). The core type skips null fields; the server type always serializes them. This means downstream consumers building against `ApiResponse<T>` from core will see a completely different wire format than what the server actually produces. This divergence will cause integration bugs in every subsequent story.
+
+### `[HIGH]` Six dependencies declared but never used — `Cargo.toml:9-14,19,23`
+
+`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber` are all listed in `[dependencies]` but **zero imports** from any of them exist in `src/lib.rs`. These are dead dependencies that increase compile time and attack surface. `axiathon-core` is also redundantly in both `[dependencies]` and `[dev-dependencies]`.
+
+### `[HIGH]` Global static mutable rate limiter — `lib.rs:92-120`
+
+`static RATE_LIMITER: LazyLock<Mutex<RateLimiterState>>` is global shared state. Per SOUL principle and the Axum `FromRef` substate pattern, state should flow through `AppState`. The global mutex:
+1. Creates test interference — rate limit tests share state across all test binaries running concurrently (the tests work around this by sending 200 requests, but it's fragile)
+2. Violates the architectural requirement for `FromRef` substates
+3. Is not configurable per-tenant (hardcoded `max_requests: usize = 100` and 60-second window)
+4. The AC says "rate limit configuration should be loadable from TOML/YAML" — no configuration loading exists
+
+### `[HIGH]` Nightly `cargo fmt` check fails — `lib.rs`
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." Three formatting diffs found. This blocks merge per project conventions.
+
+### `[MEDIUM]` No `AppState` or `FromRef` substates — entire `lib.rs`
+
+The story's technical guardrails mandate: "Axum 0.8 with `FromRef<AppState>` substate extraction pattern. Handlers must declare domain-scoped substates." No `AppState` struct exists. No `FromRef` impls. No substate extraction. Handlers take raw `Request` and manually parse headers. This means compile-time least-privilege enforcement (the core architectural pattern for this epic) is missing.
+
+### `[MEDIUM]` `trace_middleware` stores trace_id in response extensions but no handler reads it — `lib.rs:244-259`
+
+The trace middleware stores the trace_id in response extensions after the handler has already run (`resp.extensions_mut().insert(tid)`), which means handlers can never access it from there. Meanwhile, every handler independently re-extracts the trace ID from request headers. The middleware is dead code that does nothing useful.
+
+### `[MEDIUM]` No structured logging / tracing instrumentation — entire `lib.rs`
+
+`tracing` is listed as a dependency but never imported or used. Zero `tracing::info!`, `tracing::error!`, or `#[instrument]` annotations. The story operates a REST API with auth, rate limiting, and error handling — all of which should emit structured traces per SOUL principles and the observability requirements. The `trace_id` is extracted but never logged.
+
+### `[MEDIUM]` `expect()` calls in production response paths — `lib.rs:64,82,87,297,302`
+
+Multiple `expect("serialization should not fail")` and `expect("response builder should not fail")` in hot response paths. While unlikely to panic, the Rust rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." These messages are not actionable. If serialization fails due to a non-finite float in `serde_json::Value`, the server panics with no graceful degradation.
+
+### `[LOW]` `_user_id` field in `AuthInfo` is never read — `lib.rs:131`
+
+The underscore prefix suppresses the unused warning, but if tenant context is meant to be extractable from the credential (per AC), the user_id should be threaded through to handlers or at least stored in request extensions.
+
+### `[LOW]` `events_post_handler` content-length check is bypassable — `lib.rs:345-361`
+
+The `content-length` header check happens before body reads, but `content-length` is optional and can be absent (chunked transfer encoding). The code defaults to `0` when absent, skipping the check entirely. The actual body read at line 364 with `max_body + 1` as the limit is the real protection, so this isn't a vulnerability — but the content-length check gives false confidence.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present in `lib.rs:2`
+### `[VERIFIED]` Health endpoint does not require authentication — `/api/v1/health` outside auth middleware layer
+### `[VERIFIED]` Fallback handler returns envelope-format 404 responses
+### `[VERIFIED]` Error responses do not leak internal paths, stack traces, or error type names
+### `[VERIFIED]` Per-tenant rate limiting isolation works (tenant A exhausted, tenant B unaffected)
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+### Blocking issues (must fix before merge):
+
+1. **Nightly fmt failure** — trivial fix, but blocks per project conventions
+2. **CORS `Any` origin** — must be configurable or restricted; wide-open CORS on an authenticated API is a security defect
+3. **Hardcoded auth without any safeguard** — needs at minimum a `#[cfg(test)]` or feature gate, or a 501 stub that documents it's not real auth
+4. **`ServerApiResponse` diverges from `ApiResponse<T>` in axiathon-core** — the wire format contract is broken; downstream stories will build against the wrong type
+5. **6 unused crate dependencies** — remove to reduce compile time and attack surface
+6. **No `AppState` / `FromRef` pattern** — the foundational architectural pattern for the entire epic is missing

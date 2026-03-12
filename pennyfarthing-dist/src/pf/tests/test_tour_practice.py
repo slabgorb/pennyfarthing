@@ -81,8 +81,7 @@ class TestPracticeEpicTemplate:
     def test_template_file_exists(self, template_path: Path) -> None:
         """Practice epic template must exist."""
         assert template_path.exists(), (
-            "epic-tour-practice.yaml template must exist at "
-            "workflows/guided-tour/templates/"
+            "epic-tour-practice.yaml template must exist at workflows/guided-tour/templates/"
         )
 
     def test_template_has_epic_id(self, template_content: dict) -> None:
@@ -216,30 +215,25 @@ class TestStepFourPracticeSection:
 
     def test_step_04_exists(self, step_04_path: Path) -> None:
         """step-04-sprint.md must exist in guided-tour steps."""
-        assert step_04_path.exists(), (
-            "step-04-sprint.md must exist at workflows/guided-tour/steps/"
-        )
+        assert step_04_path.exists(), "step-04-sprint.md must exist at workflows/guided-tour/steps/"
 
     def test_practice_section_exists(self, step_04: str) -> None:
         """step-04 must contain a practice section."""
         lower = step_04.lower()
-        assert "practice" in lower, (
-            "step-04-sprint.md must contain a 'practice' section"
-        )
+        assert "practice" in lower, "step-04-sprint.md must contain a 'practice' section"
 
     def test_mentions_sprint_work_command(self, step_04: str) -> None:
         """Practice section must mention claiming the story (AC2)."""
-        assert "pf sprint work tour-practice-1" in step_04 or \
-               "sprint work tour-practice-1" in step_04, (
-            "step-04 must mention 'pf sprint work tour-practice-1' for claiming"
-        )
+        assert (
+            "pf sprint work tour-practice-1" in step_04 or "sprint work tour-practice-1" in step_04
+        ), "step-04 must mention 'pf sprint work tour-practice-1' for claiming"
 
     def test_mentions_story_finish_command(self, step_04: str) -> None:
         """Practice section must mention completing the story (AC3)."""
-        assert "story finish tour-practice-1" in step_04 or \
-               "sprint story finish tour-practice-1" in step_04, (
-            "step-04 must mention finishing the practice story"
-        )
+        assert (
+            "story finish tour-practice-1" in step_04
+            or "sprint story finish tour-practice-1" in step_04
+        ), "step-04 must mention finishing the practice story"
 
     def test_mentions_sprint_status(self, step_04: str) -> None:
         """Practice section must mention checking status (AC4)."""
@@ -279,9 +273,7 @@ class TestCleanupInstructions:
     def test_cleanup_mentions_session_removal(self, step_04: str) -> None:
         """Cleanup must mention removing session artifacts."""
         lower = step_04.lower()
-        assert "session" in lower, (
-            "Cleanup must mention removing session artifacts"
-        )
+        assert "session" in lower, "Cleanup must mention removing session artifacts"
 
 
 # ---------------------------------------------------------------------------
@@ -331,9 +323,7 @@ class TestExistingContentPreserved:
     def test_jira_integration_mentioned(self, step_04: str) -> None:
         """step-04 must still mention Jira integration."""
         lower = step_04.lower()
-        assert "jira" in lower, (
-            "step-04 must still mention Jira integration"
-        )
+        assert "jira" in lower, "step-04 must still mention Jira integration"
 
 
 # ---------------------------------------------------------------------------
@@ -349,9 +339,7 @@ class TestSprintValidationTolerance:
         required = {"id", "title", "status", "stories"}
         actual = set(template_content.keys())
         missing = required - actual
-        assert not missing, (
-            f"Template missing required fields: {missing}"
-        )
+        assert not missing, f"Template missing required fields: {missing}"
 
     def test_practice_story_has_standard_fields(self, template_content: dict) -> None:
         """Practice story must have required standard fields."""
@@ -361,9 +349,7 @@ class TestSprintValidationTolerance:
         required = {"id", "title", "points", "status"}
         actual = set(practice.keys())
         missing = required - actual
-        assert not missing, (
-            f"Practice story missing required fields: {missing}"
-        )
+        assert not missing, f"Practice story missing required fields: {missing}"
 
     def test_epic_status_is_active(self, template_content: dict) -> None:
         """Template epic status must be 'active' for sprint inclusion."""
@@ -507,9 +493,7 @@ class TestCreatePracticeEpicBehavioral:
 
         monkeypatch.setattr(shutil, "copy2", broken_copy)
         result = practice_module.create_practice_epic(mock_project)
-        assert result["success"] is False, (
-            "copy2 failure must return {success: False}, not raise"
-        )
+        assert result["success"] is False, "copy2 failure must return {success: False}, not raise"
         assert "error" in result
 
 
@@ -580,8 +564,7 @@ class TestCleanupPracticeBehavioral:
         index_after = yaml.safe_load(index_path.read_text())
         epics_after = index_after.get("epics", [])
         assert "tour-practice" not in epics_after, (
-            f"Practice epic ref must be removed from index after cleanup, "
-            f"got {epics_after}"
+            f"Practice epic ref must be removed from index after cleanup, got {epics_after}"
         )
 
 
@@ -626,7 +609,9 @@ class TestDetectOrphanedPracticeBehavioral:
         """Must detect all orphaned artifacts at once."""
         (mock_project / "sprint" / "epic-tour-practice.yaml").write_text("id: epic-tour-practice\n")
         (mock_project / ".session" / "tour-practice-1-session.md").write_text("# Session\n")
-        (mock_project / "sprint" / "archive" / "tour-practice-1-session.md").write_text("# Archive\n")
+        (mock_project / "sprint" / "archive" / "tour-practice-1-session.md").write_text(
+            "# Archive\n"
+        )
         result = practice_module.detect_orphaned_practice(mock_project)
         assert result["found"] is True
         assert len(result["artifacts"]) == 3, (

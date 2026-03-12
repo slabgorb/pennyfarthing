@@ -58,11 +58,16 @@ def persona_current(agent_name: str | None, output_json: bool):
         if output_json:
             import json
 
-            click.echo(json.dumps({
-                "error": "No theme configured",
-                "code": "NO_THEME",
-                "detail": None,
-            }, indent=2))
+            click.echo(
+                json.dumps(
+                    {
+                        "error": "No theme configured",
+                        "code": "NO_THEME",
+                        "detail": None,
+                    },
+                    indent=2,
+                )
+            )
             raise SystemExit(1)
         click.echo("No theme configured. Use 'pf theme set <name>' first.")
         raise SystemExit(1)

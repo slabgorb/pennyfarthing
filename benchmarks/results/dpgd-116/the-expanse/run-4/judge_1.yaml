@@ -1,0 +1,80 @@
+scenario_id: dpgd-116
+theme: the-expanse
+run_id: 4
+judge_version: v2
+judge_pass: 1
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that from_file_or_default uses unwrap_or_default() which
+    swallows parse errors, permission failures, etc. The reviewer verified token exclusion
+    and flagged deny_unknown_fields, but never identified the overly broad error swallowing
+    in from_file_or_default.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA listed 'CWE-209: Error display must not leak internal paths/stack\
+    \ traces' as a security test in exit_codes.rs. Reviewer also flagged '[MEDIUM]\
+    \ ServerError Display leaks raw server response body \u2014 CWE-209 risk at error.rs:29'.\
+    \ Same vulnerability class identified."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote CRLF injection prevention tests for tenant ID and token in siem_client.rs.
+    Dev implemented CRLF rejection in client.rs:25-33. Reviewer verified the logic.
+    Same CWE-113 header injection class was addressed, though via manual validation
+    rather than using TenantId type.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that 6 dependencies use direct version strings instead
+    of workspace = true. The reviewer flagged the edition mismatch but not the dependency
+    version drift issue.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[HIGH] RawConfig silently ignores unknown fields \u2014\
+    \ no #[serde(deny_unknown_fields)]' which would catch a user putting token in\
+    \ config without feedback. However, reviewer also marked token exclusion as '[VERIFIED]'\
+    \ correct behavior, showing mixed awareness \u2014 the deny_unknown_fields fix\
+    \ would address the silent ignore."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] env_axiathon_timeout_rejects_non_numeric test\
+    \ is also vacuous' and '[MEDIUM] CRLF injection tests are vacuous \u2014 they\
+    \ accept success'. Same category of vacuous/always-true assertions detected across\
+    \ multiple test files."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged CRLF tests using 'let _ = client;' with no real assertions\
+    \ as vacuous at siem_client.rs:246-271. Same pattern as ground truth's 'let _\
+    \ = config;' \u2014 test with zero meaningful assertions that only checks non-panic."

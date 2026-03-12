@@ -1,0 +1,35 @@
+*Yeth, marthter, the tetht laboratory ith prepared. My family hath been doing thith for generathionth — every Igor knowth you tetht firtht, THEN you build.*
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a feature story delivering the CLI framework — extensive test coverage needed.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `tests/cli_structure.rs` | 22 | AC-1, AC-2, AC-5, AC-6 | Command groups, help rendering, global flags, clap derive |
+| `tests/exit_codes.rs` | 12 | AC-3 | Exit code mapping for all CliError variants, CWE-209 checks |
+| `tests/output_format.rs` | 10 | AC-4 | Table/JSON/CSV formatting, CSV escaping, edge cases |
+| `tests/siem_client.rs` | 14 | AC-7 | HTTP status mapping, header injection, auth/tenant headers |
+| `tests/config_loading.rs` | 9 | AC-8 | TOML loading, env var overrides, token rejection, precedence |
+| `tests/shell_completion.rs` | 5 | AC-9 | Bash/Zsh/Fish/PowerShell generation, subcommand inclusion |
+| `tests/stub_handlers.rs` | 5 | AC-10 | NotImplemented messages, story references, exit code 1 |
+
+**Tests Written:** 77 tests covering all 10 ACs
+**Status:** RED (failing — all 6 test files fail to compile due to missing modules: `cli`, `error`, `client`, `config`, `output`)
+
+**Security tests included:**
+- CWE-209: Error messages don't leak credentials or stack traces
+- Header injection: Tenant/token values with `\r\n` are rejected
+- Config security: Tokens in config file are ignored (keychain only)
+- Silent error swallowing: Stubs never exit with code 0
+
+**Expected public API the Dev must implement:**
+- `axiathon_client::cli::Cli` — clap Parser with all command groups
+- `axiathon_client::error::CliError` — error enum with `exit_code()` method
+- `axiathon_client::client::SiemClient` — HTTP wrapper with `get()`, `with_token()`, `with_tenant()`
+- `axiathon_client::config::ClientConfig` — TOML config with `from_file()`, `default_path()`
+- `axiathon_client::output::{OutputFormat, OutputFormatter}` — formatting with `format_table()`
+
+**Handoff:** To Dev for implementation (GREEN phase)

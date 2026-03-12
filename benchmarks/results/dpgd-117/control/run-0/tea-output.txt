@@ -1,0 +1,41 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 has 5 acceptance criteria requiring REST API foundation, authentication, rate limiting, versioning, and envelope conformance.
+
+**Test Files:**
+- `crates/axiathon-server/tests/api_endpoints.rs` — Route existence, HTTP methods, content type, 404 handling (15 tests)
+- `crates/axiathon-server/tests/api_response_envelope.rs` — Envelope conformance: data/errors/meta fields, UUID request_id, ISO 8601 timestamp, trace_id, unique IDs (14 tests)
+- `crates/axiathon-server/tests/auth_middleware.rs` — JWT Bearer and API key auth: valid/invalid/expired/missing tokens, scope enforcement (403), tenant context extraction, JWKS endpoint, security edge cases (20 tests)
+- `crates/axiathon-server/tests/rate_limiting.rs` — Per-tenant rate limiting, 429 + Retry-After header, tenant isolation, configurability (7 tests)
+- `crates/axiathon-server/tests/api_versioning.rs` — v1 prefix, v2 returns 404, unversioned returns 404, case sensitivity, deprecation header mechanism (11 tests)
+- `crates/axiathon-server/tests/security.rs` — CWE-209, error sanitization, malformed JSON, large payloads, path traversal, XSS reflection, TRACE disabled, content-type validation (14 tests)
+
+**Tests Written:** ~81 tests covering all 5 ACs
+**Status:** RED (compilation failure — `create_app`, `ServerConfig`, `AppState` not yet implemented)
+
+**AC Coverage:**
+
+| AC | Tests | File |
+|---|---|---|
+| REST endpoints exist | 15 | `api_endpoints.rs` |
+| ApiResponse envelope | 14 | `api_response_envelope.rs` |
+| Authentication | 20 | `auth_middleware.rs` |
+| Rate limiting | 7 | `rate_limiting.rs` |
+| API versioning | 11 | `api_versioning.rs` |
+| Security (bonus) | 14 | `security.rs` |
+
+**Key design decisions for Dev:**
+1. Tests expect `axiathon_server::create_app() -> Router` as the primary entry point
+2. Tests expect `axiathon_server::ServerConfig` with `rate_limit_per_second` field
+3. Tests expect `axiathon_server::AppState` to be publicly accessible
+4. Envelope tests enforce `meta` (with `request_id`, `timestamp`, `trace_id`) and `errors` (array) as always-present fields — this differs from current `ApiResponse<T>` which has `Option<ApiMeta>` with pagination-only fields. Dev must reconcile.
+5. Auth tests use marker tokens (`test-valid-token`, `test-readonly-token`, `test-tenant-a-token`, etc.) — Dev should wire these in test configuration
+
+**Handoff:** To Dev for implementation (GREEN phase)
+
+### Delivery Findings
+
+- **Gap** (blocking): `ApiResponse<T>` in axiathon-core has `error: Option<ApiError>` (singular) but AC requires `errors: Vec<...>` (always-present array). `ApiMeta` has only pagination fields but AC requires `request_id`, `timestamp`, `trace_id`. Dev must update the core type or create a server-layer wrapper.
+  Affects `crates/axiathon-core/src/types.rs` (ApiResponse, ApiMeta types need AC-aligned fields).
+  *Found by TEA during test design.*

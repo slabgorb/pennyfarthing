@@ -158,7 +158,7 @@ class DiffsPanel(BasePanel):
                 stats = f" +{additions} -{deletions}"
 
             if i == self._current_file_index:
-                selector.append(f"[{i+1}/{len(diffs)}] ", style="bold")
+                selector.append(f"[{i + 1}/{len(diffs)}] ", style="bold")
                 selector.append(path, style="bold cyan")
                 if stats:
                     selector.append(stats, style="bold dim")
@@ -201,9 +201,7 @@ class DiffsPanel(BasePanel):
         for diff_entry in diffs:
             raw_diff = diff_entry.get("diff", "")
             if raw_diff.count("\n") > TEMP_FILE_THRESHOLD:
-                fd, path = tempfile.mkstemp(
-                    prefix="bikerack_diff_", suffix=".diff"
-                )
+                fd, path = tempfile.mkstemp(prefix="bikerack_diff_", suffix=".diff")
                 with os.fdopen(fd, "w") as f:
                     f.write(raw_diff)
                 self._temp_files.append(path)
@@ -219,14 +217,30 @@ class DiffsPanel(BasePanel):
 
 
 _LANG_MAP: dict[str, str] = {
-    ".py": "python", ".ts": "typescript", ".tsx": "tsx",
-    ".js": "javascript", ".jsx": "jsx", ".go": "go",
-    ".rs": "rust", ".rb": "ruby", ".java": "java",
-    ".css": "css", ".html": "html", ".json": "json",
-    ".yaml": "yaml", ".yml": "yaml", ".md": "markdown",
-    ".sh": "bash", ".zsh": "bash", ".toml": "toml",
-    ".xml": "xml", ".sql": "sql", ".c": "c", ".cpp": "cpp",
-    ".h": "c", ".hpp": "cpp",
+    ".py": "python",
+    ".ts": "typescript",
+    ".tsx": "tsx",
+    ".js": "javascript",
+    ".jsx": "jsx",
+    ".go": "go",
+    ".rs": "rust",
+    ".rb": "ruby",
+    ".java": "java",
+    ".css": "css",
+    ".html": "html",
+    ".json": "json",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+    ".md": "markdown",
+    ".sh": "bash",
+    ".zsh": "bash",
+    ".toml": "toml",
+    ".xml": "xml",
+    ".sql": "sql",
+    ".c": "c",
+    ".cpp": "cpp",
+    ".h": "c",
+    ".hpp": "cpp",
 }
 
 
@@ -283,7 +297,11 @@ def _render_file_diff(
     language = _detect_language(path)
     parts: list[Any] = [header]
     rendered_lines, total_lines = _parse_diff_lines(
-        raw_diff, language, page=page, page_size=page_size, skip_highlight=skip_highlight,
+        raw_diff,
+        language,
+        page=page,
+        page_size=page_size,
+        skip_highlight=skip_highlight,
     )
     parts.extend(rendered_lines)
 

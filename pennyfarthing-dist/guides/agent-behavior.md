@@ -20,12 +20,20 @@ pf <command> [args...]
 1. Reviewer approves and merges the PR
 2. SM runs `pf sprint story finish` (archive session, update Jira, clean up)
 
-**Never** start new work while stories have open PRs. The merge gate blocks `/pf-sprint work` if open PRs exist.
+**Never** start new work while stories have blocking open PRs. The merge gate (`gates/merge-ready`) blocks `/pf-sprint work` if non-draft PRs exist for stories not in `in_review` status. PRs for `in_review` stories are allowed — they're awaiting external review and can't be self-merged.
 
 **If stuck in incomplete state:**
-- Open PRs? → Run `/pf-reviewer` to complete reviews and merge
+- Blocking open PRs (story not `in_review`)? → Run `/pf-reviewer` to complete reviews and merge
 - Merged but not finished? → Run `/pf-sm` to trigger finish flow
 </critical>
+
+---
+
+<plan-mode>
+## Plan Mode
+
+To hand off plan execution to a different agent: `echo "dev" > .session/.plan-exit-agent` before entering plan mode. The `plan-exit-reload` hook consumes the file on exit and loads that agent automatically. Omit the file to reload the current phase owner. See `guides/plan-mode.md` for details.
+</plan-mode>
 
 ---
 

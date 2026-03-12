@@ -1,0 +1,20 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a feature story establishing the CLI framework — requires comprehensive test coverage across all 10 ACs.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_framework_integration.rs` | 17 | AC-1 (command groups, plural nouns, no server cmd), AC-2 (help rendering, about text, verb subcommands, usage examples), AC-5 (format/verbose/quiet/server/tenant/config/no-color flags, global scope), AC-6 (Parser trait, command metadata) |
+| `cli_error_integration.rs` | 12 | AC-3 (exit codes 0/1/3/4, all variants mapped), security (CWE-209 no stack traces, no token leaks, no raw HTML) |
+| `cli_output_integration.rs` | 14 | AC-4 (TableFormatter, JsonFormatter, CsvFormatter, OutputFormat enum, no-color, JSON metadata, CSV RFC 4180 escaping, empty/wide/many-column edge cases) |
+| `cli_client_integration.rs` | 14 | AC-7 (SiemClient construction, tenant/token storage, HTTP status mapping 401/403/404/429/5xx, connection refused), security (CRLF header injection, null bytes, URL credentials) |
+| `cli_config_integration.rs` | 12 | AC-8 (TOML loading, defaults, malformed/empty files, env var overrides AXIATHON_API_URL/AXIATHON_TIMEOUT, precedence, no-token-in-config, XDG path, negative/zero timeout validation) |
+| `cli_completion_stub_integration.rs` | 13 | AC-9 (bash/zsh/fish/powershell generation, invalid shell rejection, all commands in completions), AC-10 (8 stub handlers with "not yet implemented", story number references, exit code 1) |
+
+**Tests Written:** 82 tests covering all 10 ACs
+**Status:** RED (failing — unresolved imports, modules `cli`, `client`, `config`, `error`, `output`, `commands` don't exist yet)
+**Security Tests:** 7 tests for header injection (CRLF, null bytes), CWE-209 error information disclosure, credential-in-URL handling
+
+**Handoff:** To Dev for implementation (GREEN phase)

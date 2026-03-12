@@ -134,7 +134,10 @@ class TestConfigPreservation:
         config_path = config_dir / "config.local.yaml"
         original = {
             "theme": "test",
-            "layout": {"grid": {"root": {"type": "branch"}}, "panels": {"sprint": {"id": "sprint"}}},
+            "layout": {
+                "grid": {"root": {"type": "branch"}},
+                "panels": {"sprint": {"id": "sprint"}},
+            },
         }
         config_path.write_text(yaml.dump(original, default_flow_style=False))
 
@@ -187,7 +190,9 @@ class TestClearPanelFocus:
         config_dir = tmp_path / ".pennyfarthing"
         config_dir.mkdir()
         config_path = config_dir / "config.local.yaml"
-        config_path.write_text("theme: the-expanse\nfocus: git\ndisplay:\n  colorPreset: tokyo-night\n")
+        config_path.write_text(
+            "theme: the-expanse\nfocus: git\ndisplay:\n  colorPreset: tokyo-night\n"
+        )
 
         clear_panel_focus(project_dir=tmp_path)
 
@@ -475,9 +480,17 @@ class TestValidPanels:
     def test_contains_all_expected_panels(self) -> None:
         """VALID_PANELS should contain all BikeRack + Cyclist panels."""
         expected = {
-            "sprint", "git", "diffs", "todo", "workflow",
-            "progress", "audit-log", "ac",
-            "debug", "settings", "tty",
+            "sprint",
+            "git",
+            "diffs",
+            "todo",
+            "workflow",
+            "progress",
+            "audit-log",
+            "ac",
+            "debug",
+            "settings",
+            "tty",
         }
         assert set(VALID_PANELS) == expected
 

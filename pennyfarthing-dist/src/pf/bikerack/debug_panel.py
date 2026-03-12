@@ -103,6 +103,7 @@ class DebugPanel(BasePanel):
         """Call context_window.check_context() directly as fallback."""
         try:
             from pf.context_window import check_context
+
             result = check_context()
             if result.error:
                 return None
@@ -115,9 +116,12 @@ class DebugPanel(BasePanel):
                 "usablePercent": result.usable_percent,
                 "available": result.available,
                 "tier": (
-                    "MINIMAL" if result.usable_percent >= 85
-                    else "HANDOFF" if result.usable_percent >= 65
-                    else "REFRESH" if result.usable_percent >= 50
+                    "MINIMAL"
+                    if result.usable_percent >= 85
+                    else "HANDOFF"
+                    if result.usable_percent >= 65
+                    else "REFRESH"
+                    if result.usable_percent >= 50
                     else "FULL"
                 ),
                 "error": None,
@@ -249,7 +253,6 @@ class DebugPanel(BasePanel):
 
         # Default: normal context/token view
         return self._render_normal(payload)
-
 
     def _render_normal(self, payload: dict[str, Any]) -> Any:
         """Render the normal context usage and token stats view."""

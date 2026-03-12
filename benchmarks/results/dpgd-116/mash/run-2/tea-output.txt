@@ -1,0 +1,28 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a greenfield implementation — CLI framework, error types, output formatting, HTTP client wrapper, config loading, shell completions, and stub handlers all need test coverage.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `tests/cli_structure.rs` | 35 | AC-1, 2, 5, 6 | Command groups, help rendering, global flags, clap derive |
+| `tests/exit_codes.rs` | 12 | AC-3 | CliError exit code mapping (0/1/2/3/4), CWE-209 checks |
+| `tests/output_format.rs` | 17 | AC-4 | Table/JSON/CSV formatting, escaping, metadata, edge cases |
+| `tests/siem_client.rs` | 16 | AC-7 | HTTP wrapper, header injection, status code mapping |
+| `tests/config_loading.rs` | 10 | AC-8 | TOML loading, env overrides, secret exclusion, validation |
+| `tests/shell_completion.rs` | 6 | AC-9 | bash/zsh/fish/PowerShell generation |
+| `tests/stub_handlers.rs` | 10 | AC-10 | NotImplemented errors with story references |
+
+**Tests Written:** 106 tests covering all 10 ACs
+**Status:** RED (failing — all 7 test files fail to compile because modules don't exist)
+
+**Security tests included:**
+- Header injection prevention (newlines in tenant ID / token)
+- CWE-209: auth error messages don't expose internals
+- Config files don't load secret fields (token/password/api_key)
+- Config errors don't leak file contents
+- JSON formatter produces valid JSON with special chars (XSS-safe)
+- CSV escaping for commas, quotes, newlines
+
+**Handoff:** To Dev for implementation (GREEN phase)

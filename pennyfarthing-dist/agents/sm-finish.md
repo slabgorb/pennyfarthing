@@ -17,29 +17,73 @@ model: haiku
 <execution>
 ## 1. Create PR (if needed)
 
-Before running preflight, check if a PR exists for the branch. If not, create one
-using the project's `pr_mode` config:
+Before running preflight, check if a PR exists for the branch. If not, create one.
 
 ```bash
-# Read pr_mode: draft | ready | none
+# Read pr_mode and pr_strategy
 PR_MODE=$(source .venv/bin/activate && python -m pf.common.pr_config)
+PR_STRATEGY=$(python3 -c "
+from pf.git.repos import get_repo_config
+rc = get_repo_config('{REPOS}')
+print(rc.pr_strategy if rc else 'standard')
+")
 ```
 
 Format the PR title using the project's `pr_title_format` from `.pennyfarthing/repos.yaml`:
 ```bash
-PR_TITLE=$(source .venv/bin/activate && python -c "
+PR_TITLE=$(python3 -c "
 from pf.git.repos import format_pr_title
 print(format_pr_title(jira_key='${JIRA_KEY:-$STORY_ID}', title='${title}', scope='${scope}'))
 ")
 ```
-- If `PR_MODE=draft`: `gh pr create --draft --title "$PR_TITLE" --body "..." --base develop`
-- If `PR_MODE=ready`: `gh pr create --title "$PR_TITLE" --body "..." --base develop`
-- If `PR_MODE=none`: Skip PR creation entirely.
 
 Check for existing PR first: `gh pr list --head {BRANCH} --json number --jq '.[0].number'`
 If a PR already exists, skip creation.
 
-## 2. Compile Impact Summary
+### Standard repos (default)
+
+- If `PR_MODE=draft`: `gh pr create --draft --title "$PR_TITLE" --body "..." --base develop`
+- If `PR_MODE=ready`: `gh pr create --title "$PR_TITLE" --body "..." --base develop`
+- If `PR_MODE=none`: Skip PR creation entirely.
+
+### Stacked repos (`pr_strategy: stacked`)
+
+Use Graphite to submit the PR. Graphite automatically sets the base branch from stack metadata:
+
+```bash
+gt submit --title "$PR_TITLE" --body "..."
+```
+
+If `PR_MODE=draft`, add `--draft` flag.
+
+**Post-merge (stacked only):** After merging a stacked PR, sync the stack so dependents retarget:
+
+```bash
+gt sync
+```
+
+SM must run `gt sync` after every stacked PR merge, regardless of position in the stack.
+
+## 2. Include Design Deviations in PR Body
+
+If the session file has a `## Design Deviations` section with entries (not just the template marker),
+extract it and append to the PR description body as a `## Design Deviations` section.
+
+```bash
+# Extract deviations from session (between marker comment and next ## heading)
+DEVIATIONS=$(sed -n '/^## Design Deviations/,/^## [^D]/p' ".session/{STORY_ID}-session.md" | head -n -1)
+```
+
+If the PR already exists, update the body:
+```bash
+gh pr edit {PR_NUMBER} --body "$(gh pr view {PR_NUMBER} --json body -q .body)
+
+${DEVIATIONS}"
+```
+
+If creating a new PR (Step 1), include the deviations in the initial `--body`.
+
+## 3. Compile Impact Summary
 
 Compile Delivery Findings from the session file into an Impact Summary section.
 Uses `pf.findings.summary.write_impact_summary_to_session()` which reads the

@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: game-of-thrones
+run_id: 4
+total_caught: 4
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors. The
+    config tests and reviewer comments discuss config loading but none flag the unwrap_or_default
+    pattern that silently discards parse/permission errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: "Dev implemented CWE-209 sanitization in CliError::Display, filtering\
+    \ HTML and credential-like content in ServerError variant. TEA also wrote security\
+    \ tests for CWE-209 error exposure. However, the reviewer did not flag that eprintln\
+    \ still prints Display directly to stderr, so the mitigation is partial \u2014\
+    \ Display is sanitized but the underlying Io(transparent) variant may still leak\
+    \ OS details."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote tests for 'Header injection via CRLF in URLs, tokens, tenant\
+    \ IDs (AC-7)' and Dev implemented CRLF validation in SiemClient builder (client.rs:69-71,\
+    \ 97-116). However, the finding is specifically about using raw String instead\
+    \ of TenantId from axiathon-core \u2014 that type-safety aspect was not caught.\
+    \ The CRLF validation mitigates the injection risk but doesn't use the validated\
+    \ TenantId type."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[HIGH] Workspace dependency hygiene violation \u2014\
+    \ 6 crate-pinned dependencies not declared in [workspace.dependencies]' listing\
+    \ clap_complete, comfy-table, csv, dirs, keyring, reqwest, toml as locally pinned."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] ClientConfig accepts unknown TOML fields silently\
+    \ \u2014 config.rs:15' and recommended adding #[serde(deny_unknown_fields)]. This\
+    \ directly addresses the silent ignore of unknown fields including token."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (assert!(config.server().is_none()
+    || ...)) in any test. TEA wrote config tests but this specific logical flaw was
+    not flagged.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test (let _ = config). TEA wrote
+    config tests but this specific test quality issue was not flagged by any phase.

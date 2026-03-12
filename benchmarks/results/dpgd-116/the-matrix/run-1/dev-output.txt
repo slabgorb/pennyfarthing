@@ -1,0 +1,20 @@
+All **124 tests pass** and **clippy is clean** (no warnings or errors).
+
+## Summary
+
+**Files created:**
+- `crates/axiathon-client/src/error.rs` — `CliError` enum (#[non_exhaustive]) with exit code mapping (0/1/3/4) and sanitized Display impl preventing CWE-209/CWE-113
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum (Table/Json/Csv) with FromStr + ValueEnum, `OutputFormatter` with comfy-table, JSON+metadata, and CSV (RFC 4180)
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides, CLI flag precedence, validation (deny_unknown_fields, no token storage), XDG paths
+- `crates/axiathon-client/src/client.rs` — `SiemClient` wrapping reqwest with Authorization/X-Tenant-ID headers, HTTP status→CliError mapping, header injection prevention, token-safe Debug
+- `crates/axiathon-client/src/cli.rs` — Clap 4.x derive-only `Cli` struct with all global flags (global=true), `Commands` enum with all 12 command groups using plural nouns
+- `crates/axiathon-client/src/commands/mod.rs` — Module re-exports
+- `crates/axiathon-client/src/commands/completion.rs` — `generate_completion(Shell)` using clap_complete
+- `crates/axiathon-client/src/main.rs` — Binary entry point
+
+**Files modified:**
+- `crates/axiathon-client/src/lib.rs` — Added public module declarations
+- `crates/axiathon-client/Cargo.toml` — Added chrono/uuid dependencies
+- `Cargo.toml` (workspace) — Added `env` feature to clap
+
+**Tests:** 124/124 passing (GREEN), clippy clean.

@@ -1,0 +1,29 @@
+All **137 tests pass** (0 failures) and **clippy is clean** (0 warnings with `-D warnings`).
+
+## Summary
+
+### Files Created (production code in `crates/axiathon-client/src/`)
+
+| File | Description |
+|------|-------------|
+| `error.rs` | `CliError` enum (`#[non_exhaustive]`, `thiserror`) with `exit_code()` (3=auth, 4=authz, 1=other) and `from_status_code()`. Display sanitizes internal details (CWE-209). |
+| `output.rs` | `OutputFormat` (Table/Json/Csv) with FromStr/Display, `OutputFormatter` with table (comfy-table), JSON (metadata envelope with request_id/timestamp/api_version), CSV (csv crate). |
+| `client.rs` | `SiemClient` wrapping base_url/token/tenant. Strips trailing slashes, rejects `\r\n` in headers (header injection prevention), `default_headers()` for X-Tenant-ID and Authorization: Bearer. |
+| `config.rs` | `ClientConfig` with TOML loading, XDG default path, env var overrides (AXIATHON_API_URL/AXIATHON_TIMEOUT), validation (negative timeout, empty URL), token field intentionally absent. |
+| `cli.rs` | `Cli` (derive Parser) with global flags (`--format`, `-v`, `--quiet`, `--server` with env, `--tenant`, `--config`, `--no-color`). `Commands` enum with 10 subcommands. |
+| `commands/*.rs` | 10 modules: 8 stub handlers returning `NotImplemented` with story references (5.5, 6.2-6.5, 6.6, 6.7, 9.1), functional `completion` (clap_complete), and `init`. All have `after_help` examples. |
+| `lib.rs` | Updated with module re-exports. |
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `Cargo.toml` (workspace) | Added `env` feature to clap; changed `unsafe_code` from `forbid` to `deny` (production crates keep `#![forbid(unsafe_code)]` in lib.rs) |
+| `crates/axiathon-client/Cargo.toml` | Added `uuid` dependency |
+| `tests/config_loading.rs` | Fixed `set_var`/`remove_var` for edition 2024 (`unsafe` blocks), explicit `apply_env_overrides()` to fix race condition |
+| `tests/global_flags.rs` | Fixed `set_var`/`remove_var` for edition 2024 (`unsafe` blocks) |
+
+### Delivery Findings
+
+- **Gap** (non-blocking): Test files use `std::env::set_var`/`remove_var` which are unsafe in edition 2024. Affects `tests/config_loading.rs` and `tests/global_flags.rs` (need `unsafe` blocks and `#[allow(unsafe_code)]`). *Found by Dev during implementation.*
+- **Gap** (non-blocking): Workspace `unsafe_code = "forbid"` lint prevents any `unsafe` in tests, even for `set_var` in edition 2024. Changed to `deny` with `#![forbid(unsafe_code)]` preserved in production `lib.rs`. Affects `Cargo.toml` workspace lints. *Found by Dev during implementation.*

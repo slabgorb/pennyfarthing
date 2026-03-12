@@ -25,7 +25,7 @@ DISPATCHER_MANAGED_HOOKS: set[str] = {
     "context-warning",
     "context-breaker",
     "schema-validation",
-    "cyclist-pretooluse",
+
     "sprint-yaml",
     "agent-reload",
 }

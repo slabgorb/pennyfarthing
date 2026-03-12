@@ -1,0 +1,26 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — every module needs tests to verify the contract.
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `cli_command_structure.rs` | 33 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (derive macros) |
+| `cli_error_exit_codes.rs` | 16 | AC-3 (exit codes 0/1/2/3/4), error trait, CWE-209 info leak |
+| `output_formatting.rs` | 12 | AC-4 (table/json/csv formatting), metadata, escaping |
+| `siem_client.rs` | 15 | AC-7 (HTTP status mapping, headers), CWE-113 header injection |
+| `config_loading.rs` | 12 | AC-8 (TOML loading, env overrides, precedence, validation) |
+| `shell_completion.rs` | 7 | AC-9 (bash/zsh/fish/powershell completion generation) |
+| `stub_handlers.rs` | 14 | AC-10 (stubs return NotImplemented with story refs) |
+
+**Tests Written:** 109 tests covering all 10 ACs
+**Status:** RED (fails to compile — modules `cli`, `error`, `output`, `client`, `config`, `commands` don't exist yet)
+
+**Security tests included:**
+- CWE-209: Error messages don't leak internal paths, tokens, or stack traces
+- CWE-113: Header injection via CRLF in token/tenant values rejected
+- Token leak: Auth errors don't include Bearer/JWT content
+- Config security: Tokens not loadable from TOML files (must use OS keychain)
+
+**Handoff:** To Dev for implementation (GREEN phase)

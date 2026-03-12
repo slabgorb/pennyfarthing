@@ -86,15 +86,11 @@ class TestGateFileExists:
         """AC1: Gate is discoverable via resolve_gate_file()."""
         # Use the framework root which has pennyfarthing-dist/gates/
         result = resolve_gate_file(GATE_NAME, project_root=_FRAMEWORK_ROOT)
-        assert result["status"] == "found", (
-            f"Gate not discoverable: {result.get('error')}"
-        )
+        assert result["status"] == "found", f"Gate not discoverable: {result.get('error')}"
 
     def test_gate_discoverable_with_prefix(self, gate_path: Path) -> None:
         """AC1: Gate discoverable with gates/ prefix."""
-        result = resolve_gate_file(
-            f"gates/{GATE_NAME}", project_root=_FRAMEWORK_ROOT
-        )
+        result = resolve_gate_file(f"gates/{GATE_NAME}", project_root=_FRAMEWORK_ROOT)
         assert result["status"] == "found"
 
 
@@ -131,9 +127,7 @@ class TestGateSchemaStructure:
 
     def test_parses_without_error(self, parsed_gate: dict) -> None:
         """AC2: parse_gate_file returns status 'ok'."""
-        assert parsed_gate["status"] == "ok", (
-            f"Parse error: {parsed_gate.get('error')}"
-        )
+        assert parsed_gate["status"] == "ok", f"Parse error: {parsed_gate.get('error')}"
 
 
 # ===========================================================================
@@ -148,14 +142,11 @@ class TestGateAmbiguityDetection:
         """AC3: Purpose section references ambiguity or unclear instructions."""
         import re
 
-        purpose_match = re.search(
-            r"<purpose>(.*?)</purpose>", gate_content, re.DOTALL
-        )
+        purpose_match = re.search(r"<purpose>(.*?)</purpose>", gate_content, re.DOTALL)
         assert purpose_match is not None, "No <purpose> block found"
         purpose = purpose_match.group(1).lower()
         assert any(
-            term in purpose
-            for term in ["ambig", "unclear", "vague", "confidence", "clarif"]
+            term in purpose for term in ["ambig", "unclear", "vague", "confidence", "clarif"]
         ), f"Purpose doesn't reference ambiguity: {purpose}"
 
     def test_gate_name_is_confidence(self, parsed_gate: dict) -> None:
@@ -165,10 +156,9 @@ class TestGateAmbiguityDetection:
     def test_content_is_agent_agnostic(self, gate_content: str) -> None:
         """AC3: Gate content is agent-agnostic (not SM-specific)."""
         content_lower = gate_content.lower()
-        assert any(
-            term in content_lower
-            for term in ["current agent", "the agent", "any agent"]
-        ), "Gate should be agent-agnostic"
+        assert any(term in content_lower for term in ["current agent", "the agent", "any agent"]), (
+            "Gate should be agent-agnostic"
+        )
 
 
 # ===========================================================================
@@ -261,9 +251,7 @@ class TestGateModel:
 
     def test_model_is_haiku(self, parsed_gate: dict) -> None:
         """AC6: parse_gate_file extracts model as 'haiku' from a valid gate."""
-        assert parsed_gate["status"] == "ok", (
-            f"Gate parse failed: {parsed_gate.get('error')}"
-        )
+        assert parsed_gate["status"] == "ok", f"Gate parse failed: {parsed_gate.get('error')}"
         assert parsed_gate["model"] == "haiku", (
             f"Expected model 'haiku', got '{parsed_gate['model']}'"
         )
@@ -275,9 +263,7 @@ class TestGateModel:
         gate_match = re.search(r"<gate\b[^>]*>", gate_content)
         assert gate_match is not None
         gate_tag = gate_match.group(0)
-        assert 'model="haiku"' in gate_tag, (
-            f"<gate> tag missing model=\"haiku\": {gate_tag}"
-        )
+        assert 'model="haiku"' in gate_tag, f'<gate> tag missing model="haiku": {gate_tag}'
 
 
 # ===========================================================================
@@ -290,9 +276,7 @@ class TestGateSchemaConsistency:
 
     def test_result_has_all_required_keys(self, parsed_gate: dict) -> None:
         """AC7: parse_gate_file result has all expected keys and parse succeeds."""
-        assert parsed_gate["status"] == "ok", (
-            f"Gate parse failed: {parsed_gate.get('error')}"
-        )
+        assert parsed_gate["status"] == "ok", f"Gate parse failed: {parsed_gate.get('error')}"
         for key in ("status", "name", "model", "content", "error"):
             assert key in parsed_gate, f"Missing key: {key}"
 

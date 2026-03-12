@@ -130,29 +130,21 @@ class TestSetupRunsAfterInit:
 
             mock_setup.assert_called_once()
 
-    def test_init_result_includes_setup_data(
-        self, target_dir: Path, mock_dist: Path
-    ) -> None:
+    def test_init_result_includes_setup_data(self, target_dir: Path, mock_dist: Path) -> None:
         """init_project result should include setup workflow results."""
         from pf.init.core import init_project
 
-        result = init_project(
-            target_dir=target_dir, dist_root=mock_dist
-        )
+        result = init_project(target_dir=target_dir, dist_root=mock_dist)
 
         assert result["success"] is True
         data = result.get("data", {})
         assert "setup" in data, "Result should include 'setup' key with setup workflow results"
 
-    def test_setup_runs_after_directories_exist(
-        self, target_dir: Path, mock_dist: Path
-    ) -> None:
+    def test_setup_runs_after_directories_exist(self, target_dir: Path, mock_dist: Path) -> None:
         """Setup should run after .pennyfarthing/ and .claude/ already exist."""
         from pf.init.setup import run_setup
 
-        result = run_setup(
-            target_dir=target_dir, dist_root=mock_dist, skip_prompts=True
-        )
+        result = run_setup(target_dir=target_dir, dist_root=mock_dist, skip_prompts=True)
 
         assert result["success"] is True
 
@@ -162,9 +154,7 @@ class TestSetupRunsAfterInit:
         """run_setup should return {success, data?, error?} format."""
         from pf.init.setup import run_setup
 
-        result = run_setup(
-            target_dir=initialized_project, dist_root=mock_dist, skip_prompts=True
-        )
+        result = run_setup(target_dir=initialized_project, dist_root=mock_dist, skip_prompts=True)
 
         assert "success" in result
         assert isinstance(result["success"], bool)
@@ -200,9 +190,7 @@ class TestRepoDiscovery:
         for _name, config in repos.items():
             assert "type" in config
 
-    def test_write_repos_yaml_creates_file(
-        self, initialized_project: Path
-    ) -> None:
+    def test_write_repos_yaml_creates_file(self, initialized_project: Path) -> None:
         """Should write repos.yaml to .pennyfarthing/ directory."""
         from pf.init.setup import write_repos_yaml
 
@@ -263,15 +251,11 @@ class TestRepoDiscovery:
         assert "type" in repo
         assert "default_branch" in repo
 
-    def test_setup_writes_repos_yaml(
-        self, initialized_project: Path, mock_dist: Path
-    ) -> None:
+    def test_setup_writes_repos_yaml(self, initialized_project: Path, mock_dist: Path) -> None:
         """Full setup should write repos.yaml."""
         from pf.init.setup import run_setup
 
-        run_setup(
-            target_dir=initialized_project, dist_root=mock_dist, skip_prompts=True
-        )
+        run_setup(target_dir=initialized_project, dist_root=mock_dist, skip_prompts=True)
 
         repos_path = initialized_project / ".pennyfarthing" / "repos.yaml"
         assert repos_path.is_file()
@@ -285,9 +269,7 @@ class TestRepoDiscovery:
 class TestThemeSelection:
     """AC: Theme selection writes config.local.yaml."""
 
-    def test_write_theme_config_creates_file(
-        self, initialized_project: Path
-    ) -> None:
+    def test_write_theme_config_creates_file(self, initialized_project: Path) -> None:
         """Should create config.local.yaml in .pennyfarthing/."""
         from pf.init.setup import write_theme_config
 
@@ -307,9 +289,7 @@ class TestThemeSelection:
         data = yaml.safe_load(config_path.read_text())
         assert data["theme"] == "lord-of-the-rings"
 
-    def test_write_theme_preserves_existing_config(
-        self, initialized_project: Path
-    ) -> None:
+    def test_write_theme_preserves_existing_config(self, initialized_project: Path) -> None:
         """Writing theme should not clobber other config keys."""
         from pf.init.setup import write_theme_config
 
@@ -462,9 +442,7 @@ class TestPackageManagerDetection:
         """Should detect npm when package-lock.json exists."""
         from pf.init.setup import detect_package_manager
 
-        (target_dir / "package-lock.json").write_text(
-            json.dumps({"lockfileVersion": 3})
-        )
+        (target_dir / "package-lock.json").write_text(json.dumps({"lockfileVersion": 3}))
 
         result = detect_package_manager(target_dir)
 
@@ -475,9 +453,7 @@ class TestPackageManagerDetection:
         from pf.init.setup import detect_package_manager
 
         (target_dir / "pnpm-lock.yaml").write_text("lockfileVersion: '9.0'\n")
-        (target_dir / "package-lock.json").write_text(
-            json.dumps({"lockfileVersion": 3})
-        )
+        (target_dir / "package-lock.json").write_text(json.dumps({"lockfileVersion": 3}))
 
         result = detect_package_manager(target_dir)
 
@@ -499,9 +475,7 @@ class TestPackageManagerDetection:
         from pf.init.setup import detect_package_manager
 
         (target_dir / "yarn.lock").write_text("# yarn lockfile v1\n")
-        (target_dir / "package-lock.json").write_text(
-            json.dumps({"lockfileVersion": 3})
-        )
+        (target_dir / "package-lock.json").write_text(json.dumps({"lockfileVersion": 3}))
 
         result = detect_package_manager(target_dir)
 
@@ -539,15 +513,11 @@ class TestPackageManagerDetection:
 class TestNodePackageInstall:
     """AC: Node packages installed via detected package manager."""
 
-    def test_install_returns_result_format(
-        self, initialized_project: Path
-    ) -> None:
+    def test_install_returns_result_format(self, initialized_project: Path) -> None:
         """install_node_packages should return {success, data?, error?}."""
         from pf.init.setup import install_node_packages
 
-        result = install_node_packages(
-            initialized_project, "npm", dry_run=True
-        )
+        result = install_node_packages(initialized_project, "npm", dry_run=True)
 
         assert "success" in result
         assert isinstance(result["success"], bool)
@@ -556,9 +526,7 @@ class TestNodePackageInstall:
         """Dry run should not actually install packages."""
         from pf.init.setup import install_node_packages
 
-        result = install_node_packages(
-            initialized_project, "npm", dry_run=True
-        )
+        result = install_node_packages(initialized_project, "npm", dry_run=True)
 
         assert result["success"] is True
         data = result.get("data", {})
@@ -568,9 +536,7 @@ class TestNodePackageInstall:
         """Dry run should report the command that would be executed."""
         from pf.init.setup import install_node_packages
 
-        result = install_node_packages(
-            initialized_project, "pnpm", dry_run=True
-        )
+        result = install_node_packages(initialized_project, "pnpm", dry_run=True)
 
         assert result["success"] is True
         data = result.get("data", {})
@@ -581,9 +547,7 @@ class TestNodePackageInstall:
         """Should use pnpm install when pnpm is the detected manager."""
         from pf.init.setup import install_node_packages
 
-        result = install_node_packages(
-            initialized_project, "pnpm", dry_run=True
-        )
+        result = install_node_packages(initialized_project, "pnpm", dry_run=True)
 
         assert result["success"] is True
         assert "pnpm" in result["data"]["command"]
@@ -592,9 +556,7 @@ class TestNodePackageInstall:
         """Should use yarn add when yarn is the detected manager."""
         from pf.init.setup import install_node_packages
 
-        result = install_node_packages(
-            initialized_project, "yarn", dry_run=True
-        )
+        result = install_node_packages(initialized_project, "yarn", dry_run=True)
 
         assert result["success"] is True
         assert "yarn" in result["data"]["command"]
@@ -603,16 +565,12 @@ class TestNodePackageInstall:
         """Should use npm install when npm is the detected manager."""
         from pf.init.setup import install_node_packages
 
-        result = install_node_packages(
-            initialized_project, "npm", dry_run=True
-        )
+        result = install_node_packages(initialized_project, "npm", dry_run=True)
 
         assert result["success"] is True
         assert "npm" in result["data"]["command"]
 
-    def test_rejects_invalid_package_manager(
-        self, initialized_project: Path
-    ) -> None:
+    def test_rejects_invalid_package_manager(self, initialized_project: Path) -> None:
         """Should reject an unknown package manager."""
         from pf.init.setup import install_node_packages
 
@@ -621,9 +579,7 @@ class TestNodePackageInstall:
         assert result["success"] is False
         assert "error" in result
 
-    def test_setup_detects_and_installs(
-        self, initialized_project: Path, mock_dist: Path
-    ) -> None:
+    def test_setup_detects_and_installs(self, initialized_project: Path, mock_dist: Path) -> None:
         """Full setup should detect package manager and install packages."""
         from pf.init.setup import run_setup
 
@@ -650,9 +606,7 @@ class TestNodePackageInstall:
 class TestPartialCompletionReentry:
     """AC: Handles partial completion and re-entry gracefully."""
 
-    def test_get_setup_state_all_false_initially(
-        self, target_dir: Path
-    ) -> None:
+    def test_get_setup_state_all_false_initially(self, target_dir: Path) -> None:
         """Fresh project (before init) should report no setup steps completed."""
         from pf.init.setup import get_setup_state
 
@@ -663,9 +617,7 @@ class TestPartialCompletionReentry:
         assert state["git_hooks"] is False
         assert state["node_packages"] is False
 
-    def test_get_setup_state_detects_repos_yaml(
-        self, initialized_project: Path
-    ) -> None:
+    def test_get_setup_state_detects_repos_yaml(self, initialized_project: Path) -> None:
         """Should detect repos.yaml as completed."""
         from pf.init.setup import get_setup_state
 
@@ -678,9 +630,7 @@ class TestPartialCompletionReentry:
 
         assert state["repos"] is True
 
-    def test_get_setup_state_detects_theme_config(
-        self, initialized_project: Path
-    ) -> None:
+    def test_get_setup_state_detects_theme_config(self, initialized_project: Path) -> None:
         """Should detect config.local.yaml with theme as completed."""
         from pf.init.setup import get_setup_state
 
@@ -691,9 +641,7 @@ class TestPartialCompletionReentry:
 
         assert state["theme"] is True
 
-    def test_setup_skips_completed_repos(
-        self, initialized_project: Path, mock_dist: Path
-    ) -> None:
+    def test_setup_skips_completed_repos(self, initialized_project: Path, mock_dist: Path) -> None:
         """Re-running setup should not overwrite existing repos.yaml."""
         from pf.init.setup import run_setup, write_repos_yaml
 
@@ -721,9 +669,7 @@ class TestPartialCompletionReentry:
         data = yaml.safe_load(repos_path.read_text())
         assert "custom-repo" in data["repos"]
 
-    def test_setup_skips_completed_theme(
-        self, initialized_project: Path, mock_dist: Path
-    ) -> None:
+    def test_setup_skips_completed_theme(self, initialized_project: Path, mock_dist: Path) -> None:
         """Re-running setup should not overwrite existing theme selection."""
         from pf.init.setup import run_setup
 
@@ -803,9 +749,7 @@ class TestPartialCompletionReentry:
 class TestSetupDryRun:
     """Verify dry-run mode for the full setup workflow."""
 
-    def test_dry_run_creates_no_config_files(
-        self, target_dir: Path, mock_dist: Path
-    ) -> None:
+    def test_dry_run_creates_no_config_files(self, target_dir: Path, mock_dist: Path) -> None:
         """Dry run should not write repos.yaml or config.local.yaml.
 
         Uses target_dir (pre-init) so no repos.yaml or config exist yet.
@@ -824,9 +768,7 @@ class TestSetupDryRun:
         assert not (target_dir / ".pennyfarthing" / "repos.yaml").exists()
         assert not (target_dir / ".pennyfarthing" / "config.local.yaml").exists()
 
-    def test_dry_run_returns_plan(
-        self, initialized_project: Path, mock_dist: Path
-    ) -> None:
+    def test_dry_run_returns_plan(self, initialized_project: Path, mock_dist: Path) -> None:
         """Dry run should return a plan describing what would happen."""
         from pf.init.setup import run_setup
 
@@ -871,9 +813,7 @@ class TestEdgeCases:
         data = result.get("data", {})
         assert data.get("git_hooks_installed") is False
 
-    def test_setup_with_invalid_dist_root(
-        self, initialized_project: Path, tmp_path: Path
-    ) -> None:
+    def test_setup_with_invalid_dist_root(self, initialized_project: Path, tmp_path: Path) -> None:
         """Should return error when dist_root is invalid."""
         from pf.init.setup import run_setup
 

@@ -58,7 +58,7 @@ def resolve_hook_paths(settings: dict, project_root: Path) -> dict:
 
     def _resolve(cmd: str) -> str:
         if cmd.startswith(_SHIM_REL):
-            return abs_shim + cmd[len(_SHIM_REL):]
+            return abs_shim + cmd[len(_SHIM_REL) :]
         return cmd
 
     for _event, entries in settings.get("hooks", {}).items():

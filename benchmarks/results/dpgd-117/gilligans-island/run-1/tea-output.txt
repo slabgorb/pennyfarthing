@@ -1,0 +1,31 @@
+---
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 establishes the REST API foundation — every AC has testable behavior.
+
+**Test Files:**
+- `crates/axiathon-server/tests/common/mod.rs` - Shared test helpers (HTTP request builders, response wrapper)
+- `crates/axiathon-server/tests/api_routes.rs` - AC1: Route registration and health endpoint (9 tests)
+- `crates/axiathon-server/tests/api_envelope.rs` - AC2: ApiResponse envelope format (12 tests)
+- `crates/axiathon-server/tests/api_auth.rs` - AC3: JWT Bearer + API key authentication (17 tests)
+- `crates/axiathon-server/tests/api_rate_limit.rs` - AC4: Per-tenant rate limiting (4 tests)
+- `crates/axiathon-server/tests/api_versioning.rs` - AC5: URL versioning and deprecation (6 tests)
+- `crates/axiathon-server/tests/api_security.rs` - Security edge cases (12 tests)
+
+**Tests Written:** 60 tests covering 5 ACs + security edge cases
+**Status:** RED (56 failing, 4 passing — the 4 passing are legitimate negative versioning assertions)
+
+**Key Observations for Dev:**
+1. The existing `ApiResponse<T>` in axiathon-core does NOT match the AC spec. The AC requires `meta` with `request_id`/`timestamp`/`trace_id` and `errors` as an always-present array. The existing type has `meta` with pagination fields (`total`/`limit`/`offset`) and singular `error` as an Option. The dev must either update the existing types or create server-layer adapter types.
+2. A minimal `app() -> Router` stub was added to `lib.rs` to enable test compilation.
+3. Auth tests use placeholder token strings — the dev needs to set up test JWT signing infrastructure.
+4. Rate limiting tests use `app.clone()` for repeated requests; the dev must ensure shared state via `Arc` in `AppState`.
+
+**Handoff:** To Dev for implementation
+
+## Delivery Findings
+
+- **Gap** (blocking): `ApiResponse<T>` envelope in axiathon-core does not match AC2 requirements. AC requires `meta` with `request_id`, `timestamp`, `trace_id` and `errors` as always-present array. Current type has `meta` with `total`/`limit`/`offset` and singular optional `error`. Affects `crates/axiathon-core/src/types.rs` (envelope structure needs updating or server-layer wrapper). *Found by TEA during test design.*
+- **Gap** (non-blocking): No test JWT infrastructure exists. Auth tests (AC3) use placeholder token strings. Dev will need to establish a test fixture pattern for creating valid/expired/scoped JWTs. Affects `crates/axiathon-server/tests/` (test helpers need JWT generation). *Found by TEA during test design.*

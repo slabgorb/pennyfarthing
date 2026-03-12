@@ -161,9 +161,7 @@ def validate_exit_protocol_team_branch(
 
     # Look for team cleanup in exit protocol section
     # The exit protocol is in <agent-exit-protocol> tags
-    exit_re = re.compile(
-        r"<agent-exit-protocol>(.*?)</agent-exit-protocol>", re.DOTALL
-    )
+    exit_re = re.compile(r"<agent-exit-protocol>(.*?)</agent-exit-protocol>", re.DOTALL)
     exit_match = exit_re.search(content)
 
     if exit_match is None:
@@ -176,8 +174,7 @@ def validate_exit_protocol_team_branch(
     team_cleanup_terms = ["team", "teamdelete", "cleanup team", "shut down teammate"]
     if not any(term in exit_content for term in team_cleanup_terms):
         errors.append(
-            "Exit protocol missing team-mode branch "
-            "(must reference team cleanup before handoff)"
+            "Exit protocol missing team-mode branch (must reference team cleanup before handoff)"
         )
 
     return errors, warnings
@@ -199,15 +196,15 @@ def validate_communication_protocols(
 
     # Reflector section must still exist
     if "<critical>" not in content or "CYCLIST" not in content:
-        errors.append("Reflector/CYCLIST marker section missing — must remain for inter-phase handoff")
+        errors.append(
+            "Reflector/CYCLIST marker section missing — must remain for inter-phase handoff"
+        )
 
     # Team-mode section must reference SendMessage for intra-phase
     section = extract_team_mode_section(content)
     if section is not None:
         if "SendMessage" not in section:
-            errors.append(
-                "<team-mode> must reference SendMessage for intra-phase communication"
-            )
+            errors.append("<team-mode> must reference SendMessage for intra-phase communication")
         # Should distinguish inter-phase (markers) from intra-phase (SendMessage)
         if "inter-phase" not in section.lower() and "intra-phase" not in section.lower():
             warnings.append(
@@ -247,9 +244,7 @@ def classify_team_mode_agents(
     return leads, all_tm
 
 
-def run(
-    root: Path, *, fix: bool = False, strict: bool = False
-) -> ValidateReport:
+def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateReport:
     """Validate agent team-mode protocol sections."""
     report = ValidateReport(validator="team-mode")
 

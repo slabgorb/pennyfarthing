@@ -115,13 +115,7 @@ def npm_layout(tmp_path: Path) -> Path:
     (pf_config / "config.local.yaml").write_text("theme: mash\n")
 
     # npm-installed dist
-    dist = (
-        tmp_path
-        / "node_modules"
-        / "@pennyfarthing"
-        / "core"
-        / "pennyfarthing-dist"
-    )
+    dist = tmp_path / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
     dist.mkdir(parents=True)
 
     # Agents (sm.md must pass validation; others are stubs for cross-ref)
@@ -183,7 +177,7 @@ def npm_layout(tmp_path: Path) -> Path:
     skills = dist / "skills"
     skills.mkdir()
     (skills / "skill-registry.yaml").write_text(
-        "version: \"1.0.0\"\nskills:\n  pf-testing:\n    name: pf-testing\n"
+        'version: "1.0.0"\nskills:\n  pf-testing:\n    name: pf-testing\n'
     )
     (skills / "skill-registry.schema.json").write_text('{"type": "object"}')
 
@@ -228,9 +222,7 @@ def bare_project(tmp_path: Path) -> Path:
 class TestGetDistRootMonorepo:
     """AC1: get_dist_root() in monorepo development layout."""
 
-    def test_finds_pennyfarthing_dist_at_project_root(
-        self, monorepo_layout: Path
-    ) -> None:
+    def test_finds_pennyfarthing_dist_at_project_root(self, monorepo_layout: Path) -> None:
         """Should find pennyfarthing-dist/ directly under project root."""
         result = get_dist_root(project_root=monorepo_layout)
         assert result is not None
@@ -306,13 +298,7 @@ class TestGetDistRootPrecedence:
         direct.mkdir()
         (direct / "agents").mkdir()
 
-        npm = (
-            tmp_path
-            / "node_modules"
-            / "@pennyfarthing"
-            / "core"
-            / "pennyfarthing-dist"
-        )
+        npm = tmp_path / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
         npm.mkdir(parents=True)
         (npm / "agents").mkdir()
 
@@ -359,14 +345,10 @@ class TestGetDistRootNotFound:
         result = get_dist_root(project_root=tmp_path)
         assert result is None or result.is_dir()
 
-    def test_auto_detects_project_root_when_not_given(
-        self, monorepo_layout: Path
-    ) -> None:
+    def test_auto_detects_project_root_when_not_given(self, monorepo_layout: Path) -> None:
         """When project_root is None, should auto-detect via get_project_root()."""
         # Patch get_project_root to return our monorepo layout
-        with patch(
-            "pf.common.config.get_project_root", return_value=monorepo_layout
-        ):
+        with patch("pf.common.config.get_project_root", return_value=monorepo_layout):
             result = get_dist_root()  # No project_root argument
             assert result is not None
             assert result == monorepo_layout / "pennyfarthing-dist"
@@ -406,9 +388,7 @@ class TestCallSitesNpmResolution:
 
         report = run(npm_layout, fix=False, strict=False)
         # Should NOT report "agents directory not found" error
-        has_dir_not_found = any(
-            "not found" in d.lower() for d in report.details
-        )
+        has_dir_not_found = any("not found" in d.lower() for d in report.details)
         assert not has_dir_not_found, (
             f"Agent validator failed to find agents in npm layout: {report.details}"
         )
@@ -417,23 +397,17 @@ class TestCallSitesNpmResolution:
             "Agent validator found 0 files in npm layout — call site not refactored"
         )
 
-    def test_workflow_validator_finds_workflows_in_npm(
-        self, npm_layout: Path
-    ) -> None:
+    def test_workflow_validator_finds_workflows_in_npm(self, npm_layout: Path) -> None:
         """workflow.run() should find and validate workflows in npm layout."""
         from pf.validate.adapters.workflow import run
 
         report = run(npm_layout, fix=False, strict=False)
-        has_dir_not_found = any(
-            "not found" in d.lower() for d in report.details
-        )
+        has_dir_not_found = any("not found" in d.lower() for d in report.details)
         assert not has_dir_not_found, (
             f"Workflow validator failed to find workflows in npm layout: {report.details}"
         )
 
-    def test_skill_command_discovers_registry_in_npm(
-        self, npm_layout: Path
-    ) -> None:
+    def test_skill_command_discovers_registry_in_npm(self, npm_layout: Path) -> None:
         """skill_command.discover_skill_registry() should find registry in npm."""
         from pf.validate.adapters.skill_command import discover_skill_registry
 
@@ -453,18 +427,10 @@ class TestCallSitesNpmResolution:
         """
         from pf.handoff.gate_file import resolve_gate_file
 
-        npm_dist = (
-            npm_layout
-            / "node_modules"
-            / "@pennyfarthing"
-            / "core"
-            / "pennyfarthing-dist"
-        )
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
         with patch("pf.handoff.gate_file.get_dist_root", return_value=npm_dist):
             result = resolve_gate_file("gates/red-gate", project_root=npm_layout)
-        assert result.get("status") == "found", (
-            f"resolve_gate_file failed in npm layout: {result}"
-        )
+        assert result.get("status") == "found", f"resolve_gate_file failed in npm layout: {result}"
 
     def test_theme_discovery_includes_npm_path(self, npm_layout: Path) -> None:
         """themes.discover_all_theme_dirs() should find themes when given the npm dist root.
@@ -475,21 +441,14 @@ class TestCallSitesNpmResolution:
         """
         from pf.common.themes import discover_all_theme_dirs
 
-        npm_dist = (
-            npm_layout
-            / "node_modules"
-            / "@pennyfarthing"
-            / "core"
-            / "pennyfarthing-dist"
-        )
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
         npm_themes = npm_dist / "personas" / "themes"
 
         with patch("pf.common.themes.get_dist_root", return_value=npm_dist):
             dirs = discover_all_theme_dirs(project_root=npm_layout)
         # Should include the npm-installed themes directory
         assert any(d == npm_themes or d.resolve() == npm_themes.resolve() for d in dirs), (
-            f"discover_all_theme_dirs did not include npm themes path. "
-            f"Got: {dirs}"
+            f"discover_all_theme_dirs did not include npm themes path. Got: {dirs}"
         )
 
     def test_workflow_get_phase_owner_in_npm(self, npm_layout: Path) -> None:
@@ -523,9 +482,7 @@ class TestCallSitesNpmResolution:
             "call site not refactored to use get_dist_root()"
         )
 
-    def test_team_mode_validator_finds_guides_in_npm(
-        self, npm_layout: Path
-    ) -> None:
+    def test_team_mode_validator_finds_guides_in_npm(self, npm_layout: Path) -> None:
         """team_mode.run() should find and validate guides in npm layout."""
         from pf.validate.adapters.team_mode import run
 
@@ -561,9 +518,7 @@ class TestValidateZeroFilesWarning:
             "Validator silently passed with 0 agent files — should warn"
         )
 
-    def test_workflow_validator_warns_on_zero_workflows(
-        self, tmp_path: Path
-    ) -> None:
+    def test_workflow_validator_warns_on_zero_workflows(self, tmp_path: Path) -> None:
         """Workflow validator should warn when 0 workflow files found."""
         from pf.validate.adapters.workflow import run
 
@@ -579,9 +534,7 @@ class TestValidateZeroFilesWarning:
             "Validator silently passed with 0 workflow files — should warn"
         )
 
-    def test_agent_validator_report_mentions_zero_files(
-        self, tmp_path: Path
-    ) -> None:
+    def test_agent_validator_report_mentions_zero_files(self, tmp_path: Path) -> None:
         """Report details should mention that 0 files were found."""
         from pf.validate.adapters.agent import run
 
@@ -631,8 +584,7 @@ class TestIntegrationNpmContext:
         report = run(npm_layout, fix=False, strict=False)
         # After refactoring, should validate at least 1 agent successfully
         assert report.passed >= 1, (
-            f"Expected at least 1 agent validated, got {report.passed}. "
-            f"Details: {report.details}"
+            f"Expected at least 1 agent validated, got {report.passed}. Details: {report.details}"
         )
 
     def test_theme_resolution_end_to_end_npm(self, npm_layout: Path) -> None:
@@ -640,9 +592,7 @@ class TestIntegrationNpmContext:
         from pf.common.themes import resolve_theme_path
 
         result = resolve_theme_path("mash", project_root=npm_layout)
-        assert result is not None, (
-            "resolve_theme_path('mash') returned None in npm layout"
-        )
+        assert result is not None, "resolve_theme_path('mash') returned None in npm layout"
         assert result.is_file()
 
     def test_gate_resolution_end_to_end_npm(self, npm_layout: Path) -> None:
@@ -654,18 +604,10 @@ class TestIntegrationNpmContext:
         """
         from pf.handoff.gate_file import resolve_gate_file
 
-        npm_dist = (
-            npm_layout
-            / "node_modules"
-            / "@pennyfarthing"
-            / "core"
-            / "pennyfarthing-dist"
-        )
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
         with patch("pf.handoff.gate_file.get_dist_root", return_value=npm_dist):
             result = resolve_gate_file("gates/red-gate", project_root=npm_layout)
-        assert result.get("status") == "found", (
-            f"Gate resolution failed in npm layout: {result}"
-        )
+        assert result.get("status") == "found", f"Gate resolution failed in npm layout: {result}"
         assert "path" in result
 
     def test_workflow_phase_lookup_end_to_end_npm(self, npm_layout: Path) -> None:
@@ -709,10 +651,7 @@ class TestRemainingCallSitesNpmResolution:
         hooks_dir.mkdir()
 
         # Create hooks source files and dispatcher template in dist
-        dist = (
-            npm_layout / "node_modules" / "@pennyfarthing" / "core"
-            / "pennyfarthing-dist"
-        )
+        dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
         hooks_source = dist / "scripts" / "hooks"
         hooks_source.mkdir(parents=True)
         (hooks_source / "dispatcher-template.sh").write_text(
@@ -731,9 +670,7 @@ class TestRemainingCallSitesNpmResolution:
         from pf.validate.adapters.tandem_awareness import run
 
         report = run(npm_layout, fix=False, strict=False)
-        has_dir_not_found = any(
-            "not found" in d.lower() for d in report.details
-        )
+        has_dir_not_found = any("not found" in d.lower() for d in report.details)
         assert not has_dir_not_found, (
             f"Tandem awareness failed to find agents in npm layout: {report.details}"
         )
@@ -747,19 +684,11 @@ class TestRemainingCallSitesNpmResolution:
         """
         import yaml
 
-        npm_dist = (
-            npm_layout
-            / "node_modules"
-            / "@pennyfarthing"
-            / "core"
-            / "pennyfarthing-dist"
-        )
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
         # Use the npm dist directly to verify command-registry.yaml is present
         assert npm_dist.is_dir(), "npm_layout fixture did not create npm dist"
         registry_path = npm_dist / "command-registry.yaml"
-        assert registry_path.is_file(), (
-            "command-registry.yaml not found in npm dist layout fixture"
-        )
+        assert registry_path.is_file(), "command-registry.yaml not found in npm dist layout fixture"
         data = yaml.safe_load(registry_path.read_text())
         assert data is not None
 
@@ -773,6 +702,4 @@ class TestRemainingCallSitesNpmResolution:
         display, theme_file = _get_character_display(str(npm_layout), "tea")
         # Should resolve the theme file (even if character isn't found for tea,
         # theme_file path should point to the dist location)
-        assert theme_file is not None, (
-            "statusline could not resolve theme file in npm layout"
-        )
+        assert theme_file is not None, "statusline could not resolve theme file in npm layout"

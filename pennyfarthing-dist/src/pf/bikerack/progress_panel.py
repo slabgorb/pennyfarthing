@@ -143,9 +143,20 @@ class ProgressPanel(BasePanel):
             "assignee": story.get("assignee", ""),
             "workflow": story.get("workflow", ""),
             "workflow_phase": story.get("phase", ""),
-            **{k: v for k, v in story.items() if k not in (
-                "id", "title", "points", "status", "assignee", "workflow", "phase",
-            )},
+            **{
+                k: v
+                for k, v in story.items()
+                if k
+                not in (
+                    "id",
+                    "title",
+                    "points",
+                    "status",
+                    "assignee",
+                    "workflow",
+                    "phase",
+                )
+            },
         }
 
     def _separator(self) -> Text:
@@ -166,10 +177,12 @@ class ProgressPanel(BasePanel):
             if next_header is not None:
                 parts.append(next_header)
             else:
-                parts.append(Text(
-                    "No stories \u2014 backlog empty",
-                    style="dim italic",
-                ))
+                parts.append(
+                    Text(
+                        "No stories \u2014 backlog empty",
+                        style="dim italic",
+                    )
+                )
         parts.append(self._separator())
 
         # --- Sprint Burndown ---
@@ -280,6 +293,7 @@ class ProgressPanel(BasePanel):
         """Render the next backlog story as a 'Next Story' header."""
         try:
             from pf.sprint.loader import get_stories_by_status
+
             backlog = get_stories_by_status("backlog")
             if not backlog:
                 return None
@@ -378,7 +392,9 @@ class ProgressPanel(BasePanel):
         remaining = sprint.get("remaining", 0) + sprint.get("inProgress", 0)
 
         pts_per_day = round(done / max(elapsed, 1), 1)
-        on_track = pts_per_day * days_left >= remaining if days_left > 0 else done >= remaining + done
+        on_track = (
+            pts_per_day * days_left >= remaining if days_left > 0 else done >= remaining + done
+        )
 
         line = Text()
         line.append(f"Day {elapsed}/{total_days}  ", style="bold")
@@ -451,7 +467,11 @@ class ProgressPanel(BasePanel):
                 phase_status = phase.get("status", "")
 
             # Determine phase state
-            if phase_status == "done" or (current_phase and phase_name != current_phase and _phase_before(phase_name, current_phase, phases)):
+            if phase_status == "done" or (
+                current_phase
+                and phase_name != current_phase
+                and _phase_before(phase_name, current_phase, phases)
+            ):
                 line.append("\u2713", style="green")
             elif phase_name == current_phase:
                 line.append("\u25cf", style="bold yellow")

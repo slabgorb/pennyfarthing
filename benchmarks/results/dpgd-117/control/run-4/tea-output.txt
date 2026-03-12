@@ -1,0 +1,37 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 introduces REST API foundation — routes, envelope, auth, rate limiting, versioning all need test coverage.
+
+**Test Files:**
+- `crates/axiathon-server/tests/api_routes.rs` — Route existence for all 5 groups + health endpoint behavior (14 tests)
+- `crates/axiathon-server/tests/api_envelope.rs` — ApiResponse envelope compliance: data/errors/meta fields, RFC 9457, unique request_id, JSON Content-Type (13 tests)
+- `crates/axiathon-server/tests/api_auth.rs` — JWT Bearer + API key auth: valid/missing/expired/malformed tokens, scope enforcement (403), JWKS endpoint (16 tests)
+- `crates/axiathon-server/tests/api_rate_limiting.rs` — Per-tenant rate limiting, 429 + Retry-After header, tenant isolation, health exemption (6 tests)
+- `crates/axiathon-server/tests/api_versioning.rs` — URL versioning under `/api/v1/`, 404 for v0/v2/unversioned, Deprecation header mechanism (8 tests)
+- `crates/axiathon-server/tests/api_security.rs` — CWE-209 info leak prevention, error sanitization, malformed JSON handling, body size limits, Content-Type enforcement, method restrictions, `#![forbid(unsafe_code)]` (13 tests)
+
+**Tests Written:** 70 tests covering all 5 ACs
+**Status:** RED (failing — `axiathon_server::app()` function does not exist)
+
+**AC Coverage:**
+| AC | Tests | File |
+|----|-------|------|
+| REST endpoints exist | 14 | `api_routes.rs` |
+| ApiResponse envelope | 13 | `api_envelope.rs` |
+| Authentication | 16 | `api_auth.rs` |
+| Rate limiting | 6 | `api_rate_limiting.rs` |
+| API versioning | 8 | `api_versioning.rs` |
+| Security (bonus) | 13 | `api_security.rs` |
+
+**Handoff:** To Dev for implementation of `axiathon_server::app()` and all middleware/routes.
+
+## Delivery Findings
+
+- **Gap** (non-blocking): Current `ApiResponse<T>` in axiathon-core has `meta: Option<ApiMeta>` with `total/limit/offset` fields, but AC requires `meta` to always be present with `request_id` (UUID), `timestamp` (ISO 8601), `trace_id` (string). Dev will need to either extend `ApiMeta` or create a separate response meta type for the server layer.
+  Affects `crates/axiathon-core/src/types.rs` (ApiMeta struct needs request_id, timestamp, trace_id fields).
+  *Found by TEA during test design.*
+
+- **Gap** (non-blocking): AC says `errors` should be "always present array (empty on success)" but current `ApiResponse<T>` has `error: Option<ApiError>` (singular, optional). Dev needs to change this to `errors: Vec<ApiError>` to match the AC.
+  Affects `crates/axiathon-core/src/types.rs` (ApiResponse.error field needs to become `errors: Vec<...>`).
+  *Found by TEA during test design.*

@@ -1,0 +1,33 @@
+Clean. Here's the summary:
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed/Created:**
+
+| File | Purpose |
+|------|---------|
+| `crates/axiathon-client/src/lib.rs` | Module declarations (added 6 pub mods) |
+| `crates/axiathon-client/src/error.rs` | `CliError` enum with 10 variants, exit code mapping, security-safe Display |
+| `crates/axiathon-client/src/config.rs` | `ClientConfig` with TOML loading, env var overrides, validation, token redaction |
+| `crates/axiathon-client/src/output.rs` | `OutputFormatter` trait + `TableFormatter`, `JsonFormatter`, `CsvFormatter`, `ResponseMetadata` |
+| `crates/axiathon-client/src/client.rs` | `SiemClient` HTTP wrapper with header injection, status code mapping |
+| `crates/axiathon-client/src/cli.rs` | Clap 4.x derive-based `Cli` struct, `Commands` enum (12 variants), global flags, all subcommand args |
+| `crates/axiathon-client/src/commands/mod.rs` | Module re-exports |
+| `crates/axiathon-client/src/commands/query.rs` | Stub → Story 5.5 |
+| `crates/axiathon-client/src/commands/rules.rs` | Stub → Story 6.6 |
+| `crates/axiathon-client/src/commands/alerts.rs` | Stub → Story 6.5 |
+| `crates/axiathon-client/src/commands/ingest.rs` | Stub → Story 6.4 |
+| `crates/axiathon-client/src/commands/config.rs` | Stub → Story 6.3 |
+| `crates/axiathon-client/src/commands/status.rs` | Stub → Story 6.2 |
+| `crates/axiathon-client/src/commands/tenant.rs` | Stub → Story 6.7 |
+| `crates/axiathon-client/src/commands/login.rs` | Stub → Story 9.1 |
+| `crates/axiathon-client/src/commands/init.rs` | Stub (functional in future) |
+| `crates/axiathon-client/src/commands/completion.rs` | `generate_completion()` using `clap_complete` |
+| `crates/axiathon-client/tests/config_loading.rs` | Added `#![allow(unsafe_code)]` + `unsafe` blocks for `set_var`/`remove_var` (edition 2024 requirement) |
+| `Cargo.toml` | Changed workspace lint `unsafe_code` from `forbid` to `deny` (edition 2024 compatibility — production crates still `#![forbid(unsafe_code)]` in lib.rs) |
+
+**Tests:** 129/129 passing (GREEN)
+**Clippy:** Clean (0 warnings)
+**Branch:** story/6.1-cli-framework-tests

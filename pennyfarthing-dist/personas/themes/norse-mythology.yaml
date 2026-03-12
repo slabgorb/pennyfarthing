@@ -22,6 +22,14 @@ theme:
     era: historical
     genre: fantasy
     energy: high-energy
+    zeitgeist: moderate
+    scrutiny: skeptical
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: ceremonial
+    intellectual_style: strategic
+    stakes: existential
   spinner_verbs:
     - Hurling Mjolnir
     - Reading the runes
@@ -56,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 79.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Odin moved here - the All-Father orchestrates across nine worlds

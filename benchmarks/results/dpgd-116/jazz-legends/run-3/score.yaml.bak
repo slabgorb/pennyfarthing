@@ -1,0 +1,72 @@
+scenario_id: dpgd-116
+theme: jazz-legends
+run_id: 3
+total_caught: 2
+total_findings: 7
+weighted_caught: 10
+total_weight: 37
+score_pct: 27.0
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase addressed from_file_or_default swallowing all errors. The config
+    implementation uses deny_unknown_fields and loads TOML, but no evidence of distinguishing
+    NotFound from parse/permission errors in the fallback path.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: 'Dev implemented sanitize_message() in error.rs Display impl for credential
+    sanitization (CWE-209). Reviewer verified it but also noted NotFound and Config
+    variants inconsistently skip sanitization (finding #7), so partial catch.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: Dev implemented CRLF/null stripping in client.rs:16-19 (header injection
+    prevention), but SiemClient.tenant_id still uses raw String rather than axiathon-core's
+    validated TenantId type. The stripping mitigates CWE-113 but doesn't use the type-safe
+    approach. No phase flagged the missing TenantId usage.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer noted version mismatches (dirs 5 vs 6, toml 0.8 vs 0.9) but did
+    not flag that dependencies use direct version strings instead of workspace = true.
+    The core issue of version drift from not using workspace inheritance was not caught.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: 'Dev implemented #[serde(deny_unknown_fields)] on ClientConfig (config.rs:11).
+    Reviewer verified this in finding #11. Unknown TOML keys including token cause
+    parse errors rather than silent acceptance.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...) in tests. TEA wrote 9 config_loading tests but the specific vacuous assertion
+    was not flagged.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test that only checks non-panic
+    via let _ = config. TEA wrote config tests but didn't flag this pattern.

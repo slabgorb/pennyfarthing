@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: the-west-wing
+run_id: 3
+timestamp: '2026-03-07T21:40:59.878390+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-the-west-wing-run-3
+phases:
+  tea:
+    token_usage:
+      input: 29
+      output: 21939
+    duration_s: 325.22
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 50
+      output: 20127
+    duration_s: 395.92
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 12
+      output: 4948
+    duration_s: 104.19
+    exit_code: 0

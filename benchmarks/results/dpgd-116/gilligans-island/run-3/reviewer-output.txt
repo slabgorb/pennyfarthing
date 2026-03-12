@@ -1,0 +1,185 @@
+*taps cane impatiently on the marble floor of the Howell estate*
+
+Well now. My Portfolio and I have thoroughly inspected this... *offering* from the development staff. Let me deliver the verdict with all the gravitas befitting a man of my station.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+## Preflight Results
+- `cargo test -p axiathon-client`: **101 tests PASS**
+- `cargo clippy -p axiathon-client -- -D warnings`: **CLEAN**
+- `cargo +nightly fmt --all --check`: **FAIL** (514 lines of formatting diffs)
+
+---
+
+## Findings
+
+### `[CRITICAL]` F1: Missing `main.rs` — Binary cannot be built or executed
+**Location:** `crates/axiathon-client/src/main.rs` does not exist
+
+The entire Story 6.1 scope requires an `axiathon` binary. Without `main.rs`, there is no CLI dispatch, no exit code enforcement via `std::process::exit()`, no config loading orchestration, and no operator tool. AC-3 explicitly requires main.rs to "catch errors and call `std::process::exit()`". The crate is library-only — `cargo build -p axiathon-client` produces no binary.
+
+**Blocks:** Every downstream story (6.2–6.7), AC-3, AC-8 precedence enforcement.
+
+---
+
+### `[HIGH]` F2: Nightly `rustfmt` check fails — 514 lines of formatting diffs
+**Location:** `crates/axiathon-client/src/cli.rs` and other files
+
+Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." It fails massively. The `#[command(...)]` attribute formatting throughout `cli.rs` is non-compliant with nightly rules.
+
+**Blocks:** CI will reject this.
+
+---
+
+### `[HIGH]` F3: `build_headers()` silently drops headers on invalid characters — no error, no log
+**Location:** `crates/axiathon-client/src/client.rs:59-69`
+
+```rust
+if let Ok(hv) = HeaderValue::from_str(&value) {
+    headers.insert("authorization", hv);
+}
+// else: silently dropped, no error, no warning
+```
+
+If a token or tenant ID contains characters that `HeaderValue::from_str` rejects (e.g., certain Unicode), the header is **silently not sent**. The operator gets a mysterious 401/403 with no indication their credential was dropped. This violates the project's "no silent failures" principle. The security tests verify CRLF is rejected — good — but they don't verify the operator is *told* about it.
+
+**Fix:** Return `Err(CliError::Config("invalid characters in token/tenant"))` instead of silently skipping.
+
+---
+
+### `[HIGH]` F4: Missing command modules — `login.rs`, `init.rs` not created
+**Location:** `crates/axiathon-client/src/commands/mod.rs`
+
+The `Commands` enum declares `Login`, `Logout`, `Tui`, and `Init` variants, but:
+- No `commands/login.rs` exists (AC-1 lists `login`/`logout`)
+- No `commands/init.rs` exists — and the story scope says init should be **functional**, not a stub
+- No `commands/logout.rs` exists
+
+The `commands/mod.rs` doesn't declare these modules. Without a `main.rs` dispatch, this isn't a compile error *yet*, but these are missing deliverables per AC-1 and the scope section.
+
+---
+
+### `[HIGH]` F5: `toml` version mismatch — workspace declares 0.8, story spec says 0.9
+**Location:** `Cargo.toml:50`
+
+The workspace root declares `toml = "0.8"` but the story's Technical Guardrails explicitly specify `toml` 0.9. This is either a spec error or a build dependency divergence. If the spec is authoritative, the dependency is wrong.
+
+---
+
+### `[MEDIUM]` F6: `RawConfig` silently accepts unknown TOML fields
+**Location:** `crates/axiathon-client/src/config.rs:9-15`
+
+```rust
+#[derive(Debug, Deserialize)]
+struct RawConfig {
+    server_url: Option<String>,
+    timeout: Option<i64>,
+    token: Option<String>,
+}
+```
+
+No `#[serde(deny_unknown_fields)]`. An operator with `servr_url = "..."` (typo) gets **no error** — the typo is silently ignored and the default is used. This is a classic config footgun.
+
+---
+
+### `[MEDIUM]` F7: `with_env_overrides_from()` silently ignores invalid timeout values
+**Location:** `crates/axiathon-client/src/config.rs:97-100`
+
+```rust
+"AXIATHON_TIMEOUT" => {
+    if let Ok(t) = value.parse::<u64>() {
+        self.timeout_secs = t;
+    }
+}
+```
+
+If `AXIATHON_TIMEOUT=abc`, it's silently ignored and the previous value stands. The operator has no idea their env var was rejected. At minimum, a `tracing::warn!` is warranted.
+
+---
+
+### `[MEDIUM]` F8: JSON `request_id` is fabricated at format time, not from server
+**Location:** `crates/axiathon-client/src/output.rs:54`
+
+```rust
+"request_id": Uuid::new_v4().to_string(),
+```
+
+This UUID is generated locally and has zero correlation to any server-side request. Operators using `--format json` to debug issues will see a request_id that matches nothing on the server side. The `OutputFormatter::format()` signature should accept metadata from the actual HTTP response.
+
+---
+
+### `[MEDIUM]` F9: Exit code matrix test missing `Config` variant
+**Location:** `crates/axiathon-client/tests/exit_codes.rs:132-152`
+
+The `all_error_variants_have_defined_exit_codes` test covers 9 of 10 `CliError` variants but omits `Config(String)`. Since `CliError` is `#[non_exhaustive]`, this test doesn't provide the exhaustive coverage its name promises.
+
+---
+
+### `[MEDIUM]` F10: `--tenant` accepts raw `String`, not validated `TenantId`
+**Location:** `crates/axiathon-client/src/cli.rs:35`
+
+```rust
+pub tenant: Option<String>,
+```
+
+The project's Rust rules mandate "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag accepts any string and passes it through without validation. `axiathon-core` exports `TenantId` with validated constructors. At minimum, conversion to `TenantId` should happen before it reaches `SiemClient`.
+
+---
+
+### `[LOW]` F11: `SiemClient` has no HTTP request methods
+**Location:** `crates/axiathon-client/src/client.rs:11`
+
+```rust
+_http: reqwest::Client,
+```
+
+The `_http` field is prefixed with underscore (dead code). There are no `get()`, `post()`, `put()`, `delete()` methods. This is arguably fine for Story 6.1 (stubs only), but the field should not be `_`-prefixed if it's intended for future use — that signals "intentionally unused" to readers and linters.
+
+---
+
+### `[VERIFIED]` V1: Header injection (CWE-113) properly prevented
+`HeaderValue::from_str()` rejects CRLF. Tests at `security.rs:57-101` confirm.
+
+### `[VERIFIED]` V2: Token not leaked in Debug output
+Custom `Debug` impl for `SiemClient` shows `has_token: bool` not the value. Test at `security.rs:222-231`.
+
+### `[VERIFIED]` V3: `#![forbid(unsafe_code)]` enforced
+Present in `lib.rs:2`. Workspace-level `unsafe_code = "forbid"` in root `Cargo.toml:72`.
+
+### `[VERIFIED]` V4: Config file does not load tokens
+`RawConfig.token` is `#[allow(dead_code)]` — parsed but never used. `has_token_from_file` stays false. Test at `security.rs:154-171`.
+
+### `[VERIFIED]` V5: Error Display does not leak sensitive data (CWE-209)
+Error messages are generic. `/// **SECURITY:**` comment present on `CliError`. Tests at `security.rs:13-51`.
+
+### `[VERIFIED]` V6: Clap derive-only (AC-6)
+No imperative `Command::new()` calls anywhere. Tests confirm `Parser` and `CommandFactory` trait bounds.
+
+### `[VERIFIED]` V7: Exit codes 0/1/3/4 correctly mapped (AC-3)
+Comprehensive test coverage in `exit_codes.rs`.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+### Blocking Issues (must fix):
+| # | Severity | Finding |
+|---|----------|---------|
+| F1 | CRITICAL | `main.rs` missing — no binary exists |
+| F2 | HIGH | Nightly `rustfmt` fails (514 lines of diffs) |
+| F3 | HIGH | `build_headers()` silently drops invalid headers |
+| F4 | HIGH | Missing `login.rs`, `init.rs`, `logout.rs` command modules |
+| F5 | HIGH | `toml` dependency version mismatch (0.8 vs spec 0.9) |
+
+### Should fix before merge:
+| # | Severity | Finding |
+|---|----------|---------|
+| F6 | MEDIUM | `RawConfig` silently accepts unknown TOML fields |
+| F7 | MEDIUM | `with_env_overrides_from()` silently ignores bad timeout |
+| F8 | MEDIUM | JSON `request_id` fabricated locally |
+| F9 | MEDIUM | Exit code matrix test missing `Config` variant |
+| F10 | MEDIUM | `--tenant` uses raw `String` not `TenantId` newtype |
+
+*The Portfolio is not impressed, my dear boy. Come back when the binary actually... runs.*

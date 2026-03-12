@@ -50,7 +50,8 @@ class TestNoPortScanning:
         """
         # Mock _probe_wheelhub to track if it's ever called
         with patch(
-            "pf.bikerack.launcher._probe_wheelhub", side_effect=AssertionError("Port scanning detected!")
+            "pf.bikerack.launcher._probe_wheelhub",
+            side_effect=AssertionError("Port scanning detected!"),
         ) as mock_probe:
             running, pid, port = is_already_running(tmp_project)
 

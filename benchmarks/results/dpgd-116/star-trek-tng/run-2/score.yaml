@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: star-trek-tng
+run_id: 2
+judge_version: v2
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase addressed error discrimination in from_file_or_default. TEA config
+    tests don't cover parse/permission error handling distinctly from NotFound. Dev
+    presumably implemented unwrap_or_default(). Reviewer did not flag this pattern.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: Dev implemented InternalDetail wrapper type that suppresses sensitive
+    info in Display (CWE-209). TEA wrote cli_security.rs with 9 tests covering 'CWE-209
+    error exposure.' Reviewer verified 'CliError::Display does not leak InternalDetail
+    strings to user-facing output' and also flagged ServerError variant leaking response
+    body.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote header injection tests in cli_siem_client.rs and cli_security.rs
+    covering CWE-113. Dev implemented CR/LF stripping in with_tenant and rejection
+    in with_token. Same vulnerability class (CWE-113 header injection) addressed,
+    though the type-safety fix (using TenantId from axiathon-core) was not adopted.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "Reviewer explicitly verified 'All workspace dependencies properly declared'\
+    \ \u2014 reaching the opposite conclusion from the ground truth. Six deps use\
+    \ direct version strings instead of workspace = true, but this was marked as correct."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] RawConfig silently ignores unknown fields\
+    \ \u2014 config.rs:7-15' and specifically recommended #[serde(deny_unknown_fields)],\
+    \ noting 'A config file with typos like api_rul or timeoat will silently use defaults.'"
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assert!(config.server().is_none()
+    || ...) pattern. The reviewer did not audit test assertion quality for this specific
+    issue.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test using 'let _ = config;'. The
+    reviewer did not flag tests lacking meaningful assertions.

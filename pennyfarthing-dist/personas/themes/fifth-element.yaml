@@ -16,12 +16,19 @@ theme:
   character_immersion: high
   user_title: Meat Popsicle
   portrait_style: ", two-thirds portrait, Klimt and Schiele painting space opera"
-  tier: U
+  tier: B
   dimensions:
     tone: flamboyant
     era: futuristic
     genre: sci-fi
     energy: kinetic
+    scrutiny: trusting
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: casual
+    intellectual_style: improvisational
+    stakes: cosmic
   spinner_verbs:
     - Multipass
     - Big badaboom

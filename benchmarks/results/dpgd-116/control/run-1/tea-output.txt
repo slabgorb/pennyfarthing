@@ -1,0 +1,35 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 introduces the entire CLI framework with 10 acceptance criteria requiring structural, behavioral, and security validation.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `cli_structure.rs` | 16 | AC-1, AC-2, AC-5, AC-6 | Command groups, help, global flags, clap derive |
+| `exit_codes.rs` | 12 | AC-3 | CliError exit code mapping (0/1/2/3/4), CWE-209 checks |
+| `output_format.rs` | 12 | AC-4 | OutputFormatter trait, Table/JSON/CSV, trait object safety |
+| `siem_client.rs` | 14 | AC-7 | HTTP wrapper, headers, status→error mapping, header injection |
+| `config_loading.rs` | 11 | AC-8 | TOML loading, env overrides, validation, XDG paths |
+| `shell_completion.rs` | 6 | AC-9 | Bash/Zsh/Fish/PowerShell generation |
+| `stub_handlers.rs` | 12 | AC-10 | Stub messages, exit codes, story references |
+
+**Tests Written:** 83 tests covering all 10 ACs
+**Status:** RED (fails to compile — all modules unresolved)
+
+**Security tests included:**
+- Header injection via tenant ID and token (CRLF injection)
+- CWE-209: Error display doesn't leak server internals or credentials
+- Silent error swallowing: all non-200 HTTP responses produce errors
+- Config validation: rejects invalid TOML, empty URLs, negative timeouts
+- Token not stored in config file (belongs in OS keychain)
+
+**Handoff:** To Dev for implementation
+
+**Note:** The Project Notes in CLAUDE.md reference `crates/axiathon-server/` as the target crate and `cargo test -p axiathon-server` for running tests. This appears incorrect for Story 6.1 which targets `crates/axiathon-client/`. Tests are placed in `crates/axiathon-client/tests/` and should be run with `cargo test -p axiathon-client`.
+
+## Delivery Findings
+
+- **Gap** (non-blocking): Project Notes in CLAUDE.md reference `axiathon-server` as target crate, but Story 6.1 targets `axiathon-client`. Dev should use `cargo test -p axiathon-client`.
+  Affects `CLAUDE.md` (Project Notes section needs updating for this story).
+  *Found by TEA during test design.*

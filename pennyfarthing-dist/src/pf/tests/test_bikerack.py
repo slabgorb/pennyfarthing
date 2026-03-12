@@ -609,8 +609,7 @@ class TestExitCodes:
         (tmp_path / "bikerack-pid").write_text("12345")
 
         with patch("pf.bikerack.launcher.is_process_alive", return_value=True):
-            with patch("pf.bikerack.launcher.is_already_running",
-                       return_value=(True, 12345, 2898)):
+            with patch("pf.bikerack.launcher.is_already_running", return_value=(True, 12345, 2898)):
                 # The start flow should detect already-running and exit 2
                 # This tests the logic, not the full CLI flow
                 running, pid, port = is_already_running(tmp_path)

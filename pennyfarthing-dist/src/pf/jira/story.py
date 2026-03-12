@@ -151,7 +151,9 @@ def sync_story(
                 if result.get("success"):
                     actions.append(action)
                 else:
-                    errors.append(f"Failed to transition {jira_key}: {result.get('error', 'unknown')}")
+                    errors.append(
+                        f"Failed to transition {jira_key}: {result.get('error', 'unknown')}"
+                    )
         else:
             actions.append(f"status already {current_jira_status}")
 

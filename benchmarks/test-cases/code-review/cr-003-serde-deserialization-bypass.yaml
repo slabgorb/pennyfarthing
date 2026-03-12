@@ -1,0 +1,372 @@
+# CR-003: Serde Deserialization Constructor Bypass
+# Source: lang-review -- rust-review-checklist.md check #8
+# Family: detection
+# Discovered via: scenario-discovery workflow (party mode + 4x4 factorial + N=5 replication)
+
+version: "2.0"
+family: detection
+category: code-review
+id: cr-003
+title: "Serde Deserialization Constructor Bypass"
+description: |
+  A Rust API key module where #[derive(Deserialize)] bypasses the validating new()
+  constructor. Tests whether agents can identify structural validation bypass vs
+  higher-drama security findings that absorb attention. Role-dependent difficulty:
+  easy for Dev framing, medium for TEA, hard for Architect, near-impossible for
+  adversarial Reviewer framing (Firefly 0/4, cross-theme 2/3).
+difficulty: medium
+agent_target: dev
+
+content_source:
+  type: lang-review
+  reference: "rust-review-checklist.md check #8 (orc-ax-2 .pennyfarthing/gates/)"
+  provenance: |
+    Discovered in production PR reviews (PR#53 I10/I12, PR#50 I10). The pattern
+    #[derive(Deserialize)] on types with validating constructors is a known Rust
+    anti-pattern (CWE-20). Extracted as benchmark scenario via scenario-discovery
+    workflow with 28+ independent agent runs across 4 themes.
+
+instructions: |
+  Review this Rust code. What issues do you see? Prioritize them.
+
+code:
+  language: rust
+  context: "API key validation module with webhook payload processing"
+  filename: api_key.rs
+  content: |
+    use serde::{Deserialize, Serialize};
+    use std::fmt;
+
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    pub struct ApiKey {
+        prefix: String,
+        secret: String,
+    }
+
+    impl ApiKey {
+        pub fn new(raw: &str) -> Result<Self, ApiKeyError> {
+            let (prefix, secret) = raw
+                .split_once('_')
+                .ok_or(ApiKeyError::InvalidFormat)?;
+
+            if prefix.len() < 2 || prefix.len() > 10 {
+                return Err(ApiKeyError::InvalidPrefix);
+            }
+            if !prefix.chars().all(|c| c.is_ascii_lowercase()) {
+                return Err(ApiKeyError::InvalidPrefix);
+            }
+            if secret.len() < 32 {
+                return Err(ApiKeyError::SecretTooShort);
+            }
+
+            Ok(Self {
+                prefix: prefix.to_string(),
+                secret: secret.to_string(),
+            })
+        }
+
+        pub fn prefix(&self) -> &str {
+            &self.prefix
+        }
+    }
+
+    impl fmt::Display for ApiKey {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}_{}", self.prefix, &self.secret[..8])
+        }
+    }
+
+    #[derive(Debug)]
+    pub enum ApiKeyError {
+        InvalidFormat,
+        InvalidPrefix,
+        SecretTooShort,
+    }
+
+    pub struct RateLimitConfig {
+        pub max_requests: u32,
+        pub window_secs: u64,
+        pub burst_size: u32,
+        pub allowed_origins: Vec<String>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct WebhookPayload {
+        pub event_type: String,
+        pub timestamp: u64,
+        pub api_key: ApiKey,
+        pub source_ip: String,
+        pub metadata: serde_json::Value,
+    }
+
+    pub fn process_webhook(payload: &WebhookPayload) -> Result<(), String> {
+        if payload.event_type.is_empty() {
+            return Err("empty event type".into());
+        }
+
+        println!("Processing {} from {}", payload.api_key, payload.source_ip);
+        Ok(())
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        fn make_test_key() -> ApiKey {
+            ApiKey::new("test_abcdefghijklmnopqrstuvwxyz0123456789").unwrap()
+        }
+
+        #[test]
+        fn test_valid_api_key() {
+            let key = make_test_key();
+            assert_eq!(key.prefix(), "test");
+        }
+
+        #[test]
+        fn test_invalid_prefix_rejected() {
+            assert!(ApiKey::new("AB_short").is_err());
+            assert!(ApiKey::new("_nosecret").is_err());
+        }
+    }
+
+known_issues:
+  critical:
+    - id: SERDE_CONSTRUCTOR_BYPASS
+      location: "line 4 (#[derive(Deserialize)] on ApiKey)"
+      description: |
+        #[derive(Deserialize)] generates a deserializer that sets prefix/secret fields
+        directly, bypassing all validation in ApiKey::new(). Any JSON with
+        {"prefix":"","secret":""} creates an ApiKey that violates all invariants.
+        WebhookPayload deserializes ApiKey from external input (line 63), making this
+        exploitable. CWE-20. Fix: remove derive, use #[serde(try_from)] or manual impl.
+  high:
+    - id: DEBUG_SECRET_LEAK
+      location: "line 4 (#[derive(Debug)] on ApiKey)"
+      description: "Debug trait prints secret field in logs, errors, and panic messages"
+    - id: DISPLAY_PANIC_SHORT_SECRET
+      location: "line 42 (&self.secret[..8])"
+      description: "Display impl panics if secret is shorter than 8 bytes (possible via serde bypass)"
+    - id: TIMING_SIDE_CHANNEL
+      location: "line 4 (#[derive(PartialEq)] on ApiKey)"
+      description: "PartialEq uses byte-by-byte comparison, enabling timing attacks on secret"
+  medium:
+    - id: CLONE_SECRET_PROLIFERATION
+      location: "line 4 (#[derive(Clone)] on ApiKey)"
+      description: "Clone proliferates secret copies in memory; no Zeroize on drop"
+    - id: SOURCE_IP_SPOOFABLE
+      location: "line 65 (source_ip field)"
+      description: "source_ip is caller-controlled string, not extracted from connection"
+    - id: UNBOUNDED_METADATA
+      location: "line 66 (serde_json::Value)"
+      description: "Unbounded JSON value enables DoS via large payloads"
+    - id: MISSING_TEST_COVERAGE
+      location: "tests module"
+      description: "Only 2 tests for ~15 testable behaviors; no deserialization tests"
+  low:
+    - id: NON_EXHAUSTIVE_ERROR
+      location: "line 47 (ApiKeyError enum)"
+      description: "Public error enum should be #[non_exhaustive] for API stability"
+    - id: STRINGLY_TYPED_EVENT
+      location: "line 60 (event_type: String)"
+      description: "event_type as String allows arbitrary values; enum would be safer"
+
+red_herrings:
+  - type: style
+    id: RH1
+    description: "RateLimitConfig has pub fields -- this is fine, no invariants to protect"
+    severity: low
+  - type: pattern
+    id: RH2
+    description: "unwrap() in test helper make_test_key() -- acceptable in test code"
+    severity: low
+
+scoring:
+  total_issues: 10
+  weights:
+    critical: 3
+    high: 2
+    medium: 1
+    low: 0.5
+  max_score: 14.5  # 1*3 + 3*2 + 4*1 + 2*0.5
+
+  # Dual scoring mode (individual + pipeline)
+  individual:
+    dimensions: [correctness, depth, quality, persona]
+    ground_truth_weight: 0.4
+  pipeline:
+    coverage_union: true
+    complementarity_bonus: true
+    seats: [dev, reviewer]
+    optional_seats: [tea, architect]
+
+rubric:
+  correctness:
+    weight: 25
+    expert: |
+      Identifies the serde constructor bypass (F1) as the primary critical issue AND
+      connects it to downstream exploits (Display panic, secret exposure via Debug).
+      Correctly ignores RateLimitConfig pub fields as a non-issue. Prioritizes F1 above
+      higher-drama findings like timing attacks. Example: Dev-Mal and Dev-Jayne (7 findings
+      each including F1, RateLimitConfig correctly not flagged).
+    adequate: |
+      Finds many legitimate issues (8+ findings) but misses F1 entirely. High quantity
+      masks the qualitative miss -- correctly identifies F2-F5 as security concerns but
+      cannot distinguish "serious" from "critical." Example: Reviewer-River/Jayne/Inara
+      (8 findings each, F1 missing, all converged on Debug secret leak as #1).
+    poor: |
+      Identifies only surface observations that any linter could flag -- missing test
+      coverage and RateLimitConfig validation. Misses all structural and security findings.
+      Treats the code as "mostly fine with minor gaps."
+  depth:
+    weight: 25
+    expert: |
+      Connects F1 (structural bypass) to F2 (secret exposure) to F7 (unbounded
+      deserialization) as a causal chain: the constructor bypass ENABLES the other exploits.
+      Multi-layer analysis linking symptoms to root cause to systemic pattern. Example:
+      Architect-Mal (8 findings across 5 categories, causal chain articulated).
+    adequate: |
+      Identifies issues correctly but treats them as independent items rather than
+      connecting the causal chain. Each finding gets adequate explanation of WHY it's a
+      problem, but no synthesis across findings. Example: TEA-Mal/River (5 findings each,
+      each explained but not linked).
+    poor: |
+      Lists findings as a flat checklist with no explanation. "F1: derive Deserialize
+      bypasses constructor. F2: Debug prints secrets." No WHY, no implications, no
+      connections between findings.
+  quality:
+    weight: 25
+    expert: |
+      Despite potentially missing F1, the response is comprehensive and actionable. Clear
+      prioritization by severity, specific fix suggestions with code examples, organized
+      by category. A reader can implement every recommendation directly. Example:
+      Reviewer-Mal (10 findings, well-organized, specific fixes for each).
+    adequate: |
+      Findings are correct and clearly stated but sparse. The reader gets actionable items
+      but must do additional investigation to understand the full picture. Adequate for a
+      focused review, insufficient for a standalone assessment. Example: TEA-Inara
+      (4 findings, each clear but incomplete coverage).
+    poor: |
+      Wall of text mixing observations, opinions, and tangents. Findings buried in prose.
+      No priority ordering. Reader cannot extract action items without re-reading.
+  persona:
+    weight: 25
+    expert: |
+      The character's worldview visibly shapes WHAT gets found, not just how it's delivered.
+      Finding profile is distinctively different from other personas in the same role.
+      Example: TEA-Jayne (8 findings, adversarial O1/A1 personality perfectly aligned with
+      testing framing -- found F3 timing attack, F6 IP spoofing, F7 DoS, all "ways it
+      gets you killed"). The persona adds genuine analytical value.
+    adequate: |
+      Character voice is present and recognizable throughout but doesn't noticeably shape
+      the finding profile. Same analysis would emerge regardless of which character delivers
+      it. Example: Dev-River (5 findings, River's voice present but generic Dev response).
+    poor: |
+      Response reads identically regardless of which character delivers it. No voice, no
+      perspective-driven prioritization, no personality in the analysis approach.
+      Interchangeable with any generic agent.
+
+persona_influence:
+  dimensions:
+    - name: ocean_balance
+      observation: "Balanced OCEAN profiles resist role-framing tunnel vision"
+      evidence: "Mal found F1 in 3/4 roles. No other persona exceeded 2/4."
+      high: "No extreme dimension to amplify; broad, pragmatic coverage"
+      low: "N/A -- this is about balance, not a single dimension"
+
+    - name: neuroticism
+      observation: "High-N narrows finding profile under adversarial framing"
+      evidence: "River-as-Reviewer found 8 findings (tied lowest). River-as-Architect found 4 (lowest)."
+      high: "Anxiety-driven fixation on most alarming finding, suppresses breadth"
+      low: "Stable, broad scanning; maintains focus across categories"
+
+    - name: agreeableness_inverse
+      observation: "Low-A amplifies adversarial/testing roles"
+      evidence: "Jayne-as-TEA found 8 findings (highest TEA). Jayne-as-Dev found 7 (tied highest Dev)."
+      high: "Cooperation orientation fights adversarial framing; pulls punches on severity"
+      low: "Self-interested, confrontational stance naturally asks 'what breaks?'"
+
+    - name: conscientiousness
+      observation: "High-C stabilizes systematic roles but penalizes adversarial ones"
+      evidence: "Inara-as-Architect found 6 (2nd best). Inara-as-TEA found 4 (worst)."
+      high: "Disciplined, systematic approach suits design roles"
+      low: "Less filtering may paradoxically help by not self-censoring findings"
+
+    - name: role_prompt_dominance
+      observation: "Role prompt overrides persona for ground truth detection"
+      evidence: "Dev 100% F1, Reviewer 0% F1 in Firefly; persona makes zero difference within role"
+      high: "The role prompt establishes the search space"
+      low: "Persona only affects coverage WITHIN the role-defined search space"
+
+expected_tendencies:
+  - archetype: cautious_analytical
+    traits: [high_conscientiousness, low_openness]
+    expected: |
+      Reliable F1 detection as Dev. Broad but F1-missing coverage as Reviewer.
+      Systematic test design as TEA but may miss adversarial edge cases. Strong
+      as Architect -- systematic analysis suits the role perfectly.
+      Example analog: Hermione Granger, Spock.
+
+  - archetype: creative_adventurous
+    traits: [high_openness, low_conscientiousness]
+    expected: |
+      Finds F1 plus novel framings as Dev. May produce false positives. Risk of
+      fixation on most dramatic finding as Reviewer -- narrow but deep. Creative
+      test scenarios as TEA but inconsistent coverage.
+      Example analog: River Tam (observed), Luna Lovegood.
+
+  - archetype: team_focused_diplomatic
+    traits: [high_agreeableness, high_extraversion]
+    expected: |
+      Reliable but conservative as Dev. May pull punches on severity ratings as
+      Reviewer. Weakest fit for TEA -- cooperation orientation fights adversarial
+      testing nature. Good at stakeholder-aware design as Architect.
+      Example analog: Kaylee Frye (predicted), Carter (observed 40% Dev F1 at N=5).
+
+  - archetype: skeptical_thorough
+    traits: [low_agreeableness, high_conscientiousness]
+    expected: |
+      Strong F1 detection + high finding count as Dev. Broadest coverage as
+      Reviewer (still may miss F1 due to role dominance). Excellent as TEA --
+      "what breaks?" + systematic approach = maximal coverage.
+      Example analog: Jayne's skepticism + Inara's discipline (not observed together).
+
+  - archetype: falsely_competent
+    traits: [low_conscientiousness, high_extraversion]
+    expected: |
+      May detect F1 as Dev (role framing strong enough) but produces confident
+      near-misses as Reviewer -- sounds thorough, misses the point. Harder to
+      catch than a simple miss because output LOOKS good.
+      Example analog: Klink (observed: Dev 80%, Reviewer 80% at N=5).
+
+  - archetype: narratively_incompetent
+    traits: [low_conscientiousness, low_openness]
+    expected: |
+      Initial hypothesis (suppresses detection) overturned by N=5 replication.
+      Gilligan-Dev: 80% F1 at N=5. Incompetence narrative does NOT reliably
+      suppress Dev-role detection on medium-difficulty stimuli.
+      Example analog: Gilligan (observed), Frank Burns (5/5 Dev F1 at N=5).
+
+difficulty_profile:
+  declared: medium
+  role_difficulty:
+    dev: easy       # 100% F1 in Firefly, 80-100% at N=5 cross-theme
+    tea: medium     # 75% in Firefly
+    architect: hard # 25% in Firefly, 0% in GI+HH
+    reviewer: variable  # 0% Firefly, 67-100% cross-theme (theme-dependent)
+  calibration: null  # populated by control baseline runs
+
+# Observations from N=5 replication (28 total runs)
+replication_notes:
+  n1_warning: |
+    N=1 is dangerously misleading. Phase 2 reversed 3 of 4 Phase 1 conclusions.
+    Gilligan-Dev miss was stochastic noise (4/5 at N=5). Carter-Dev hit was noise
+    (2/5 at N=5). Minimum N=5 for any conclusion about persona effects.
+  competence_axis: |
+    Dev role F1 detection is ceiling-bound on this stimulus. Winchester 5/5,
+    Frank Burns 5/5. Competence axis affects breadth (19 vs 12 unique findings)
+    but not ground truth detection. Actionable persona effects live in the
+    Reviewer seat (0-100% range across themes).
+  reviewer_paradox: |
+    Reviewer 0% on F1 is correct pipeline behavior -- Dev fixes structural bugs,
+    Reviewer catches what Dev leaves behind. Individual scores are misleading
+    without pipeline context. Use dual scoring (individual + pipeline).

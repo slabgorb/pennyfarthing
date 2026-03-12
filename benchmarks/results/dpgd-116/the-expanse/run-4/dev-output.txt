@@ -1,0 +1,45 @@
+**All 92 tests pass (GREEN).** Clippy clean.
+
+## Summary
+
+### Files Created (17 files)
+
+**Production code** (`crates/axiathon-client/src/`):
+| File | Description |
+|------|-------------|
+| `lib.rs` | Public API re-exports (module declarations) |
+| `main.rs` | Binary entry point with dispatch and exit code handling |
+| `cli.rs` | `Cli` struct (Parser derive), `Commands` enum (Subcommand derive), global flags |
+| `error.rs` | `CliError` enum with `exit_code()` method (0/1/2/3/4) |
+| `client.rs` | `SiemClient` HTTP wrapper with header injection and status mapping |
+| `config.rs` | `ClientConfig` TOML loading, env var overrides, token rejection |
+| `output.rs` | `OutputFormatter` with Table/JSON/CSV, `ResponseMetadata`, TTY detection |
+| `commands/mod.rs` | Module re-exports |
+| `commands/query.rs` | Query stub (Story 5.5) |
+| `commands/rules.rs` | Rules stub with list/get/create/update/delete (Story 6.5) |
+| `commands/alerts.rs` | Alerts stub (Story 6.5) |
+| `commands/ingest.rs` | Ingest stub (Story 6.4) |
+| `commands/config.rs` | Config stub (Story 6.3) |
+| `commands/status.rs` | Status stub (Story 6.2) |
+| `commands/tenant.rs` | Tenant stub (Story 6.6) |
+| `commands/login.rs` | Login stub (Story 9.1) |
+| `commands/completion.rs` | Shell completion (functional) |
+| `commands/init.rs` | First-time setup (functional) |
+
+**Files Modified (2)**:
+- `Cargo.toml` (workspace) — added `env` feature to clap
+- `crates/axiathon-client/Cargo.toml` — added `uuid`/`chrono` deps, set `edition = "2021"` to support test `set_var`/`remove_var` calls
+
+### Tests: 92/92 passing (GREEN)
+
+- `cli_structure`: 18 tests (AC-1, AC-2, AC-5, AC-6)
+- `config_loading`: 11 tests (AC-8)
+- `exit_codes`: 15 tests (AC-3)
+- `output_format`: 16 tests (AC-4)
+- `shell_completion`: 6 tests (AC-9)
+- `siem_client`: 16 tests (AC-7)
+- `stub_handlers`: 10 tests (AC-10)
+
+### Delivery Finding
+
+- **Gap** (non-blocking): Config loading tests (`config_loading.rs`) use `std::env::set_var`/`remove_var` without synchronization, causing race conditions when run with parallel test threads. Tests must run with `--test-threads=1` to pass reliably. The crate edition was set to `2021` (instead of workspace `2024`) because `set_var`/`remove_var` became unsafe in edition 2024 and the test files call them without `unsafe` blocks. Affects `crates/axiathon-client/tests/config_loading.rs` (needs `unsafe` blocks and a test serialization mechanism). *Found by Dev during implementation.*

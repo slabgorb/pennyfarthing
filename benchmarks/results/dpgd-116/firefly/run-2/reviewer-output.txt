@@ -1,0 +1,76 @@
+Here is my adversarial review of Story 6.1: CLI Framework & Structure.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*River sees the code's soul. Simon documents what she finds.*
+
+## Observations
+
+### Blocking Issues
+
+**1. [HIGH] `apply_env_overrides` bypasses URL validation — `config.rs:86-98`**
+
+`from_toml()` validates that `api_url` is not empty and rejects URLs containing `@` (credential embedding). But `apply_env_overrides()` directly assigns `value.to_string()` to `self.api_url` with zero validation. An operator setting `AXIATHON_API_URL=""` or `AXIATHON_API_URL="https://user:pass@host"` silently bypasses the security check. Same issue in `apply_cli_overrides()` at line 100-107.
+
+**2. [HIGH] AC-2 violation: 8 of 10 command groups missing `after_help` examples — `commands/*.rs`**
+
+AC-2 requires "include `after_help` usage examples for each command group." Only `query.rs` and `rules.rs` have `after_help`. Missing from: `alerts`, `ingest`, `config`, `status`, `tenant`, `login`, `completion`, `init`. This is a direct acceptance criteria failure.
+
+**3. [HIGH] `apply_env_overrides` silently swallows invalid timeout — `config.rs:91`**
+
+`if let Ok(t) = value.parse::<u64>()` silently ignores unparseable values. An operator setting `AXIATHON_TIMEOUT=abc` gets no error, no warning — the old value is silently retained. This violates the "no silent failures" principle. At minimum, return a `Result` or log a warning.
+
+### Non-Blocking Issues
+
+**4. [MEDIUM] Vacuous security test: token newline check — `security_tests.rs:54-60`**
+
+The assertion body at line 55-58 is `!client.has_token() || { true }`, which is always true when a token is set. The test claims to verify sanitization but proves nothing about the sanitized value. There's no getter for the raw token to actually verify the `\r\n` was stripped. Test provides false confidence.
+
+**5. [MEDIUM] Vacuous security test: HTTP URL check — `security_tests.rs:79-89`**
+
+`config.is_ok() || config.is_err()` is a tautology — this assertion literally cannot fail. It's a placeholder masquerading as a test.
+
+**6. [MEDIUM] `OutputFormatter` stores format but never dispatches on it — `output.rs:41-84`**
+
+The struct stores `format: OutputFormat` but exposes three separate methods (`format_table`, `format_json`, `format_csv`). Line 51 has `let _ = self.format;` — an explicit suppression of the unused field warning. There's no unified `format()` dispatch method, making the `OutputFormatter` pattern incomplete per AC-4's intent. The caller must dispatch externally, defeating the purpose of the trait pattern.
+
+**7. [MEDIUM] `main.rs` ignores all global flags — `main.rs:18-43`**
+
+The `run()` function receives `cli: Cli` with parsed `format`, `verbose`, `quiet`, `server`, `tenant`, `config`, `no_color` fields but passes none of them to handlers. Config is never loaded, `SiemClient` is never constructed, tracing is never initialized. Even the functional `completion` and `init` handlers don't receive config context.
+
+**8. [MEDIUM] `RawConfig` silently ignores unknown TOML fields — `config.rs:10-17`**
+
+No `#[serde(deny_unknown_fields)]`. A typo like `api_ur1 = "..."` or `timeoutt = 60` is silently ignored with the default used instead. This is a classic operator footgun in config files.
+
+**9. [LOW] `tenant.rs` references wrong story number — `tenant.rs:20`**
+
+`handle_tenant` returns `NotImplemented("6.6")` but the tenant command doesn't correspond to Story 6.6 (that's rules). No clear story mapping for the tenant stub.
+
+**10. [LOW] `completion.rs` unnecessary string round-trip — `main.rs:31-37`, `completion.rs:27-34`**
+
+`main.rs` converts `CompletionShell` enum to `&str`, then `generate_completions` converts `&str` back to `clap_complete::Shell`. Should accept the enum directly or `clap_complete::Shell` to avoid the fragile string mapping (with a silent empty-string fallback on line 33 for unknown shells).
+
+### Verified Good
+
+- **[VERIFIED]** Header injection prevention: CR/LF stripped from tokens and tenant IDs at `client.rs:34,43`
+- **[VERIFIED]** `#![forbid(unsafe_code)]` in both `lib.rs:2` and `main.rs:2`
+- **[VERIFIED]** `#[non_exhaustive]` on `CliError` at `error.rs:10`
+- **[VERIFIED]** Exit code mapping correct: auth=3, authz=4, others=1
+- **[VERIFIED]** Workspace dependency management: all deps use `{ workspace = true }`
+- **[VERIFIED]** Token exclusion from config serialization: `ClientConfig` has no token field, `Serialize` derive won't emit one
+- **[VERIFIED]** SiemClient HTTP status mapping comprehensively tested with wiremock (401/403/404/429/5xx/connection refused)
+- **[VERIFIED]** CSV escaping tested for commas and embedded quotes
+- **[VERIFIED]** `toml = "0.8"` in workspace Cargo.toml (story spec says 0.9 but 0.8 is the current stable release — spec is aspirational)
+
+## Verdict
+
+**CHANGES_REQUESTED**
+
+Three HIGH findings block approval:
+1. Validation bypass in `apply_env_overrides`/`apply_cli_overrides` — security gap
+2. 8/10 command groups missing `after_help` examples — AC-2 failure
+3. Silent error swallowing on invalid env var timeout — operator footgun
+
+The framework structure is solid and well-tested where it matters (SiemClient HTTP mapping, exit codes, config loading). Fix the three blocking items and clean up the vacuous security tests before resubmission.
