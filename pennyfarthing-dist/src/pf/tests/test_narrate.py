@@ -302,17 +302,16 @@ class TestCostWarning:
         # Should succeed without prompting
         assert result.exit_code == 0
 
-    def test_cost_warning_on_stderr(self, run_dir_with_events: Path):
-        """Cost warning should appear on stderr."""
+    def test_cost_warning_in_output(self, run_dir_with_events: Path):
+        """Cost warning should appear in output."""
         from pf.benchmark.cli import replay
 
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             replay, ["narrate", str(run_dir_with_events)], input="n\n"
         )
         # Cost info should be in output
-        combined = (result.output or "") + (getattr(result, "stderr", "") or "")
-        assert "cost" in combined.lower() or "~$" in combined
+        assert "cost" in result.output.lower() or "~$" in result.output
 
 
 # ===========================================================================
