@@ -164,9 +164,7 @@ def _parse_acceptance_criteria(content: str) -> list[AcceptanceCriterion]:
     criteria = []
 
     # Find AC section
-    ac_section = re.search(
-        r"## Acceptance Criteria\n(.+?)(?=\n##|\Z)", content, re.DOTALL
-    )
+    ac_section = re.search(r"## Acceptance Criteria\n(.+?)(?=\n##|\Z)", content, re.DOTALL)
     if not ac_section:
         return criteria
 
@@ -206,9 +204,7 @@ def _parse_work_log(content: str) -> tuple[list[WorkLogEntry], ReviewAssessment 
     section_text = log_section.group(1)
 
     # Split by agent headers (### Agent Name (Date) or ### Agent Action (Date))
-    header_pattern = re.compile(
-        r"^###\s+(\w+)(?:\s+\w+)?\s+\((\d{4}-\d{2}-\d{2})\)", re.MULTILINE
-    )
+    header_pattern = re.compile(r"^###\s+(\w+)(?:\s+\w+)?\s+\((\d{4}-\d{2}-\d{2})\)", re.MULTILINE)
 
     matches = list(header_pattern.finditer(section_text))
 
@@ -238,14 +234,10 @@ def _parse_work_log(content: str) -> tuple[list[WorkLogEntry], ReviewAssessment 
                 verdict = "rejected"
             elif "needs-work" in entry_content.lower() or "needs work" in entry_content.lower():
                 verdict = "needs-work"
-            assessment = ReviewAssessment(
-                agent="reviewer", verdict=verdict, content=entry_content
-            )
+            assessment = ReviewAssessment(agent="reviewer", verdict=verdict, content=entry_content)
         else:
             entries.append(
-                WorkLogEntry(
-                    agent=agent, date=entry_date, content=entry_content, phase=phase
-                )
+                WorkLogEntry(agent=agent, date=entry_date, content=entry_content, phase=phase)
             )
 
     return entries, assessment
@@ -254,9 +246,7 @@ def _parse_work_log(content: str) -> tuple[list[WorkLogEntry], ReviewAssessment 
 def _extract_context(content: str) -> str:
     """Extract technical context section."""
     # Find context section
-    context_section = re.search(
-        r"## Technical Context\n(.+?)(?=\n##|\Z)", content, re.DOTALL
-    )
+    context_section = re.search(r"## Technical Context\n(.+?)(?=\n##|\Z)", content, re.DOTALL)
     if context_section:
         return context_section.group(1).strip()
     return ""
@@ -325,9 +315,7 @@ def is_xml_format(content: str) -> bool:
     return "<session story=" in content
 
 
-def convert_session_file(
-    file_path: Path, *, dry_run: bool = False
-) -> dict[str, str | bool]:
+def convert_session_file(file_path: Path, *, dry_run: bool = False) -> dict[str, str | bool]:
     """Convert a session file from markdown to XML format.
 
     Args:

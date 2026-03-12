@@ -254,6 +254,7 @@ def preview_hook_changes(
 
     # Simulate the upgrade + merge
     import copy
+
     after = copy.deepcopy(before)
     frontmatter_hooks = collect_all_frontmatter_hooks(dist_root)
 
@@ -371,16 +372,12 @@ def init_project(
     directories = _PENNYFARTHING_DIRS + _CLAUDE_DIRS
 
     # --- Identify content dirs to copy ---
-    content_dirs_to_copy = [
-        name for name in _CONTENT_DIRS if (dist_root / name).is_dir()
-    ]
+    content_dirs_to_copy = [name for name in _CONTENT_DIRS if (dist_root / name).is_dir()]
 
     if dry_run:
         from pf.init.justfile import update_framework_justfile
 
-        justfile_result = update_framework_justfile(
-            target_dir, dist_root, dry_run=True
-        )
+        justfile_result = update_framework_justfile(target_dir, dist_root, dry_run=True)
         justfile_data = justfile_result.get("data", {}) if justfile_result["success"] else {}
 
         return {
@@ -616,11 +613,11 @@ def _copy_tree(src: Path, dst: Path) -> None:
 
 
 def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
-    """Install tmux config samples and launcher to the project root.
+    """Install tmux config samples and launcher as symlinks to templates.
 
-    Copies tmux.conf.template variants as *-sample files and installs
-    the tmux-dev launcher. Skips files that already exist (user may
-    have customized them).
+    Creates symlinks from the project root to the template sources in
+    pennyfarthing-dist/templates/. Replaces stale copies with symlinks.
+    Skips non-framework files (user's local tmux.conf) that aren't symlinks.
 
     Returns:
         List of installed file names.
@@ -641,13 +638,22 @@ def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
         dest = target_dir / dest_name
         if not src.is_file():
             continue
-        # Always overwrite tmux-dev (framework code), skip config samples if customized
-        if dest.exists() and dest_name != "tmux-dev":
+
+        # Compute relative symlink target
+        rel_target = os.path.relpath(src, target_dir)
+
+        # If dest is already correct symlink, skip
+        if dest.is_symlink() and os.readlink(str(dest)) == rel_target:
             continue
-        shutil.copy2(src, dest)
-        # Make tmux-dev executable
-        if dest_name == "tmux-dev":
-            dest.chmod(dest.stat().st_mode | 0o111)
+
+        # For config samples: skip if user has a non-symlink customized copy
+        if dest.exists() and not dest.is_symlink() and dest_name != "tmux-dev":
+            continue
+
+        # Remove stale file/symlink and create fresh symlink
+        if dest.exists() or dest.is_symlink():
+            dest.unlink()
+        dest.symlink_to(rel_target)
         installed.append(dest_name)
 
     return installed
@@ -875,8 +881,12 @@ def _clean_stale_artifacts(target_dir: Path) -> None:
     # Remove stale node_modules/@pennyfarthing packages and pnpm cache if present
     nm = target_dir / "node_modules"
     if nm.is_dir():
-        for pkg in ["@pennyfarthing/core", "@pennyfarthing/shared",
-                     "@pennyfarthing/cyclist", "pennyfarthing"]:
+        for pkg in [
+            "@pennyfarthing/core",
+            "@pennyfarthing/shared",
+            "@pennyfarthing/cyclist",
+            "pennyfarthing",
+        ]:
             pkg_path = nm / pkg
             if pkg_path.is_symlink():
                 pkg_path.unlink()
@@ -977,6 +987,7 @@ def _find_portraits_source(dist_root: Path) -> Path | None:
     # Fall back to pip-installed _dist (always has real images from wheel)
     try:
         from pf._dist import get_root, is_populated
+
         if is_populated():
             pip_portraits = get_root() / "personas" / "portraits"
             if pip_portraits.is_dir():
@@ -1034,11 +1045,17 @@ def _install_portraits(dist_root: Path) -> dict:
     _copy_tree(source, target)
 
     # Write version manifest
-    manifest_path.write_text(json.dumps({
-        "pf_version": __version__,
-        "installed_at": datetime.now(UTC).isoformat(),
-        "source": str(source),
-    }, indent=2) + "\n")
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "pf_version": __version__,
+                "installed_at": datetime.now(UTC).isoformat(),
+                "source": str(source),
+            },
+            indent=2,
+        )
+        + "\n"
+    )
 
     return {
         "installed": True,
@@ -1105,10 +1122,7 @@ def _update_gitignore(target_dir: Path) -> None:
         if line.endswith("/") and not line.endswith("/*"):
             normalized_existing.add(line + "*")  # ".session/" -> ".session/*"
 
-    new_entries = [
-        e for e in _GITIGNORE_ENTRIES
-        if e.strip() not in normalized_existing
-    ]
+    new_entries = [e for e in _GITIGNORE_ENTRIES if e.strip() not in normalized_existing]
 
     if new_entries:
         # Ensure trailing newline before appending

@@ -196,11 +196,13 @@ def list_sessions(project_root: Path | None = None) -> list[SessionInfo]:
         if session_file.is_file():
             try:
                 agent_name = session_file.read_text().strip()
-                sessions.append(SessionInfo(
-                    session_id=session_file.name,
-                    agent_name=agent_name,
-                    file_path=str(session_file),
-                ))
+                sessions.append(
+                    SessionInfo(
+                        session_id=session_file.name,
+                        agent_name=agent_name,
+                        file_path=str(session_file),
+                    )
+                )
             except OSError:
                 pass
 

@@ -40,7 +40,8 @@ def _list_contents(path: str) -> dict[str, Any]:
     """
     result = subprocess.run(
         [
-            "gh", "api",
+            "gh",
+            "api",
             f"repos/{GITHUB_REPO}/contents/{path}?ref={GITHUB_BRANCH}",
         ],
         capture_output=True,
@@ -115,12 +116,14 @@ def _collect_portrait_files(
             for img_entry in images_result["data"]:
                 if img_entry.get("type") != "file":
                     continue
-                files_to_download.append({
-                    "path": img_entry["path"],
-                    "download_url": img_entry.get("download_url", ""),
-                    "name": img_entry["name"],
-                    "relative": f"{theme_name}/{size_entry['name']}/{img_entry['name']}",
-                })
+                files_to_download.append(
+                    {
+                        "path": img_entry["path"],
+                        "download_url": img_entry.get("download_url", ""),
+                        "name": img_entry["name"],
+                        "relative": f"{theme_name}/{size_entry['name']}/{img_entry['name']}",
+                    }
+                )
 
     return {"success": True, "data": files_to_download}
 
@@ -207,7 +210,10 @@ def download_portraits(
 
     files = collect_result["data"]
     if not files:
-        return {"success": True, "data": {"downloaded": 0, "skipped": 0, "message": "No portrait files found"}}
+        return {
+            "success": True,
+            "data": {"downloaded": 0, "skipped": 0, "message": "No portrait files found"},
+        }
 
     pkg_dir = get_package_dir(name, project_root)
     portraits_dir = pkg_dir / "portraits"

@@ -69,7 +69,8 @@ def get_workflow_state() -> dict[str, Any]:
 
     # Filter out workflow session files and archived files
     story_sessions = [
-        f for f in session_files
+        f
+        for f in session_files
         if not f.name.startswith("prd-")
         and not f.name.startswith("architecture-")
         and not f.name.startswith("research-")

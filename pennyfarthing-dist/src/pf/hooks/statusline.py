@@ -20,6 +20,7 @@ from pf.hooks import load_settings
 
 try:
     import yaml
+
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
@@ -80,9 +81,9 @@ AGENT_COLORS = {
 
 # Title patterns to strip from character names
 TITLE_PATTERN = re.compile(
-    r'^(Captain|Lieutenant|Dr\.|Doc|Mr\.|Mrs\.|Ms\.|Admiral|Commander|'
-    r'Chief|Ensign|Translator|Agent|Colonel|Major|Sergeant|Professor|'
-    r'Lord|Lady|Sir|The)\s+',
+    r"^(Captain|Lieutenant|Dr\.|Doc|Mr\.|Mrs\.|Ms\.|Admiral|Commander|"
+    r"Chief|Ensign|Translator|Agent|Colonel|Major|Sergeant|Professor|"
+    r"Lord|Lady|Sir|The)\s+",
     re.IGNORECASE,
 )
 
@@ -103,9 +104,9 @@ def _get_agent_color(name: str) -> str:
 def _clean_character_name(full_name: str) -> str:
     """Extract short display name from full character name."""
     # Remove parenthetical: "Breq (Justice of Toren)" → "Breq"
-    clean = re.sub(r'\s*\([^)]*\)', '', full_name).strip()
+    clean = re.sub(r"\s*\([^)]*\)", "", full_name).strip()
     # Strip titles
-    clean = TITLE_PATTERN.sub('', clean).strip()
+    clean = TITLE_PATTERN.sub("", clean).strip()
     words = clean.split()
     if len(words) <= 1:
         return clean
@@ -138,8 +139,8 @@ def _get_model_name(data: dict) -> str:
         model = "claude"
 
     # Clean: remove "claude-" prefix and trailing version number
-    model = re.sub(r'^claude-', '', model)
-    model = re.sub(r'-\d+$', '', model)
+    model = re.sub(r"^claude-", "", model)
+    model = re.sub(r"-\d+$", "", model)
     return model[:10]
 
 
@@ -150,20 +151,26 @@ def _get_git_info(cwd: str) -> tuple[str, str]:
     try:
         result = subprocess.run(
             ["git", "-C", cwd, "branch", "--show-current"],
-            capture_output=True, text=True, timeout=3,
+            capture_output=True,
+            text=True,
+            timeout=3,
         )
         branch = result.stdout.strip()
         if not branch:
             result = subprocess.run(
                 ["git", "-C", cwd, "rev-parse", "--short", "HEAD"],
-                capture_output=True, text=True, timeout=3,
+                capture_output=True,
+                text=True,
+                timeout=3,
             )
             branch = result.stdout.strip()
 
         # Check dirty (using diff-index to avoid index.lock issues)
         result = subprocess.run(
             ["git", "-C", cwd, "diff-index", "--quiet", "HEAD", "--"],
-            capture_output=True, text=True, timeout=3,
+            capture_output=True,
+            text=True,
+            timeout=3,
         )
         if result.returncode != 0:
             dirty = "*"
@@ -171,7 +178,9 @@ def _get_git_info(cwd: str) -> tuple[str, str]:
             # Check for untracked files
             result = subprocess.run(
                 ["git", "-C", cwd, "ls-files", "--others", "--exclude-standard"],
-                capture_output=True, text=True, timeout=3,
+                capture_output=True,
+                text=True,
+                timeout=3,
             )
             if result.stdout.strip():
                 dirty = "*"
@@ -188,9 +197,9 @@ def _get_context_pct(data: dict) -> str | int:
         return "--"
 
     current = (
-        usage.get("input_tokens", 0) +
-        usage.get("cache_creation_input_tokens", 0) +
-        usage.get("cache_read_input_tokens", 0)
+        usage.get("input_tokens", 0)
+        + usage.get("cache_creation_input_tokens", 0)
+        + usage.get("cache_read_input_tokens", 0)
     )
     size = data.get("context_window", {}).get("context_window_size", 0)
 
@@ -216,8 +225,11 @@ def _resolve_agent(project_root: str, session_id: str) -> str:
             now = __import__("time").time()
             one_hour = 3600
             files = sorted(
-                (f for f in agents_dir.iterdir()
-                 if f.is_file() and now - f.stat().st_mtime < one_hour),
+                (
+                    f
+                    for f in agents_dir.iterdir()
+                    if f.is_file() and now - f.stat().st_mtime < one_hour
+                ),
                 key=lambda f: f.stat().st_mtime,
                 reverse=True,
             )
@@ -257,6 +269,7 @@ def _get_character_display(project_root: str, agent_name: str) -> tuple[str, str
         # Fallback: check pennyfarthing-dist via get_dist_root (npm context)
         try:
             from pf.common.config import get_dist_root
+
             dist_root = get_dist_root(project_root=Path(project_root))
             if dist_root:
                 candidate = dist_root / "personas" / "themes" / f"{theme}.yaml"
@@ -292,7 +305,7 @@ def _get_tandem_partner_display(project_root: str, theme_file: str | None) -> st
         return ""
 
     tandem_file = tandem_files[0]
-    match = re.search(r'-tandem-([a-zA-Z_-]+)\.md$', tandem_file.name)
+    match = re.search(r"-tandem-([a-zA-Z_-]+)\.md$", tandem_file.name)
     if not match:
         return ""
 
@@ -376,8 +389,7 @@ def _tmux_context_bar(pct: str | int) -> str:
     return f"{bar} #[{color}]{pct}%#[default]"
 
 
-def _write_tmux_cache(project_root: str, pct: str | int,
-                      story_id: str, dir_name: str) -> None:
+def _write_tmux_cache(project_root: str, pct: str | int, story_id: str, dir_name: str) -> None:
     """Write tmux-formatted status to .pennyfarthing/tmux-status-left and right."""
     pf_dir = Path(project_root) / ".pennyfarthing"
     if not pf_dir.is_dir():
@@ -456,7 +468,11 @@ def main() -> None:
         tandem_suffix = ""
         tandem_suffix_len = 0
         if tandem_display:
-            partner_color = _get_agent_color(tandem_display) if tandem_display in AGENT_ABBREVS else _get_agent_color("")
+            partner_color = (
+                _get_agent_color(tandem_display)
+                if tandem_display in AGENT_ABBREVS
+                else _get_agent_color("")
+            )
             tandem_suffix = f" {DIM}+{RESET} {partner_color}{tandem_display}{RESET}"
             tandem_suffix_len = 3 + len(tandem_display)
 
@@ -483,7 +499,7 @@ def main() -> None:
         otel_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "")
         if otel_endpoint:
             # Extract port from http://localhost:PORT
-            otel_match = re.search(r':(\d+)$', otel_endpoint.rstrip('/'))
+            otel_match = re.search(r":(\d+)$", otel_endpoint.rstrip("/"))
             if otel_match:
                 otel_suffix = f" {DIM}│{RESET} {FG_TEAL}otel:{otel_match.group(1)}{RESET}"
 

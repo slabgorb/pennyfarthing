@@ -269,7 +269,9 @@ def _validate_single_context(context_type: str, context_id: str) -> None:
     for w in result.warnings:
         warn(f"[WARN] {w.component}: {w.message}")
 
-    success(f"context-{context_type}-{context_id}: valid ({result.components_checked} components checked)")
+    success(
+        f"context-{context_type}-{context_id}: valid ({result.components_checked} components checked)"
+    )
     raise SystemExit(0)
 
 

@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.0.0-alpha.0] - 2026-03-10
+
+### Added
+
+- **Reviewer edge-case hunter subagent** — Specialized subagent for adversarial edge-case detection (MSSCI-16333, #1323)
+- **BMAD simulator template adapter** — Benchmark scenarios can use BMAD templates for story translation (#1320)
+- **Startup agent auto-invoke** — Agents auto-invoke on SessionStart hook (MSSCI-16331, #1319)
+- **Plan mode agent reload** — Agents reload on ExitPlanMode for seamless workflow transitions (MSSCI-16323, #1318)
+- **OTEL telemetry streaming to disk** — Benchmark telemetry streams to disk instead of requiring BikeRack (MSSCI-16322, #1317)
+- **FastAPI WheelHub API routes** — Core API routes ported to Python FastAPI WheelHub (MSSCI-16314, #1313)
+- **Multi-judge benchmark support** — Pipeline replay supports multiple judges for scoring consistency (#1311)
+
+### Changed
+
+- **BREAKING: WheelHub migrated from Node.js to Python/uvicorn** — Server-side TypeScript removed entirely; WheelHub now runs on FastAPI/uvicorn (ADR-0034, #1316)
+- **Legacy TypeScript CLI removed** — Dead CLI, BMAD, and Jira TypeScript modules deleted in favor of Python pf CLI
+
+### Fixed
+
+- **Node test failures** — Deleted orphaned dist files and fixed test assertions
+- **Benchmark empty judge response warning** — Restored detailed warning for empty judge responses
+
 ## [12.7.0] - 2026-03-08
 
 ### Added
@@ -3058,7 +3080,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.7.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.0...HEAD
+[13.0.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.7.0...v13.0.0-alpha.0
 [12.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.2...v12.7.0
 [12.6.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.1...v12.6.2
 [12.6.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.0...v12.6.1

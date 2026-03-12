@@ -507,16 +507,20 @@ class TestWorkflowStateDetection:
         # Create workflow YAML
         workflows_dir = tmp_path / "pennyfarthing-dist" / "workflows"
         workflows_dir.mkdir(parents=True)
-        (workflows_dir / "tdd.yaml").write_text(yaml.dump({
-            "workflow": {
-                "phases": [
-                    {"name": "setup", "agent": "sm"},
-                    {"name": "red", "agent": "tea"},
-                    {"name": "green", "agent": "dev"},
-                    {"name": "review", "agent": "reviewer"},
-                ]
-            }
-        }))
+        (workflows_dir / "tdd.yaml").write_text(
+            yaml.dump(
+                {
+                    "workflow": {
+                        "phases": [
+                            {"name": "setup", "agent": "sm"},
+                            {"name": "red", "agent": "tea"},
+                            {"name": "green", "agent": "dev"},
+                            {"name": "review", "agent": "reviewer"},
+                        ]
+                    }
+                }
+            )
+        )
 
         session_dir = tmp_path / ".session"
         session_dir.mkdir()
@@ -553,18 +557,22 @@ class TestWorkflowStateDetection:
         pf_dir.mkdir()
         sprint_dir = tmp_path / "sprint"
         sprint_dir.mkdir()
-        (sprint_dir / "current-sprint.yaml").write_text(yaml.dump({
-            "sprint": {"number": 12},
-            "epics": [
+        (sprint_dir / "current-sprint.yaml").write_text(
+            yaml.dump(
                 {
-                    "id": "epic-1",
-                    "stories": [
-                        {"id": "1-1", "status": "backlog", "points": 3},
-                        {"id": "1-2", "status": "ready", "points": 5},
-                    ]
+                    "sprint": {"number": 12},
+                    "epics": [
+                        {
+                            "id": "epic-1",
+                            "stories": [
+                                {"id": "1-1", "status": "backlog", "points": 3},
+                                {"id": "1-2", "status": "ready", "points": 5},
+                            ],
+                        }
+                    ],
                 }
-            ]
-        }))
+            )
+        )
 
         # Test
         result = detect_workflow_state(tmp_path)
@@ -585,17 +593,21 @@ class TestWorkflowStateDetection:
         pf_dir.mkdir()
         sprint_dir = tmp_path / "sprint"
         sprint_dir.mkdir()
-        (sprint_dir / "current-sprint.yaml").write_text(yaml.dump({
-            "sprint": {"number": 12},
-            "epics": [
+        (sprint_dir / "current-sprint.yaml").write_text(
+            yaml.dump(
                 {
-                    "id": "epic-1",
-                    "stories": [
-                        {"id": "1-1", "status": "done", "points": 3},
-                    ]
+                    "sprint": {"number": 12},
+                    "epics": [
+                        {
+                            "id": "epic-1",
+                            "stories": [
+                                {"id": "1-1", "status": "done", "points": 3},
+                            ],
+                        }
+                    ],
                 }
-            ]
-        }))
+            )
+        )
 
         # Test
         result = detect_workflow_state(tmp_path)
@@ -720,17 +732,21 @@ class TestPersonaLoading:
         # Create theme
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
-        (themes_dir / "test-theme.yaml").write_text(yaml.dump({
-            "theme": {"name": "Test Theme"},
-            "agents": {
-                "dev": {
-                    "character": "Test Developer",
-                    "style": "Test style",
-                    "role": "Test role",
-                    "quote": "Test quote",
+        (themes_dir / "test-theme.yaml").write_text(
+            yaml.dump(
+                {
+                    "theme": {"name": "Test Theme"},
+                    "agents": {
+                        "dev": {
+                            "character": "Test Developer",
+                            "style": "Test style",
+                            "role": "Test role",
+                            "quote": "Test quote",
+                        }
+                    },
                 }
-            }
-        }))
+            )
+        )
 
         # Test
         persona, theme = load_persona("dev", tmp_path)
@@ -774,13 +790,17 @@ class TestPersonaLoading:
         # Create theme with multiple agents
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
-        (themes_dir / "test-theme.yaml").write_text(yaml.dump({
-            "agents": {
-                "sm": {"character": "Scrum Master"},
-                "tea": {"character": "Test Engineer"},
-                "dev": {"character": "Developer"},
-            }
-        }))
+        (themes_dir / "test-theme.yaml").write_text(
+            yaml.dump(
+                {
+                    "agents": {
+                        "sm": {"character": "Scrum Master"},
+                        "tea": {"character": "Test Engineer"},
+                        "dev": {"character": "Developer"},
+                    }
+                }
+            )
+        )
 
         # Test
         crew = get_crew_manifest(tmp_path)
@@ -878,6 +898,7 @@ class TestSessionRegistration:
         # Set mtime to 10 days ago
         old_time = time.time() - (10 * 86400)
         import os
+
         os.utime(old_session, (old_time, old_time))
 
         # Create a new session file
@@ -962,17 +983,21 @@ class TestJSONOutput:
         (agents_dir / "sm.md").write_text("# SM Agent\nScrum Master")
         sprint_dir = tmp_path / "sprint"
         sprint_dir.mkdir()
-        (sprint_dir / "current-sprint.yaml").write_text(yaml.dump({
-            "sprint": {"number": 12},
-            "epics": [
+        (sprint_dir / "current-sprint.yaml").write_text(
+            yaml.dump(
                 {
-                    "id": "epic-1",
-                    "stories": [
-                        {"id": "1-1", "status": "backlog", "points": 3},
-                    ]
+                    "sprint": {"number": 12},
+                    "epics": [
+                        {
+                            "id": "epic-1",
+                            "stories": [
+                                {"id": "1-1", "status": "backlog", "points": 3},
+                            ],
+                        }
+                    ],
                 }
-            ]
-        }))
+            )
+        )
 
         # Test
         result = prime(
@@ -1007,13 +1032,17 @@ class TestJSONOutput:
         # Create workflow YAML
         workflows_dir = tmp_path / "pennyfarthing-dist" / "workflows"
         workflows_dir.mkdir(parents=True)
-        (workflows_dir / "tdd.yaml").write_text(yaml.dump({
-            "workflow": {
-                "phases": [
-                    {"name": "green", "agent": "dev"},
-                ]
-            }
-        }))
+        (workflows_dir / "tdd.yaml").write_text(
+            yaml.dump(
+                {
+                    "workflow": {
+                        "phases": [
+                            {"name": "green", "agent": "dev"},
+                        ]
+                    }
+                }
+            )
+        )
 
         session_dir = tmp_path / ".session"
         session_dir.mkdir()
@@ -1079,9 +1108,9 @@ class TestCLIFlagsV2:
         (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test"}))
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
-        (themes_dir / "test.yaml").write_text(yaml.dump({
-            "agents": {"dev": {"character": "Test", "style": "s", "role": "r"}}
-        }))
+        (themes_dir / "test.yaml").write_text(
+            yaml.dump({"agents": {"dev": {"character": "Test", "style": "s", "role": "r"}}})
+        )
 
         with patch("pf.prime.cli.get_project_root", return_value=tmp_path):
             result = main(["--agent", "dev", "--no-persona", "--no-workflow", "--no-register"])

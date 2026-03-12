@@ -30,12 +30,7 @@ import pytest
 _THIS_DIR = Path(__file__).resolve().parent
 # src/pf/tests -> src/pf -> src -> pennyfarthing-dist (project root)
 _DIST_ROOT = _THIS_DIR.parents[2]
-_EVAL_FILE = (
-    _DIST_ROOT
-    / "gates"
-    / "evaluations"
-    / "confidence-sm.md"
-)
+_EVAL_FILE = _DIST_ROOT / "gates" / "evaluations" / "confidence-sm.md"
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -156,8 +151,7 @@ class TestUserExperience:
         """AC3: UX section addresses override/dismissal behavior."""
         content_lower = eval_content.lower()
         assert any(
-            term in content_lower
-            for term in ["override", "dismiss", "bypass", "skip", "ignored"]
+            term in content_lower for term in ["override", "dismiss", "bypass", "skip", "ignored"]
         ), "UX section doesn't address override/dismissal behavior"
 
 
@@ -188,9 +182,7 @@ class TestResultsFile:
     def test_eval_has_structured_sections(self, eval_content: str) -> None:
         """AC4: Evaluation has multiple sections (at least 3 headings)."""
         headings = re.findall(r"^##\s+", eval_content, re.MULTILINE)
-        assert len(headings) >= 3, (
-            f"Expected at least 3 sections, found {len(headings)}"
-        )
+        assert len(headings) >= 3, f"Expected at least 3 sections, found {len(headings)}"
 
     def test_eval_references_gate(self, eval_content: str) -> None:
         """AC4: Evaluation references the confidence-sm gate."""
@@ -232,9 +224,7 @@ class TestRolloutRecommendation:
             ]
         ), "Recommendation lacks clear actionable decision"
 
-    def test_recommendation_mentions_other_agents(
-        self, eval_content: str
-    ) -> None:
+    def test_recommendation_mentions_other_agents(self, eval_content: str) -> None:
         """AC5: Recommendation addresses rollout to other agents."""
         content_lower = eval_content.lower()
         assert any(

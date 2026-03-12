@@ -9,6 +9,7 @@ import atexit
 import os
 import signal
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -79,17 +80,6 @@ def resolve_project_dir(project_dir: str | None) -> Path:
     return Path.cwd()
 
 
-def _get_wheelhub_command(port: int = 0) -> list[str]:
-    """Return the command to start the Python FastAPI WheelHub server.
-
-    Args:
-        port: Port number. 0 means let uvicorn pick an available port.
-    """
-    from pf.wheelhub.app import get_server_command
-
-    return get_server_command(port=port)
-
-
 def _wheelhub_log_path(project_dir: Path) -> Path:
     """Return the WheelHub log file path, ensuring parent dir exists."""
     session_dir = project_dir / ".session"
@@ -98,7 +88,7 @@ def _wheelhub_log_path(project_dir: Path) -> Path:
 
 
 def start_wheelhub(project_dir: Path) -> subprocess.Popen | dict:
-    """Start Python FastAPI WheelHub server in background.
+    """Start WheelHub server (Python/uvicorn) in background.
 
     Logs stdout/stderr to .session/wheelhub.log for diagnostics.
     Returns a result dict with {success: False, error: ...} on failure.
@@ -113,11 +103,13 @@ def start_wheelhub(project_dir: Path) -> subprocess.Popen | dict:
     if session_id:
         env["SESSION_ID"] = session_id
 
-    try:
-        cmd = _get_wheelhub_command()
-    except Exception as exc:
-        return {"success": False, "error": str(exc)}
-
+    cmd = [
+        sys.executable, "-m", "uvicorn",
+        "pf.wheelhub.app:create_app",
+        "--factory",
+        "--host", "127.0.0.1",
+        "--port", str(_default_port()),
+    ]
     log_file = open(log_path, "w")  # noqa: SIM115
     return subprocess.Popen(
         cmd,
@@ -165,9 +157,7 @@ def poll_for_port_file(
                 if log_tail:
                     lines = log_tail.splitlines()
                     log_tail = "\n\nWheelHub log (last 20 lines):\n" + "\n".join(lines[-20:])
-            raise TimeoutError(
-                f"Timed out waiting for {port_file} after {timeout}s{log_tail}"
-            )
+            raise TimeoutError(f"Timed out waiting for {port_file} after {timeout}s{log_tail}")
         time.sleep(interval)
 
 
@@ -203,12 +193,18 @@ def _probe_wheelhub(port: int, timeout: float = 1.0) -> bool:
         return False
 
 
+def _default_port() -> int:
+    """Resolve default WheelHub port from WHEELHUB_PORT env or 2898."""
+    return int(os.environ.get("WHEELHUB_PORT", "2898"))
+
+
 def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]:
     """Check if BikeRack is already running.
 
     Returns (is_running, pid_or_none, port_or_none).
     Uses HTTP liveness probes in addition to PID/port file checks.
     Cleans up stale/orphaned files when detection fails.
+    Falls back to probing the default port to detect orphaned servers.
     """
     pid = read_pid_file(project_dir)
     port = read_port_file(project_dir)
@@ -217,23 +213,24 @@ def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]
     if pid is not None and port is not None:
         if is_process_alive(pid) and _probe_wheelhub(port):
             return (True, pid, port)
-        # Stale files — clean up
+        # Stale files — clean up and fall through to default port probe
         cleanup_files(project_dir)
-        return (False, None, None)
 
     # Port file only (no PID) — probe before assuming orphaned
-    if port is not None and pid is None:
+    elif port is not None and pid is None:
         if _probe_wheelhub(port):
             return (True, None, port)
         cleanup_files(project_dir)
-        return (False, None, None)
 
     # PID file only (no port) — stale state, clean up
-    if pid is not None and port is None:
+    elif pid is not None and port is None:
         cleanup_files(project_dir)
-        return (False, None, None)
 
-    # No files — not running
+    # Fall through: no valid files — probe default port to detect orphaned servers
+    default = _default_port()
+    if _probe_wheelhub(default):
+        return (True, None, default)
+
     return (False, None, None)
 
 

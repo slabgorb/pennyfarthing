@@ -86,10 +86,7 @@ def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
     filtered_stories: list[dict] = []
     if filter_status:
         match_statuses = _FILTER_MAP.get(filter_status, {filter_status})
-        filtered_stories = [
-            s for s in stories
-            if s.get("status", "backlog") in match_statuses
-        ]
+        filtered_stories = [s for s in stories if s.get("status", "backlog") in match_statuses]
 
     return {
         "sprint": sprint_info,
@@ -165,7 +162,7 @@ def format_status(status: dict[str, Any]) -> str:
     lines.append("")
 
     # Points
-    in_review_pts = status.get('in_review_points', 0)
+    in_review_pts = status.get("in_review_points", 0)
     pts_display = f"Points: {status.get('completed_points', 0)}"
     if in_review_pts:
         pts_display += f" (+{in_review_pts} in review)"
@@ -204,4 +201,5 @@ def main(args: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

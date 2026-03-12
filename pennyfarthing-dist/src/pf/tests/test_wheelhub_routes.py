@@ -26,10 +26,6 @@ Acceptance Criteria:
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
 import pytest
 from starlette.testclient import TestClient
 
@@ -829,7 +825,9 @@ class TestRouteRegistration:
         from pf.wheelhub.routes import data_proxy
 
         source = inspect.getsource(data_proxy)
-        assert "subprocess" not in source, "Data proxy routes should use direct imports, not subprocess"
+        assert "subprocess" not in source, (
+            "Data proxy routes should use direct imports, not subprocess"
+        )
         assert "execSync" not in source
         assert "exec(" not in source
 
@@ -840,4 +838,6 @@ class TestRouteRegistration:
         from pf.wheelhub.routes import analysis
 
         source = inspect.getsource(analysis)
-        assert "subprocess" not in source, "Analysis routes should use direct imports, not subprocess"
+        assert "subprocess" not in source, (
+            "Analysis routes should use direct imports, not subprocess"
+        )

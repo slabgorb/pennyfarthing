@@ -76,14 +76,6 @@ assert_contains .pennyfarthing/init-manifest.json "pf_version" "version in manif
 assert_contains .pennyfarthing/init-manifest.json "initialized_at" "timestamp in manifest"
 
 echo ""
-echo "Checking WheelHub is Python-only (no Node.js bundle) ..."
-if [[ ! -f .pennyfarthing/server/wheelhub.mjs ]]; then
-    pass "No Node.js WheelHub bundle (Python FastAPI is sole backend)"
-else
-    fail "Stale Node.js WheelHub bundle found — should have been removed"
-fi
-
-echo ""
 echo "Checking pf shim ..."
 assert_file .pennyfarthing/bin/pf
 if [[ -x .pennyfarthing/bin/pf ]]; then

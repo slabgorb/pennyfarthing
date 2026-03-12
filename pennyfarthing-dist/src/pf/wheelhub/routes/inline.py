@@ -97,7 +97,7 @@ async def get_pending_approvals() -> JSONResponse:
 
 @hook_request_router.post("/resolve/{request_id}")
 async def resolve_approval(request_id: str, request: Request) -> JSONResponse:
-    body = await request.json()
+    await request.json()  # consume body
     if request_id in _pending_approvals:
         del _pending_approvals[request_id]
         return JSONResponse({"success": True, "resolved": True})

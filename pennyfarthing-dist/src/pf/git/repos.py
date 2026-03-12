@@ -43,10 +43,16 @@ class RepoConfig:
     owns: list[str] = field(default_factory=list)
     never_edit: list[str] = field(default_factory=list)
     ui_layer: str = "none"
+    pr_strategy: str = "standard"  # "standard" or "stacked"
+    stack_tool: str = ""  # "graphite" when pr_strategy is stacked
 
     @property
     def is_gitflow(self) -> bool:
         return self.branch_strategy == "gitflow"
+
+    @property
+    def is_stacked(self) -> bool:
+        return self.pr_strategy == "stacked"
 
     @property
     def upstream_ref(self) -> str:
@@ -75,6 +81,8 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         owns=data.get("owns", []) or [],
         never_edit=data.get("never_edit", []) or [],
         ui_layer=data.get("ui_layer", "none"),
+        pr_strategy=data.get("pr_strategy", "standard"),
+        stack_tool=data.get("stack_tool", ""),
     )
 
 
@@ -129,9 +137,7 @@ def get_repo_paths(project_root: Path | None = None) -> list[tuple[str, Path]]:
     return result
 
 
-def get_default_branch(
-    repo_name: str, project_root: Path | None = None
-) -> str:
+def get_default_branch(repo_name: str, project_root: Path | None = None) -> str:
     """Get the default branch for a specific repo.
 
     Args:
@@ -148,9 +154,7 @@ def get_default_branch(
     return "main"
 
 
-def get_repo_config(
-    repo_name: str, project_root: Path | None = None
-) -> RepoConfig | None:
+def get_repo_config(repo_name: str, project_root: Path | None = None) -> RepoConfig | None:
     """Get the full config for a specific repo.
 
     Args:
@@ -240,6 +244,38 @@ def format_pr_title(
         scope=scope,
         title=title,
     )
+
+
+def check_stack_tool_health(project_root: Path | None = None) -> dict[str, Any]:
+    """Check if required stack tools are installed for stacked PR repos.
+
+    Returns:
+        Dict with success, checks list, and any errors.
+    """
+    import shutil
+
+    repos = load_repos_config(project_root)
+    stacked = {n: r for n, r in repos.items() if r.is_stacked}
+
+    if not stacked:
+        return {"success": True, "checks": [], "message": "No stacked PR repos configured"}
+
+    checks = []
+    errors = []
+
+    gt_path = shutil.which("gt")
+    checks.append({"name": "gt-installed", "pass": gt_path is not None})
+    if not gt_path:
+        errors.append(
+            "Graphite CLI (gt) not found. Install: brew install withgraphite/tap/graphite"
+        )
+
+    return {
+        "success": len(errors) == 0,
+        "stacked_repos": list(stacked.keys()),
+        "checks": checks,
+        "errors": errors,
+    }
 
 
 def get_build_order(project_root: Path | None = None) -> list[str]:

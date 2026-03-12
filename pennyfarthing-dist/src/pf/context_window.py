@@ -12,6 +12,7 @@ from pathlib import Path
 
 try:
     import yaml
+
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
@@ -20,10 +21,12 @@ except ImportError:
 @dataclass
 class ContextConfig:
     """Configuration for context thresholds."""
+
     imminent_threshold: int = 65
     warning_threshold: int = 60
     critical_threshold: int = 85
     max_tokens: int = 200000
+    tirepump_threshold: int = 60
     permission_mode: str = "manual"
     relay_mode: bool = False
 
@@ -31,6 +34,7 @@ class ContextConfig:
 @dataclass
 class ContextResult:
     """Result of context check."""
+
     # Token counts
     tokens: int = 0
     baseline: int = 0
@@ -50,6 +54,7 @@ class ContextResult:
     permission_mode: str = "manual"
     relay_mode: bool = False
     handoff_mode: str = "ask"  # ask, auto
+    use_tirepump: bool = False
     is_gui: bool = False
 
     # Error state
@@ -71,6 +76,7 @@ class ContextResult:
             f"PERMISSION_MODE={self.permission_mode}",
             f"RELAY_MODE={str(self.relay_mode).lower()}",
             f"HANDOFF_MODE={self.handoff_mode}",
+            f"USE_TIREPUMP={str(self.use_tirepump).lower()}",
             f"IS_GUI={str(self.is_gui).lower()}",
         ]
 
@@ -86,7 +92,9 @@ class ContextResult:
         if self.error:
             return f"⚠️  Context: unknown ({self.error})"
 
-        if self.status == "HIGH":
+        if self.use_tirepump:
+            status_line = f"🔄 Context: {self.usable_percent}% used ({self.usable_tokens} of {self.available} available) - TIREPUMP (clear + next agent)"
+        elif self.status == "HIGH":
             status_line = f"⚠️  Context: {self.usable_percent}% used ({self.usable_tokens} of {self.available} available) - AUTO-HANDOFF"
         else:
             status_line = f"✅ Context: {self.usable_percent}% used ({self.usable_tokens} of {self.available} available)"
@@ -98,7 +106,9 @@ class ContextResult:
         ]
 
         if self.warning == "Critical":
-            lines.append(f"CONTEXT_WARNING: Critical ({self.usable_percent}%) - checkpoint and handoff recommended")
+            lines.append(
+                f"CONTEXT_WARNING: Critical ({self.usable_percent}%) - checkpoint and handoff recommended"
+            )
         elif self.warning == "High":
             lines.append(f"CONTEXT_WARNING: High ({self.usable_percent}%) - consider handoff soon")
 
@@ -113,10 +123,10 @@ def load_config(project_dir: str | None = None) -> ContextConfig:
     """
     config = ContextConfig()
     project_dir = (
-        project_dir or
-        os.environ.get("CLAUDE_PROJECT_DIR") or
-        os.environ.get("PROJECT_ROOT") or
-        os.getcwd()
+        project_dir
+        or os.environ.get("CLAUDE_PROJECT_DIR")
+        or os.environ.get("PROJECT_ROOT")
+        or os.getcwd()
     )
 
     # Try .pennyfarthing/config.local.yaml first
@@ -152,6 +162,8 @@ def _apply_config(config: ContextConfig, data: dict) -> None:
         config.warning_threshold = cb.get("warning_threshold", config.warning_threshold)
         config.critical_threshold = cb.get("critical_threshold", config.critical_threshold)
         config.max_tokens = cb.get("max_tokens", config.max_tokens)
+        config.tirepump_threshold = cb.get("tirepump_threshold", config.tirepump_threshold)
+
     if "workflow" in data:
         wf = data["workflow"]
         config.permission_mode = wf.get("permission_mode", config.permission_mode)
@@ -165,10 +177,10 @@ def get_claude_project_path(project_dir: str | None = None) -> Path:
     The path format is: -Users-name-Projects-project (leading dash, slashes become dashes)
     """
     project_dir = (
-        project_dir or
-        os.environ.get("CLAUDE_PROJECT_DIR") or
-        os.environ.get("PROJECT_ROOT") or
-        os.getcwd()
+        project_dir
+        or os.environ.get("CLAUDE_PROJECT_DIR")
+        or os.environ.get("PROJECT_ROOT")
+        or os.getcwd()
     )
     path_with_dashes = project_dir.replace("/", "-").replace(".", "-")
     return Path.home() / ".claude" / "projects" / path_with_dashes
@@ -244,9 +256,9 @@ def parse_transcript(transcript_path: Path) -> tuple[int | None, int | None]:
                 if "message" in data and "usage" in data["message"]:
                     usage = data["message"]["usage"]
                     total = (
-                        usage.get("input_tokens", 0) +
-                        usage.get("cache_read_input_tokens", 0) +
-                        usage.get("cache_creation_input_tokens", 0)
+                        usage.get("input_tokens", 0)
+                        + usage.get("cache_read_input_tokens", 0)
+                        + usage.get("cache_creation_input_tokens", 0)
                     )
                     if first_total is None:
                         first_total = total
@@ -270,10 +282,10 @@ def detect_gui(project_dir: str | None = None) -> bool:
 
     # Port file check - verify BikeRack is actually running
     project_dir = (
-        project_dir or
-        os.environ.get("WHEELHUB_PROJECT_DIR") or
-        os.environ.get("PROJECT_ROOT") or
-        os.getcwd()
+        project_dir
+        or os.environ.get("WHEELHUB_PROJECT_DIR")
+        or os.environ.get("PROJECT_ROOT")
+        or os.getcwd()
     )
 
     port_file = Path(project_dir) / ".bikerack-port"
@@ -281,6 +293,7 @@ def detect_gui(project_dir: str | None = None) -> bool:
         try:
             port = int(port_file.read_text().strip())
             import socket
+
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(0.5)
                 result = s.connect_ex(("127.0.0.1", port))
@@ -353,6 +366,11 @@ def check_context(
 
     # Handoff mode
     result.handoff_mode = "auto" if config.relay_mode else "ask"
+
+    # TirePump
+    result.use_tirepump = (
+        config.relay_mode or config.permission_mode == "turbo"
+    ) and usable_pct > config.tirepump_threshold
 
     # GUI detection
     result.is_gui = detect_gui(project_dir)
