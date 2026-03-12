@@ -1,0 +1,39 @@
+Tests are committed in RED state. Here's the TEA Assessment:
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 is the REST API foundation — core infrastructure that everything in Epic 8 builds on. Every AC needs test coverage.
+
+**Test Files:**
+- `crates/axiathon-server/tests/rest_api_foundation.rs` — 47 integration tests covering all 14 ACs
+
+**Tests Written:** 47 tests covering 14 ACs
+
+| AC | Description | Tests | Count |
+|-----|------------|-------|-------|
+| AC1 | Router on /api/v1/ | prefix routing, reject bare paths, 404 on /api/v2/ | 3 |
+| AC2 | ApiResponse envelope | data/meta/errors structure, request_id UUID, timestamp ISO8601, unique IDs | 6 |
+| AC3 | RFC 9457 errors | error object fields (type/title/status), content-type json | 2 |
+| AC4 | FromRef substates | alerts/events/rules/queries handlers don't 500 | 4 |
+| AC5 | TenantContext extraction | authed requests extract context, unauthed returns 401 | 2 |
+| AC6 | Health endpoint | 200 OK, no auth, version/status/uptime fields | 5 |
+| AC7 | CORS | preflight OPTIONS, Allow-Origin header | 2 |
+| AC8 | Security headers | nosniff, DENY frames, HSTS, CSP, present on errors too | 5 |
+| AC9 | Request tracing | X-Request-Id header, matches meta, honors client-supplied ID | 3 |
+| AC10 | Graceful shutdown | app() returns functioning Router | 1 |
+| AC11 | Rate limiting | 429 on excess, Retry-After header, envelope format | 3 |
+| AC12 | Auth extractor | valid/expired/malformed/empty bearer, wrong scope 403, API key, revoked key | 7 |
+| AC13 | Stub routes | 5 route groups exist, stubs return 501 | 6 |
+| Security | CWE-209, info leakage | no internal details leaked, identical error messages for different invalid tokens | 2 |
+| Error handling | Malformed input | bad JSON 400, wrong method 405, 404/401 use envelope, content-type | 5 |
+| Concurrency | Sanity | 10 concurrent health requests | 1 |
+
+**Status:** RED (failing — `axiathon_server::app()` not yet implemented)
+
+**Handoff:** To Dev for implementation. The `app()` function must be exported from `axiathon_server` and return an `axum::Router` with all middleware and routes wired up.
+
+**Delivery Findings:**
+- **Gap** (non-blocking): The existing `ApiResponse<T>` in axiathon-core uses `error: Option<ApiError>` (singular) and `meta: Option<ApiMeta>` with pagination fields. Story 8.1 spec requires `errors: Vec<...>` (plural array, always present) and `meta` with `request_id`/`timestamp`/`trace_id` (always present). Dev will need to evolve or wrap the core type.
+  Affects `crates/axiathon-core/src/types.rs` (ApiResponse, ApiMeta structs need alignment with Story 8.1 envelope spec).
+  *Found by TEA during test design.*

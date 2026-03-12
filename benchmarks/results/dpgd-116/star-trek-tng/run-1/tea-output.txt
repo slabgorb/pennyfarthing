@@ -1,0 +1,36 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI binary with 10 acceptance criteria requiring structural, behavioral, and security validation.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_command_groups.rs` | 19 | AC-1 (command groups), AC-2 (help/examples), AC-6 (clap derive) |
+| `tests/cli_error_exit_codes.rs` | 15 | AC-3 (exit codes 0/1/2/3/4, CliError traits, non-exhaustive) |
+| `tests/cli_output_format.rs` | 17 | AC-4 (table/json/csv, metadata, escaping, default detection) |
+| `tests/cli_global_flags.rs` | 14 | AC-5 (-v repeatable, --quiet, --server, --tenant, --config, --no-color, global=true) |
+| `tests/cli_siem_client.rs` | 16 | AC-7 (construction, HTTP status mapping, header injection, CRLF prevention) |
+| `tests/cli_config.rs` | 12 | AC-8 (TOML loading, env overrides, XDG path, validation, no tokens in file) |
+| `tests/cli_completion.rs` | 7 | AC-9 (bash/zsh/fish/PowerShell generation, command group coverage) |
+| `tests/cli_stub_handlers.rs` | 11 | AC-10 (stub returns, message format, story reference, exit code) |
+| `tests/cli_security.rs` | 10 | CWE-209 error exposure, header injection, URL scheme validation, dependency boundary |
+
+**Tests Written:** 121 tests covering all 10 ACs
+**Status:** RED (failing — 21 compilation errors, all modules referenced do not yet exist)
+**Handoff:** To Dev for implementation
+
+### Delivery Findings
+
+- No upstream findings during test design.
+
+### Key API Surface Defined by Tests
+
+The tests define the expected public API for `axiathon-client`:
+- `axiathon_client::cli::{Cli, Commands}` — clap Parser/Subcommand types with `verbose`, `quiet`, `no_color`, `server`, `tenant` fields
+- `axiathon_client::error::CliError` — non-exhaustive enum with `exit_code()` method, variants: General, AuthenticationExpired, Unauthorized, NotFound, ConnectionTimeout, ServerUnavailable, ServerError, RateLimited, Config, NotImplemented
+- `axiathon_client::output::{OutputFormat, OutputFormatter}` — format enum (Table/Json/Csv) with Default + FromStr, formatter with `format_table()` method
+- `axiathon_client::client::SiemClient` — `new()`, `with_token()`, `with_tenant()`, `base_url()`, `has_token()`, `tenant_id()`, `default_headers()`, `map_http_status()`, `get()`
+- `axiathon_client::config::ClientConfig` — `default()`, `from_file()`, `default_path()`, `api_url()`, `timeout_seconds()`, `with_env_overrides()`, `has_token_from_file()`
+- `axiathon_client::commands::{query, rules, alerts, ingest, config, status, tenant, login}::handle_*_stub()`
+- `axiathon_client::commands::completion::generate_completions()`

@@ -142,9 +142,7 @@ def update_story(
         # Auto-set assignee from current Jira user if not already assigned
         if "assigned_to" not in story and assigned_to is None:
             try:
-                result = subprocess.run(
-                    ["jira", "me"], capture_output=True, text=True
-                )
+                result = subprocess.run(["jira", "me"], capture_output=True, text=True)
                 if result.returncode == 0 and result.stdout.strip():
                     story["assigned_to"] = result.stdout.strip()
             except Exception:
@@ -175,7 +173,21 @@ def update_story(
 
 @click.command("update")
 @click.argument("story_id")
-@click.option("--status", type=click.Choice(["backlog", "ready", "in_progress", "in-progress", "in_review", "in-review", "done", "canceled"]))
+@click.option(
+    "--status",
+    type=click.Choice(
+        [
+            "backlog",
+            "ready",
+            "in_progress",
+            "in-progress",
+            "in_review",
+            "in-review",
+            "done",
+            "canceled",
+        ]
+    ),
+)
 @click.option("--completed", "completed_date", default=None)
 @click.option("--assigned-to", default=None)
 @click.option("--points", type=int, default=None)
@@ -184,9 +196,13 @@ def update_story(
 @click.option("--workflow", default=None)
 @click.option("--description", default=None, help="Story description text")
 @click.option("--review-findings", default=None, help="Reviewer findings text")
-@click.option("--review-verdict", type=click.Choice(["approved", "rejected", "pending"]), default=None)
+@click.option(
+    "--review-verdict", type=click.Choice(["approved", "rejected", "pending"]), default=None
+)
 @click.option("--add-ac", multiple=True, help="Acceptance criterion to append (repeatable)")
-@click.option("--clear-ac", is_flag=True, help="Clear all acceptance criteria (use with --add-ac to replace)")
+@click.option(
+    "--clear-ac", is_flag=True, help="Clear all acceptance criteria (use with --add-ac to replace)"
+)
 @click.option("--dry-run", is_flag=True)
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 def story_update_command(
@@ -211,6 +227,7 @@ def story_update_command(
         status = status.replace("-", "_")
     if sprint_file is None:
         from pf.common.config import get_project_root
+
         path = get_project_root() / "sprint" / "current-sprint.yaml"
     else:
         path = Path(sprint_file)

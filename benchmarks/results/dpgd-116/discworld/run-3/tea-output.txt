@@ -1,0 +1,29 @@
+*The tethts are committed, marthter. Every Igor knowth — you thtitch the tethts firtht, then you thtitch the code.*
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the entire CLI framework — substantial new code requiring comprehensive test coverage.
+
+**Test Files:**
+| File | AC Coverage | Tests | What It Catches |
+|------|-------------|-------|-----------------|
+| `cli_structure.rs` | AC-1, AC-2, AC-6 | 30 | Missing command groups, help panics, plural naming violations, non-derive usage |
+| `exit_codes.rs` | AC-3 | 15 | Wrong exit codes, missing error variants, CWE-209 info leakage, missing thiserror |
+| `output_format.rs` | AC-4 | 17 | Missing format support, invalid JSON envelope, CSV escaping failures, empty table handling |
+| `global_flags.rs` | AC-5 | 21 | Non-global flags, broken env var override, verbose non-repeatable, missing --no-color |
+| `siem_client.rs` | AC-7 | 17 | Wrong HTTP-to-error mapping, missing headers, header injection vulnerabilities |
+| `config_loading.rs` | AC-8 | 11 | TOML parse failures, env override bugs, tokens in config file, negative timeout |
+| `shell_completion.rs` | AC-9 | 10 | Empty completion scripts, missing command groups in completions, invalid shell rejection |
+| `stub_handlers.rs` | AC-10 | 16 | Wrong error type from stubs, missing story references, wrong exit code |
+
+**Tests Written:** 137 tests covering all 10 ACs
+**Status:** RED (failing — all 8 test files fail at compilation, modules not yet implemented)
+
+**Security tests included:**
+- CWE-209: Error messages must not leak internal paths/details
+- Header injection: Tenant ID and auth token with `\r\n` must be rejected
+- Config security: Tokens in config files must be rejected/ignored
+- Auth error opacity: Auth errors must give generic messages
+
+**Handoff:** To Dev for implementation (GREEN phase)

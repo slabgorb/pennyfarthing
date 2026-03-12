@@ -1,0 +1,78 @@
+scenario_id: dpgd-116
+theme: stephen-king
+run_id: 4
+judge_version: v2
+judge_pass: 1
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors. TEA
+    tests cover config loading but none specifically test that parse errors or permission
+    failures are distinguished from NotFound. Dev implemented from_file_or_default
+    without this distinction. Reviewer did not flag it.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer observation #5: 'ServerError and Unauthorized Display impls\
+    \ pass through raw server body text \u2014 CWE-209 risk' and notes the security.rs\
+    \ test is 'a no-op: it feeds a hardcoded string and only checks !display.is_empty(),\
+    \ which proves nothing about sanitization.'"
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer observation #4: 'SiemClient uses raw String for tenant_id instead\
+    \ of TenantId newtype \u2014 client.rs:11' \u2014 explicitly flags that axiathon-core\
+    \ exports TenantId but SiemClient stores Option<String>, bypassing type safety."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that dependencies use direct version strings instead
+    of workspace = true. The reviewer verified dependency boundaries but not workspace
+    dependency management.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: "Dev implemented #[serde(deny_unknown_fields)] on ClientConfig (confirmed\
+    \ by reviewer verification #12: 'deny_unknown_fields on ClientConfig \u2014 unknown\
+    \ TOML keys including token are rejected'). This avoids the silent-ignore issue\
+    \ by design."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer observation #7 flags a vacuous success path in config_loading.rs:160-171
+    where the Ok branch can never execute. Reviewer observation #6 also flags a weak
+    assertion pattern with ''if let Ok'' silently passing on Err. Same category of
+    vacuously true test assertions.'
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer observations #6 and #7 both flag vacuous/zero-effective-assertion
+    tests in config_loading.rs. Per partial match rule #2, the pipeline demonstrated
+    detection capability for weak/vacuous test assertions in the same file, same category.'

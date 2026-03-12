@@ -1,0 +1,94 @@
+All code read, all preflight run. Here is my review.
+
+---
+
+# Story 6.1 Review — Colonel Potter's Assessment
+
+*Now listen here, son. I've been through enough M*A*S*H units to know when something looks clean on the surface but has a shell fragment still lodged inside. Let me tell you what my decades of experience turned up.*
+
+---
+
+## Findings
+
+### [HIGH] F1 — Nightly `rustfmt` fails: import ordering violations across 5 files — `commands/alerts.rs:1`, `commands/config.rs:1`, `commands/ingest.rs:1`, `commands/query.rs:1`, `commands/rules.rs:1`, `commands/tenant.rs:1`
+
+Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The nightly fmt check **fails**. All command stub files have `use crate::error::CliError` before `use clap::Subcommand` — nightly wants external crates first. This will fail CI.
+
+### [HIGH] F2 — Edition mismatch: crate uses `edition = "2021"`, workspace declares `edition = "2024"` — `crates/axiathon-client/Cargo.toml:2`
+
+The workspace package declares `edition = "2024"` in the root `Cargo.toml`, but the `axiathon-client` crate explicitly overrides this to `edition = "2021"`. Per the Rust coding rules, the project uses "Edition 2024, MSRV 1.85+". This is either an intentional divergence that needs documenting (unlikely) or a bug. Edition 2024 has different semantics (e.g., `gen` keyword reservation, lifetime elision changes). This crate should use `edition.workspace = true`.
+
+### [MEDIUM] F3 — `RawConfig` silently swallows unknown fields in TOML — `config.rs:19-25`
+
+The `RawConfig` struct uses `#[derive(Deserialize, Default)]` without `#[serde(deny_unknown_fields)]`. An operator with a typo in their config (e.g., `serever_url = "..."`) will get zero feedback — the typo is silently ignored and the default is used. This is a classic config footgun. The `token` field is explicitly `#[allow(dead_code)]` to absorb it, but other unknown fields also vanish silently.
+
+### [MEDIUM] F4 — `with_env_overrides()` silently ignores invalid `AXIATHON_TIMEOUT` — `config.rs:96-103`
+
+When `AXIATHON_TIMEOUT` is set to a non-numeric or zero/negative value, it's silently ignored. The comment says "Invalid values are silently ignored" — but an operator who sets `AXIATHON_TIMEOUT=60s` (with a unit suffix, common muscle memory) will get the config file value with no warning whatsoever. At minimum, a `tracing::warn!` would surface this. The test `client_config_invalid_timeout_env_var_handled` explicitly permits this silent behavior, which means the test is encoding a suboptimal design.
+
+### [MEDIUM] F5 — `Tui` and `Logout` commands dispatch to `login::handle_stub()` — wrong story reference — `main.rs:21-22`
+
+In `main.rs`, both `Commands::Tui` and `Commands::Logout` dispatch to `commands::login::handle_stub()` which returns `CliError::NotImplemented("Story 9.1")`. But `Tui` should reference Epic 4, and `Logout` is its own concept (arguably 9.1, but coupling it to Login's stub is fragile). If someone later implements login but not logout, this dispatch breaks silently.
+
+### [MEDIUM] F6 — `--format` accepts arbitrary strings at parse time, validation deferred — `cli.rs:14`
+
+The `--format` global flag is `Option<String>`, not a clap `ValueEnum`. An operator can pass `--format xml` and clap will accept it. The `OutputFormat::from_str` validation happens much later (if ever — no command currently calls it since all are stubs). AC-4 says `--format table|json|csv` — this should be validated at parse time via `clap::ValueEnum` or `PossibleValuesParser`.
+
+### [MEDIUM] F7 — `Completion` shell arg is raw `String`, not validated by clap — `cli.rs:87-88`
+
+Same pattern as F6. The `shell` field in `Commands::Completion` is a raw `String`. Clap should enforce `PossibleValues` of `bash|zsh|fish|powershell` at parse time so the help text shows valid options and invalid shells are rejected at the arg parsing layer, not in command logic.
+
+### [LOW] F8 — `CliError` uses manual `impl Display` + `impl Error` instead of `thiserror` — `error.rs:1-72`
+
+The Rust coding rules mandate "Use `thiserror` for error enums." `thiserror` is in the dependencies but not used. The manual `impl fmt::Display` and `impl std::error::Error` work fine but violate the project convention. Using `#[derive(thiserror::Error)]` would be more consistent.
+
+### [LOW] F9 — JSON metadata `request_id` is randomly generated per render call — `output.rs:98`
+
+`uuid::Uuid::new_v4()` generates a random UUID for every JSON output. This makes output non-deterministic and untestable for exact matching. More importantly, the AC says "JSON includes `ResponseMetadata` (request_id, timestamp, api_version)" — the request_id should correlate with an actual API request, not be fabricated client-side. This is a design concern for future stories but worth noting.
+
+### [LOW] F10 — `--tenant` accepts raw `String`, not `TenantId` newtype — `cli.rs:30`
+
+Per the Rust coding rules: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag passes a raw `String` all the way through. For a stub this is acceptable, but the story context says `axiathon-core` already has `TenantId`. This should be validated/converted at the CLI boundary in the next story.
+
+### [VERIFIED] V1 — Header injection prevention (CWE-113)
+
+`validate_header_value()` in `client.rs:14-21` correctly checks for `\r`, `\n`, and `\0` before constructing header values. Tests cover CRLF and null byte injection attempts. Additionally, `HeaderValue::from_str()` provides a second layer of defense. Good.
+
+### [VERIFIED] V2 — Exit code mapping matches AC-3
+
+All exit codes verified: 0=success (implicit), 1=general errors, 2=clap usage (automatic), 3=AuthenticationExpired, 4=Unauthorized. Tests are exhaustive.
+
+### [VERIFIED] V3 — Security display messages (CWE-209)
+
+Error messages are generic and don't leak internal paths, stack traces, or token details. The `SECURITY` doc comment is present on the error type.
+
+### [VERIFIED] V4 — Token not stored in config
+
+`ClientConfig::token()` always returns `None`. The `RawConfig` accepts but discards the `token` field. Test verifies this invariant.
+
+### [VERIFIED] V5 — `#![forbid(unsafe_code)]` present in both `lib.rs` and `main.rs`
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 0 | - |
+| High | 2 | YES |
+| Medium | 5 | No |
+| Low | 3 | No |
+| Verified | 5 | - |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two High findings block approval:
+
+1. **F1**: Nightly `rustfmt` fails. Run `cargo +nightly fmt --all` and commit the result.
+2. **F2**: Edition `"2021"` must be `edition.workspace = true` to match workspace `"2024"`.
+
+Both are straightforward fixes. The Medium findings (F3-F7) should be addressed or explicitly deferred with TODO comments referencing the relevant story. The codebase is otherwise well-structured — good header injection defense, clean error taxonomy, solid test coverage.
+
+*Now get those fixed and come back. I'm not signing off on anything with formatting violations — I've seen what happens when you let the small stuff slide. Next thing you know, the whole OR is a mess.*

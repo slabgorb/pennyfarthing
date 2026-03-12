@@ -1,0 +1,32 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the entire CLI framework — foundational types, traits, and command structure that all subsequent stories depend on.
+
+**Test Files:**
+| File | AC Coverage | Tests |
+|------|-------------|-------|
+| `tests/cli_structure.rs` | AC-1, AC-2, AC-6 | 24 |
+| `tests/exit_codes.rs` | AC-3 | 12 |
+| `tests/output_format.rs` | AC-4 | 12 |
+| `tests/global_flags.rs` | AC-5 | 12 |
+| `tests/siem_client.rs` | AC-7 | 13 |
+| `tests/config_loading.rs` | AC-8 | 11 |
+| `tests/shell_completion.rs` | AC-9 | 6 |
+| `tests/stub_handlers.rs` | AC-10 | 15 |
+
+**Tests Written:** 105 tests covering all 10 ACs
+**Status:** RED (compilation failures — modules `cli`, `error`, `output`, `client`, `config`, `commands` do not exist)
+
+**Security tests included:**
+- CWE-209: Error display must not leak server internals or token details
+- CWE-113: Header injection via CR/LF in tenant ID and auth token
+- Credential leakage: `Debug` output must not expose auth tokens
+- Config security: Token field in config file must be ignored (keychain only)
+- Transport security: Plain HTTP to non-localhost should be rejected/warned
+
+**Handoff:** To Dev for implementation
+
+### Delivery Findings
+
+- No upstream findings during test design.

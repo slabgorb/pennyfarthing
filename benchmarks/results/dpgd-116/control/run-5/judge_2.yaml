@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: null
+run_id: 1
+judge_version: v2
+judge_pass: 2
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer observation #17 explicitly marks ''Config file missing returns
+    defaults'' as VERIFIED (correct), concluding ''NotFound IO error correctly falls
+    back to Ok(Self::default())''. The ground truth says unwrap_or_default swallows
+    ALL errors including parse/permission failures. Opposite conclusion reached.'
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA security tests include ''CWE-209: ServerError Display must not leak
+    stack traces/internal details''. Reviewer observation #14 verifies ServerError
+    display suppresses raw body. Same vulnerability class (CWE-209) addressed, though
+    the specific Io(transparent) variant forwarding OS details was not explicitly
+    flagged.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote ''Header injection: tenant ID and token with \r\n must be rejected/sanitized''
+    tests (siem_client_test.rs:103-130). Reviewer observation #13 verified CRLF stripping.
+    Reviewer observation #11 also flagged ''tenant field is Option<String> not TenantId''
+    as a LOW finding.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Dev output shows dependencies added to workspace Cargo.toml, but no phase
+    flagged that the crate Cargo.toml uses direct version strings instead of workspace
+    = true for the 6 dependencies.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer observation #4: 'RawConfig silently ignores unknown fields \u2014\
+    \ config.rs:6-12. RawConfig has no #[serde(deny_unknown_fields)]. A typo like\
+    \ api_ulr will be silently ignored... Silent misconfiguration is dangerous.' Directly\
+    \ addresses the mechanism that causes I4."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified vacuously true test assertions. TEA wrote the tests
+    but did not flag the assert!(config.server().is_none() || ...) pattern as vacuous.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test. TEA wrote the test with 'let
+    _ = config;' and no assertions but did not flag it as a testing gap.

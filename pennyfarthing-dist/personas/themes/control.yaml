@@ -15,7 +15,7 @@ theme:
   character_immersion: none
   user_title: ""
   portrait_style: ", neutral professional headshot, plain grey background, even studio lighting, minimal styling, corporate stock photo"
-  tier: D
+  tier: B
   spinner_verbs:
     - Processing
     - Analyzing
@@ -50,8 +50,15 @@ theme:
   dimensions:
     tone: eerie
     era: contemporary
-    genre: sci-fi-thriller
+    genre: sci-fi
     energy: unsettling
+    scrutiny: professional
+    cooperation_model: unified
+    conflict_approach: consensus
+    authority_model: hierarchical
+    formality: formal
+    intellectual_style: analytical
+    stakes: institutional
 zeitgeist:
   score: 8.0
   rating: minimal

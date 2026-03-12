@@ -1,0 +1,78 @@
+scenario_id: dpgd-116
+theme: enlightenment-thinkers
+run_id: 2
+total_caught: 4
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase addressed the from_file_or_default swallowing all errors. The
+    config loading tests and reviewer comments discuss config issues but never flag
+    that unwrap_or_default catches permission/parse errors indiscriminately.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [LOW] 'ConfigError Display exposes config file paths\
+    \ in error message' and noted CWE-209 concerns. TEA also wrote tests for CWE-209\
+    \ error leakage. However, the reviewer verified CliError Display as safe while\
+    \ noting the ConfigError pass-through gap \u2014 partial catch."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote header injection prevention tests in siem_client.rs covering\
+    \ CRLF in tenant ID. Reviewer verified CWE-113 header injection prevention. However,\
+    \ the specific finding about using raw String instead of TenantId from axiathon-core\
+    \ was not flagged \u2014 the pipeline caught the injection symptom but not the\
+    \ type-safety root cause."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged [HIGH] 'Duplicate [dev-dependencies] for crates already
+    in [dependencies]' but did not flag the direct version strings vs workspace =
+    true issue. The specific finding about 6 deps using direct versions instead of
+    workspace = true was not caught.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [HIGH] 'ConfigFile silently ignores the token field\
+    \ instead of rejecting it' and [HIGH] 'toml::from_str with #[derive(Deserialize,\
+    \ Default)] silently ignores unknown fields' \u2014 recommending #[serde(deny_unknown_fields)]\
+    \ and warning/error when token is present."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: The reviewer noted a weak disjunction in output_format.rs:89-92 (parsed.get('request_id').is_some()
+    || parsed.get('metadata').is_some()) but did not flag the specific vacuously true
+    assertion pattern in config_loading tests where assert!(config.server().is_none()
+    || ...) always passes.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the test with zero assertions that only checks non-panic
+    via 'let _ = config;'. TEA wrote config_loading tests but the specific zero-assertion
+    test was not identified by any phase.

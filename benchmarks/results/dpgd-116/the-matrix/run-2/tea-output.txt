@@ -1,0 +1,31 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — every AC needs test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure.rs` | 30 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (derive macros) |
+| `exit_codes.rs` | 12 | AC-3 (exit code mapping 0/1/2/3/4 via CliError) |
+| `output_format.rs` | 12 | AC-4 (table/json/csv OutputFormatter, CSV escaping, JSON metadata) |
+| `siem_client.rs` | 11 | AC-7 (SiemClient construction, HTTP status mapping, header injection) |
+| `config_loading.rs` | 12 | AC-8 (TOML loading, env override, precedence, validation, no-token-in-config) |
+| `shell_completion.rs` | 10 | AC-9 (bash/zsh/fish/powershell generation, subcommand inclusion) |
+| `stub_handlers.rs` | 11 | AC-10 (stubs return "not yet implemented", exit code 1, story references) |
+| `security.rs` | 11 | CWE-209 error exposure, header injection via CRLF, credential leakage in Debug, URL scheme validation |
+
+**Tests Written:** 109 tests covering all 10 ACs + security
+**Status:** RED (failing — compilation errors, all modules unresolved)
+**Commit:** `15301be`
+
+**Expected public API for Dev:**
+- `axiathon_client::cli::{Cli, Commands, OutputFormat}` — clap derive structs
+- `axiathon_client::error::CliError` — with `exit_code()` method
+- `axiathon_client::output::{OutputFormat, OutputFormatter}` — formatting trait
+- `axiathon_client::client::SiemClient` — HTTP wrapper with `default_headers()`, `map_http_status()`
+- `axiathon_client::config::ClientConfig` — TOML config with `from_toml()`, `from_file()`, `default_path()`
+- `axiathon_client::commands::{query,rules,alerts,ingest,config,status,tenant,login}::handle_stub()`
+- `axiathon_client::commands::completion::generate_completion()`
+
+**Handoff:** To Dev for implementation (GREEN phase).

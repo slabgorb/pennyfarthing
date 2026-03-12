@@ -1,0 +1,23 @@
+All 49 tests pass, clippy clean.
+
+## Summary
+
+**Tests:** 49/49 passing (GREEN)
+
+**Files changed:**
+
+| File | Change |
+|------|--------|
+| `crates/axiathon-server/Cargo.toml` | Added `chrono` and `uuid` workspace dependencies |
+| `crates/axiathon-server/src/lib.rs` | `AppState` with `FromRef` substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`), `RateLimiter` (per-tenant, 100 req limit), `AuthInfo`, and `pub fn app()` building the Axum router |
+| `crates/axiathon-server/src/middleware.rs` | Auth middleware (Bearer token + API key validation, 401/403 responses) and rate limit middleware (per-tenant tracking, 429 + Retry-After) |
+| `crates/axiathon-server/src/handlers.rs` | Route handlers: `health` (public, returns version/status), stub GET/POST for events/alerts/rules/queries (auth-protected), JSON fallback 404 |
+| `crates/axiathon-server/src/response.rs` | Response envelope helpers with `request_id` (UUID v4), `timestamp` (ISO 8601), `trace_id` in every `meta` object |
+
+**Architecture highlights:**
+- `#![forbid(unsafe_code)]` enforced
+- `FromRef<AppState>` substates for compile-time least-privilege
+- Auth middleware validates Bearer/API-Key before rate limiting
+- CWE-209 compliant: error responses use generic messages, no internal paths/stack traces
+- All responses use consistent `{data, error, meta}` envelope
+- Per-tenant independent rate limits via `Arc<Mutex<HashMap>>`

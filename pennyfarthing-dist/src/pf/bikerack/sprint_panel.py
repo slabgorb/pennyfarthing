@@ -97,7 +97,14 @@ def _should_expand(epic: dict[str, Any]) -> bool:
 _EPIC_ID_WIDTH = 11  # "AAAAA-XXXXX" = 11; fits any 5+5 key
 
 # Sort order: actionable items first, completed last
-_STATUS_ORDER = {"in-progress": 0, "in-review": 1, "blocked": 2, "backlog": 3, "done": 4, "canceled": 5}
+_STATUS_ORDER = {
+    "in-progress": 0,
+    "in-review": 1,
+    "blocked": 2,
+    "backlog": 3,
+    "done": 4,
+    "canceled": 5,
+}
 
 
 def _build_epic_label(
@@ -119,8 +126,14 @@ def _build_epic_label(
     ordinal_padded = f"{epic_id:<4}"
     label.append(ordinal_padded, style=id_style)
     if jira_key:
-        display_jira = jira_key if len(jira_key) <= _EPIC_ID_WIDTH else jira_key[: _EPIC_ID_WIDTH - 1] + "\u2026"
-        label.append(f"  {display_jira:<{_EPIC_ID_WIDTH}}", style="dim cyan" if completed else "cyan")
+        display_jira = (
+            jira_key
+            if len(jira_key) <= _EPIC_ID_WIDTH
+            else jira_key[: _EPIC_ID_WIDTH - 1] + "\u2026"
+        )
+        label.append(
+            f"  {display_jira:<{_EPIC_ID_WIDTH}}", style="dim cyan" if completed else "cyan"
+        )
     else:
         label.append(" " * (_EPIC_ID_WIDTH + 2))
     label.append("  ")
@@ -142,9 +155,7 @@ def _build_epic_label(
     return label
 
 
-def _build_story_label(
-    story: dict[str, Any], current_story_id: str, max_width: int = 80
-) -> Text:
+def _build_story_label(story: dict[str, Any], current_story_id: str, max_width: int = 80) -> Text:
     """Build Rich Text label for a story tree leaf.
 
     Layout: ``✓  126-1  KA MSSCI-1495  2pt  Story title``
@@ -171,7 +182,15 @@ def _build_story_label(
     # Assignee initials badge between ordinal and Jira key
     owner = _format_assignee(story.get("assignee") or story.get("assignedTo"))
     if owner:
-        owner_style = "reverse yellow" if is_in_progress else "reverse cyan" if status == "in-review" else "dim on grey23" if is_done else "reverse dim"
+        owner_style = (
+            "reverse yellow"
+            if is_in_progress
+            else "reverse cyan"
+            if status == "in-review"
+            else "dim on grey23"
+            if is_done
+            else "reverse dim"
+        )
         label.append(f" {owner} ", style=owner_style)
     else:
         label.append("    ")  # 4-char placeholder: space + 2 initials + space
@@ -180,7 +199,9 @@ def _build_story_label(
     if len(jira) > _EPIC_ID_WIDTH:
         jira = jira[: _EPIC_ID_WIDTH - 1] + "\u2026"
     jira_padded = f"{jira:<{_EPIC_ID_WIDTH}}"
-    label.append(f" {jira_padded}", style="dim" if is_done else ("bold cyan" if is_current else "cyan"))
+    label.append(
+        f" {jira_padded}", style="dim" if is_done else ("bold cyan" if is_current else "cyan")
+    )
 
     # Points right-aligned
     label.append(f" {pts:>2}", style="dim")
@@ -252,9 +273,7 @@ class SprintPanel(Widget):
         self._loading_timeout: int = 10
 
     def compose(self) -> ComposeResult:
-        yield Static(
-            "[dim]Waiting for sprint data...[/dim]", id="sprint-header"
-        )
+        yield Static("[dim]Waiting for sprint data...[/dim]", id="sprint-header")
         yield Static(
             "[dim bright_black]\u2191/\u2193:navigate  space:expand/collapse  Enter:open  j/k/e:vim  c:copy ID[/dim bright_black]",
             id="sprint-hints",
@@ -387,7 +406,10 @@ class SprintPanel(Widget):
                         done_pts += pts
 
             label = _build_epic_label(
-                epic_id, epic_title, done_pts, total_pts,
+                epic_id,
+                epic_title,
+                done_pts,
+                total_pts,
                 jira_key=epic.get("jiraKey", ""),
                 max_width=tree_width,
             )
@@ -444,7 +466,10 @@ class SprintPanel(Widget):
                             done_pts += pts
 
                 label = _build_epic_label(
-                    epic_id, epic_title, done_pts, total_pts,
+                    epic_id,
+                    epic_title,
+                    done_pts,
+                    total_pts,
                     jira_key=epic.get("jiraKey", ""),
                     completed=True,
                     max_width=tree_width,

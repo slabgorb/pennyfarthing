@@ -1,0 +1,116 @@
+I now have a complete picture. Here is my adversarial review.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+**Reviewer:** The Merovingian
+**Reviewed:** All files in `crates/axiathon-client/src/` and `crates/axiathon-client/tests/`
+
+> *"I have survived your predecessors, and I will survive you. But only if I understand the why — and right now, the 'why' of this code has a hole in it large enough to drive a truck through."*
+
+---
+
+## Findings
+
+### [CRITICAL] No binary entry point — `main.rs` is missing at `crates/axiathon-client/src/main.rs`
+
+The story's purpose is to "create the foundational CLI binary that operators will use." There is no `main.rs`, no `[[bin]]` section in `Cargo.toml`. `cargo build -p axiathon-client` produces a library (`.rlib`), not an executable. AC-1 ("axiathon --help must show all command groups") is impossible to satisfy. This single omission means:
+
+- No command dispatch — stub handlers are defined but never called from a binary
+- Global flags (`--format`, `--verbose`, `--quiet`, `--server`, `--no-color`) are parsed but never wired to any behavior
+- Exit codes (`CliError::exit_code()`) are implemented but never invoked via `std::process::exit()`
+- Config loading, SiemClient initialization, and token loading never occur in production flow
+
+**Impact:** 5 of 10 ACs are unachievable. Every downstream story (6.2–6.7) is blocked.
+
+### [CRITICAL] AC-1 missing commands: `tui` and `logout` not in `Commands` enum at `cli.rs:54-94`
+
+AC-1 requires: "axiathon --help must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout, tui**, completion, init." The `Commands` enum has no `Tui` or `Logout` variant. While TUI implementation is out of scope, the *stub command group* should exist per AC-1.
+
+### [HIGH] `RawConfig` silently ignores unknown fields at `config.rs:10-15`
+
+`RawConfig` uses `#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]`. A user who puts `token = "secret"` in their config file gets zero feedback — the field is silently consumed and ignored. This violates the principle of least surprise and creates a security-adjacent issue: users may *believe* their token is being used from config when it isn't. The test at `security.rs:88-110` explicitly accepts this ambiguity but doesn't assert either behavior concretely — the `if let Ok(cfg)` branch has an empty body.
+
+### [HIGH] `keyring` dependency missing from `Cargo.toml` and workspace at `Cargo.toml`
+
+Story spec mandates `keyring` 3 in workspace dependencies. It's absent from both the root `Cargo.toml` and `crates/axiathon-client/Cargo.toml`. No keychain code exists. AC-8 requires "Tokens in OS keychain, NOT config file" — the enforcement side (not-in-config) works, but the implementation side (load-from-keychain) doesn't exist at all.
+
+### [HIGH] `cargo +nightly fmt --all --check` fails at `cli.rs:1`
+
+Per gotchas.md: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The check fails — imports in `cli.rs` are not in nightly-fmt order (std before external before crate). This would block CI.
+
+### [MEDIUM] `toml` version mismatch: workspace declares `0.8`, story spec says `0.9` at `Cargo.toml:49`
+
+The story technical guardrails specify `toml 0.9` in workspace dependencies. The actual workspace has `toml = "0.8"`. If `0.9` has breaking changes or required features, this could cause issues later.
+
+### [MEDIUM] `SiemClient::new()` panics on empty URL instead of returning `Result` at `client.rs:16`
+
+`assert!(!base_url.is_empty())` causes an unrecoverable panic. Per project rules: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." While `assert!` with a message isn't `unwrap()`, a constructor that panics on bad input is poor API design for a production client. The test at `siem_client.rs:193-201` verifies this panic via `catch_unwind`, which confirms it's expected behavior, but the Rust rules doc's spirit points toward `Result`.
+
+### [MEDIUM] Race conditions in env var tests at `config_loading.rs:87-137`
+
+Tests use `std::env::set_var`/`remove_var` without synchronization. These mutate global process state. If tests run in parallel (default for `cargo test`), `AXIATHON_API_URL`/`AXIATHON_TIMEOUT`/`AXIATHON_SERVER` could leak between tests. The Edition 2021 comment in Cargo.toml acknowledges this ("tests use std::env::set_var without unsafe blocks"), but the actual race condition is unaddressed. Tests should use `serial_test` or a mutex.
+
+### [MEDIUM] `expect()` calls in output formatters at `output.rs:119,136,153-161`
+
+`JsonFormatter::format` and `CsvFormatter::format` use `.expect("JSON serialization should not fail")` and similar. Per project rules, `expect()` is allowed with actionable messages, and these are in-memory serialization of known-good types so they realistically can't fail. However, 5 `expect()` calls in `CsvFormatter::format` alone is aggressive — a single `Result`-returning method would be cleaner.
+
+### [LOW] `init.rs` is an empty stub with no `handle_stub()` function at `commands/init.rs:1-6`
+
+All other command modules have a `handle_stub()` function. `init.rs` only has the `InitArgs` struct. AC-10 says stub handlers should print "not yet implemented (Story X.Y)". Init is supposed to be *functional* (not stub) per the story scope, but nothing is implemented. No test covers this gap.
+
+### [LOW] `completion.rs` has functional code but no `handle_stub()` — inconsistent pattern at `commands/completion.rs`
+
+Completion is functional (has `generate_completions()`), which is correct per scope. But there's no integration path from CLI dispatch since `main.rs` doesn't exist.
+
+### [LOW] `AXIATHON_SERVER` and `AXIATHON_API_URL` env var precedence unclear at `config.rs:78-83`
+
+Both are checked in sequence. If both are set, `AXIATHON_SERVER` wins because it's checked second and overwrites `raw.api_url`. This is undocumented and could confuse operators. AC-5 says `--server` supports `AXIATHON_SERVER`, but AC-8 says `AXIATHON_API_URL` overrides file values. Having both is ambiguous.
+
+---
+
+## Verified Good
+
+- **[VERIFIED]** Header injection prevention (CRLF + null byte) correctly implemented at `client.rs:77-85`
+- **[VERIFIED]** CWE-209 error sanitization — Display impls are generic, internal details hidden at `error.rs:10-42`
+- **[VERIFIED]** URL scheme validation rejects non-HTTP at `config.rs:115-123`
+- **[VERIFIED]** Timeout bounds validation at `config.rs:125-137`
+- **[VERIFIED]** Clap derive macros used throughout (no imperative builder) — AC-6 satisfied
+- **[VERIFIED]** Plural noun command names (`rules`, `alerts`) — architecture doc compliance
+- **[VERIFIED]** `#![forbid(unsafe_code)]` at `lib.rs:2`
+- **[VERIFIED]** `#[non_exhaustive]` on `CliError` at `error.rs:11`
+- **[VERIFIED]** Clippy passes cleanly with `-D warnings`
+
+---
+
+## Data Flow Trace
+
+**Scenario:** Operator runs `axiathon rules list --format json --tenant acme`
+
+1. Binary parses args → **BLOCKED** — no binary exists
+2. Would match `Commands::Rules(RulesArgs { command: RulesCommand::List })` with `global.format = Some(Json)`, `global.tenant = Some("acme")`
+3. Would need to load config, create SiemClient, inject tenant header, dispatch to handler
+4. `rules::handle_stub()` would return `Err(CliError::NotImplemented("Story 6.6"))`
+5. `main.rs` would print error to stderr and `exit(1)`
+
+**Steps 2-5 are unreachable.** The library components work in isolation (tests prove this), but end-to-end flow does not exist.
+
+---
+
+## Verdict
+
+**CHANGES_REQUESTED**
+
+> *"Causality, Neo. Everything begins with choice — and the choice to ship a library when you promised a binary... that is a choice I cannot accept."*
+
+**Blocking issues (must fix):**
+1. Add `src/main.rs` with `#[tokio::main]`, clap parsing, config loading, command dispatch, and exit code mapping
+2. Add `[[bin]]` target to `Cargo.toml` (name = "axiathon")
+3. Add `Tui` and `Logout` stub variants to `Commands` enum (AC-1)
+4. Fix nightly `rustfmt` import ordering violations
+5. Add `keyring` to workspace dependencies (even if usage is deferred to Story 9.1, the dependency should be declared per story spec)
+
+**Should fix (high priority):**
+6. Add `#[serde(deny_unknown_fields)]` to `RawConfig` — unknown fields like `token` should be loudly rejected, not silently swallowed
+7. Address env var test race conditions (serial_test or mutex)

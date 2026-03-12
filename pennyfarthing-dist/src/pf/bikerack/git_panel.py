@@ -74,14 +74,30 @@ def _parse_file_status(status: str) -> tuple[str, str, str]:
 # ---- Diff rendering helpers (from diffs_panel.py patterns) ----
 
 _LANG_MAP: dict[str, str] = {
-    ".py": "python", ".ts": "typescript", ".tsx": "tsx",
-    ".js": "javascript", ".jsx": "jsx", ".go": "go",
-    ".rs": "rust", ".rb": "ruby", ".java": "java",
-    ".css": "css", ".html": "html", ".json": "json",
-    ".yaml": "yaml", ".yml": "yaml", ".md": "markdown",
-    ".sh": "bash", ".zsh": "bash", ".toml": "toml",
-    ".xml": "xml", ".sql": "sql", ".c": "c", ".cpp": "cpp",
-    ".h": "c", ".hpp": "cpp",
+    ".py": "python",
+    ".ts": "typescript",
+    ".tsx": "tsx",
+    ".js": "javascript",
+    ".jsx": "jsx",
+    ".go": "go",
+    ".rs": "rust",
+    ".rb": "ruby",
+    ".java": "java",
+    ".css": "css",
+    ".html": "html",
+    ".json": "json",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+    ".md": "markdown",
+    ".sh": "bash",
+    ".zsh": "bash",
+    ".toml": "toml",
+    ".xml": "xml",
+    ".sql": "sql",
+    ".c": "c",
+    ".cpp": "cpp",
+    ".h": "c",
+    ".hpp": "cpp",
 }
 
 

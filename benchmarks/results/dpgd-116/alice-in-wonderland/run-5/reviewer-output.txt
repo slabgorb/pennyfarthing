@@ -1,0 +1,150 @@
+Good. I've now read every source file, every test file, run the test suite (all pass), run clippy (clean), and run nightly fmt (fails). Let me compile my final verdict.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+**"OFF WITH THEIR HEADS!"** ...but let us be precise about *which* heads.
+
+---
+
+## Mandatory Review Checklist
+
+- [x] **5+ observations** (11 found below)
+- [x] **Data flow traced:** CLI parse → config → SiemClient → HTTP → format → exit
+- [x] **Wiring checked:** No binary exists; chain is severed at dispatch
+- [x] **Pattern identified:** Good and bad, with file:line
+- [x] **Error handling verified:** CliError, config fallbacks, HTTP mapping
+- [x] **Security analysis:** CRLF injection, CWE-209, secret exposure
+- [x] **Hard questions:** Empty inputs, timeouts, race conditions
+- [x] **Judgment rendered**
+
+---
+
+## Findings
+
+### `[CRITICAL]` No binary entry point — `main.rs` does not exist
+
+The story spec requires: *"The story delivers the `axiathon-client` crate producing the `axiathon` binary"*. AC-3 states: *"`main.rs` catches errors and calls `std::process::exit()`"*.
+
+**There is no `src/main.rs`.** No `[[bin]]` in Cargo.toml. The crate is library-only. You cannot run `axiathon --help`. The data flow trace breaks at dispatch: `Cli::parse()` produces a `Commands` enum variant, but nothing matches on it, nothing calls handlers, nothing calls `process::exit()`.
+
+This means AC-1 ("axiathon --help must show all command groups") is **untestable in practice** — the tests verify the parser in isolation, not the actual binary.
+
+### `[CRITICAL]` Edition mismatch — `edition = "2018"` vs workspace `"2024"` at `Cargo.toml:2`
+
+The workspace declares `edition = "2024"` at root `Cargo.toml:6`. The client crate declares `edition = "2018"`. This is not just cosmetic — edition 2024 changes keyword reservations, import behavior, and other semantics. The crate should inherit from workspace or explicitly match.
+
+### `[CRITICAL]` Nightly fmt check fails at `cli.rs`, test files, and more
+
+Per `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the preflight."*
+
+Confirmed failure. Import ordering in `cli.rs:3-4` (crate import before std-lib), long `#[command(after_help = ...)]` attributes that nightly wants wrapped. This is a blocking preflight requirement.
+
+### `[HIGH]` No command dispatch or handler modules — AC-10 unfulfilled
+
+`commands/mod.rs:3` exports only `pub mod completion;`. No other command modules exist. AC-10 requires: *"Unimplemented commands print 'not yet implemented (Story X.Y)' and exit with code 1."*
+
+The `CliError::NotImplemented` variant exists and is tested in isolation (`stub_handlers.rs`), but **no code actually creates these errors in response to commands**. There is no `match cli.command { Commands::Status(_) => Err(CliError::NotImplemented("Story 6.2")) ... }` anywhere.
+
+### `[HIGH]` `bare_trait_objects = "allow"` suppresses Edition 2018→2021 lint at `Cargo.toml:40`
+
+This lint suppression exists solely to make `impl dyn OutputFormatter` at `output.rs:40` compile without warnings. This is a code smell — it's a workaround for using an empty marker trait with static methods on `dyn Trait`, which is unidiomatic Rust. The `OutputFormatter` trait at `output.rs:38` is empty:
+
+```rust
+pub trait OutputFormatter {}
+```
+
+All methods are `impl dyn OutputFormatter { ... }` static methods. This should be a plain struct or a module-level function set. The empty trait + `impl dyn` pattern is confusing and requires suppressing a workspace lint.
+
+### `[HIGH]` Keyring integration completely absent — AC-8 partially unfulfilled
+
+AC-8 requires: *"Credential storage: OS keychain via `keyring` crate. Load token at CLI startup in sync context BEFORE entering Tokio runtime."*
+
+At `config.rs:67-68`, the only token source is `std::env::var("AXIATHON_API_TOKEN").ok()`. No `keyring` import, no keychain loading code, no `keyring` in `Cargo.toml` dependencies. The comment says "keychain loading is done elsewhere" but there is no "elsewhere."
+
+### `[MEDIUM]` `ConfigFile` silently ignores unknown fields at `config.rs:9-16`
+
+`#[serde(default)]` with no `#[serde(deny_unknown_fields)]` means typos like `servr_url` are silently ignored. The security test at `security.rs:103` acknowledges this ("Rejecting unknown fields is also acceptable") but the test is **vacuous** — it accepts both behaviors, testing nothing. An operator who typos `server_url` as `servr_url` gets the default with zero warning.
+
+### `[MEDIUM]` `ClientConfig.timeout` is parsed but never used at `config.rs:25`, `client.rs:23`
+
+`config.rs:48,54-58` parses and stores timeout. `client.rs:23` creates `reqwest::Client::new()` with default timeouts. The stored timeout value is never applied to the HTTP client. Dead code that gives false confidence.
+
+### `[MEDIUM]` `with_token()` bypasses CRLF validation at `client.rs:42-46`
+
+Two token setters exist: `with_token()` (no validation, line 43) and `with_token_validated()` (CRLF check, line 49). Same for tenant. The non-validated versions are `#[must_use]` but have no safety gate. Nothing prevents a caller from using the unsafe path. The validated methods should be the only public API, or `with_token` should call validation internally.
+
+### `[LOW]` `output.rs:82` uses `.expect()` for JSON serialization
+
+```rust
+serde_json::to_string_pretty(&output).expect("JSON serialization should not fail")
+```
+
+Per rust.md: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message."* The `expect` message is explanatory but not actionable. Same pattern at lines 88-89, 91, 94, 95-96 for CSV. Since these serialize from known-good in-memory data, panics are theoretically impossible, but 5 `expect()`s in one function is aggressive.
+
+### `[VERIFIED]` Exit code mapping is correct and thoroughly tested
+
+`error.rs:35-41` — Auth→3, Authz→4, everything else→1. `exit_codes.rs` has 13 tests including distinctness checks between auth/authz/generic. Solid.
+
+### `[VERIFIED]` CRLF header injection prevention works
+
+`client.rs:49-83` — Both `with_token_validated()` and `with_tenant_validated()` reject `\r` and `\n`. Tests at `security.rs:48-66` confirm.
+
+### `[VERIFIED]` CWE-209 error sanitization is correct
+
+`error.rs:47` — `ServerError(_)` Display outputs generic message, not the inner string. Test at `security.rs:18` confirms internal IPs/ports don't leak.
+
+### `[VERIFIED]` Token never loaded from config file
+
+`config.rs:14` — `ConfigFile` has no `token` field. Test at `config_loading.rs:104-124` confirms that even if `token = "..."` appears in TOML, `config.token()` returns `None`.
+
+### `[VERIFIED]` All tests pass (77 total), clippy clean
+
+```
+test result: ok. 77 passed; 0 failed; 0 ignored
+```
+
+---
+
+## Data Flow Trace
+
+**Input:** `axiathon --tenant abc123 --format json status`
+
+1. **Parse** (`cli.rs`): `Cli::try_parse_from()` → `Cli { command: Commands::Status(_), tenant: Some("abc123"), format: Json }`
+2. **Config** (`config.rs:34`): `ClientConfig::load_from(path)` → reads TOML, applies env overrides
+3. **Client** (`client.rs:18`): `SiemClient::new(url).with_tenant("abc123").with_token(token)`
+4. **Request** (`client.rs:101`): `client.get::<T>("/api/v1/status")` → injects headers, maps HTTP status
+5. **Format** (`output.rs:58`): `OutputFormatter::format_json(headers, rows, options)`
+6. **Exit**: `main.rs` catches `CliError`, prints to stderr, calls `process::exit(code)`
+
+**BROKEN AT:** Step 1→2. No `main.rs` exists. Steps 2-6 have library code but no orchestrator.
+
+---
+
+## Verdict
+
+# CHANGES_REQUESTED
+
+**Blocking issues (Critical + High):**
+
+| # | Severity | Issue | Location |
+|---|----------|-------|----------|
+| 1 | CRITICAL | No `main.rs` binary entry point | Missing file |
+| 2 | CRITICAL | Edition `"2018"` vs workspace `"2024"` | `Cargo.toml:2` |
+| 3 | CRITICAL | Nightly fmt fails | `cli.rs`, multiple files |
+| 4 | HIGH | No command dispatch; AC-10 stubs not wired | `commands/mod.rs` |
+| 5 | HIGH | `bare_trait_objects = "allow"` lint suppression hack | `Cargo.toml:40` |
+| 6 | HIGH | Keyring integration absent (AC-8) | `config.rs:67` |
+
+**Required before resubmission:**
+1. Create `src/main.rs` with async dispatch, config loading, error handling, and `process::exit()`
+2. Fix edition to `"2024"` (or use `edition.workspace = true`)
+3. Run `cargo +nightly fmt --all` and fix all formatting
+4. Add stub dispatch for all commands returning `CliError::NotImplemented("Story X.Y")`
+5. Remove `bare_trait_objects = "allow"` — refactor `OutputFormatter` to use a struct namespace or proper trait methods
+6. Add keyring loading with env var fallback, or document explicitly why it's deferred with a tracking issue
+
+*The King of Hearts whispers: "Consider, my dear — the architectural pieces are well-designed. The error types are solid, the SiemClient is clean, the security validation is real. This is 80% of a good foundation. But the last 20% — the binary, the dispatch, the formatting — is what makes it usable. Send it back with these specific asks."*
+
+**The Queen's final word: OFF WITH IT! Rework and resubmit.**

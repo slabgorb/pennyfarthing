@@ -12,14 +12,16 @@ from pathlib import Path
 
 # Recipe names that belong to the framework and should be migrated out
 # of inline justfiles when the import approach is adopted.
-FRAMEWORK_RECIPES: frozenset[str] = frozenset({
-    "wheelhub",
-    "tui",
-    "gui",
-    "claude",
-    "tmux-dev",
-    "tmux",
-})
+FRAMEWORK_RECIPES: frozenset[str] = frozenset(
+    {
+        "wheelhub",
+        "tui",
+        "gui",
+        "claude",
+        "tmux-dev",
+        "tmux",
+    }
+)
 
 _IMPORT_LINE = "import '.pennyfarthing/justfile.pf'"
 
@@ -36,9 +38,7 @@ default:
 """
 
 # Regex matching a recipe header: name with optional params, then a colon
-_RECIPE_HEADER_RE = re.compile(
-    r"^([a-zA-Z_][a-zA-Z0-9_-]*)\s*(?:[^:]*)?:\s*$"
-)
+_RECIPE_HEADER_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_-]*)\s*(?:[^:]*)?:\s*$")
 
 
 def update_framework_justfile(
@@ -100,8 +100,7 @@ def update_framework_justfile(
             actions.append("justfile updated (import line added)")
             if legacy_recipes:
                 actions.append(
-                    f"{len(legacy_recipes)} legacy recipes migrated: "
-                    + ", ".join(legacy_recipes)
+                    f"{len(legacy_recipes)} legacy recipes migrated: " + ", ".join(legacy_recipes)
                 )
         return {
             "success": True,
@@ -126,9 +125,7 @@ def update_framework_justfile(
     if not justfile_exists:
         # Create minimal justfile with import
         project_name = target_dir.name
-        justfile_path.write_text(
-            _MINIMAL_JUSTFILE.replace("{project_name}", project_name)
-        )
+        justfile_path.write_text(_MINIMAL_JUSTFILE.replace("{project_name}", project_name))
         justfile_created = True
         import_added = True
     elif not has_import:
@@ -277,16 +274,10 @@ def _comment_out_recipes(content: str, recipe_names: list[str]) -> tuple[str, li
             # Look back for comment lines that belong to this recipe
             # (contiguous comment block immediately before)
             comment_start = len(result_lines)
-            while (
-                comment_start > 0
-                and result_lines[comment_start - 1].strip().startswith("#")
-            ):
+            while comment_start > 0 and result_lines[comment_start - 1].strip().startswith("#"):
                 comment_start -= 1
             # Also absorb blank lines between comments and recipe
-            while (
-                comment_start > 0
-                and result_lines[comment_start - 1].strip() == ""
-            ):
+            while comment_start > 0 and result_lines[comment_start - 1].strip() == "":
                 comment_start -= 1
 
             # Comment out the preceding comment/blank lines
@@ -322,13 +313,10 @@ def _comment_out_recipes(content: str, recipe_names: list[str]) -> tuple[str, li
                         # header, stop here
                         peek = i + 1
                         while peek < len(lines) and (
-                            not lines[peek].strip()
-                            or lines[peek].strip().startswith("#")
+                            not lines[peek].strip() or lines[peek].strip().startswith("#")
                         ):
                             peek += 1
-                        if peek < len(lines) and _RECIPE_HEADER_RE.match(
-                            lines[peek].strip()
-                        ):
+                        if peek < len(lines) and _RECIPE_HEADER_RE.match(lines[peek].strip()):
                             break
 
                 if body_stripped:

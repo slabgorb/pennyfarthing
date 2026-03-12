@@ -16,6 +16,7 @@ theme:
   user_title: Dear Client
   portrait_style: ", Victorian detective, gaslight and fog, Baker Street, Victorian pen and ink"
   tier: A
+  optimized: true
   spinner_verbs:
     - Deducing
     - Elementary
@@ -50,12 +51,20 @@ theme:
   dimensions:
     tone: analytical
     era: historical
-    genre: mystery
+    genre: drama
     energy: methodical
+    zeitgeist: high
+    scrutiny: adversarial
+    cooperation_model: ensemble
+    conflict_approach: psychological
+    authority_model: meritocratic
+    formality: formal
+    intellectual_style: analytical
+    stakes: institutional
 
 zeitgeist:
   score: 85.0
-  rating: rich
+  rating: high
 agents:
   orchestrator:
     character: Mycroft Holmes

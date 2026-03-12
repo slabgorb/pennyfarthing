@@ -66,7 +66,8 @@ def mock_dist_with_frontmatter(tmp_path: Path) -> Path:
     agents_dir = dist / "agents"
     agents_dir.mkdir()
 
-    (agents_dir / "sm.md").write_text(dedent("""\
+    (agents_dir / "sm.md").write_text(
+        dedent("""\
         ---
         hooks:
           PreToolUse:
@@ -77,9 +78,11 @@ def mock_dist_with_frontmatter(tmp_path: Path) -> Path:
         ---
         # SM Agent
         <role>Scrum Master</role>
-    """))
+    """)
+    )
 
-    (agents_dir / "dev.md").write_text(dedent("""\
+    (agents_dir / "dev.md").write_text(
+        dedent("""\
         ---
         hooks:
           PreToolUse:
@@ -90,7 +93,8 @@ def mock_dist_with_frontmatter(tmp_path: Path) -> Path:
         ---
         # Dev Agent
         <role>Developer</role>
-    """))
+    """)
+    )
 
     # README should be skipped
     (agents_dir / "README.md").write_text(
@@ -103,7 +107,8 @@ def mock_dist_with_frontmatter(tmp_path: Path) -> Path:
 
     sprint_skill = skills_dir / "pf-sprint"
     sprint_skill.mkdir()
-    (sprint_skill / "SKILL.md").write_text(dedent("""\
+    (sprint_skill / "SKILL.md").write_text(
+        dedent("""\
         ---
         name: pf-sprint
         description: Sprint management
@@ -113,17 +118,20 @@ def mock_dist_with_frontmatter(tmp_path: Path) -> Path:
               matcher: Edit|Write
         ---
         # /pf-sprint
-    """))
+    """)
+    )
 
     testing_skill = skills_dir / "pf-testing"
     testing_skill.mkdir()
-    (testing_skill / "SKILL.md").write_text(dedent("""\
+    (testing_skill / "SKILL.md").write_text(
+        dedent("""\
         ---
         name: pf-testing
         description: Test runner
         ---
         # /pf-testing (no hooks)
-    """))
+    """)
+    )
 
     return dist
 
@@ -235,7 +243,14 @@ class TestNoDuplicateHooks:
         settings_path = target_dir / ".claude" / "settings.local.json"
         data = json.loads(settings_path.read_text())
         commands = _extract_all_hook_commands(data)
-        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse", "SessionEnd", "PreCompact"):
+        for event in (
+            "SessionStart",
+            "Stop",
+            "PreToolUse",
+            "PostToolUse",
+            "SessionEnd",
+            "PreCompact",
+        ):
             count = sum(1 for cmd in commands if f"dispatch {event}" in cmd)
             assert count == 1, f"dispatch {event} found {count} times (expected 1)"
 
@@ -274,14 +289,19 @@ class TestSettingsDispatcherEntries:
         data = json.loads(settings_path.read_text())
         commands = _extract_all_hook_commands(data)
 
-        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse", "SessionEnd", "PreCompact"):
+        for event in (
+            "SessionStart",
+            "Stop",
+            "PreToolUse",
+            "PostToolUse",
+            "SessionEnd",
+            "PreCompact",
+        ):
             assert any(f"dispatch {event}" in cmd for cmd in commands), (
                 f"Missing dispatcher for {event}"
             )
 
-    def test_statusline_preserved(
-        self, target_dir: Path, mock_dist_with_frontmatter: Path
-    ) -> None:
+    def test_statusline_preserved(self, target_dir: Path, mock_dist_with_frontmatter: Path) -> None:
         """statusLine should still be present after frontmatter merge."""
         from pf.init.core import init_project
 
@@ -308,14 +328,10 @@ class TestFrontmatterIdempotency:
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
-        first_settings = json.loads(
-            (target_dir / ".claude" / "settings.local.json").read_text()
-        )
+        first_settings = json.loads((target_dir / ".claude" / "settings.local.json").read_text())
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
-        second_settings = json.loads(
-            (target_dir / ".claude" / "settings.local.json").read_text()
-        )
+        second_settings = json.loads((target_dir / ".claude" / "settings.local.json").read_text())
 
         assert first_settings == second_settings
 
@@ -326,20 +342,12 @@ class TestFrontmatterIdempotency:
         from pf.init.core import init_project
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
-        first = json.loads(
-            (target_dir / ".claude" / "settings.local.json").read_text()
-        )
-        first_count = sum(
-            len(entries) for entries in first.get("hooks", {}).values()
-        )
+        first = json.loads((target_dir / ".claude" / "settings.local.json").read_text())
+        first_count = sum(len(entries) for entries in first.get("hooks", {}).values())
 
         init_project(target_dir=target_dir, dist_root=mock_dist_with_frontmatter)
-        second = json.loads(
-            (target_dir / ".claude" / "settings.local.json").read_text()
-        )
-        second_count = sum(
-            len(entries) for entries in second.get("hooks", {}).values()
-        )
+        second = json.loads((target_dir / ".claude" / "settings.local.json").read_text())
+        second_count = sum(len(entries) for entries in second.get("hooks", {}).values())
 
         assert first_count == second_count
 
@@ -357,17 +365,51 @@ class TestFrontmatterIdempotency:
         old_settings = {
             "hooks": {
                 "PreToolUse": [
-                    {"matcher": "Edit|Write", "hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks pre-edit-check"}]},
-                    {"matcher": "Edit|Write|Bash|Task", "hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks context-warning"}]},
+                    {
+                        "matcher": "Edit|Write",
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": ".pennyfarthing/bin/pf hooks pre-edit-check",
+                            }
+                        ],
+                    },
+                    {
+                        "matcher": "Edit|Write|Bash|Task",
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": ".pennyfarthing/bin/pf hooks context-warning",
+                            }
+                        ],
+                    },
                 ],
                 "PostToolUse": [
-                    {"hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks bell-mode"}]},
+                    {
+                        "hooks": [
+                            {"type": "command", "command": ".pennyfarthing/bin/pf hooks bell-mode"}
+                        ]
+                    },
                 ],
                 "SessionStart": [
-                    {"hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks session-start"}]},
+                    {
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": ".pennyfarthing/bin/pf hooks session-start",
+                            }
+                        ]
+                    },
                 ],
                 "Stop": [
-                    {"hooks": [{"type": "command", "command": ".pennyfarthing/bin/pf hooks session-stop"}]},
+                    {
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": ".pennyfarthing/bin/pf hooks session-stop",
+                            }
+                        ]
+                    },
                 ],
             },
             "statusLine": {"type": "command", "command": ".pennyfarthing/bin/pf hooks statusline"},
@@ -380,7 +422,14 @@ class TestFrontmatterIdempotency:
         restored = json.loads(settings_path.read_text())
         commands = _extract_all_hook_commands(restored)
         # Should have dispatcher entries, not individual hooks
-        for event in ("SessionStart", "Stop", "PreToolUse", "PostToolUse", "SessionEnd", "PreCompact"):
+        for event in (
+            "SessionStart",
+            "Stop",
+            "PreToolUse",
+            "PostToolUse",
+            "SessionEnd",
+            "PreCompact",
+        ):
             assert any(f"dispatch {event}" in cmd for cmd in commands)
         # Individual hooks should be gone
         assert ".pennyfarthing/bin/pf hooks pre-edit-check" not in commands

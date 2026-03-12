@@ -18,7 +18,9 @@ def docs():
 
 @docs.command("sync-skills")
 @click.option("--dry-run", is_flag=True, help="Preview changes without writing files")
-@click.option("--skill", "skill_name", default=None, help="Sync a single skill by name (e.g. pf-theme)")
+@click.option(
+    "--skill", "skill_name", default=None, help="Sync a single skill by name (e.g. pf-theme)"
+)
 def sync_skills(dry_run: bool, skill_name: str | None):
     """Regenerate usage.md files from live CLI --help output.
 

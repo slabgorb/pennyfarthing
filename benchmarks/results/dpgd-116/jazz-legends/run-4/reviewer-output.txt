@@ -1,0 +1,83 @@
+All 117 tests pass, clippy is clean, but nightly fmt fails. I've now read every source file, test file, and the workspace config. Here is my adversarial review.
+
+---
+
+# Story 6.1 CLI Framework — Adversarial Code Review
+
+## Findings
+
+### HIGH (Blocks PR)
+
+**[HIGH] H-1: `main.rs` is a non-functional placeholder — AC-3 unfulfilled for the binary** at `crates/axiathon-client/src/main.rs:5`
+
+`main.rs` just prints "not yet implemented" and exits 1. It never calls `Cli::parse()`, never dispatches commands, never maps `CliError::exit_code()` to `std::process::exit()`. AC-3 explicitly requires: *"main.rs catches errors and calls std::process::exit()"*. The entire CLI framework exists as library code that the binary cannot use. Running `cargo run -p axiathon-client -- status` prints "axiathon CLI not yet implemented" regardless of arguments.
+
+**[HIGH] H-2: `Commands` enum and `Cli.command` field are private — no dispatch possible** at `crates/axiathon-client/src/cli.rs:77`
+
+`enum Commands` is `pub(crate)` (implicitly private to the crate since no `pub`) and `Cli.command` is a private field with no accessor. Even when `main.rs` is wired up, there is no way to dispatch commands. The `Cli` struct exposes getters for global flags but has zero mechanism to access the parsed `Commands` variant. Either `Commands` needs to be pub with a `command()` getter, or `Cli` needs a `pub fn dispatch(&self) -> Result<(), CliError>` method.
+
+**[HIGH] H-3: `cargo +nightly fmt --all --check` fails — import ordering violations** across 14 files
+
+Per `_bmad/reviewer-gotchas.md`: *"Always include cargo +nightly fmt --all --check in the preflight. If it fails, flag it before approval."* Nightly rustfmt wants `std`/`extern`/`crate` import grouping with blank lines between groups. Every `commands/*.rs` file, `cli.rs`, and `config.rs` have ordering violations.
+
+### MEDIUM (Does not block, should fix)
+
+**[MEDIUM] M-1: `init` command has no handler — AC says "functional, not stub"** at `crates/axiathon-client/src/commands/init.rs:1`
+
+AC-9 scope says *"axiathon init first-time setup (functional, not stub)"*. But `init.rs` is just an empty `InitArgs` struct with no handler function at all — not even a stub like every other command has. Contrast with `completion.rs` which is genuinely functional.
+
+**[MEDIUM] M-2: Config silently accepts unknown fields — `token` field ignored without warning** at `crates/axiathon-client/src/config.rs:11`
+
+`RawConfig` uses serde's default deserialization which silently drops unknown fields. A config file containing `token = "my-secret"` parses without error, giving the user no feedback that their token is being ignored. The security test at `security_test.rs:155` passes because `config.token()` hardcodes `None`, but the *file* was accepted without complaint. Add `#[serde(deny_unknown_fields)]` to `RawConfig` so users get an explicit error if they put secrets in the config file instead of the keychain.
+
+**[MEDIUM] M-3: `thiserror` is a declared dependency but never used** at `crates/axiathon-client/Cargo.toml:23`
+
+`thiserror` is in `[dependencies]` but `error.rs` manually implements `Display` and `std::error::Error`. Per `rust.md`: *"Use thiserror for error enums."* Either use it or remove the dead dependency. Dead dependencies increase compile time and attack surface.
+
+### LOW (Informational)
+
+**[LOW] L-1: `OutputFormatter` is a struct, not a trait as specified** at `crates/axiathon-client/src/output.rs:39`
+
+AC-4 and the architecture doc specify *"OutputFormatter trait with Table/Json/Csv implementations"*. The implementation uses a struct with a format enum discriminant. Functionally equivalent for now, but diverges from the specified design and may complicate future extensibility (e.g., custom formatters).
+
+**[LOW] L-2: `SiemClient::get` doesn't validate path starts with `/`** at `crates/axiathon-client/src/client.rs:50`
+
+`format!("{}{path}", self.base_url)` silently produces a malformed URL if `path` doesn't start with `/` (e.g., `"api/v1/status"` → `"https://example.comapi/v1/status"`). A debug_assert or validation would catch misuse early.
+
+### VERIFIED
+
+- **[VERIFIED]** Header injection prevention (CWE-113) — `sanitize_header_value` strips CR/LF at `client.rs:93`
+- **[VERIFIED]** Exit code mapping — 0/1/3/4 correct per AC-3 at `error.rs:27`
+- **[VERIFIED]** `#[non_exhaustive]` on `CliError` per rust.md at `error.rs:13`
+- **[VERIFIED]** `#![forbid(unsafe_code)]` on both `lib.rs:2` and `main.rs:3`
+- **[VERIFIED]** No server-side crate imports — only `axiathon-core` dependency
+- **[VERIFIED]** Workspace dependency management — all deps at workspace level
+- **[VERIFIED]** Shell completion generation is functional at `completion.rs:13`
+- **[VERIFIED]** All 8 stub handlers return `CliError::NotImplemented` with story references
+- **[VERIFIED]** `ServerError` Display suppresses raw response body (CWE-209) at `error.rs:50`
+- **[VERIFIED]** `config.token()` always returns `None` — tokens don't live in config files
+- **[VERIFIED]** Clap derive macros used throughout (AC-6) — no imperative command building
+- **[VERIFIED]** Plural command names (`rules`, `alerts`) per architecture doc
+- **[VERIFIED]** All global flags have `global = true` (AC-5)
+- **[VERIFIED]** `--server` supports `AXIATHON_SERVER` env var via clap `env` attribute
+
+---
+
+## Data Flow Trace
+
+Traced `--tenant "malicious\r\nX-Injected: true"` → `Cli.tenant` (raw String) → `SiemClient::new(tenant_id)` → `sanitize_header_value` strips CRLF → clean `X-Tenant-ID` header. **Correct.**
+
+Traced config file with `token = "secret"` → `RawConfig` deserialize → `token` field silently dropped (serde ignores it) → `ClientConfig::token()` returns `None`. **Functionally safe but user gets no warning** (see M-2).
+
+## Test Quality Assessment
+
+117 tests across 9 test files. Good coverage of AC items. Tests are well-structured with clear assertions and descriptive names. The wiremock-based `SiemClient` tests (AC-7) are particularly thorough, covering all HTTP status code mappings. Missing: no integration tests exercising the actual binary (`cargo run`), which would have caught H-1 and H-2.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three HIGH findings block this PR:
+1. **H-1**: `main.rs` must wire up CLI parsing, command dispatch, and exit code mapping
+2. **H-2**: `Commands` and `Cli.command` must be accessible for dispatch
+3. **H-3**: Nightly fmt must pass (per reviewer gotchas)

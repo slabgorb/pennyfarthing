@@ -24,6 +24,7 @@ DISPATCH_REGISTRY: dict[str, list[tuple[str, str | None, str]]] = {
         ("context-breaker", "Edit|Write|Bash|Task", "pf.hooks.context_breaker"),
         ("schema-validation", "Write", "pf.hooks.schema_validation"),
         ("pretooluse-forward", None, "pf.hooks.pretooluse_forward"),
+        ("plan-exit-reload", "ExitPlanMode", "pf.hooks.plan_exit_reload"),
     ],
     "PostToolUse": [
         ("sprint-yaml", "Edit|Write", "pf.hooks.sprint_yaml_validation"),
@@ -168,9 +169,7 @@ def dispatch(event: str) -> None:
 
     # Emit merged response
     if decision or contexts:
-        output: dict[str, Any] = {
-            "hookSpecificOutput": {"hookEventName": event}
-        }
+        output: dict[str, Any] = {"hookSpecificOutput": {"hookEventName": event}}
         if decision:
             output["hookSpecificOutput"]["permissionDecision"] = decision
         if reason:

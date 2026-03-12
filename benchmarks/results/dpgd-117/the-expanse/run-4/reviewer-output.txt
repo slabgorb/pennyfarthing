@@ -1,0 +1,90 @@
+All 73 tests pass. Clippy clean. **Nightly fmt fails.** Now here's the real work.
+
+---
+
+# Code Review: Story 8.1 — REST API Foundation
+
+*Well, darling, the tests pass. Congratulations. The tests are also wrong. Let me tell you exactly how wrong.*
+
+---
+
+## Findings
+
+### `[HIGH]` Response envelope does not match spec — `error` singular vs `errors` array at `middleware.rs:177-189`, `handlers.rs:98-108`
+
+The AC is explicit: *"errors: always present array (empty on success, RFC 9457-aligned on error)"*. The implementation uses `"error": { ... }` (a singular object). Every single `error_response()` call and every `success_json()` call violates the three-field contract:
+
+- Success responses are missing the `errors` field entirely (spec says: empty array `[]`)
+- Error responses use `"error"` (singular object) instead of `"errors"` (array of RFC 9457 objects)
+
+The tests then assert against this wrong shape, so they all pass. **The tests are testing the wrong envelope.** This is the most dangerous kind of bug — green tests hiding a spec violation.
+
+### `[HIGH]` Nightly rustfmt check fails — multiple files
+
+Per `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."* Import ordering is wrong across `lib.rs`, `handlers.rs`, `middleware.rs`, and all 6 test files. This blocks merge.
+
+### `[HIGH]` RateLimiter never resets — permanent lockout at `state.rs:72-81`
+
+`RateLimiter::check()` increments a counter and never decrements or resets it. Once a client hits `burst_size`, they are blocked **forever** for the lifetime of the process. The `requests_per_second` field in `RateLimitConfig` is accepted, stored nowhere, and completely ignored. This is dead config that creates the illusion of time-windowed rate limiting while actually implementing a one-shot request quota.
+
+### `[MEDIUM]` `FromRef` pattern not implemented — compile-time substate extraction broken at `state.rs:29-42`
+
+The AC and story guardrails require `FromRef<AppState>` substate extraction so handlers declare only the substates they need (CWE-653 least privilege). The implementation uses `From<&AppState>` — a standard conversion trait — **not** Axum's `FromRef`. This means handlers cannot use `State(detection): State<DetectionServices>` as an extractor. The `health` handler already cheats by extracting full `State<AppState>` (`handlers.rs:10`), which the story explicitly forbids: *"Handlers must declare domain-scoped substates — never full AppState."*
+
+### `[MEDIUM]` No observability despite tracing dependency at `Cargo.toml:21-22`
+
+`tracing` and `tracing-subscriber` are listed as dependencies. Zero `tracing::info!()`, `tracing::error!()`, `tracing::warn!()`, or `#[instrument]` attributes anywhere in the codebase. No structured logging on auth failures, rate limit triggers, or request lifecycle. For a security product's API layer, this is a significant gap.
+
+### `[MEDIUM]` Six unused production dependencies at `Cargo.toml:9-14,19-22`
+
+`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber` — none of these are imported in any production source file. This inflates compile times and creates phantom coupling.
+
+### `[MEDIUM]` No body size limit — `extremely_large_body_is_rejected` test is a false pass at `api_security.rs:195-217`
+
+The test sends 10MB of `"x"` and asserts 400 or 413. It gets 400 — but only because `"xxxxxxxxx..."` is invalid JSON, triggering the JSON parse error path. If someone sends 10MB of *valid* JSON, it will be happily accepted and parsed. There is no `axum::extract::DefaultBodyLimit` or equivalent configured. The test gives false confidence about DoS protection.
+
+### `[MEDIUM]` Rate limit key is auth header, not tenant ID at `middleware.rs:163-171`
+
+The story requires *per-tenant* rate limiting. The implementation keys on the full `Authorization` header value (including the `"Bearer "` prefix). Two different API keys belonging to the same tenant would have independent rate limit buckets. This contradicts the AC: *"different tenants have independent limits"* — the implementation gives different *credentials* independent limits.
+
+### `[LOW]` Unused import warning at `api_rate_limiting.rs:12`
+
+`use axiathon_server::app;` is imported but never used. Clippy doesn't catch it because it's in a test file, but the compiler warning is visible in test output.
+
+### `[LOW]` `body_json` helper duplicated 5 times across test files
+
+Identical 5-line helper function copy-pasted into `api_auth.rs`, `api_endpoints.rs`, `api_rate_limiting.rs`, `api_response_envelope.rs`, `api_security.rs`, and `api_versioning.rs`. A shared test utility module would reduce maintenance burden.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present at `lib.rs:2`
+
+### `[VERIFIED]` Health endpoint does not require authentication — confirmed by routing structure at `lib.rs:36-37`
+
+### `[VERIFIED]` Error messages sanitized — no stack traces, crate names, or internal details leak in error responses
+
+### `[VERIFIED]` Per-credential rate limit isolation works — tenant-a-token and tenant-b-token get independent counters
+
+### `[VERIFIED]` API versioning correctly 404s on `/api/v2/`, `/api/v0/`, `/v1/health`, `/health`
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| High     | 3     | YES       |
+| Medium   | 5     | No        |
+| Low      | 2     | No        |
+| Verified | 5     | —         |
+
+The three HIGH findings are all blocking:
+1. The response envelope is structurally wrong — every response in the system violates the AC
+2. Nightly fmt fails — per project gotchas, this is a merge gate
+3. The rate limiter is a memory-leaking one-shot counter, not a rate limiter
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+*Listen carefully: I don't care that 73 tests pass. The tests are validating the wrong contract. Fix the envelope to match the spec — `errors` as an array, present on every response. Run nightly fmt. Build a rate limiter that actually limits rates instead of counting to a number and then dying. Then come back to me.*
+
+*— Chrisjen*

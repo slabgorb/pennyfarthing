@@ -1,0 +1,83 @@
+Now I have a complete picture. Time for the adversarial review.
+
+---
+
+# Story 6.1 Code Review — Colonel Potter's Assessment
+
+*"Listen, I've been reviewing code since before some of you were born. Let me tell you what I found..."*
+
+## Preflight Status
+
+- **73 tests passing**: All pass (29 + 12 + 14 + 14 + 9 + 9 + 16 + 10 = 113... wait, 73 unique across 8 test files)
+- **Clippy**: Clean, zero warnings
+- **Nightly fmt**: **FAILS** — import ordering in `cli.rs` and formatting in `client.rs`
+
+---
+
+## Findings
+
+### [HIGH] Missing `main.rs` — binary cannot be built
+
+No `main.rs` exists in `crates/axiathon-client/src/`. The `Cargo.toml` has no `[[bin]]` section either. The crate compiles as a library only. AC-1 requires `axiathon --help` to work — that requires a binary entry point with command dispatch, tracing init, and `std::process::exit()` for exit codes. Without `main.rs`, exit code mapping (AC-3), the `--help` command (AC-1), and the actual CLI binary all exist only in unit-test fantasy land.
+
+**Impact:** The entire CLI binary doesn't exist. Tests exercise library code but the story's primary deliverable — the `axiathon` binary — is unproducable.
+
+### [HIGH] Nightly `rustfmt` check fails at `cli.rs:3` and `client.rs:33`
+
+Per gotchas.md: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."* Import ordering in `cli.rs` and formatting in `client.rs` fail nightly fmt. This would break CI.
+
+### [MEDIUM] `server_url` not sanitized for CRLF injection (CWE-113 incomplete)
+
+`SiemClient::new()` sanitizes `tenant_id` and `token` via `sanitize_header_value()`, but `server_url` is accepted raw. While `server_url` goes into the URL (not a header), a malicious URL with CRLF could cause request smuggling depending on the HTTP library. The `siem_client_rejects_invalid_server_url` test is vacuous — it asserts an empty string is empty, proving nothing.
+
+### [MEDIUM] `ClientConfig` silently ignores unknown TOML keys
+
+`ClientConfig` deserializes with `serde::Deserialize` default (which ignores unknown fields). A test explicitly asserts this as "forward compatible" behavior. However, this means typos like `server_rrl` are silently ignored, leading to hard-to-debug configuration issues. The story spec doesn't mandate `deny_unknown_fields`, but this is a footgun worth flagging.
+
+### [MEDIUM] `toml` version mismatch: workspace declares `0.8`, story spec says `0.9`
+
+The workspace `Cargo.toml` declares `toml = "0.8"` but the story technical guardrails specify `toml` 0.9. This is a spec deviation.
+
+### [MEDIUM] `init.rs` is a skeleton — no handler function
+
+`init.rs` contains only the `InitArgs` struct with no `handle_stub()` or any handler. AC-10 says init should be **functional** (not a stub), but there's no implementation at all. Unlike completion (which has a working `generate_completions()`), init does nothing.
+
+### [LOW] `NotFound` variant passes user-controlled `resource` string through Display
+
+At `error.rs:56`: `write!(f, "Not found: {resource}")`. The `resource` value comes from `map_status_code` with hardcoded "Resource not found", which is safe now. But the type allows arbitrary strings via `NotFound(String)`, and Display passes them through unsanitized. If a future caller passes user input or server response body into `NotFound`, it could leak information. The security comment claims Display is sanitized, but this variant is a passthrough.
+
+### [LOW] `CompletionArgs.shell` is `String` not `ValueEnum`
+
+At `cli.rs:157`, `shell` is a raw `String`. Unrecognized values silently return empty string from `generate_completions()`. This should use a `ValueEnum` enum (like `OutputFormat`) so clap validates at parse time and generates proper help text showing valid values. The user gets no error for `axiathon completion powershel` (typo).
+
+### [VERIFIED] CWE-113 header injection protection for tenant_id and token — `client.rs:26-31`
+### [VERIFIED] CWE-209 error message sanitization — `error.rs:46-78`, ServerError inner string not exposed
+### [VERIFIED] SiemClient Debug impl redacts token — `client.rs:15-23`
+### [VERIFIED] `#![forbid(unsafe_code)]` present — `lib.rs:2`
+### [VERIFIED] Config file does not store tokens — enforced by struct design
+### [VERIFIED] All global flags use `global = true` — `cli.rs:22-47`
+### [VERIFIED] Exit codes correctly mapped: auth=3, authz=4, general=1 — `error.rs:35-41`
+### [VERIFIED] Workspace dependencies properly declared — `Cargo.toml:42-50`
+### [VERIFIED] `keyring` dependency in workspace but NOT in axiathon-client `Cargo.toml` — correct, keyring is for Story 9.1
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 0 | — |
+| High | 2 | YES |
+| Medium | 4 | NO |
+| Low | 2 | NO |
+
+## Verdict: **CHANGES_REQUESTED**
+
+The two High findings block approval:
+
+1. **No `main.rs`** — the binary that is the entire point of Story 6.1 cannot be produced. Tests prove the library code works, but there's no entry point to wire it together.
+2. **Nightly fmt failure** — per project gotchas, this blocks approval.
+
+Fix those two, and this is a solid foundation. The code quality is good — the error types are well-designed, the security posture is thoughtful (CWE-113/209 mitigations), and the test coverage is thorough for what exists. But I've seen too many wars lost because someone forgot to build the actual fort, not just the blueprints.
+
+*"Now go fix that `main.rs` situation before I have Radar file the paperwork."*

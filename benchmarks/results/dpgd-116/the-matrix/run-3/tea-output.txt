@@ -1,0 +1,29 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 creates the foundational CLI framework — extensive testing needed for all 10 acceptance criteria.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure_test.rs` | 21 | AC-1 (command groups), AC-2 (subcommand help), AC-6 (clap derive) |
+| `exit_codes_test.rs` | 15 | AC-3 (exit codes 0/1/2/3/4, CliError mapping) |
+| `output_format_test.rs` | 22 | AC-4 (Table/JSON/CSV formatters, OutputFormatter trait) |
+| `global_flags_test.rs` | 18 | AC-5 (--format, -v/-vv, --quiet, --server, --tenant, --config, --no-color, global=true) |
+| `siem_client_test.rs` | 14 | AC-7 (SiemClient construction, HTTP status mapping, header injection) |
+| `config_loading_test.rs` | 13 | AC-8 (TOML loading, env var overrides, precedence, XDG paths) |
+| `shell_completion_test.rs` | 10 | AC-9 (bash/zsh/fish/powershell generation, subcommand inclusion) |
+| `stub_handlers_test.rs` | 8 | AC-10 (not-yet-implemented messages, story references, module existence) |
+| `security_test.rs` | 11 | CWE-209 error exposure, CWE-113 header injection, config validation, AxiathonError conversion |
+
+**Tests Written:** 132 tests covering all 10 ACs
+**Status:** RED (failing — all tests fail to compile because `cli`, `error`, `output`, `client`, `config`, and `commands` modules don't exist yet in `axiathon-client`)
+
+**Security tests cover:**
+- CWE-209: Error messages don't leak file paths, connection strings, or stack traces
+- CWE-113: Header injection prevention (newlines, null bytes in tokens/tenant IDs)
+- Config validation: no embedded credentials in URLs, HTTPS enforcement, no token field in config
+- Silent error swallowing: all CliError variants produce non-empty messages
+- Dependency boundary: client doesn't import server-side crates
+
+**Handoff:** To Dev for implementation (GREEN phase)

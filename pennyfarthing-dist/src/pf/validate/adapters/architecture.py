@@ -54,7 +54,9 @@ def _validate_architecture(path: Path) -> tuple[list[str], list[str]]:
 
     # Mermaid diagrams
     if not _MERMAID_RE.search(content):
-        warnings.append("No Mermaid diagrams found — architecture docs should include visual diagrams")
+        warnings.append(
+            "No Mermaid diagrams found — architecture docs should include visual diagrams"
+        )
 
     # ADR references
     if not _ADR_REF_RE.search(content):

@@ -57,7 +57,7 @@ def temp_project_dir() -> Generator[Path, None, None]:
 def node_project(temp_project_dir: Path) -> Path:
     """Create a basic Node.js project structure."""
     # package.json
-    (temp_project_dir / "package.json").write_text('''{
+    (temp_project_dir / "package.json").write_text("""{
   "name": "test-project",
   "version": "1.0.0",
   "type": "module",
@@ -67,15 +67,15 @@ def node_project(temp_project_dir: Path) -> Path:
   "devDependencies": {
     "typescript": "^5.3.3"
   }
-}''')
+}""")
 
     # tsconfig.json
-    (temp_project_dir / "tsconfig.json").write_text('''{
+    (temp_project_dir / "tsconfig.json").write_text("""{
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext"
   }
-}''')
+}""")
 
     # src directory
     src = temp_project_dir / "src"
@@ -89,7 +89,7 @@ def node_project(temp_project_dir: Path) -> Path:
 def python_project(temp_project_dir: Path) -> Path:
     """Create a basic Python project structure."""
     # pyproject.toml
-    (temp_project_dir / "pyproject.toml").write_text('''[project]
+    (temp_project_dir / "pyproject.toml").write_text("""[project]
 name = "test-project"
 version = "1.0.0"
 dependencies = [
@@ -99,7 +99,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0.0", "black>=23.0.0"]
-''')
+""")
 
     # src directory
     src = temp_project_dir / "src" / "test_project"
@@ -113,36 +113,36 @@ dev = ["pytest>=7.0.0", "black>=23.0.0"]
 def monorepo_project(temp_project_dir: Path) -> Path:
     """Create a pnpm monorepo structure."""
     # Root package.json
-    (temp_project_dir / "package.json").write_text('''{
+    (temp_project_dir / "package.json").write_text("""{
   "name": "test-monorepo",
   "version": "1.0.0",
   "private": true,
   "workspaces": ["packages/*"]
-}''')
+}""")
 
     # pnpm-workspace.yaml
-    (temp_project_dir / "pnpm-workspace.yaml").write_text('''packages:
+    (temp_project_dir / "pnpm-workspace.yaml").write_text("""packages:
   - packages/*
-''')
+""")
 
     # Package A
     pkg_a = temp_project_dir / "packages" / "core"
     pkg_a.mkdir(parents=True)
-    (pkg_a / "package.json").write_text('''{
+    (pkg_a / "package.json").write_text("""{
   "name": "@test/core",
   "version": "1.0.0"
-}''')
+}""")
 
     # Package B
     pkg_b = temp_project_dir / "packages" / "cli"
     pkg_b.mkdir(parents=True)
-    (pkg_b / "package.json").write_text('''{
+    (pkg_b / "package.json").write_text("""{
   "name": "@test/cli",
   "version": "1.0.0",
   "dependencies": {
     "@test/core": "workspace:*"
   }
-}''')
+}""")
 
     return temp_project_dir
 
@@ -157,7 +157,7 @@ def multi_language_project(temp_project_dir: Path) -> Path:
     (temp_project_dir / "pyproject.toml").write_text('[project]\nname = "multi"\nversion = "1.0.0"')
 
     # Go
-    (temp_project_dir / "go.mod").write_text('module example.com/multi\n\ngo 1.21')
+    (temp_project_dir / "go.mod").write_text("module example.com/multi\n\ngo 1.21")
 
     return temp_project_dir
 
@@ -264,14 +264,14 @@ class TestTechStackDetection:
     @pytest.mark.asyncio
     async def test_detect_go_module(self, temp_project_dir: Path) -> None:
         """Should detect Go from go.mod."""
-        (temp_project_dir / "go.mod").write_text('''module example.com/test
+        (temp_project_dir / "go.mod").write_text("""module example.com/test
 
 go 1.21
 
 require (
     github.com/gin-gonic/gin v1.9.1
 )
-''')
+""")
 
         result = await detect_tech_stack(temp_project_dir)
 
@@ -281,13 +281,13 @@ require (
     @pytest.mark.asyncio
     async def test_detect_rust_crate(self, temp_project_dir: Path) -> None:
         """Should detect Rust from Cargo.toml."""
-        (temp_project_dir / "Cargo.toml").write_text('''[package]
+        (temp_project_dir / "Cargo.toml").write_text("""[package]
 name = "test-crate"
 version = "0.1.0"
 
 [dependencies]
 serde = "1.0"
-''')
+""")
 
         result = await detect_tech_stack(temp_project_dir)
 
@@ -393,6 +393,7 @@ class TestDirectoryScanning:
 
         # Time the scan (should be fast due to parallelism)
         import time
+
         start = time.time()
         result = await scan_directory_structure(temp_project_dir)
         elapsed = time.time() - start
@@ -597,6 +598,7 @@ class TestDiscover:
     async def test_discover_quick_depth(self, node_project: Path) -> None:
         """Quick depth should complete quickly."""
         import time
+
         start = time.time()
         result = await discover(node_project, depth=DepthLevel.QUICK)
         elapsed = time.time() - start
@@ -616,7 +618,9 @@ class TestDiscover:
         assert (output_dir / "project-overview.md").exists()
 
     @pytest.mark.asyncio
-    async def test_discover_all_output_files(self, node_project: Path, temp_project_dir: Path) -> None:
+    async def test_discover_all_output_files(
+        self, node_project: Path, temp_project_dir: Path
+    ) -> None:
         """Should write all expected output files."""
         output_dir = temp_project_dir / "output"
         output_dir.mkdir()
@@ -704,8 +708,13 @@ class TestBrownfieldCLI:
         """CLI scan should accept path argument."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "pf.brownfield.cli",
-                "scan", str(node_project), "--depth", "quick"
+                sys.executable,
+                "-m",
+                "pf.brownfield.cli",
+                "scan",
+                str(node_project),
+                "--depth",
+                "quick",
             ],
             capture_output=True,
             text=True,
@@ -723,10 +732,15 @@ class TestBrownfieldCLI:
 
         result = subprocess.run(
             [
-                sys.executable, "-m", "pf.brownfield.cli",
-                "scan", str(node_project),
-                "--output", str(output_dir),
-                "--depth", "quick"
+                sys.executable,
+                "-m",
+                "pf.brownfield.cli",
+                "scan",
+                str(node_project),
+                "--output",
+                str(output_dir),
+                "--depth",
+                "quick",
             ],
             capture_output=True,
             text=True,

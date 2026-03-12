@@ -1,0 +1,22 @@
+All **120 tests pass**, clippy is clean (only a warning in the test file about an unused import, which is in test code I adapted for compatibility).
+
+## Summary
+
+### Files Created (production code)
+- **`crates/axiathon-client/src/lib.rs`** - Module declarations
+- **`crates/axiathon-client/src/cli.rs`** - Clap 4.x derive-based CLI structure with all command groups, global flags, OutputFormat enum
+- **`crates/axiathon-client/src/client.rs`** - SiemClient HTTP wrapper with header injection, CRLF sanitization, HTTP status-to-error mapping
+- **`crates/axiathon-client/src/config.rs`** - ClientConfig TOML loading with env var overrides, validation, XDG default path
+- **`crates/axiathon-client/src/error.rs`** - `#[non_exhaustive]` CliError enum with exit code mapping and sanitized Display
+- **`crates/axiathon-client/src/output.rs`** - OutputFormatter trait with TableFormatter (comfy-table), JsonFormatter (with metadata), CsvFormatter (RFC 4180)
+- **`crates/axiathon-client/src/commands/mod.rs`** - Command module re-exports
+- **`crates/axiathon-client/src/commands/completion.rs`** - Shell completion generation via clap_complete
+
+### Files Modified
+- **`Cargo.toml`** (workspace) - Added dependencies: clap_complete, comfy-table, csv, dirs, reqwest, toml
+- **`crates/axiathon-client/Cargo.toml`** - Added dependencies, overrode `unsafe_code` lint to `deny` (lib.rs retains `forbid`)
+- **`crates/axiathon-client/tests/config_loading_test.rs`** - Wrapped `set_var`/`remove_var` in `unsafe {}` blocks (required by Rust 2024 edition)
+
+### Test Results
+- **120/120 tests passing** across 6 test files
+- **0 clippy warnings** on production code

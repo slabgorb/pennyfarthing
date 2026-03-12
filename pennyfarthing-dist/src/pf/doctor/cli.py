@@ -31,8 +31,7 @@ def doctor(fix: bool, json_output: bool) -> None:
         data = {
             "success": report.success,
             "checks": [
-                {"name": c.name, "status": c.status, "detail": c.detail}
-                for c in report.checks
+                {"name": c.name, "status": c.status, "detail": c.detail} for c in report.checks
             ],
             "fixed": report.fixed,
         }

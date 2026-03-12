@@ -16,9 +16,7 @@ import re
 import subprocess
 from pathlib import Path
 
-_SEMVER_RE = re.compile(
-    r"^\d+\.\d+\.\d+(-[a-zA-Z0-9]+(\.\d+)?)?$"
-)
+_SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+(-[a-zA-Z0-9]+(\.\d+)?)?$")
 
 _VALID_BUMPS = {"major", "minor", "patch"}
 
@@ -43,7 +41,7 @@ def dry_run_release(
     if bump and bump not in _VALID_BUMPS:
         return {"success": False, "error": f"Invalid bump type: {bump}"}
 
-    if version and not _SEMVER_RE.match(version):
+    if version is not None and not _SEMVER_RE.match(version):
         return {"success": False, "error": f"Invalid version: {version}"}
 
     # --- Read current version from package.json ---
@@ -78,28 +76,34 @@ def dry_run_release(
     steps = []
 
     # Step 1: Version bump
-    steps.append({
-        "action": "version_bump",
-        "detail": f"{current_version} -> {target_version} ({', '.join(version_files)})",
-        "success": True,
-    })
+    steps.append(
+        {
+            "action": "version_bump",
+            "detail": f"{current_version} -> {target_version} ({', '.join(version_files)})",
+            "success": True,
+        }
+    )
 
     # Step 2: Changelog update
     changelog_path = project_root / "CHANGELOG.md"
     if changelog_path.is_file():
         content = changelog_path.read_text()
         has_unreleased = "## [Unreleased]" in content
-        steps.append({
-            "action": "changelog_update",
-            "detail": f"Would update CHANGELOG.md (unreleased section: {'yes' if has_unreleased else 'no'})",
-            "success": True,
-        })
+        steps.append(
+            {
+                "action": "changelog_update",
+                "detail": f"Would update CHANGELOG.md (unreleased section: {'yes' if has_unreleased else 'no'})",
+                "success": True,
+            }
+        )
     else:
-        steps.append({
-            "action": "changelog_update",
-            "detail": "CHANGELOG.md not found",
-            "success": False,
-        })
+        steps.append(
+            {
+                "action": "changelog_update",
+                "detail": "CHANGELOG.md not found",
+                "success": False,
+            }
+        )
 
     # Step 3: Build check (tsc --noEmit)
     build_result = subprocess.run(
@@ -109,13 +113,15 @@ def dry_run_release(
         cwd=str(project_root),
     )
     build_ok = build_result.returncode == 0
-    steps.append({
-        "action": "build",
-        "detail": "TypeScript compilation check (tsc --noEmit)"
-                  if build_ok
-                  else f"Build failed: {build_result.stderr.strip()[:200]}",
-        "success": build_ok,
-    })
+    steps.append(
+        {
+            "action": "build",
+            "detail": "TypeScript compilation check (tsc --noEmit)"
+            if build_ok
+            else f"Build failed: {build_result.stderr.strip()[:200]}",
+            "success": build_ok,
+        }
+    )
 
     # Step 4: Pack check (npm pack --dry-run)
     pack_result = subprocess.run(
@@ -125,13 +131,15 @@ def dry_run_release(
         cwd=str(project_root),
     )
     pack_ok = pack_result.returncode == 0
-    steps.append({
-        "action": "pack",
-        "detail": "npm pack --dry-run"
-                  if pack_ok
-                  else f"Pack failed: {pack_result.stderr.strip()[:200]}",
-        "success": pack_ok,
-    })
+    steps.append(
+        {
+            "action": "pack",
+            "detail": "npm pack --dry-run"
+            if pack_ok
+            else f"Pack failed: {pack_result.stderr.strip()[:200]}",
+            "success": pack_ok,
+        }
+    )
 
     return {
         "success": True,
@@ -164,10 +172,12 @@ def _discover_packages(project_root: Path, root_pkg: dict) -> list[dict]:
     packages = []
 
     # Root package
-    packages.append({
-        "name": root_pkg.get("name", "unknown"),
-        "version": root_pkg.get("version", "0.0.0"),
-    })
+    packages.append(
+        {
+            "name": root_pkg.get("name", "unknown"),
+            "version": root_pkg.get("version", "0.0.0"),
+        }
+    )
 
     # Workspace packages
     packages_dir = project_root / "packages"
@@ -177,10 +187,12 @@ def _discover_packages(project_root: Path, root_pkg: dict) -> list[dict]:
             if pkg_json.is_file():
                 try:
                     data = json.loads(pkg_json.read_text())
-                    packages.append({
-                        "name": data.get("name", pkg_dir.name),
-                        "version": data.get("version", "0.0.0"),
-                    })
+                    packages.append(
+                        {
+                            "name": data.get("name", pkg_dir.name),
+                            "version": data.get("version", "0.0.0"),
+                        }
+                    )
                 except (json.JSONDecodeError, ValueError):
                     pass
 

@@ -1,15 +1,13 @@
 """
 SessionStart hook — initialize environment for Claude Code session.
 
-Consolidates session_start_hook.py and welcome_hook.py into a single module.
-
 Handles:
 1. Session directory setup and logging
 2. Checkpoint validation (cross-session drift detection)
 3. WheelHub auto-start (ensure BikeRack server is running)
 4. OTEL auto-configuration via CLAUDE_ENV_FILE
-5. Welcome message display (CLI ASCII art or Cyclist API)
-6. Setup auto-detection (Story 126-12) — nudge if pf init ran but /pf-setup did not
+5. Setup auto-detection (Story 126-12) — nudge if pf init ran but /pf-setup did not
+6. Startup agent context injection
 """
 
 from __future__ import annotations
@@ -23,10 +21,7 @@ from pathlib import Path
 
 import yaml
 
-from pf.hooks import (
-    PennySettings,
-    load_settings,
-)
+from pf.hooks import load_settings
 
 # =============================================================================
 # Session Setup
@@ -181,102 +176,6 @@ def _write_env_file(project_dir: Path, session_id: str, otel_port: int | None) -
 
 
 # =============================================================================
-# Welcome Message
-# =============================================================================
-
-
-def _get_welcome_lock_path(project_root: Path) -> Path:
-    """Get path to welcome shown lock file."""
-    session_id = os.environ.get("CLAUDE_SESSION_ID", str(os.getpid()))
-    session_dir = project_root / ".session"
-    session_dir.mkdir(parents=True, exist_ok=True)
-    return session_dir / f".welcome-shown-{session_id}"
-
-
-def _get_project_name(project_root: Path) -> str:
-    """Get project name from package.json or directory name."""
-    package_json = project_root / "package.json"
-    if package_json.exists():
-        try:
-            with open(package_json) as f:
-                data = json.load(f)
-                name = data.get("name")
-                if name:
-                    return name
-        except (json.JSONDecodeError, OSError):
-            pass
-    return project_root.name
-
-
-def _display_cli_welcome(
-    project_name: str, theme: str | None, show_nudge: bool = False
-) -> None:
-    """Display welcome info for CLI mode."""
-    if project_name:
-        print(f"    Project: {project_name}")
-    if theme:
-        print(f"    Theme:   {theme}")
-    if show_nudge:
-        print()
-        print("    Tip: Run /pf-help to explore commands, agents, and workflows")
-    print()
-
-
-def _should_show_nudge(project_dir: Path, settings: PennySettings) -> bool:
-    """Check if discovery nudge should be shown.
-
-    Shows on first session only. Controlled by discovery_nudge config setting
-    and a persistent marker file.
-    """
-    if not settings.discovery_nudge:
-        return False
-
-    pf_dir = project_dir / ".pennyfarthing"
-    if not pf_dir.is_dir():
-        return False
-
-    marker = pf_dir / ".discovery-nudge-shown"
-    if marker.exists():
-        return False
-
-    return True
-
-
-def _mark_nudge_shown(project_dir: Path) -> None:
-    """Write persistent marker so nudge only shows once."""
-    marker = project_dir / ".pennyfarthing" / ".discovery-nudge-shown"
-    try:
-        marker.touch()
-    except OSError:
-        pass
-
-
-def _show_welcome(project_dir: Path) -> bool:
-    """Show welcome message (once per session).
-
-    Returns:
-        True if discovery nudge was shown (for additionalContext injection).
-    """
-    lock_path = _get_welcome_lock_path(project_dir)
-    if lock_path.exists():
-        return False
-
-    lock_path.touch()
-
-    project_name = _get_project_name(project_dir)
-    settings = load_settings(project_dir)
-    theme = settings.theme
-    show_nudge = _should_show_nudge(project_dir, settings)
-
-    _display_cli_welcome(project_name, theme, show_nudge=show_nudge)
-
-    if show_nudge:
-        _mark_nudge_shown(project_dir)
-
-    return show_nudge
-
-
-# =============================================================================
 # Setup Auto-Detection (Story 126-12)
 # =============================================================================
 
@@ -384,6 +283,54 @@ def _sync_spinner_settings(project_dir: Path) -> None:
 
 
 # =============================================================================
+# Startup Agent Context
+# =============================================================================
+
+
+def _load_startup_agent_context(project_dir: Path, agent: str) -> str | None:
+    """Load agent context via prime for injection into additionalContext.
+
+    Runs prime with HANDOFF tier (agent definition + persona, ~2K tokens)
+    and captures stdout. Skips session registration and workflow detection
+    since those happen later when the agent skill runs.
+
+    Returns:
+        Agent context string, or None on failure.
+    """
+    try:
+        import io
+        from contextlib import redirect_stdout
+
+        from pf.prime import prime
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            exit_code = prime(
+                agent_name=agent,
+                tier="handoff",
+                no_register=True,
+                no_workflow=True,
+                quiet=True,
+                project_root=project_dir,
+            )
+
+        if exit_code != 0:
+            return None
+
+        context = buf.getvalue().strip()
+        if not context:
+            return None
+
+        return (
+            f"You are activated as the {agent} agent. "
+            f"Adopt the persona and follow the agent instructions below.\n\n"
+            + context
+        )
+    except Exception:
+        return None
+
+
+# =============================================================================
 # Entry Point
 # =============================================================================
 
@@ -400,36 +347,44 @@ def main() -> None:
         _setup_session_dir(project_dir, session_id, source_type)
         _validate_checkpoint(project_dir)
 
+        # Set SESSION_ID in process env BEFORE starting WheelHub so the
+        # subprocess inherits it. This is the single source of truth for
+        # agent identity — without it, WheelHub falls back to mtime-based
+        # resolution which picks up stale agent files.
+        os.environ["SESSION_ID"] = session_id
+
         # Detect incomplete setup and emit additionalContext if needed
         setup_context = detect_incomplete_setup(project_dir)
         if setup_context:
             from pf.hooks import HookResponse, output_hook_response
 
-            output_hook_response(HookResponse(
-                event_name="SessionStart",
-                additional_context=setup_context,
-            ))
+            output_hook_response(
+                HookResponse(
+                    event_name="SessionStart",
+                    additional_context=setup_context,
+                )
+            )
 
         otel_port = _ensure_wheelhub(project_dir)
         _write_env_file(project_dir, session_id, otel_port)
         _ensure_theme_portraits(project_dir)
         _sync_spinner_settings(project_dir)
-        nudge_shown = _show_welcome(project_dir)
 
-        if nudge_shown:
-            from pf.hooks import HookResponse, output_hook_response
+        # Auto-invoke startup agent on new sessions
+        if source_type != "compact" and source_type != "clear":
+            settings = load_settings(project_dir)
+            agent = settings.startup_agent
+            if agent and agent != "none":
+                agent_context = _load_startup_agent_context(project_dir, agent)
+                if agent_context:
+                    from pf.hooks import HookResponse, output_hook_response
 
-            output_hook_response(HookResponse(
-                event_name="SessionStart",
-                additional_context=(
-                    "This appears to be a new user session. "
-                    "The welcome banner included a discovery nudge. "
-                    "If the user asks for help getting started, suggest `/pf-help` "
-                    "for commands and workflows, or mention the "
-                    "`what-is-pennyfarthing` guide for a framework overview."
-                ),
-            ))
-
+                    output_hook_response(
+                        HookResponse(
+                            event_name="SessionStart",
+                            additional_context=agent_context,
+                        )
+                    )
 
     except Exception:
         pass

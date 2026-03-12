@@ -1,0 +1,78 @@
+scenario_id: dpgd-116
+theme: house-md
+run_id: 4
+judge_version: v2
+total_caught: 6
+total_findings: 7
+weighted_caught: 28
+total_weight: 37
+score_pct: 75.7
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors including
+    parse/permission failures. The reviewer flagged silent unknown field ignoring
+    (deny_unknown_fields) but that's a different issue. No test distinguishes NotFound
+    from parse errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #7 explicitly flags CWE-209 and notes the test checking
+    for leaks is vacuous (''!display.is_empty()'' proves nothing about information
+    leakage). TEA also wrote security.rs tests targeting CWE-209 error exposure. Same
+    vulnerability class identified.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer CRITICAL finding #2: 'validate_header_value() exists but is\
+    \ never called in get() \u2014 CWE-113 defense is theater. A tenant ID of evil\\\
+    r\\nX-Injected: yes would be injected directly into the HTTP request.' TEA also\
+    \ wrote header injection tests in siem_client.rs and security.rs."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer HIGH finding #4: 'toml = 0.8 not workspace-managed, spec requires\
+    \ 0.9' \u2014 flags the same pattern of direct version strings instead of workspace\
+    \ = true. Same category, identifies the workspace dependency management convention\
+    \ violation."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer MEDIUM finding #9: 'RawConfig silently ignores unknown fields\
+    \ \u2014 no #[serde(deny_unknown_fields)]. A config file with passwrd = secret\
+    \ (typo) will silently use defaults.' Exactly matches the ground truth about tokens/unknown\
+    \ fields being silently ignored."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged multiple vacuous test patterns: finding #7 (CWE-209
+    test asserts only !display.is_empty() which proves nothing), finding #10 (assert_eq!(0u8,
+    0) tautology). Same category of vacuously true tests detected across the suite.'
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer LOW finding #11: 'header_value_handles_tabs test has no assertion\
+    \ \u2014 let _ = result. This is not a test; it's a comment with extra steps.'\
+    \ Same category: test with zero meaningful assertions, only checking non-panic."

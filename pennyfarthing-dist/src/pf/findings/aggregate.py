@@ -182,11 +182,13 @@ def collect_session_files(archive_dir: Path, sprint_number: int) -> dict:
             jira_key = str(fm.get("jira_key", fm.get("jira", "")))
             if jira_key in jira_keys and jira_key not in seen_keys:
                 info = done_stories[jira_key]
-                sessions.append({
-                    "jira_key": jira_key,
-                    "story_id": info["story_id"],
-                    "path": session_file,
-                })
+                sessions.append(
+                    {
+                        "jira_key": jira_key,
+                        "story_id": info["story_id"],
+                        "path": session_file,
+                    }
+                )
                 seen_keys.add(jira_key)
                 continue
 
@@ -196,11 +198,13 @@ def collect_session_files(archive_dir: Path, sprint_number: int) -> dict:
         jira_key = re.sub(r"\[([^\]]+)\].*", r"\1", jira_key).strip()
         if jira_key in jira_keys and jira_key not in seen_keys:
             info = done_stories[jira_key]
-            sessions.append({
-                "jira_key": jira_key,
-                "story_id": info["story_id"],
-                "path": session_file,
-            })
+            sessions.append(
+                {
+                    "jira_key": jira_key,
+                    "story_id": info["story_id"],
+                    "path": session_file,
+                }
+            )
             seen_keys.add(jira_key)
             continue
 
@@ -208,11 +212,13 @@ def collect_session_files(archive_dir: Path, sprint_number: int) -> dict:
         stem = session_file.stem.removesuffix("-session")
         if stem in jira_keys and stem not in seen_keys:
             info = done_stories[stem]
-            sessions.append({
-                "jira_key": stem,
-                "story_id": info["story_id"],
-                "path": session_file,
-            })
+            sessions.append(
+                {
+                    "jira_key": stem,
+                    "story_id": info["story_id"],
+                    "path": session_file,
+                }
+            )
             seen_keys.add(stem)
 
     sprint_file = archive_dir / f"sprint-{sprint_number}-completed.yaml"
@@ -305,12 +311,14 @@ def detect_patterns(aggregated: dict) -> dict:
     patterns = []
     for (path, ftype), stories in sorted(groups.items()):
         if len(stories) >= 2:
-            patterns.append({
-                "path": path,
-                "type": ftype,
-                "stories": sorted(stories),
-                "count": len(stories),
-            })
+            patterns.append(
+                {
+                    "path": path,
+                    "type": ftype,
+                    "stories": sorted(stories),
+                    "count": len(stories),
+                }
+            )
 
     return {
         "success": True,
@@ -338,7 +346,10 @@ def format_report(aggregated: dict, patterns: dict, output_format: str = "markdo
     elif output_format == "json":
         return _format_json(aggregated, patterns)
     else:
-        return {"success": False, "error": f"Unknown format: {output_format!r}. Use 'markdown' or 'json'."}
+        return {
+            "success": False,
+            "error": f"Unknown format: {output_format!r}. Use 'markdown' or 'json'.",
+        }
 
 
 def _format_markdown(aggregated: dict, patterns: dict) -> dict:

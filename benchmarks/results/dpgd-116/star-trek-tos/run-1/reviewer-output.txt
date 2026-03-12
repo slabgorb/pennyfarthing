@@ -1,0 +1,107 @@
+*adjusts science station console* 
+
+Fascinating. 127 tests pass. Clippy is clean. The library code is well-structured. However, logic does not permit rubber-stamping. Let me trace every data flow.
+
+---
+
+## Review: Story 6.1 — CLI Framework & Structure
+
+### Preflight Results
+- **Tests:** 127 passed, 0 failed
+- **Clippy:** Clean
+- **Nightly fmt:** FAILS (multiple formatting differences)
+
+---
+
+### Findings
+
+**1. [CRITICAL] `main.rs` is a non-functional placeholder — binary does nothing** at `crates/axiathon-client/src/main.rs:4-6`
+
+The binary entry point is:
+```rust
+fn main() {
+    println!("axiathon CLI");
+}
+```
+This means the *entire* `axiathon` binary is a no-op. It does not call `Cli::parse()`, does not dispatch commands, does not map errors to exit codes via `std::process::exit()`, does not route `completion` to `generate_completions()`, does not print stub messages. **Every AC that involves the binary is violated:** AC-1 (help output), AC-3 (exit codes from binary), AC-9 (completion generation from binary), AC-10 (stubs print messages and exit 1). Tests only exercise the library — the actual shipped binary is inert.
+
+**2. [HIGH] `completion.rs:17` — `panic!()` on unsupported shell name** at `crates/axiathon-client/src/completion.rs:17`
+
+```rust
+other => panic!("unsupported shell: {other}"),
+```
+Production code must not panic on user input. If a user types `axiathon completion elvish`, the process crashes with a stack trace instead of a graceful error message and exit code 1. Should return `Result<String, CliError>`.
+
+**3. [HIGH] Nightly fmt check fails — blocks merge per `gotchas.md`**
+
+Per the reviewer gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." Multiple files have formatting differences (import ordering, line wrapping).
+
+**4. [MEDIUM] `cli.rs:117` — Shell type is raw `String`, not `clap_complete::Shell`** at `crates/axiathon-client/src/cli.rs:114-117`
+
+```rust
+Completion {
+    shell: String,
+}
+```
+Using `String` instead of `clap_complete::Shell` means clap cannot validate the shell name at parse time, provide tab completion for shell names, or show valid options in `--help`. This pushes validation to runtime (where it panics per finding #2). Using `Shell` directly would eliminate both this issue and the panic.
+
+**5. [MEDIUM] `output.rs:63-64` — Non-standard timestamp and weak request_id** at `crates/axiathon-client/src/output.rs:60-67`
+
+```rust
+"request_id": format!("{:x}", SystemTime::now()...as_nanos()),
+"timestamp": format!("{:?}", SystemTime::now()),
+```
+- `request_id` is a nanosecond timestamp, not a unique identifier. Two calls in the same nanosecond produce identical IDs. Should use UUID.
+- `format!("{:?}", SystemTime::now())` produces Rust Debug output (`SystemTime { tv_sec: ..., tv_nsec: ... }`), not ISO 8601/RFC 3339. This is not parseable by any standard tool.
+
+**6. [MEDIUM] `stubs.rs` — Three stubs lack story references** at `crates/axiathon-client/src/stubs.rs:26-39`
+
+AC-10 requires "not yet implemented (Story X.Y)" but `rules_message()`, `tenant_message()`, and `tui_message()` return only "not yet implemented" without story references. The tests for these three (stub_handlers.rs:60-93) only assert `contains("not yet implemented")` — the assertions are vacuously weak compared to the other stubs that check story numbers.
+
+**7. [MEDIUM] `config.rs:98` — No upper-bound validation on timeout** at `crates/axiathon-client/src/config.rs:93-99`
+
+After checking `t < 0`, the code casts `t as u64` with no upper bound. A config file with `timeout = 9223372036854775807` would be accepted as ~292 billion years. A reasonable upper bound (e.g., 3600 seconds) would catch configuration errors.
+
+**8. [LOW] Workspace `toml` version is `0.8`, story spec says `0.9`** at `Cargo.toml:51`
+
+The technical guardrails specify `toml 0.9` but the workspace declares `toml = "0.8"`. Minor version mismatch — `0.9` may not exist yet, in which case the spec is aspirational, but this should be documented.
+
+**9. [VERIFIED] CWE-209 — `ServerError` Display does not leak inner details**
+
+`#[error("server error")]` on `ServerError(String)` omits the inner string from Display output. The contained details (e.g., `"HTTP 500"`) are accessible only via pattern matching/Debug, not via user-facing output. Correct.
+
+**10. [VERIFIED] CWE-113 — Header injection prevention is properly implemented**
+
+`sanitize_header_value()` strips `\r` and `\n` from base_url, token, and tenant values. Tests verify CRLF injection is neutralized. Correct.
+
+**11. [VERIFIED] `deny_unknown_fields` on `RawConfig` catches config typos**
+
+Test `config_rejects_unknown_fields` verifies that a typo like `tiemout` produces an error. Good defense against silent misconfiguration.
+
+**12. [VERIFIED] `#[non_exhaustive]` on `CliError`**
+
+Allows future variants without breaking downstream code. Correctly applied.
+
+**13. [VERIFIED] `#![forbid(unsafe_code)]` on both `lib.rs` and `main.rs`**
+
+Both entry points forbid unsafe code. Correct.
+
+---
+
+### Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 1 |
+| High | 2 |
+| Medium | 4 |
+| Low | 1 |
+| Verified Good | 5 |
+
+The library code is well-designed — header injection prevention, `deny_unknown_fields`, `#[non_exhaustive]`, CWE-209 sanitization, and thorough test coverage are all commendable. However, the binary entry point (`main.rs`) does not wire up any of this work. The `axiathon` binary, as shipped, prints "axiathon CLI" and exits. This is not a minor gap — it means AC-1, AC-3, AC-9, and AC-10 cannot be verified against the actual binary. Additionally, the completion function panics on invalid input (production code must not panic on user input), and nightly fmt must pass per project conventions.
+
+---
+
+### Verdict: **CHANGES_REQUESTED**
+
+Dr. McCoy would say "It's dead, Jim" — and indeed, `main.rs` is lifeless. The library is logical and well-constructed, but a binary that does nothing is, by definition, not a CLI framework. Wire up `Cli::parse()` with command dispatch, error-to-exit-code mapping, and stub routing. Fix the nightly fmt failures. Replace the `panic!` in completion with a proper error return. Then we can discuss approval.

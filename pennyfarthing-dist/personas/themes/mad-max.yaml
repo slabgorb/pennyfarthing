@@ -24,7 +24,7 @@ theme:
   character_immersion: high
   user_title: Stranger
   portrait_style: ", movie storyboard art, rough charcoal and sepia sketch, dynamic action lines, dusty wasteland atmosphere"
-  tier: D
+  tier: U
   optimized: 2026-01-12
   optimization_source: job-fair/mad-max-20260112-060650
   spinner_verbs:
@@ -61,11 +61,19 @@ theme:
   dimensions:
     tone: gritty
     era: futuristic
-    genre: post-apocalyptic
+    genre: sci-fi
     energy: explosive
+    zeitgeist: moderate
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: confrontation
+    authority_model: feudal
+    formality: casual
+    intellectual_style: pragmatic
+    stakes: existential
 zeitgeist:
   score: 79.7
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: The Dag

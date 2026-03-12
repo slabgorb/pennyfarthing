@@ -1,0 +1,26 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers core CLI framework infrastructure — all ACs need test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 26 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive) |
+| `tests/error_exit_codes.rs` | 16 | AC-3 (exit codes 0/1/2/3/4), CliError variants, Display impl |
+| `tests/output_format.rs` | 13 | AC-4 (table/json/csv formatting, metadata, escaping, TTY detection) |
+| `tests/siem_client.rs` | 19 | AC-7 (HTTP wrapper, auth/tenant headers, status code mapping, header injection) |
+| `tests/config_loading.rs` | 13 | AC-8 (TOML loading, env overrides, config precedence, keychain-only tokens) |
+| `tests/completion.rs` | 11 | AC-9 (bash/zsh/fish/powershell generation), AC-10 (stub handlers) |
+| `tests/security.rs` | 12 | CWE-209 error exposure, header injection, null bytes, config token rejection |
+
+**Tests Written:** 110 tests covering all 10 ACs
+**Status:** RED (all fail to compile — modules `cli`, `error`, `output`, `client`, `config`, `commands` do not exist yet)
+
+**Key security tests:**
+- Header injection prevention (newlines, CR, LF, null bytes in tokens/tenant IDs)
+- CWE-209: server error display doesn't leak stack traces or internal paths
+- Config file must NOT load tokens (OS keychain only)
+- CliError carries context (no silent swallowing)
+
+**Handoff:** To Dev for implementation (GREEN phase)

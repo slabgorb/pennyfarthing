@@ -1,0 +1,96 @@
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+## Review Findings
+
+### CRITICAL
+
+**[CRITICAL] `main.rs` is a no-op — entire CLI framework is dead code** at `crates/axiathon-client/src/main.rs:3-4`
+
+`main.rs` does `std::process::exit(0)` and nothing else. It does not parse CLI args via clap, does not dispatch to command handlers, does not wire up error-to-exit-code mapping, does not load config, and does not initialize tracing. The binary `axiathon` will silently exit 0 for all inputs — `axiathon status`, `axiathon --help`, `axiathon rules list` — all exit 0 with no output. The entire lib (cli.rs, commands/, config, output, client) is unreachable from the binary. **AC-1, AC-2, AC-3, AC-5, AC-7, AC-8, AC-9, AC-10 are all unmet at the binary level.**
+
+---
+
+### HIGH
+
+**[HIGH] `cargo +nightly fmt --all --check` fails** — nightly formatting violations in `cli.rs` (import ordering, `#[command]` attribute formatting). Per `gotchas.md`, nightly fmt must pass before approval.
+
+**[HIGH] `Completion` command variant takes no `Shell` argument** at `crates/axiathon-client/src/cli.rs:86`
+
+AC-9 requires `axiathon completion <shell>` but the enum variant is `Completion` with no associated data. The `generate_completion(shell: Shell)` function exists but is unwireable from the CLI since there's no way to pass the shell type. Similarly, `Logout` and `Tui` have no handler modules at all — they exist as enum variants but would cause unreachable code or match failures if `main.rs` were wired up.
+
+**[HIGH] No `AXIATHON_SERVER` env var support for `--server` flag** at `crates/axiathon-client/src/cli.rs:23-24`
+
+AC-5 explicitly requires `--server supports AXIATHON_SERVER env var`. The clap arg has no `env = "AXIATHON_SERVER"` attribute, and there's no manual env var loading for this flag. Operators in CI/CD cannot set the server URL via environment variable.
+
+**[HIGH] `with_token()` bypasses header injection validation** at `crates/axiathon-client/src/client.rs:39-42`
+
+`with_token()` accepts any string including `\r\n`-injected values. Only `try_with_token()` validates. The unsafe path is the simpler, more discoverable API — a pit-of-failure design. A caller using `with_token("user\r\nX-Evil: injected")` silently succeeds. reqwest may reject it downstream, but relying on that is defense-in-depth at best, not primary protection.
+
+---
+
+### MEDIUM
+
+**[MEDIUM] Dependencies not using workspace declarations** at `crates/axiathon-client/Cargo.toml:16-25`
+
+`clap_complete`, `comfy-table`, `csv`, `dirs`, `keyring`, `reqwest`, `toml` are declared with inline versions instead of `workspace = true`, despite existing in `[workspace.dependencies]`. This creates version drift risk — updating the workspace version won't propagate to this crate.
+
+**[MEDIUM] `RawConfig` silently accepts unknown fields including secrets** at `crates/axiathon-client/src/config.rs:11-14`
+
+No `#[serde(deny_unknown_fields)]`. An operator who writes `token = "my-secret"` in `cli.toml` gets zero feedback that the field is ignored. The test `config_file_with_token_field_is_rejected_or_ignored` explicitly accepts both behaviors (reject or ignore), masking this gap. For a security-sensitive CLI, unknown fields in config should be rejected or warned about.
+
+**[MEDIUM] `init::handle()` is a no-op** at `crates/axiathon-client/src/commands/init.rs:3-5`
+
+Returns `Ok(())` without creating the config directory, writing a default config file, or doing any "first-time setup". AC says `init` should be "functional, not stub", unlike other commands. Currently indistinguishable from a successful no-op.
+
+**[MEDIUM] Missing `Logout` and `Tui` handler modules and tests**
+
+`Commands::Logout` and `Commands::Tui` exist in the enum but have no corresponding modules in `commands/`, no handler functions, and no tests. `stub_handlers.rs` doesn't test them either. If `main.rs` were wired up, these branches would have nowhere to dispatch.
+
+**[MEDIUM] `cli_does_not_contain_server_commands` test is fragile** at `crates/axiathon-client/tests/cli_commands.rs:43-49`
+
+The test asserts `!help.contains("server")` to verify no server *commands* exist. This only passes because `--server` flag is `hide = true`. If someone un-hides the flag (which is a valid change — AC-5 documents it as a user-facing flag), this test breaks for the wrong reason. The test conflates "server subcommand" with "the word server appearing anywhere in help".
+
+---
+
+### LOW
+
+**[LOW] `build_get_request` uses `expect()` on infallible operation** at `crates/axiathon-client/src/client.rs:87`
+
+The `.expect("request build should not fail")` follows the project rule (actionable message with `expect`), but `build_get_request` returning `reqwest::Request` instead of `Result<reqwest::Request, CliError>` means callers can't handle the (admittedly unlikely) failure gracefully.
+
+**[LOW] `OutputFormatter` field `format` is largely unused** at `crates/axiathon-client/src/output.rs:44-46`
+
+The `format` field is only exposed via `format()` getter. The `format_table`, `format_json`, `format_csv` methods don't consult `self.format` to auto-dispatch — the caller must manually choose which method to call. This is a minor API design issue, not a bug.
+
+---
+
+### VERIFIED
+
+- [VERIFIED] `#![forbid(unsafe_code)]` present in both `main.rs:1` and `lib.rs:2`
+- [VERIFIED] `#[non_exhaustive]` on `CliError` enum at `error.rs:13`
+- [VERIFIED] CWE-209 mitigation: `ServerError` display omits internal details at `error.rs:27`
+- [VERIFIED] CWE-113 mitigation: `try_with_token`/`try_with_tenant` reject `\r\n` at `client.rs:44-52`
+- [VERIFIED] Token redacted in `Debug` output at `client.rs:15-23`
+- [VERIFIED] Clap derive macros used throughout (no imperative building) — AC-6 met
+- [VERIFIED] Exit codes 3/4 map correctly for auth/authz errors — tested in `exit_codes.rs`
+- [VERIFIED] `thiserror` used for error enums per project rules
+- [VERIFIED] All clippy warnings pass (`cargo clippy -p axiathon-client -- -D warnings`)
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 1 | YES |
+| High | 4 | YES |
+| Medium | 5 | NO |
+| Low | 2 | NO |
+
+The library code (types, parsing, formatting, config) is mostly well-structured. The test suite is thorough for what it covers. However, **the binary itself does nothing** — `main.rs` is an empty shell that never calls into the framework. Combined with nightly fmt failures, missing env var wiring, and the unsafe `with_token` API, this PR has blocking issues.
+
+## Verdict: **CHANGES_REQUESTED**
+
+The critical `main.rs` no-op means the CLI binary doesn't function at all. The high-severity issues (nightly fmt, missing shell arg on Completion, no AXIATHON_SERVER env var, unsafe token setter) compound the problem. The lib-level code and tests are a solid foundation, but the wiring and integration layer needs work before this can ship.

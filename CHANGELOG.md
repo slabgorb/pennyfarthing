@@ -7,6 +7,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.0.0-alpha.0] - 2026-03-10
+
+### Added
+
+- **Reviewer edge-case hunter subagent** — Specialized subagent for adversarial edge-case detection (MSSCI-16333, #1323)
+- **BMAD simulator template adapter** — Benchmark scenarios can use BMAD templates for story translation (#1320)
+- **Startup agent auto-invoke** — Agents auto-invoke on SessionStart hook (MSSCI-16331, #1319)
+- **Plan mode agent reload** — Agents reload on ExitPlanMode for seamless workflow transitions (MSSCI-16323, #1318)
+- **OTEL telemetry streaming to disk** — Benchmark telemetry streams to disk instead of requiring BikeRack (MSSCI-16322, #1317)
+- **FastAPI WheelHub API routes** — Core API routes ported to Python FastAPI WheelHub (MSSCI-16314, #1313)
+- **Multi-judge benchmark support** — Pipeline replay supports multiple judges for scoring consistency (#1311)
+
+### Changed
+
+- **BREAKING: WheelHub migrated from Node.js to Python/uvicorn** — Server-side TypeScript removed entirely; WheelHub now runs on FastAPI/uvicorn (ADR-0034, #1316)
+- **Legacy TypeScript CLI removed** — Dead CLI, BMAD, and Jira TypeScript modules deleted in favor of Python pf CLI
+
+### Fixed
+
+- **Node test failures** — Deleted orphaned dist files and fixed test assertions
+- **Benchmark empty judge response warning** — Restored detailed warning for empty judge responses
+
+## [12.7.0] - 2026-03-08
+
+### Added
+
+- **Judge versioning and partial-match rubrics** — Benchmark judges support version tracking and partial-match scoring (#1309)
+- **Theme YAML schema and git snapshot command** — Structured theme validation plus `pf git snapshot` for point-in-time repo captures (#1308)
+- **Pipeline replay framework** — Replay benchmark pipelines from stored results for regression testing (#1307)
+- **Kitchen-sink workflow and language-specific review checklists** — Extended gate coverage with per-language review checklists (#1302)
+
+### Changed
+
+- **Theme genre consolidation** — Reduced to 5 genres, added benchmark slicing dimensions, reset tiers to unranked
+
+### Fixed
+
+- **SESSION_ID propagation to WheelHub** — Eliminated CYCLIST_SESSION_ID, set SESSION_ID before WheelHub spawn for correct agent detection (MSSCI-16303, #1310)
+- **Merge gate docs alignment** — Gate documentation now reflects the in_review exception correctly (#1299)
+- **Lint cleanup** — Removed unused type imports, fixed f-string and import sorting
+
+## [12.6.2] - 2026-03-07
+
+### Added
+
+- **Consumer E2E test suite** — 6 scenarios covering fresh-init, re-init preservation, WheelHub Node 24, upgrade safety, orc-ax snapshot, and idempotency (MSSCI-16292)
+- **WheelHub CJS banner fix** — esbuild bundler auto-patches `createRequire` shim for Node 24 ESM compatibility (MSSCI-16292)
+- **Scenario discovery workflow** — New stepped workflow for benchmark scenario discovery
+
+### Fixed
+
+- **Hook change confirmation in pf init** — Added confirmation prompt before modifying hooks and fixed WheelHub bundle handling during init
+
+## [12.6.1] - 2026-03-07
+
+### Fixed
+
+- **TUI agent display stuck on ORC** — `getCurrentAgent()` now falls back to most recently modified agent file when `CYCLIST_SESSION_ID` is not set (standalone WheelHub via `just wheelhub`)
+- **Ghostty portrait support** — Detect Ghostty terminal as kitty graphics protocol for inline portraits
+- **Hook change confirmation in pf init** — Added confirmation prompt for hook changes and fixed WheelHub bundle handling during init
+
+## [12.6.0] - 2026-03-06
+
+### Added
+
+- **Gold standard schema for scenarios** — Benchmark scenarios support gold_standard calibration references (MSSCI-16225)
+- **Difficulty profile population** — Populate difficulty profiles from baseline benchmark data (MSSCI-16230)
+
+### Fixed
+
+- **TUI showing wrong agent persona** — BikeRack TUI launcher now forwards SESSION_ID to WheelHub for correct agent detection
+- **Scenario validator test casts** — Use double-cast in scenario-validator tests for type safety
+
+## [12.5.0] - 2026-03-06
+
+### Added
+
+- **Scenario Builder stepped workflow** — Interactive workflow for building benchmark scenarios with code and open-ended modes (MSSCI-16234)
+- **Perplexity research guidance** — Orchestrator pattern doc for web-grounded research (#1295)
+- **Reference anchors in judge prompts** — Benchmark judge prompts now include anchored rubric criteria (MSSCI-16220)
+- **Sprint panel in-review differentiation** — In-review stories visually distinguished from backlog (#1293)
+- **Multi-judge flag for /solo** — `--multi-judge` flag for comparative scoring (MSSCI-16215)
+- **Output style config wiring** — `output_style` from config piped into agent activation (#1289)
+- **TypeScript workflow engine replaced with pf CLI** — BikeLane workflow operations delegated to Python CLI (141-18)
+- **Hook audit** — Unexported hooks exported or deleted (#1262)
+- **Core API route tests** — Test coverage for agent-load through welcome API routes (MSSCI-16132, MSSCI-16133, MSSCI-16209)
+
+### Fixed
+
+- **WheelHub in_review status mapping** — Rebuilt bundle with correct status mapping and Node 24 ESM shim (#1296, #1297, #1298)
+- **CI check failures** — Resolved all 5 failing CI checks for scenario-builder PR
+- **Stale and broken tests** — Removed stale tests and fixed broken contract tests (#1291)
+- **28 dependency vulnerabilities** — Resolved via dependency updates (#1290)
+- **TUI bugfixes** — Context lookup, workflow dots, keybinding, status CLI fixes (#1282)
+
 ## [12.4.1] - 2026-03-05
 
 ### Added
@@ -2985,7 +3080,13 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.1...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.0...HEAD
+[13.0.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.7.0...v13.0.0-alpha.0
+[12.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.2...v12.7.0
+[12.6.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.1...v12.6.2
+[12.6.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.0...v12.6.1
+[12.6.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.5.0...v12.6.0
+[12.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.1...v12.5.0
 [12.4.1]: https://github.com/1898andCo/pennyfarthing/compare/v12.4.0...v12.4.1
 [12.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.3.0...v12.4.0
 [12.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.2.0...v12.3.0

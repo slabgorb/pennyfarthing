@@ -34,10 +34,28 @@ DEFAULT_EXCLUDES = [
 
 # Source file extensions to include
 SOURCE_EXTENSIONS = {
-    ".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs",
-    ".java", ".kt", ".swift", ".rb", ".sh", ".bash",
-    ".css", ".scss", ".less", ".html", ".md", ".yaml", ".yml",
-    ".json", ".toml",
+    ".py",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".go",
+    ".rs",
+    ".java",
+    ".kt",
+    ".swift",
+    ".rb",
+    ".sh",
+    ".bash",
+    ".css",
+    ".scss",
+    ".less",
+    ".html",
+    ".md",
+    ".yaml",
+    ".yml",
+    ".json",
+    ".toml",
 }
 
 
@@ -295,7 +313,8 @@ async def find_unused_exports(repo_path: Path) -> UnusedExportResult:
         )
 
     proc = await asyncio.create_subprocess_exec(
-        "npx", "ts-prune",
+        "npx",
+        "ts-prune",
         cwd=resolved,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
