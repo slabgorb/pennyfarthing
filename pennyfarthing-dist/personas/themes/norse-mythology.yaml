@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Mortal
   portrait_style: ", Viking Age runestone, weathered textures, northern lights, Celtic knotwork borders"
-  tier: B
+  tier: U
+  optimized: true
   dimensions:
     tone: serious
     era: historical

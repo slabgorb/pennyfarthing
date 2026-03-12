@@ -4,6 +4,7 @@ Usage:
     pf benchmark replay run <scenario.yaml> --theme firefly [--n 1]
     pf benchmark replay score <result-dir>
     pf benchmark replay compare <scenario.yaml>
+    pf benchmark analyze <scenario.yaml> [--section tier|findings|dimensions|untested|all]
 
 Must be run from a regular terminal (not inside Claude Code).
 
@@ -15,6 +16,7 @@ Extension discovery:
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import click
@@ -31,6 +33,399 @@ def benchmark():
 
 # Load project-local extensions (lazy — only runs when benchmark group is invoked)
 load_extensions(benchmark, "benchmark")
+
+
+# ---------------------------------------------------------------------------
+# analyze command
+# ---------------------------------------------------------------------------
+
+
+@benchmark.command("analyze")
+@click.argument("scenario_path", type=click.Path(exists=True))
+@click.option(
+    "--results-dir",
+    default=None,
+    type=click.Path(exists=True),
+    help="Base results directory",
+)
+@click.option(
+    "--section",
+    type=click.Choice(["tier", "findings", "dimensions", "untested", "all"]),
+    default="all",
+    help="Which analysis section to show",
+)
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+def analyze(scenario_path, results_dir, section, as_json):
+    """Analyze benchmark results — tiers, catch rates, dimension correlations.
+
+    \b
+    Sections:
+      tier        Theme ranking by weighted score average
+      findings    Per-finding catch rates across themes
+      dimensions  Theme dimension correlation with scores
+      untested    Themes not yet benchmarked
+      all         All sections (default)
+
+    \b
+    Examples:
+        pf benchmark analyze scenarios/dpgd-116.yaml
+        pf benchmark analyze scenarios/dpgd-116.yaml --section dimensions
+        pf benchmark analyze scenarios/dpgd-116.yaml --json
+    """
+    import json as json_mod
+
+    from pf.benchmark.pipeline_replay import FindingScore, PipelineScore, load_scenario
+
+    project = Path.cwd()
+    scenario = load_scenario(scenario_path, project_dir=project)
+
+    base = Path(results_dir) if results_dir else project / "internal" / "results" / "pipeline-replay"
+    scenario_dir = base / scenario.id
+
+    if not scenario_dir.exists():
+        click.echo(f"No results found at {scenario_dir}", err=True)
+        raise SystemExit(1)
+
+    # --- Collect all scored runs ---
+    theme_runs: dict[str, list[PipelineScore]] = {}
+    for theme_dir in sorted(scenario_dir.iterdir()):
+        if not theme_dir.is_dir() or theme_dir.name.startswith("_"):
+            continue
+        for run_dir in sorted(theme_dir.iterdir()):
+            if not run_dir.is_dir() or not run_dir.name.startswith("run-"):
+                continue
+            mv_file = run_dir / "majority_vote.yaml"
+            score_file = run_dir / "score.yaml"
+            chosen = mv_file if mv_file.exists() else score_file
+            if not chosen.exists():
+                continue
+            score_data = yaml.safe_load(chosen.read_text())
+            run_num = int(run_dir.name.split("-")[1]) if "-" in run_dir.name else 0
+            ps = PipelineScore(
+                scenario_id=score_data.get("scenario_id", scenario.id),
+                theme=score_data.get("theme", theme_dir.name),
+                run_id=score_data.get("run_id", run_num),
+                findings=[
+                    FindingScore(**{
+                        k: v for k, v in f.items()
+                        if k in ("finding_id", "title", "weight", "phase_ideal", "caught", "caught_by", "evidence")
+                    })
+                    for f in score_data.get("findings", [])
+                ],
+                total_caught=score_data["total_caught"],
+                total_findings=score_data["total_findings"],
+                weighted_caught=score_data["weighted_caught"],
+                total_weight=score_data["total_weight"],
+                score_pct=score_data["score_pct"],
+            )
+            tag = theme_dir.name
+            theme_runs.setdefault(tag, []).append(ps)
+
+    if not theme_runs:
+        click.echo("No scored runs found.", err=True)
+        raise SystemExit(1)
+
+    # --- Compute stats per theme ---
+    finding_ids = [gt.id for gt in scenario.ground_truth]
+    theme_stats = _compute_theme_stats(theme_runs, finding_ids)
+
+    # --- Collect for JSON output ---
+    result_data: dict = {"scenario_id": scenario.id}
+
+    show_all = section == "all"
+
+    if show_all or section == "tier":
+        _print_tier_ranking(theme_stats, finding_ids, scenario)
+        result_data["tiers"] = _tier_data(theme_stats)
+
+    if show_all or section == "findings":
+        _print_finding_rates(theme_stats, finding_ids, scenario)
+        result_data["finding_rates"] = _finding_rate_data(theme_stats, finding_ids, scenario)
+
+    if show_all or section == "dimensions":
+        _print_dimension_correlation(theme_stats, scenario)
+        result_data["dimensions"] = _dimension_data(theme_stats)
+
+    if show_all or section == "untested":
+        _print_untested_themes(theme_stats)
+        result_data["untested"] = _untested_data(theme_stats)
+
+    if as_json:
+        click.echo(json_mod.dumps(result_data, indent=2))
+
+
+def _compute_theme_stats(
+    theme_runs: dict[str, list], finding_ids: list[str]
+) -> dict[str, dict]:
+    """Compute per-theme statistics from collected runs."""
+    stats = {}
+    for theme, runs in theme_runs.items():
+        scores = [r.score_pct for r in runs]
+        n = len(scores)
+        avg = sum(scores) / n
+        stdev = math.sqrt(sum((s - avg) ** 2 for s in scores) / n) if n > 1 else 0.0
+
+        # Per-finding catch rates
+        finding_rates = {}
+        for fid in finding_ids:
+            catches = sum(
+                1 for r in runs
+                for f in r.findings
+                if f.finding_id == fid and f.caught
+            )
+            finding_rates[fid] = catches / n * 100
+
+        # Per-finding phase attribution
+        finding_phases = {}
+        for fid in finding_ids:
+            phase_counts: dict[str, int] = {}
+            for r in runs:
+                for f in r.findings:
+                    if f.finding_id == fid and f.caught and f.caught_by:
+                        phase_counts[f.caught_by] = phase_counts.get(f.caught_by, 0) + 1
+            finding_phases[fid] = phase_counts
+
+        stats[theme] = {
+            "avg": avg,
+            "stdev": stdev,
+            "n": n,
+            "scores": scores,
+            "finding_rates": finding_rates,
+            "finding_phases": finding_phases,
+        }
+    return stats
+
+
+def _assign_tiers(theme_stats: dict[str, dict]) -> dict[str, str]:
+    """Assign themes to tiers based on average score."""
+    ranked = sorted(theme_stats.items(), key=lambda x: -x[1]["avg"])
+    tiers = {}
+    for theme, s in ranked:
+        avg = s["avg"]
+        if avg >= 62:
+            tiers[theme] = "A"
+        elif avg >= 55:
+            tiers[theme] = "B"
+        elif avg >= 48:
+            tiers[theme] = "C"
+        else:
+            tiers[theme] = "D"
+    return tiers
+
+
+def _print_tier_ranking(theme_stats, finding_ids, scenario):
+    """Print themes ranked by score with tier assignments."""
+    tiers = _assign_tiers(theme_stats)
+    ranked = sorted(theme_stats.items(), key=lambda x: -x[1]["avg"])
+
+    control_avg = theme_stats.get("control", {}).get("avg")
+    overall_avg = sum(s["avg"] for s in theme_stats.values()) / len(theme_stats)
+
+    click.echo(f"\n{'=' * 80}")
+    click.echo(f"  THEME TIER RANKING — {scenario.id}")
+    click.echo(f"  Control: {control_avg:.1f}%  |  Overall mean: {overall_avg:.1f}%  |  Themes: {len(theme_stats)}")
+    click.echo(f"{'=' * 80}")
+
+    hdr = f"  {'Tier':<5} {'Theme':<25} {'Avg':>6} {'SD':>6} {'N':>3}  "
+    hdr += "  ".join(f"{fid:>4}" for fid in finding_ids)
+    click.echo(hdr)
+    click.echo(f"  {'-' * (len(hdr) - 2)}")
+
+    current_tier = None
+    for theme, s in ranked:
+        tier = tiers[theme]
+        if tier != current_tier:
+            if current_tier is not None:
+                click.echo()
+            current_tier = tier
+
+        fr = s["finding_rates"]
+        row = f"  {tier:<5} {theme:<25} {s['avg']:5.1f}% {s['stdev']:5.1f} {s['n']:3d}  "
+        row += "  ".join(f"{fr.get(fid, 0):3.0f}%" for fid in finding_ids)
+
+        # Mark control
+        if theme == "control":
+            row += "  <-- control"
+        click.echo(row)
+
+    click.echo()
+    click.echo("  Tier thresholds: A >= 62% | B >= 55% | C >= 48% | D < 48%")
+    click.echo()
+
+
+def _print_finding_rates(theme_stats, finding_ids, scenario):
+    """Print per-finding catch rates sorted by difficulty."""
+    overall_rates = {}
+    for fid in finding_ids:
+        all_rates = [s["finding_rates"][fid] for s in theme_stats.values()]
+        overall_rates[fid] = sum(all_rates) / len(all_rates)
+
+    click.echo(f"\n{'=' * 80}")
+    click.echo("  FINDING CATCH RATES (sorted by difficulty)")
+    click.echo(f"{'=' * 80}")
+
+    sorted_findings = sorted(
+        scenario.ground_truth, key=lambda gt: -overall_rates.get(gt.id, 0)
+    )
+    for gt in sorted_findings:
+        rate = overall_rates[gt.id]
+        bar_len = int(rate / 2)
+        bar = "█" * bar_len + "░" * (50 - bar_len)
+        click.echo(f"  {gt.id:<4} {bar} {rate:5.1f}%  w={gt.weight}  {gt.title[:50]}")
+
+    click.echo()
+
+
+def _print_dimension_correlation(theme_stats, scenario):
+    """Cross-reference theme dimensions with benchmark scores."""
+    from pf.benchmark.aggregator import _default_themes_dir, _load_theme_dimensions
+
+    themes_dir = _default_themes_dir()
+    overall_avg = sum(s["avg"] for s in theme_stats.values()) / len(theme_stats)
+
+    # Load dimensions for all tested themes
+    dim_values: dict[str, dict[str, list[float]]] = {}
+    themes_with_dims = 0
+    for theme in theme_stats:
+        dims = _load_theme_dimensions(theme, themes_dir)
+        if not dims:
+            continue
+        themes_with_dims += 1
+        for k, v in dims.items():
+            v_str = str(v)
+            dim_values.setdefault(k, {}).setdefault(v_str, []).append(
+                theme_stats[theme]["avg"]
+            )
+
+    click.echo(f"\n{'=' * 80}")
+    click.echo(f"  DIMENSION CORRELATION  (overall mean: {overall_avg:.1f}%, {themes_with_dims} themes with dimensions)")
+    click.echo(f"{'=' * 80}")
+
+    for dim in sorted(dim_values.keys()):
+        vals = dim_values[dim]
+        if len(vals) < 2:
+            continue
+
+        click.echo(f"\n  --- {dim.upper()} ---")
+        for v, scores in sorted(vals.items(), key=lambda x: -sum(x[1]) / len(x[1])):
+            n = len(scores)
+            avg = sum(scores) / n
+            delta = avg - overall_avg
+            marker = " **" if abs(delta) > 5 else ""
+            click.echo(
+                f"    {v:<22} avg={avg:5.1f}%  delta={delta:+5.1f}  n={n:2d}{marker}"
+            )
+
+    click.echo()
+    click.echo("  ** = delta > 5 points from overall mean")
+    click.echo()
+
+
+def _print_untested_themes(theme_stats):
+    """Show themes that haven't been benchmarked yet."""
+    from pf.benchmark.aggregator import _default_themes_dir
+
+    themes_dir = Path(_default_themes_dir())
+    if not themes_dir.exists():
+        click.echo("  Themes directory not found.", err=True)
+        return
+
+    all_themes = sorted(
+        f.stem for f in themes_dir.iterdir()
+        if f.is_file() and f.suffix == ".yaml" and f.stem != "control"
+    )
+    tested = set(theme_stats.keys()) - {"control"}
+    untested = [t for t in all_themes if t not in tested]
+
+    click.echo(f"\n{'=' * 80}")
+    click.echo(f"  UNTESTED THEMES  ({len(untested)} of {len(all_themes)} remaining)")
+    click.echo(f"{'=' * 80}")
+
+    # Show in columns
+    cols = 4
+    for i in range(0, len(untested), cols):
+        row = "  ".join(f"{t:<25}" for t in untested[i : i + cols])
+        click.echo(f"  {row}")
+
+    click.echo()
+
+
+# --- JSON data helpers ---
+
+def _tier_data(theme_stats):
+    tiers = _assign_tiers(theme_stats)
+    ranked = sorted(theme_stats.items(), key=lambda x: -x[1]["avg"])
+    return [
+        {
+            "theme": t,
+            "tier": tiers[t],
+            "avg": round(s["avg"], 1),
+            "stdev": round(s["stdev"], 1),
+            "n": s["n"],
+        }
+        for t, s in ranked
+    ]
+
+
+def _finding_rate_data(theme_stats, finding_ids, scenario):
+    result = {}
+    for gt in scenario.ground_truth:
+        rates = [s["finding_rates"][gt.id] for s in theme_stats.values()]
+        result[gt.id] = {
+            "title": gt.title,
+            "weight": gt.weight,
+            "overall_rate": round(sum(rates) / len(rates), 1),
+            "by_theme": {
+                t: round(s["finding_rates"][gt.id], 1)
+                for t, s in theme_stats.items()
+            },
+        }
+    return result
+
+
+def _dimension_data(theme_stats):
+    from pf.benchmark.aggregator import _default_themes_dir, _load_theme_dimensions
+
+    themes_dir = _default_themes_dir()
+    overall_avg = sum(s["avg"] for s in theme_stats.values()) / len(theme_stats)
+
+    dim_values: dict[str, dict[str, list[float]]] = {}
+    for theme in theme_stats:
+        dims = _load_theme_dimensions(theme, themes_dir)
+        if not dims:
+            continue
+        for k, v in dims.items():
+            dim_values.setdefault(k, {}).setdefault(str(v), []).append(
+                theme_stats[theme]["avg"]
+            )
+
+    result = {}
+    for dim, vals in sorted(dim_values.items()):
+        if len(vals) < 2:
+            continue
+        result[dim] = {
+            v: {
+                "avg": round(sum(scores) / len(scores), 1),
+                "delta": round(sum(scores) / len(scores) - overall_avg, 1),
+                "n": len(scores),
+            }
+            for v, scores in vals.items()
+        }
+    return result
+
+
+def _untested_data(theme_stats):
+    from pf.benchmark.aggregator import _default_themes_dir
+
+    themes_dir = Path(_default_themes_dir())
+    if not themes_dir.exists():
+        return []
+    all_themes = sorted(
+        f.stem for f in themes_dir.iterdir()
+        if f.is_file() and f.suffix == ".yaml" and f.stem != "control"
+    )
+    tested = set(theme_stats.keys()) - {"control"}
+    return [t for t in all_themes if t not in tested]
 
 
 # ---------------------------------------------------------------------------

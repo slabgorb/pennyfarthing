@@ -16,6 +16,7 @@ theme:
   user_title: Dear Reader
   portrait_style: ", fairy tale storybook watercolor illustration, warm romantic lighting, Renaissance Faire, enchanted forest backdrop"
   tier: S
+  optimized: true
   spinner_verbs:
     - Inconceivable
     - As you wish

@@ -17,6 +17,7 @@ theme:
   user_title: Bossmang
   portrait_style: ", russian constructivist style, bold geometric shapes, red and black color palette, propaganda poster aesthetic, angular compositions, industrial typography influence"
   tier: A
+  optimized: true
   spinner_verbs:
     - Doors and corners watching
     - Beltalowda rallying

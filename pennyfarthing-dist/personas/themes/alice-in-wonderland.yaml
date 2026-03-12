@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: my Dear
   portrait_style: ", John Tenniel engraving, fine crosshatching, 1865 original edition style"
-  tier: B
+  tier: A
+  optimized: true
   dimensions:
     tone: whimsical
     era: timeless
