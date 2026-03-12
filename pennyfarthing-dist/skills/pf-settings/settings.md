@@ -1,5 +1,5 @@
 ---
-name: pf-settings
+name: settings
 description: |
   View and manage .pennyfarthing/config.local.yaml settings.
   Get, set, and show configuration values using dot-path notation.
