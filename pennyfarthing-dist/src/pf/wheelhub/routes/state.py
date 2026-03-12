@@ -422,6 +422,47 @@ async def clear_spans() -> JSONResponse:
 
 
 # ---------------------------------------------------------------------------
+# Benchmark router
+# ---------------------------------------------------------------------------
+
+benchmark_router = APIRouter(prefix="/api/benchmark", tags=["benchmark"])
+
+_benchmark_events: list[dict[str, Any]] = []
+_benchmark_phase: dict[str, Any] = {}
+
+
+@benchmark_router.post("/phase")
+async def post_benchmark_phase(request: Request) -> JSONResponse:
+    """Receive phase transition from pipeline_replay and broadcast on benchmark-events."""
+    body = await request.json()
+    phase = body.get("phase", "")
+    status = body.get("status", "")
+
+    event = {
+        "type": "phase",
+        "phase": phase,
+        "status": status,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+    _benchmark_phase.update(event)
+
+    # Broadcast to benchmark-events channel
+    try:
+        from pf.wheelhub.app import broadcast
+        import asyncio
+        asyncio.ensure_future(broadcast("benchmark-events", event))
+    except Exception:
+        pass
+
+    return JSONResponse({"success": True})
+
+
+@benchmark_router.get("/status")
+async def get_benchmark_status() -> JSONResponse:
+    return JSONResponse({"phase": _benchmark_phase, "events": len(_benchmark_events)})
+
+
+# ---------------------------------------------------------------------------
 # All state routers
 # ---------------------------------------------------------------------------
 
@@ -434,4 +475,5 @@ all_state_routers = [
     telemetry_router,
     evaluation_router,
     spans_router,
+    benchmark_router,
 ]

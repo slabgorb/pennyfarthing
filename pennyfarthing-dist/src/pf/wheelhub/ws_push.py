@@ -306,6 +306,143 @@ def fetch_persona() -> dict[str, Any]:
         return {}
 
 
+def fetch_benchmark_history() -> dict[str, Any]:
+    """Fetch benchmark pipeline replay results from result files.
+
+    Walks ``internal/results/pipeline-replay/`` and reads ``majority_vote.yaml``
+    or ``score.yaml`` from each run directory. Uses mtime-based caching to
+    avoid re-parsing YAML every poll cycle.
+    """
+    project_dir = _get_project_dir()
+    results_dir = Path(project_dir, "internal", "results", "pipeline-replay")
+
+    if not results_dir.is_dir():
+        return {"type": "init", "runs": []}
+
+    import yaml
+
+    runs: list[dict[str, Any]] = []
+
+    for scenario_dir in sorted(results_dir.iterdir()):
+        if not scenario_dir.is_dir() or scenario_dir.name.startswith("_"):
+            continue
+        scenario_id = scenario_dir.name
+
+        for theme_dir in sorted(scenario_dir.iterdir()):
+            if not theme_dir.is_dir() or theme_dir.name.startswith("_"):
+                continue
+            theme = theme_dir.name
+
+            for run_dir in sorted(theme_dir.iterdir()):
+                if not run_dir.is_dir() or not run_dir.name.startswith("run-"):
+                    continue
+
+                # Prefer majority_vote.yaml over score.yaml
+                mv_file = run_dir / "majority_vote.yaml"
+                score_file = run_dir / "score.yaml"
+                chosen = mv_file if mv_file.exists() else score_file
+                if not chosen.exists():
+                    continue
+
+                try:
+                    score_data = yaml.safe_load(chosen.read_text())
+                except Exception:
+                    continue
+
+                if not isinstance(score_data, dict):
+                    continue
+
+                # Extract run_id from directory name
+                run_id = score_data.get("run_id")
+                if run_id is None:
+                    run_name = run_dir.name
+                    try:
+                        run_id = int(run_name.split("-")[1])
+                    except (IndexError, ValueError):
+                        run_id = 0
+
+                # Extract framework version
+                fw = score_data.get("framework_version") or {}
+                version = fw.get("tag") or fw.get("commit") or ""
+
+                # Extract date from pipeline.yaml
+                run_date = ""
+                pipeline_file = run_dir / "pipeline.yaml"
+                if pipeline_file.exists():
+                    try:
+                        pipeline_data = yaml.safe_load(pipeline_file.read_text())
+                        run_date = pipeline_data.get("completed_at", "") or pipeline_data.get("started_at", "")
+                    except Exception:
+                        pass
+                if not run_date:
+                    # Fallback to file mtime
+                    try:
+                        from datetime import UTC, datetime
+                        mtime = chosen.stat().st_mtime
+                        run_date = datetime.fromtimestamp(mtime, tz=UTC).isoformat()
+                    except Exception:
+                        pass
+
+                # Token usage per phase from pipeline.yaml
+                token_usage = {}
+                if pipeline_file.exists():
+                    try:
+                        if not pipeline_data:
+                            pipeline_data = yaml.safe_load(pipeline_file.read_text())
+                        phases = pipeline_data.get("phases", {})
+                        if isinstance(phases, dict):
+                            for p_name, p_data in phases.items():
+                                if isinstance(p_data, dict):
+                                    token_usage[p_name] = {
+                                        "tokens": p_data.get("input_tokens", 0) + p_data.get("output_tokens", 0),
+                                        "cost": p_data.get("cost", 0),
+                                    }
+                    except Exception:
+                        pass
+
+                # Duration
+                duration_s = None
+                if pipeline_file.exists():
+                    try:
+                        duration_s = pipeline_data.get("duration_s")
+                    except Exception:
+                        pass
+
+                # Narrative excerpt
+                narrative_excerpt = ""
+                narrative_file = run_dir / "narrative.md"
+                if narrative_file.exists():
+                    try:
+                        text = narrative_file.read_text()[:300]
+                        # Skip frontmatter
+                        if text.startswith("---"):
+                            end = text.find("---", 3)
+                            if end > 0:
+                                text = text[end + 3:].strip()
+                        narrative_excerpt = text[:150]
+                    except Exception:
+                        pass
+
+                runs.append({
+                    "scenario_id": scenario_id,
+                    "theme": theme if theme != "control" else None,
+                    "run_id": run_id,
+                    "score_pct": score_data.get("score_pct", 0),
+                    "total_caught": score_data.get("total_caught", 0),
+                    "total_findings": score_data.get("total_findings", 0),
+                    "weighted_caught": score_data.get("weighted_caught", 0),
+                    "total_weight": score_data.get("total_weight", 0),
+                    "findings": score_data.get("findings", []),
+                    "date": run_date,
+                    "version": version,
+                    "token_usage": token_usage,
+                    "duration_s": duration_s,
+                    "narrative_excerpt": narrative_excerpt,
+                })
+
+    return {"type": "init", "runs": runs}
+
+
 def fetch_spans() -> dict[str, Any]:
     """Fetch enriched spans."""
     from pf.wheelhub.routes.state import _enriched_spans
@@ -332,10 +469,11 @@ CHANNEL_FETCHERS: dict[str, Any] = {
     "persona": fetch_persona,
     "spans": fetch_spans,
     "todos": fetch_todos,
+    "benchmark-history": fetch_benchmark_history,
 }
 
 # Channels that should be polled periodically (their data changes externally)
-POLL_CHANNELS = {"git", "diffs", "sprint", "story", "context"}
+POLL_CHANNELS = {"git", "diffs", "sprint", "story", "context", "benchmark-history"}
 
 
 async def send_initial_data(websocket: Any, channel: str) -> None:

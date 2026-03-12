@@ -83,6 +83,7 @@ def parse_session_header(session_path: Path) -> dict[str, Any]:
                 "story context" in section_name
                 or "workflow phase" in section_name
                 or "workflow state" in section_name
+                or "workflow tracking" in section_name
                 or "branch" in section_name
             )
             # Stop at assessment sections (too far down)

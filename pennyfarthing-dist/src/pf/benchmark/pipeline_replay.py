@@ -694,10 +694,17 @@ class OTELFileCollector:
         collector.stop()
     """
 
-    def __init__(self, output_dir: Path, *, worktree_path: Path | None = None) -> None:
+    def __init__(
+        self,
+        output_dir: Path,
+        *,
+        worktree_path: Path | None = None,
+        forward_to: str | None = None,
+    ) -> None:
         self._output_dir = output_dir
         self._output_dir.mkdir(parents=True, exist_ok=True)
         self._worktree = worktree_path
+        self._forward_to = forward_to
         self._phase = "unknown"
         self._lock = threading.Lock()
 
@@ -739,6 +746,21 @@ class OTELFileCollector:
 
                     with open(out_file, "a") as f:
                         f.write(json.dumps(record) + "\n")
+
+                    # Dual-write: forward to WheelHub if available
+                    if parent._forward_to:
+                        try:
+                            import urllib.request
+                            fwd_url = f"{parent._forward_to}/v1/{signal}"
+                            req = urllib.request.Request(
+                                fwd_url,
+                                data=body,
+                                headers={"Content-Type": "application/json"},
+                                method="POST",
+                            )
+                            urllib.request.urlopen(req, timeout=2)
+                        except Exception:
+                            pass  # best-effort, never block
 
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
@@ -1172,9 +1194,20 @@ def run_pipeline(
     otel_base = output_dir or (project_dir / "internal" / "results" / "pipeline-replay")
     run_dir = compute_run_dir(output_base=otel_base, scenario_id=scenario.id, tag=tag, run_id=run_id)
 
+    # Auto-detect WheelHub for dual-write (disabled by PF_BENCHMARK_NO_WHEELHUB)
+    forward_to: str | None = None
+    port_file = project_dir / ".bikerack-port"
+    if port_file.exists() and not os.environ.get("PF_BENCHMARK_NO_WHEELHUB"):
+        try:
+            port = int(port_file.read_text().strip())
+            forward_to = f"http://127.0.0.1:{port}"
+            print(f"  [OTEL] WheelHub detected on :{port} — dual-write enabled")
+        except (ValueError, OSError):
+            pass
+
     # Start OTEL file collector (with enrichment while worktree exists)
     collector: OTELFileCollector | None = None
-    collector = OTELFileCollector(run_dir, worktree_path=wt_path)
+    collector = OTELFileCollector(run_dir, worktree_path=wt_path, forward_to=forward_to)
     collector.start()
     print(f"  [OTEL] File collector on {collector.endpoint} → {run_dir}")
 
@@ -1216,6 +1249,23 @@ def run_pipeline(
             # BMAD has no TEA equivalent — use a minimal prompt
             return f"# {role.upper()} Phase\n\nBegin {role} phase for: {scenario.title}\n"
 
+    def _notify_wheelhub_phase(phase: str, status: str) -> None:
+        """Notify WheelHub of a phase transition (best-effort)."""
+        if not forward_to:
+            return
+        try:
+            import urllib.request
+            data = json.dumps({"phase": phase, "status": status}).encode()
+            req = urllib.request.Request(
+                f"{forward_to}/api/benchmark/phase",
+                data=data,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=2)
+        except Exception:
+            pass
+
     # Session ID for cross-phase continuity via --resume
     pipeline_session_id: str | None = None
 
@@ -1236,6 +1286,7 @@ def run_pipeline(
 
         (wt_path / "CLAUDE.md").write_text(claude_md)
 
+        _notify_wheelhub_phase(key, "started")
         print(f"  [{key.upper()}] Running phase...")
         phase_result = run_phase(
             wt_path,
@@ -1262,6 +1313,8 @@ def run_pipeline(
             f"({tokens.get('input', 0)}+{tokens.get('output', 0)} tokens, "
             f"model={model_str}{cost_str}{otel_str})"
         )
+
+        _notify_wheelhub_phase(key, "completed")
 
         if phase_result.exit_code != 0:
             print(f"  [{key.upper()}] WARNING: non-zero exit ({phase_result.exit_code})")

@@ -28,6 +28,7 @@ from textual.widgets import Header, Rule, Static, Tab, Tabs
 from pf.bc.focus import get_last_panel, save_last_panel
 from pf.bikerack import layout_order as _layout_order
 from pf.bikerack.audit_log_panel import AuditLogPanel
+from pf.bikerack.benchmark_panel import BenchmarkPanel
 from pf.bikerack.base_panel import get_panel_icon
 from pf.bikerack.context_meter_footer import StatusFooter
 from pf.bikerack.debug_panel import DebugPanel
@@ -84,6 +85,7 @@ PANEL_REGISTRY: list[tuple[str, str]] = [
     ("debug", "Debug"),
     ("progress", "Progress"),
     ("settings", "Settings"),
+    ("benchmark", "Benchmark"),
 ]
 
 # Human-readable display names for panels (full set for external focus messages)
@@ -98,6 +100,7 @@ PANEL_DISPLAY_NAMES: dict[str, str] = {
     "debug": "Debug",
     "progress": "Progress",
     "settings": "Settings",
+    "benchmark": "Benchmark",
     "tty": "TTY",
 }
 
@@ -548,6 +551,7 @@ class BikeRackApp(App):
         Binding("5", "switch_panel('debug')", "Debug", show=False),
         Binding("6", "switch_panel('progress')", "Progress", show=False),
         Binding("7", "switch_panel('settings')", "Settings", show=False),
+        Binding("8", "switch_panel('benchmark')", "Benchmark", show=False),
         Binding("bracketright", "next_panel", "Next panel", show=False),
         Binding("bracketleft", "prev_panel", "Prev panel", show=False),
         Binding("tab", "next_panel", show=False, priority=True),
@@ -640,6 +644,7 @@ class BikeRackApp(App):
                     yield DebugPanel(client=self._client, id="panel-debug")
                     yield ProgressPanel(client=self._client, id="panel-progress")
                     yield SettingsPanel(id="panel-settings")
+                    yield BenchmarkPanel(client=self._client, id="panel-benchmark")
                 with Horizontal(id="split-container"):
                     yield VerticalScroll(id="split-left")
                     yield VerticalScroll(id="split-right")

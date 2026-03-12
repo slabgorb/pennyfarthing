@@ -34,6 +34,7 @@ WS_CHANNELS = [
     "claude", "git", "focus", "tandem", "settings", "persona",
     "diffs", "todos", "spans", "story", "bell", "token-stats",
     "hooks", "evaluation", "audit-log", "welcome",
+    "benchmark-history", "benchmark-events",
 ]
 
 # Connected WebSocket clients per channel
