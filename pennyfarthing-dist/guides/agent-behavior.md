@@ -49,6 +49,8 @@ To hand off plan execution to a different agent: `echo "dev" > .session/.plan-ex
 **Subagents:** Include skill paths in prompts - they don't auto-load.
 
 **Dogfooding:** Write to `pennyfarthing-dist/` not `.claude/` (symlink issue).
+
+**tmux:** Use `pf tmux run <cmd>` for worker panes. See `guides/tmux-panes.md`. Never use raw `tmux send-keys`.
 </info>
 
 **Exit:** Each agent's `<exit>` section defines the handoff sequence. See `guides/handoff-cli.md` for the full protocol.

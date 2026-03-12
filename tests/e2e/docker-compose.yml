@@ -27,7 +27,7 @@ services:
     <<: *common
     command: /scenarios/reinit-preserves-custom.sh
 
-  # Scenario 3: WheelHub starts on Node 24 without CJS errors
+  # Scenario 3: Python WheelHub server starts and responds
   wheelhub-node24:
     <<: *common
     command: /scenarios/wheelhub-node24.sh

@@ -1,286 +1,291 @@
-/**
- * Scenario Validator Tests
- *
- * Story 45-1: Add gold_standard schema to scenarios
- * RED phase — these tests must FAIL until Dev implements the validator.
- */
+// scenario-validator.test.ts — Tests for difficulty_profile schema validation
+// Story 46-1: Add difficulty_profile schema to scenarios
 
 import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
 import {
-  validateGoldStandard,
   validateScenario,
-  type GoldStandard,
+  validateDifficultyProfile,
   type ScenarioData,
+  type DifficultyProfile,
 } from './scenario-validator.js';
 
-// ============================================================================
+// ---------------------------------------------------------------------------
 // Helpers
-// ============================================================================
+// ---------------------------------------------------------------------------
 
-function validGoldStandard(): GoldStandard {
+function makeScenario(overrides: Partial<ScenarioData> = {}): ScenarioData {
   return {
-    response: 'This code has a race condition in the cache invalidation logic. The mutex should be acquired before checking staleness.',
-    score: 92,
-    notes: 'Identifies race condition, suggests mutex pattern, covers edge cases',
-    graded_by: 'keith',
-  };
-}
-
-function validScenario(): ScenarioData {
-  return {
-    id: 'arch-001',
-    name: 'Order Service Review',
+    name: 'test-scenario',
+    title: 'Test Scenario',
     category: 'code-review',
-    difficulty: 'hard',
-    agent: 'reviewer',
-    version: '2.0',
-    description: 'Review an order service with concurrency issues',
-    instructions: 'Review the following code for bugs and design issues',
+    difficulty: 'medium',
+    prompt: 'Review this code.',
+    ...overrides,
   };
 }
 
-// ============================================================================
-// validateGoldStandard
-// ============================================================================
+function makeProfile(overrides: Partial<DifficultyProfile> = {}): DifficultyProfile {
+  return {
+    tier: 'medium',
+    dimensions: {
+      code_complexity: 6,
+      domain_knowledge: 4,
+      red_herring_count: 2,
+      issue_subtlety: 5,
+    },
+    calibration: {
+      control_mean: 72.5,
+      control_stddev: 8.3,
+      n_runs: 4,
+    },
+    ...overrides,
+  };
+}
 
-describe('validateGoldStandard', () => {
-  // --- Happy path ---
+// ===========================================================================
+// AC: Schema accepts difficulty_profile with valid tier, dimensions, calibration
+// ===========================================================================
 
-  it('should accept a valid gold_standard object', () => {
-    const result = validateGoldStandard(validGoldStandard());
-    assert.strictEqual(result.success, true);
-    assert.deepStrictEqual(result.errors, []);
+describe('validateScenario — difficulty_profile acceptance', () => {
+  it('accepts a scenario with a complete difficulty_profile', () => {
+    const scenario = makeScenario({ difficulty_profile: makeProfile() });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, true, 'Expected validation to pass');
+    assert.equal(result.errors.length, 0, 'Expected no errors');
   });
 
-  it('should accept gold_standard without optional notes', () => {
-    const gs = validGoldStandard();
-    delete (gs as unknown as Record<string, unknown>).notes;
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, true);
-    assert.deepStrictEqual(result.errors, []);
-  });
-
-  it('should accept score at lower boundary (1)', () => {
-    const gs = validGoldStandard();
-    gs.score = 1;
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, true);
-    assert.deepStrictEqual(result.errors, []);
-  });
-
-  it('should accept score at upper boundary (100)', () => {
-    const gs = validGoldStandard();
-    gs.score = 100;
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, true);
-    assert.deepStrictEqual(result.errors, []);
-  });
-
-  // --- Required field: response ---
-
-  it('should reject gold_standard with missing response', () => {
-    const gs = validGoldStandard();
-    delete (gs as unknown as Record<string, unknown>).response;
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.length > 0);
-    assert.ok(result.errors.some(e => e.includes('response')));
-  });
-
-  it('should reject gold_standard with empty response', () => {
-    const gs = validGoldStandard();
-    gs.response = '';
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('response')));
-  });
-
-  it('should reject gold_standard with non-string response', () => {
-    const gs = { ...validGoldStandard(), response: 42 };
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('response')));
-  });
-
-  // --- Required field: score ---
-
-  it('should reject gold_standard with missing score', () => {
-    const gs = validGoldStandard();
-    delete (gs as unknown as Record<string, unknown>).score;
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('score')));
-  });
-
-  it('should reject score below 1', () => {
-    const gs = validGoldStandard();
-    gs.score = 0;
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('score')));
-  });
-
-  it('should reject score above 100', () => {
-    const gs = validGoldStandard();
-    gs.score = 101;
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('score')));
-  });
-
-  it('should reject non-number score', () => {
-    const gs = { ...validGoldStandard(), score: 'high' };
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('score')));
-  });
-
-  it('should reject fractional score', () => {
-    const gs = validGoldStandard();
-    gs.score = 85.5;
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('score')));
-  });
-
-  // --- Required field: graded_by ---
-
-  it('should reject gold_standard with missing graded_by', () => {
-    const gs = validGoldStandard();
-    delete (gs as unknown as Record<string, unknown>).graded_by;
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('graded_by')));
-  });
-
-  it('should reject graded_by value "ai"', () => {
-    const gs = validGoldStandard();
-    gs.graded_by = 'ai';
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('graded_by')));
-  });
-
-  it('should reject graded_by value "auto"', () => {
-    const gs = validGoldStandard();
-    gs.graded_by = 'auto';
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('graded_by')));
-  });
-
-  it('should reject graded_by value "claude"', () => {
-    const gs = validGoldStandard();
-    gs.graded_by = 'claude';
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('graded_by')));
-  });
-
-  it('should reject graded_by value "agent"', () => {
-    const gs = validGoldStandard();
-    gs.graded_by = 'agent';
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('graded_by')));
-  });
-
-  it('should reject graded_by case-insensitively ("AI", "Claude")', () => {
-    for (const val of ['AI', 'Claude', 'AUTO', 'Agent']) {
-      const gs = validGoldStandard();
-      gs.graded_by = val;
-      const result = validateGoldStandard(gs);
-      assert.strictEqual(result.success, false, `should reject graded_by="${val}"`);
+  it('accepts all valid tier values', () => {
+    for (const tier of ['easy', 'medium', 'hard', 'extreme'] as const) {
+      const scenario = makeScenario({
+        difficulty_profile: makeProfile({ tier }),
+      });
+      const result = validateScenario(scenario);
+      assert.equal(result.success, true, `Expected tier "${tier}" to be valid`);
     }
   });
 
-  it('should reject empty graded_by', () => {
-    const gs = validGoldStandard();
-    gs.graded_by = '';
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('graded_by')));
-  });
-
-  // --- Optional field: notes ---
-
-  it('should accept notes as a string', () => {
-    const gs = validGoldStandard();
-    gs.notes = 'Expert-level response covering all edge cases';
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, true);
-  });
-
-  it('should reject non-string notes', () => {
-    const gs = { ...validGoldStandard(), notes: 123 };
-    const result = validateGoldStandard(gs);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('notes')));
-  });
-
-  // --- Null / non-object input ---
-
-  it('should reject null input', () => {
-    const result = validateGoldStandard(null);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.length > 0);
-  });
-
-  it('should reject non-object input', () => {
-    const result = validateGoldStandard('not an object');
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.length > 0);
-  });
-
-  // --- Multiple errors ---
-
-  it('should report multiple validation errors at once', () => {
-    const result = validateGoldStandard({ score: 200, graded_by: 'ai' });
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.length >= 2, `expected >=2 errors, got ${result.errors.length}`);
+  it('accepts dimension values at boundaries (1 and 10)', () => {
+    const scenario = makeScenario({
+      difficulty_profile: makeProfile({
+        dimensions: {
+          code_complexity: 1,
+          domain_knowledge: 10,
+          red_herring_count: 1,
+          issue_subtlety: 10,
+        },
+      }),
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, true, 'Expected boundary values to be valid');
   });
 });
 
-// ============================================================================
-// validateScenario — gold_standard integration
-// ============================================================================
+// ===========================================================================
+// AC: Scenario without difficulty_profile still validates (backward compat)
+// ===========================================================================
 
-describe('validateScenario — gold_standard field', () => {
-  it('should accept scenario without gold_standard (backward compat)', () => {
-    const scenario = validScenario();
+describe('validateScenario — backward compatibility', () => {
+  it('accepts a scenario without difficulty_profile', () => {
+    const scenario = makeScenario();
     const result = validateScenario(scenario);
-    assert.strictEqual(result.success, true);
-    assert.deepStrictEqual(result.errors, []);
+    assert.equal(result.success, true, 'Expected validation to pass without difficulty_profile');
+    assert.equal(result.errors.length, 0);
   });
 
-  it('should accept scenario with null gold_standard', () => {
-    const scenario = { ...validScenario(), gold_standard: null };
+  it('accepts a scenario with difficulty_profile explicitly undefined', () => {
+    const scenario = makeScenario({ difficulty_profile: undefined });
     const result = validateScenario(scenario);
-    assert.strictEqual(result.success, true);
-    assert.deepStrictEqual(result.errors, []);
+    assert.equal(result.success, true);
+  });
+});
+
+// ===========================================================================
+// AC: Invalid tier value rejects
+// ===========================================================================
+
+describe('validateScenario — invalid tier rejection', () => {
+  it('rejects an invalid tier value', () => {
+    const scenario = makeScenario({
+      difficulty_profile: makeProfile({ tier: 'impossible' as any }),
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, false, 'Expected invalid tier to fail');
+    assert.ok(
+      result.errors.some((e) => e.includes('tier')),
+      'Expected error message to mention tier'
+    );
   });
 
-  it('should accept scenario with valid gold_standard', () => {
-    const scenario = { ...validScenario(), gold_standard: validGoldStandard() };
+  it('rejects empty string as tier', () => {
+    const scenario = makeScenario({
+      difficulty_profile: makeProfile({ tier: '' as any }),
+    });
     const result = validateScenario(scenario);
-    assert.strictEqual(result.success, true);
-    assert.deepStrictEqual(result.errors, []);
+    assert.equal(result.success, false);
   });
 
-  it('should reject scenario with invalid gold_standard', () => {
-    const scenario = { ...validScenario(), gold_standard: { score: 200 } };
+  it('rejects numeric tier', () => {
+    const scenario = makeScenario({
+      difficulty_profile: makeProfile({ tier: 3 as any }),
+    });
     const result = validateScenario(scenario);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.length > 0);
+    assert.equal(result.success, false);
+  });
+});
+
+// ===========================================================================
+// AC: Dimension value outside 1-10 rejects
+// ===========================================================================
+
+describe('validateScenario — dimension value validation', () => {
+  it('rejects dimension value below 1', () => {
+    const scenario = makeScenario({
+      difficulty_profile: makeProfile({
+        dimensions: { code_complexity: 0 },
+      }),
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, false, 'Expected value 0 to fail');
+    assert.ok(result.errors.some((e) => e.includes('code_complexity')));
   });
 
-  it('should reject scenario with gold_standard where graded_by is ai', () => {
-    const gs = validGoldStandard();
-    gs.graded_by = 'ai';
-    const scenario = { ...validScenario(), gold_standard: gs };
+  it('rejects dimension value above 10', () => {
+    const scenario = makeScenario({
+      difficulty_profile: makeProfile({
+        dimensions: { domain_knowledge: 11 },
+      }),
+    });
     const result = validateScenario(scenario);
-    assert.strictEqual(result.success, false);
-    assert.ok(result.errors.some(e => e.includes('graded_by')));
+    assert.equal(result.success, false, 'Expected value 11 to fail');
+    assert.ok(result.errors.some((e) => e.includes('domain_knowledge')));
+  });
+
+  it('rejects negative dimension value', () => {
+    const scenario = makeScenario({
+      difficulty_profile: makeProfile({
+        dimensions: { issue_subtlety: -1 },
+      }),
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, false);
+  });
+
+  it('rejects non-numeric dimension value', () => {
+    const scenario = makeScenario({
+      difficulty_profile: makeProfile({
+        dimensions: { code_complexity: 'high' as any },
+      }),
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, false);
+  });
+
+  it('rejects fractional dimension value', () => {
+    const scenario = makeScenario({
+      difficulty_profile: makeProfile({
+        dimensions: { code_complexity: 5.5 },
+      }),
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, false, 'Expected fractional values to fail');
+  });
+});
+
+// ===========================================================================
+// AC: Partial profile (tier only, no dimensions) validates
+// ===========================================================================
+
+describe('validateScenario — partial profiles', () => {
+  it('accepts tier only (no dimensions, no calibration)', () => {
+    const scenario = makeScenario({
+      difficulty_profile: { tier: 'hard' },
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, true, 'Expected tier-only profile to be valid');
+  });
+
+  it('accepts tier with empty dimensions object', () => {
+    const scenario = makeScenario({
+      difficulty_profile: { tier: 'easy', dimensions: {} },
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, true);
+  });
+
+  it('accepts tier with partial dimensions (only some fields)', () => {
+    const scenario = makeScenario({
+      difficulty_profile: {
+        tier: 'medium',
+        dimensions: { code_complexity: 7 },
+      },
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, true);
+  });
+
+  it('accepts tier with calibration but no dimensions', () => {
+    const scenario = makeScenario({
+      difficulty_profile: {
+        tier: 'extreme',
+        calibration: { control_mean: 45.2, control_stddev: 12.1, n_runs: 10 },
+      },
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, true);
+  });
+
+  it('accepts calibration with partial fields', () => {
+    const scenario = makeScenario({
+      difficulty_profile: {
+        tier: 'medium',
+        calibration: { control_mean: 72.5 },
+      },
+    });
+    const result = validateScenario(scenario);
+    assert.equal(result.success, true);
+  });
+});
+
+// ===========================================================================
+// validateDifficultyProfile — standalone validation
+// ===========================================================================
+
+describe('validateDifficultyProfile', () => {
+  it('validates a complete profile', () => {
+    const result = validateDifficultyProfile(makeProfile());
+    assert.equal(result.success, true);
+  });
+
+  it('rejects null', () => {
+    const result = validateDifficultyProfile(null);
+    assert.equal(result.success, false);
+  });
+
+  it('rejects non-object', () => {
+    const result = validateDifficultyProfile('not an object');
+    assert.equal(result.success, false);
+  });
+
+  it('rejects profile without tier (tier is required)', () => {
+    const result = validateDifficultyProfile({ dimensions: { code_complexity: 5 } });
+    assert.equal(result.success, false);
+    assert.ok(result.errors.some((e) => e.includes('tier')));
+  });
+
+  it('rejects unknown dimension keys', () => {
+    const result = validateDifficultyProfile({
+      tier: 'medium',
+      dimensions: { unknown_field: 5 },
+    });
+    assert.equal(result.success, false);
+  });
+
+  it('rejects negative calibration values', () => {
+    const result = validateDifficultyProfile({
+      tier: 'medium',
+      calibration: { n_runs: -1 },
+    });
+    assert.equal(result.success, false);
   });
 });

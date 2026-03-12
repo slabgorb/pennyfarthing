@@ -16,7 +16,8 @@ theme:
   character_immersion: high
   user_title: Staffer
   portrait_style: ", 19th century political cartoon style, bold ink linework, ink on paper, muted colors"
-  tier: S
+  tier: B
+  optimized: true
   spinner_verbs:
     - Walk and talking
     - Preparing briefings

@@ -15,7 +15,8 @@ theme:
   character_immersion: high
   user_title: Shipmate
   portrait_style: ", maritime oil painting, stormy sea backdrop, dark oceanic tones, scrimshaw details"
-  tier: C
+  tier: U
+  optimized: true
   spinner_verbs:
     - Whale hunting
     - Harpooning

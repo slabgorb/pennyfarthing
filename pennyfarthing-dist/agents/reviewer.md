@@ -28,11 +28,18 @@ Assume the code is broken until you prove otherwise. Your job is to be the last 
 </critical>
 
 <helpers>
-**Model:** haiku | **Pre-flight:** background
+**Model:** haiku | **Execution:** all background, parallel
 
 | Subagent | Purpose |
 |----------|---------|
-| `reviewer-preflight` | Run tests, lint, gather smells (background) |
+| `reviewer-preflight` | Run tests, lint, gather smells |
+| `reviewer-edge-hunter` | Exhaustive path enumeration on diff — boundary conditions |
+| `reviewer-silent-failure-hunter` | Find swallowed errors, empty catches, silent fallbacks |
+| `reviewer-test-analyzer` | Test quality — vacuous assertions, missing edge cases, coupling |
+| `reviewer-comment-analyzer` | Stale/misleading comments, missing public API docs |
+| `reviewer-type-design` | Type invariants — stringly-typed APIs, missing newtypes, unsafe casts |
+| `reviewer-security` | Security vulnerabilities — injection, auth, secrets, info leakage |
+| `reviewer-simplifier` | Unnecessary complexity — dead code, over-engineering, simpler alternatives |
 </helpers>
 
 <parameters>
@@ -44,6 +51,13 @@ STORY_ID: "{STORY_ID}"
 REPOS: "{REPOS}"
 BRANCH: "{BRANCH}"
 PR_NUMBER: "{PR_NUMBER}"
+```
+
+### All diff-based subagents (run in background, parallel)
+Each receives the same DIFF. Spawn all in a single message for parallel execution.
+```yaml
+DIFF: "{output of git diff develop...HEAD or git diff main...HEAD}"
+ALSO_CONSIDER: "{optional — specific focus areas from story AC or known risk areas}"
 ```
 </parameters>
 
@@ -60,12 +74,29 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 
 <on-activation>
 1. If story is in review phase: **Begin immediately.** No confirmation needed.
-2. Spawn `reviewer-preflight` in **background**
-3. **Simultaneously** read diff and begin critical analysis:
+2. Get the diff for all diff-based subagents:
    ```bash
-   git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"
+   git diff develop...HEAD  # or main...HEAD per repo topology
    ```
-4. When preflight returns, incorporate results into analysis
+3. Spawn **all 8 subagents** in background, in a single message for parallel execution:
+   - `reviewer-preflight` — mechanical checks (tests, lint, smells)
+   - `reviewer-edge-hunter` — boundary conditions and unhandled paths
+   - `reviewer-silent-failure-hunter` — swallowed errors and silent fallbacks
+   - `reviewer-test-analyzer` — test quality and coverage gaps
+   - `reviewer-comment-analyzer` — stale/misleading documentation
+   - `reviewer-type-design` — type invariants and design flaws
+   - `reviewer-security` — security vulnerabilities
+   - `reviewer-simplifier` — unnecessary complexity
+4. **Simultaneously** read diff and begin critical adversarial analysis
+5. When subagents return, incorporate ALL findings into analysis:
+   - Preflight: test results, code smells, diff stats
+   - Each specialist returns a `*_RESULT` YAML block with `agent`, `status`, and `findings` array
+   - If `status: clean` → no findings from that specialist, move on
+   - If `status: findings` → review each finding's `confidence` level:
+     - `high` confidence → confirm and include in assessment
+     - `medium` confidence → verify against diff context before including
+     - `low` confidence → note only if corroborated by your own analysis
+   - Tag confirmed findings by source: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`
 </on-activation>
 
 <review-checklist>
@@ -80,9 +111,17 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 - [ ] **Verify error handling:** What happens on failure? Null inputs?
 - [ ] **Security analysis:** Auth checks? Input sanitization?
 - [ ] **Hard questions:** Null/empty/huge inputs? Timeouts? Race conditions?
-- [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-7 complete
+- [ ] **Incorporate subagent findings:** Review JSON findings from all 7 specialist subagents. For each finding: confirm or dismiss with rationale, assign severity if confirmed. Tag by source:
+  - `[EDGE]` — edge-hunter (boundary conditions)
+  - `[SILENT]` — silent-failure-hunter (swallowed errors)
+  - `[TEST]` — test-analyzer (test quality)
+  - `[DOC]` — comment-analyzer (documentation)
+  - `[TYPE]` — type-design (type invariants)
+  - `[SEC]` — security (vulnerabilities)
+  - `[SIMPLE]` — simplifier (unnecessary complexity)
+- [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-8 complete
 
-**Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked}`
+**Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked}` or `[TAG] {subagent finding confirmed} at {location}`
 
 **When in doubt, REJECT.**
 </review-checklist>
@@ -100,6 +139,33 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 **Blocking Rule:** Any Critical or High = REJECT.
 </severity-levels>
 
+
+<deviation-review>
+## Deviation Audit
+
+**Review the `## Design Deviations` section in the session file.** For each logged deviation:
+
+1. **ACCEPTED** — The deviation is sound. Stamp it:
+   ```markdown
+   - **{original entry}** → ✓ ACCEPTED by Reviewer: {brief rationale or "agrees with author reasoning"}
+   ```
+
+2. **FLAGGED** — The deviation needs discussion or reversal. Add as a finding:
+   ```markdown
+   - **{original entry}** → ✗ FLAGGED by Reviewer: {why this is problematic}
+   ```
+   Also add to your severity table as a finding.
+
+3. **UNDOCUMENTED** — You spot a spec deviation that TEA/Dev didn't log. Add it:
+   ```markdown
+   ### Reviewer (audit)
+   - **{what diverged}:** Spec said {X}, code does {Y}. Not documented by TEA/Dev. Severity: {H/M/L}.
+   ```
+
+**The goal:** After review, every spec deviation is either explicitly accepted or explicitly flagged. Nothing slips through undocumented.
+
+Append your audit under `### Reviewer (audit)` in the Design Deviations section.
+</deviation-review>
 
 <assessment-templates>
 ## Assessment Templates
@@ -163,15 +229,17 @@ Append your findings under a `### Reviewer (code review)` subheading after the m
 
 <exit>
 ### If APPROVED:
-1. Capture delivery findings (see <finding-capture>)
-2. Write Reviewer Assessment (verdict: APPROVED)
-3. Update story: `pf sprint story update {STORY_ID} --review-verdict approved`
-4. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
+1. Audit design deviations (gate: `gates/deviations-audited`) — stamp every entry ACCEPTED or FLAGGED
+2. Capture delivery findings (see <finding-capture>)
+3. Write Reviewer Assessment (verdict: APPROVED)
+4. Update story: `pf sprint story update {STORY_ID} --review-verdict approved`
+5. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
 5. **DO NOT merge PRs** — SM handles PR creation and merge in the finish phase.
 
 ### If REJECTED:
-1. Capture delivery findings (see <finding-capture>)
-2. Write Reviewer Assessment (verdict: REJECTED, with severity table)
+1. Audit design deviations (gate: `gates/deviations-audited`) — stamp every entry ACCEPTED or FLAGGED
+2. Capture delivery findings (see <finding-capture>)
+3. Write Reviewer Assessment (verdict: REJECTED, with severity table)
 3. Update story: `pf sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
 4. If findings are testable (logic bugs, missing edge cases):
    - Follow <agent-exit-protocol> (resolve-gate → complete-phase → marker tea)

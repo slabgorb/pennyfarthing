@@ -22,7 +22,6 @@ from pf.benchmark.bmad_adapter import (
     translate_story_file,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures — minimal BMAD source content for testing
 # ---------------------------------------------------------------------------

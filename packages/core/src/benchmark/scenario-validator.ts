@@ -1,31 +1,35 @@
-/**
- * Scenario Validator
- *
- * Story 45-1: Add gold_standard schema to scenarios
- * Validates scenario YAML data including optional gold_standard field.
- */
+// scenario-validator.ts — Validates scenario YAML against schema
+// Story 46-1: Add difficulty_profile schema to scenarios
 
-// ============================================================================
-// Types
-// ============================================================================
+export interface DifficultyDimensions {
+  code_complexity?: number;
+  domain_knowledge?: number;
+  red_herring_count?: number;
+  issue_subtlety?: number;
+}
 
-export interface GoldStandard {
-  response: string;
-  score: number;
-  notes?: string;
-  graded_by: string;
+export interface DifficultyCalibration {
+  control_mean?: number;
+  control_stddev?: number;
+  n_runs?: number;
+}
+
+export type DifficultyTier = 'easy' | 'medium' | 'hard' | 'extreme';
+
+export interface DifficultyProfile {
+  tier: DifficultyTier;
+  dimensions?: DifficultyDimensions;
+  calibration?: DifficultyCalibration;
 }
 
 export interface ScenarioData {
-  id: string;
   name: string;
+  title: string;
   category: string;
   difficulty: string;
-  agent: string;
-  version: string;
-  description: string;
-  instructions: string;
-  gold_standard?: GoldStandard | null;
+  prompt: string;
+  difficulty_profile?: DifficultyProfile;
+  [key: string]: unknown;
 }
 
 export interface ValidationResult {
@@ -33,69 +37,74 @@ export interface ValidationResult {
   errors: string[];
 }
 
-// ============================================================================
-// Constants
-// ============================================================================
+const VALID_TIERS: readonly DifficultyTier[] = ['easy', 'medium', 'hard', 'extreme'];
+const VALID_DIMENSION_KEYS: readonly (keyof DifficultyDimensions)[] = [
+  'code_complexity',
+  'domain_knowledge',
+  'red_herring_count',
+  'issue_subtlety',
+];
 
-const FORBIDDEN_GRADED_BY = ['ai', 'auto', 'claude', 'agent'];
+/**
+ * Validate a scenario object against the schema.
+ * Returns {success, errors} — never throws.
+ */
+export function validateScenario(scenario: ScenarioData): ValidationResult {
+  if (scenario.difficulty_profile == null) {
+    return { success: true, errors: [] };
+  }
+  return validateDifficultyProfile(scenario.difficulty_profile);
+}
 
-// ============================================================================
-// Validation Functions
-// ============================================================================
-
-export function validateGoldStandard(goldStandard: unknown): ValidationResult {
+/**
+ * Validate the difficulty_profile field specifically.
+ * Returns {success, errors} — never throws.
+ */
+export function validateDifficultyProfile(profile: unknown): ValidationResult {
   const errors: string[] = [];
 
-  if (goldStandard === null || goldStandard === undefined || typeof goldStandard !== 'object') {
-    return { success: false, errors: ['gold_standard must be an object'] };
+  if (profile == null || typeof profile !== 'object') {
+    return { success: false, errors: ['difficulty_profile must be an object'] };
   }
 
-  const gs = goldStandard as Record<string, unknown>;
+  const p = profile as Record<string, unknown>;
 
-  // response: required, non-empty string
-  if (typeof gs.response !== 'string') {
-    errors.push('gold_standard.response must be a string');
-  } else if (gs.response.length === 0) {
-    errors.push('gold_standard.response must not be empty');
+  // tier is required and must be a valid enum value
+  if (!p.tier || typeof p.tier !== 'string' || !(VALID_TIERS as readonly string[]).includes(p.tier)) {
+    errors.push(`Invalid tier: expected one of ${VALID_TIERS.join(', ')}, got ${String(p.tier)}`);
   }
 
-  // score: required, integer 1-100
-  if (typeof gs.score !== 'number') {
-    errors.push('gold_standard.score must be a number');
-  } else if (!Number.isInteger(gs.score)) {
-    errors.push('gold_standard.score must be an integer');
-  } else if (gs.score < 1 || gs.score > 100) {
-    errors.push('gold_standard.score must be between 1 and 100');
+  // dimensions — optional object, but if present validate keys and values
+  if (p.dimensions != null) {
+    if (typeof p.dimensions !== 'object') {
+      errors.push('dimensions must be an object');
+    } else {
+      const dims = p.dimensions as Record<string, unknown>;
+      for (const [key, value] of Object.entries(dims)) {
+        if (!(VALID_DIMENSION_KEYS as readonly string[]).includes(key)) {
+          errors.push(`Unknown dimension key: ${key}`);
+          continue;
+        }
+        if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > 10) {
+          errors.push(`${key} must be an integer between 1 and 10, got ${String(value)}`);
+        }
+      }
+    }
   }
 
-  // graded_by: required, non-empty string, human-only (ADR-0034 rule 6)
-  if (typeof gs.graded_by !== 'string') {
-    errors.push('gold_standard.graded_by must be a string');
-  } else if (gs.graded_by.length === 0) {
-    errors.push('gold_standard.graded_by must not be empty');
-  } else if (FORBIDDEN_GRADED_BY.includes(gs.graded_by.toLowerCase())) {
-    errors.push('gold_standard.graded_by must be a human identifier, not: ' + gs.graded_by);
-  }
-
-  // notes: optional, but must be string if present
-  if (gs.notes !== undefined && typeof gs.notes !== 'string') {
-    errors.push('gold_standard.notes must be a string');
+  // calibration — optional object, but if present validate numeric non-negative values
+  if (p.calibration != null) {
+    if (typeof p.calibration !== 'object') {
+      errors.push('calibration must be an object');
+    } else {
+      const cal = p.calibration as Record<string, unknown>;
+      for (const [key, value] of Object.entries(cal)) {
+        if (typeof value !== 'number' || value < 0) {
+          errors.push(`calibration.${key} must be a non-negative number, got ${String(value)}`);
+        }
+      }
+    }
   }
 
   return { success: errors.length === 0, errors };
-}
-
-export function validateScenario(scenario: unknown): ValidationResult {
-  if (scenario === null || scenario === undefined || typeof scenario !== 'object') {
-    return { success: false, errors: ['scenario must be an object'] };
-  }
-
-  const s = scenario as Record<string, unknown>;
-
-  // gold_standard is optional — absent or null is valid
-  if (s.gold_standard === undefined || s.gold_standard === null) {
-    return { success: true, errors: [] };
-  }
-
-  return validateGoldStandard(s.gold_standard);
 }

@@ -112,10 +112,10 @@ describe('CLI Delegation Integration — AC5: Full Story Lifecycle', () => {
     // This may succeed or fail depending on whether there's an active session
     // The key assertion is that it returns a result object, not throws
     assert.ok(typeof statusResult.success === 'boolean');
-    if (statusResult.success && statusResult.data?.storyId) {
-      assert.ok(statusResult.data.storyId, 'Should include story ID');
-      assert.ok('phase' in statusResult.data, 'Should include phase field');
-      assert.ok('workflow' in statusResult.data, 'Should include workflow field');
+    if (statusResult.success) {
+      assert.ok(statusResult.data?.storyId, 'Should include story ID');
+      assert.ok(statusResult.data?.phase, 'Should include current phase');
+      assert.ok(statusResult.data?.workflow, 'Should include workflow name');
     }
   });
 

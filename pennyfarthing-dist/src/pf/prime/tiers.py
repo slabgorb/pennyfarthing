@@ -64,6 +64,7 @@ class ContextTier(Enum):
     REFRESH = "REFRESH"
     HANDOFF = "HANDOFF"
     MINIMAL = "MINIMAL"
+    SUBAGENT = "SUBAGENT"
 
 
 def tier_from_string(value: str) -> ContextTier:
@@ -183,6 +184,32 @@ def load_tier_components(
         topology_content = load_repos_topology(project_root)
         if topology_content:
             add_component("repos_topology", topology_content)
+
+        components["token_counts"] = token_counts
+        components["total_tokens"] = sum(token_counts.values())
+        return components
+
+    if tier == ContextTier.SUBAGENT:
+        # SUBAGENT: Session + sprint + repos. No agent def, persona, or guide
+        # (native .md file carries those).
+        sprint_content = load_sprint_context(project_root)
+        if sprint_content:
+            add_component("sprint_context", sprint_content)
+
+        topology_content = load_repos_topology(project_root)
+        if topology_content:
+            add_component("repos_topology", topology_content)
+
+        session_result = load_session_context(project_root)
+        if session_result:
+            filename, header, assessment = session_result
+            add_component("session_header", header)
+            if assessment:
+                add_component("session_assessment", assessment)
+
+        sidecars = load_sidecars(agent_name, project_root)
+        if sidecars:
+            add_component("sidecars", sidecars)
 
         components["token_counts"] = token_counts
         components["total_tokens"] = sum(token_counts.values())

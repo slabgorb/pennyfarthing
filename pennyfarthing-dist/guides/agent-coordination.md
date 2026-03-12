@@ -413,7 +413,15 @@ Perplexity provides real-time web intelligence for broader knowledge needs. Four
 | `perplexity_reason` | Medium | Trade-off analysis, logical problems |
 | `perplexity_research` | Slow (2-4 min) | Deep multi-source investigation (Architect only) |
 
-_Note: Perplexity tool details will be expanded when story 136-20 lands._
+**Speed-tier routing:** Default to `perplexity_ask` — it's fast and handles most questions. Escalate only when needed:
+1. `perplexity_ask` — First choice for any factual question ("does X support Y?", "what changed in v3?")
+2. `perplexity_search` — When you need specific URLs, changelogs, or release notes
+3. `perplexity_reason` — When you need step-by-step analysis or trade-off comparison
+4. `perplexity_research` — Deep multi-source investigation. **Architect only.** Takes 2-4 minutes. Never use for quick lookups.
+
+**Scope restriction:** Queries must relate to the active story or task. No open-ended browsing or curiosity-driven research.
+
+**Graceful degradation:** If Perplexity is unavailable or returns errors, proceed with training data knowledge and note "Perplexity unavailable — proceeding with training data" in your assessment. Do NOT block, retry in a loop, or ask the user to fix MCP configuration.
 
 ### Routing: Which Tool for Which Need?
 

@@ -94,6 +94,7 @@ _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
     "doctor": ("pf.doctor.cli", "doctor"),
     "dashboard": ("pf.dashboard.cli", "dashboard"),
     "benchmark": ("pf.benchmark.cli", "benchmark"),
+    "tmux": ("pf.tmux.cli", "tmux"),
 }
 
 
