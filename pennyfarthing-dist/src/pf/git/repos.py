@@ -246,6 +246,39 @@ def format_pr_title(
     )
 
 
+def check_stack_tool_health(project_root: Path | None = None) -> dict[str, Any]:
+    """Check if required stack tools are installed for stacked PR repos.
+
+    Returns:
+        Dict with success, checks list, and any errors.
+    """
+    import shutil
+    import subprocess
+
+    repos = load_repos_config(project_root)
+    stacked = {n: r for n, r in repos.items() if r.is_stacked}
+
+    if not stacked:
+        return {"success": True, "checks": [], "message": "No stacked PR repos configured"}
+
+    checks = []
+    errors = []
+
+    gt_path = shutil.which("gt")
+    checks.append({"name": "gt-installed", "pass": gt_path is not None})
+    if not gt_path:
+        errors.append(
+            "Graphite CLI (gt) not found. Install: brew install withgraphite/tap/graphite"
+        )
+
+    return {
+        "success": len(errors) == 0,
+        "stacked_repos": list(stacked.keys()),
+        "checks": checks,
+        "errors": errors,
+    }
+
+
 def get_build_order(project_root: Path | None = None) -> list[str]:
     """Get repos in build/dependency order.
 
