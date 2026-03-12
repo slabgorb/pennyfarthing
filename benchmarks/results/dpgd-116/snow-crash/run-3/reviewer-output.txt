@@ -1,0 +1,73 @@
+`keyring` is mentioned in the story spec but not included as a dependency. This is a judgment call — the story says "Credential storage: OS keychain via `keyring` crate" but login isn't implemented until Story 9.1. Not adding it is reasonable for a stub-only story.
+
+Now I have all the information needed for a thorough review. Here are my findings:
+
+---
+
+# Story 6.1 Review: CLI Framework & Structure
+
+*The Librarian has cross-referenced the ancient tablets of the architecture docs against the implemented code. Here are the findings from the Research Archives.*
+
+## Findings
+
+### [HIGH] F1 — Nightly `rustfmt` check fails at `output.rs`, multiple test files
+`cargo +nightly fmt --all --check` produces diffs in `output.rs:39`, `output.rs:74`, `cli_structure.rs:132`, `config_loading.rs:9`, `config_loading.rs:59`, `output_format.rs:107`, `shell_completion.rs:110`, `siem_client.rs:149`, `stub_handlers.rs:96`. Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." This is a blocking finding.
+
+### [HIGH] F2 — No `main.rs` binary entry point
+The story requires the crate to produce the `axiathon` binary. The `Cargo.toml` has no `[[bin]]` section and no `src/main.rs` exists. The crate is library-only. Without a binary entry point, there is no CLI binary at all — the central deliverable of this story. AC-3 requires `main.rs` to catch errors and call `std::process::exit()`. This is missing.
+
+### [HIGH] F3 — Missing `tui` and `logout` commands per AC-1
+AC-1 explicitly requires: "axiathon --help must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init." The `Commands` enum in `cli.rs` has no `Tui` or `Logout` variant. `tui` is an explicit requirement in AC-1 even though implementation is Epic 4. `logout` is also listed alongside `login`.
+
+### [HIGH] F4 — `with_token()` bypasses header injection validation (CWE-113)
+`SiemClient::with_token()` at `client.rs:36` accepts any string including CRLF sequences. Only `with_token_validated()` checks for injection. There's nothing preventing callers from using the unvalidated path. The validated variant should be the only public API, or `with_token` should perform validation internally. The unvalidated `with_token()` is a latent injection vector.
+
+### [MEDIUM] F5 — `RawConfig` silently ignores unknown TOML fields (secret exposure risk)
+At `config.rs:8`, `RawConfig` uses plain `#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]`. The test `client_config_does_not_have_token_field` at `config_loading.rs:122` explicitly checks that a `token` field in TOML is silently ignored — but this means operators could accidentally put secrets in the config file thinking they're used, and they'd just be silently dropped with no warning. A warning or error on unknown fields would be safer. The test comment even acknowledges this: "it should be ignored or cause a warning."
+
+### [MEDIUM] F6 — `OutputFormatter._format` field is dead code
+At `output.rs:36`, the `_format` field is prefixed with underscore to suppress warnings but is never read. The `format_table`/`format_json`/`format_csv` methods are called explicitly rather than dispatching on the stored format. There should be a single `format()` method that dispatches based on the stored format, or the field should be removed. Currently the struct stores state it never uses.
+
+### [MEDIUM] F7 — `apply_env_override` silently ignores invalid `AXIATHON_TIMEOUT` values
+At `config.rs:66`, if `value.parse::<u64>()` fails, the error is silently swallowed with `if let Ok(t)`. Negative values passed as strings (e.g., "-1") and garbage strings are silently ignored. Additionally, zero timeout via env var is not rejected (the TOML path rejects `timeout = 0` but env override doesn't).
+
+### [MEDIUM] F8 — `ServerError` Display leaks internal detail string
+At `error.rs:8`, the `Display` impl for `ServerError` is `"server error: please check server logs for details"` — this looks sanitized. However, the inner `String` field at `error.rs:9` stores the raw server message (e.g., `"panic at thread 'main': index out of bounds"` from the test). The `Debug` output will expose this. The `Display` impl correctly hides it, but `{:?}` formatting in logs or error chains could still leak. The security comment is accurate for Display; this is a minor concern.
+
+### [MEDIUM] F9 — Workspace dependency version mismatch: `toml` 0.8 vs story spec's 0.9
+The story spec says `toml` 0.9 but workspace `Cargo.toml` declares 0.8. `toml` 0.9 doesn't exist (the crate jumped from 0.8 to 1.0). The story spec is wrong, and the implementation is correct. However, `toml` 1.0 is the current release and the workspace is pinned to an older version. Not a code defect but worth noting.
+
+### [LOW] F10 — `generate_completion` takes `&str` instead of `Shell` enum
+At `completion.rs:7`, the function takes a string and manually matches shell names, returning `String::new()` for unknown shells. Since the CLI already parses the shell as `clap_complete::Shell` enum (in `cli.rs:71`), the function should accept `Shell` directly. The string-matching re-implements what clap already validates, and the empty-string fallback for unknown shells is a silent failure.
+
+### [LOW] F11 — Missing `init` stub handler test for story reference
+The `stub_handlers.rs` tests verify the story reference for `status` (Story 6.2) but the `init` command at `commands/init.rs:4` references "Story 6.1" which seems incorrect — `init` should be functional per the story scope ("axiathon init first-time setup (functional, not stub)"), yet it's implemented as a stub.
+
+### [LOW] F12 — No test for `OutputFormatter` auto-detecting TTY vs piped
+AC-4 requires "Table default for TTY, JSON for piped output" using `std::io::IsTerminal`. There is no TTY detection logic anywhere in the codebase, and no test for this behavior.
+
+### [VERIFIED] V1 — `#![forbid(unsafe_code)]` present at `lib.rs:2`
+### [VERIFIED] V2 — `#[non_exhaustive]` on `CliError` enum at `error.rs:6`
+### [VERIFIED] V3 — All global flags use `global = true` per AC-5
+### [VERIFIED] V4 — Clap derive macros only (no imperative builders) per AC-6
+### [VERIFIED] V5 — Header injection checks exist for token and tenant (CWE-113)
+### [VERIFIED] V6 — Exit codes 1/3/4 correctly mapped per AC-3
+### [VERIFIED] V7 — CWE-209: `Display` impl on `ServerError` does not leak the inner string
+### [VERIFIED] V8 — All 113 tests pass, clippy clean with `-D warnings`
+### [VERIFIED] V9 — Workspace dependency declarations used correctly
+### [VERIFIED] V10 — No server-side crate imports (dependency rule respected)
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+### Blocking issues (must fix):
+1. **F1** — Nightly `rustfmt` failures. Run `cargo +nightly fmt --all` to fix.
+2. **F2** — No `main.rs` / binary entry point. The story's central deliverable is missing.
+3. **F3** — Missing `Tui` and `Logout` command variants per AC-1.
+4. **F4** — `with_token()` / `with_tenant()` bypass CWE-113 validation. Either remove the unvalidated API or make validation mandatory.
+
+### Should fix (non-blocking but strongly recommended):
+5. **F5** — Add `#[serde(deny_unknown_fields)]` or warn on unknown config fields.
+6. **F7** — Validate env var overrides (reject zero/negative timeout, invalid parse).
+7. **F11** — `init` is stubbed but the story scope says it should be functional.

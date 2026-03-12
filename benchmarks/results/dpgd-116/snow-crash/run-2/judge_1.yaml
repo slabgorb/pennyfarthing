@@ -1,0 +1,80 @@
+scenario_id: dpgd-116
+theme: snow-crash
+run_id: 2
+judge_version: v2
+judge_pass: 1
+total_caught: 6
+total_findings: 7
+weighted_caught: 31
+total_weight: 37
+score_pct: 83.8
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: tea
+  evidence: TEA explicitly listed 'Silent error swallowing detection' as a security
+    test in the config_loading.rs test file (15 tests for AC-8).
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: 'Dev implemented ''CWE-209 safe Display'' on CliError. Reviewer verified:
+    ''ServerError Display suppresses the server body, showing only the HTTP status
+    code.'' Same vulnerability class (CWE-209) addressed, though Io(transparent) variant
+    specifically not called out.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote CWE-113 header injection tests for tenant ID and token. Dev\
+    \ implemented stripping \\r\\n from tenant and token values (client.rs:23,29).\
+    \ Reviewer verified. However, the type-safety fix (using TenantId from axiathon-core\
+    \ instead of raw String) was not addressed \u2014 only the injection vector was\
+    \ mitigated via sanitization."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged as HIGH: 'Workspace dependency declarations not used\
+    \ consistently \u2014 clap_complete, comfy-table, csv, dirs, reqwest, toml use\
+    \ direct version strings instead of workspace declarations.'"
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer examined this exact issue but reached the OPPOSITE conclusion:\
+    \ '[VERIFIED] Credential exclusion from config \u2014 RawConfig has no token/secret\
+    \ fields. Test confirms tokens placed in config file are silently ignored rather\
+    \ than loaded.' Ground truth says silent ignoring IS the problem (user believes\
+    \ they're authenticated, secret sits on disk in plaintext)."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] Vacuous test assertion \u2014 tautological\
+    \ check' at siem_client.rs:315-318: 'assert!(result.is_ok() || result.is_err(),\
+    \ ...) \u2014 This assertion is always true. It proves nothing.' Same category\
+    \ (vacuous OR assertion), different test file than ground truth."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] Vacuous token injection test' \u2014 '!client.has_token()\
+    \ || { true } means this assertion can never fail... the test doesn't actually\
+    \ verify the sanitized value.' Same type of issue (test that proves nothing),\
+    \ adjacent location."

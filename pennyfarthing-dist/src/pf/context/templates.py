@@ -225,9 +225,7 @@ def generate_templates(
     if tier:
         tier_upper = tier.upper()
         if tier_upper not in tiers:
-            raise ValueError(
-                f"Unknown tier '{tier}' — valid tiers: {', '.join(tiers.keys())}"
-            )
+            raise ValueError(f"Unknown tier '{tier}' — valid tiers: {', '.join(tiers.keys())}")
         tier_components = set(tiers[tier_upper].get("components", []))
     else:
         tier_components = None  # all components

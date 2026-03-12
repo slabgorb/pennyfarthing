@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Partner
   portrait_style: ", gritty urban screenprinted-poster style, Baltimore street scenes"
-  tier: C
+  tier: S
   spinner_verbs:
     - Corner watching
     - Working the wire
@@ -51,12 +51,20 @@ theme:
   dimensions:
     tone: gritty
     era: contemporary
-    genre: crime-drama
+    genre: drama
     energy: relentless
+    zeitgeist: moderate
+    scrutiny: skeptical
+    cooperation_model: transactional
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: conversational
+    intellectual_style: analytical
+    stakes: institutional
 
 zeitgeist:
   score: 81.3
-  rating: rich
+  rating: moderate
 
 agents:
   orchestrator:

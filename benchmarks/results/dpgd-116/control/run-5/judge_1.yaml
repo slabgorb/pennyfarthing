@@ -1,0 +1,82 @@
+scenario_id: dpgd-116
+theme: null
+run_id: 1
+judge_version: v2
+judge_pass: 1
+total_caught: 2
+total_findings: 7
+weighted_caught: 10
+total_weight: 37
+score_pct: 27.0
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "Reviewer observation #17 examines config.rs:57 and marks it VERIFIED\
+    \ correct: 'NotFound IO error correctly falls back to Ok(Self::default()) rather\
+    \ than failing.' This is an opposite conclusion \u2014 the reviewer examined the\
+    \ exact code and concluded it was correct, but the ground truth says it swallows\
+    \ ALL errors (parse, permission, encoding) not just NotFound."
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote CWE-209 security tests: ''ServerError Display must not leak
+    stack traces/internal details.'' Reviewer verified at observation #14: ''ServerError
+    display suppresses the raw body.'' Same vulnerability class (CWE-209 information
+    exposure) addressed, though the specific Io(transparent) variant was not flagged.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer observation #11: 'tenant field is Option<String> not TenantId\
+    \ \u2014 cli.rs:22. The Rust coding rules mandate newtypes for IDs: TenantId(String).\
+    \ The --tenant flag and SiemClient.tenant_id both use raw String. While TenantId\
+    \ comes from axiathon-core, the CLI should validate and convert to TenantId at\
+    \ the boundary.'"
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the use of direct version strings instead of workspace
+    = true for the 6 dependencies. The dev summary mentions adding deps to workspace
+    Cargo.toml but the crate-level usage of direct versions was not identified.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer observation #18 examines the exact token behavior and marks\
+    \ it VERIFIED correct: 'Token not stored in config... RawConfig reads the field\
+    \ but it's #[allow(dead_code)] and never propagated to ClientConfig.' This is\
+    \ an opposite conclusion \u2014 the reviewer concluded the behavior was correct\
+    \ when the ground truth identifies it as a usability/security trap. Observation\
+    \ #4 flags deny_unknown_fields but that wouldn't catch token since it IS a known\
+    \ field in RawConfig."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (None || true).
+    TEA wrote the config tests but introduced the vacuous assertion itself. Neither
+    dev nor reviewer caught the logic error in the test.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test. TEA wrote tests including
+    this one but the lack of meaningful assertions was not flagged by dev or reviewer.

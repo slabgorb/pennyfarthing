@@ -37,9 +37,7 @@ def load_schema(schema_path: Path) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _validate_structured(
-    name: str, content: dict, schema: dict
-) -> list[ValidationError]:
+def _validate_structured(name: str, content: dict, schema: dict) -> list[ValidationError]:
     """Validate a structured (dict) component — enum values, required fields."""
     errors: list[ValidationError] = []
     fields = schema.get("fields", {})
@@ -49,59 +47,67 @@ def _validate_structured(
         field_type = field_def.get("type", "string")
 
         if field_required and field_name not in content:
-            errors.append(ValidationError(
-                component=name,
-                message=f"Required field '{field_name}' is missing",
-                field_path=field_name,
-            ))
+            errors.append(
+                ValidationError(
+                    component=name,
+                    message=f"Required field '{field_name}' is missing",
+                    field_path=field_name,
+                )
+            )
             continue
 
         if field_name in content and field_type == "enum":
             value = content[field_name]
             valid_values = field_def.get("values", [])
             if value not in valid_values:
-                errors.append(ValidationError(
-                    component=name,
-                    message=(
-                        f"Invalid enum value '{value}' for '{field_name}' "
-                        f"— must be one of: {', '.join(str(v) for v in valid_values)}"
-                    ),
-                    field_path=field_name,
-                ))
+                errors.append(
+                    ValidationError(
+                        component=name,
+                        message=(
+                            f"Invalid enum value '{value}' for '{field_name}' "
+                            f"— must be one of: {', '.join(str(v) for v in valid_values)}"
+                        ),
+                        field_path=field_name,
+                    )
+                )
 
     return errors
 
 
-def _validate_markdown(
-    name: str, content: str, schema: dict
-) -> list[ValidationError]:
+def _validate_markdown(name: str, content: str, schema: dict) -> list[ValidationError]:
     """Validate a markdown component — min_length, required/recommended sections."""
     errors: list[ValidationError] = []
     validation = schema.get("validation", {})
 
     min_length = validation.get("min_length")
     if min_length and len(content) < min_length:
-        errors.append(ValidationError(
-            component=name,
-            message=f"Content length ({len(content)}) is below minimum ({min_length})",
-        ))
+        errors.append(
+            ValidationError(
+                component=name,
+                message=f"Content length ({len(content)}) is below minimum ({min_length})",
+            )
+        )
 
     for section in validation.get("required_sections", []):
         if f"<{section}" not in content:
-            errors.append(ValidationError(
-                component=name,
-                message=f"Missing required section '<{section}>'",
-                field_path=section,
-            ))
+            errors.append(
+                ValidationError(
+                    component=name,
+                    message=f"Missing required section '<{section}>'",
+                    field_path=section,
+                )
+            )
 
     for section in validation.get("recommended_sections", []):
         if f"<{section}" not in content:
-            errors.append(ValidationError(
-                component=name,
-                message=f"Missing recommended section '<{section}>'",
-                field_path=section,
-                severity="warning",
-            ))
+            errors.append(
+                ValidationError(
+                    component=name,
+                    message=f"Missing recommended section '<{section}>'",
+                    field_path=section,
+                    severity="warning",
+                )
+            )
 
     return errors
 
@@ -123,9 +129,7 @@ def _content_as_text(content: str | list | dict) -> str:
     return str(content)
 
 
-def _validate_text(
-    name: str, content: str | list | dict, schema: dict
-) -> list[ValidationError]:
+def _validate_text(name: str, content: str | list | dict, schema: dict) -> list[ValidationError]:
     """Validate a text component — pattern matching, required/recommended fields."""
     errors: list[ValidationError] = []
     validation = schema.get("validation", {})
@@ -134,37 +138,41 @@ def _validate_text(
     pattern = validation.get("pattern")
     if pattern and text:
         if not re.search(pattern, text):
-            errors.append(ValidationError(
-                component=name,
-                message=f"Content does not match required pattern '{pattern}'",
-            ))
+            errors.append(
+                ValidationError(
+                    component=name,
+                    message=f"Content does not match required pattern '{pattern}'",
+                )
+            )
 
     text_lower = text.lower()
     for field in validation.get("required_fields", []):
         search_term = field.split()[0].lower()
         if search_term not in text_lower:
-            errors.append(ValidationError(
-                component=name,
-                message=f"Missing required field '{field}' in content",
-                field_path=field,
-            ))
+            errors.append(
+                ValidationError(
+                    component=name,
+                    message=f"Missing required field '{field}' in content",
+                    field_path=field,
+                )
+            )
 
     for field in validation.get("recommended_fields", []):
         search_term = field.split()[0].lower()
         if search_term not in text_lower:
-            errors.append(ValidationError(
-                component=name,
-                message=f"Missing recommended field '{field}' in content",
-                field_path=field,
-                severity="warning",
-            ))
+            errors.append(
+                ValidationError(
+                    component=name,
+                    message=f"Missing recommended field '{field}' in content",
+                    field_path=field,
+                    severity="warning",
+                )
+            )
 
     return errors
 
 
-def _validate_collection(
-    name: str, content: dict, schema: dict
-) -> list[ValidationError]:
+def _validate_collection(name: str, content: dict, schema: dict) -> list[ValidationError]:
     """Validate a collection component — check recommended tags per item."""
     errors: list[ValidationError] = []
     items = schema.get("items", {})
@@ -179,12 +187,14 @@ def _validate_collection(
         recommended_tags = item_schema.get("validation", {}).get("recommended_tags", [])
         for tag in recommended_tags:
             if f"<{tag}" not in item_content:
-                errors.append(ValidationError(
-                    component=name,
-                    message=f"Missing recommended '<{tag}>' tag in {item_name}",
-                    field_path=item_name,
-                    severity="warning",
-                ))
+                errors.append(
+                    ValidationError(
+                        component=name,
+                        message=f"Missing recommended '<{tag}>' tag in {item_name}",
+                        field_path=item_name,
+                        severity="warning",
+                    )
+                )
 
     return errors
 
@@ -204,25 +214,31 @@ def validate_component(
         return []
 
     if content is None:
-        return [ValidationError(
-            component=name,
-            message=f"Component '{name}' content is None — expected valid content",
-        )]
+        return [
+            ValidationError(
+                component=name,
+                message=f"Component '{name}' content is None — expected valid content",
+            )
+        ]
 
     if isinstance(content, str) and len(content.strip()) == 0:
-        return [ValidationError(
-            component=name,
-            message=f"Component '{name}' content is empty — expected valid content",
-        )]
+        return [
+            ValidationError(
+                component=name,
+                message=f"Component '{name}' content is empty — expected valid content",
+            )
+        ]
 
     comp_type = component_schema.get("type", "text")
 
     if comp_type == "structured":
         if not isinstance(content, dict):
-            return [ValidationError(
-                component=name,
-                message=f"Expected structured dict for '{name}', got {type(content).__name__}",
-            )]
+            return [
+                ValidationError(
+                    component=name,
+                    message=f"Expected structured dict for '{name}', got {type(content).__name__}",
+                )
+            ]
         return _validate_structured(name, content, component_schema)
 
     if comp_type == "markdown":
@@ -245,9 +261,7 @@ def validate_tier_components(
     """Validate that all required components for a tier are present and valid."""
     tiers = schema.get("tiers", {})
     if tier not in tiers:
-        raise ValueError(
-            f"Unknown tier '{tier}' — valid tiers: {', '.join(tiers.keys())}"
-        )
+        raise ValueError(f"Unknown tier '{tier}' — valid tiers: {', '.join(tiers.keys())}")
 
     tier_def = tiers[tier]
     tier_components = tier_def.get("components", [])
@@ -261,10 +275,12 @@ def validate_tier_components(
 
         if comp_name not in components:
             if is_required:
-                result.errors.append(ValidationError(
-                    component=comp_name,
-                    message=f"Required component '{comp_name}' is missing for tier {tier}",
-                ))
+                result.errors.append(
+                    ValidationError(
+                        component=comp_name,
+                        message=f"Required component '{comp_name}' is missing for tier {tier}",
+                    )
+                )
             continue
 
         comp_errors = validate_component(comp_name, components[comp_name], comp_schema)
@@ -295,10 +311,12 @@ def validate_context_file(
     if not content.strip():
         return ContextValidationResult(
             valid=False,
-            errors=[ValidationError(
-                component="document",
-                message="Context file is empty",
-            )],
+            errors=[
+                ValidationError(
+                    component="document",
+                    message="Context file is empty",
+                )
+            ],
         )
 
     try:
@@ -306,19 +324,23 @@ def validate_context_file(
     except yaml.YAMLError as e:
         return ContextValidationResult(
             valid=False,
-            errors=[ValidationError(
-                component="document",
-                message=f"Invalid YAML: {e}",
-            )],
+            errors=[
+                ValidationError(
+                    component="document",
+                    message=f"Invalid YAML: {e}",
+                )
+            ],
         )
 
     if not isinstance(data, dict):
         return ContextValidationResult(
             valid=False,
-            errors=[ValidationError(
-                component="document",
-                message="Context document must be a YAML mapping",
-            )],
+            errors=[
+                ValidationError(
+                    component="document",
+                    message="Context document must be a YAML mapping",
+                )
+            ],
         )
 
     schema = load_schema(schema_path)
@@ -328,10 +350,12 @@ def validate_context_file(
     if not components:
         return ContextValidationResult(
             valid=False,
-            errors=[ValidationError(
-                component="document",
-                message="No components found in context document",
-            )],
+            errors=[
+                ValidationError(
+                    component="document",
+                    message="No components found in context document",
+                )
+            ],
         )
 
     return validate_tier_components(components, schema, tier)
@@ -368,16 +392,20 @@ def validate_context_sources(
         elif fallback_path and fallback_path.exists():
             result.components_checked += 1
         elif is_required:
-            result.errors.append(ValidationError(
-                component=comp_name,
-                message=f"Required source file not found: {source_path}",
-            ))
+            result.errors.append(
+                ValidationError(
+                    component=comp_name,
+                    message=f"Required source file not found: {source_path}",
+                )
+            )
 
     if result.components_checked == 0:
-        result.errors.append(ValidationError(
-            component="sources",
-            message="No context source files found in project",
-        ))
+        result.errors.append(
+            ValidationError(
+                component="sources",
+                message="No context source files found in project",
+            )
+        )
 
     result.valid = len(result.errors) == 0
     return result

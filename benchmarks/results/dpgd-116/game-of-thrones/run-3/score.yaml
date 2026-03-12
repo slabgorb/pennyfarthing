@@ -1,0 +1,73 @@
+scenario_id: dpgd-116
+theme: game-of-thrones
+run_id: 3
+judge_version: v2
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors including
+    parse/permission failures. The reviewer flagged serde(flatten) absorbing typos
+    but not the broader error-swallowing in file loading.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote CWE-209 tests: ''Server error display must not leak stack traces,
+    exception names, or source file paths.'' Reviewer also flagged NotFound Display
+    leaking raw server response body as HIGH CWE-209. Same vulnerability class.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote CWE-113 header injection tests: 'CR, LF, CRLF, and null bytes\
+    \ rejected in token and tenant ID values.' Dev implemented rejection in client.rs:65-71.\
+    \ However, the specific fix of using Option<TenantId> from axiathon-core was not\
+    \ flagged \u2014 pipeline addressed the injection symptom, not the type-safety\
+    \ root cause."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Reviewer noted toml version mismatch (0.8 vs 0.9) but did not flag the
+    broader issue of 6 dependencies using direct version strings instead of workspace
+    = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged as MEDIUM: 'serde(flatten) silently absorbs config typos\
+    \ at config.rs:15' and explicitly suggested '#[serde(deny_unknown_fields)]' \u2014\
+    \ same class of issue as token field being silently ignored."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ... always true). No test or review comment addresses this.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the test with zero assertions that only checks non-panic.
+    No review comment addresses 'let _ = config' pattern.

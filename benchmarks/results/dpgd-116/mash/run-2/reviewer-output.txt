@@ -1,0 +1,162 @@
+OK the test runs (just the filter was wrong earlier). Now I have all the information I need for a thorough review. Here's my full adversarial review:
+
+---
+
+# Story 6.1 Review: CLI Framework & Structure
+
+**Reviewer:** Colonel Sherman Potter
+**Disposition:** Skeptical until proven otherwise
+
+*"I've seen more field hospitals than hot meals, and I know when something's held together with baling wire. Let me walk through this one by one."*
+
+---
+
+## Findings
+
+### [CRITICAL] No binary entry point — `main.rs` does not exist
+**`crates/axiathon-client/src/main.rs` — MISSING**
+
+The entire story is supposed to deliver the `axiathon` binary. There is no `main.rs`, no `[[bin]]` in `Cargo.toml`, and no command dispatch logic anywhere. This means:
+- No command dispatch (CLI parses args but never routes to handlers)
+- No `std::process::exit()` with exit codes (AC-3 untestable in real binary)
+- No Tokio runtime init for async HTTP
+- The crate produces only `libaxiathon_client.rlib`, not the `axiathon` executable
+
+**Fails:** AC-1, AC-3, AC-7, AC-9 (completions write to stdout from binary), AC-10 (stubs print and exit)
+
+### [CRITICAL] `init` command is an empty stub, story scope says "functional, not stub"
+**`crates/axiathon-client/src/commands/init.rs:1-5`**
+
+The story scope explicitly says: *"Shell completion generation (functional, not stub)"* and *"`axiathon init` first-time setup (functional, not stub)"*. `completion.rs` has a real `generate_completion()` function (good), but `init.rs` is just:
+```rust
+pub struct InitArgs;
+```
+No handler, no first-time setup logic, no test coverage. This is an incomplete delivery.
+
+### [HIGH] Missing `tui` and `logout` commands per AC-1
+**`crates/axiathon-client/src/cli.rs:48-70`**
+
+AC-1 states: *"`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, login/logout, tui, completion, init."*
+
+The `Commands` enum is missing:
+- `Tui` — required per AC-1, launches TUI mode (even as stub)
+- `Logout` — AC-1 says `login/logout`, only `Login` is present
+
+### [HIGH] `SiemClient` creates a new `reqwest::Client` on every request
+**`crates/axiathon-client/src/client.rs:66`**
+
+```rust
+let http = reqwest::Client::new(); // created per-request
+```
+
+`reqwest::Client` is designed to be reused — it manages a connection pool, TLS session cache, and cookie jar. Creating one per request means:
+- New TLS handshake every request
+- Connection pool immediately discarded
+- File descriptor exhaustion under load
+
+The client should store `reqwest::Client` as a struct field.
+
+### [HIGH] `RawConfig` silently accepts unknown fields — security-sensitive fields ignored without warning
+**`crates/axiathon-client/src/config.rs:9-13`**
+
+```rust
+#[derive(Debug, serde::Deserialize, Default)]
+struct RawConfig {
+    server_url: Option<String>,
+    timeout: Option<i64>,
+}
+```
+
+Missing `#[serde(deny_unknown_fields)]`. If an operator puts `token = "my-secret"` in `cli.toml` (a natural mistake), serde silently drops it. The operator believes their token is configured but it isn't. This is a usability trap and a security concern — the token sits in plaintext on disk doing nothing, with the operator unaware.
+
+At minimum, warn on unknown fields. Ideally, `deny_unknown_fields` returns an error telling operators tokens belong in the keychain.
+
+### [HIGH] Two vacuous tests — assertions never execute
+**`crates/axiathon-client/tests/config_loading.rs:206-221`** — `config_error_does_not_expose_file_contents`
+
+This test writes `secret_key = "super-secret-value-12345"` to a TOML file, then calls `load_from()`. Since `RawConfig` silently ignores unknown fields, `load_from()` returns `Ok(...)`. The `if let Err(e)` branch never executes, so the assertion about not exposing secrets **never runs**. This test always passes regardless of behavior. It's a false green.
+
+**`crates/axiathon-client/tests/config_loading.rs:113-136`** — `config_does_not_load_token_from_file`
+
+This test has the same issue but is less severe: it calls `has_secret_fields()` which is a hardcoded `false` return. The test asserts a constant. It can never fail regardless of what `RawConfig` does or doesn't parse.
+
+### [MEDIUM] `keyring` dependency missing from workspace
+**`Cargo.toml` (workspace) and `crates/axiathon-client/Cargo.toml`**
+
+The story's Technical Guardrails section states: *"Add to [workspace.dependencies]: ... keyring 3 ..."*. It's not present. While the actual keyring integration is in Story 9.1, the dependency was supposed to be declared here per the workspace dependency management plan. Not blocking but a deviation from spec.
+
+### [MEDIUM] AXIATHON_TIMEOUT env var silently ignores invalid values
+**`crates/axiathon-client/src/config.rs:59-65`**
+
+```rust
+if let Ok(t) = std::env::var("AXIATHON_TIMEOUT") {
+    if let Ok(t) = t.parse::<u64>() {
+        if t > 0 {
+            config.timeout = t;
+        }
+    }
+}
+```
+
+If `AXIATHON_TIMEOUT=garbage` or `AXIATHON_TIMEOUT=0`, the env var is silently ignored and the file/default value is used. An operator setting `AXIATHON_TIMEOUT=0` to test edge cases gets no feedback that their setting was dropped. At minimum, log a warning.
+
+### [MEDIUM] `tenant` field uses raw `Option<String>` instead of `TenantId` newtype
+**`crates/axiathon-client/src/cli.rs:34` and `crates/axiathon-client/src/client.rs:9`**
+
+The Rust coding rules mandate: *"Newtypes for IDs: TenantId(String) — prevents mixing ID types."* `axiathon-core` exports `TenantId`, but both `Cli` and `SiemClient` use raw `Option<String>` for tenant. This bypasses validated constructors at the trust boundary (CLI input is external input).
+
+### [MEDIUM] `build_request` panics on invalid HTTP method
+**`crates/axiathon-client/src/client.rs:65`**
+
+```rust
+let method = reqwest::Method::from_bytes(method.as_bytes()).expect("valid HTTP method");
+```
+
+The Rust rules say: *"No unwrap() in production code — use ? or expect() with actionable message."* While `expect()` is used here, the message isn't actionable and this is a panic path in production code. The method string comes from handler code (trusted), but returning a `Result` would be more defensive.
+
+### [MEDIUM] Nightly rustfmt formatting violations
+**Multiple test files**
+
+`cargo +nightly fmt --all --check` reports formatting diffs across test files (import ordering, line wrapping). Per the gotchas sidecar: *"Always include cargo +nightly fmt --all --check in the preflight. If it fails, flag it before approval."*
+
+### [LOW] `toml` version mismatch — Cargo.toml says `0.8`, story spec says `0.9`
+**`crates/axiathon-client/Cargo.toml:21`**
+
+Story Technical Guardrails specify `toml 0.9`, but `Cargo.toml` declares `toml = "0.8"`. Minor, but a spec deviation.
+
+### [VERIFIED] Error types are well-designed
+`error.rs` uses `thiserror`, `#[non_exhaustive]`, has the security comment on Display, and exit code mapping is correct (3=auth, 4=authz, 1=general).
+
+### [VERIFIED] Output formatters work correctly
+All three formatters (Table, JSON, CSV) implement the `OutputFormatter` trait. JSON includes the `ResponseMetadata` envelope. CSV uses the `csv` crate for proper escaping. Tests verify actual formatting behavior.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` is present
+`lib.rs:2` — compliant with Rust coding rules.
+
+### [VERIFIED] Shell completion generation is functional
+`completion.rs` uses `clap_complete::generate()` correctly for all four shell types.
+
+### [VERIFIED] Config precedence is correct
+Env vars override file values, file values override defaults. Tests confirm this.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+### Blocking Issues (must fix):
+1. **[CRITICAL]** No `main.rs` — cannot produce the `axiathon` binary
+2. **[CRITICAL]** `init` command is empty despite "functional, not stub" requirement
+3. **[HIGH]** Missing `tui` and `logout` command groups per AC-1
+4. **[HIGH]** `reqwest::Client` created per-request — will fail under any real use
+5. **[HIGH]** `RawConfig` silently swallows unknown fields including security-sensitive ones
+6. **[HIGH]** Two vacuous tests that can never fail (false green)
+
+### Non-blocking (should fix):
+7. **[MEDIUM]** Missing `keyring` workspace dependency
+8. **[MEDIUM]** Silent env var validation failures
+9. **[MEDIUM]** Raw `String` instead of `TenantId` newtype at CLI boundary
+10. **[MEDIUM]** `build_request` panics on invalid method
+11. **[MEDIUM]** Nightly fmt violations
+12. **[LOW]** `toml` version mismatch with spec
+
+*"Son, the bones are good here — the error typing, the output formatting, the config precedence. But you can't send a patient to recovery when they don't have a pulse. Get that main.rs in, wire up the dispatch, fix the security holes in config parsing, and come back. I've seen worse, but I'm not signing off on this one yet."*

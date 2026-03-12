@@ -110,9 +110,7 @@ class StatusFooter(Static):
             self._client.subscribe("stats", self._handle_stats_message)
             self._client.on_state_change(self._on_connection_state_change)
         try:
-            self._refresh_timer = self.set_interval(
-                self.refresh_interval, self.request_refresh
-            )
+            self._refresh_timer = self.set_interval(self.refresh_interval, self.request_refresh)
         except RuntimeError:
             pass
 
@@ -175,6 +173,7 @@ class StatusFooter(Static):
         """Call context_window.check_context() directly as fallback."""
         try:
             from pf.context_window import check_context
+
             result = check_context()
             if result.error:
                 return None
@@ -187,9 +186,12 @@ class StatusFooter(Static):
                 "usablePercent": result.usable_percent,
                 "available": result.available,
                 "tier": (
-                    "MINIMAL" if result.usable_percent >= 85
-                    else "HANDOFF" if result.usable_percent >= 65
-                    else "REFRESH" if result.usable_percent >= 50
+                    "MINIMAL"
+                    if result.usable_percent >= 85
+                    else "HANDOFF"
+                    if result.usable_percent >= 65
+                    else "REFRESH"
+                    if result.usable_percent >= 50
                     else "FULL"
                 ),
                 "error": None,

@@ -220,18 +220,18 @@ Claude Code's OTEL SDK initializes before session hooks run. The `CLAUDE_ENV_FIL
 
 ### Architecture
 
-Both display modes are wrappers around **WheelHub**, the shared Express/WebSocket server:
+Both display modes are wrappers around **WheelHub**, the Python FastAPI server:
 
 ```mermaid
 graph TB
     subgraph "BikeRack GUI (Browser)"
-        C["pf bikerack start<br/>Electron + React UI"]
+        C["pf bikerack start<br/>React UI"]
     end
-    subgraph "BikeRack (CLI)"
-        BR["Node.js server"]
+    subgraph "BikeRack TUI (Terminal)"
+        BR["Python FastAPI server"]
     end
 
-    C --> WH["WheelHub<br/>(shared server)"]
+    C --> WH["WheelHub<br/>(uvicorn)"]
     BR --> WH
 
     C -- "writes" --> BP2[".bikerack-port"]

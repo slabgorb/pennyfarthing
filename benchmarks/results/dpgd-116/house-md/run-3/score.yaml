@@ -1,0 +1,74 @@
+scenario_id: dpgd-116
+theme: house-md
+run_id: 3
+judge_version: v2
+total_caught: 4
+total_findings: 7
+weighted_caught: 20
+total_weight: 37
+score_pct: 54.1
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors including
+    parse/permission failures. The reviewer flagged Config Display swallowing detail
+    but not the underlying error-swallowing in the fallback logic.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[HIGH] CWE-209 \u2014 NotFound and ServerError leak\
+    \ server response body to user' and TEA wrote security tests for CWE-209 error\
+    \ exposure. Same vulnerability class, different instance."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[LOW] tenant CLI flag accepts raw String \u2014 not\
+    \ validated as TenantId' noting 'axiathon-core defines TenantId as a validated\
+    \ newtype' and it's 'inconsistent with the project's newtype philosophy.' TEA\
+    \ also wrote header injection tests for CRLF in tenant ID."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that 6 dependencies use direct version strings instead
+    of workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged '[MEDIUM] ClientConfig silently accepts unknown fields'
+    and specifically noted 'A config file with token = "my-secret" is silently ignored'
+    recommending '#[serde(deny_unknown_fields)] or at minimum warn on unknown config
+    keys.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[HIGH] Vacuous assertion \u2014 config_returns_error_for_missing_file\
+    \ proves nothing' identifying 'result.is_ok() || result.is_err() is always true.'\
+    \ Same category of vacuous OR-assertion, adjacent test location."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the test with zero assertions (let _ = config with
+    no assert_eq! checks). The reviewer's vacuous assertion finding covered a different
+    test.

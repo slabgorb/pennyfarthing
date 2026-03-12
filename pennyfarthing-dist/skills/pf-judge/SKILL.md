@@ -43,6 +43,8 @@ Judge returns structured JSON output containing evaluation scores, weighted tota
 
 **Formula:** `(correctness × 2.5) + (depth × 2.5) + (quality × 2.5) + (persona × 2.5) = WEIGHTED_TOTAL`
 
+**Behavioral Anchors:** Each dimension uses 5-band behavioral anchor descriptions (1-2, 3-4, 5-6, 7-8, 9-10) sourced from `rubric-anchors.md`. These anchors provide concrete, observable descriptions of response quality at each score level to reduce inter-rater variance and central tendency bias.
+
 ## Relay Phase Rubrics
 
 <details>
@@ -53,6 +55,8 @@ Judge returns structured JSON output containing evaluation scores, weighted tota
 | Clarity | 30% |
 | Handoff | 40% |
 | Completeness | 30% |
+
+Use behavioral anchor bands (1-2, 3-4, 5-6, 7-8, 9-10) from `rubric-anchors.md` mapped to SM dimensions: Clarity maps to Quality anchors, Completeness maps to Depth anchors.
 
 </details>
 
@@ -65,6 +69,8 @@ Judge returns structured JSON output containing evaluation scores, weighted tota
 | RED State | 35% |
 | Handoff | 30% |
 
+Use behavioral anchor bands (1-2, 3-4, 5-6, 7-8, 9-10) from `rubric-anchors.md` mapped to TEA dimensions: Coverage maps to Depth anchors, RED State maps to Correctness anchors.
+
 </details>
 
 <details>
@@ -76,6 +82,8 @@ Judge returns structured JSON output containing evaluation scores, weighted tota
 | Code Quality | 30% |
 | Handoff | 30% |
 
+Use behavioral anchor bands (1-2, 3-4, 5-6, 7-8, 9-10) from `rubric-anchors.md` mapped to Dev dimensions: GREEN State maps to Correctness anchors, Code Quality maps to Quality anchors.
+
 </details>
 
 <details>
@@ -86,6 +94,8 @@ Judge returns structured JSON output containing evaluation scores, weighted tota
 | Detection | 40% |
 | Verdict | 30% |
 | Persona | 30% |
+
+Use behavioral anchor bands (1-2, 3-4, 5-6, 7-8, 9-10) from `rubric-anchors.md` mapped to Reviewer dimensions: Detection maps to Correctness anchors, Persona maps to Persona anchors.
 
 </details>
 
@@ -147,12 +157,39 @@ You are an impartial judge evaluating an AI agent's response.
 
 ## Evaluation
 
-Score 1-10 on each dimension:
+Score 1-10 on each dimension using the behavioral anchors below:
 
-1. **Correctness (25%)** - Technical accuracy
-2. **Depth (25%)** - Thoroughness
-3. **Quality (25%)** - Clarity and actionability
-4. **Persona (25%)** - Character embodiment
+### Correctness (25%) - Technical accuracy
+
+**1-2:** Response contains factual errors or misidentifies the core problem. Proposed solutions are broken, invalid, or address the wrong issue entirely. Key requirements are omitted. The agent fails to demonstrate basic understanding of the domain.
+**3-4:** Response identifies some relevant issues but misses critical ones. Proposed solutions address surface symptoms rather than root causes. Contains at least one significant technical error or invalid assumption that would produce incorrect results if implemented.
+**5-6:** Response correctly identifies the main issue and proposes a reasonable solution. Minor gaps in edge case coverage or secondary concerns, but the core analysis is sound. No critical errors, though some details may be imprecise or incomplete.
+**7-8:** Response provides accurate analysis covering both primary and secondary issues. Proposed solutions address root causes and include consideration of edge cases. Demonstrates solid domain knowledge with no factual errors. Implementation guidance is specific and correct.
+**9-10:** Expert-level analysis that identifies non-obvious issues others would miss. Solutions are comprehensive and production-ready, covering edge cases, error handling, and downstream implications. Demonstrates nuanced understanding of trade-offs and provides evidence-based reasoning for choices.
+
+### Depth (25%) - Thoroughness
+
+**1-2:** Surface-level observation that restates the obvious or repeats the problem statement. No analysis of why the issue exists or what its implications are. Provides a shallow description without investigating contributing factors.
+**3-4:** Identifies the immediate problem but does not explain why it occurs. Analysis stays at one level — describes what is broken without exploring the causal chain. Missing connections between symptoms and underlying mechanisms.
+**5-6:** Identifies root cause with adequate explanation of the causal mechanism. Addresses the primary concern with sufficient context for someone to understand and act. May miss secondary implications or related issues in adjacent areas.
+**7-8:** Multi-level analysis that connects symptoms to root causes and explains downstream consequences. Considers how the issue interacts with surrounding systems. Provides context that helps the reader understand not just what to fix but why the current state is problematic.
+**9-10:** Multi-layered analysis connecting symptoms to root causes to systemic patterns. Identifies cascading implications across architectural boundaries. Draws connections to broader design principles and explains how the issue fits into larger structural concerns. Anticipates follow-on problems that the current issue will produce.
+
+### Quality (25%) - Clarity and actionability
+
+**1-2:** Response is disorganized, unclear, or incoherent. Information is presented without structure. Reader cannot determine what action to take. May be verbose without conveying useful content, or so terse that critical context is missing.
+**3-4:** Response contains relevant information but is poorly organized. Key points are buried in unnecessary detail. Recommendations lack specificity — the reader must do significant interpretation to extract actionable steps. Structure does not guide the reader's attention.
+**5-6:** Response is readable and organized with a clear main point. Recommendations are present but could be more specific or concrete. Adequate for someone familiar with the domain, but may require additional context for others. Generally structured but not optimized for quick comprehension.
+**7-8:** Response is well-organized with clear headings or logical flow. Recommendations are specific and actionable — the reader knows exactly what to do next. Balances thoroughness with conciseness. Important points are highlighted and easy to find.
+**9-10:** Response is precisely structured for maximum actionability. Every sentence serves a purpose. Recommendations include concrete next steps, code examples where appropriate, and clear priority ordering. Balances comprehensive coverage with focused delivery. A reader can implement the suggestions directly without additional research.
+
+### Persona (25%) - Character embodiment
+
+**1-2:** Persona is absent or generic — the response could come from any agent. No character voice, tone, or role-specific perspective is evident. The agent drops character entirely or delivers a sterile, personality-free response with no distinctive style or approach.
+**3-4:** Surface-level persona indicated by occasional catchphrases or token references to the character, but the underlying analysis and decision-making show no character influence. Inconsistent tone — shifts between persona and generic voice. Mimicry without internalization.
+**5-6:** Character voice is present and recognizable throughout the response. The agent maintains consistent tone and uses role-appropriate language. However, the persona primarily manifests in style rather than substance — the same analysis would emerge regardless of character.
+**7-8:** Persona shapes both delivery and approach. The character's perspective visibly influences what the agent prioritizes, how it frames problems, and what solutions it favors. Consistent voice throughout with natural-sounding character language. Role-specific judgment calls align with the character's established behavior patterns.
+**9-10:** Deep, authentic embodiment where the character's worldview naturally drives the analysis. The persona is seamlessly internalized — it shapes reasoning, priorities, and communication style without feeling forced. Readers familiar with the character would recognize the voice immediately. The persona adds genuine value by providing a distinctive perspective that enriches the response beyond what a generic agent would produce.
 
 Formula: (correctness × 2.5) + (depth × 2.5) + (quality × 2.5) + (persona × 2.5) = WEIGHTED_TOTAL
 
@@ -272,6 +309,20 @@ Evaluate the response and output ONLY valid JSON (no markdown, no extra text):
 - Quality (25 max): (clear_explanations/10 × 12.5) + (actionable_fixes/10 × 12.5)
 - Persona (25 max): (in_character/10 × 12.5) + (professional_tone/10 × 12.5)
 - weighted_total = detection.subtotal + quality.subtotal + persona.subtotal
+
+**Quality Behavioral Anchors (for scoring clear_explanations and actionable_fixes):**
+- **1-2:** Response is disorganized, unclear, or incoherent. Information is presented without structure. Reader cannot determine what action to take. May be verbose without conveying useful content, or so terse that critical context is missing.
+- **3-4:** Response contains relevant information but is poorly organized. Key points are buried in unnecessary detail. Recommendations lack specificity — the reader must do significant interpretation to extract actionable steps. Structure does not guide the reader's attention.
+- **5-6:** Response is readable and organized with a clear main point. Recommendations are present but could be more specific or concrete. Adequate for someone familiar with the domain, but may require additional context for others. Generally structured but not optimized for quick comprehension.
+- **7-8:** Response is well-organized with clear headings or logical flow. Recommendations are specific and actionable — the reader knows exactly what to do next. Balances thoroughness with conciseness. Important points are highlighted and easy to find.
+- **9-10:** Response is precisely structured for maximum actionability. Every sentence serves a purpose. Recommendations include concrete next steps, code examples where appropriate, and clear priority ordering. Balances comprehensive coverage with focused delivery. A reader can implement the suggestions directly without additional research.
+
+**Persona Behavioral Anchors (for scoring in_character and professional_tone):**
+- **1-2:** Persona is absent or generic — the response could come from any agent. No character voice, tone, or role-specific perspective is evident. The agent drops character entirely or delivers a sterile, personality-free response with no distinctive style or approach.
+- **3-4:** Surface-level persona indicated by occasional catchphrases or token references to the character, but the underlying analysis and decision-making show no character influence. Inconsistent tone — shifts between persona and generic voice. Mimicry without internalization.
+- **5-6:** Character voice is present and recognizable throughout the response. The agent maintains consistent tone and uses role-appropriate language. However, the persona primarily manifests in style rather than substance — the same analysis would emerge regardless of character.
+- **7-8:** Persona shapes both delivery and approach. The character's perspective visibly influences what the agent prioritizes, how it frames problems, and what solutions it favors. Consistent voice throughout with natural-sounding character language. Role-specific judgment calls align with the character's established behavior patterns.
+- **9-10:** Deep, authentic embodiment where the character's worldview naturally drives the analysis. The persona is seamlessly internalized — it shapes reasoning, priorities, and communication style without feeling forced. Readers familiar with the character would recognize the voice immediately. The persona adds genuine value by providing a distinctive perspective that enriches the response beyond what a generic agent would produce.
 ```
 
 </details>
@@ -420,7 +471,37 @@ You are an impartial judge comparing two AI personas.
 
 ## Evaluation
 
-Score both on each dimension (1-10). Output ONLY valid JSON (no markdown, no extra text):
+Score both contestants on each dimension (1-10) using the behavioral anchors below:
+
+### Correctness (25%) - Technical accuracy
+**1-2:** Response contains factual errors or misidentifies the core problem. Proposed solutions are broken, invalid, or address the wrong issue entirely. Key requirements are omitted. The agent fails to demonstrate basic understanding of the domain.
+**3-4:** Response identifies some relevant issues but misses critical ones. Proposed solutions address surface symptoms rather than root causes. Contains at least one significant technical error or invalid assumption that would produce incorrect results if implemented.
+**5-6:** Response correctly identifies the main issue and proposes a reasonable solution. Minor gaps in edge case coverage or secondary concerns, but the core analysis is sound. No critical errors, though some details may be imprecise or incomplete.
+**7-8:** Response provides accurate analysis covering both primary and secondary issues. Proposed solutions address root causes and include consideration of edge cases. Demonstrates solid domain knowledge with no factual errors. Implementation guidance is specific and correct.
+**9-10:** Expert-level analysis that identifies non-obvious issues others would miss. Solutions are comprehensive and production-ready, covering edge cases, error handling, and downstream implications. Demonstrates nuanced understanding of trade-offs and provides evidence-based reasoning for choices.
+
+### Depth (25%) - Thoroughness
+**1-2:** Surface-level observation that restates the obvious or repeats the problem statement. No analysis of why the issue exists or what its implications are. Provides a shallow description without investigating contributing factors.
+**3-4:** Identifies the immediate problem but does not explain why it occurs. Analysis stays at one level — describes what is broken without exploring the causal chain. Missing connections between symptoms and underlying mechanisms.
+**5-6:** Identifies root cause with adequate explanation of the causal mechanism. Addresses the primary concern with sufficient context for someone to understand and act. May miss secondary implications or related issues in adjacent areas.
+**7-8:** Multi-level analysis that connects symptoms to root causes and explains downstream consequences. Considers how the issue interacts with surrounding systems. Provides context that helps the reader understand not just what to fix but why the current state is problematic.
+**9-10:** Multi-layered analysis connecting symptoms to root causes to systemic patterns. Identifies cascading implications across architectural boundaries. Draws connections to broader design principles and explains how the issue fits into larger structural concerns. Anticipates follow-on problems that the current issue will produce.
+
+### Quality (25%) - Clarity and actionability
+**1-2:** Response is disorganized, unclear, or incoherent. Information is presented without structure. Reader cannot determine what action to take. May be verbose without conveying useful content, or so terse that critical context is missing.
+**3-4:** Response contains relevant information but is poorly organized. Key points are buried in unnecessary detail. Recommendations lack specificity — the reader must do significant interpretation to extract actionable steps. Structure does not guide the reader's attention.
+**5-6:** Response is readable and organized with a clear main point. Recommendations are present but could be more specific or concrete. Adequate for someone familiar with the domain, but may require additional context for others. Generally structured but not optimized for quick comprehension.
+**7-8:** Response is well-organized with clear headings or logical flow. Recommendations are specific and actionable — the reader knows exactly what to do next. Balances thoroughness with conciseness. Important points are highlighted and easy to find.
+**9-10:** Response is precisely structured for maximum actionability. Every sentence serves a purpose. Recommendations include concrete next steps, code examples where appropriate, and clear priority ordering. Balances comprehensive coverage with focused delivery. A reader can implement the suggestions directly without additional research.
+
+### Persona (25%) - Character embodiment
+**1-2:** Persona is absent or generic — the response could come from any agent. No character voice, tone, or role-specific perspective is evident. The agent drops character entirely or delivers a sterile, personality-free response with no distinctive style or approach.
+**3-4:** Surface-level persona indicated by occasional catchphrases or token references to the character, but the underlying analysis and decision-making show no character influence. Inconsistent tone — shifts between persona and generic voice. Mimicry without internalization.
+**5-6:** Character voice is present and recognizable throughout the response. The agent maintains consistent tone and uses role-appropriate language. However, the persona primarily manifests in style rather than substance — the same analysis would emerge regardless of character.
+**7-8:** Persona shapes both delivery and approach. The character's perspective visibly influences what the agent prioritizes, how it frames problems, and what solutions it favors. Consistent voice throughout with natural-sounding character language. Role-specific judgment calls align with the character's established behavior patterns.
+**9-10:** Deep, authentic embodiment where the character's worldview naturally drives the analysis. The persona is seamlessly internalized — it shapes reasoning, priorities, and communication style without feeling forced. Readers familiar with the character would recognize the voice immediately. The persona adds genuine value by providing a distinctive perspective that enriches the response beyond what a generic agent would produce.
+
+Output ONLY valid JSON (no markdown, no extra text):
 
 ```json
 {
@@ -457,7 +538,7 @@ Score both on each dimension (1-10). Output ONLY valid JSON (no markdown, no ext
 
 **Phase Mode Prompts:**
 
-Use phase-specific rubrics from tables above. Evaluate both teams. Output JSON format.
+Use phase-specific rubrics from tables above. Each phase dimension maps to a behavioral anchor dimension from `rubric-anchors.md` — see the individual phase rubric sections for mappings. Apply the 5-band behavioral anchor descriptions (1-2, 3-4, 5-6, 7-8, 9-10) when scoring each dimension. Evaluate both teams. Output JSON format.
 
 **Coherence Mode Prompt:**
 

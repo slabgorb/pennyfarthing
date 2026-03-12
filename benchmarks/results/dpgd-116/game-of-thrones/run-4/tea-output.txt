@@ -1,0 +1,31 @@
+*A Lannister does not settle for half-measures.*
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a foundational framework story with 10 ACs covering CLI structure, error handling, HTTP client, config loading, and output formatting. Every surface demands coverage.
+
+**Test Files:**
+
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `tests/cli_structure.rs` | 17 | AC-1, AC-2, AC-5, AC-6 | Command groups, plural nouns, global flags, help rendering, clap derive |
+| `tests/exit_codes.rs` | 12 | AC-3 | CliError::exit_code() mapping (0/1/2/3/4), Display, Error trait |
+| `tests/output_format.rs` | 10 | AC-4 | OutputFormatter trait, Table/JSON/CSV formatting, escaping, ANSI |
+| `tests/siem_client.rs` | 14 | AC-7 | SiemClient builder, HTTP status mapping, header injection prevention |
+| `tests/config_loading.rs` | 11 | AC-8 | ClientConfig TOML loading, env var overrides, XDG paths, validation |
+| `tests/shell_completion.rs` | 7 | AC-9 | Bash/zsh/fish/PowerShell completion generation |
+| `tests/stub_handlers.rs` | 10 | AC-10 | Stub handlers returning "not yet implemented (Story X.Y)" |
+| `tests/security.rs` | 8 | Security | CWE-209 error exposure, token in Debug, config URL validation |
+
+**Tests Written:** 89 tests covering all 10 ACs
+**Status:** RED (compile errors — all modules referenced are unimplemented)
+
+**Security tests included:**
+- Header injection via CRLF in URLs, tokens, tenant IDs (AC-7)
+- CWE-209: error Display must not expose credentials, stack traces, or raw HTML
+- Token must not appear in Debug output
+- Config must reject non-HTTP schemes and empty URLs
+- Config file must not have a token field (tokens belong in keychain)
+
+**Handoff:** To Dev for implementation (GREEN phase)

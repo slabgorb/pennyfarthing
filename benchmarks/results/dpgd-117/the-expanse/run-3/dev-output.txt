@@ -1,0 +1,22 @@
+All **69 tests pass**, clippy is clean.
+
+## Summary
+
+**Files changed:**
+
+| File | Action | Description |
+|------|--------|-------------|
+| `crates/axiathon-server/Cargo.toml` | Modified | Added `chrono` and `uuid` workspace dependencies |
+| `crates/axiathon-server/src/lib.rs` | Rewritten | Router with versioned routes, auth on protected endpoints, rate limiting on all |
+| `crates/axiathon-server/src/response.rs` | Created | HTTP envelope (`data`/`errors`/`meta`) with `success()` and `error()` builders |
+| `crates/axiathon-server/src/middleware.rs` | Created | Auth middleware (Bearer/API key stub, CWE-209 safe) + per-tenant rate limiter |
+| `crates/axiathon-server/src/routes.rs` | Created | Health, JWKS, and stub handlers for events/alerts/rules/queries + 404 fallback |
+
+**Architecture:**
+- **Middleware order:** rate_limit (outermost) → auth (protected routes only) → handler
+- **Response envelope:** `{ data, errors: [], meta: { request_id, timestamp, trace_id } }` on every response
+- **Rate limiting:** Global `OnceLock<Mutex<HashMap>>` with 100 req/60s per-tenant windows, keyed by `X-Tenant-Id` header
+- **Auth:** Stub that rejects all credentials with generic "Authentication required" message
+- **Routes:** `/api/v1/{health,events,alerts,rules,queries}` + `/.well-known/jwks.json`, with JSON 404 fallback
+
+**Tests:** 69/69 passing (GREEN). Clippy clean.

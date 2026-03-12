@@ -16,7 +16,7 @@ Examine current Pennyfarthing installation, detect drift from expected state, an
 </purpose>
 
 <when-to-use>
-- After updating Pennyfarthing (`pipx upgrade pennyfarthing-scripts`)
+- After updating Pennyfarthing (see [Updating](#updating) below)
 - When something seems broken
 - Periodic health verification
 - Before starting new sprint
@@ -59,11 +59,13 @@ Walks through guided verification with AI-assisted explanation and remediation.
 # Check installed version
 pf --version
 
-# Upgrade via pipx
-pipx upgrade pennyfarthing-scripts
+# Upgrade (use whichever you installed with)
+pipx upgrade pennyfarthing-scripts       # pipx
+uv tool upgrade pennyfarthing-scripts    # uv
 
 # Re-init project after upgrade
 pf init
+pf doctor
 ```
 
 </health-checks>

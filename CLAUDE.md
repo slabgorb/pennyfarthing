@@ -1,18 +1,16 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 12.4.1. ES module monorepo (pnpm, TypeScript, Node >=18).
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 13.0.0-alpha.0. Python-first architecture.
 
 <critical>
 ## Implementation Rules
 
 1. **Modify `pennyfarthing-dist/`** — single source of truth for all definitions
-2. **Use `.js` extensions** in all relative TypeScript imports
-3. **Return result objects** `{success, data?, error?}` — don't throw
-4. **Use Haiku for subagents** — never Opus for mechanical tasks
-5. **Commit `dist/`** alongside `src/` changes
-6. **Scripts use `.pennyfarthing/` paths** — never `pennyfarthing-dist/` in runtime
-7. **Scripts must exist in ONE location only** — build-time validation prevents duplication
-8. **Never edit `node_modules/`** or symlink targets — trace to `pennyfarthing-dist/`
+2. **Use Haiku for subagents** — never Opus for mechanical tasks
+3. **Scripts use `.pennyfarthing/` paths** — never `pennyfarthing-dist/` in runtime
+4. **Scripts must exist in ONE location only** — build-time validation prevents duplication
+5. **Never edit symlink targets** — trace to `pennyfarthing-dist/`
+6. **Python is the only language** — no JavaScript/TypeScript logic in this repo
 </critical>
 
 <critical>
@@ -20,8 +18,8 @@ Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workf
 
 This repo is inlined at `pennyfarthing/` inside `pennyfarthing-orchestrator`. The `.pennyfarthing/` directory lives at the **orchestrator root**, not here.
 
-GUI debugging: `PF_PROJECT_DIR=/path/to/pennyfarthing-orchestrator npm run dev:web`
-(must point to orchestrator root where `.pennyfarthing/` exists)
+TUI dashboard: `pf bikerack start`
+(must run from orchestrator root where `.pennyfarthing/` exists)
 </critical>
 
 <git-operations>
@@ -34,10 +32,8 @@ Two repos: `pennyfarthing-orchestrator/` (sprint, sessions, docs) and `pennyfart
 ## Build & Test
 
 ```bash
-pnpm run build     # TypeScript compilation
-pnpm run dev       # Watch mode
-pnpm test          # Node.js native test runner
-pnpm run lint      # ESLint
+python3 -m pytest pennyfarthing-dist/src/pf/tests/  # Python tests
+pf validate                                          # Framework validation
 ```
 </info>
 
@@ -47,18 +43,13 @@ pnpm run lint      # ESLint
 | Directory | Purpose |
 |-----------|---------|
 | `pennyfarthing-dist/` | Published package (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
-| `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime) |
-| `packages/core/` | `@pennyfarthing/core` — CLI, WheelHub server, API routes, shared utilities |
-| `packages/cyclist/` | BikeRack GUI (React 19, Tailwind v4, dockview) — browser UI over core |
+| `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime, wheelhub, bikerack) |
 | `tests/` | Framework tests |
 | `scripts/` | Framework dev only (NOT distributed) |
 
-**Display modes:** BikeRack panels render in three contexts:
-- **TUI** — `pf bikerack start` launches panels alongside Claude Code CLI in the terminal
-- **GUI** — BikeRack browser UI with full dockview panel layout
-- **IDE** — VS Code / Cursor sidebar panels via WheelHub API
+**Display:** BikeRack TUI — `pf bikerack start` launches Textual terminal panels alongside Claude Code CLI.
 
-**Scripts:** `pennyfarthing-dist/scripts/` (distributed, bash/JS) and `pennyfarthing-dist/src/pf/` (distributed, Python). Path resolution via `find-root.sh` (walks up looking for `.pennyfarthing/`).
+**Scripts:** `pennyfarthing-dist/scripts/` (distributed, bash) and `pennyfarthing-dist/src/pf/` (distributed, Python). Path resolution via `find-root.sh` (walks up looking for `.pennyfarthing/`).
 </info>
 
 <info>
@@ -78,7 +69,15 @@ BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (pro
 
 **Handoff:** Agent writes assessment → `pf handoff resolve-gate` → `complete-phase` → `marker` → next agent activates.
 
-**Codenames:** WheelHub (server), TirePump (context clearing), JobFair (benchmarking), BikeRack (panel viewer)
+**Codenames:** WheelHub (server), TirePump (context clearing), JobFair (benchmarking), BikeRack (TUI dashboard), Peloton (pipeline replay benchmarks)
+
+**Glossary:**
+
+| Term | Definition |
+|------|------------|
+| Peloton test | Repeatable benchmark scenario for a full agent team (TEA→Dev→Reviewer), sourced from real external review findings. Ground truth = what the pipeline actually missed. Run via `pf benchmark replay`. |
+| Pipeline replay | The harness (`pf benchmark replay run/score/compare`) that executes peloton tests against real code at a known commit. |
+| JobFair | Single-agent benchmarking — tests one role in isolation against a rubric. |
 </info>
 
 <context>
@@ -91,15 +90,13 @@ Read guides for detailed behavior, key files, and APIs. All paths relative to `p
 | Component | Guide | Purpose |
 |-----------|-------|---------|
 | BikeLane | `guides/bikelane.md` | Workflow engine — phased, stepped, procedural |
-| BikeRack | `guides/bikerack.md` | Standalone panel viewer for CLI-first dev |
+| BikeRack | `guides/bikerack.md` | TUI dashboard for CLI-first dev |
 | Gates | `guides/gates.md` | Phase transition quality checks |
 | Handoff CLI | `guides/handoff-cli.md` | Gate resolution, session transitions, markers |
 | Hooks | `guides/hooks.md` | Claude Code hooks — session, pre/post tool use |
-| Bell Mode | `guides/bell-mode.md` | Message queue injection via PostToolUse |
 | Relay Mode | `guides/relay-mode.md` | Auto-handoff execution |
 | TirePump | `guides/tirepump.md` | Context clearing and session reload |
 | Prime | `guides/prime.md` | Agent activation with tiered context |
-| Reflector | `guides/reflector.md` | Agent-to-UI markers for QuickActions |
 | Tandem | `guides/tandem-protocol.md` | Background observer pairing |
 | Output Styles | `guides/output-styles.md` | Response modes (terse, verbose, teaching) |
 | Brownfield | `guides/brownfield-tools.md` | Codebase analysis — hotspots, complexity, health |

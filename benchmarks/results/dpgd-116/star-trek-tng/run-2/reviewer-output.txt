@@ -1,0 +1,92 @@
+I've now read all production code, all test files, run tests (all pass), run clippy (clean), and checked nightly fmt (minor formatting diffs). Here is my adversarial review.
+
+---
+
+# Story 6.1: CLI Framework & Structure — Adversarial Code Review
+
+## Observations
+
+### [HIGH] Missing `login.rs` and `init.rs` command modules — `commands/mod.rs` at `:1`
+
+The story spec explicitly requires `commands/login.rs`, `commands/init.rs`, and `commands/completion.rs` as files. The `cli.rs` `Commands` enum defines `Login`, `Logout`, `Tui`, `Completion`, and `Init` variants, but `commands/mod.rs` only re-exports 8 modules — missing `login`, `init`. There are no `login.rs` or `init.rs` files in `commands/`. The `Completion` and `Init` commands are specified as **functional** (not stubs) per AC-9 and AC-10 notes. `completion.rs` exists and is functional, but `init.rs` is completely absent. Login/logout are stubs (Story 9.1) but still need a file with a stub handler. The `Commands` enum includes these variants but there's no dispatch code in `main.rs` that routes them — `main.rs` just prints "axiathon CLI" and exits.
+
+### [HIGH] `main.rs` is a dead stub — no command dispatch at `main.rs:3`
+
+`main.rs` currently does:
+```rust
+fn main() {
+    println!("axiathon CLI");
+}
+```
+
+It never parses CLI args, never dispatches to commands, never maps errors to exit codes, never initializes tracing. The entire `Cli` struct, `Commands` enum, `SiemClient`, `ClientConfig`, `OutputFormatter`, and all command handlers are **dead code from the binary's perspective**. The binary does nothing. This means:
+- AC-1 (`axiathon --help` shows command groups): **FAILS** — binary ignores arguments
+- AC-3 (exit codes): **FAILS** — binary always exits 0
+- AC-9 (shell completion): **FAILS** — binary doesn't route to completion handler
+- AC-10 (stub messages): **FAILS** — binary doesn't route to stubs
+
+The tests pass only because they exercise the library API directly, never the binary. The integration between all components is completely untested.
+
+### [HIGH] `std::env::set_var`/`remove_var` in tests is unsound — `cli_config.rs:90-109`
+
+`std::env::set_var` and `std::env::remove_var` are **unsafe in Rust 2024 edition** (and deprecated since 1.66). They mutate global state without synchronization. When tests run in parallel (the default for `cargo test`), one test setting `AXIATHON_API_URL` can race with another test's `ClientConfig::load_from`. In the 2024 edition, these are actually `unsafe` functions — the code compiles because `Cargo.toml` declares `edition = "2021"` while the workspace declares `edition = "2024"`. This edition mismatch is itself a bug (see below).
+
+### [MEDIUM] Edition mismatch: crate uses 2021, workspace declares 2024 — `Cargo.toml:2`
+
+`crates/axiathon-client/Cargo.toml` has `edition = "2021"` but the workspace `[workspace.package]` declares `edition = "2024"`. Since the crate doesn't use `edition.workspace = true`, it silently overrides to 2021. This dodges the 2024 edition's `unsafe` requirement on `set_var`/`remove_var` but contradicts the project's stated MSRV/edition policy. Either the crate should use `edition.workspace = true` (and fix the `set_var` calls), or the divergence needs explicit justification.
+
+### [MEDIUM] `RawConfig` silently ignores unknown fields — `config.rs:7-15`
+
+`RawConfig` uses `serde::Deserialize` without `#[serde(deny_unknown_fields)]`. A config file with typos like `api_rul` or `timeoat` will silently use defaults instead of alerting the operator. This is a common source of "config works but nothing changes" debugging headaches.
+
+### [MEDIUM] `ServerError` variant leaks response body — `client.rs:81-83`
+
+```rust
+let body = response.text().await.unwrap_or_default();
+Err(CliError::ServerError(status, body.into()))
+```
+
+The full response body from a 5xx error is captured into `InternalDetail`. While `Display` hides it behind "see logs for details," the body is stored in memory and accessible via `source()`. If the server returns a large error page (HTML, stack trace), this could (a) consume unexpected memory, (b) leak server internals to anyone calling `.source()`. Should truncate or omit the body.
+
+### [MEDIUM] `with_token` silently drops invalid tokens instead of returning an error — `client.rs:20-28`
+
+When a token contains `\r\n`, `with_token` silently sets `self.token = None`. The caller has no way to know the token was rejected — `has_token()` returns `false` and the request will fail with a 401 later. This should return a `Result` or at least log a warning. Compare with `with_tenant` which strips the characters — the two methods handle the same attack vector inconsistently (one strips, one drops).
+
+### [MEDIUM] No test for `AXIATHON_TIMEOUT` env var with non-numeric value — `config.rs:76`
+
+`config.rs:76` silently ignores unparseable `AXIATHON_TIMEOUT` values (`parse::<u64>()` fails silently via `if let Ok`). If an operator sets `AXIATHON_TIMEOUT=fast`, it's silently ignored with no warning. No test covers this path.
+
+### [LOW] `toml` version mismatch with story spec — `Cargo.toml:21`
+
+Story spec says `toml 0.9` but `Cargo.toml` declares `toml = "0.8"`. Minor, but deviates from spec.
+
+### [LOW] Nightly `rustfmt` check fails — formatting diffs in `client.rs`
+
+`cargo +nightly fmt --all --check` reports formatting diffs in `client.rs:29` and `client.rs:81`. Per the gotchas file, nightly fmt must pass before approval.
+
+### [VERIFIED] Header injection prevention exists for both tenant and token paths
+### [VERIFIED] `CliError::Display` does not leak `InternalDetail` strings to user-facing output
+### [VERIFIED] Token not loadable from config file — `config.rs:101-104` correctly returns `None`
+### [VERIFIED] Exit code mapping covers all required codes (0/1/2/3/4)
+### [VERIFIED] All workspace dependencies properly declared; `axiathon-core` is the only internal dep
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 5 |
+| Low | 2 |
+
+The three High findings are blocking:
+
+1. **`main.rs` is a dead stub** — the binary doesn't parse args or dispatch commands, so none of the acceptance criteria actually work end-to-end
+2. **Missing `login.rs` and `init.rs` command modules** — spec requires these files
+3. **`set_var`/`remove_var` unsoundness in tests** — races in parallel test execution, made worse by edition mismatch
+
+## Verdict: **CHANGES_REQUESTED**
+
+The library code is well-structured and the tests are good at exercising individual components. But the binary itself is non-functional — it's a `println!` that ignores all arguments. The tests create a false sense of completeness by testing the library API while the binary entry point does nothing. Fix `main.rs` to actually parse and dispatch, add the missing command modules, resolve the edition mismatch, and fix the nightly fmt issues.

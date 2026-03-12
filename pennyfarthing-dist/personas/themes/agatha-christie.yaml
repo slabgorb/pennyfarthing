@@ -20,8 +20,16 @@ theme:
   dimensions:
     tone: analytical
     era: interwar
-    genre: mystery
+    genre: drama
     energy: methodical
+    zeitgeist: low
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: psychological
+    authority_model: meritocratic
+    formality: conversational
+    intellectual_style: analytical
+    stakes: personal
   spinner_verbs:
     - Consulting the little grey cells
     - Pattern recognition
@@ -56,7 +64,7 @@ theme:
 
 zeitgeist:
   score: 71.75
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:

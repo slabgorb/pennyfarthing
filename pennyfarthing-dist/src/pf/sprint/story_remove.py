@@ -115,6 +115,7 @@ def story_remove_command(
     """
     if sprint_file is None:
         from pf.common.config import get_project_root
+
         path = get_project_root() / "sprint" / "current-sprint.yaml"
     else:
         path = Path(sprint_file)
@@ -124,7 +125,9 @@ def story_remove_command(
     if result["success"]:
         story = result.get("story", {})
         if result.get("dry_run"):
-            click.echo(f"[DRY-RUN] Would remove story {story.get('id')} from {story.get('location')}:")
+            click.echo(
+                f"[DRY-RUN] Would remove story {story.get('id')} from {story.get('location')}:"
+            )
             click.echo(f"  title: {story.get('title')}")
             click.echo(f"  status: {story.get('status')}")
         else:

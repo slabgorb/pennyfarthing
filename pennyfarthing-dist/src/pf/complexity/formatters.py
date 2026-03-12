@@ -44,21 +44,25 @@ def export_csv(files: list[FileComplexity]) -> str:
     """Export file complexity data as CSV."""
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow([
-        "path",
-        "total_lines",
-        "longest_function",
-        "avg_cyclomatic_complexity",
-        "max_nesting_depth",
-        "function_count",
-    ])
+    writer.writerow(
+        [
+            "path",
+            "total_lines",
+            "longest_function",
+            "avg_cyclomatic_complexity",
+            "max_nesting_depth",
+            "function_count",
+        ]
+    )
     for f in files:
-        writer.writerow([
-            f.path,
-            f.total_lines,
-            f.longest_function,
-            f.avg_cyclomatic_complexity,
-            f.max_nesting_depth,
-            f.function_count,
-        ])
+        writer.writerow(
+            [
+                f.path,
+                f.total_lines,
+                f.longest_function,
+                f.avg_cyclomatic_complexity,
+                f.max_nesting_depth,
+                f.function_count,
+            ]
+        )
     return buf.getvalue()

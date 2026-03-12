@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: mash
+run_id: 1
+judge_version: v2
+total_caught: 4
+total_findings: 7
+weighted_caught: 23
+total_weight: 37
+score_pct: 62.2
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: tea
+  evidence: 'TEA security tests explicitly cover ''Silent error swallowing: Config
+    IO errors not silently defaulted'', and Dev made these tests pass with config.rs
+    implementation including ''TOML loading, env var overrides, XDG default path,
+    validation''.'
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote security tests for 'CWE-209: Error messages don't leak stack\
+    \ traces, connection strings, or DB details'. Dev implemented 'sanitized Display\
+    \ (CWE-209)' in error.rs. Reviewer verified: 'CWE-209 error message sanitization\
+    \ \u2014 error.rs:46-78'."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA wrote tests for 'CWE-113: CRLF/null-byte injection in tenant ID and\
+    \ auth token headers'. Dev implemented 'CRLF/null byte injection prevention (CWE-113)'\
+    \ in client.rs. However, the type-safety fix (using Option<TenantId> from axiathon-core)\
+    \ was not adopted \u2014 only string sanitization. Same vulnerability class caught."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "Reviewer stated '[VERIFIED] Workspace dependencies properly declared\
+    \ \u2014 Cargo.toml:42-50', concluding the opposite of the ground truth. The 6\
+    \ deps using direct versions instead of workspace = true were not flagged."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged '[MEDIUM] ClientConfig silently ignores unknown TOML\
+    \ keys' \u2014 noting typos like 'server_rrl' are silently ignored and suggesting\
+    \ deny_unknown_fields, which directly matches the ground truth about token fields\
+    \ being silently ignored."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: The vacuously true test (assert with None || true) was not flagged by
+    any phase. TEA likely authored the flawed assertion, and neither Dev nor Reviewer
+    identified it as vacuous.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: The zero-assertion test (let _ = config with no assert) was not flagged
+    by any phase. TEA likely authored the assertion-free test, and neither Dev nor
+    Reviewer identified it as vacuously passing.

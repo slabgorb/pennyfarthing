@@ -14,15 +14,14 @@ from pathlib import Path
 import pytest
 
 from pf.validate.adapters.agent import (
-    classify_agent_files,
     validate_main_agent,
     validate_subagent,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_agent(tmp_path: Path, name: str, content: str) -> Path:
     """Write an agent file to tmp agents dir and return the dir."""
@@ -84,6 +83,7 @@ def _minimal_subagent(*, name: str = "testing-runner") -> str:
 # Each primary agent requires a specific mindset tag that must be closed.
 # ===========================================================================
 
+
 class TestMindsetTagEnforcement:
     """Legacy behavior from validate-agent-schema.sh MINDSET_TAGS (lines 85-96)."""
 
@@ -130,7 +130,9 @@ class TestMindsetTagEnforcement:
         )
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         errors, _ = validate_main_agent(agents_dir / "dev.md", agents_dir)
-        mindset_errors = [e for e in errors if "mindset" in e.lower() or "minimalist-discipline" in e.lower()]
+        mindset_errors = [
+            e for e in errors if "mindset" in e.lower() or "minimalist-discipline" in e.lower()
+        ]
         assert len(mindset_errors) > 0, "Expected error for unclosed mindset tag"
 
     def test_agent_not_in_mindset_map_no_error(self, tmp_path):
@@ -147,6 +149,7 @@ class TestMindsetTagEnforcement:
 # Legacy: validate-agent-schema.sh check_best_practices (lines 233-236)
 # First <critical> must appear at or before line 30.
 # ===========================================================================
+
 
 class TestCriticalLinePosition:
     """Legacy behavior from validate-agent-schema.sh line-position check."""
@@ -166,7 +169,9 @@ class TestCriticalLinePosition:
         content = _minimal_main_agent(line_pad=30)
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         _, warnings = validate_main_agent(agents_dir / "dev.md", agents_dir)
-        position_warnings = [w for w in warnings if "critical" in w.lower() and ("line" in w.lower() or "30" in w)]
+        position_warnings = [
+            w for w in warnings if "critical" in w.lower() and ("line" in w.lower() or "30" in w)
+        ]
         assert len(position_warnings) > 0, "Expected warning for <critical> after line 30"
 
 
@@ -176,6 +181,7 @@ class TestCriticalLinePosition:
 # <on-activation> must appear at or before line 100.
 # ===========================================================================
 
+
 class TestOnActivationLinePosition:
     """Legacy behavior from validate-agent-schema.sh on-activation position check."""
 
@@ -184,7 +190,9 @@ class TestOnActivationLinePosition:
         content = _minimal_main_agent()
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         _, warnings = validate_main_agent(agents_dir / "dev.md", agents_dir)
-        position_warnings = [w for w in warnings if "on-activation" in w.lower() and "line" in w.lower()]
+        position_warnings = [
+            w for w in warnings if "on-activation" in w.lower() and "line" in w.lower()
+        ]
         assert position_warnings == []
 
     def test_on_activation_after_line_100_warns(self, tmp_path):
@@ -193,7 +201,11 @@ class TestOnActivationLinePosition:
         content = _minimal_main_agent(line_pad=100)
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         _, warnings = validate_main_agent(agents_dir / "dev.md", agents_dir)
-        position_warnings = [w for w in warnings if "on-activation" in w.lower() and ("line" in w.lower() or "100" in w)]
+        position_warnings = [
+            w
+            for w in warnings
+            if "on-activation" in w.lower() and ("line" in w.lower() or "100" in w)
+        ]
         assert len(position_warnings) > 0, "Expected warning for <on-activation> after line 100"
 
 
@@ -202,6 +214,7 @@ class TestOnActivationLinePosition:
 # Legacy: validate-agent-schema.sh check_best_practices (lines 228-230)
 # Files over 300 lines are errors.
 # ===========================================================================
+
 
 class TestFileLengthCheck:
     """Legacy behavior from validate-agent-schema.sh file length check."""
@@ -221,7 +234,9 @@ class TestFileLengthCheck:
         content = _minimal_main_agent(extra=f"<info>\n{padding}\n</info>\n")
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         errors, _ = validate_main_agent(agents_dir / "dev.md", agents_dir)
-        length_errors = [e for e in errors if "line" in e.lower() and ("500" in e or "max" in e.lower())]
+        length_errors = [
+            e for e in errors if "line" in e.lower() and ("500" in e or "max" in e.lower())
+        ]
         assert len(length_errors) > 0, "Expected error for file over 500 lines"
 
 
@@ -232,6 +247,7 @@ class TestFileLengthCheck:
 # Line 1 (if heading) and blank lines are exempt.
 # ===========================================================================
 
+
 class TestOrphanContentCheck:
     """Legacy behavior from validate-agent-schema.sh orphan content detection."""
 
@@ -240,7 +256,11 @@ class TestOrphanContentCheck:
         content = _minimal_main_agent()
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         errors, _ = validate_main_agent(agents_dir / "dev.md", agents_dir)
-        orphan_errors = [e for e in errors if "orphan" in e.lower() or "outside" in e.lower() or "content outside" in e.lower()]
+        orphan_errors = [
+            e
+            for e in errors
+            if "orphan" in e.lower() or "outside" in e.lower() or "content outside" in e.lower()
+        ]
         assert orphan_errors == []
 
     def test_orphan_content_at_depth_zero_errors(self, tmp_path):
@@ -256,7 +276,11 @@ class TestOrphanContentCheck:
         )
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         errors, _ = validate_main_agent(agents_dir / "dev.md", agents_dir)
-        orphan_errors = [e for e in errors if "orphan" in e.lower() or "outside" in e.lower() or "content outside" in e.lower()]
+        orphan_errors = [
+            e
+            for e in errors
+            if "orphan" in e.lower() or "outside" in e.lower() or "content outside" in e.lower()
+        ]
         assert len(orphan_errors) > 0, "Expected error for content outside XML tags"
 
     def test_blank_lines_between_tags_no_error(self, tmp_path):
@@ -292,6 +316,7 @@ class TestOrphanContentCheck:
 # Non-whitespace after the last closing </tag> is a warning.
 # ===========================================================================
 
+
 class TestOrphanContentAfterLastTag:
     """Legacy behavior from validate-agent-schema.sh post-tag content check."""
 
@@ -319,48 +344,53 @@ class TestOrphanContentAfterLastTag:
 # items must match ^\s*-\s*\[\s*[x ]?\s*\]
 # ===========================================================================
 
+
 class TestChecklistFormatCheck:
     """Legacy behavior from validate-agent-schema.sh checklist format validation."""
 
     def test_valid_checklist_no_warning(self, tmp_path):
         """Properly formatted checklist items should produce no warning."""
-        content = _minimal_main_agent(extra=(
-            "<gate>\n"
-            "- [ ] Check tests pass\n"
-            "- [x] Review code\n"
-            "- [ ] Verify coverage\n"
-            "</gate>\n"
-        ))
+        content = _minimal_main_agent(
+            extra=(
+                "<gate>\n"
+                "- [ ] Check tests pass\n"
+                "- [x] Review code\n"
+                "- [ ] Verify coverage\n"
+                "</gate>\n"
+            )
+        )
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         _, warnings = validate_main_agent(agents_dir / "dev.md", agents_dir)
-        checklist_warnings = [w for w in warnings if "checklist" in w.lower() or "malformed" in w.lower()]
+        checklist_warnings = [
+            w for w in warnings if "checklist" in w.lower() or "malformed" in w.lower()
+        ]
         assert checklist_warnings == []
 
     def test_malformed_checklist_warns(self, tmp_path):
         """Malformed checklist items should produce a warning."""
-        content = _minimal_main_agent(extra=(
-            "<gate>\n"
-            "- [ ] Good item\n"
-            "- [bad] Malformed checkbox\n"
-            "- [] Missing space\n"
-            "</gate>\n"
-        ))
+        content = _minimal_main_agent(
+            extra=(
+                "<gate>\n- [ ] Good item\n- [bad] Malformed checkbox\n- [] Missing space\n</gate>\n"
+            )
+        )
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         _, warnings = validate_main_agent(agents_dir / "dev.md", agents_dir)
-        checklist_warnings = [w for w in warnings if "checklist" in w.lower() or "malformed" in w.lower()]
+        checklist_warnings = [
+            w for w in warnings if "checklist" in w.lower() or "malformed" in w.lower()
+        ]
         assert len(checklist_warnings) > 0, "Expected warning for malformed checklist items"
 
     @pytest.mark.parametrize("tag", ["gate", "handoff-gate", "self-review", "review-checklist"])
     def test_checklist_checked_in_all_gate_tags(self, tmp_path, tag):
         """Checklist format should be checked in all gate-like tags."""
-        content = _minimal_main_agent(extra=(
-            f"<{tag}>\n"
-            "- [bad] Malformed checkbox\n"
-            f"</{tag}>\n"
-        ))
+        content = _minimal_main_agent(extra=(f"<{tag}>\n- [bad] Malformed checkbox\n</{tag}>\n"))
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         _, warnings = validate_main_agent(agents_dir / "dev.md", agents_dir)
-        checklist_warnings = [w for w in warnings if "checklist" in w.lower() or "malformed" in w.lower() or tag in w.lower()]
+        checklist_warnings = [
+            w
+            for w in warnings
+            if "checklist" in w.lower() or "malformed" in w.lower() or tag in w.lower()
+        ]
         assert len(checklist_warnings) > 0, f"Expected warning for malformed checklist in <{tag}>"
 
 
@@ -369,6 +399,7 @@ class TestChecklistFormatCheck:
 # Legacy: validate-agent-schema.sh check_header_format (lines 264-275)
 # First line of primary agents must match ^# .+ Agent
 # ===========================================================================
+
 
 class TestHeaderFormatCheck:
     """Legacy behavior from validate-agent-schema.sh header format validation."""
@@ -416,14 +447,15 @@ class TestHeaderFormatCheck:
 # If <helpers> present, <parameters> should also be present.
 # ===========================================================================
 
+
 class TestParametersWithHelpers:
     """Legacy behavior from validate-agent-schema.sh parameters section check."""
 
     def test_helpers_with_parameters_no_warning(self, tmp_path):
         """File with both <helpers> and <parameters> should produce no warning."""
-        content = _minimal_main_agent(extra=(
-            "<parameters>\n## Subagent Parameters\n</parameters>\n"
-        ))
+        content = _minimal_main_agent(
+            extra=("<parameters>\n## Subagent Parameters\n</parameters>\n")
+        )
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         _, warnings = validate_main_agent(agents_dir / "dev.md", agents_dir)
         param_warnings = [w for w in warnings if "parameters" in w.lower()]
@@ -443,6 +475,7 @@ class TestParametersWithHelpers:
 # Legacy: validate-subagent-frontmatter.sh (lines 107-113)
 # The `name` field in frontmatter must equal the filename without .md.
 # ===========================================================================
+
 
 class TestSubagentNameFilenameMatch:
     """Legacy behavior from validate-subagent-frontmatter.sh name check."""

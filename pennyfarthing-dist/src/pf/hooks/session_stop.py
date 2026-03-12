@@ -64,11 +64,13 @@ def main() -> None:
             if session_files:
                 session_file = session_files[0]
                 # Extract story ID from filename (e.g., 8-3-session.md -> 8-3)
-                story = re.sub(r'-session\.md$', '', session_file.name)
+                story = re.sub(r"-session\.md$", "", session_file.name)
                 # Extract phase from session file
                 try:
                     content = session_file.read_text()
-                    phase_match = re.search(r'^- Phase:\s*(\S+)', content, re.MULTILINE | re.IGNORECASE)
+                    phase_match = re.search(
+                        r"^- Phase:\s*(\S+)", content, re.MULTILINE | re.IGNORECASE
+                    )
                     if phase_match:
                         phase = phase_match.group(1)
                 except OSError:
@@ -89,7 +91,9 @@ def main() -> None:
             pass
 
         # Build and save checkpoint
-        checkpoint_data = f"agent={agent};story={story};phase={phase};sha={git_sha};session={session_id}"
+        checkpoint_data = (
+            f"agent={agent};story={story};phase={phase};sha={git_sha};session={session_id}"
+        )
         _checkpoint_save(project_dir, "session_state", checkpoint_data)
 
         # Log session end

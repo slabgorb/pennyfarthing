@@ -40,9 +40,9 @@ from pf.prime.loader import (  # noqa: E402
     load_behavior_guide,
     load_output_style,
     load_repos_topology,
-    load_soul,
     load_session_context,
     load_sidecars,
+    load_soul,
     load_sprint_context,
     load_step_content,
 )
@@ -209,9 +209,7 @@ def load_tier_components(
 
             crew = get_crew_manifest(project_root)
             user_title = get_user_title(project_root)
-            persona_content = format_persona_output(
-                persona, theme, agent_name, crew, user_title
-            )
+            persona_content = format_persona_output(persona, theme, agent_name, crew, user_title)
             add_component("persona", persona_content)
 
     guide_content = load_behavior_guide(project_root)

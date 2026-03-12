@@ -1,0 +1,33 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a foundational feature story establishing the entire CLI framework. Every AC needs test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_framework_test.rs` | 43 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive) |
+| `error_exit_codes_test.rs` | 16 | AC-3 (exit codes 0/1/2/3/4), error Display, trait impls |
+| `output_format_test.rs` | 15 | AC-4 (table/json/csv formatters, escaping, metadata) |
+| `siem_client_test.rs` | 15 | AC-7 (HTTP headers, status code mapping, connection handling) |
+| `config_loading_test.rs` | 13 | AC-8 (TOML loading, defaults, validation, XDG paths) |
+| `shell_completion_test.rs` | 7 | AC-9 (bash/zsh/fish/powershell generation) |
+| `stub_handlers_test.rs` | 11 | AC-10 (stub messages with story references) |
+| `security_test.rs` | 12 | CWE-209, CRLF injection, null bytes, URL validation, credential leakage |
+
+**Tests Written:** 132 tests covering 10 ACs
+**Status:** RED (failing — all tests fail to compile because modules `cli`, `error`, `output`, `client`, `config`, `commands` don't exist yet)
+
+**Handoff:** To Dev for implementation
+
+### Key Design Decisions in Tests
+
+1. **Tests import from module paths** (`axiathon_client::cli::Cli`, `axiathon_client::error::CliError`, etc.) — this defines the expected public API surface the Dev must implement
+2. **SiemClient tests use wiremock** for HTTP mocking — tests validate actual header injection and status code mapping
+3. **Security tests are paranoid** — CRLF injection in tenant IDs/tokens, null bytes, javascript: URLs, credential leakage in config serialization
+4. **Stub tests verify story references** — each stub must name the specific story (e.g., "Story 6.2") so operators know what's coming
+5. **OutputFormatter is a trait** — tests verify `TableFormatter`, `JsonFormatter`, `CsvFormatter` all implement it
+
+### Delivery Findings
+
+- No upstream findings during test design.

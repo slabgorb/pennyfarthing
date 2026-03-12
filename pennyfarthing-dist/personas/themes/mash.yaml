@@ -51,11 +51,19 @@ theme:
   dimensions:
     tone: satirical
     era: historical
-    genre: comedy-drama
+    genre: drama
     energy: bittersweet
+    zeitgeist: low
+    scrutiny: professional
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: egalitarian
+    formality: casual
+    intellectual_style: pragmatic
+    stakes: communal
 zeitgeist:
   score: 74.25
-  rating: rich
+  rating: low
 
 agents:
   orchestrator:

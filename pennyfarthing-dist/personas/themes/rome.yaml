@@ -51,12 +51,20 @@ theme:
   dimensions:
     tone: serious
     era: ancient
-    genre: historical-drama
+    genre: drama
     energy: commanding
+    zeitgeist: moderate
+    scrutiny: adversarial
+    cooperation_model: transactional
+    conflict_approach: manipulation
+    authority_model: feudal
+    formality: ceremonial
+    intellectual_style: strategic
+    stakes: existential
 
 zeitgeist:
   score: 80.0
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Gaius Julius Caesar

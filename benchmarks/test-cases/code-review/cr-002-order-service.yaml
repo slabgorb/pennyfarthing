@@ -9,6 +9,13 @@ difficulty: hard
 agent: reviewer
 version: 2.0
 
+difficulty_profile:
+  tier: medium
+  calibration:
+    control_mean: 71.75
+    control_stddev: 1.9519
+    n_runs: 10
+
 description: |
   An e-commerce order service with payment processing, inventory management,
   and notification handling. Contains multiple layers of issues - some obvious,

@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: stephen-king
+run_id: 3
+judge_version: v2
+judge_pass: 1
+total_caught: 2
+total_findings: 7
+weighted_caught: 10
+total_weight: 37
+score_pct: 27.0
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'TEA mentions ''Silent error swallowing: Parse errors and HTTP errors
+    must propagate'' in security tests, but all 132 tests pass with the buggy from_file_or_default
+    implementation, meaning the test does not actually catch the swallowed config
+    parse/permission errors. Reviewer does not flag this issue.'
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote cli_security.rs tests explicitly covering ''CWE-209: Error
+    messages must not expose server paths, SQL, JWT internals.'' Reviewer also flagged
+    it as F1 (Critical): ''CliError::Generic leaks raw error strings to stderr...
+    This is a CWE-209 information exposure vector.'''
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer F9: 'tenant field uses raw String instead of validated TenantId\
+    \ newtype at cli.rs:29, client.rs:10 \u2014 The project's Rust rules specify newtypes\
+    \ for IDs: TenantId(String). The axiathon-core crate exports TenantId. Yet both\
+    \ Cli.tenant and SiemClient.tenant use raw Option<String>.'"
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase mentions that the crate-level Cargo.toml uses direct version
+    strings instead of workspace = true for the 6 dependencies. Dev added them to
+    workspace deps but the crate Cargo.toml apparently uses direct versions.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer F7 examines the deny_unknown_fields question but concludes the\
+    \ OPPOSITE: 'This is the correct choice for forward compatibility... Verified\
+    \ good \u2014 this is intentional.' The specific risk of a user's token being\
+    \ silently ignored while left on disk in plaintext is not flagged."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identifies the vacuously true assertion pattern (assert!(config.server().is_none()
+    || ...)). The test was written by TEA and passed in DEV, meaning the vacuous assertion
+    was never caught.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identifies the zero-assertion test (let _ = config). The test
+    was written by TEA and passed in DEV without any phase flagging the missing assertions.

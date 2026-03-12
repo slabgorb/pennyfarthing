@@ -616,11 +616,16 @@ class TestCLIIntegration:
         """Basic CLI invocation should update a story successfully."""
         from pf.sprint.story_update import story_update_command
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "76-3",
-            "--status", "ready",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76-3",
+                "--status",
+                "ready",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -628,11 +633,16 @@ class TestCLIIntegration:
         """--status option should update the status field."""
         from pf.sprint.story_update import story_update_command
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "76-3",
-            "--status", "ready",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76-3",
+                "--status",
+                "ready",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -644,11 +654,16 @@ class TestCLIIntegration:
         """--points option should update points as integer."""
         from pf.sprint.story_update import story_update_command
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "76-3",
-            "--points", "5",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76-3",
+                "--points",
+                "5",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -662,12 +677,17 @@ class TestCLIIntegration:
 
         original_content = sprint_file.read_text()
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "76-3",
-            "--status", "ready",
-            "--dry-run",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76-3",
+                "--status",
+                "ready",
+                "--dry-run",
+            ],
+        )
 
         assert result.exit_code == 0
         assert sprint_file.read_text() == original_content
@@ -678,27 +698,35 @@ class TestCLIIntegration:
         """Specifying a non-existent story should produce non-zero exit code with message."""
         from pf.sprint.story_update import story_update_command
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "99-99",
-            "--status", "ready",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "99-99",
+                "--status",
+                "ready",
+            ],
+        )
 
         assert result.exit_code != 0
         # Should be a proper error message, not a raw exception
         assert "99-99" in result.output
 
-    def test_cli_invalid_status_exits_nonzero(
-        self, runner: CliRunner, sprint_file: Path
-    ) -> None:
+    def test_cli_invalid_status_exits_nonzero(self, runner: CliRunner, sprint_file: Path) -> None:
         """Specifying an invalid status value should fail."""
         from pf.sprint.story_update import story_update_command
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "76-3",
-            "--status", "invalid",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76-3",
+                "--status",
+                "invalid",
+            ],
+        )
 
         assert result.exit_code != 0
 
@@ -706,11 +734,16 @@ class TestCLIIntegration:
         """Successful update should show confirmation."""
         from pf.sprint.story_update import story_update_command
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "76-3",
-            "--status", "ready",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76-3",
+                "--status",
+                "ready",
+            ],
+        )
 
         assert result.exit_code == 0
         assert "76-3" in result.output
@@ -719,11 +752,16 @@ class TestCLIIntegration:
         """--assigned-to option should set the assignee."""
         from pf.sprint.story_update import story_update_command
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "76-3",
-            "--assigned-to", "jdoe",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76-3",
+                "--assigned-to",
+                "jdoe",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -735,11 +773,16 @@ class TestCLIIntegration:
         """--completed option should set the completed date."""
         from pf.sprint.story_update import story_update_command
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "76-1",
-            "--completed", "2026-01-22",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76-1",
+                "--completed",
+                "2026-01-22",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -751,11 +794,16 @@ class TestCLIIntegration:
         """--started option should set the started date."""
         from pf.sprint.story_update import story_update_command
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "76-3",
-            "--started", "2026-02-01",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76-3",
+                "--started",
+                "2026-02-01",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -767,11 +815,16 @@ class TestCLIIntegration:
         """--status in_review should be accepted by CLI."""
         from pf.sprint.story_update import story_update_command
 
-        result = runner.invoke(story_update_command, [
-            "--sprint-file", str(sprint_file),
-            "76-2",
-            "--status", "in_review",
-        ])
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file",
+                str(sprint_file),
+                "76-2",
+                "--status",
+                "in_review",
+            ],
+        )
 
         assert result.exit_code == 0
 

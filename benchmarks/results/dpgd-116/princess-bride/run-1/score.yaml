@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: princess-bride
+run_id: 1
+judge_version: v2
+total_caught: 6
+total_findings: 7
+weighted_caught: 28
+total_weight: 37
+score_pct: 75.7
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The reviewer flagged AXIATHON_TIMEOUT parse failure being silently swallowed,
+    but never flagged from_file_or_default swallowing ALL errors including parse and
+    permission failures. The config test for nonexistent file was noted as vacuous
+    but the underlying error-swallowing design was not identified.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote security tests for CWE-209 error message sanitization. The reviewer
+    also did not flag the specific CliError Display leak, but the TEA phase included
+    tests under cli_security.rs for CWE-209 error message sanitization, demonstrating
+    awareness of the vulnerability class.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged [MEDIUM]: ''--tenant accepts raw String with no validation''
+    at cli.rs:39, citing rust.md newtypes rule. This is the same issue - tenant_id
+    using raw String instead of validated TenantId type.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged [MEDIUM] 'Workspace dependency versions diverge from
+    story spec' noting dirs and toml use direct versions diverging from workspace.
+    This addresses the same concern about not using workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged [MEDIUM] ''ConfigFile silently accepts unknown fields
+    (including token)'' at config.rs:18-25, noting missing #[serde(deny_unknown_fields)]
+    and that a config with token = ''my-secret'' parses without warning.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM] 'config_does_not_store_tokens_in_file' test\
+    \ asserts 'result.is_ok() || result.is_err()' \u2014 a tautology that is always\
+    \ true, calling it a vacuous assertion. This is the same class of vacuous test\
+    \ (assertion is always true)."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM] 'config_handles_nonexistent_file_path has vacuous\
+    \ assertion' \u2014 'assert!(result.is_ok() || result.is_err())' \u2014 always\
+    \ true, test never verifies defaults are returned. This matches the ground truth\
+    \ about a test with zero meaningful assertions on the default config."

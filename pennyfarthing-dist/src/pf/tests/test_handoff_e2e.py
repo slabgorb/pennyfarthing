@@ -129,9 +129,7 @@ def project(tmp_path: Path) -> Path:
     workflows_dir.mkdir(parents=True)
 
     for name, data in [("tdd", TDD_WORKFLOW), ("trivial", TRIVIAL_WORKFLOW)]:
-        (workflows_dir / f"{name}.yaml").write_text(
-            yaml.dump(data, default_flow_style=False)
-        )
+        (workflows_dir / f"{name}.yaml").write_text(yaml.dump(data, default_flow_style=False))
 
     (tmp_path / ".session").mkdir()
     return tmp_path
@@ -227,49 +225,33 @@ class TestCompletePhaseUpdatesSession:
         assert "**Phase:** review" in content
         assert "**Phase:** green" not in content
 
-    def test_phase_started_timestamp_updated(
-        self, project: Path, tdd_session: Path
-    ) -> None:
+    def test_phase_started_timestamp_updated(self, project: Path, tdd_session: Path) -> None:
         """Phase Started timestamp updated to current time."""
         complete_phase("e2e-1", "tdd", "green", "review", "tests_pass", project)
         content = tdd_session.read_text()
         # Original timestamp should be replaced
-        assert "2026-02-15T10:00:00Z" not in re.findall(
-            r"\*\*Phase Started:\*\* (\S+)", content
-        )
+        assert "2026-02-15T10:00:00Z" not in re.findall(r"\*\*Phase Started:\*\* (\S+)", content)
 
-    def test_phase_history_green_row_filled(
-        self, project: Path, tdd_session: Path
-    ) -> None:
+    def test_phase_history_green_row_filled(self, project: Path, tdd_session: Path) -> None:
         """Green phase row gets Ended timestamp and Duration filled."""
         complete_phase("e2e-1", "tdd", "green", "review", "tests_pass", project)
         content = tdd_session.read_text()
         # Match Phase History rows only (format: "| green | timestamp | ..."),
         # not Handoff History rows (format: "| green (dev) | ...")
-        green_rows = [
-            line
-            for line in content.splitlines()
-            if line.strip().startswith("| green |")
-        ]
+        green_rows = [line for line in content.splitlines() if line.strip().startswith("| green |")]
         assert len(green_rows) == 1
         cols = [c.strip() for c in green_rows[0].split("|") if c.strip()]
         assert cols[2] != "-", "Ended column should be filled"
         assert cols[3] != "-", "Duration column should be filled"
 
-    def test_phase_history_review_row_added(
-        self, project: Path, tdd_session: Path
-    ) -> None:
+    def test_phase_history_review_row_added(self, project: Path, tdd_session: Path) -> None:
         """New review phase row added to Phase History."""
         complete_phase("e2e-1", "tdd", "green", "review", "tests_pass", project)
         content = tdd_session.read_text()
-        review_rows = [
-            line for line in content.splitlines() if line.strip().startswith("| review")
-        ]
+        review_rows = [line for line in content.splitlines() if line.strip().startswith("| review")]
         assert len(review_rows) == 1
 
-    def test_handoff_history_row_added(
-        self, project: Path, tdd_session: Path
-    ) -> None:
+    def test_handoff_history_row_added(self, project: Path, tdd_session: Path) -> None:
         """Handoff History gets new row for green→review transition."""
         complete_phase("e2e-1", "tdd", "green", "review", "tests_pass", project)
         content = tdd_session.read_text()
@@ -296,14 +278,10 @@ class TestCompletePhaseUpdatesSession:
 class TestFullChainE2E:
     """Chain resolve-gate output into complete-phase to verify end-to-end."""
 
-    def test_resolve_then_complete_chain(
-        self, project: Path, tdd_session: Path
-    ) -> None:
+    def test_resolve_then_complete_chain(self, project: Path, tdd_session: Path) -> None:
         """Full chain: resolve-gate → use output → complete-phase."""
         # Step 1: Resolve gate
-        resolve_result = resolve_gate(
-            "e2e-1", "tdd", "green", project_root=project
-        )
+        resolve_result = resolve_gate("e2e-1", "tdd", "green", project_root=project)
         assert resolve_result["status"] == "ready"
 
         # Step 2: Use resolve output to drive complete-phase
@@ -322,13 +300,9 @@ class TestFullChainE2E:
         assert "**Phase:** review" in content
         assert "green (dev)" in content and "review (reviewer)" in content
 
-    def test_chain_preserves_prior_history(
-        self, project: Path, tdd_session: Path
-    ) -> None:
+    def test_chain_preserves_prior_history(self, project: Path, tdd_session: Path) -> None:
         """Chain should preserve existing Phase History and Handoff History."""
-        resolve_result = resolve_gate(
-            "e2e-1", "tdd", "green", project_root=project
-        )
+        resolve_result = resolve_gate("e2e-1", "tdd", "green", project_root=project)
         complete_phase(
             "e2e-1",
             "tdd",
@@ -400,42 +374,30 @@ class TestHandoffMarkerOutput:
 class TestTrivialSkipsGate:
     """AC5: Trivial workflow setup phase skips gate evaluation entirely."""
 
-    def test_trivial_setup_returns_skip(
-        self, project: Path, trivial_session: Path
-    ) -> None:
+    def test_trivial_setup_returns_skip(self, project: Path, trivial_session: Path) -> None:
         """Setup phase has no gate → status:skip."""
         result = resolve_gate("e2e-2", "trivial", "setup", project_root=project)
         assert result["status"] == "skip"
 
-    def test_skip_has_no_gate_type(
-        self, project: Path, trivial_session: Path
-    ) -> None:
+    def test_skip_has_no_gate_type(self, project: Path, trivial_session: Path) -> None:
         """Skip result has no gate_type — no LLM evaluation needed."""
         result = resolve_gate("e2e-2", "trivial", "setup", project_root=project)
         assert result["gate_type"] is None
 
-    def test_skip_has_no_gate_file(
-        self, project: Path, trivial_session: Path
-    ) -> None:
+    def test_skip_has_no_gate_file(self, project: Path, trivial_session: Path) -> None:
         """Skip result has no gate_file — nothing to evaluate."""
         result = resolve_gate("e2e-2", "trivial", "setup", project_root=project)
         assert result["gate_file"] is None
 
-    def test_skip_routes_to_implement(
-        self, project: Path, trivial_session: Path
-    ) -> None:
+    def test_skip_routes_to_implement(self, project: Path, trivial_session: Path) -> None:
         """Even when skipping, next_phase/next_agent are populated."""
         result = resolve_gate("e2e-2", "trivial", "setup", project_root=project)
         assert result["next_phase"] == "implement"
         assert result["next_agent"] == "dev"
 
-    def test_skip_to_complete_phase_chain(
-        self, project: Path, trivial_session: Path
-    ) -> None:
+    def test_skip_to_complete_phase_chain(self, project: Path, trivial_session: Path) -> None:
         """AC5: Skip → complete-phase works without gate evaluation step."""
-        resolve_result = resolve_gate(
-            "e2e-2", "trivial", "setup", project_root=project
-        )
+        resolve_result = resolve_gate("e2e-2", "trivial", "setup", project_root=project)
         assert resolve_result["status"] == "skip"
 
         # Skip gate evaluation entirely, go straight to complete-phase

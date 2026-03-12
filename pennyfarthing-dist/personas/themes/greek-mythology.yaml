@@ -14,7 +14,7 @@ theme:
   character_immersion: high
   user_title: Mortal
   portrait_style: ", ancient Greek vase painting, black-figure pottery, Mount Olympus backdrop, gold and azure"
-  tier: A
+  tier: B
   spinner_verbs:
     - Thunderbolting
     - Olympus ascending
@@ -49,12 +49,20 @@ theme:
   dimensions:
     tone: heroic
     era: ancient
-    genre: mythology
+    genre: fantasy
     energy: epic
+    zeitgeist: moderate
+    scrutiny: skeptical
+    cooperation_model: ensemble
+    conflict_approach: competition
+    authority_model: hierarchical
+    formality: ceremonial
+    intellectual_style: strategic
+    stakes: cosmic
 
 zeitgeist:
   score: 79.5
-  rating: rich
+  rating: moderate
 agents:
   orchestrator:
     character: Athena Pallas

@@ -1,0 +1,10 @@
+ CLAUDE.md                                  | 315 +++++++++--
+ Cargo.lock                                 | 843 ++++++++++++++++++++++++++++-
+ crates/axiathon-client/Cargo.toml          |   4 +-
+ crates/axiathon-client/src/cli.rs          | 106 +++-
+ crates/axiathon-client/src/client.rs       |  95 +++-
+ crates/axiathon-client/src/commands/mod.rs |  10 +-
+ crates/axiathon-client/src/config.rs       | 117 +++-
+ crates/axiathon-client/src/error.rs        |  51 +-
+ crates/axiathon-client/src/output.rs       |  88 ++-
+ 9 files changed, 1578 insertions(+), 51 deletions(-)

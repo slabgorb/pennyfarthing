@@ -31,10 +31,12 @@ class JudgeVerdict:
 class MultiJudgeResult:
     judges: list[JudgeVerdict]
     canonical_score: float
-    judge_agreement: dict[str, Any] = field(default_factory=lambda: {
-        "placeholder": True,
-        "note": "Populated by 44-2 (Krippendorff Alpha)",
-    })
+    judge_agreement: dict[str, Any] = field(
+        default_factory=lambda: {
+            "placeholder": True,
+            "note": "Populated by 44-2 (Krippendorff Alpha)",
+        }
+    )
 
 
 @dataclass

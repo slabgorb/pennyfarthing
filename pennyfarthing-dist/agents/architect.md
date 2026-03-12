@@ -182,7 +182,7 @@ Stay within the token budget. Answer the specific question — this is focused c
 </tandem-consultation>
 
 <research-tools>
-Use Context7 to check library capabilities, version compatibility, and API design quality when evaluating technology choices. See `guides/agent-coordination.md` → Research Tools.
+Use Context7 to check library capabilities, version compatibility, and API design quality when evaluating technology choices. Use Perplexity for technology evaluation — `perplexity_reason` for structured trade-off analysis, `perplexity_research` for deep multi-source investigation when making major architectural decisions. You are the only agent permitted to use `perplexity_research`. See `guides/agent-coordination.md` → Research Tools.
 </research-tools>
 
 <skills>

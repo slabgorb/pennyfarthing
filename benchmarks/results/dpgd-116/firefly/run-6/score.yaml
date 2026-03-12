@@ -1,0 +1,72 @@
+scenario_id: dpgd-116
+theme: firefly
+run_id: 6
+judge_version: v2
+total_caught: 4
+total_findings: 7
+weighted_caught: 23
+total_weight: 37
+score_pct: 62.2
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged \"[MEDIUM] from_file_or_default swallows parse errors\
+    \ silently\" \u2014 noted unwrap_or_default() means malformed TOML silently falls\
+    \ back to defaults and recommended returning error for parse failures while only\
+    \ defaulting for file-not-found."
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote CWE-209 error exposure tests in security.rs. Dev implemented
+    sanitized Display for ServerError. Reviewer additionally flagged "[MEDIUM] CliError::NotFound
+    Display leaks the inner string directly" as a remaining gap.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote header injection tests in siem_client.rs and security.rs (CWE-113).
+    Dev implemented CRLF rejection via HeaderValue::from_str(). Reviewer verified
+    mitigation. Same vulnerability class addressed, though type-safety (using TenantId)
+    was not flagged.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that crate-level Cargo.toml uses direct version strings
+    instead of workspace = true for the 6 dependencies.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged \"[MEDIUM] RawConfig silently ignores unknown fields\
+    \ \u2014 intentional but risky\" and recommended #[serde(deny_unknown_fields)]\
+    \ with an allow-list. Noted that operator typos like servre_url are silently ignored."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion (is_none() || ... always
+    passes). TEA designed 9 config_loading tests but the pattern was not flagged.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test that only checks non-panic
+    via let _ = config.

@@ -1,0 +1,34 @@
+All 80 tests GREEN, clippy clean. Here's the summary:
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `crates/axiathon-client/src/lib.rs` - Added module declarations
+- `crates/axiathon-client/src/main.rs` - Binary entry point (new)
+- `crates/axiathon-client/src/cli.rs` - Clap 4.x derive CLI struct with all command groups, global flags, OutputFormat enum (new)
+- `crates/axiathon-client/src/error.rs` - CliError enum with exit code mapping, InternalDetail wrapper for safe Display (new)
+- `crates/axiathon-client/src/config.rs` - ClientConfig with TOML loading, env var overrides, validation (new)
+- `crates/axiathon-client/src/output.rs` - OutputFormatter trait + TableFormatter, JsonFormatter, CsvFormatter (new)
+- `crates/axiathon-client/src/client.rs` - SiemClient HTTP wrapper with header injection, status code mapping (new)
+- `crates/axiathon-client/src/commands/mod.rs` - Command module re-exports (new)
+- `crates/axiathon-client/src/commands/query.rs` - Stub → Story 5.5 (new)
+- `crates/axiathon-client/src/commands/rules.rs` - Stub → Story 6.6 (new)
+- `crates/axiathon-client/src/commands/alerts.rs` - Stub → Story 6.5 (new)
+- `crates/axiathon-client/src/commands/ingest.rs` - Stub → Story 6.4 (new)
+- `crates/axiathon-client/src/commands/config.rs` - Stub → Story 6.3 (new)
+- `crates/axiathon-client/src/commands/status.rs` - Stub → Story 6.2 (new)
+- `crates/axiathon-client/src/commands/tenant.rs` - Stub → Story 6.7 (new)
+- `crates/axiathon-client/src/commands/completion.rs` - Functional shell completion generation (new)
+- `crates/axiathon-client/Cargo.toml` - Changed edition to "2021" (tests use `set_var` without unsafe blocks)
+
+**Tests:** 80/80 passing (GREEN) across 8 test files
+**Clippy:** Clean, no warnings
+
+**Key design decisions:**
+- `CliError::ServerError` and `Config` wrap an `InternalDetail` type that suppresses sensitive info in Display (CWE-209)
+- `SiemClient` strips CR/LF from tenant IDs and rejects tokens with CR/LF (header injection prevention)
+- `ClientConfig::token()` always returns `None` — tokens come from OS keychain only
+- `Cli::try_parse_from` added as inherent method to avoid requiring `use clap::Parser` in consumers
+- Edition set to 2021 because pre-written tests use `std::env::set_var` without unsafe blocks (Rust 2024 requires unsafe)

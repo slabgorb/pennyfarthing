@@ -115,20 +115,24 @@ def deprecate_version(
                 },
             ],
         }
-    steps.append({
-        "action": "npm_deprecate",
-        "detail": f"{package_name}@{version}",
-        "success": True,
-    })
+    steps.append(
+        {
+            "action": "npm_deprecate",
+            "detail": f"{package_name}@{version}",
+            "success": True,
+        }
+    )
 
     # Step 2: Update CHANGELOG.md
     today = datetime.now(UTC).strftime("%Y-%m-%d")
     changelog_ok = _update_changelog(changelog_path, version, reason, today)
-    steps.append({
-        "action": "changelog_update",
-        "detail": f"Added [DEPRECATED] marker to {version}",
-        "success": changelog_ok,
-    })
+    steps.append(
+        {
+            "action": "changelog_update",
+            "detail": f"Added [DEPRECATED] marker to {version}",
+            "success": changelog_ok,
+        }
+    )
 
     # Step 3: Add git note
     note_msg = f"Deprecated: {reason}\nDate: {today}\nPackage: {package_name}@{version}"
@@ -139,11 +143,13 @@ def deprecate_version(
         cwd=str(project_root),
     )
     git_ok = git_result.returncode == 0
-    steps.append({
-        "action": "git_notes",
-        "detail": f"Note added to v{version}" if git_ok else git_result.stderr.strip(),
-        "success": git_ok,
-    })
+    steps.append(
+        {
+            "action": "git_notes",
+            "detail": f"Note added to v{version}" if git_ok else git_result.stderr.strip(),
+            "success": git_ok,
+        }
+    )
 
     all_ok = all(s.get("success", True) for s in steps)
     return {"success": all_ok, "steps": steps}
@@ -159,9 +165,7 @@ def _update_changelog(
     content = changelog_path.read_text()
 
     # Find the version header line: ## [X.Y.Z] - YYYY-MM-DD
-    pattern = re.compile(
-        rf"(## \[{re.escape(version)}\] - \d{{4}}-\d{{2}}-\d{{2}})"
-    )
+    pattern = re.compile(rf"(## \[{re.escape(version)}\] - \d{{4}}-\d{{2}}-\d{{2}})")
     match = pattern.search(content)
     if not match:
         return False
@@ -181,7 +185,13 @@ def _update_changelog(
     deprecation_notice = f"\n\n### Deprecated\n\n- **Version deprecated ({today})** — {reason}\n"
 
     # Replace header and insert notice
-    content = content[:match.start()] + new_header + content[header_end:insert_pos] + deprecation_notice + content[insert_pos:]
+    content = (
+        content[: match.start()]
+        + new_header
+        + content[header_end:insert_pos]
+        + deprecation_notice
+        + content[insert_pos:]
+    )
 
     changelog_path.write_text(content)
     return True

@@ -1,0 +1,30 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — all 10 ACs require test coverage.
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `tests/cli_binary_integration.rs` | 49 | AC-1, AC-2, AC-3, AC-5, AC-9, AC-10 |
+| `tests/cli_error_exit_codes.rs` | 16 | AC-3 (CliError enum, exit codes, thiserror) |
+| `tests/cli_output_format.rs` | 23 | AC-4, AC-6 (OutputFormatter, table/json/csv, clap derive) |
+| `tests/cli_siem_client.rs` | 17 | AC-7 (SiemClient, headers, status mapping, connection errors) |
+| `tests/cli_config.rs` | 14 | AC-8 (ClientConfig, TOML loading, env overrides, XDG paths) |
+| `tests/cli_security.rs` | 12 | CWE-209, header injection, null bytes, credential leakage |
+
+**Tests Written:** 132 tests covering all 10 ACs
+**Status:** RED (failing — binary tests fail at runtime, library tests fail at compilation)
+
+**RED State Breakdown:**
+- `cli_binary_integration.rs`: Compiles, 49/49 tests FAIL (binary `axiathon` doesn't exist)
+- Other 5 files: Compilation failure (modules `error`, `output`, `client`, `config`, `cli` not yet exported from `axiathon_client`)
+
+**Security tests included:**
+- CWE-209: Error messages must not expose server paths, SQL, JWT internals
+- Header injection: CRLF and null bytes in tokens/tenant IDs
+- Config credential leakage: Tokens must NOT load from TOML files
+- Silent error swallowing: Parse errors and HTTP errors must propagate
+- Dependency isolation: Client must not import server-side crates
+
+**Handoff:** To Dev for implementation (GREEN phase)

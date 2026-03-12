@@ -108,17 +108,27 @@ Prime script provides workflow state. Route based on state from activation outpu
 
 > **Triggered when:** `FINISH_STATE`
 
-1. **Spawn `sm-finish` with PHASE=preflight**
+1. **Check stack-ready gate (stacked repos only):**
+   If repo has `pr_strategy: stacked` and story has `depends_on`, verify parent is merged:
+   ```bash
+   # Gate auto-passes for non-stacked repos or stack roots
+   ```
+   See `gates/stack-ready.md`. Block finish if parent PR not yet merged.
+
+2. **Spawn `sm-finish` with PHASE=preflight**
    - Provide: STORY_ID, JIRA_KEY (from session `Jira:` field), REPOS, BRANCH
    - **Never construct JIRA_KEY from epic number** - read it from session/YAML
    - sm-finish compiles the Impact Summary from Delivery Findings before running preflight checks
 
-2. **Run finish command:**
+3. **Run finish command:**
    ```bash
    pf sprint story finish {STORY_ID}
    ```
 
-3. **Commit results:**
+4. **Post-merge stack sync (stacked repos only):**
+   If repo has `pr_strategy: stacked`, run `gt sync` to rebase and retarget dependent PRs.
+
+5. **Commit results:**
    ```bash
    git add sprint/archive/{JIRA_KEY}-session.md sprint/current-sprint.yaml
    git commit -m "chore(sprint): complete {STORY_ID}"
@@ -182,9 +192,9 @@ Present to user:
 <merge-gate>
 ## Merge Gate (BLOCKING)
 
-Enforced by `gates/merge-ready`. Blocks new work if non-draft PRs are open.
+Enforced by `gates/merge-ready`. Blocks new work if non-draft PRs exist for stories not in `in_review` status. PRs for `in_review` stories are allowed — they're awaiting external review and can't be self-merged.
 
-**Resolution:** Merge/close all non-draft PRs first. Use `/pf-reviewer` to complete reviews.
+**Resolution:** Merge/close blocking PRs, or update story status to `in_review` if awaiting external review. Use `/pf-reviewer` to complete reviews.
 </merge-gate>
 
 <gate>
