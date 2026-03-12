@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: enlightenment-thinkers
+run_id: 1
+timestamp: '2026-03-08T09:07:33.781507+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-enlightenment-thinkers-run-1
+phases:
+  tea:
+    token_usage:
+      input: 1154
+      output: 19311
+    duration_s: 358.69
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 20
+      output: 28965
+    duration_s: 493.84
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 10
+      output: 4928
+    duration_s: 157.33
+    exit_code: 0

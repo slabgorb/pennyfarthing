@@ -1,0 +1,76 @@
+scenario_id: dpgd-116
+theme: game-of-thrones
+run_id: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Config uses from_file(path).unwrap_or_default() pattern. TEA wrote a test
+    for 'missing file graceful handling' and 'malformed TOML rejection' but the malformed
+    TOML test likely tests a different code path. No phase flagged that permission
+    errors and parse errors are swallowed by unwrap_or_default().
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer observation #3: 'ServerError Display leaks raw server response\
+    \ body (CWE-209)' \u2014 flags that the Display impl includes raw HTTP response\
+    \ body that could contain stack traces and internal paths. TEA also wrote security\
+    \ tests for CWE-209 error exposure, but the reviewer's finding is more directly\
+    \ about the stderr leak pattern."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer observation #9: '--tenant flag accepts raw String instead of\
+    \ TenantId' \u2014 explicitly flags that SiemClient uses Option<String> for tenant\
+    \ instead of TenantId from axiathon-core, citing project newtype rules."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer noted toml version mismatch (observation #5) but did not flag
+    that dependencies use direct version strings instead of workspace = true. The
+    Dev phase added deps with direct versions in Cargo.toml.'
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer observation #4: 'RawConfig silently accepts unknown fields'\
+    \ \u2014 explicitly recommends #[serde(deny_unknown_fields)] to catch misconfigurations\
+    \ like typos. Does not specifically mention the token-left-on-disk scenario but\
+    \ catches the root cause."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (assert!(config.server().is_none()
+    || ...)). TEA wrote config tests but this specific assertion logic flaw was not
+    flagged.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test pattern (let _ = config with
+    no assert_eq! checks). TEA designed config_loading tests but did not flag this
+    specific issue in existing tests.

@@ -40,30 +40,42 @@ try:
         merge_patch_branch,
         restore_workflow_state,
     )
+
     IMPORT_SUCCESS = True
 except ImportError:
     IMPORT_SUCCESS = False
+
     # Stub classes for test compilation
     class PatchState:
         pass
+
     class PatchStack:
         pass
+
     def enter_patch_mode(*args, **kwargs):
         raise NotImplementedError("patch_mode.py not implemented")
+
     def exit_patch_mode(*args, **kwargs):
         raise NotImplementedError("patch_mode.py not implemented")
+
     def get_patch_stack(*args, **kwargs):
         raise NotImplementedError("patch_mode.py not implemented")
+
     def create_patch_branch(*args, **kwargs):
         raise NotImplementedError("patch_mode.py not implemented")
+
     def merge_patch_branch(*args, **kwargs):
         raise NotImplementedError("patch_mode.py not implemented")
+
     def restore_workflow_state(*args, **kwargs):
         raise NotImplementedError("patch_mode.py not implemented")
+
     def log_patch_to_session(*args, **kwargs):
         raise NotImplementedError("patch_mode.py not implemented")
+
     def generate_patch_commit_message(*args, **kwargs):
         raise NotImplementedError("patch_mode.py not implemented")
+
     def is_in_patch_mode(*args, **kwargs):
         raise NotImplementedError("patch_mode.py not implemented")
 
@@ -79,7 +91,7 @@ class TestPatchModeModuleExists:
         """PatchState class should exist."""
         assert IMPORT_SUCCESS, "PatchState class not found"
         # When implemented, PatchState should have these attributes
-        assert hasattr(PatchState, '__init__') or not IMPORT_SUCCESS
+        assert hasattr(PatchState, "__init__") or not IMPORT_SUCCESS
 
     def test_patch_stack_class_exists(self) -> None:
         """PatchStack class should exist."""
@@ -407,6 +419,7 @@ class TestSessionPatches:
         content = session_file.read_text()
         # Should have a date in YYYY-MM-DD format
         import re
+
         assert re.search(r"\d{4}-\d{2}-\d{2}", content)
 
 

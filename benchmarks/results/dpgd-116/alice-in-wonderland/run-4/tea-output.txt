@@ -1,0 +1,31 @@
+*Exhales a perfect smoke ring.*
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 builds the entire CLI framework — every acceptance criterion needs test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure.rs` | 18 | AC-1 (command groups), AC-2 (help), AC-5 (global flags), AC-6 (clap derive) |
+| `exit_codes.rs` | 13 | AC-3 (exit codes 0/1/2/3/4, CliError variants, trait bounds) |
+| `output_format.rs` | 12 | AC-4 (table/json/csv formatting, metadata, escaping, edge cases) |
+| `siem_client.rs` | 13 | AC-7 (construction, tenant/auth headers, HTTP→CliError mapping) |
+| `config_loading.rs` | 10 | AC-8 (TOML loading, env overrides, precedence, XDG paths) |
+| `shell_completion.rs` | 7 | AC-9 (bash/zsh/fish/powershell generation, binary name) |
+| `stub_handlers.rs` | 11 | AC-10 (NotImplemented errors with story references for each command) |
+| `security.rs` | 10 | CWE-209 error exposure, CRLF header injection, config validation |
+
+**Tests Written:** 94 tests covering all 10 ACs
+**Status:** RED (compilation failure — modules `cli`, `error`, `output`, `client`, `config`, `commands` don't exist yet)
+
+**Key security tests:**
+- Auth error Display doesn't leak tokens/Bearer strings
+- Server error Display is concise (no raw response dumps)
+- Tenant ID rejects CRLF injection (`\r\n`)
+- Auth token rejects CRLF injection
+- Config rejects `file://` URLs, negative/zero timeouts
+- Corrupted config files produce errors (not silent fallback)
+
+**Handoff:** To Dev for implementation (GREEN phase)

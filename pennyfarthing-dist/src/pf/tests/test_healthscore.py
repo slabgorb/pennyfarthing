@@ -41,12 +41,14 @@ from pf.healthscore.models import (
 # AC1: Module structure
 # ---------------------------------------------------------------------------
 
+
 class TestModuleStructure:
     """AC1: New module at pf/healthscore/ with standard files."""
 
     def test_package_has_init(self):
         """Module must be importable as a package."""
         import pf.healthscore
+
         assert hasattr(pf.healthscore, "HealthscoreResult")
         assert hasattr(pf.healthscore, "DimensionScore")
         assert hasattr(pf.healthscore, "DEFAULT_WEIGHTS")
@@ -55,22 +57,26 @@ class TestModuleStructure:
     def test_models_module_exists(self):
         """models.py must define DimensionScore and HealthscoreResult."""
         from pf.healthscore import models
+
         assert hasattr(models, "DimensionScore")
         assert hasattr(models, "HealthscoreResult")
 
     def test_analyze_module_exists(self):
         """analyze.py must define analyze_healthscore."""
         from pf.healthscore import analyze
+
         assert hasattr(analyze, "analyze_healthscore")
 
     def test_cli_module_exists(self):
         """cli.py must define the click group."""
         from pf.healthscore import cli
+
         assert hasattr(cli, "healthscore")
 
     def test_formatters_module_exists(self):
         """formatters.py must define table/json/csv formatters."""
         from pf.healthscore import formatters
+
         assert hasattr(formatters, "format_table")
         assert hasattr(formatters, "export_json")
         assert hasattr(formatters, "export_csv")
@@ -79,6 +85,7 @@ class TestModuleStructure:
 # ---------------------------------------------------------------------------
 # AC2: Weighted scoring algorithm with 8 configurable dimensions
 # ---------------------------------------------------------------------------
+
 
 class TestWeightedScoring:
     """AC2: 8 dimensions with configurable weights."""
@@ -95,8 +102,13 @@ class TestWeightedScoring:
     def test_default_weight_keys(self):
         """Must include all 8 named dimensions."""
         expected = {
-            "churn", "todo_density", "complexity", "test_gaps",
-            "dead_code", "deprecation_debt", "dependency_freshness",
+            "churn",
+            "todo_density",
+            "complexity",
+            "test_gaps",
+            "dead_code",
+            "deprecation_debt",
+            "dependency_freshness",
             "agent_context_efficiency",
         }
         assert set(DEFAULT_WEIGHTS.keys()) == expected
@@ -134,6 +146,7 @@ class TestWeightedScoring:
 # ---------------------------------------------------------------------------
 # AC3: Each dimension 0-100, composite is weighted average 0-100
 # ---------------------------------------------------------------------------
+
 
 class TestScoreRanges:
     """AC3: Dimension scores 0-100, composite 0-100."""
@@ -199,6 +212,7 @@ class TestScoreRanges:
 # ---------------------------------------------------------------------------
 # AC4: CLI command
 # ---------------------------------------------------------------------------
+
 
 class TestCLI:
     """AC4: pf healthscore analyze [--format table|json|csv] [--path DIR]."""
@@ -303,9 +317,9 @@ class TestCLI:
             return_value=mock_result,
         ):
             runner = CliRunner()
-            result = runner.invoke(healthscore, [
-                "analyze", "--format", "json", "--output", str(output_file)
-            ])
+            result = runner.invoke(
+                healthscore, ["analyze", "--format", "json", "--output", str(output_file)]
+            )
             assert result.exit_code == 0
             assert output_file.exists()
             data = json.loads(output_file.read_text())
@@ -315,6 +329,7 @@ class TestCLI:
 # ---------------------------------------------------------------------------
 # AC5: Result caching within 5-minute window
 # ---------------------------------------------------------------------------
+
 
 class TestCaching:
     """AC5: Component scores cached, reused within 5-minute window."""
@@ -366,9 +381,7 @@ class TestCaching:
             "pf.healthscore.analyze.read_cached_score",
             return_value=99.0,
         ) as mock_read:
-            asyncio.run(
-                analyze_healthscore(Path("/tmp/project"), cache_ttl=0)
-            )
+            asyncio.run(analyze_healthscore(Path("/tmp/project"), cache_ttl=0))
             # With ttl=0, cached values should not be used
             mock_read.assert_not_called()
 
@@ -376,6 +389,7 @@ class TestCaching:
 # ---------------------------------------------------------------------------
 # AC6: Cache stored in .pennyfarthing/.cache/healthscore/
 # ---------------------------------------------------------------------------
+
 
 class TestCacheLocation:
     """AC6: Cache files stored in .pennyfarthing/.cache/healthscore/."""
@@ -399,6 +413,7 @@ class TestCacheLocation:
 # ---------------------------------------------------------------------------
 # AC7: ADR-0008 result pattern
 # ---------------------------------------------------------------------------
+
 
 class TestADR0008Pattern:
     """AC7: HealthscoreResult follows ADR-0008 pattern."""
@@ -470,12 +485,14 @@ class TestADR0008Pattern:
 # AC8: Registered in main CLI
 # ---------------------------------------------------------------------------
 
+
 class TestMainCLIRegistration:
     """AC8: healthscore command registered in pf/cli.py."""
 
     def test_healthscore_registered_in_main_cli(self):
         """Main CLI must expose healthscore via the 'debug' command group."""
         from pf.cli import cli
+
         command_names = list(cli.commands)
         assert "debug" in command_names
 
@@ -483,6 +500,7 @@ class TestMainCLIRegistration:
 # ---------------------------------------------------------------------------
 # AC9: Full integration — analyze_healthscore returns real result
 # ---------------------------------------------------------------------------
+
 
 class TestAnalyzeIntegration:
     """AC9: End-to-end analysis returns HealthscoreResult."""

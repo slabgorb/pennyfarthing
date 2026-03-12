@@ -1,0 +1,24 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 introduces the entire CLI framework — foundational public API surface requiring thorough coverage.
+
+**Test Files:**
+
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `tests/cli_structure.rs` | 28 | AC-1, AC-2, AC-5, AC-6 | Command groups in help, subcommand help rendering with examples, global flags (format, verbose, quiet, server, tenant, config, no-color), clap Parser trait |
+| `tests/exit_codes.rs` | 12 | AC-3 | CliError::exit_code() mapping: 1 for general/config/timeout/not-found, 3 for auth, 4 for authz, valid range check |
+| `tests/output_format.rs` | 11 | AC-4 | OutputFormat enum variants, table formatting with headers/empty rows, JSON with ResponseMetadata (request_id, timestamp, api_version), CSV headers/escaping (commas, quotes, newlines) |
+| `tests/siem_client.rs` | 11 | AC-7 | SiemClient construction, HTTP status → CliError mapping (401→AuthenticationExpired, 403→Unauthorized, 404→NotFound, 429→RateLimited, 5xx→ServerError), URL normalization, connection refused |
+| `tests/config_loading.rs` | 9 | AC-8 | TOML loading, defaults, env var overrides (AXIATHON_API_URL, AXIATHON_TIMEOUT), invalid TOML rejection, token NOT in config file, XDG path |
+| `tests/shell_completion.rs` | 10 | AC-9 | bash/zsh/fish/PowerShell completion generation, subcommand inclusion, CLI parsing for shell argument, unknown shell rejection |
+| `tests/stub_handlers.rs` | 10 | AC-10 | All stubs print "not yet implemented" with story reference, stubs return CliError::NotImplemented with exit code 1 |
+| `tests/security.rs` | 9 | Security | CWE-209 error info exposure (no stack traces, tokens, sensitive values in Display), header injection via CR/LF in tenant ID/token/URL, silent error swallowing prevention, config validation (empty URL, negative timeout), HTTP status exhaustive mapping |
+
+**Tests Written:** 100 tests covering all 10 ACs
+**Status:** RED (failing — compile errors across all 8 test files; modules `cli`, `error`, `client`, `config`, `output`, `commands` do not exist yet)
+
+**Handoff:** To Dev for implementation
+
+*A Lannister does not leave gaps in his defenses. Every acceptance criterion is under guard, every security boundary tested. The Dev will find no corner where sloppiness goes unnoticed.*

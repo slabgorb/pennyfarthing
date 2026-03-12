@@ -1,0 +1,28 @@
+No session file exists. The TEA assessment will be provided here directly.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI framework with 10 acceptance criteria covering command structure, error handling, output formatting, HTTP client, config loading, and shell completions.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_framework.rs` | 30 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (derive macros) |
+| `tests/error_exit_codes.rs` | 16 | AC-3 (exit codes 0/1/2/3/4), CWE-209 security (error info leakage) |
+| `tests/output_format.rs` | 14 | AC-4 (table/json/csv formatting, JSON metadata, CSV escaping) |
+| `tests/siem_client.rs` | 14 | AC-7 (header injection, HTTP status mapping, CWE-113 header injection prevention) |
+| `tests/config_loading.rs` | 11 | AC-8 (TOML loading, env var overrides, token security, validation) |
+| `tests/shell_completion.rs` | 7 | AC-9 (bash/zsh/fish/powershell completion generation) |
+| `tests/stub_handlers.rs` | 11 | AC-10 (NotImplemented stubs with story references, exit code 1) |
+
+**Tests Written:** 103 tests covering all 10 ACs
+**Status:** RED (compilation failure — modules `cli`, `error`, `output`, `client`, `config`, `commands` do not exist yet)
+
+**Security tests included:**
+- CWE-209: `CliError` display must not leak server stack traces, token values, or config file contents
+- CWE-113: `SiemClient` must reject tenant IDs and tokens containing CRLF (header injection)
+- Config tokens: config file must not store or expose API tokens
+- Input validation: negative timeouts, empty URLs rejected
+
+**Handoff:** To Dev for implementation (GREEN phase)

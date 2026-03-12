@@ -1,0 +1,31 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a feature story delivering the entire CLI framework — all 10 ACs require test coverage.
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `cli_structure.rs` | 30 | AC-1, AC-2, AC-5, AC-6 | Command groups, subcommand help, global flags, clap derive |
+| `cli_error_exit_codes.rs` | 14 | AC-3 | CliError enum variants and exit code mapping (0/1/2/3/4) |
+| `cli_output_format.rs` | 14 | AC-4 | OutputFormatter trait, Table/JSON/CSV implementations |
+| `cli_siem_client.rs` | 14 | AC-7 | SiemClient HTTP wrapper, header injection, error mapping |
+| `cli_config.rs` | 12 | AC-8 | ClientConfig TOML loading, env var overrides, XDG paths |
+| `cli_completion_and_stubs.rs` | 14 | AC-9, AC-10 | Shell completion (bash/zsh/fish/ps), stub messages with story refs |
+| `cli_security.rs` | 11 | Security | CWE-209 info exposure, header injection, token validation |
+
+**Tests Written:** 109 tests covering all 10 ACs
+**Status:** RED (compile failure — modules `cli`, `error`, `client`, `config`, `output`, `commands` do not exist)
+
+**Security tests cover:**
+- CWE-209: Server error display must not leak stack traces, connection strings, or credentials
+- Header injection: tokens/tenant IDs with `\r\n`, `\r`, `\0` must be rejected
+- Token validation: empty and whitespace-only tokens rejected
+- Config safety: token field in TOML must be ignored (use keychain), Debug output must not contain Bearer tokens
+- Exit codes: auth errors never return 0, no error variant silently succeeds
+
+**Handoff:** To Dev for implementation (GREEN phase)
+
+## Delivery Findings
+
+- No upstream findings during test design.

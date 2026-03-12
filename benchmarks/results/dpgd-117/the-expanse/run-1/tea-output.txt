@@ -1,0 +1,28 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 establishes the REST API foundation — endpoints, envelope, auth, rate limiting, versioning all need verification.
+
+**Test Files:**
+- `crates/axiathon-server/tests/api_endpoints.rs` — 14 tests: 5 route groups respond, return envelope, health returns status/version/uptime, 404 for unregistered routes
+- `crates/axiathon-server/tests/api_response_envelope.rs` — 10 tests: success has data + empty errors, error has null data + populated errors, meta always has UUID request_id + ISO 8601 timestamp + trace_id, RFC 9457 error structure, unique request IDs, content-type header
+- `crates/axiathon-server/tests/authentication.rs` — 14 tests: valid Bearer (200), missing (401), empty (401), expired (401), malformed scheme (401), wrong scope (403), API key valid/revoked/wrong-scope, JWKS endpoint, health skips auth, auth errors use envelope
+- `crates/axiathon-server/tests/rate_limiting.rs` — 5 tests: exceeding limit returns 429, 429 includes Retry-After, 429 uses envelope, per-tenant isolation, configurable per-tenant limits
+- `crates/axiathon-server/tests/api_versioning.rs` — 5 tests: routes under /api/v1/, /api/v2/ returns 404, /api/v0/ returns 404, missing /api/ prefix returns 404, missing version returns 404, non-deprecated lacks Deprecation header
+- `crates/axiathon-server/tests/security.rs` — 10 tests: no internal paths/crate names/stack traces in errors, no resource names leaked, no DB details leaked, #![forbid(unsafe_code)] present, oversized body rejected, invalid JSON returns 400, invalid content-type rejected, POST to health returns 405, Bearer edge cases don't 500
+
+**Tests Written:** 58 tests covering 5 ACs
+**Status:** RED (failing — compile errors on `axiathon_server::app::create_app` and `axiathon_server::config::ServerConfig`)
+
+**Expected public API the Dev must implement:**
+- `axiathon_server::app::create_app(config: ServerConfig) -> Router` — creates the Axum router with all middleware
+- `axiathon_server::config::ServerConfig` — with `test_default()`, `with_rate_limit(n)`, `with_tenant_rate_limit(tenant, n)` builders
+
+**Handoff:** To Dev for implementation
+
+---
+
+**Delivery Findings:**
+- **Gap** (non-blocking): Current `ApiResponse<T>` in axiathon-core uses `error: Option<ApiError>` (singular) and `meta: Option<ApiMeta>` with pagination fields. AC requires `errors: Vec<...>` (always-present array) and `meta` with `request_id`, `timestamp`, `trace_id`. Dev will need to evolve the envelope type or create a new response type in axiathon-server.
+  Affects `crates/axiathon-core/src/types.rs` (ApiResponse, ApiMeta struct fields).
+  *Found by TEA during test design.*

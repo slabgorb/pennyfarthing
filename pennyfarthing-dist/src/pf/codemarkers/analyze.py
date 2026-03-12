@@ -39,16 +39,50 @@ DEFAULT_EXCLUDES = [
 ]
 
 # Binary file extensions to skip
-_BINARY_EXTENSIONS = frozenset({
-    ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".svg",
-    ".woff", ".woff2", ".ttf", ".eot", ".otf",
-    ".zip", ".gz", ".tar", ".bz2", ".7z", ".rar",
-    ".pdf", ".doc", ".docx", ".xls", ".xlsx",
-    ".exe", ".dll", ".so", ".dylib", ".o", ".a",
-    ".pyc", ".pyo", ".class", ".jar",
-    ".mp3", ".mp4", ".wav", ".avi", ".mov",
-    ".sqlite", ".db",
-})
+_BINARY_EXTENSIONS = frozenset(
+    {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".bmp",
+        ".ico",
+        ".svg",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".eot",
+        ".otf",
+        ".zip",
+        ".gz",
+        ".tar",
+        ".bz2",
+        ".7z",
+        ".rar",
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".exe",
+        ".dll",
+        ".so",
+        ".dylib",
+        ".o",
+        ".a",
+        ".pyc",
+        ".pyo",
+        ".class",
+        ".jar",
+        ".mp3",
+        ".mp4",
+        ".wav",
+        ".avi",
+        ".mov",
+        ".sqlite",
+        ".db",
+    }
+)
 
 
 def _should_exclude(path: str, patterns: list[str]) -> bool:
@@ -96,12 +130,14 @@ def _grep_markers(root: Path, excludes: list[str]) -> list[dict]:
         for line_num, line_text in enumerate(content.split("\n"), start=1):
             match = MARKER_PATTERN.search(line_text)
             if match:
-                results.append({
-                    "path": rel_path,
-                    "line": line_num,
-                    "marker_type": match.group(1),
-                    "text": line_text.strip(),
-                })
+                results.append(
+                    {
+                        "path": rel_path,
+                        "line": line_num,
+                        "marker_type": match.group(1),
+                        "text": line_text.strip(),
+                    }
+                )
 
     return results
 
@@ -164,9 +200,7 @@ async def _run_git_command(args: list[str], cwd: Path) -> tuple[str, str, int]:
     )
 
 
-async def _batch_blame_file(
-    repo_path: Path, file_path: str, lines: list[int]
-) -> dict[int, dict]:
+async def _batch_blame_file(repo_path: Path, file_path: str, lines: list[int]) -> dict[int, dict]:
     """Blame an entire file once and extract data for requested lines.
 
     Args:
@@ -177,9 +211,7 @@ async def _batch_blame_file(
     Returns:
         Dict mapping line number -> {author, author_time}
     """
-    stdout, stderr, rc = await _run_git_command(
-        ["blame", "--porcelain", file_path], repo_path
-    )
+    stdout, stderr, rc = await _run_git_command(["blame", "--porcelain", file_path], repo_path)
 
     if rc != 0:
         return {}
@@ -286,9 +318,7 @@ async def analyze_repo(
             # Compute age
             if author_time > 0:
                 age_days = (now - author_time) / 86400
-                date_str = datetime.fromtimestamp(
-                    author_time, tz=UTC
-                ).isoformat()
+                date_str = datetime.fromtimestamp(author_time, tz=UTC).isoformat()
             else:
                 age_days = 0.0
                 date_str = ""
@@ -386,30 +416,37 @@ def _grep_deprecations(root: Path, excludes: list[str]) -> list[dict]:
 
             # Look ahead for the symbol declaration
             symbol = ""
-            for ahead in lines[line_num:]:  # line_num is already 1-indexed, so lines[line_num:] starts after current
+            for ahead in lines[
+                line_num:
+            ]:  # line_num is already 1-indexed, so lines[line_num:] starts after current
                 sym_match = _SYMBOL_PATTERN.search(ahead)
                 if sym_match:
                     symbol = sym_match.group(1)
                     break
                 # Stop looking if we hit another JSDoc or a blank line after the block closes
                 stripped = ahead.strip()
-                if stripped and not stripped.startswith("*") and not stripped.startswith("/") and not stripped == "":
+                if (
+                    stripped
+                    and not stripped.startswith("*")
+                    and not stripped.startswith("/")
+                    and not stripped == ""
+                ):
                     break
 
             if symbol:
-                results.append({
-                    "path": rel_path,
-                    "line": line_num,
-                    "symbol": symbol,
-                    "text": deprecated_text,
-                })
+                results.append(
+                    {
+                        "path": rel_path,
+                        "line": line_num,
+                        "symbol": symbol,
+                        "text": deprecated_text,
+                    }
+                )
 
     return results
 
 
-def _count_callers(
-    symbol: str, root: Path, defining_file: str
-) -> tuple[int, list[str]]:
+def _count_callers(symbol: str, root: Path, defining_file: str) -> tuple[int, list[str]]:
     """Count files that import/reference a deprecated symbol.
 
     Greps all TypeScript/JS files for the symbol name, excluding
@@ -477,17 +514,17 @@ async def analyze_deprecations(
 
     markers: list[DeprecationMarker] = []
     for item in raw:
-        count, caller_list = _count_callers(
-            item["symbol"], resolved, item["path"]
+        count, caller_list = _count_callers(item["symbol"], resolved, item["path"])
+        markers.append(
+            DeprecationMarker(
+                path=item["path"],
+                line=item["line"],
+                symbol=item["symbol"],
+                text=item["text"],
+                caller_count=count,
+                callers=caller_list,
+            )
         )
-        markers.append(DeprecationMarker(
-            path=item["path"],
-            line=item["line"],
-            symbol=item["symbol"],
-            text=item["text"],
-            caller_count=count,
-            callers=caller_list,
-        ))
 
     with_callers = sum(1 for m in markers if m.caller_count > 0)
 

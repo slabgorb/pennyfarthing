@@ -11,12 +11,8 @@ import click
 
 @click.command()
 @click.option("--dry-run", is_flag=True, help="Show migration plan without executing")
-@click.option(
-    "--clean", is_flag=True, help="Remove npm-era artifacts after migration"
-)
-@click.option(
-    "--yes", "-y", is_flag=True, help="Skip confirmation prompts (for CI)"
-)
+@click.option("--clean", is_flag=True, help="Remove npm-era artifacts after migration")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompts (for CI)")
 @click.argument("target", required=False, default=".")
 def upgrade(dry_run: bool, clean: bool, yes: bool, target: str):
     """Upgrade from npm-based to Python-based Pennyfarthing installation.

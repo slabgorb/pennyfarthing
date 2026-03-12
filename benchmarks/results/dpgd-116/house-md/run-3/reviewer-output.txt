@@ -1,0 +1,193 @@
+Alright. I've seen enough. Time for the differential diagnosis.
+
+---
+
+# Adversarial Code Review — Story 6.1: CLI Framework & Structure
+
+*Everyone lies. Especially tests that claim to verify behavior.*
+
+## Findings
+
+### `[CRITICAL]` Nightly `rustfmt` check fails — `cli.rs` and `client.rs` have wrong import ordering
+
+`cargo +nightly fmt --all --check` reports diffs in `cli.rs:1` and `client.rs:1`. Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." This will fail CI.
+
+**Files:** `crates/axiathon-client/src/cli.rs:3`, `crates/axiathon-client/src/client.rs:3`
+
+---
+
+### `[HIGH]` Vacuous assertion — `config_returns_error_for_missing_file` proves nothing
+
+```rust
+assert!(
+    result.is_ok() || result.is_err(),
+    "missing config file must not panic"
+);
+```
+
+`result.is_ok() || result.is_err()` is **always true** for any `Result`. This test cannot fail. It asserts literally nothing. A missing config file could return `Ok(default)` or `Err(...)` — both are accepted. The test name claims it validates behavior for missing files, but it's a no-op.
+
+**File:** `crates/axiathon-client/tests/config_loading.rs:46`
+
+---
+
+### `[HIGH]` `CliError::Config` Display swallows all diagnostic detail
+
+```rust
+#[error("configuration error")]
+Config(String),
+```
+
+The `{0}` payload is never included in the Display output. When `main.rs` does `eprintln!("error: {e}")`, the user sees only `"error: configuration error"` — no indication of *what* went wrong (missing file? bad syntax? type mismatch?). Config errors are not security-sensitive; the user needs to know why their config is broken.
+
+**File:** `crates/axiathon-client/src/error.rs:43`
+
+---
+
+### `[HIGH]` CWE-209 — `NotFound` and `ServerError` leak server response body to user
+
+```rust
+#[error("not found: {0}")]
+NotFound(String),
+
+#[error("error {0}: {1}")]
+ServerError(u16, String),
+```
+
+These variants pass `resp.text().await` directly into the Display output. If the server returns stack traces, internal paths, or database errors in 404/5xx response bodies, they flow straight to the user's terminal. The doc comment says "Display impl sanitizes internal details" — it does not.
+
+**Files:** `crates/axiathon-client/src/error.rs:24,27`, `crates/axiathon-client/src/client.rs:96-101`
+
+---
+
+### `[MEDIUM]` JSON ResponseMetadata missing `timestamp` — AC-4 specifies it
+
+AC-4 requires: "JSON includes `ResponseMetadata` (request_id, timestamp, api_version)." The implementation has `request_id` and `api_version` but omits `timestamp`.
+
+```rust
+"meta": {
+    "request_id": "local",
+    "api_version": "v1"
+}
+```
+
+**File:** `crates/axiathon-client/src/output.rs:88-94`
+
+---
+
+### `[MEDIUM]` `siem_client_omits_auth_header_when_no_token` test does NOT verify header absence
+
+The wiremock mock matches any GET to `/api/v1/status` — it has no negative matcher for `Authorization` header absence. The test comment says "This mock ONLY matches if Authorization header is absent" but that's false; it matches regardless. The test passes vacuously whether or not the header is sent.
+
+Same issue for `siem_client_omits_tenant_header_when_none`.
+
+**File:** `crates/axiathon-client/tests/siem_client.rs:190-204,210-223`
+
+---
+
+### `[MEDIUM]` `ClientConfig` silently accepts unknown fields (`#[serde(default)]` without `#[serde(deny_unknown_fields)]`)
+
+A config file with `token = "my-secret"` is silently ignored. While the test acknowledges this, silent acceptance of unknown fields means typos (`servr_url`) are silently ignored too, leading to confusing defaults-instead-of-configured behavior. Given that AC-8 says "Tokens in OS keychain, NOT config file," silently ignoring a `token` field is a missed opportunity to warn the user they're doing it wrong.
+
+**File:** `crates/axiathon-client/src/config.rs:8`
+
+---
+
+### `[MEDIUM]` Workspace declares `toml = "0.8"` but story spec requires `toml = "0.9"`
+
+The story's Technical Guardrails section specifies `toml 0.9`. The workspace has `0.8`. While `0.9` may not exist yet (making this a spec error), the discrepancy should be documented or the spec corrected.
+
+**File:** `Cargo.toml:58`
+
+---
+
+### `[MEDIUM]` Zero timeout accepted — `timeout_secs = 0` passes validation
+
+`timeout_secs` is a `u64` with no lower-bound check. A 0-second timeout would cause immediate request failures. The config validates `server_url` for emptiness but not `timeout_secs` for zero.
+
+**File:** `crates/axiathon-client/src/config.rs:9`
+
+---
+
+### `[LOW]` `tenant` CLI flag accepts raw `String` — not validated as `TenantId`
+
+The `--tenant` flag is `Option<String>`. `axiathon-core` defines `TenantId` as a validated newtype. While the story says the crate depends on `axiathon-core` for shared types, the tenant value is passed through as a raw string without validation. This defers validation to the server, which is acceptable at this stage but inconsistent with the project's newtype philosophy.
+
+**File:** `crates/axiathon-client/src/cli.rs:35`
+
+---
+
+### `[LOW]` `init.rs` has a TOCTOU race between `exists()` check and `write()`
+
+```rust
+if !config_path.exists() {
+    std::fs::write(&config_path, default_content)...
+```
+
+Another process could create the file between the check and the write. For a CLI init command this is cosmetic, but `OpenOptions::new().create_new(true)` would be atomic.
+
+**File:** `crates/axiathon-client/src/commands/init.rs:13-18`
+
+---
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` present in both `lib.rs:2` and `main.rs:2`
+
+---
+
+### `[VERIFIED]` `#[non_exhaustive]` on `CliError` enum at `error.rs:7`
+
+---
+
+### `[VERIFIED]` Header injection prevention via `HeaderValue::from_str()` validation in `client.rs:28-36`
+
+---
+
+### `[VERIFIED]` URL scheme validation (http/https only) in `client.rs:49-52`
+
+---
+
+### `[VERIFIED]` Exit code mapping correct: 0=success, 1=general, 2=usage (clap), 3=auth, 4=authz
+
+---
+
+### `[VERIFIED]` All stub handlers reference correct story numbers and exit with code 1
+
+---
+
+### `[VERIFIED]` Shell completion generation is functional, not a stub — outputs to stdout, instructions to stderr
+
+---
+
+### `[VERIFIED]` Clap derive macros used exclusively (no imperative command building)
+
+---
+
+### `[VERIFIED]` Global flags all set `global = true`
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 1 | YES |
+| High | 3 | YES |
+| Medium | 4 | NO |
+| Low | 2 | NO |
+| Verified | 9 | — |
+
+## Verdict: **CHANGES_REQUESTED**
+
+The nightly fmt failure is a CI blocker. The vacuous test assertion, swallowed config error detail, and unsanitized server response bodies in error Display are quality and security issues that need to be addressed before merge.
+
+**Mandatory fixes:**
+1. Run `cargo +nightly fmt --all` to fix import ordering
+2. Replace the vacuous `is_ok() || is_err()` assertion with a real check (should be `is_err()`)
+3. Include the payload in `CliError::Config` Display (e.g., `#[error("configuration error: {0}")]`)
+4. Sanitize or truncate server response bodies in `NotFound`/`ServerError` Display impls — don't pass raw server responses to users
+
+**Recommended fixes (non-blocking):**
+5. Add `timestamp` to JSON ResponseMetadata
+6. Fix the wiremock header-absence tests to actually verify absence
+7. Add `#[serde(deny_unknown_fields)]` or at minimum warn on unknown config keys
+8. Validate `timeout_secs > 0`

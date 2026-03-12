@@ -45,9 +45,7 @@ def complete_phase(
         project_root = _find_project_root()
 
     # Validate phase names against workflow YAML to catch agent-name confusion
-    from_phase, to_phase = _validate_phase_names(
-        project_root, workflow, from_phase, to_phase
-    )
+    from_phase, to_phase = _validate_phase_names(project_root, workflow, from_phase, to_phase)
 
     session_path = project_root / ".session" / f"{story_id}-session.md"
     if not session_path.exists():
@@ -110,9 +108,7 @@ def complete_phase(
             if len(cols) >= 4 and cols[2] == "-":
                 started_str = cols[1]
                 duration = _calc_duration(started_str, now)
-                result_lines.append(
-                    f"| {from_phase} | {started_str} | {now} | {duration} |"
-                )
+                result_lines.append(f"| {from_phase} | {started_str} | {now} | {duration} |")
                 result_lines.append(f"| {to_phase} | {now} | - | - |")
                 continue
         result_lines.append(line)
@@ -120,8 +116,7 @@ def complete_phase(
 
     # Add Handoff History row at end of table
     handoff_row = (
-        f"| {from_phase} ({from_agent}) | {to_phase} ({to_agent}) "
-        f"| {gate_type} | PASSED | {now} |"
+        f"| {from_phase} ({from_agent}) | {to_phase} ({to_agent}) | {gate_type} | PASSED | {now} |"
     )
     lines = content.splitlines()
     insert_after = None
@@ -136,9 +131,7 @@ def complete_phase(
     content = "\n".join(lines)
 
     # Atomic write: temp file in same directory + rename
-    temp_fd, temp_path_str = tempfile.mkstemp(
-        dir=str(session_path.parent), suffix=".tmp"
-    )
+    temp_fd, temp_path_str = tempfile.mkstemp(dir=str(session_path.parent), suffix=".tmp")
     os.close(temp_fd)
     temp_path = Path(temp_path_str)
     try:
@@ -152,6 +145,7 @@ def complete_phase(
     if to_phase == "review":
         try:
             from pf.sprint.story_transition import transition_story
+
             transition_story(project_root, story_id, "in_review")
         except Exception:
             pass  # Non-fatal — status-sync gate will catch mismatches
@@ -246,9 +240,7 @@ def _validate_phase_names(
     return resolved_from, resolved_to
 
 
-def _resolve_one(
-    value: str, phase_names: set[str], agent_to_phases: dict[str, list[str]]
-) -> str:
+def _resolve_one(value: str, phase_names: set[str], agent_to_phases: dict[str, list[str]]) -> str:
     """Resolve a single value: return as-is if phase name, else try agent→phase."""
     if value in phase_names:
         return value

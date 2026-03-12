@@ -1,0 +1,126 @@
+I have now completed my full review. Let me deliver my verdict.
+
+---
+
+*Cicero stands, adjusts his toga, and addresses the Senate:*
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+**Senators, I have examined every line of this code as though it were a bill placed before the Republic. Here are my findings.**
+
+---
+
+## Findings
+
+### [CRITICAL] F1: Missing `main.rs` — No Binary Entry Point
+**`crates/axiathon-client/src/main.rs` — ABSENT**
+
+The story spec explicitly requires `main.rs` as the first file to create. The `Cargo.toml` has no `[[bin]]` section. This crate compiles as a library only. The `axiathon` binary cannot exist. There is no entry point that:
+- Initializes tracing
+- Loads config from file
+- Loads credentials from keychain (sync, before Tokio)
+- Parses CLI args
+- Dispatches commands
+- Maps `CliError` to `std::process::exit()`
+
+Without `main.rs`, **the exit code mapping is dead code** — `exit_code()` is defined but never called by any runtime path. The entire CLI framework is a library that nothing invokes.
+
+### [CRITICAL] F2: `axiathon init` Is a Stub — Spec Says "Functional, Not Stub"
+**`crates/axiathon-client/src/commands/init.rs:5-7`**
+
+The Scope Boundaries section explicitly states: *"Shell completion generation (functional, not stub)"* and *"`axiathon init` first-time setup (functional, not stub)"*. Completion is functional. Init returns `NotImplemented("Story 6.1")` — referencing **its own story** as unimplemented. This is a self-contradictory state.
+
+### [HIGH] F3: Missing `tui` Command — AC-1 Non-Compliance
+**`crates/axiathon-client/src/cli.rs:46-84`**
+
+AC-1 requires: *"`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, login/logout, **tui**, completion, init."* The `Commands` enum has 12 variants but `Tui` is not among them. The test `cli_structure_test.rs` only checks for 11 groups, masking this gap.
+
+### [HIGH] F4: Nightly `rustfmt` Fails — Per Gotchas, This Blocks Approval
+**`crates/axiathon-client/src/client.rs:36`, `commands/query.rs:23`**
+
+`cargo +nightly fmt --all --check` produces diffs. Per `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."* Three files have formatting issues.
+
+### [HIGH] F5: `SiemClient` Has No HTTP Methods — Header Injection Prevention Is Untestable
+**`crates/axiathon-client/src/client.rs:1-71`**
+
+`SiemClient` stores `_http: reqwest::Client` (underscore = intentionally unused). There are no `get()`, `post()`, etc. methods. The `with_token()` and `with_tenant()` methods store values but **never inject them into actual HTTP requests**. AC-7 says: *"Injects X-Tenant-ID and Authorization: Bearer headers"* — this doesn't happen anywhere. The validated variants (`with_token_validated`, `with_tenant_validated`) prevent CWE-113, which is good, but since there's no actual HTTP method, the protection has no effect in practice.
+
+### [MEDIUM] F6: `generate_completion()` Panics on Invalid Shell Names
+**`crates/axiathon-client/src/commands/completion.rs:10`**
+
+```rust
+let shell: Shell = shell.parse().expect("valid shell name");
+```
+
+This `expect()` in production code violates the Rust rules: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message."* While `expect` has a message, it still panics. The function takes `&str`, so an invalid shell name from any caller will crash. The `Cli::execute()` path uses clap's `value_enum` which pre-validates, but this is a public function that could be called with arbitrary input. Should return `Result`.
+
+### [MEDIUM] F7: `OutputFormatter::format_json` Fabricates Fake Request IDs
+**`crates/axiathon-client/src/output.rs:45`**
+
+`request_id: Uuid::new_v4()` generates a client-side UUID that has no correlation to the server's actual request ID. Operators seeing this in `--format json` output cannot use it for tracing. AC-4 specifies `ResponseMetadata (request_id, timestamp, api_version)` — the intent is to relay server metadata, not fabricate it. This will cause operational confusion.
+
+### [MEDIUM] F8: `keyring` Dependency Missing from Workspace and Crate
+**`Cargo.toml` (workspace), `crates/axiathon-client/Cargo.toml`**
+
+The spec mandates `keyring 3` in workspace dependencies for OS keychain credential storage. It's not in the workspace `Cargo.toml` and not in the crate's dependencies. The entire keychain loading flow (AC-8: *"Tokens in OS keychain, NOT config file"*) is absent.
+
+### [MEDIUM] F9: `RawConfig` Silently Ignores Unknown Fields
+**`crates/axiathon-client/src/config.rs:17-24`**
+
+No `#[serde(deny_unknown_fields)]` on `RawConfig`. Typos like `api_rul` or `timeot` will be silently ignored, falling back to defaults. The operator will think their config is applied when it isn't. This is a classic config safety issue.
+
+### [MEDIUM] F10: `toml` Version Mismatch — Spec Says 0.9, Workspace Has 0.8
+**`Cargo.toml:49`**
+
+Story spec says `toml 0.9`. Workspace declares `toml = "0.8"`. Minor, but diverges from the planning artifact.
+
+### [LOW] F11: `CliError` Does Not Implement `thiserror::Error` — Uses Manual Impl
+**`crates/axiathon-client/src/error.rs:55-71`**
+
+The Rust rules say *"Use `thiserror` for error enums."* `CliError` has a manual `Display` impl and `impl std::error::Error for CliError {}` instead of using `#[derive(Error)]`. The manual Display is intentional for CWE-209 sanitization (good), but `thiserror` supports `#[error("...")]` with the same controlled messages. Not blocking, but inconsistent with codebase conventions.
+
+### [VERIFIED] V1: Exit Code Mapping Correct
+**`crates/axiathon-client/src/error.rs:46-52`** — 0/1/3/4 correctly mapped. `#[non_exhaustive]` on enum.
+
+### [VERIFIED] V2: CWE-209 Error Sanitization
+**`crates/axiathon-client/src/error.rs:60`** — `ServerError(_)` Display writes generic message, not the inner string. Good.
+
+### [VERIFIED] V3: CWE-113 Header Injection Prevention
+**`crates/axiathon-client/src/client.rs:37-43`** — CR/LF rejected in validated methods.
+
+### [VERIFIED] V4: Command Naming Uses Plurals
+**`crates/axiathon-client/src/cli.rs:52,55`** — `Rules`, `Alerts` per architecture doc.
+
+### [VERIFIED] V5: Config Tokens Blocked
+**`crates/axiathon-client/src/config.rs:75-77`** — `token()` always returns `None`. `RawConfig.token` field is silently dropped. Tokens cannot leak from config file.
+
+### [VERIFIED] V6: Shell Completion Functional
+**`crates/axiathon-client/src/commands/completion.rs`** — Generates real completions for all 4 shells. Tested.
+
+### [VERIFIED] V7: No Server-Side Crate Imports
+**`crates/axiathon-client/Cargo.toml`** — Only depends on `axiathon-core`. No imports of storage, detection, ingestion, or query crates. Dependency rule honored.
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| CRITICAL | 2 | YES |
+| HIGH | 3 | YES |
+| MEDIUM | 5 | NO |
+| LOW | 1 | NO |
+| VERIFIED | 7 | — |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+The foundation is sound — clap derive structure, error types, output formatting, CWE-209/CWE-113 protections are all well done. But the CLI framework **cannot produce a binary** (no `main.rs`), a spec-mandated functional feature (`init`) is a stub, a required command group (`tui`) is missing, and nightly fmt fails.
+
+**Minimum to unblock approval:**
+1. Add `src/main.rs` with Tokio runtime, config loading, error→exit code dispatch
+2. Implement `axiathon init` as functional (create default config file, print setup guidance)
+3. Add `Tui` variant to `Commands` enum (stub is fine — the TUI itself is Epic 4)
+4. Fix nightly `rustfmt` violations
+5. Add `keyring` to workspace deps (implementation can be minimal/stub for keychain load)

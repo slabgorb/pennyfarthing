@@ -1,0 +1,88 @@
+Good. Now I have a complete picture. Let me compile the review.
+
+---
+
+# Review: Story 8.1 — REST API Foundation
+
+*River sees the code's soul. Simon documents the findings.*
+
+## Observations
+
+### [CRITICAL] Global mutable state in rate limiter causes test pollution and production bugs — `rate_limit.rs:18-19`
+
+The rate limiter uses a `static LazyLock<Mutex<HashMap>>` for per-tenant counters. This is fundamentally broken:
+
+1. **Test isolation failure**: The global counter persists across all tests in the same binary. Tests that share tenant tokens (e.g., `"test-valid-token"` → `"tenant-default"`) accumulate counts across unrelated tests. The `exceeding_rate_limit_returns_429` test works by accident — it depends on test execution order and prior counter state. Running tests with `--test-threads=1` vs parallel may produce different results.
+
+2. **No reset/window mechanism**: Counters only grow. In production, this means every tenant eventually hits the rate limit with no recovery. There is no window, no decay, no reset. The story calls for `tower-governor` which provides windowed rate limiting — this hand-rolled solution is a pale substitute that will break under any real usage.
+
+3. **Mutex poisoning**: `RATE_COUNTERS.lock().expect("rate limit lock poisoned")` at line 41 will panic (crash the server) if any thread panics while holding the lock. Production code should handle poisoned locks gracefully or use `parking_lot::Mutex` which doesn't poison.
+
+### [HIGH] Handler reuse bug — wrong handler on multiple routes — `lib.rs:34-40`
+
+Lines 34-40 reuse `handlers::get_alert_by_id` for `/events/{id}`, `/rules/{id}`, and `/queries/{id}`. The handler is named `get_alert_by_id` but is serving events, rules, and queries by ID. While all currently return 404 stubs, this is a copy-paste error that will be a landmine when real handlers are implemented — the wrong handler will be wired to the wrong route, and the naming makes it invisible.
+
+### [HIGH] Server-side `Envelope` diverges from `axiathon-core::ApiResponse<T>` with no migration plan — `response.rs:1-6`
+
+The story spec says responses must use `ApiResponse<T>` from `axiathon-core`. Instead, a completely separate `Envelope<T>` type was created in `axiathon-server::response`. The two types have incompatible shapes:
+
+- **Core `ApiResponse`**: `{ data?, error?, meta? }` with `skip_serializing_if = "Option::is_none"` — fields are absent when None
+- **Server `Envelope`**: `{ data, errors: [], meta: { request_id, timestamp, trace_id } }` — `errors` is always-present array, `meta` is always present with different fields
+
+This means the server's response format is completely disconnected from the canonical type. When downstream stories (8.2+) try to use `ApiResponse<T>`, they'll find it doesn't match what Story 8.1 actually serves. The comment on line 3-5 acknowledges this divergence but offers no resolution path.
+
+### [HIGH] `POST /api/v1/events` scope check only requires `events:read`, not `events:write` — `auth.rs:155-157`
+
+The `required_scope_for_path` function at line 155 uses `path.contains("/events")` and returns `Some("events:read")` for ALL event operations. A POST to `/api/v1/events` (write operation) only requires `events:read` scope. The AC explicitly calls for scoped permissions (e.g., `events:write`). The scope middleware doesn't differentiate between HTTP methods — GET and POST both require only read access.
+
+### [MEDIUM] `required_scope_for_path` uses `contains()` — path confusion risk — `auth.rs:155-167`
+
+`path.contains("/events")` would match paths like `/api/v1/prevent-events-leakage` or `/api/v1/non-events`. Should use a more precise match like splitting on path segments. This is currently low-risk with the existing routes but becomes a real problem when routes grow.
+
+### [MEDIUM] No structured logging / tracing anywhere — missing observability
+
+The story spec mentions "structured logging, trace correlation." The `tracing` and `tracing-subscriber` crates are in `Cargo.toml` dependencies but are **never used** in any source file. There are zero `tracing::info!`, `tracing::warn!`, or span macros anywhere. Authentication failures, rate limit hits, request processing — all silent. This violates the observability requirements and the Rust coding rules that say to include `tenant_id()` and `trace_id()` in all tracing spans.
+
+### [MEDIUM] `ServerConfig` not loadable from TOML/YAML — `config.rs`
+
+The AC states: "Rate limit configuration should be loadable from TOML/YAML (SOUL principle 13: behavior is configuration)." `ServerConfig` is a plain struct with no deserialization support — no `#[derive(Deserialize)]`, no file-loading function, no config file format support. The `serde` dependency is in Cargo.toml but not used for config.
+
+### [MEDIUM] No `#[non_exhaustive]` on public enums/structs — `response.rs`, `auth.rs`
+
+The Rust rules require `#[non_exhaustive]` on enums that will grow. `ErrorEntry` and `AuthIdentity` are public types that will definitely evolve (new fields, new error shapes). Neither has `#[non_exhaustive]`.
+
+### [MEDIUM] `uptime_seconds` is hardcoded to `0` — `handlers.rs:27`
+
+The health endpoint claims to report "actual server health (uptime, version)" per the AC, but `uptime_seconds` is always `0`. Version is correctly pulled from `CARGO_PKG_VERSION`, but uptime is meaningless. Should track server start time via `AppState` or similar.
+
+### [LOW] Test `response_headers_do_not_reflect_user_input` fails — `api_security.rs:211`
+
+This test panics because `http::Request::builder().header("X-Evil", "injected\r\nX-Fake: header")` fails — the `http` crate rejects header values containing `\r\n` at construction time, so the test never actually sends the request. The test is verifying that the `http` crate validates headers, not that the server handles header injection. The test needs rewriting to use a raw TCP connection or a less strict HTTP client.
+
+### [LOW] Unused compiler warnings in test code
+
+Multiple warnings for unused variables (`app`, `i`, `status`, `body`) and unused functions in `common/mod.rs` across test files. While these are test-only warnings, they indicate sloppy construction.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in `lib.rs:2`
+
+### [VERIFIED] Auth errors use identical generic messages (CWE-209 mitigation) — confirmed by `auth_errors_use_generic_message_to_prevent_enumeration` test passing
+
+### [VERIFIED] Error responses don't leak internal details — `api_security.rs` tests pass (stack traces, SQL, internal names)
+
+### [VERIFIED] Clippy passes clean on production code
+
+### [VERIFIED] Duplicate Authorization headers correctly rejected — `auth.rs:24-33`
+
+### [VERIFIED] Fallback handler wraps 404/405 in envelope format
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+**Blocking issues (3):**
+
+1. **[CRITICAL] Global mutable rate limiter state** — broken by design. Counters never reset, tests leak state across runs. Must use windowed counting or `tower-governor` as spec requires.
+2. **[HIGH] Wrong handler wired to `/events/{id}`, `/rules/{id}`, `/queries/{id}`** — all point to `get_alert_by_id`. Copy-paste bug.
+3. **[HIGH] Scope check ignores HTTP method** — `POST /events` only requires `events:read`, should require `events:write`.
+
+The `Envelope` vs `ApiResponse` divergence is also high-severity but may be acceptable as a deliberate design decision if documented. The missing observability (zero tracing usage despite dependencies) should be addressed before merge.

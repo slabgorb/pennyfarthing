@@ -1,0 +1,24 @@
+scenario_id: dpgd-117
+theme: the-expanse
+run_id: 1
+timestamp: '2026-03-08T19:15:44.024402+00:00'
+worktree_path: /tmp/pf-replay/dpgd-117-the-expanse-run-1
+phases:
+  tea:
+    token_usage:
+      input: 27
+      output: 23101
+    duration_s: 444.19
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 74
+      output: 123363
+    duration_s: 2246.36
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 1000
+      output: 5065
+    duration_s: 128.86
+    exit_code: 0

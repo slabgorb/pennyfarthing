@@ -1,0 +1,37 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the entire CLI framework — foundational types, binary entry point, config loading, HTTP client, output formatting, and command structure. All require test coverage.
+
+**Test Files:**
+- `crates/axiathon-client/tests/cli_binary.rs` — 48 tests, binary-level via assert_cmd (AC-1, AC-2, AC-3, AC-5, AC-9, AC-10)
+- `crates/axiathon-client/tests/cli_types.rs` — 31 tests, CliError/OutputFormatter/ClientConfig types (AC-3, AC-4, AC-6, AC-8)
+- `crates/axiathon-client/tests/siem_client.rs` — 19 tests, SiemClient HTTP wrapper + header injection (AC-7)
+- `crates/axiathon-client/tests/security.rs` — 12 tests, CWE-209 error exposure, header injection, config validation, silent error swallowing
+
+**Tests Written:** 110 tests covering all 10 ACs
+**Status:** RED (failing — ready for Dev)
+
+### AC Coverage Matrix
+
+| AC | Description | Test File | Test Count |
+|----|-------------|-----------|------------|
+| AC-1 | Top-level command groups | cli_binary.rs | 5 |
+| AC-2 | Subcommand help rendering | cli_binary.rs | 11 |
+| AC-3 | Exit codes (0/1/2/3/4) | cli_binary.rs + cli_types.rs | 16 |
+| AC-4 | Output format (table/json/csv) | cli_types.rs | 8 |
+| AC-5 | Global flags | cli_binary.rs | 12 |
+| AC-6 | Clap derive macros | cli_types.rs | 1 |
+| AC-7 | SiemClient HTTP wrapper | siem_client.rs | 19 |
+| AC-8 | Config file loading | cli_types.rs | 7 |
+| AC-9 | Shell completions | cli_binary.rs | 6 |
+| AC-10 | Stub handlers | cli_binary.rs | 9 |
+| Security | CWE-209, header injection, validation | security.rs | 12 |
+
+### RED State Verification
+- `cli_binary.rs`: 48 tests compile but fail at runtime (no binary exists)
+- `cli_types.rs`: 31 tests fail at compile time (modules `cli`, `config`, `error`, `output` not found)
+- `siem_client.rs`: 19 tests fail at compile time (module `client` not found)
+- `security.rs`: 12 tests fail at compile time (modules `error`, `config` not found)
+
+**Handoff:** To Dev for implementation (GREEN phase)

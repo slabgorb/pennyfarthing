@@ -1,0 +1,112 @@
+Now I have all the information I need. Here is my review.
+
+---
+
+# Story 6.1 CLI Framework & Structure — Adversarial Code Review
+
+## Preflight
+
+- `cargo test -p axiathon-client`: **PASS** (all 67 tests)
+- `cargo clippy -p axiathon-client -- -D warnings`: **PASS**
+- `cargo +nightly fmt --all --check`: **FAIL** — formatting diffs in `siem_client.rs` tests
+
+---
+
+## Findings
+
+### 1. [HIGH] Nightly `rustfmt` check fails — `tests/siem_client.rs`
+
+`cargo +nightly fmt --all --check` reports formatting diffs in `siem_client.rs` (lines ~71-76 and ~281-285). Per project rules (gotchas.md), nightly fmt must pass before approval. This blocks merge.
+
+### 2. [HIGH] No `main.rs` — binary entry point missing
+
+AC-3 requires exit codes via `std::process::exit()` in `main.rs`. AC-10 requires stubs to print to stderr. There is no `main.rs` and no `[[bin]]` section in `Cargo.toml`. The `axiathon` binary literally cannot be built. Without `main.rs`, there is no proof that:
+- `CliError::exit_code()` is wired to `std::process::exit()`
+- Errors are printed to stderr (not stdout)
+- Subcommands are dispatched to their handlers
+- The completion and init commands are actually functional (vs stubs)
+- TTY auto-detection for default format works
+
+The story scope explicitly lists `main.rs` as a key file to create.
+
+### 3. [HIGH] `unsafe_code` lint level mismatch: workspace `forbid` vs crate `deny`
+
+Workspace `Cargo.toml:78` sets `unsafe_code = "forbid"`. Crate `Cargo.toml:39` sets `unsafe_code = "deny"`. The crate-level `deny` is weaker than the workspace `forbid` and could theoretically be overridden with `#[allow(unsafe_code)]` (as the test file at `config_loading.rs:3` does). While `lib.rs:2` has `#![forbid(unsafe_code)]`, the crate-level lint should match the workspace or inherit it rather than weakening it.
+
+### 4. [MEDIUM] Vacuous assertion in `config_handles_missing_file_gracefully` — `config_loading.rs:51`
+
+```rust
+assert!(result.is_ok() || result.is_err(), "Missing config file should not panic");
+```
+
+This assertion is **always true** — a `Result` is always either `Ok` or `Err`. This test asserts nothing. It should verify that the error is a `CliError::ConfigError` with a meaningful message, or that the function returns defaults.
+
+### 5. [MEDIUM] `RawConfig.timeout` is `i64` but `ClientConfig.timeout` is `u64` — silent truncation at `config.rs:55`
+
+```rust
+let mut timeout = if raw.timeout > 0 { raw.timeout as u64 } else { 30 };
+```
+
+If `raw.timeout` is `i64::MAX`, the `as u64` cast is well-defined but semantically wrong (a timeout of ~292 years). More critically, there's no upper bound validation. A `u64` for timeout with no max is suspicious — `reqwest::ClientBuilder::timeout()` takes `Duration`, and a massive value could cause issues. Consider validating a sane range (e.g., 1-3600 seconds) or deserializing directly as `u64`.
+
+### 6. [MEDIUM] `SiemClient` only implements `get()` — no `post`, `put`, `delete`
+
+AC-7 specifies `SiemClient` wraps `reqwest::Client`. The current implementation only has a `get()` method. While Story 6.1 only delivers stubs, future stories (alerts acknowledge, rules enable, config set) will all need mutation endpoints. This is acceptable for now as stubs, but worth noting the API surface is incomplete.
+
+### 7. [MEDIUM] `SiemClient` does not use `ClientConfig.timeout` — `client.rs`
+
+`SiemClient::new()` takes `base_url`, `token`, and `tenant` but does not accept or use a timeout value. The `ClientConfig` has a `timeout()` getter, but it's never consumed. The `reqwest::Client` is created with `reqwest::Client::new()` which has no timeout configured — requests could hang indefinitely.
+
+### 8. [MEDIUM] `OutputFormat` enum duplicates `FormatArg` enum — `output.rs:8` vs `cli.rs:3`
+
+`FormatArg` (with `ValueEnum` derive for clap) and `OutputFormat` (with `FromStr`) represent the same concept. There's no conversion between them, and `OutputFormat::FromStr` is unused in practice since clap uses `FormatArg`. This is dead code that will cause confusion when wiring up `main.rs`.
+
+### 9. [LOW] `init.rs` stub says "Story 6.1" but AC says init should be functional, not a stub
+
+AC-9/AC-10 distinguish between functional commands (completion, init) and stubs. The story scope says: "Shell completion generation (functional, not stub)" and "axiathon init first-time setup (functional, not stub)". The `completion.rs` is indeed functional, but `init.rs` is a stub returning `CliError::General("not yet implemented (Story 6.1)")`. This contradicts the scope requirements.
+
+### 10. [LOW] `stubs_reference_correct_stories` test at `stub_handlers.rs:120` only checks 6 of 8 stubs
+
+The test maps `query→5.5, status→6.2, config→6.3, ingest→6.4, alerts→6.5, login→9.1` but omits `rules→6.6` and `tenant→6.7`. Coverage gap.
+
+### 11. [VERIFIED] Header injection protection — `client.rs:32-39`
+
+`HeaderValue::from_str()` rejects values containing `\r\n` and other invalid header characters. Tests at `siem_client.rs:239-270` and `siem_client.rs:273-300` verify this. Confirmed safe against CWE-113.
+
+### 12. [VERIFIED] `#[non_exhaustive]` on `CliError` — `error.rs:8`
+
+Correctly applied, preventing downstream exhaustive matching.
+
+### 13. [VERIFIED] Security comment on `CliError` Display — `error.rs:5-6`
+
+Present per project rules. Display output avoids token/credential leakage.
+
+### 14. [VERIFIED] No `unwrap()` in production code
+
+Grep confirms zero `unwrap()` calls in `src/`. All fallible operations use `expect()` with descriptive messages (acceptable per project rules for infallible-in-practice operations like UTF-8 conversion of known-good data).
+
+### 15. [VERIFIED] Unknown config keys silently ignored — `config.rs:8`
+
+`#[serde(default)]` on `RawConfig` means unknown keys are ignored. Test at `config_loading.rs:125-142` confirms. Forward-compatible as intended.
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 5 |
+| Low | 2 |
+| Verified | 5 |
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three High-severity findings block approval:
+
+1. **Nightly fmt fails** — must pass per project gotchas
+2. **No `main.rs`** — the binary entry point is missing entirely, meaning exit code wiring, stderr output, command dispatch, and TTY detection are unverifiable
+3. **`unsafe_code` lint weakened** from workspace `forbid` to crate `deny`
+
+The Medium findings (vacuous test assertion, timeout not wired, duplicated enum, missing timeout validation) should also be addressed but are not individually blocking.

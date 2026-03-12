@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: game-of-thrones
+run_id: 1
+timestamp: '2026-03-08T04:25:21.113027+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-game-of-thrones-run-1
+phases:
+  tea:
+    token_usage:
+      input: 87
+      output: 23870
+    duration_s: 343.97
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 49
+      output: 24081
+    duration_s: 507.16
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 14
+      output: 5545
+    duration_s: 125.11
+    exit_code: 0

@@ -1,0 +1,27 @@
+All tests pass, clippy is clean. Here's the summary:
+
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `crates/axiathon-client/src/lib.rs` — Added module declarations for all 6 modules
+- `crates/axiathon-client/src/cli.rs` — Cli struct (Parser), Commands enum (Subcommand), OutputFormat (ValueEnum) with all global flags
+- `crates/axiathon-client/src/error.rs` — CliError enum with 10 variants, exit_code() mapping, #[non_exhaustive]
+- `crates/axiathon-client/src/client.rs` — SiemClient wrapping reqwest::Client, header injection, status code mapping, custom Debug (no token exposure)
+- `crates/axiathon-client/src/config.rs` — ClientConfig with TOML loading, env var overrides, validation, XDG path
+- `crates/axiathon-client/src/output.rs` — OutputFormatter trait, TableFormatter (comfy-table), JsonFormatter (metadata envelope), CsvFormatter (csv crate)
+- `crates/axiathon-client/src/commands/mod.rs` — Re-exports for all 10 command modules
+- `crates/axiathon-client/src/commands/query.rs` — QueryArgs with `run` subcommand, stub handler
+- `crates/axiathon-client/src/commands/rules.rs` — RulesArgs with `list` subcommand, stub handler
+- `crates/axiathon-client/src/commands/alerts.rs` — AlertsArgs with `list` subcommand, stub handler
+- `crates/axiathon-client/src/commands/ingest.rs` — IngestArgs with `status` subcommand, stub handler
+- `crates/axiathon-client/src/commands/config.rs` — ConfigArgs with `show` subcommand, stub handler
+- `crates/axiathon-client/src/commands/status.rs` — StatusArgs, stub handler
+- `crates/axiathon-client/src/commands/tenant.rs` — TenantArgs with `list` subcommand, stub handler
+- `crates/axiathon-client/src/commands/login.rs` — LoginArgs, stub handler
+- `crates/axiathon-client/src/commands/completion.rs` — CompletionArgs, generate_completion() via clap_complete
+- `crates/axiathon-client/src/commands/init.rs` — InitArgs
+
+**Tests:** 143/143 passing (GREEN) across 8 test suites + doc-tests
+**Clippy:** Clean, no warnings or errors

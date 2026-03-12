@@ -1,0 +1,20 @@
+All **73 tests pass**, clippy is clean. Here's the summary:
+
+## Implementation Summary
+
+**Files created (production code):**
+- `crates/axiathon-server/src/lib.rs` — App entrypoints (`app()`, `app_with_config()`), router construction with nested `/api/v1/` routes, middleware layering
+- `crates/axiathon-server/src/state.rs` — `AppState`, `DetectionServices`, `StorageServices` (with `From<&AppState>`), `RateLimitConfig` (TOML-deserializable), `RateLimiter` (per-tenant token bucket)
+- `crates/axiathon-server/src/middleware.rs` — Auth middleware (Bearer + API key validation, scope checking, CWE-209 sanitized errors), rate limit middleware (per-tenant keyed by auth header, 429 + Retry-After)
+- `crates/axiathon-server/src/handlers.rs` — Route handlers: health (version + uptime), events GET/POST, alerts, rules, queries, deprecated-test (with Deprecation/Sunset headers)
+
+**Files modified:**
+- `crates/axiathon-server/Cargo.toml` — Added `uuid` and `chrono` workspace dependencies
+
+**Test file fix:**
+- `crates/axiathon-server/tests/api_response_envelope.rs` — Fixed variable shadowing bug in `error_response_has_null_data` where `let app = app().await` shadowed the imported `app` function, making the subsequent `app()` call fail to compile
+
+**Tests:** 73/73 passing (GREEN)
+
+**Delivery Finding:**
+- **Gap** (non-blocking): Test `error_response_has_null_data` in `api_response_envelope.rs` had a variable shadowing bug (`let app` shadowed `use axiathon_server::app`). Fixed by renaming to `app1`. *Found by Dev during implementation.*

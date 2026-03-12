@@ -110,6 +110,7 @@ def archive_story(
                 epic["stories"] = [s for s in epic.get("stories", []) if s.get("id") != story_id]
 
         from pf.sprint.yaml_io import write_sprint
+
         write_sprint(sprint_file, sprint_data)
         msg += f" and removed from {sprint_file.name}"
 
@@ -161,4 +162,5 @@ def main(args: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

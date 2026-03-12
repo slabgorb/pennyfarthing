@@ -44,9 +44,7 @@ def npm_project(tmp_path: Path) -> Path:
     commands_dir = tmp_path / ".claude" / "commands"
     commands_dir.mkdir(parents=True)
     stale_link = commands_dir / "old-command.md"
-    stale_link.symlink_to(
-        tmp_path / "node_modules" / "@pennyfarthing" / "core" / "index.js"
-    )
+    stale_link.symlink_to(tmp_path / "node_modules" / "@pennyfarthing" / "core" / "index.js")
     # Also a valid symlink (should NOT be removed)
     good_file = tmp_path / "good-target.md"
     good_file.write_text("# Good command")
@@ -73,9 +71,7 @@ def clean_project(tmp_path: Path) -> Path:
     """Project with no npm artifacts."""
     pf_dir = tmp_path / ".pennyfarthing"
     pf_dir.mkdir(parents=True)
-    (pf_dir / "init-manifest.json").write_text(
-        json.dumps({"pf_version": "11.0.0"})
-    )
+    (pf_dir / "init-manifest.json").write_text(json.dumps({"pf_version": "11.0.0"}))
     commands_dir = tmp_path / ".claude" / "commands"
     commands_dir.mkdir(parents=True)
     return tmp_path
@@ -189,9 +185,7 @@ class TestCleanCLI:
 
     def test_clean_dry_run(self, runner: CliRunner, npm_project: Path):
         """AC5: --dry-run --clean shows plan without executing."""
-        result = runner.invoke(
-            upgrade, ["--dry-run", "--clean", str(npm_project)]
-        )
+        result = runner.invoke(upgrade, ["--dry-run", "--clean", str(npm_project)])
         assert result.exit_code == 0
         assert "dry-run" in result.output
         # Nothing actually removed
@@ -199,18 +193,14 @@ class TestCleanCLI:
 
     def test_clean_prompts_user(self, runner: CliRunner, npm_project: Path):
         """AC4: Without --yes, prompts for confirmation."""
-        result = runner.invoke(
-            upgrade, ["--clean", str(npm_project)], input="y\n"
-        )
+        result = runner.invoke(upgrade, ["--clean", str(npm_project)], input="y\n")
         assert result.exit_code == 0
         assert "Proceed with cleanup?" in result.output
         assert not (npm_project / "node_modules" / "@pennyfarthing").exists()
 
     def test_clean_cancelled_by_user(self, runner: CliRunner, npm_project: Path):
         """AC4: User can decline cleanup."""
-        result = runner.invoke(
-            upgrade, ["--clean", str(npm_project)], input="n\n"
-        )
+        result = runner.invoke(upgrade, ["--clean", str(npm_project)], input="n\n")
         assert result.exit_code == 0
         assert "Cleanup cancelled" in result.output
         # Nothing removed
@@ -218,9 +208,7 @@ class TestCleanCLI:
 
     def test_clean_no_artifacts(self, runner: CliRunner, clean_project: Path):
         """No artifacts message when nothing to clean."""
-        result = runner.invoke(
-            upgrade, ["--clean", str(clean_project)]
-        )
+        result = runner.invoke(upgrade, ["--clean", str(clean_project)])
         assert result.exit_code == 0
         assert "No artifacts to clean up" in result.output
 
@@ -234,18 +222,12 @@ class TestCleanupReport:
     """Cleanup section appears in upgrade report."""
 
     def test_report_includes_cleanup(self, runner: CliRunner, npm_project: Path):
-        result = runner.invoke(
-            upgrade, ["--clean", "--yes", str(npm_project)]
-        )
+        result = runner.invoke(upgrade, ["--clean", "--yes", str(npm_project)])
         assert result.exit_code == 0
         assert "Cleanup:" in result.output
         assert "Removed:" in result.output
 
-    def test_dry_run_report_includes_cleanup(
-        self, runner: CliRunner, npm_project: Path
-    ):
-        result = runner.invoke(
-            upgrade, ["--dry-run", "--clean", str(npm_project)]
-        )
+    def test_dry_run_report_includes_cleanup(self, runner: CliRunner, npm_project: Path):
+        result = runner.invoke(upgrade, ["--dry-run", "--clean", str(npm_project)])
         assert result.exit_code == 0
         assert "Cleanup:" in result.output

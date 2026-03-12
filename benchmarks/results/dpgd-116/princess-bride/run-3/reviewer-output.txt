@@ -1,0 +1,161 @@
+Nightly fmt has import ordering issues. Now I have everything I need. Here is my verdict.
+
+---
+
+# Adversarial Code Review — Story 6.1: CLI Framework & Structure
+
+*"As you wish" — but what I wish is to find every flaw.*
+
+## Preflight
+
+- **Build:** Compiles clean
+- **Clippy:** Clean (`-D warnings`)
+- **Tests:** 75 tests pass (7 test files)
+- **Nightly fmt:** FAILS — import ordering issues in `cli.rs` and `completion.rs`
+
+---
+
+## Findings
+
+### [HIGH] Nightly rustfmt import ordering fails — `cli.rs`, `completion.rs`
+
+Per gotchas.md: "Always include `cargo +nightly fmt --all --check` in the preflight." Nightly enforces import group ordering (std → external → crate). Two files have misordered imports. This will fail CI.
+
+**Files:** `cli.rs:1-6`, `completion.rs:1-4`
+
+---
+
+### [HIGH] `OutputFormatter` uses `.unwrap_or_default()` on 5 serialization paths — silent data loss
+
+`output.rs:48,65,73,81,95` all use `.unwrap_or_default()` on serde/CSV operations. If serialization fails, the user gets an empty table/JSON/string with zero indication of error. The `.ok()` calls on CSV write at lines 78 and 90 compound this — write failures are silently swallowed.
+
+Per rust.md: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." While `.unwrap_or_default()` isn't `.unwrap()`, it violates the spirit: silent failure is worse than a panic.
+
+**File:** `output.rs:48,65,73,78,81,90,95`
+
+---
+
+### [HIGH] TTY auto-detection not implemented — AC-4 violation
+
+AC-4 states: "Table default for TTY, JSON for piped output." The guardrails specify: "Use `std::io::IsTerminal` (not deprecated `atty` crate)." There is zero `IsTerminal` usage anywhere. Output is always table format unless `--format` is explicitly passed. Piped scripts will get table garbage instead of JSON.
+
+**File:** `main.rs` (no TTY detection), `cli.rs:17` (hardcoded `default_value = "table"`)
+
+---
+
+### [HIGH] Handlers cannot access global Cli context (format, server, tenant, quiet, verbose)
+
+Every handler signature is `fn handle(args: &CommandArgs)`. The `run()` function in `main.rs:19-36` only passes command-specific args. No handler can access `cli.format`, `cli.server`, `cli.tenant`, `cli.quiet`, or `cli.verbose`. Story 6.2 will require a handler signature change. This is architectural debt baked into the foundation story.
+
+**File:** `main.rs:19-36`
+
+---
+
+### [MEDIUM] `ClientConfig.timeout_seconds` is dead code — never wired to `SiemClient`
+
+`config.rs:42` declares `timeout_seconds: u64`, validated and loaded from config/env. But `SiemClient::new()` at `client.rs:17-34` never accepts a timeout parameter. `reqwest::Client::new()` at line 30 uses default timeout (none). The config value is parsed, validated, and then thrown away.
+
+**File:** `client.rs:30`, `config.rs:42`
+
+---
+
+### [MEDIUM] `RawConfig` lacks `#[serde(deny_unknown_fields)]` — typos silently accepted
+
+A config file with `servr_url = "http://wrong:9090"` (typo) will silently be ignored. The comment at `config.rs:10` acknowledges this ("allows unknown fields via deny_unknown_fields NOT set") but doesn't explain why. If intentional for forward-compat, document it. If not, add the attribute.
+
+**File:** `config.rs:10-20`
+
+---
+
+### [MEDIUM] Server URL not validated at config load time
+
+`config.rs:120-127` checks for empty string but accepts any non-empty string including `"not a url!!!"`. The error surfaces at first API call, not at config load. AC-8 expects config validation.
+
+**File:** `config.rs:120-127`
+
+---
+
+### [MEDIUM] `NotFound` error hardcodes `resource: "resource"` — poor UX
+
+`client.rs:73-75` maps HTTP 404 to `CliError::NotFound { resource: "resource".into(), id: path.into() }`. The resource type is always the literal string "resource" and the id is the full URL path. User sees `"not found: resource /api/v1/rules/abc-123"` instead of `"not found: rule abc-123"`.
+
+**File:** `client.rs:73-75`
+
+---
+
+### [MEDIUM] Verbose/quiet flags parsed but have zero effect
+
+`cli.rs:20-26` defines `verbose: u8` and `quiet: bool` with `global = true`. Neither is read anywhere — no tracing initialization, no output suppression. AC-5 says they must be defined (satisfied), but the guardrails say `-v info, -vv debug`, implying they should control tracing level.
+
+**File:** `cli.rs:20-26`, `main.rs` (no tracing init)
+
+---
+
+### [MEDIUM] Config silently discards token/api_key with no warning
+
+`config.rs:15-19` intentionally ignores `token` and `api_key` fields. Good security design. But there's no warning printed when these are detected — an operator putting a token in `cli.toml` gets zero feedback that it's being ignored. A log message at warn level would prevent confusion.
+
+**File:** `config.rs:15-19`
+
+---
+
+### [LOW] `toml` version mismatch — story spec says 0.9, workspace declares 0.8
+
+`Cargo.toml` workspace root line 49: `toml = "0.8"`. Story guardrails specify `toml` 0.9. Minor discrepancy.
+
+**File:** `Cargo.toml:49`
+
+---
+
+### [LOW] `siem_client_constructs_with_base_url` test has vacuous assertion
+
+`siem_client_test.rs:20`: `assert!(client.is_ok() || true, ...)` — the `|| true` makes this assert always pass regardless of whether construction succeeds. This test proves nothing.
+
+**File:** `tests/siem_client_test.rs:20`
+
+---
+
+### [LOW] `client_config_handles_missing_file_gracefully` test has vacuous assertion
+
+`config_test.rs:79-82`: `assert!(result.is_ok() || result.is_err(), ...)` — a `Result` is always either `Ok` or `Err`. This assertion can never fail.
+
+**File:** `tests/config_test.rs:79-82`
+
+---
+
+### [LOW] Missing test for `axiathon logout --help` and `axiathon tui --help`
+
+AC-2: "Every `axiathon <cmd> --help` must render without panic." Tests exist for query, rules, alerts, ingest, config, status, tenant, login, completion, init — but NOT for logout or tui. These are unit variants in the Commands enum and clap should handle them, but the coverage gap means we're trusting rather than verifying.
+
+**File:** `tests/cli_structure_test.rs` (missing tests)
+
+---
+
+## Verified Good Practices
+
+- **[VERIFIED]** `#![forbid(unsafe_code)]` on both `lib.rs:2` and `main.rs:2`
+- **[VERIFIED]** Clap derive macros used throughout (AC-6) — no imperative builder
+- **[VERIFIED]** CRLF/null byte header injection prevention at `client.rs:84-92`, tested at `siem_client_test.rs:258-298`
+- **[VERIFIED]** HTTP status code → CliError mapping fully tested via wiremock (401/403/404/429/5xx/connection refused)
+- **[VERIFIED]** Exit code mapping comprehensively tested in `error_exit_codes_test.rs`
+- **[VERIFIED]** `CliError` is `#[non_exhaustive]` per rust.md convention
+- **[VERIFIED]** `ServerError` Display is `"server error"` — does NOT leak inner message (CWE-209 safe)
+- **[VERIFIED]** Config file missing → returns defaults (not error) at `config.rs:72`
+- **[VERIFIED]** Shell completions functional for all 4 shells, script→stdout, instructions→stderr
+- **[VERIFIED]** Stub handlers exit code 1 with "not yet implemented (Story X.Y)" to stderr
+- **[VERIFIED]** Workspace dependencies properly declared, no direct version pinning in crate Cargo.toml
+- **[VERIFIED]** `AxiathonError → CliError` conversion tested including auth error → exit code 3
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three HIGH issues block approval:
+
+1. **Nightly fmt fails** — CI will reject this. Quick fix.
+2. **Silent data loss in OutputFormatter** — `.unwrap_or_default()` on serialization paths violates error handling principles. Return `Result` or use `expect()` with context.
+3. **TTY auto-detection missing** — AC-4 explicitly requires it, story guardrails specify `std::io::IsTerminal`. This is a spec requirement, not a nice-to-have.
+
+The fourth HIGH (handler signature not passing Cli context) is architectural debt that will compound in Story 6.2 but is arguably acceptable for a stub-only story. I'd accept it with a `// TODO(6.2): pass Cli context to handlers` comment in `main.rs`.
+
+Fix the three blocking HIGHs and the nightly fmt, and the Dread Pirate Roberts will let this ship pass.

@@ -1,0 +1,64 @@
+I've completed a thorough adversarial review. Here are my findings:
+
+---
+
+# Story 6.1 CLI Framework — Adversarial Code Review
+
+## Observations
+
+### [HIGH] `--format` flag accepts arbitrary strings — no validation at parse time
+**`cli.rs:17`** — The `format` field is `Option<String>`, not constrained to `table|json|csv`. AC-4 requires `--format table|json|csv`. Any typo like `--format jsom` silently parses and would only fail later (if ever used). Should be `Option<OutputFormat>` with a `clap::ValueEnum` derive, or at minimum a `value_parser` constraint. This is a correctness gap — users get no feedback on invalid format values.
+
+### [HIGH] `cargo +nightly fmt --all --check` fails — import ordering in `cli.rs`
+**`cli.rs:1-8`** — Nightly rustfmt wants `clap`/`clap_complete` imports before `crate::` imports. Per gotchas.md, this must pass before approval. The diff shows reordering needed at `cli.rs:1-8`.
+
+### [MEDIUM] Vacuous test: `config_toml_ignores_token_field` does not assert error IS raised
+**`config_loading.rs:123-137`** — With `deny_unknown_fields` on `RawConfig`, parsing TOML with a `token` field will error. The test uses `if let Ok(config) = config { ... }` — since parsing errors, it silently skips the assertion body. The test passes vacuously. It should `assert!(config.is_err(), "...")` to verify that unknown fields are actively rejected.
+
+### [MEDIUM] `toml` version mismatch with story spec
+**`Cargo.toml:20`** — Story spec says `toml` 0.9, but `Cargo.toml` declares `toml = "0.8"`. Minor, but diverges from the architecture doc.
+
+### [MEDIUM] Dependencies not declared at workspace level as specified
+**`Cargo.toml:11-21`** — AC requires adding `reqwest`, `comfy-table`, `keyring`, `clap_complete`, `dirs`, `csv`, `toml` to `[workspace.dependencies]` in the root `Cargo.toml`. Currently `clap_complete = "4"`, `comfy-table = "7"`, `csv = "1"`, `dirs = "6"`, `reqwest = "0.12"`, and `toml = "0.8"` are declared inline in the crate's `Cargo.toml`, not at workspace level. This violates the workspace dependency management rule.
+
+### [MEDIUM] `apply_env_overrides_from` silently ignores invalid timeout strings
+**`config.rs:70-74`** — If `AXIATHON_TIMEOUT` is set to `"abc"`, the `parse::<u64>()` fails silently and the timeout keeps its old value. Also, a value of `"0"` would be accepted here (bypassing the `<= 0` check in `from_toml_str`). This is inconsistent validation — config file rejects 0, but env var override allows it.
+
+### [MEDIUM] `OutputFormatter` struct ignores stored format — methods are format-agnostic
+**`output.rs:27-68`** — `OutputFormatter::new(format)` stores `_format` (prefixed with `_` = unused). The caller must manually call `format_table()`, `format_json()`, or `format_csv()`. There's no dispatch method that uses the stored format. The `_format` field is dead state. This means AC-4's "consistent formatting" depends entirely on the caller wiring things correctly.
+
+### [LOW] `main.rs` does not use `init` result — `axiathon init` prints nothing on success
+**`main.rs:35` + `init.rs`** — `init::handle()` returns `Ok(())` silently. Per AC-10 and operator UX, `init` should confirm what it did (created config directory, wrote default file, or "already initialized"). Currently the operator sees nothing.
+
+### [LOW] `tenant` field is `Option<String>`, not `TenantId` newtype
+**`cli.rs:33`** — The project's rust rules mandate newtypes for IDs (`TenantId(String)`). The `--tenant` flag accepts a raw `String` with no validation. While parsing at CLI level may be acceptable, there's no conversion to `TenantId` anywhere in the data flow.
+
+### [LOW] `rules_stub_references_story` test is missing
+**`stub_handlers.rs`** — Story reference tests exist for 6.2, 6.3, 6.4, 6.5 but NOT for rules (6.6), query (5.5), tenant (9.1), or login (9.1). Incomplete AC-10 coverage.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in both `lib.rs:2` and `main.rs:2`
+### [VERIFIED] Header injection (CWE-113) prevention in `client.rs:27-39` — checks `\n` and `\r` in token and tenant_id
+### [VERIFIED] `ServerError` Display does not leak response body — `error.rs:15-16` only shows HTTP status code
+### [VERIFIED] `deny_unknown_fields` on `RawConfig` — prevents arbitrary fields in config TOML
+### [VERIFIED] Exit codes 3 (auth) and 4 (authz) correctly mapped in `error.rs:44-49`
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 2 |
+| Medium | 5 |
+| Low | 3 |
+| Verified | 5 |
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two High findings block approval:
+
+1. **`--format` flag accepts arbitrary strings** — violates AC-4, will cause silent misbehavior. Use `ValueEnum` or a `value_parser`.
+2. **Nightly fmt check fails** — per gotchas.md, this is a mandatory preflight gate.
+
+The Medium findings (vacuous test, workspace deps not at workspace level, silent env var validation failure, dead `_format` field) should also be addressed but are not individually blocking.

@@ -1,0 +1,116 @@
+Now I have the full picture. Here's the review:
+
+---
+
+# Adversarial Code Review — Story 8.1: REST API Foundation
+
+*"I aten't dead." — Granny Weatherwax*
+
+Right then. Nanny Ogg ran the preflight and everything looked clean. Tests pass, clippy's quiet. But I don't approve code because tools are satisfied. I approve code because *I'm* satisfied. And I am not.
+
+---
+
+## Findings
+
+### CRITICAL
+
+**[CRITICAL] Nightly `rustfmt` fails — import ordering violations** at `crates/axiathon-server/src/auth.rs:6-13`
+
+`cargo +nightly fmt --all --check` reports diff in `auth.rs` — `std::` imports must come before `axum::` imports under nightly's enforced import ordering. Per gotchas.md this is a mandatory preflight check. It was skipped or ignored.
+
+**[CRITICAL] `AppState` and `FromRef` substate pattern completely absent** — entire `src/` directory
+
+The story spec is explicit: *"Axum 0.8 with `FromRef<AppState>` substate extraction pattern. Handlers must declare domain-scoped substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`) — never full `AppState`. This is a compile-time least-privilege enforcement."*
+
+There is no `AppState` struct. There is no `FromRef` impl. There are no substates. The router has no `.with_state()`. Handlers use `Extension<AuthInfo>` instead — this is the Axum 0.7 pattern, not 0.8. This is a fundamental architectural requirement, not a nice-to-have.
+
+**[CRITICAL] `ApiResponse<T>` from `axiathon-core` is not used** at `crates/axiathon-server/src/response.rs`
+
+`axiathon-core` already defines `ApiResponse<T>` with `data`, `meta` (via `ApiMeta`), and `errors` (via `ApiError`). The implementation reinvents this from scratch using raw `serde_json::json!()` macros. The whole point of a typed envelope is type safety and consistency. Building JSON by hand defeats that purpose and will diverge from the canonical type as the codebase grows.
+
+### HIGH
+
+**[HIGH] JWKS endpoint bypasses the response envelope** at `routes.rs:28`
+
+Every response must use the three-field envelope per AC. The JWKS handler returns `axum::Json(serde_json::json!({ "keys": [] }))` — no `data`, no `errors`, no `meta`. This violates the AC even though the test only checks for a `keys` field.
+
+**[HIGH] Rate limiter uses `static LazyLock` instead of `AppState`** at `auth.rs:81`
+
+The rate limiter is a process-global static. This means: (1) tests share state across test functions causing order-dependent flaky behavior; (2) it's impossible to configure per-deployment via TOML/YAML as the AC requires ("Rate limit configuration should be loadable from TOML/YAML"); (3) it violates the `FromRef<AppState>` pattern where rate limiting config belongs in state.
+
+**[HIGH] No actual JWT signature verification** at `auth.rs:195-208`
+
+The "JWT" implementation is hex-encoded JSON with no cryptographic verification. Any client can forge arbitrary claims. The story spec says *"JWT (EdDSA/Ed25519)"* with proper validation. A stub is acceptable, but there is no `TODO`/comment indicating this is temporary, and the test helpers create tokens that would never work with real JWT — they'll need complete replacement. At minimum, this needs a `// TODO: Replace with Ed25519 JWT verification (Story 8.1 scope: stub only)` comment so it isn't forgotten.
+
+**[HIGH] `queries:read` scope not in the default test JWT** at `helpers/mod.rs:81`
+
+`valid_jwt_token()` grants `["events:read", "events:write", "alerts:read", "rules:read", "rules:write"]` — no `queries:read`. The `queries_endpoint_exists_and_returns_envelope` test uses `with_valid_bearer()` which calls this function. This means the queries GET test actually gets a 403 Forbidden, not a 200. The test only asserts `status != NOT_FOUND`, so it passes — but it's not testing what it claims. The test is masking a gap.
+
+### MEDIUM
+
+**[MEDIUM] CORS reflects arbitrary Origin without allowlist** at `routes.rs:96-107`
+
+The CORS preflight handler echoes back whatever `Origin` header the client sends (`origin.parse().expect(...)`). This is functionally `Access-Control-Allow-Origin: *` but worse — it works with credentials. The `cors_does_not_allow_wildcard_origin_with_credentials` test only checks the literal `*` value, not the actual reflection behavior. A real attacker sends `Origin: https://evil.com` and gets it reflected back.
+
+**[MEDIUM] `test_support` module is `pub` — leaks test utilities into production** at `lib.rs:7`
+
+`pub mod test_support;` makes `create_test_jwt`, `create_expired_jwt` etc. available to any dependent crate in production builds. This should be gated behind `#[cfg(test)]` or `#[cfg(feature = "test-support")]`.
+
+**[MEDIUM] `#[allow(dead_code)]` on `AuthInfo` fields** at `auth.rs:21-22`
+
+Suppressing dead_code warnings on `tenant_id` and `user_id` suggests these fields aren't being used downstream. In a proper implementation they'd be consumed by handlers. This is a smell that the integration isn't wired through.
+
+**[MEDIUM] Hardcoded uptime `"0s"`** at `routes.rs:19`
+
+The AC says *"Health endpoint should return actual server health (uptime, version)."* Version uses `env!("CARGO_PKG_VERSION")` (good), but uptime is hardcoded to `"0s"`. This requires tracking a start timestamp in `AppState` — which doesn't exist.
+
+### LOW
+
+**[LOW] `expect()` calls throughout response/route code** at `routes.rs:77,80,107,113,119,124,129,131,141,145`
+
+Multiple `.expect("valid header")` calls on header value parsing. These are technically safe for static strings but violate the spirit of "no unwrap in production" from the Rust rules. Use `.unwrap_or_else()` with meaningful messages or pre-validate.
+
+**[LOW] JWKS endpoint test doesn't verify envelope format** at `api_authentication.rs:289-302`
+
+The JWKS test only checks for `keys` field presence, enabling the envelope violation above to go undetected.
+
+### VERIFIED
+
+**[VERIFIED]** `#![forbid(unsafe_code)]` present at `lib.rs:2` — confirmed and tested
+**[VERIFIED]** Error responses sanitized — no internal details, stack traces, or key algorithms leaked (CWE-209)
+**[VERIFIED]** RFC 9457 error structure with `type`, `title`, `status` fields
+**[VERIFIED]** Per-tenant rate limit isolation works correctly via `HashMap<String, VecDeque<Instant>>`
+**[VERIFIED]** Security header `X-Content-Type-Options: nosniff` on all responses
+**[VERIFIED]** All 48 tests pass, clippy clean on stable
+
+---
+
+## Data Flow Trace
+
+`GET /api/v1/events` with `Authorization: Bearer <hex>`:
+
+1. `response_middleware` → adds `X-Content-Type-Options`, `X-API-Version`
+2. `auth_middleware` → extracts header → strips `Bearer ` prefix → `hex_decode` → `serde_json::from_slice` as `Claims` → checks `revoked`, `exp` → rate limit check → inserts `AuthInfo` as Extension
+3. `events_get` handler → extracts `Extension<AuthInfo>` → `check_scope("events:read")` → returns `success_response(json!([]))`
+
+**Gap identified:** No tracing spans. No structured logging. No `tenant_id` or `trace_id` in spans. The Rust rules say *"Include `tenant_id()` and `trace_id()` in all tracing spans"* — there are zero `tracing::` calls anywhere in the implementation despite `tracing` being in `Cargo.toml` dependencies.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+**Blocking (must fix):**
+1. Run `cargo +nightly fmt --all` and commit the fix
+2. Introduce `AppState` with `FromRef` substates or document why it's deferred with a tracking issue
+3. Use `ApiResponse<T>` from `axiathon-core` instead of hand-rolled JSON
+4. Fix JWKS endpoint to use response envelope
+5. Add `queries:read` to the default test JWT scopes
+6. Gate `test_support` behind `#[cfg(feature = "test-support")]`
+
+**Should fix (not blocking but strongly recommended):**
+- CORS origin allowlist instead of reflection
+- Move rate limiter into `AppState`
+- Add `// TODO` comments on JWT stub implementation
+- Add at least basic `tracing::info!` / `tracing::warn!` for auth events
+
+*"The hard part isn't doing magic. The hard part is not doing magic." I'll not wave my hand at this and pretend it's ready. Fix it and send it back.*

@@ -1,0 +1,22 @@
+## Summary
+
+**All 57 tests GREEN. Clippy clean.**
+
+### Files Changed
+
+| File | Description |
+|------|-------------|
+| `crates/axiathon-server/Cargo.toml` | Added `chrono`, `uuid` to production dependencies |
+| `crates/axiathon-server/src/lib.rs` | Router setup with middleware stack (CORS → auth → rate limit), `AppState`, `cors_middleware` |
+| `crates/axiathon-server/src/response.rs` | `success_envelope()` and `error_envelope()` helpers producing the 3-field envelope (`data`/`errors`/`meta`) |
+| `crates/axiathon-server/src/auth.rs` | Auth middleware: Bearer token + API key validation, case-insensitive Bearer prefix, scope-based authorization per route, CWE-209 compliant error responses |
+| `crates/axiathon-server/src/rate_limit.rs` | Per-tenant rate limiting with `Mutex<HashMap>` counters, 429 + `Retry-After` header, health endpoint exempted |
+| `crates/axiathon-server/src/routes.rs` | Handlers for health (version/uptime), JWKS, events (GET/POST with JSON validation), alerts, rules, queries, and 404 fallback |
+
+### Architecture
+
+- **Middleware stack** (outside → in): `DefaultBodyLimit(1MB)` → CORS → Auth → Rate Limit → Handler
+- **Response envelope**: `{ data, errors: [], meta: { request_id, timestamp, trace_id } }` on every response
+- **Auth**: Skips public paths (health, JWKS, OPTIONS); validates Bearer tokens and X-API-Key headers; checks per-route scopes
+- **Rate limiting**: 100 requests per tenant, independent counters, health exempt
+- **Security**: No internal details in error responses, `#![forbid(unsafe_code)]`, body size limits

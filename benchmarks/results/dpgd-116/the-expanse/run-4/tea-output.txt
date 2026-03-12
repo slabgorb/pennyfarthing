@@ -1,0 +1,29 @@
+Machine Shop stress test complete. Here's the damage report.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI binary — every AC requires behavioral verification.
+
+**Test Files:**
+| File | AC Coverage | Tests | Focus |
+|------|------------|-------|-------|
+| `cli_structure.rs` | AC-1, AC-2, AC-5, AC-6 | 17 | Command groups, help rendering, global flags, derive macros |
+| `exit_codes.rs` | AC-3 | 14 | CliError::exit_code() mapping (1/3/4), security (CWE-209), Error trait |
+| `output_format.rs` | AC-4 | 14 | OutputFormatter table/json/csv, ResponseMetadata, TTY detection, CSV escaping |
+| `siem_client.rs` | AC-7 | 14 | HTTP wrapper, header injection (X-Tenant-ID, Bearer), status code mapping (401→403→404→429→5xx), CRLF injection prevention, silent error swallowing |
+| `config_loading.rs` | AC-8 | 10 | TOML loading, env var overrides, precedence, token-not-in-config security, validation |
+| `shell_completion.rs` | AC-9 | 6 | bash/zsh/fish/PowerShell generation, command group presence |
+| `stub_handlers.rs` | AC-10 | 10 | "not yet implemented" messages, exit code 1, story references, stderr routing |
+
+**Tests Written:** 85 tests covering all 10 ACs
+**Status:** RED (compilation failures — all 7 test files + binary fail because modules don't exist)
+
+**Security Tests Included:**
+- CWE-209: Error display must not leak internal paths/stack traces
+- Header injection: CRLF in tenant ID and token must be rejected/sanitized
+- Silent error swallowing: non-2xx responses must not return Ok
+- Token in config file: must be rejected (tokens belong in OS keychain)
+- Auth error opacity: must not reveal user existence vs wrong password
+
+**Handoff:** To Dev for implementation (GREEN phase)

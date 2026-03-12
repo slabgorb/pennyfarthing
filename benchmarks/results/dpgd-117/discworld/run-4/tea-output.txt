@@ -1,0 +1,31 @@
+## TEA Assessment
+
+*Yeth, marthter. Igor hath finithhed the tethtth. The family would be proud — every acceptanthe criterion hath been thetht-covered, and then thome.*
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 is a core foundation story with 5 acceptance criteria requiring comprehensive test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/helpers/mod.rs` | — | Shared test infrastructure (app builder, request helpers, auth fixtures) |
+| `tests/api_endpoints.rs` | 10 | AC: REST endpoints exist — all 5 route groups, health details, unknown routes |
+| `tests/api_response_envelope.rs` | 10 | AC: ApiResponse envelope — data/meta/errors fields, RFC 9457, unique request IDs, Content-Type |
+| `tests/api_authentication.rs` | 15 | AC: Authentication — JWT valid/missing/expired/malformed, scopes, API keys, tenant isolation, JWKS, CWE-209 |
+| `tests/api_rate_limiting.rs` | 5 | AC: Rate limiting — 429 status, Retry-After header, envelope format, per-tenant isolation, health bypass |
+| `tests/api_versioning.rs` | 4 | AC: API versioning — v1 prefix, v2 returns 404, unversioned 404, deprecation header mechanism |
+| `tests/api_security.rs` | 10 | Security edge cases — CWE-209 info exposure, CORS, input validation, security headers, method restrictions, `forbid(unsafe_code)` |
+
+**Tests Written:** 54 tests covering 5 ACs + security edge cases
+**Status:** RED (compilation failure — `axiathon_server::app()` and `axiathon_server::test_support` not yet implemented)
+
+**What Dev needs to implement:**
+1. `pub async fn app() -> Router` — builds the Axum router with AppState and all middleware
+2. `pub mod test_support` — test JWT/API key creation helpers (`create_test_jwt`, `create_expired_jwt`, `create_test_api_key`, `create_revoked_api_key`)
+3. Route handlers for `/api/v1/{health,events,alerts,rules,queries}`
+4. Auth middleware (JWT Bearer + API key with scope checking)
+5. Rate limiting middleware (tower-governor, per-tenant)
+6. Response envelope wrapper (meta with `request_id`, `timestamp`, `trace_id`; `errors` as array)
+7. CORS and security headers middleware
+
+**Handoff:** To Dev for implementation (GREEN phase)

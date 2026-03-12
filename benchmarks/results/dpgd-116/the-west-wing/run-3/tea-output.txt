@@ -1,0 +1,29 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a foundational feature story with 10 acceptance criteria requiring code implementation.
+
+**Test Files:**
+- `crates/axiathon-client/tests/cli_command_groups.rs` — AC-1 (command groups), AC-2 (help rendering), AC-6 (clap derive)
+- `crates/axiathon-client/tests/cli_exit_codes.rs` — AC-3 (exit code mapping via CliError)
+- `crates/axiathon-client/tests/cli_output_format.rs` — AC-4 (table/json/csv formatting, CSV escaping)
+- `crates/axiathon-client/tests/cli_global_flags.rs` — AC-5 (global flags, env var integration)
+- `crates/axiathon-client/tests/cli_siem_client.rs` — AC-7 (HTTP wrapper, header injection, status code mapping)
+- `crates/axiathon-client/tests/cli_config.rs` — AC-8 (TOML config loading, env overrides, validation)
+- `crates/axiathon-client/tests/cli_completion.rs` — AC-9 (shell completion generation for 4 shells)
+- `crates/axiathon-client/tests/cli_stubs_and_security.rs` — AC-10 (stub handlers with story refs) + security
+
+**Tests Written:** 98 tests covering 10 ACs
+**Status:** RED (all 8 test files fail to compile — modules don't exist yet)
+
+**Security coverage:**
+- CWE-113: Header injection via tenant ID/token with CRLF characters
+- CWE-209: Error display must not leak server internals, stack traces, or file paths
+- Config validation: rejects dangerous URL schemes, negative timeouts, token storage in config file
+- Silent error swallowing: all stubs must propagate errors via Result
+
+**Handoff:** To Dev for implementation
+
+## Delivery Findings
+
+- No upstream findings during test design.

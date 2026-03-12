@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: jazz-legends
+run_id: 1
+timestamp: '2026-03-08T04:25:20.755556+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-jazz-legends-run-1
+phases:
+  tea:
+    token_usage:
+      input: 34
+      output: 21826
+    duration_s: 453.36
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 15
+      output: 11489
+    duration_s: 209.21
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 13
+      output: 4764
+    duration_s: 100.91
+    exit_code: 0
