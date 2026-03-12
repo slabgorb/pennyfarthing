@@ -23,6 +23,7 @@ import subprocess
 import sys
 import threading
 import time
+import warnings
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -99,17 +100,25 @@ class PipelineResult:
 # ---------------------------------------------------------------------------
 
 
-def _framework_version(project_dir: Path) -> dict:
+def _framework_version(project_dir: Path, phases: list[str] | None = None) -> dict:
     """Collect PF framework version info for run metadata."""
     pf_repo = project_dir / "pennyfarthing"
 
     commit = "unknown"
-    if (pf_repo / ".git").exists():
+    tag = "unknown"
+    if pf_repo.exists() and (pf_repo / ".git").exists():
         try:
             commit = subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=pf_repo,
                 stderr=subprocess.DEVNULL,
             ).decode().strip()[:12]
+        except subprocess.CalledProcessError:
+            pass
+        try:
+            tag = subprocess.check_output(
+                ["git", "describe", "--tags", "--always"], cwd=pf_repo,
+                stderr=subprocess.DEVNULL,
+            ).decode().strip()
         except subprocess.CalledProcessError:
             pass
 
@@ -119,7 +128,8 @@ def _framework_version(project_dir: Path) -> dict:
     # Hash each agent definition used in pipeline phases
     agents_dir = pf_repo / "pennyfarthing-dist" / "agents"
     agent_hashes = {}
-    for role in ["tea", "dev", "reviewer"]:
+    roles = phases if phases else ["tea", "dev", "reviewer"]
+    for role in roles:
         agent_file = agents_dir / f"{role}.md"
         if agent_file.exists():
             agent_hashes[role] = hashlib.sha256(
@@ -129,6 +139,7 @@ def _framework_version(project_dir: Path) -> dict:
     return {
         "commit": commit,
         "semver": semver,
+        "tag": tag,
         "agent_hashes": agent_hashes,
     }
 
@@ -1856,6 +1867,7 @@ def save_result(
     *,
     project_dir: Path | None = None,
     bmad_root: Path | None = None,
+    scenario_phases: list[str] | None = None,
 ) -> Path:
     """Save pipeline result and score to disk."""
     tag = pipeline_result.theme or "control"
@@ -1879,6 +1891,13 @@ def save_result(
         pr.cost_usd for pr in pipeline_result.phases.values() if not pr.role.startswith("_")
     )
 
+    if not project_dir and not bmad_root:
+        warnings.warn(
+            "save_result() called without project_dir or bmad_root — "
+            "framework_version will be null",
+            stacklevel=2,
+        )
+
     meta = {
         "scenario_id": pipeline_result.scenario_id,
         "theme": pipeline_result.theme,
@@ -1890,7 +1909,7 @@ def save_result(
         "worktree_path": pipeline_result.worktree_path,
         "framework_version": (
             _bmad_version(bmad_root) if bmad_root
-            else _framework_version(project_dir) if project_dir
+            else _framework_version(project_dir, phases=scenario_phases) if project_dir
             else None
         ),
         "phases": {

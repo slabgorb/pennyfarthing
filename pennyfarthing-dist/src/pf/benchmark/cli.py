@@ -574,7 +574,7 @@ def replay_run(
             all_scores.append(score)
 
         # Save pipeline result + score.yaml
-        run_dir = save_result(result, score, out_dir, project_dir=project, bmad_root=bmad)
+        run_dir = save_result(result, score, out_dir, project_dir=project, bmad_root=bmad, scenario_phases=scenario.phases)
         click.echo(f"  Saved to {run_dir}")
 
         # Additional judge passes (judge_1.yaml, judge_2.yaml, ...)
@@ -659,7 +659,7 @@ def replay_score(result_dir, scenario_path, model, project_dir):
         click.echo(f"  [{status}] {f.finding_id}: {f.title} ({f.weight}pts){by}")
 
     # Save updated score
-    save_result(pipeline_result, score, result_path.parent.parent.parent, project_dir=project)
+    save_result(pipeline_result, score, result_path.parent.parent.parent, project_dir=project, scenario_phases=scenario.phases)
 
 
 @replay.command("judge")
