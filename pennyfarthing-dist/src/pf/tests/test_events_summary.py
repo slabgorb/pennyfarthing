@@ -389,6 +389,7 @@ class TestSaveResultWritesEventsSummary:
             phases=["dev"],
             ground_truth=[],
             total_weight=0,
+            phase_prompts={},
         )
         result = reconstruct_pipeline_result(run_dir, scenario)
         assert result is not None

@@ -1787,6 +1787,15 @@ def save_result(
     if diff_pr:
         (run_dir / "diff-stat.txt").write_text(diff_pr.output_text)
 
+    # Generate and save events summary from OTEL data
+    from pf.benchmark.events import generate_events_summary
+
+    phase_names = [r for r in pipeline_result.phases if not r.startswith("_")]
+    events_summary = generate_events_summary(run_dir, phase_names)
+    (run_dir / "events-summary.yaml").write_text(
+        yaml.dump(events_summary, default_flow_style=False, sort_keys=False)
+    )
+
     return run_dir
 
 
