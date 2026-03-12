@@ -57,19 +57,21 @@ def list_native_agents(project_root: Path) -> list[dict[str, Any]]:
     ]
 
 
+def _get_frontmatter_field(name: str, field: str, project_root: Path) -> Any:
+    """Extract a single field from native agent frontmatter."""
+    defn = load_native_agent_definition(name, project_root)
+    if defn is None or defn["frontmatter"] is None:
+        return None
+    return defn["frontmatter"].get(field)
+
+
 def get_agent_tool_restrictions(
     name: str, project_root: Path
 ) -> list[str] | None:
     """Extract allowed-tools from native agent frontmatter."""
-    defn = load_native_agent_definition(name, project_root)
-    if defn is None or defn["frontmatter"] is None:
-        return None
-    return defn["frontmatter"].get("allowed-tools")
+    return _get_frontmatter_field(name, "allowed-tools", project_root)
 
 
 def get_agent_model(name: str, project_root: Path) -> str | None:
     """Extract model from native agent frontmatter."""
-    defn = load_native_agent_definition(name, project_root)
-    if defn is None or defn["frontmatter"] is None:
-        return None
-    return defn["frontmatter"].get("model")
+    return _get_frontmatter_field(name, "model", project_root)
