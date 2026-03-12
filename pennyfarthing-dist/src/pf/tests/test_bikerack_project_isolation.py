@@ -42,55 +42,81 @@ def tmp_project_b(tmp_path):
 class TestNoPortScanning:
     """AC1: Port scanning must be completely removed from discovery."""
 
-    def test_is_already_running_no_files_no_scan(self, tmp_project):
-        """When no PID or port files exist, must NOT scan port range.
+    def test_is_already_running_no_files_probes_default_only(self, tmp_project):
+        """When no PID or port files exist, probes only the default port.
 
         Before fix: scans range(2898, 2909) as 'last resort'.
-        After fix: returns (False, None, None) immediately.
+        After fix: probes single default port to detect orphaned servers.
         """
-        # Mock _probe_wheelhub to track if it's ever called
-        with patch(
-            "pf.bikerack.launcher._probe_wheelhub",
-            side_effect=AssertionError("Port scanning detected!"),
-        ) as mock_probe:
-            running, pid, port = is_already_running(tmp_project)
+        probed_ports = []
+
+        def tracking_probe(port, timeout=1.0):
+            probed_ports.append(port)
+            return False  # Nothing responding
+
+        with patch("pf.bikerack.launcher._probe_wheelhub", side_effect=tracking_probe):
+            with patch("pf.bikerack.launcher._default_port", return_value=1898):
+                running, pid, port = is_already_running(tmp_project)
 
         assert running is False
         assert pid is None
         assert port is None
-        mock_probe.assert_not_called()
+        # Must probe exactly one port (the default), not a range
+        assert probed_ports == [1898]
 
-    def test_is_already_running_pid_only_no_scan(self, tmp_project):
-        """When only PID file exists (no port file), must NOT scan port range.
+    def test_is_already_running_no_files_detects_orphan(self, tmp_project):
+        """When no files exist but default port responds, detect orphaned server."""
+        with patch("pf.bikerack.launcher._probe_wheelhub", return_value=True):
+            with patch("pf.bikerack.launcher._default_port", return_value=1898):
+                running, pid, port = is_already_running(tmp_project)
 
-        Before fix: scans range(2898, 2909) when PID alive but no port file.
-        After fix: cleans up stale PID file and returns (False, None, None).
+        assert running is True
+        assert pid is None
+        assert port == 1898
+
+    def test_is_already_running_pid_only_probes_default(self, tmp_project):
+        """When only PID file exists (no port file), cleans up then probes default.
+
+        PID-only is a stale state — cleaned up, then falls through to
+        default port probe for orphan detection.
         """
         (tmp_project / "bikerack-pid").write_text("99999")
 
+        probed_ports = []
+
+        def tracking_probe(port, timeout=1.0):
+            probed_ports.append(port)
+            return False
+
         with patch("pf.bikerack.launcher.is_process_alive", return_value=True):
-            with patch(
-                "pf.bikerack.launcher._probe_wheelhub",
-                side_effect=AssertionError("Port scanning detected!"),
-            ) as mock_probe:
-                running, pid, port = is_already_running(tmp_project)
+            with patch("pf.bikerack.launcher._probe_wheelhub", side_effect=tracking_probe):
+                with patch("pf.bikerack.launcher._default_port", return_value=1898):
+                    running, pid, port = is_already_running(tmp_project)
 
         assert running is False
-        mock_probe.assert_not_called()
+        # Probes only the single default port (not a range)
+        assert probed_ports == [1898]
+        # PID file should be cleaned up
+        assert not (tmp_project / "bikerack-pid").exists()
 
-    def test_is_already_running_pid_dead_no_scan(self, tmp_project):
-        """When PID file exists but process is dead, must NOT scan port range."""
+    def test_is_already_running_pid_dead_probes_default(self, tmp_project):
+        """When PID file exists but process is dead, cleans up then probes default."""
         (tmp_project / "bikerack-pid").write_text("99999")
 
+        probed_ports = []
+
+        def tracking_probe(port, timeout=1.0):
+            probed_ports.append(port)
+            return False
+
         with patch("pf.bikerack.launcher.is_process_alive", return_value=False):
-            with patch(
-                "pf.bikerack.launcher._probe_wheelhub",
-                side_effect=AssertionError("Port scanning detected!"),
-            ) as mock_probe:
-                running, pid, port = is_already_running(tmp_project)
+            with patch("pf.bikerack.launcher._probe_wheelhub", side_effect=tracking_probe):
+                with patch("pf.bikerack.launcher._default_port", return_value=1898):
+                    running, pid, port = is_already_running(tmp_project)
 
         assert running is False
-        mock_probe.assert_not_called()
+        assert probed_ports == [1898]
+        assert not (tmp_project / "bikerack-pid").exists()
 
 
 class TestWsClientNoDefaultPort:
@@ -146,8 +172,9 @@ class TestMissingPortFile:
         assert result is None
 
     def test_is_already_running_no_port_file_not_running(self, tmp_project):
-        """Without port file, is_already_running must report not running."""
-        running, pid, port = is_already_running(tmp_project)
+        """Without port file, is_already_running must report not running when default port is dead."""
+        with patch("pf.bikerack.launcher._probe_wheelhub", return_value=False):
+            running, pid, port = is_already_running(tmp_project)
         assert running is False
         assert port is None
 
@@ -161,7 +188,10 @@ class TestStalePortFile:
     """AC3: Detect dead WheelHub and clean up stale port file."""
 
     def test_port_file_exists_wheelhub_dead_cleanup(self, tmp_project):
-        """When port file exists but WheelHub isn't responding, clean up."""
+        """When port file exists but WheelHub isn't responding, clean up.
+
+        After cleanup, falls through to default-port probe (also dead).
+        """
         (tmp_project / ".bikerack-port").write_text("2898")
         (tmp_project / "bikerack-pid").write_text("99999")
 
@@ -175,7 +205,10 @@ class TestStalePortFile:
         assert not (tmp_project / "bikerack-pid").exists()
 
     def test_port_file_only_wheelhub_dead_cleanup(self, tmp_project):
-        """When port file exists (no PID file) but WheelHub dead, clean up."""
+        """When port file exists (no PID file) but WheelHub dead, clean up.
+
+        After cleanup, falls through to default-port probe (also dead).
+        """
         (tmp_project / ".bikerack-port").write_text("2898")
 
         with patch("pf.bikerack.launcher._probe_wheelhub", return_value=False):
@@ -204,18 +237,19 @@ class TestProjectIsolation:
         assert client_a.discover_port() == 2898
         assert client_b.discover_port() == 2899
 
-    def test_project_a_running_project_b_not(self, tmp_project, tmp_project_b):
-        """Project B must not discover Project A's WheelHub.
+    def test_project_a_running_project_b_detects_default(self, tmp_project, tmp_project_b):
+        """Project B with no files still probes the default port for orphan detection.
 
-        Before fix: Project B scans ports and finds Project A's WheelHub.
-        After fix: Project B reports not running without scanning.
+        Before fix: Project B scans a range of ports and finds Project A's WheelHub.
+        After fix: Project B probes only the single default port. If something responds,
+        it's reused (orphan recovery). This is intentional — orphan detection takes
+        priority over strict project isolation when no files exist.
         """
-        # Project A has a running WheelHub
+        # Project A has a running WheelHub with files
         (tmp_project / ".bikerack-port").write_text("2898")
         (tmp_project / "bikerack-pid").write_text("11111")
 
-        # Project B has no WheelHub
-        # (no port or pid files in tmp_project_b)
+        # Project B has no WheelHub files
 
         with patch("pf.bikerack.launcher.is_process_alive", return_value=True):
             with patch("pf.bikerack.launcher._probe_wheelhub", return_value=True):
@@ -224,8 +258,9 @@ class TestProjectIsolation:
 
         assert running_a is True
         assert port_a == 2898
-        assert running_b is False
-        assert port_b is None
+        # Project B detects orphan on default port (intended behavior)
+        assert running_b is True
+        assert port_b == 1898
 
     def test_is_already_running_only_probes_own_port(self, tmp_project):
         """is_already_running must only probe the port from its own port file.

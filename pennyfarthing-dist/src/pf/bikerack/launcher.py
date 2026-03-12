@@ -108,7 +108,7 @@ def start_wheelhub(project_dir: Path) -> subprocess.Popen | dict:
         "pf.wheelhub.app:create_app",
         "--factory",
         "--host", "127.0.0.1",
-        "--port", "1898",
+        "--port", str(_default_port()),
     ]
     log_file = open(log_path, "w")  # noqa: SIM115
     return subprocess.Popen(
@@ -193,12 +193,18 @@ def _probe_wheelhub(port: int, timeout: float = 1.0) -> bool:
         return False
 
 
+def _default_port() -> int:
+    """Resolve default WheelHub port from WHEELHUB_PORT env or 1898."""
+    return int(os.environ.get("WHEELHUB_PORT", "1898"))
+
+
 def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]:
     """Check if BikeRack is already running.
 
     Returns (is_running, pid_or_none, port_or_none).
     Uses HTTP liveness probes in addition to PID/port file checks.
     Cleans up stale/orphaned files when detection fails.
+    Falls back to probing the default port to detect orphaned servers.
     """
     pid = read_pid_file(project_dir)
     port = read_port_file(project_dir)
@@ -207,23 +213,24 @@ def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]
     if pid is not None and port is not None:
         if is_process_alive(pid) and _probe_wheelhub(port):
             return (True, pid, port)
-        # Stale files — clean up
+        # Stale files — clean up and fall through to default port probe
         cleanup_files(project_dir)
-        return (False, None, None)
 
     # Port file only (no PID) — probe before assuming orphaned
-    if port is not None and pid is None:
+    elif port is not None and pid is None:
         if _probe_wheelhub(port):
             return (True, None, port)
         cleanup_files(project_dir)
-        return (False, None, None)
 
     # PID file only (no port) — stale state, clean up
-    if pid is not None and port is None:
+    elif pid is not None and port is None:
         cleanup_files(project_dir)
-        return (False, None, None)
 
-    # No files — not running
+    # Fall through: no valid files — probe default port to detect orphaned servers
+    default = _default_port()
+    if _probe_wheelhub(default):
+        return (True, None, default)
+
     return (False, None, None)
 
 
