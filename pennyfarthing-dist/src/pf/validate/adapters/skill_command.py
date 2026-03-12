@@ -58,9 +58,7 @@ def _load_schema(root: Path) -> dict | None:
         return None
 
 
-def _validate_against_schema(
-    data: dict, schema: dict
-) -> list[str]:
+def _validate_against_schema(data: dict, schema: dict) -> list[str]:
     """Validate data against a JSON Schema (manual implementation).
 
     Handles the subset of JSON Schema used by skill-registry.schema.json:
@@ -112,9 +110,7 @@ def _validate_against_schema(
                 if key in props:
                     _validate_value(val, props[key], f"{path}.{key}")
                 elif additional is False:
-                    errors.append(
-                        f"{path}: additional property '{key}' not allowed"
-                    )
+                    errors.append(f"{path}: additional property '{key}' not allowed")
                 elif isinstance(additional, dict):
                     _validate_value(val, additional, f"{path}.{key}")
 
@@ -128,8 +124,7 @@ def _validate_against_schema(
             enum_vals = prop_schema.get("enum")
             if enum_vals and value not in enum_vals:
                 errors.append(
-                    f"{path}: value '{value}' not in allowed values: "
-                    f"{', '.join(enum_vals)}"
+                    f"{path}: value '{value}' not in allowed values: {', '.join(enum_vals)}"
                 )
 
         elif expected_type == "array":
@@ -215,7 +210,7 @@ def _get_body(content: str) -> str:
     end = content.find("\n---", 3)
     if end == -1:
         return ""
-    return content[end + 4:].strip()
+    return content[end + 4 :].strip()
 
 
 def _discover_registry(root: Path) -> dict | None:
@@ -268,9 +263,19 @@ def _collect_registry_command_names(registry: dict) -> set[str]:
         names.add(f"pf-{group_name}")
     for cmd_name in registry.get("standalone", {}):
         if cmd_name not in (
-            "help", "setup", "health-check", "prime", "check", "work",
-            "chore", "patch", "standalone", "party-mode", "brainstorming",
-            "retro", "permissions",
+            "help",
+            "setup",
+            "health-check",
+            "prime",
+            "check",
+            "work",
+            "chore",
+            "patch",
+            "standalone",
+            "party-mode",
+            "brainstorming",
+            "retro",
+            "permissions",
         ):
             names.add(f"pf-{cmd_name}")
 
@@ -309,9 +314,7 @@ def validate_deprecated(commands_dir: Path) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def validate_registry_crossref(
-    root: Path, commands_dir: Path
-) -> tuple[list[str], list[str]]:
+def validate_registry_crossref(root: Path, commands_dir: Path) -> tuple[list[str], list[str]]:
     """Cross-reference command files with command-registry.yaml."""
     errors: list[str] = []
     warnings: list[str] = []
@@ -424,7 +427,9 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
 
     # --- Command file validation ---
     dist_root = get_dist_root(project_root=root)
-    commands_dir = (dist_root / "commands") if dist_root else root / "pennyfarthing-dist" / "commands"
+    commands_dir = (
+        (dist_root / "commands") if dist_root else root / "pennyfarthing-dist" / "commands"
+    )
     command_files = discover_command_files(commands_dir)
 
     if not command_files:

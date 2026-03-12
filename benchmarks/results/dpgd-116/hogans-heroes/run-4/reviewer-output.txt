@@ -1,0 +1,85 @@
+I have now reviewed all source and test files thoroughly. Here is my structured review.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*General Burkhalter adjusts his monocle and slams the report on the desk.*
+
+So. The Development staff thinks they can present me with a half-built CLI framework and I won't notice what's missing. Let me disabuse them of that fantasy.
+
+## Findings
+
+### CRITICAL
+
+**[CRITICAL] CWE-209: ServerError Display exposes raw internal details** — at `error.rs:24`
+
+The `ServerError` variant uses `#[error("server error — contact your administrator")]` with a `#[doc(hidden)]` annotation on the inner `String`, but the security test at `security.rs:62-72` **passes by accident**. The `Display` impl hard-codes the message "server error — contact your administrator" and ignores the inner string — which is correct behavior. HOWEVER, the `Debug` impl (auto-derived) **does** expose the inner string. If any code path uses `{err:?}` instead of `{err}` for user-facing output (which is a common mistake), the internal connection string leaks. The `#[doc(hidden)]` attribute does nothing for `Debug`. This needs a manual `Debug` impl or a wrapper type that redacts the inner field. **Lowering to MEDIUM** — the `Display` path is safe, but the `Debug` path is a latent risk.
+
+### HIGH
+
+**[HIGH] No `main.rs` binary entry point** — Story spec requires producing the `axiathon` binary. There is no `main.rs` and no `[[bin]]` section in `Cargo.toml`. The crate is library-only. AC-3 requires `main.rs` to catch errors and call `std::process::exit()`. Without `main.rs`, the binary doesn't exist and exit codes are never exercised end-to-end. This is a fundamental deliverable gap.
+
+**[HIGH] `toml` workspace dependency is `0.8` but story spec requires `0.9`** — at `Cargo.toml:50`. The story Technical Guardrails specify `toml 0.9`. The workspace declares `toml = "0.8"`. This is a spec deviation. (Note: toml 0.9 may not exist yet as a published crate, which means the story spec may be aspirational — but the reviewer role requires flagging the discrepancy.)
+
+**[HIGH] `RawConfig` silently ignores unknown fields** — at `config.rs:20`. The comment says "Ignore unknown fields (including `token`) silently". serde's default behavior is to silently drop unknown fields. An operator who misspells `api_url` as `api_rul` gets no warning. This is a config safety issue — `#[serde(deny_unknown_fields)]` should be used with an explicit allowlist, or at minimum unknown fields should produce a warning.
+
+**[HIGH] `cargo +nightly fmt --all --check` fails with 47 diffs** — Per `gotchas.md`, nightly fmt must pass before approval. Import ordering and function signature formatting violations throughout `client.rs`, `output.rs`, and other files.
+
+### MEDIUM
+
+**[MEDIUM] AC-2 violation: No `after_help` usage examples on any command group** — AC-2 explicitly requires "include `after_help` usage examples for each command group." Zero commands have `after_help` attributes. This is a direct AC miss.
+
+**[MEDIUM] AC-5 violation: `--server` does not read `AXIATHON_SERVER` env var** — AC-5 states "`--server` supports `AXIATHON_SERVER` env var." The `--server` flag in `cli.rs:24` has no `env = "AXIATHON_SERVER"` attribute, and there's no code wiring this env var to the server flag. The `config.rs` handles `AXIATHON_API_URL` but not `AXIATHON_SERVER` for the CLI flag.
+
+**[MEDIUM] `CliError` is not `#[non_exhaustive]`** — Per project rust rules: "enums that will grow" should have `#[non_exhaustive]`. This error enum will grow as more stories add variants. Missing the annotation breaks downstream code when new variants are added.
+
+**[MEDIUM] `uuid_v4_string()` generates deterministic pseudo-UUIDs, not real UUIDs** — at `output.rs:165-178`. The function name implies UUID v4 (random), but it's actually a time-based hash with no randomness. Two calls in the same nanosecond produce identical "UUIDs". The workspace already has `uuid = "1"` with v4 feature enabled — use it.
+
+**[MEDIUM] `chrono_like_timestamp()` produces epoch seconds, not ISO 8601** — at `output.rs:157-163`. The timestamp format is `"1709900000Z"` which is not a standard timestamp format. ISO 8601 (`2024-03-08T12:00:00Z`) would be expected for `ResponseMetadata.timestamp`.
+
+**[MEDIUM] `Ingest`, `Config`, `Status`, `Tenant`, `Login`, `Query` commands have no subcommands** — at `cli.rs:73-89`. Per the architecture doc, commands should follow "plural-noun + verb" pattern (`axiathon ingest start`). Currently `axiathon ingest` is a leaf command with no verb subcommands, making it impossible to add verbs later without a breaking CLI change.
+
+**[MEDIUM] Table formatter silently drops non-Object rows** — at `output.rs:42`. If `serde_json::to_value(row)` produces an `Array` or `String` instead of `Object`, the row is silently skipped with no warning. Same issue in `CsvFormatter` at line 120.
+
+### LOW
+
+**[LOW] `SiemClient::new()` panics on empty URL instead of returning `Result`** — at `client.rs:21`. The project rule says "No `unwrap()` in production code — use `?` or `expect()` with actionable message." While `assert!` is slightly better than `unwrap()`, a constructor that can fail should return `Result` per Rust conventions. The test at `security.rs:138` explicitly uses `catch_unwind` to handle this, which is a code smell.
+
+**[LOW] `completion.rs:10` uses `.expect()` in production code** — `String::from_utf8(buf).expect("completion output should be valid UTF-8")`. Per project rules, no `unwrap()` in production. `expect()` is allowed with actionable messages, and this qualifies as one, so this is borderline acceptable.
+
+**[LOW] Redundant `about` + doc comment on every command** — at `cli.rs:53-108`. Every variant has both `/// doc comment` and `#[command(about = "...")]` with identical text. clap uses the doc comment as `about` by default — the explicit `about` is redundant.
+
+**[LOW] `keyring` dependency declared in workspace but not used by axiathon-client** — at `Cargo.toml:47`. The `keyring` crate is in workspace deps but `axiathon-client/Cargo.toml` doesn't include it. This is fine for now (Story 9.1), but the workspace dep pulls in platform-specific features that affect compile times.
+
+### VERIFIED
+
+- **[VERIFIED]** Header injection prevention via `HeaderValue::from_str()` — correctly rejects CRLF and null bytes (CWE-113).
+- **[VERIFIED]** Token not stored in config file — `RawConfig` has no `token` field, `ClientConfig::token()` always returns `None`.
+- **[VERIFIED]** Exit codes 1/3/4 correctly mapped; no variant maps to 0 or 2.
+- **[VERIFIED]** `#![forbid(unsafe_code)]` in `lib.rs`, `deny` in Cargo.toml lints.
+- **[VERIFIED]** Dependency rule upheld — no server-side crate imports.
+- **[VERIFIED]** Shell completion generation works for all 4 shells.
+- **[VERIFIED]** All tests pass (74 tests across 8 test files).
+- **[VERIFIED]** Clippy clean with `-D warnings`.
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 0 (downgraded to Medium) | — |
+| High | 4 | YES |
+| Medium | 7 | No |
+| Low | 4 | No |
+| Verified | 8 | — |
+
+## Verdict: **CHANGES_REQUESTED**
+
+The four High findings block approval:
+
+1. **No `main.rs`** — the binary doesn't exist. This is the primary deliverable.
+2. **Nightly fmt fails** — 47 formatting violations, per `gotchas.md` this is a pre-approval requirement.
+3. **`RawConfig` silently swallows unknown fields** — config safety hazard for operators.
+4. **`toml` version mismatch** — spec says 0.9, workspace has 0.8.
+
+*Burkhalter stands.* "Klink! You told me this CLI framework was ready. It doesn't even have a binary. Fix these issues and bring it back — and don't waste my time with formatting violations again."

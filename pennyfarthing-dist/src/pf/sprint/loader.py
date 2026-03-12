@@ -280,10 +280,10 @@ def get_archived_stories(
     if not archive_dir.is_dir():
         return []
 
-    current_number = None
+    current_id: int | str | None = None
     if exclude_current or only_current:
         sprint_info = get_sprint_info()
-        current_number = sprint_info.get("number")
+        current_id = sprint_info.get("number") or sprint_info.get("name")
 
     stories = []
     for path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
@@ -291,9 +291,10 @@ def get_archived_stories(
         if not data or "completed_stories" not in data:
             continue
 
-        if current_number is not None:
-            archive_number = data.get("sprint", {}).get("number")
-            is_current = archive_number == current_number
+        if current_id is not None:
+            archive_sprint = data.get("sprint", {})
+            archive_id = archive_sprint.get("number") or archive_sprint.get("name")
+            is_current = archive_id == current_id
             if exclude_current and is_current:
                 continue
             if only_current and not is_current:
@@ -372,9 +373,7 @@ def find_story(epic: dict[str, Any] | None, story_id: str) -> dict[str, Any] | N
     return None
 
 
-def get_story_field(
-    sprint_data: dict[str, Any], story_id: str, field_name: str
-) -> Any | None:
+def get_story_field(sprint_data: dict[str, Any], story_id: str, field_name: str) -> Any | None:
     """Get a specific field from a story in sprint data.
 
     Extracts the epic number from the story ID (e.g., "63-7" -> epic 63)

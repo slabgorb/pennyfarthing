@@ -12,7 +12,7 @@ Launch the interactive project-setup workflow to configure a Pennyfarthing proje
 
 <usage>
 ```bash
-# Run after pf setup
+# Run after pf init
 /setup
 
 # Skip certain steps
@@ -38,14 +38,14 @@ The setup workflow guides you through:
 </workflow>
 
 <when-to-use>
-- After running `pf setup` for the first time
+- After running `pf init` for the first time
 - When setting up a new orchestrator with subrepos
 - When repos.yaml or CLAUDE.md don't exist
 - When converting an existing project to use Pennyfarthing
 </when-to-use>
 
 <prerequisites>
-- Pennyfarthing must be initialized (`pf setup`)
+- Pennyfarthing must be initialized (`pf init`)
 - Should be in project root directory
 </prerequisites>
 

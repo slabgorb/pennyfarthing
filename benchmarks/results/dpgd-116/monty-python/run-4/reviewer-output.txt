@@ -1,0 +1,99 @@
+I have all the information I need. Here is my adversarial review.
+
+---
+
+# Story 6.1 CLI Framework & Structure — Adversarial Code Review
+
+## Review Checklist
+
+- [x] Find at least 5 observations
+- [x] Trace data flow (tenant ID from CLI flag through SiemClient to HTTP header)
+- [x] Wiring: check CLI → command handler accessibility
+- [x] Identify patterns (good and bad)
+- [x] Verify error handling
+- [x] Security analysis
+- [x] Hard questions (null, empty, newlines, invalid shells)
+- [x] Make judgment
+
+---
+
+## Findings
+
+### CRITICAL
+
+**[CRITICAL] Missing `tui` and `logout` commands — AC-1 violation** at `cli.rs:40-62`
+AC-1 explicitly requires: "query, rules, alerts, ingest, config, status, tenant, login/logout, tui, completion, init." The `Commands` enum has no `Logout` or `Tui` variant. The `top_level_help_renders_all_command_groups` test at `cli_structure.rs:105-113` also omits `tui` and `logout` from the checked list, so the test cannot catch this gap. This is a direct AC failure.
+
+### HIGH
+
+**[HIGH] `--format` flag accepts arbitrary strings — AC-4 violation** at `cli.rs:9-10`
+`format` is `Option<String>` with no `value_parser` constraint. A user can pass `--format xml` and it will parse without error. AC-4 mandates `--format table|json|csv`. Compare with `CompletionArgs::shell` at `cli.rs:173` which correctly uses `value_parser = ["bash", "zsh", "fish", "powershell"]`. The format flag should use the same pattern: `#[arg(long, global = true, value_parser = ["table", "json", "csv"])]`.
+
+**[HIGH] No `main.rs` binary entry point — story deliverable missing** 
+The story requires a `main.rs` that initializes tracing, dispatches commands, catches errors, and calls `std::process::exit()` with the proper exit code. There is no `main.rs` and no `[[bin]]` target. The crate is library-only. Without `main.rs`, exit codes (AC-3) are never actually mapped to process exits, errors are never printed to stderr, and there is no `axiathon` binary. This is the entire purpose of the story — producing the `axiathon` binary.
+
+**[HIGH] `generate_completion` panics on unsupported shell — violates Rust safety rules** at `commands/completion.rs:8`
+`panic!("unsupported shell: {other}")` violates the project rule "No `unwrap()` in production code — use `?` or `expect()` with actionable message." While clap's `value_parser` prevents this path in normal usage, library code should return `Result`, not panic. If someone calls `generate_completion` programmatically (as tests do), an invalid input causes a hard crash.
+
+**[HIGH] Workspace dependency hygiene violation** at `Cargo.toml:11-20`
+The story explicitly says "Add to `[workspace.dependencies]`: `reqwest` 0.12, `comfy-table` 7, `keyring` 3, `clap_complete` 4, `dirs` 6, `csv` 1, `toml` 0.9." None of these were added to workspace dependencies. The crate uses direct version specs (`clap_complete = "4"`, `comfy-table = "7"`, etc.). This violates the workspace-level dependency declaration rule from `rust.md`: "Workspace-level dependency declarations in root Cargo.toml." It also means version drift across crates is possible.
+
+**[HIGH] `keyring` dependency entirely missing** at `Cargo.toml`
+AC-8 requires tokens in OS keychain via the `keyring` crate. It's not in `[dependencies]` at all. The `token()` method on `ClientConfig` is a hardcoded `None` stub, but `keyring` should at least be declared as a dependency for this story's scope.
+
+### MEDIUM
+
+**[MEDIUM] `toml` version mismatch with story spec** at `Cargo.toml:20`
+Story says `toml` 0.9, implementation has `toml = "0.8"`. Semantic versioning means 0.8 and 0.9 are different major-equivalent versions. Could cause issues if 0.9-specific features are needed later.
+
+**[MEDIUM] `--server` flag does not wire `AXIATHON_SERVER` env var** at `cli.rs:21-22`
+AC-5 says "--server supports `AXIATHON_SERVER` env var." The `--server` arg has the right doc comment but lacks `env = "AXIATHON_SERVER"` in the clap attribute. The env var will not actually be read. Similarly, `AXIATHON_API_URL` and `AXIATHON_TIMEOUT` are only handled manually in `apply_env_override()` — they aren't wired in `main.rs` (which doesn't exist).
+
+**[MEDIUM] `ClientConfig` silently ignores unknown TOML fields (no `deny_unknown_fields`)** at `config.rs:6-11`
+An operator who adds `token = "secret"` to their config file gets no error, no warning — it's silently dropped. While the test at `config_loading.rs:98-114` accepts this behavior, it's a config safety issue: secrets sitting in plaintext config files with no feedback that they're being ignored. Should use `#[serde(deny_unknown_fields)]` to fail loudly, as the story says tokens must NOT be in config files.
+
+**[MEDIUM] `with_tenant` silently mutates input vs `with_token` rejects — inconsistent sanitization** at `client.rs:24-41`
+`with_tenant("evil\r\nstuff")` strips CR/LF and sets tenant to `"evilstuff"` — a silent mutation. `with_token("evil\r\nstuff")` rejects entirely and sets token to `None`. Inconsistent security behavior is confusing. Both should either reject or strip, consistently. The strip behavior for tenant_id could mask injection attempts without the operator knowing.
+
+**[MEDIUM] Nightly `cargo fmt` check fails** at `client.rs:1`, `completion.rs:1`, `config.rs:1`, `output.rs`
+Import ordering doesn't match nightly rustfmt expectations. Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."
+
+### LOW
+
+**[LOW] `siem_client_rejects_newlines_in_token` test is vacuous** at `siem_client.rs:140-143`
+The assertion `!client.has_auth_token() || { true }` always passes when `has_auth_token()` is true, because `|| { true }` short-circuits to true. The comment "We trust the implementation validates" doesn't verify anything. This test provides false confidence.
+
+**[LOW] `client_config_rejects_negative_timeout` test relies on implicit parse failure** at `config_loading.rs:141-150`
+`timeout` is `u64`, so `-5` fails TOML deserialization. The `if let Ok(config)` block is never entered. The test "passes" because parsing returns `Err`, but there's no `assert!(result.is_err())` to document that intent. If someone changes timeout to `i64`, this test silently stops testing what it claims.
+
+**[LOW] `after_help` usage examples missing from command groups** at `cli.rs`
+AC-2 says each command group should "include `after_help` usage examples." No command struct has `#[command(after_help = "...")]`. While tests only check that help "renders without panic," the AC explicitly requires examples.
+
+---
+
+## Verified Good
+
+- [VERIFIED] CWE-209 protection: `CliError::ServerError` Display does not expose the inner String — `error.rs:6-7`
+- [VERIFIED] Header injection (CWE-113) handled for both tenant ID and token — `client.rs:24-41`
+- [VERIFIED] Exit code mapping is exhaustive across all `CliError` variants — `error.rs:38-50`
+- [VERIFIED] `#![forbid(unsafe_code)]` present — `lib.rs:2`
+- [VERIFIED] Stub handlers all return `Err(NotImplemented(...))`, never silently succeed — all `commands/*.rs`
+- [VERIFIED] CSV uses the `csv` crate for proper RFC 4180 escaping — `output.rs:132-143`
+- [VERIFIED] `SiemClient::new` strips trailing slash from base URL — `client.rs:17`
+- [VERIFIED] Clap derive macros used throughout (AC-6) — no imperative command building
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+No, no, no. This isn't an argument, this is just contradiction. Well, *yes* — but let me contradict you properly with specifics.
+
+There are **2 Critical/High issues that block approval**:
+
+1. **Missing `tui` and `logout` commands** — direct AC-1 violation. The acceptance criteria explicitly lists them. Not optional.
+2. **No `main.rs` binary** — the story's *entire purpose* is producing the `axiathon` binary. Without a binary entry point, exit codes aren't mapped, errors don't go to stderr, and `axiathon` doesn't exist as a runnable command. The crate is a library with no binary target.
+3. **`--format` accepts arbitrary strings** — AC-4 says `table|json|csv`. Currently accepts anything.
+4. **Workspace dependency hygiene** — 6 new deps should be in workspace `[workspace.dependencies]` per both the story and project rules.
+5. **`keyring` not even declared** — required by the story spec.
+
+The nightly fmt failures and the vacuous test assertions are additional items that should be addressed. Fix the Critical/High issues and resubmit.

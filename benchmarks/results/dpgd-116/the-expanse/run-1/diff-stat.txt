@@ -1,0 +1,5 @@
+ CLAUDE.md                                         | 315 +++++++++++++++++++---
+ crates/axiathon-client/src/lib.rs                 |   7 +
+ crates/axiathon-client/tests/config_test.rs       |  17 +-
+ crates/axiathon-client/tests/global_flags_test.rs |   7 +-
+ 4 files changed, 295 insertions(+), 51 deletions(-)

@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: shakespeare
+run_id: 3
+judge_version: v2
+judge_pass: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No test or review comment addresses from_file_or_default swallowing all
+    error types. TEA tests mention config loading but the API contract shows from_file
+    and from_file_with_env without testing that parse/permission errors propagate
+    distinctly from NotFound.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote security_test.rs with 11 tests covering 'CWE-209 (error exposure)'.
+    Reviewer also flagged '[LOW] NotFound Display leaks resource identifier' as CWE-209
+    inconsistency. Same vulnerability class identified and tested.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged '[MEDIUM] `--tenant` accepts raw `String`, not validated
+    `TenantId`' noting 'axiathon-core provides TenantId with validation... tenant
+    IDs from user input should be validated before being passed to SiemClient.' TEA
+    also wrote CWE-113 header injection tests.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "Reviewer stated '[VERIFIED] Workspace dependencies properly declared\
+    \ at root level' \u2014 verifying root declarations exist but not checking whether\
+    \ individual crate Cargo.toml files actually use workspace = true references.\
+    \ The specific issue of 6 deps using direct version strings was not flagged."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: Reviewer flagged '[MEDIUM] `RawConfig` silently ignores unknown TOML fields'
+    and recommended '#[serde(deny_unknown_fields)]' to catch configuration mistakes,
+    directly matching the ground truth concern about token field being silently ignored.
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...) in config tests. The reviewer noted an unused test variable but did not flag
+    vacuous assertions.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test pattern. The reviewer caught
+    an unused variable in a different test but did not flag tests that only check
+    for non-panic without meaningful assertions.

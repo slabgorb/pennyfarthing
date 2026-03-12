@@ -1,0 +1,34 @@
+No session file exists. The tests are committed and in RED state. Here is the TEA Assessment.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is the foundational CLI framework — every AC demands structural and behavioral validation.
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `cli_structure_test.rs` | 35 | AC-1 (command groups), AC-2 (help), AC-5 (global flags), AC-6 (derive macros) |
+| `exit_codes_test.rs` | 18 | AC-3 (exit codes 0/1/2/3/4), error Display, trait compliance |
+| `output_format_test.rs` | 16 | AC-4 (table/json/csv formatting, metadata, escaping) |
+| `siem_client_test.rs` | 16 | AC-7 (HTTP wrapper, status code mapping, header injection) |
+| `config_test.rs` | 13 | AC-8 (TOML loading, env var overrides, credential safety) |
+| `completion_test.rs` | 6 | AC-9 (bash/zsh/fish/powershell completion scripts) |
+| `stub_handlers_test.rs` | 5 | AC-10 (stub messages, story references, exit code 1) |
+| `security_test.rs` | 13 | CWE-209, CWE-113, input validation, config safety |
+
+**Tests Written:** 122 tests covering all 10 ACs
+**Status:** RED (fails at compilation — no implementation modules exist)
+**Commit:** `5420c20`
+
+**Handoff:** To Dev for implementation
+
+### Security Tests Specifically Added
+- **CWE-209 (Error Info Exposure):** Server error display must not leak stack traces, exception names, or source file paths
+- **CWE-113 (Header Injection):** CR, LF, CRLF, and null bytes rejected in token and tenant ID values
+- **Input Validation:** javascript: and data: URLs rejected by SiemClient
+- **Credential Safety:** Config file must not store tokens; Debug output must not contain secret field names
+
+## Delivery Findings
+
+- No upstream findings during test design.

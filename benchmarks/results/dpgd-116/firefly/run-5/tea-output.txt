@@ -1,0 +1,31 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 introduces the entire CLI framework — foundational types, traits, and command structure that all subsequent stories depend on.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 22 | AC-1 (command groups, plural naming), AC-2 (help rendering), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 13 | AC-3 (exit code mapping 0/1/2/3/4), security (error display leakage) |
+| `tests/output_format.rs` | 11 | AC-4 (table/json/csv, metadata, escaping, empty data) |
+| `tests/global_flags.rs` | 15 | AC-5 (--format, -v repeatable, --quiet, --server, --tenant, --config, --no-color, global=true) |
+| `tests/siem_client.rs` | 13 | AC-7 (construction, HTTP status mapping, header injection prevention) |
+| `tests/config_loading.rs` | 11 | AC-8 (TOML loading, env var overrides, XDG path, validation, token rejection) |
+| `tests/shell_completion.rs` | 9 | AC-9 (bash/zsh/fish/powershell generation, subcommand inclusion) |
+| `tests/stub_handlers.rs` | 13 | AC-10 (not-yet-implemented messages, story references, exit code 1) |
+
+**Tests Written:** 107 tests covering all 10 ACs
+**Status:** RED (failing — none of the referenced modules exist yet)
+**Security tests:** Header injection (CWE-113), error information leakage (CWE-209), token-in-config prevention, server error body leakage
+
+**Handoff:** To Dev for implementation
+
+The tests define the public API contract the Dev must implement:
+- `axiathon_client::cli::{Cli, Commands}` — clap Parser/Subcommand with global flags as pub fields
+- `axiathon_client::error::CliError` — thiserror enum with `exit_code()` method
+- `axiathon_client::output::{OutputFormat, OutputFormatter}` — format trait with `format_table`, `format_json`, `format_csv`
+- `axiathon_client::client::SiemClient` — HTTP wrapper with `new()`, `base_url()`, `map_http_status()`
+- `axiathon_client::config::ClientConfig` — TOML config with `from_toml_str`, `from_file`, `apply_env_overrides_from`, `default_config_path`
+- `axiathon_client::commands::{query,rules,alerts,ingest,config,status,tenant,login}::handle()` — stub handlers
+- `axiathon_client::commands::completion::generate_completion(Shell)` — shell completion generation

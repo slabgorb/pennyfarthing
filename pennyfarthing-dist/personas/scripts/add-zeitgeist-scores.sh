@@ -34,12 +34,12 @@ for theme in discworld firefly star-wars west-wing breaking-bad dune the-wire su
 done
 
 # Rich
-for theme in the-expanse ted-lasso parks-and-rec catch-22 better-call-saul babylon-5 battlestar-galactica sherlock-holmes doctor-who harry-potter lord-of-the-rings hitchhikers-guide foundation mass-effect arcane avatar-the-last-airbender cowboy-bebop futurama the-good-place the-office the-simpsons marvel-mcu sandman watchmen vorkosigan-saga his-dark-materials neuromancer snow-crash bobiverse expeditionary-force hannibal fargo justified peaky-blinders deadwood black-sails the-americans twin-peaks x-files the-matrix blade-runner the-crown rome inspector-morse software-pioneers wwii-leaders; do
+for theme in the-expanse ted-lasso parks-and-rec catch-22 better-call-saul babylon-5 battlestar-galactica sherlock-holmes doctor-who lord-of-the-rings hitchhikers-guide foundation mass-effect arcane avatar-the-last-airbender cowboy-bebop futurama the-good-place the-office the-simpsons marvel-mcu watchmen vorkosigan-saga his-dark-materials neuromancer snow-crash bobiverse expeditionary-force hannibal fargo justified peaky-blinders deadwood black-sails the-americans twin-peaks x-files the-matrix blade-runner the-crown rome inspector-morse software-pioneers wwii-leaders; do
     [ -f "$THEMES_DIR/$theme.yaml" ] && add_score "$THEMES_DIR/$theme.yaml" "rich"
 done
 
 # Moderate
-for theme in superfriends a-team princess-bride mash jane-austen agatha-christie dickens shakespeare moby-dick great-gatsby 1984 count-of-monte-cristo don-quixote les-miserables gothic-literature lovecraft-mythos the-odyssey arthurian-mythos greek-mythology norse-mythology alice-in-wonderland monty-python big-lebowski mad-max the-witcher ancient-philosophers ancient-strategists enlightenment-thinkers classical-composers jazz-legends film-auteurs renaissance-masters russian-masters scientific-revolutionaries military-commanders historical-figures world-explorers; do
+for theme in superfriends a-team princess-bride mash jane-austen agatha-christie dickens shakespeare moby-dick great-gatsby 1984 count-of-monte-cristo don-quixote les-miserables gothic-literature the-odyssey arthurian-mythos greek-mythology norse-mythology alice-in-wonderland monty-python big-lebowski mad-max the-witcher ancient-philosophers ancient-strategists enlightenment-thinkers classical-composers jazz-legends film-auteurs renaissance-masters russian-masters scientific-revolutionaries military-commanders historical-figures world-explorers; do
     [ -f "$THEMES_DIR/$theme.yaml" ] && add_score "$THEMES_DIR/$theme.yaml" "moderate"
 done
 

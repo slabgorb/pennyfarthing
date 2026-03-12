@@ -1,0 +1,27 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 introduces the entire CLI framework — foundational types, command structure, HTTP client, config loading, output formatting, and error handling. Every AC demands behavioral verification.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `cli_structure_test.rs` | 35 | AC-1 (command groups), AC-2 (help), AC-5 (global flags), AC-6 (clap derive) |
+| `error_exit_codes_test.rs` | 17 | AC-3 (exit codes 0/1/2/3/4), CWE-209 error exposure |
+| `output_format_test.rs` | 20 | AC-4 (table/json/csv), JSON metadata, CSV escaping |
+| `siem_client_test.rs` | 16 | AC-7 (headers, HTTP status mapping, CRLF injection) |
+| `config_test.rs` | 14 | AC-8 (TOML loading, env overrides, secret exclusion) |
+| `completion_test.rs` | 11 | AC-9 (bash/zsh/fish/powershell generation) |
+| `stub_handlers_test.rs` | 13 | AC-10 ("not yet implemented" messages, exit code 1) |
+
+**Tests Written:** 126 tests covering all 10 ACs
+**Status:** RED (failing — all tests fail to compile due to unresolved imports for `cli`, `error`, `output`, `client`, `config` modules)
+
+**Security Tests Included:**
+- CRLF header injection in tenant ID and auth token (3 tests)
+- CWE-209 error message information leakage (2 tests)
+- Silent error swallowing prevention (1 test covering 11 HTTP status codes)
+- Config file secret leakage prevention (1 test)
+- Auth error user enumeration prevention (1 test)
+
+**Handoff:** To Dev for implementation (GREEN phase)

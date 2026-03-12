@@ -1,0 +1,74 @@
+scenario_id: dpgd-116
+theme: alice-in-wonderland
+run_id: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase identified that from_file_or_default swallows all errors. The
+    config loading tests and implementation don't distinguish NotFound from parse/permission
+    errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: 'Dev implemented CWE-209 sanitized Display on CliError for ServerError
+    and Config variants with SECURITY comments. Reviewer verified: ''ServerError Display
+    intentionally omits the response body. Config Display omits config content.''
+    However, Io(#[error(transparent)]) forwarding full OS details was not flagged.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote header injection tests but reviewer found them vacuous ('!x
+    || true' is always true). SiemClient.tenant_id remains a raw String with no validation.
+    Reviewer flagged the vacuous test but did not flag the missing TenantId type usage
+    from axiathon-core.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that 6 dependencies use direct version strings instead
+    of workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged as [MEDIUM]: ''has_token_field() is always false...
+    the token field IS silently accepted and ignored by serde. The test proves nothing.''
+    This identifies the core issue of config silently ignoring unknown fields including
+    secrets, though reviewer didn''t explicitly recommend deny_unknown_fields.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer flagged as [HIGH]: ''The expression !x || true is always true.
+    This test can never fail. It claims to test header injection prevention (CWE-113)
+    but actually tests nothing.'''
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the zero-assertion test that only checks non-panic with
+    'let _ = config'. The reviewer's vacuous test finding was about has_token_field,
+    not the default config test lacking assertions on server() and token().

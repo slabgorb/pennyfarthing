@@ -1,0 +1,27 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI framework — every module needs test coverage.
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `cli_structure_test.rs` | 26 | AC-1 (command groups), AC-2 (help rendering), AC-6 (derive macros) |
+| `exit_codes_test.rs` | 12 | AC-3 (exit codes 0/1/3/4), CWE-209 (error info leakage) |
+| `output_format_test.rs` | 13 | AC-4 (table/json/csv formatting, --format flag) |
+| `global_flags_test.rs` | 13 | AC-5 (-v repeatable, --quiet, --server env var, --tenant, --config, --no-color, global=true) |
+| `siem_client_test.rs` | 14 | AC-7 (SiemClient construction, HTTP status mapping, header injection prevention) |
+| `config_test.rs` | 9 | AC-8 (TOML loading, env overrides, precedence, XDG path, no tokens in config) |
+| `completion_test.rs` | 9 | AC-9 (bash/zsh/fish/powershell parsing + generation) |
+| `stub_handlers_test.rs` | 11 | AC-10 (stubs return NotImplemented with Story reference) |
+
+**Tests Written:** 107 tests covering all 10 ACs
+**Status:** RED (compilation failures — modules `cli`, `error`, `client`, `config`, `output`, `commands::completion` do not exist yet)
+
+**Security tests included:**
+- CWE-209: `CliError::Display` must not leak server internals
+- CWE-113: Header injection via newlines in token/tenant ID
+- Config file must not store/expose tokens (keychain only)
+- CSV escaping (commas, quotes)
+
+**Handoff:** To Dev for implementation

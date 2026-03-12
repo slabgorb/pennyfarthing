@@ -147,12 +147,20 @@ git -C {repo_path} checkout -b "$BRANCH"
 
 #### Push and Create PR
 
+Format the PR title using the project's `pr_title_format` setting:
+```bash
+PR_TITLE=$(source .venv/bin/activate && python -c "
+from pf.git.repos import format_pr_title
+print(format_pr_title(jira_key='${JIRA_KEY}', title='{title}'))
+")
+```
+
 ```bash
 git -C {repo_path} push -u origin "$BRANCH"
 
 gh pr create \
   --repo {repo_owner}/{repo_name} \
-  --title "feat: {title} (${JIRA_KEY})" \
+  --title "$PR_TITLE" \
   --body "## Summary
 {description}
 

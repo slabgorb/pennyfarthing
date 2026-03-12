@@ -1,3 +1,5 @@
+category: "Film"
+
 # Fifth Element Theme
 # The Fifth Element (1997), Luc Besson
 #
@@ -20,6 +22,13 @@ theme:
     era: futuristic
     genre: sci-fi
     energy: kinetic
+    scrutiny: trusting
+    cooperation_model: found-family
+    conflict_approach: confrontation
+    authority_model: hierarchical
+    formality: casual
+    intellectual_style: improvisational
+    stakes: cosmic
   spinner_verbs:
     - Multipass
     - Big badaboom

@@ -1,0 +1,18 @@
+All 125 tests pass, zero clippy warnings.
+
+## Summary
+
+**Files created** (all under `crates/axiathon-client/src/`):
+
+| File | Purpose |
+|------|---------|
+| `error.rs` | `CliError` enum with `exit_code()` and `from_http_status()`, CWE-209 safe Display |
+| `config.rs` | `ClientConfig` with TOML parsing, env/CLI overrides, validation |
+| `client.rs` | `SiemClient` HTTP wrapper with header injection prevention |
+| `output.rs` | `OutputFormat` enum + `OutputFormatter` (table/JSON/CSV) |
+| `cli.rs` | `Cli` struct (clap derive), `Commands` enum, all subcommand types |
+| `completion.rs` | `generate_completions()` via clap_complete |
+| `lib.rs` | Public re-exports |
+
+**Tests:** 125/125 passing (GREEN)
+**Clippy:** Clean, no warnings

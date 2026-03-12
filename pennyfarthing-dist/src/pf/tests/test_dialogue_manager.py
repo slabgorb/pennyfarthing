@@ -376,14 +376,26 @@ class TestGenerateSummary:
     def test_includes_applied_decisions(self):
         exchanges = [
             DialogueExchange(
-                number=1, timestamp="10:05", leader="dev", partner="architect",
-                question="Q1", recommendation="R1", confidence="high",
-                outcome="applied", outcome_note="Went with pure functions",
+                number=1,
+                timestamp="10:05",
+                leader="dev",
+                partner="architect",
+                question="Q1",
+                recommendation="R1",
+                confidence="high",
+                outcome="applied",
+                outcome_note="Went with pure functions",
             ),
             DialogueExchange(
-                number=2, timestamp="10:20", leader="dev", partner="architect",
-                question="Q2", recommendation="R2", confidence="medium",
-                outcome="applied", outcome_note="Implemented with sed/awk",
+                number=2,
+                timestamp="10:20",
+                leader="dev",
+                partner="architect",
+                question="Q2",
+                recommendation="R2",
+                confidence="medium",
+                outcome="applied",
+                outcome_note="Implemented with sed/awk",
             ),
         ]
         summary = generate_summary(exchanges, "2026-02-16T10:00:00Z")
@@ -394,14 +406,26 @@ class TestGenerateSummary:
     def test_excludes_rejected_from_decisions(self):
         exchanges = [
             DialogueExchange(
-                number=1, timestamp="10:05", leader="dev", partner="architect",
-                question="Q1", recommendation="R1", confidence="high",
-                outcome="rejected", outcome_note="Did not adopt this",
+                number=1,
+                timestamp="10:05",
+                leader="dev",
+                partner="architect",
+                question="Q1",
+                recommendation="R1",
+                confidence="high",
+                outcome="rejected",
+                outcome_note="Did not adopt this",
             ),
             DialogueExchange(
-                number=2, timestamp="10:20", leader="dev", partner="architect",
-                question="Q2", recommendation="R2", confidence="medium",
-                outcome="applied", outcome_note="Adopted this one",
+                number=2,
+                timestamp="10:20",
+                leader="dev",
+                partner="architect",
+                question="Q2",
+                recommendation="R2",
+                confidence="medium",
+                outcome="applied",
+                outcome_note="Adopted this one",
             ),
         ]
         summary = generate_summary(exchanges, "2026-02-16T10:00:00Z")
@@ -412,12 +436,22 @@ class TestGenerateSummary:
     def test_calculates_time_span(self):
         exchanges = [
             DialogueExchange(
-                number=1, timestamp="10:05", leader="dev", partner="architect",
-                question="Q1", recommendation="R1", confidence="high",
+                number=1,
+                timestamp="10:05",
+                leader="dev",
+                partner="architect",
+                question="Q1",
+                recommendation="R1",
+                confidence="high",
             ),
             DialogueExchange(
-                number=2, timestamp="10:35", leader="dev", partner="architect",
-                question="Q2", recommendation="R2", confidence="medium",
+                number=2,
+                timestamp="10:35",
+                leader="dev",
+                partner="architect",
+                question="Q2",
+                recommendation="R2",
+                confidence="medium",
             ),
         ]
         summary = generate_summary(exchanges, "2026-02-16T10:00:00Z")
@@ -433,8 +467,13 @@ class TestGenerateSummary:
     def test_no_applied_shows_none(self):
         exchanges = [
             DialogueExchange(
-                number=1, timestamp="10:05", leader="dev", partner="architect",
-                question="Q1", recommendation="R1", confidence="high",
+                number=1,
+                timestamp="10:05",
+                leader="dev",
+                partner="architect",
+                question="Q1",
+                recommendation="R1",
+                confidence="high",
                 outcome="deferred",
             ),
         ]
@@ -460,9 +499,15 @@ class TestRefreshSummary:
     def test_refreshes_summary_with_exchange_count(self, tmp_path: Path):
         dialogue_path = tmp_path / "86-3-dialogue.md"
         exchange_with_outcome = DialogueExchange(
-            number=1, timestamp="10:05", leader="dev", partner="architect",
-            question="Q?", recommendation="R.", confidence="high",
-            outcome="applied", outcome_note="Adopted functional approach",
+            number=1,
+            timestamp="10:05",
+            leader="dev",
+            partner="architect",
+            question="Q?",
+            recommendation="R.",
+            confidence="high",
+            outcome="applied",
+            outcome_note="Adopted functional approach",
         )
         append_exchange_to_file(dialogue_path, exchange_with_outcome, VALID_HEADER)
 
@@ -475,9 +520,15 @@ class TestRefreshSummary:
     def test_refreshed_summary_includes_applied_decisions(self, tmp_path: Path):
         dialogue_path = tmp_path / "86-3-dialogue.md"
         exchange_with_outcome = DialogueExchange(
-            number=1, timestamp="10:05", leader="dev", partner="architect",
-            question="Q?", recommendation="R.", confidence="high",
-            outcome="applied", outcome_note="Adopted functional approach",
+            number=1,
+            timestamp="10:05",
+            leader="dev",
+            partner="architect",
+            question="Q?",
+            recommendation="R.",
+            confidence="high",
+            outcome="applied",
+            outcome_note="Adopted functional approach",
         )
         append_exchange_to_file(dialogue_path, exchange_with_outcome, VALID_HEADER)
 
@@ -646,9 +697,15 @@ class TestParseDialogueExchanges:
     def test_round_trip_outcome_with_note(self, tmp_path: Path):
         dialogue_path = tmp_path / "86-3-dialogue.md"
         exchange = DialogueExchange(
-            number=1, timestamp="10:05", leader="dev", partner="architect",
-            question="Q?", recommendation="R.", confidence="high",
-            outcome="applied", outcome_note="Adopted this approach",
+            number=1,
+            timestamp="10:05",
+            leader="dev",
+            partner="architect",
+            question="Q?",
+            recommendation="R.",
+            confidence="high",
+            outcome="applied",
+            outcome_note="Adopted this approach",
         )
         append_exchange_to_file(dialogue_path, exchange, VALID_HEADER)
 

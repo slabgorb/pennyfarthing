@@ -112,9 +112,7 @@ def healthy_project(tmp_path: Path) -> Path:
     claude_dir.mkdir()
     settings = {
         "hooks": {
-            "SessionStart": [
-                {"hooks": [{"type": "command", "command": "pf hooks session-start"}]}
-            ],
+            "SessionStart": [{"hooks": [{"type": "command", "command": "pf hooks session-start"}]}],
             "Stop": [
                 {"hooks": [{"type": "command", "command": "pf hooks session-stop"}]},
                 {"hooks": [{"type": "command", "command": "pf hooks reflector-check"}]},
@@ -122,9 +120,7 @@ def healthy_project(tmp_path: Path) -> Path:
             "PreToolUse": [
                 {
                     "matcher": "Edit|Write",
-                    "hooks": [
-                        {"type": "command", "command": "pf hooks pre-edit-check"}
-                    ],
+                    "hooks": [{"type": "command", "command": "pf hooks pre-edit-check"}],
                 },
             ],
             "PostToolUse": [
@@ -161,9 +157,7 @@ class TestCLIRegistration:
         """'dashboard' should appear in the main CLI lazy commands."""
         from pf.cli import _LAZY_COMMANDS
 
-        assert "dashboard" in _LAZY_COMMANDS, (
-            "dashboard not registered in _LAZY_COMMANDS in cli.py"
-        )
+        assert "dashboard" in _LAZY_COMMANDS, "dashboard not registered in _LAZY_COMMANDS in cli.py"
 
     def test_lazy_command_points_to_correct_module(self):
         """Lazy command should point to pf.dashboard.cli:dashboard."""
@@ -199,16 +193,15 @@ class TestDashboardOutput:
         with patch("pf.dashboard.cli.get_project_root", return_value=healthy_project):
             result = runner.invoke(dashboard, [])
         for field in EXPECTED_FIELDS:
-            assert f"{field}:" in result.output, (
-                f"Missing field '{field}:' in dashboard output"
-            )
+            assert f"{field}:" in result.output, f"Missing field '{field}:' in dashboard output"
 
     def test_output_fields_aligned(self, runner, healthy_project):
         """Field values should be column-aligned (consistent indentation)."""
         with patch("pf.dashboard.cli.get_project_root", return_value=healthy_project):
             result = runner.invoke(dashboard, [])
         lines = [
-            line for line in result.output.splitlines()
+            line
+            for line in result.output.splitlines()
             if ":" in line and line.strip().split(":")[0].strip() in EXPECTED_FIELDS
         ]
         assert len(lines) >= len(EXPECTED_FIELDS), "Not enough field lines found"
@@ -217,7 +210,7 @@ class TestDashboardOutput:
         for line in lines:
             colon_pos = line.index(":")
             # Find first non-space after colon
-            rest = line[colon_pos + 1:]
+            rest = line[colon_pos + 1 :]
             stripped = rest.lstrip()
             if stripped:
                 value_positions.append(colon_pos + 1 + (len(rest) - len(stripped)))
@@ -352,9 +345,7 @@ class TestPerformance:
         importlib.import_module("pf.dashboard.cli")
         elapsed_ms = (time.monotonic() - start) * 1000
 
-        assert elapsed_ms < 200, (
-            f"Dashboard import took {elapsed_ms:.1f}ms — must be under 200ms"
-        )
+        assert elapsed_ms < 200, f"Dashboard import took {elapsed_ms:.1f}ms — must be under 200ms"
 
     def test_no_heavy_imports_at_module_level(self):
         """Dashboard cli.py should not import collector at module level.

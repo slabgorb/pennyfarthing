@@ -1,0 +1,113 @@
+I've completed my review. Here's the structured findings:
+
+---
+
+# Story 6.1 Code Review: CLI Framework & Structure
+
+*No, no, no. This isn't an argument, this is just contradiction.* Well, let me contradict professionally.
+
+## Findings
+
+### `[CRITICAL]` F1 — Nightly `rustfmt` check fails (284 lines of diff) at `config.rs`
+
+`cargo +nightly fmt --all --check` produces 284 lines of formatting diff across the implementation files. Per the gotchas sidecar (`gotchas.md`), nightly fmt must pass before approval. This will fail CI.
+
+---
+
+### `[HIGH]` F2 — Missing `tui` and `logout` command groups (AC-1 violation) at `cli.rs:48-69`
+
+AC-1 explicitly requires: *"`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."* The `Commands` enum is missing both `Tui` and `Logout` variants. The test `help_text_lists_all_command_groups` at `cli_structure.rs:80` doesn't check for `tui` or `logout` either, so this gap is untested.
+
+---
+
+### `[HIGH]` F3 — No `main.rs` binary entry point exists at `crates/axiathon-client/src/main.rs`
+
+The story requires producing an `axiathon` binary. There is no `main.rs`, no `[[bin]]` section in `Cargo.toml`, and no dispatch logic. The crate is library-only. This means `axiathon` cannot be run as a CLI tool — the central deliverable of the story.
+
+---
+
+### `[HIGH]` F4 — `generate_completion` panics on unsupported shell at `commands/completion.rs:22`
+
+`panic!("unsupported shell: {other}")` violates the Rust rules: *"No `unwrap()` in production code"*. The function should return `Result<String, CliError>` instead of panicking. The test at `shell_completion.rs:88` uses `catch_unwind` which masks this — panics are not proper error handling.
+
+---
+
+### `[MEDIUM]` F5 — `toml` version mismatch: spec says `0.9`, workspace has `0.8` at `Cargo.toml:49`
+
+The story technical guardrails specify `toml 0.9` but the workspace declares `toml = "0.8"`. While 0.8 is functional, this deviates from the spec. If 0.9 is intentionally a future target, this should be documented.
+
+---
+
+### `[MEDIUM]` F6 — Missing `dirs` and `keyring` dependencies at `crates/axiathon-client/Cargo.toml`
+
+The story requires `dirs` 6 for XDG path resolution (`~/.config/axiathon/cli.toml`) and `keyring` 3 for OS keychain credential storage. Neither is in `Cargo.toml` dependencies. Config loading currently takes a path argument instead of using `dirs` to find the default location. The `ClientConfig` has no default path resolution.
+
+---
+
+### `[MEDIUM]` F7 — `RawConfig` silently ignores unknown fields including `token` at `config.rs:13-18`
+
+`#[serde(default)]` without `#[serde(deny_unknown_fields)]` means a `token = "secret"` field in `cli.toml` is silently eaten by serde. The test `config_ignores_token_field_in_file` passes, but only because `ClientConfig::token()` always returns `None` — the token value IS deserialized into serde's void, giving users a false sense that it's being used. A warning should be emitted, or unknown fields should be explicitly handled.
+
+---
+
+### `[MEDIUM]` F8 — `CliError` doesn't derive `thiserror::Error` at `error.rs:7-18`
+
+The Rust rules mandate: *"Use `thiserror` for error enums."* The implementation manually implements `Display` and `std::error::Error` instead of using `#[derive(thiserror::Error)]`. While functionally equivalent, this deviates from the project convention and `thiserror` is already a dependency.
+
+---
+
+### `[MEDIUM]` F9 — `SiemClient` doesn't use `reqwest::Client` at `client.rs:6-10`
+
+AC-7 states *"`SiemClient` wraps `reqwest::Client`"*. The current `SiemClient` stores `base_url`, `token`, and `tenant` as raw strings but has no `reqwest::Client` field, no actual HTTP methods, and no request building. It's structurally incomplete — it's just a data holder that could make requests but can't.
+
+---
+
+### `[MEDIUM]` F10 — `ConfigError` Display leaks raw config content at `error.rs:43`
+
+`CliError::ConfigError(msg) => write!(f, "configuration error: {msg}")` passes the inner message through verbatim. The TOML parse errors from `config.rs:43` include file content snippets. This contradicts the `/// **SECURITY:** Display impl produces sanitized messages only` doc comment. The `ServerError` variant correctly suppresses its inner string, but `ConfigError` does not.
+
+---
+
+### `[LOW]` F11 — `OutputFormat` implements both `clap::ValueEnum` and manual `FromStr` at `output.rs:1-22`
+
+`#[derive(clap::ValueEnum)]` already provides parsing for clap. The manual `FromStr` implementation is redundant and case-sensitive (`"Table"` fails) while `ValueEnum` is case-insensitive. These could diverge silently.
+
+---
+
+### `[LOW]` F12 — `JsonFormatter` generates random `request_id` per call at `output.rs:78`
+
+`uuid::Uuid::new_v4()` in the formatter means every JSON output has a non-deterministic request ID unrelated to any actual API request. This is misleading — the metadata should come from the actual API response, not be fabricated locally.
+
+---
+
+### `[VERIFIED]` Header injection (CWE-113) — `with_token` and `with_tenant` strip CR/LF at `client.rs:38,45`
+
+### `[VERIFIED]` CWE-209 error exposure — `ServerError` Display suppresses internal details at `error.rs:40`
+
+### `[VERIFIED]` Debug trait hides token from `SiemClient` at `client.rs:83-91`
+
+### `[VERIFIED]` HTTPS enforcement for non-localhost at `client.rs:23-33`
+
+### `[VERIFIED]` Workspace lints with `unsafe_code = "forbid"` and `#![forbid(unsafe_code)]` in `lib.rs`
+
+### `[VERIFIED]` Config rejects negative/zero timeouts at `config.rs:56-59`
+
+### `[VERIFIED]` Tests are thorough and non-vacuous — assertions check specific values, not just `is_ok()`
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 1 |
+| High | 3 |
+| Medium | 6 |
+| Low | 2 |
+| Verified | 7 |
+
+The security fundamentals (header injection, credential exposure, HTTPS enforcement) are solid. However, there are structural gaps: no binary entry point, missing AC-1 commands (`tui`/`logout`), a panicking completion function, and nightly fmt failures.
+
+## Verdict: **CHANGES_REQUESTED**
+
+Blocking issues: F1 (nightly fmt), F2 (missing `tui`/`logout` commands — AC-1 violation), F3 (no `main.rs` binary), F4 (panic in production code).

@@ -1,0 +1,79 @@
+scenario_id: dpgd-116
+theme: the-west-wing
+run_id: 2
+judge_version: v2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'No phase flagged from_file_or_default swallowing all errors. The reviewer
+    examined config.rs but focused on unknown fields (finding #5), not on error discrimination
+    in file loading.'
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #8 flags ServerError Display leaking server response
+    body as CWE-209: ''If the server returns internal details (stack traces, SQL errors,
+    internal paths), they pass through to the operator''s terminal.'' Same vulnerability
+    class (CWE-209 information exposure).'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: dev
+  evidence: 'Dev implemented CRLF sanitization on tenant_id before header insertion,
+    directly mitigating CWE-113 header injection. Reviewer verified: ''CRLF stripped
+    from both token and tenant values before HeaderValue::from_str(). Double defense.''
+    However, the type-safety fix (using Option<TenantId>) was not flagged.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: 'Reviewer flagged edition mismatch (finding #4) and toml version mismatch
+    (finding #9) but did not flag the 6 dependencies using direct version strings
+    instead of workspace = true. The general workspace consistency concern was not
+    specific enough to cover this.'
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #5 explicitly flags: ''RawConfig uses #[derive(Deserialize)]
+    without #[serde(deny_unknown_fields)]. A typo like tokne = "..." silently compiles
+    and runs with defaults.'' Also notes token = "should-not-be-here" is silently
+    ignored.'
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer finding #5 identifies the vacuous assertion pattern: ''The test''s
+    if let Ok(config) pattern means it passes whether the field is rejected OR silently
+    swallowed, making the assertion vacuous for the silent-swallow case.'' Additionally,
+    findings #10 and #11 flag other vacuous tests. Same category of vacuously true
+    assertions.'
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding #11 flags: 'output_formatter_trait_has_format_table_method\
+    \ test body is empty \u2014 declares a local function but never calls it. The\
+    \ test passes vacuously.' Same category: test with zero effective assertions."

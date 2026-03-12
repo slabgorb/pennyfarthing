@@ -16,13 +16,13 @@ from the story ID (e.g., story "131-3" → epic "131").
 
 1. **story-context-validated:** Validate story context document.
    ```bash
-   pf context-docs validate story {N-N}
+   pf validate context-story {N-N}
    ```
    - Exit 0: PASS — story context exists and is valid
    - Exit 2 (not found): FAIL — file `sprint/context/context-story-{N-N}.md` missing
    - Exit 1 (invalid): FAIL — report validation errors from stdout
 
-   **Fallback** (if `pf context-docs` is not available): check that
+   **Fallback** (if `pf validate context` is not available): check that
    `sprint/context/context-story-{N-N}.md` exists and is non-empty.
 
 If ALL pass, return:

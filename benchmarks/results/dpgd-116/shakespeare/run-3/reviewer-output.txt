@@ -1,0 +1,106 @@
+*The quality of mercy is not strained, but the quality of this code review shall be.*
+
+I have examined every clause of this contract. Here is my verdict.
+
+---
+
+# Story 6.1 — Adversarial Code Review
+
+## Findings
+
+### [HIGH] Missing `logout` and `tui` command groups — AC-1 violation at `cli.rs:46-67`
+
+AC-1 explicitly requires: *"`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."*
+
+The `Commands` enum has 10 variants but is missing `Logout` and `Tui`. Even as stubs, these must exist to satisfy the help output requirement. This is a specification gap that will cause AC-1 validation to fail.
+
+### [HIGH] Nightly `rustfmt` check fails — 11 formatting diffs across 6 files
+
+Per `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."*
+
+Affected files:
+- `src/config.rs` — function signature wrapping, chained method alignment
+- `src/main.rs` — import ordering (nightly sorts `axiathon_client` before `clap`)
+- `tests/cli_structure_test.rs` — import ordering, line wrapping
+- `tests/output_formatter_test.rs` — assert macro formatting
+- `tests/security_test.rs` — chained method and assert formatting
+- `tests/shell_completion_test.rs` — assert macro formatting
+
+This will fail CI. Must be fixed before merge.
+
+### [MEDIUM] Silent failure on CRLF injection in `SiemClient` — `client.rs:28-46`
+
+`with_token()` and `with_tenant()` silently set the value to `None` when CRLF is detected, returning `self` without error. The caller has no indication the value was rejected. A malicious or buggy token source could silently produce an unauthenticated client.
+
+Should return `Result<Self, CliError>` so callers know the value was rejected, or at minimum log a warning via `tracing::warn!`.
+
+### [MEDIUM] JSON metadata missing `timestamp` field — `output.rs:65-71`
+
+AC-4 specifies JSON includes `ResponseMetadata` with `request_id, timestamp, api_version`. The implementation includes `request_id` and `api_version` but **no `timestamp`**. This is a partial AC-4 implementation.
+
+### [MEDIUM] `RawConfig` silently ignores unknown TOML fields — `config.rs:16-22`
+
+Serde's default behavior accepts unknown fields silently. A user who types `api_rul = "..."` (typo for `api_url`) gets no feedback — defaults are used instead. Add `#[serde(deny_unknown_fields)]` to `RawConfig` to catch configuration mistakes early. The intentionally-ignored `token` field is already declared, so it would still parse.
+
+### [MEDIUM] `init` command is a stub despite spec requiring functional — `commands/init.rs`
+
+The story scope says *"axiathon init first-time setup (functional, not stub)"*, but `InitArgs` is an empty struct with zero initialization logic. Completion has a real `generate_completions()` function; init has nothing. This is an incomplete deliverable per the spec.
+
+### [MEDIUM] `--tenant` accepts raw `String`, not validated `TenantId` — `cli.rs:37`
+
+The `--tenant` flag is `Option<String>` but `axiathon-core` provides `TenantId` with validation (UUID format, max 128 chars). Per the Rust coding rules: *"Validated constructors at trust boundaries."* The CLI is a trust boundary — tenant IDs from user input should be validated before being passed to `SiemClient`.
+
+### [LOW] `NotFound` Display leaks resource identifier — `error.rs:68`
+
+```rust
+CliError::NotFound(resource) => write!(f, "resource not found: {resource}"),
+```
+
+Unlike `ServerError` and `ConfigError` which sanitize their inner values in Display, `NotFound` passes `resource` through verbatim. If the resource string contains internal IDs or paths (e.g., from a 404 response body), it leaks to the user. Inconsistent with the CWE-209 mitigation on other variants.
+
+### [LOW] `CliError` missing `#[non_exhaustive]` — `error.rs:10`
+
+Per Rust coding rules: *"`#[non_exhaustive]` on enums that will grow."* `CliError` is `pub` and will clearly grow as stories 6.2-6.7 add new error conditions. While this is less critical for a binary crate, it's a stated pattern violation.
+
+### [LOW] Unused test variable warning — `tests/output_formatter_test.rs:114`
+
+```rust
+let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
+```
+
+Variable `parsed` is unused (cargo reports this warning). The test parses JSON but then checks the raw string instead. Either use `parsed` for the assertion or remove it.
+
+### [LOW] No command dispatch — all commands exit with "not yet implemented (Story 6.1)" — `main.rs:18`
+
+The binary parses CLI args but discards them (`let _cli`), returning NotImplemented for every command — including `completion` which has a functional library implementation. While subsequent stories will add dispatch, the story spec marks completion as "functional, not stub." The library function works, but the binary doesn't invoke it.
+
+## Verified Good
+
+- [VERIFIED] `#![forbid(unsafe_code)]` on both `main.rs` and `lib.rs`
+- [VERIFIED] CWE-113 CRLF injection defense present in `SiemClient`
+- [VERIFIED] Token redacted in `Debug` impl — `client.rs:69`
+- [VERIFIED] Token not loaded from config file — `config.rs:19-21`
+- [VERIFIED] Display sanitizes `ServerError` and `ConfigError` internals
+- [VERIFIED] Exit codes 3/4 for auth/authz — `error.rs:39-44`
+- [VERIFIED] HTTP status mapping covers 401/403/404/429/5xx — `error.rs:48-57`
+- [VERIFIED] No server-side crate imports in `axiathon-client` dependency graph
+- [VERIFIED] clap derive macros only, no imperative building
+- [VERIFIED] All 122 tests pass; clippy clean with `-D warnings`
+- [VERIFIED] CSV escaping uses `csv` crate (proper RFC 4180 compliance)
+- [VERIFIED] Workspace dependencies properly declared at root level
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+*"The quality of mercy is not strain'd; it droppeth as the gentle rain from heaven. But this code has two HIGH findings that must be remedied before it may pass through the gate."*
+
+**Blocking issues (must fix):**
+1. Add `Logout` and `Tui` stub variants to `Commands` enum (AC-1 compliance)
+2. Run `cargo +nightly fmt --all` to fix import ordering and formatting
+
+**Strongly recommended (MEDIUM):**
+3. Return `Result` from `SiemClient::with_token()`/`with_tenant()` instead of silently dropping values
+4. Add `timestamp` to JSON metadata
+5. Add `#[serde(deny_unknown_fields)]` to `RawConfig`
+6. Validate `--tenant` input as `TenantId` at the CLI boundary

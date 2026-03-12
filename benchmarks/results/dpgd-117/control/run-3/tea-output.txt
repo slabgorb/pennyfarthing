@@ -1,0 +1,29 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 introduces REST API foundation with 5 ACs requiring server implementation, middleware, and response formatting.
+
+**Test Files:**
+- `crates/axiathon-server/tests/api_endpoints.rs` — 12 tests: route registration for all 5 endpoint groups, JSON content-type, unknown route handling, health not requiring auth
+- `crates/axiathon-server/tests/api_response_envelope.rs` — 12 tests: success envelope (data, empty errors[], meta with request_id UUID, timestamp ISO 8601, trace_id), error envelope (null data, populated errors[], RFC 9457 structure, meta on errors), unique request_id per request
+- `crates/axiathon-server/tests/auth.rs` — 16 tests: valid/missing/empty/expired/malformed Bearer token, wrong auth scheme, wrong scope (403), API key valid/revoked/wrong-scope, JWKS endpoint existence and public access, envelope format on auth errors, tenant context extraction
+- `crates/axiathon-server/tests/rate_limiting.rs` — 5 tests: 429 on limit exceeded, Retry-After header, 429 envelope format, per-tenant independence, health not aggressively limited
+- `crates/axiathon-server/tests/api_versioning.rs` — 9 tests: all routes under /api/v1/, v2 returns 404 (4 endpoints), unversioned paths 404, deprecation header mechanism, version in response
+- `crates/axiathon-server/tests/security.rs` — 11 tests: CWE-209 (no stack traces, no internal paths, no error type names, generic auth errors), oversized body rejection, null bytes, method validation, content-type enforcement, CORS preflight, no server version leak, trace ID propagation
+
+**Tests Written:** 65 tests covering 5 ACs + security edge cases
+**Status:** RED (compilation fails — `axiathon_server::create_router` not implemented)
+
+**Handoff:** To Dev for implementation. Dev must implement:
+1. `pub async fn create_router() -> Router` (or similar) in `axiathon-server`
+2. Route registration for `/api/v1/{health,events,alerts,rules,queries}`
+3. `ApiResponse` envelope with `data`, `errors: []`, `meta: {request_id, timestamp, trace_id}`
+4. JWT + API key auth middleware
+5. Rate limiting middleware (tower-governor, per-tenant)
+6. API versioning under `/api/v1/` prefix
+
+## Delivery Findings
+
+- **Gap** (non-blocking): Current `ApiResponse<T>` in axiathon-core uses `Option<ApiError>` (singular) and `Option<ApiMeta>` with `total/limit/offset` fields, but the AC requires `errors: Vec<...>` (always-present array) and `meta` with `request_id/timestamp/trace_id`. Dev will need to update or extend the envelope type.
+  Affects `crates/axiathon-core/src/types.rs` (ApiResponse, ApiMeta structs need additional fields).
+  *Found by TEA during test design.*

@@ -141,23 +141,15 @@ class TestSmHandoffMdDeleted:
 class TestGateTypeFallbackRemoved:
     """AC3: gate with file but no type should resolve via assessment, not skip."""
 
-    def test_no_gate_at_all_still_returns_skip(
-        self, project: Path
-    ) -> None:
+    def test_no_gate_at_all_still_returns_skip(self, project: Path) -> None:
         """AC3: Phase with no gate (finish) should still return 'skip'."""
         session = project / ".session" / "108-2-session.md"
         session.write_text(SESSION_WITH_ASSESSMENT)
 
-        result = resolve_gate(
-            "108-2", "tdd", "finish", project_root=project
-        )
-        assert result["status"] == "skip", (
-            f"No-gate phase should skip, got: {result['status']}"
-        )
+        result = resolve_gate("108-2", "tdd", "finish", project_root=project)
+        assert result["status"] == "skip", f"No-gate phase should skip, got: {result['status']}"
 
-    def test_gate_file_only_returns_ready_with_assessment(
-        self, project: Path
-    ) -> None:
+    def test_gate_file_only_returns_ready_with_assessment(self, project: Path) -> None:
         """AC3: gate with file but no type + assessment → 'ready' (not 'skip').
 
         Before 108-2: gate_type is None → skip (fallback).
@@ -166,17 +158,13 @@ class TestGateTypeFallbackRemoved:
         session = project / ".session" / "108-2-session.md"
         session.write_text(SESSION_WITH_ASSESSMENT)
 
-        result = resolve_gate(
-            "108-2", "file-only-test", "green", project_root=project
-        )
+        result = resolve_gate("108-2", "file-only-test", "green", project_root=project)
         assert result["status"] == "ready", (
             f"File-only gate with assessment should be 'ready', got: "
             f"'{result['status']}' — gate.type fallback still active?"
         )
 
-    def test_gate_file_only_returns_ready_without_assessment(
-        self, project: Path
-    ) -> None:
+    def test_gate_file_only_returns_ready_without_assessment(self, project: Path) -> None:
         """AC3: gate with file but no type + NO assessment → 'ready'.
 
         Assessment checking is not done by resolve_gate (moved to complete_phase).
@@ -185,38 +173,28 @@ class TestGateTypeFallbackRemoved:
         session = project / ".session" / "108-2-session.md"
         session.write_text(SESSION_WITHOUT_ASSESSMENT)
 
-        result = resolve_gate(
-            "108-2", "file-only-test", "green", project_root=project
-        )
+        result = resolve_gate("108-2", "file-only-test", "green", project_root=project)
         assert result["status"] == "ready", (
             f"File-only gate should be 'ready' (assessment checked in complete_phase), got: "
             f"'{result['status']}'"
         )
 
-    def test_gate_file_only_populates_gate_file_field(
-        self, project: Path
-    ) -> None:
+    def test_gate_file_only_populates_gate_file_field(self, project: Path) -> None:
         """AC3: gate_file field should be populated for file-only gates."""
         session = project / ".session" / "108-2-session.md"
         session.write_text(SESSION_WITH_ASSESSMENT)
 
-        result = resolve_gate(
-            "108-2", "file-only-test", "green", project_root=project
-        )
+        result = resolve_gate("108-2", "file-only-test", "green", project_root=project)
         assert result["gate_file"] == "gates/tests-pass", (
             f"Expected gate_file='gates/tests-pass', got: {result['gate_file']}"
         )
 
-    def test_gate_with_both_file_and_type_still_ready(
-        self, project: Path
-    ) -> None:
+    def test_gate_with_both_file_and_type_still_ready(self, project: Path) -> None:
         """AC3: gate with both file and type should still return 'ready'."""
         session = project / ".session" / "108-2-session.md"
         session.write_text(SESSION_WITH_ASSESSMENT)
 
-        result = resolve_gate(
-            "108-2", "tdd", "green", project_root=project
-        )
+        result = resolve_gate("108-2", "tdd", "green", project_root=project)
         assert result["status"] == "ready"
         assert result["gate_file"] == "gates/dev-exit"
         assert result["gate_type"] == "dev_exit"
@@ -270,12 +248,8 @@ class TestNoSubagentReferences:
 
         content = readme.read_text()
         # Should not have the deprecated entries
-        assert "handoff.md" not in content, (
-            "README.md still references handoff.md"
-        )
-        assert "sm-handoff.md" not in content, (
-            "README.md still references sm-handoff.md"
-        )
+        assert "handoff.md" not in content, "README.md still references handoff.md"
+        assert "sm-handoff.md" not in content, "README.md still references sm-handoff.md"
 
 
 # ===========================================================================
@@ -283,8 +257,16 @@ class TestNoSubagentReferences:
 # ===========================================================================
 
 # Phased workflows that should have gate.file on every gated phase
-PHASED_WORKFLOWS = ["tdd", "trivial", "bdd", "bdd-tandem", "tdd-tandem",
-                     "2party-tdd", "agent-docs", "patch"]
+PHASED_WORKFLOWS = [
+    "tdd",
+    "trivial",
+    "bdd",
+    "bdd-tandem",
+    "tdd-tandem",
+    "2party-tdd",
+    "agent-docs",
+    "patch",
+]
 
 
 class TestAllGatedPhasesHaveGateFile:
@@ -297,9 +279,7 @@ class TestAllGatedPhasesHaveGateFile:
             return None
         return yaml.safe_load(path.read_text())
 
-    def _gated_phases_missing_file(
-        self, workflow_data: dict
-    ) -> list[tuple[str, str]]:
+    def _gated_phases_missing_file(self, workflow_data: dict) -> list[tuple[str, str]]:
         """Find phases that have a gate but no gate.file.
 
         Returns list of (phase_name, gate_type) tuples.
@@ -318,9 +298,7 @@ class TestAllGatedPhasesHaveGateFile:
         return missing
 
     @pytest.mark.parametrize("workflow_name", PHASED_WORKFLOWS)
-    def test_workflow_gated_phases_have_gate_file(
-        self, workflow_name: str
-    ) -> None:
+    def test_workflow_gated_phases_have_gate_file(self, workflow_name: str) -> None:
         """AC7: Every non-manual gated phase must have gate.file defined.
 
         This ensures the single code path — resolve-gate only needs
@@ -333,8 +311,6 @@ class TestAllGatedPhasesHaveGateFile:
         missing = self._gated_phases_missing_file(wf)
         assert len(missing) == 0, (
             f"Workflow '{workflow_name}' has gated phases without gate.file:\n"
-            + "\n".join(
-                f"  - {name} (type={gtype})" for name, gtype in missing
-            )
+            + "\n".join(f"  - {name} (type={gtype})" for name, gtype in missing)
             + "\nAll gated phases must have gate.file for single code path."
         )

@@ -139,14 +139,57 @@ def extract_gate_result(
         re.MULTILINE,
     )
     for m in check_pattern.finditer(block):
-        checks.append({
-            "name": m.group(1) or m.group(2) or m.group(3),
-            "status": m.group(4),
-            "detail": m.group(5) or m.group(6) or m.group(7) or "",
-        })
+        checks.append(
+            {
+                "name": m.group(1) or m.group(2) or m.group(3),
+                "status": m.group(4),
+                "detail": m.group(5) or m.group(6) or m.group(7) or "",
+            }
+        )
 
     return {
         "status": status,
         "message": message,
         "checks": checks,
     }
+
+
+def merge_gate_results(primary: dict, extension: dict) -> dict:
+    """Merge an extension GATE_RESULT into a primary result.
+
+    AND semantics: if the extension fails, the combined result fails.
+    Checks arrays are concatenated. Messages are joined with '; '.
+    """
+    if primary["status"] == "fail":
+        combined_status = "fail"
+    elif extension["status"] == "fail":
+        combined_status = "fail"
+    else:
+        combined_status = "pass"
+
+    primary_msg = primary.get("message", "")
+    ext_msg = extension.get("message", "")
+    if primary_msg and ext_msg:
+        combined_message = f"{primary_msg}; {ext_msg}"
+    else:
+        combined_message = primary_msg or ext_msg
+
+    combined_checks = list(primary.get("checks", []))
+    combined_checks.extend(extension.get("checks", []))
+
+    result: dict = {
+        "status": combined_status,
+        "message": combined_message,
+        "checks": combined_checks,
+    }
+
+    # Preserve recovery from either result on failure
+    recovery: list = []
+    if primary.get("recovery"):
+        recovery.extend(primary["recovery"])
+    if extension.get("recovery"):
+        recovery.extend(extension["recovery"])
+    if recovery:
+        result["recovery"] = recovery
+
+    return result

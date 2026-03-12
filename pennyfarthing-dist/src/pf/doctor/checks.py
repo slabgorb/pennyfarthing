@@ -8,7 +8,6 @@ Each check function takes a project root Path and returns a CheckResult.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 from pathlib import Path
 
@@ -19,8 +18,15 @@ from pf.doctor.models import CheckResult
 # Expected content directories under .pennyfarthing/
 # In the pip era these are file copies; in monorepo dev they may be symlinks.
 _CONTENT_DIR_NAMES = (
-    "agents", "commands", "guides", "personas", "scripts",
-    "skills", "workflows", "templates", "output-styles",
+    "agents",
+    "commands",
+    "guides",
+    "personas",
+    "scripts",
+    "skills",
+    "workflows",
+    "templates",
+    "output-styles",
 )
 
 
@@ -61,7 +67,9 @@ def check_config_file(root: Path) -> CheckResult:
     try:
         yaml.safe_load(config.read_text())
     except yaml.YAMLError:
-        return CheckResult(name="config_file", status="fail", detail="config.local.yaml has invalid YAML")
+        return CheckResult(
+            name="config_file", status="fail", detail="config.local.yaml has invalid YAML"
+        )
     return CheckResult(name="config_file", status="pass", detail="config.local.yaml valid")
 
 
@@ -69,11 +77,15 @@ def check_settings_hooks(root: Path) -> CheckResult:
     """Check settings.local.json has required Claude Code hooks."""
     settings_file = root / ".claude" / "settings.local.json"
     if not settings_file.is_file():
-        return CheckResult(name="settings_hooks", status="fail", detail="settings.local.json missing")
+        return CheckResult(
+            name="settings_hooks", status="fail", detail="settings.local.json missing"
+        )
     try:
         data = json.loads(settings_file.read_text())
     except (json.JSONDecodeError, OSError):
-        return CheckResult(name="settings_hooks", status="fail", detail="settings.local.json unreadable")
+        return CheckResult(
+            name="settings_hooks", status="fail", detail="settings.local.json unreadable"
+        )
     hooks = data.get("hooks", {})
     if not hooks:
         return CheckResult(name="settings_hooks", status="fail", detail="No hooks configured")
@@ -132,7 +144,9 @@ def check_node_packages(root: Path) -> CheckResult:
             status="pass",
             detail="Node packages not required (pip install)",
         )
-    return CheckResult(name="node_packages", status="warn", detail="node_modules/ missing — run npm install")
+    return CheckResult(
+        name="node_packages", status="warn", detail="node_modules/ missing — run npm install"
+    )
 
 
 def check_git_hooks(root: Path) -> CheckResult:
@@ -145,51 +159,13 @@ def check_git_hooks(root: Path) -> CheckResult:
     return CheckResult(name="git_hooks", status="pass", detail="Git hooks present")
 
 
-def check_bootstrap(root: Path) -> CheckResult:
-    """Check committed bootstrap hook for zero-friction onboarding."""
-    bootstrap_sh = root / ".claude" / "hooks" / "bootstrap.sh"
-    settings_json = root / ".claude" / "settings.json"
-
-    issues = []
-
-    if not bootstrap_sh.is_file():
-        issues.append("bootstrap.sh missing")
-    elif not os.access(bootstrap_sh, os.X_OK):
-        issues.append("bootstrap.sh not executable")
-
-    if not settings_json.is_file():
-        issues.append("settings.json missing")
-    else:
-        try:
-            data = json.loads(settings_json.read_text())
-            hooks = data.get("hooks", {})
-            session_start = hooks.get("SessionStart", [])
-            has_bootstrap = any(
-                "bootstrap.sh" in h.get("command", "")
-                for entry in session_start
-                for h in entry.get("hooks", [])
-                if isinstance(h, dict)
-            )
-            if not has_bootstrap:
-                issues.append("settings.json missing bootstrap SessionStart hook")
-        except (json.JSONDecodeError, OSError):
-            issues.append("settings.json unreadable")
-
-    if issues:
-        return CheckResult(
-            name="bootstrap",
-            status="fail",
-            detail="; ".join(issues),
-            fix_fn=lambda: _fix_bootstrap(root),
-        )
-    return CheckResult(name="bootstrap", status="pass", detail="Bootstrap hook configured")
-
-
 def check_theme(root: Path) -> CheckResult:
     """Check active theme is valid and persona files exist."""
     config = root / ".pennyfarthing" / "config.local.yaml"
     if not config.is_file():
-        return CheckResult(name="theme", status="fail", detail="config.local.yaml missing — no theme set")
+        return CheckResult(
+            name="theme", status="fail", detail="config.local.yaml missing — no theme set"
+        )
     try:
         data = yaml.safe_load(config.read_text()) or {}
     except yaml.YAMLError:
@@ -204,6 +180,7 @@ def check_theme(root: Path) -> CheckResult:
 # Fix helpers
 # ---------------------------------------------------------------------------
 
+
 def _fix_mkdir(path: Path) -> bool:
     path.mkdir(parents=True, exist_ok=True)
     return path.is_dir()
@@ -215,28 +192,6 @@ def _fix_default_config(path: Path) -> bool:
     return path.is_file()
 
 
-def _fix_bootstrap(root: Path) -> bool:
-    """Restore bootstrap.sh and settings.json via init logic."""
-    from pf.common.discovery import resolve_pf_binary
-    from pf.init.core import _write_bootstrap_settings
-
-    # Find dist_root from the pf binary's package location
-    discovery = resolve_pf_binary()
-    if not discovery["success"]:
-        return False
-    try:
-        from pf._dist import get_root, is_populated
-
-        if is_populated():
-            dist_root = get_root()
-        else:
-            return False
-    except (ImportError, ModuleNotFoundError):
-        return False
-
-    return _write_bootstrap_settings(root, dist_root)
-
-
 # ---------------------------------------------------------------------------
 # Check registry
 # ---------------------------------------------------------------------------
@@ -246,7 +201,6 @@ CHECKS: list[tuple[str, str]] = [
     ("pennyfarthing_dir", ".pennyfarthing/ directory exists"),
     ("config_file", "config.local.yaml is valid"),
     ("settings_hooks", "Claude Code hooks configured"),
-    ("bootstrap", "Bootstrap hook for zero-friction onboarding"),
     ("content_dirs", "Content directories present"),
     ("commands", "pf-* commands installed"),
     ("skills", "pf-* skills installed"),

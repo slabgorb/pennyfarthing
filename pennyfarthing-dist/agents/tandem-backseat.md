@@ -1,3 +1,15 @@
+---
+name: tandem-backseat
+description: Background observer in a tandem workflow — watches primary agent's work and writes concise observations
+tools:
+  - Read
+  - Glob
+  - Grep
+  - Write
+  - Edit
+  - Bash
+model: haiku
+---
 # Tandem Backseat Observer
 
 <role>
@@ -117,3 +129,7 @@ Append each observation to `{OBSERVATION_FILE}` using this exact format:
 - **Only** read files and write to your observation file
 - Exit gracefully when the primary agent terminates you
 </constraints>
+
+<output>
+Observations written to `{OBSERVATION_FILE}` in the format specified in `<observation-format>`.
+</output>

@@ -1,0 +1,100 @@
+No `main.rs` and no `[[bin]]` target. This is a library crate only — no binary is being produced. That's a significant gap per the story requirements.
+
+Now I have everything I need. Here's my review.
+
+---
+
+# Story 6.1 — Adversarial Code Review
+
+*"I don't hold with all this reviewing. I just looks at the code, and I knows." — Granny Weatherwax*
+
+*"Our Esme's got her Review Face on. Best put the kettle on." — Nanny Ogg*
+
+---
+
+## Observations
+
+### [HIGH] Missing `main.rs` binary entry point — no `axiathon` binary is produced
+
+**`crates/axiathon-client/src/main.rs`** does not exist. There is no `[[bin]]` section in `Cargo.toml`. AC-3 requires `main.rs` catches errors and calls `std::process::exit()`. The story's entire purpose is to produce the `axiathon` binary. Without `main.rs`, there is no binary, no dispatch, no exit code handling, and no tracing initialization. The crate compiles as a library only. This is the most fundamental deliverable of Story 6.1.
+
+### [HIGH] Missing `logout` and `tui` command groups per AC-1
+
+AC-1 explicitly requires `axiathon --help` shows: `login`/`logout`, `tui`. Neither `Logout` nor `Tui` variants exist in the `Commands` enum at `cli.rs:42-63`. The tests in `cli_structure.rs` don't test for them either, so this gap is invisible to the test suite.
+
+### [HIGH] `CliError` does not use `thiserror` — manual `impl Error` instead
+
+The Rust coding rules at `.claude/rules/rust.md` mandate: *"Use `thiserror` for error enums."* `thiserror` is declared as a dependency in `Cargo.toml` but never imported or used in `error.rs`. The error enum manually implements `Display` and `std::error::Error`. The test comment at `exit_codes.rs:153` says "via thiserror" — that comment is a lie. While functionally equivalent, this violates the project's stated conventions and the `thiserror` dependency is dead weight.
+
+### [HIGH] `cargo +nightly fmt --all --check` fails — import ordering violations
+
+Per the reviewer gotchas sidecar: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval."* The check shows diffs in `cli.rs`, `alerts.rs`, `completion.rs`, and likely more files. Import ordering is wrong throughout.
+
+### [MEDIUM] Config silently ignores unknown fields — no `deny_unknown_fields`
+
+`RawConfig` and `RawServerConfig` at `config.rs:13-24` use default serde deserialization which silently discards unknown fields. A config file with `[server]\ntoken = "secret"` silently ignores the `token` key. While the test `config_file_rejects_token_field` accepts this (line 146: "Either... warn/error, or... ignored"), silent acceptance means operators won't know they've misconfigured their file. More critically, typos like `timout = 60` will be silently ignored, leaving the default in place — a classic source of "works on my machine" bugs.
+
+### [MEDIUM] `SiemClient` header injection silently drops malicious values instead of returning an error
+
+At `client.rs:26-28`, `with_token()` silently sets `self.token = None` when the token contains `\r` or `\n`. Same for `with_tenant()`. This is a security defense — good. But silent failure is dangerous: the caller has no way to know their token was rejected. The operation should return a `Result` or at minimum log a warning. An operator whose token happens to contain a newline (e.g., from a bad copy-paste) will get authentication failures with no diagnostic clue.
+
+### [MEDIUM] `tenant` field is raw `String`, not `TenantId` newtype
+
+The Rust coding rules mandate: *"Newtypes for IDs: `TenantId(String)` — prevents mixing ID types."* `axiathon-core` exports `TenantId`. Both `cli.rs:27` (`pub tenant: Option<String>`) and `client.rs:7` (`tenant: Option<String>`) use raw strings. This defeats the type safety the project invested in building.
+
+### [MEDIUM] `toml` dependency version mismatch: workspace uses `0.8`, story specifies `0.9`
+
+The story's Technical Guardrails specify `toml 0.9`. The workspace `Cargo.toml:51` declares `toml = "0.8"`. While `0.8` works, this is a deviation from the specification.
+
+### [LOW] `OutputFormatter` is a concrete struct, not a trait as specified
+
+AC-4 specifies an `OutputFormatter` trait with Table/JSON/CSV implementations. The implementation at `output.rs:37-97` is a concrete struct with a `format` field and match arms. No trait exists. This prevents downstream code from providing custom formatters or mocking in tests.
+
+### [LOW] JSON `metadata.timestamp` uses epoch seconds, not ISO-8601
+
+`output.rs:101-107` produces timestamps like `"1709827200Z"` (Unix epoch seconds with a Z suffix). This is neither ISO-8601 nor RFC-3339. While functional, operators and scripts parsing this will expect a standard format.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present at `lib.rs:2`
+
+### [VERIFIED] Header injection prevention exists for both token and tenant — `client.rs:26-27,36-37`
+
+### [VERIFIED] CWE-209: `CliError::Display` sanitizes output — `ServerError` Display doesn't expose internal message at `error.rs:50`
+
+### [VERIFIED] `#[non_exhaustive]` on `CliError` at `error.rs:7`
+
+### [VERIFIED] Config tokens never stored — `config.rs:82-84` always returns `None`
+
+### [VERIFIED] Exit code mapping correct: 3 for auth, 4 for authz, 1 for general — `error.rs:27-32`
+
+### [VERIFIED] All stub handlers return correct `NotImplemented` with story references
+
+### [VERIFIED] Shell completion generation functional via `clap_complete` — `completion.rs:17-20`
+
+### [VERIFIED] Clippy clean with `-D warnings`
+
+### [VERIFIED] All 137 tests pass
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| HIGH     | 4     | YES       |
+| MEDIUM   | 4     | No        |
+| LOW      | 2     | No        |
+| VERIFIED | 9     | —         |
+
+The four HIGH findings are:
+1. **No `main.rs`** — the crate doesn't produce a binary at all
+2. **Missing `logout`/`tui` commands** — AC-1 violation
+3. **`thiserror` not used** — project convention violation, dead dependency
+4. **Nightly fmt fails** — per reviewer gotchas, this blocks approval
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+The missing `main.rs` is the showstopper. Without it, Story 6.1 doesn't deliver its primary artifact — the `axiathon` binary. The nightly fmt failures and missing command groups compound the issue. Fix the HIGHs, and I'll look again.
+
+*"I can't be havin' with this. It ain't what I'd call DONE." — Granny Weatherwax*

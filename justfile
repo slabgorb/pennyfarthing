@@ -140,14 +140,14 @@ gui *args:
 
     case "$mode" in
         web)
-            echo "Starting BikeRack GUI (Web dev mode)..."
+            echo "Starting BikeRack GUI (Vite dev mode)..."
             echo "  Project: $project_dir"
-            eval $env_vars npm run dev:web
+            eval $env_vars pnpm run dev:vite
             ;;
         server)
-            echo "Starting BikeRack GUI (Web server)..."
+            echo "Starting BikeRack (WheelHub Python server)..."
             echo "  Project: $project_dir"
-            eval $env_vars npm start
+            eval $env_vars pf bikerack start
             ;;
     esac
 
@@ -273,16 +273,23 @@ vscode *args:
 
 # Validate agent files against schema and best practices
 validate-agents *args:
-    ./pennyfarthing-dist/scripts/validation/validate-agent-schema.sh {{args}}
+    pf validate agent {{args}}
 
-# Validate subagent YAML frontmatter
+# Validate subagent YAML frontmatter (consolidated into pf validate agent)
 validate-subagents:
-    ./pennyfarthing-dist/scripts/misc/validate-subagent-frontmatter.sh
+    pf validate agent
 
 # Validate sprint YAML structure
 validate-sprint *args:
     PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.sprint.validator {{args}}
 
+<<<<<<< HEAD
+# Check if wheelhub.mjs bundle is stale vs TypeScript source
+check-bundle-drift:
+    ./scripts/check-bundle-drift.sh
+
+=======
+>>>>>>> origin/develop
 # Run all validations
 validate: validate-agents validate-subagents validate-sprint
 
@@ -360,7 +367,7 @@ bikerack *args:
     export PF_PROJECT_DIR="${project_dir:-$(cd ../.. && pwd)}"
     echo "BikeRack — hot reload mode"
     echo "  Project dir: $PF_PROJECT_DIR"
-    echo "  Server: tsx watch src/bikerack.ts"
+    echo "  Server: tsx watch ../core/src/server/entry.ts"
     echo "  Frontend: vite build --watch"
     echo ""
     logfile="$PF_PROJECT_DIR/.session/bikerack_debug.log"
@@ -371,7 +378,7 @@ bikerack *args:
     npx concurrently -k \
         -n server,vite \
         -c green,magenta \
-        "tsx watch src/bikerack.ts" \
+        "tsx watch ../core/src/server/entry.ts" \
         "vite build --watch" \
         >> "$logfile" 2>&1 &
     bg_pid=$!

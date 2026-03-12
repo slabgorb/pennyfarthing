@@ -1,0 +1,28 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 establishes the CLI framework — foundational types, parsing, config, output formatting, and HTTP client all need test coverage.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 19 | AC-1 (command groups), AC-2 (help rendering), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 12 | AC-3 (exit code mapping 0/1/2/3/4) |
+| `tests/output_format.rs` | 14 | AC-4 (table/JSON/CSV formatting, metadata, escaping) |
+| `tests/global_flags.rs` | 15 | AC-5 (--format, -v/-vv, --quiet, --server, --tenant, --config, --no-color, global=true) |
+| `tests/siem_client.rs` | 14 | AC-7 (SiemClient construction, header injection, HTTP error mapping) |
+| `tests/config_loading.rs` | 12 | AC-8 (TOML loading, env overrides, validation, precedence, XDG path) |
+| `tests/shell_completion.rs` | 6 | AC-9 (bash/zsh/fish/PowerShell generation, command group inclusion) |
+| `tests/stub_handlers.rs` | 9 | AC-10 (NotImplemented messages with story references, exit code 1) |
+| `tests/security.rs` | 8 | CWE-209 error exposure, CWE-113 header injection, token leakage, config security |
+
+**Tests Written:** 109 tests covering all 10 ACs
+**Status:** RED (failing — all tests fail to compile because modules `cli`, `error`, `output`, `config`, `client`, `commands::completion` do not exist yet)
+
+**Handoff:** To Dev for implementation. The tests define the expected public API surface:
+- `Cli` struct with `Parser` derive, `Commands` enum with `Subcommand` derive
+- `CliError` enum with `exit_code() -> i32` method and variants: `ServerError`, `ConnectionTimeout`, `ServerUnavailable`, `NotFound`, `RateLimited`, `AuthenticationExpired`, `Unauthorized`, `NotImplemented`
+- `OutputFormat` enum (Table/Json/Csv) with `FromStr`, `OutputFormatter` with `format_table`, `format_json`, `format_csv`
+- `SiemClient` with `new()`, `try_new()`, `get()`, `has_token()`, `has_tenant()`, `base_url()`
+- `ClientConfig` with `from_file()`, `from_file_with_env()`, `from_file_with_overrides()`, `default_path()`, `api_url()`, `timeout()`
+- `generate_completion(Shell) -> String`

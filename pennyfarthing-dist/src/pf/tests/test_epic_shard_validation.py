@@ -142,9 +142,7 @@ class TestValidateEpicShardRequiredFields:
         assert result.valid is False
         assert any("list" in e.message.lower() for e in result.errors)
 
-    def test_story_missing_required_fields(
-        self, valid_epic_shard: dict[str, Any]
-    ) -> None:
+    def test_story_missing_required_fields(self, valid_epic_shard: dict[str, Any]) -> None:
         """Stories within shard must have id, title, points, status."""
         valid_epic_shard["stories"] = [{"id": "94-1"}]  # Missing title, points, status
 
@@ -156,9 +154,7 @@ class TestValidateEpicShardRequiredFields:
         assert "points" in error_msgs.lower()
         assert "status" in error_msgs.lower()
 
-    def test_duplicate_story_ids_within_shard_fails(
-        self, valid_epic_shard: dict[str, Any]
-    ) -> None:
+    def test_duplicate_story_ids_within_shard_fails(self, valid_epic_shard: dict[str, Any]) -> None:
         """No duplicate story IDs within a single shard."""
         valid_epic_shard["stories"] = [
             {"id": "94-1", "title": "Story A", "points": 3, "status": "backlog"},
@@ -170,17 +166,13 @@ class TestValidateEpicShardRequiredFields:
         assert result.valid is False
         assert any("duplicate" in e.message.lower() for e in result.errors)
 
-    def test_valid_jira_key_passes(
-        self, valid_epic_shard_with_jira: dict[str, Any]
-    ) -> None:
+    def test_valid_jira_key_passes(self, valid_epic_shard_with_jira: dict[str, Any]) -> None:
         """Valid MSSCI-NNNNN Jira key should pass."""
         result = validate_epic_shard(valid_epic_shard_with_jira)
 
         assert result.valid is True
 
-    def test_invalid_jira_key_fails(
-        self, valid_epic_shard: dict[str, Any]
-    ) -> None:
+    def test_invalid_jira_key_fails(self, valid_epic_shard: dict[str, Any]) -> None:
         """Invalid Jira key format should fail."""
         valid_epic_shard["jira"] = "INVALID-KEY"
 
@@ -189,9 +181,7 @@ class TestValidateEpicShardRequiredFields:
         assert result.valid is False
         assert any("jira" in e.message.lower() for e in result.errors)
 
-    def test_jira_key_wrong_project_passes(
-        self, valid_epic_shard: dict[str, Any]
-    ) -> None:
+    def test_jira_key_wrong_project_passes(self, valid_epic_shard: dict[str, Any]) -> None:
         """Jira key from any valid project format should pass (pattern is project-agnostic)."""
         valid_epic_shard["jira"] = "PROJ-12345"
 
@@ -199,9 +189,7 @@ class TestValidateEpicShardRequiredFields:
 
         assert result.valid is True
 
-    def test_empty_stories_list_passes(
-        self, valid_epic_shard: dict[str, Any]
-    ) -> None:
+    def test_empty_stories_list_passes(self, valid_epic_shard: dict[str, Any]) -> None:
         """Empty stories list is valid (epic exists but has no stories yet)."""
         valid_epic_shard["stories"] = []
 
@@ -408,11 +396,7 @@ class TestWritePathValidatorIntegration:
         # Create future.yaml
         future = tmp_path / "sprint" / "future.yaml"
         future.parent.mkdir(parents=True)
-        future.write_text(
-            "# Next Available Epic Number: 100\n"
-            "future:\n"
-            "  initiatives: []\n"
-        )
+        future.write_text("# Next Available Epic Number: 100\nfuture:\n  initiatives: []\n")
 
         result = import_epic(
             md_file,
@@ -496,9 +480,7 @@ class TestLoaderWarnings:
 
         # Create one valid shard
         shard = tmp_path / "epic-MSSCI-14298.yaml"
-        shard.write_text(
-            "id: MSSCI-14298\ntitle: Valid Epic\nstatus: active\nstories: []\n"
-        )
+        shard.write_text("id: MSSCI-14298\ntitle: Valid Epic\nstatus: active\nstories: []\n")
 
         data = {"epics": ["MSSCI-14298", "MISSING-REF"]}
 
@@ -631,9 +613,7 @@ class TestValidationIntegration:
 
         # Write shard file
         shard_path = tmp_path / f"epic-{ref}.yaml"
-        yaml_content = yaml.dump(
-            valid_epic_shard_with_jira, default_flow_style=False
-        )
+        yaml_content = yaml.dump(valid_epic_shard_with_jira, default_flow_style=False)
         shard_path.write_text(yaml_content)
 
         # Verify file name is correct

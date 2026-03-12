@@ -35,11 +35,19 @@ async def create_team(
     phase: dict[str, Any],
     story_id: str,
     adapter: Any | None = None,
+    *,
+    scope: str = "phase",
 ) -> dict[str, Any]:
-    """Create a phase-scoped team.
+    """Create a phase-scoped or step-scoped team.
 
-    If phase has no team config, returns success with no handle (no-op).
-    If phase has team config, creates team and returns handle.
+    If phase/step has no team config, returns success with no handle (no-op).
+    If it has team config, creates team and returns handle.
+
+    Args:
+        phase: Phase or step config dict with 'name' and optional 'team' keys.
+        story_id: Story identifier.
+        adapter: Optional team adapter for external calls.
+        scope: 'phase' (default) or 'step' for step-scoped teams.
     """
     if not phase.get("team"):
         return {"success": True}
@@ -59,6 +67,7 @@ async def create_team(
         "teamName": team_name,
         "storyId": story_id,
         "phase": phase["name"],
+        "scope": scope,
         "teammates": [],
         "createdAt": datetime.now(UTC).isoformat(),
     }
@@ -91,12 +100,14 @@ async def spawn_teammates(
         }
         if adapter:
             try:
-                await adapter.spawn_teammate({
-                    "teamName": handle["teamName"],
-                    "agent": member["agent"],
-                    "prompt": f'pf agent start "{member["agent"]}"',
-                    "model": config.get("model"),
-                })
+                await adapter.spawn_teammate(
+                    {
+                        "teamName": handle["teamName"],
+                        "agent": member["agent"],
+                        "prompt": f'pf agent start "{member["agent"]}"',
+                        "model": config.get("model"),
+                    }
+                )
             except Exception:
                 teammate["status"] = "crashed"
         teammates.append(teammate)
@@ -122,10 +133,12 @@ async def shutdown_all_teammates(
             continue
         if adapter:
             try:
-                await adapter.shutdown_teammate({
-                    "teamName": handle["teamName"],
-                    "agent": teammate["agent"],
-                })
+                await adapter.shutdown_teammate(
+                    {
+                        "teamName": handle["teamName"],
+                        "agent": teammate["agent"],
+                    }
+                )
             except Exception:
                 pass  # Graceful degradation — swallow adapter errors
         teammate["status"] = "shutdown"
@@ -189,6 +202,7 @@ def generate_team_summary(handle: dict[str, Any]) -> dict[str, Any]:
         "teamName": handle["teamName"],
         "storyId": handle["storyId"],
         "phase": handle["phase"],
+        "scope": handle.get("scope", "phase"),
         "members": [
             {"agent": t["agent"], "status": t["status"], "task": t["task"]}
             for t in handle["teammates"]

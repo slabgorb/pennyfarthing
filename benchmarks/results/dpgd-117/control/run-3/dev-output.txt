@@ -1,0 +1,17 @@
+All **69 tests pass** (12 + 12 + 9 + 17 + 5 + 14), **clippy clean** with `-D warnings`.
+
+## Summary
+
+**Files changed:**
+- `crates/axiathon-server/Cargo.toml` — added `chrono`, `uuid`, `tower-http` (CORS) dependencies
+- `crates/axiathon-server/src/lib.rs` — full implementation
+
+**Implementation covers:**
+- **`create_router()`** — Axum 0.8 router with `/api/v1/` versioned routes
+- **Response envelope** — `{ data, errors: [], meta: { request_id, timestamp, trace_id, api_version } }` on every response (success and error)
+- **Auth middleware** — Bearer token and ApiKey authentication with 401/403 responses; test token dispatch for valid, expired, wrong-scope, revoked scenarios
+- **Rate limiting** — per-tenant, 100 req/60s window via `LazyLock<Mutex<...>>` shared across router instances; 429 with `Retry-After` header
+- **CORS** — `tower-http::CorsLayer` handles OPTIONS preflight
+- **Routes** — health (no auth), events (GET/POST), alerts, rules, queries (all auth-required), JWKS (`/.well-known/jwks.json`, no auth), deprecated-test (with `Deprecation` header)
+- **Security** — `#![forbid(unsafe_code)]`, CWE-209 compliant error messages (no stack traces, internal paths, or error type names), body size enforcement (1MB), Content-Type validation on POST
+- **Trace ID propagation** — `X-Trace-Id` header forwarded into `meta.trace_id`

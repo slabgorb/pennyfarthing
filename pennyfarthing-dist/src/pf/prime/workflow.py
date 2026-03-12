@@ -37,8 +37,7 @@ def find_active_session(project_root: Path) -> Path | None:
 
     # Find *-session.md files (not context-*)
     session_files = [
-        f for f in session_dir.glob("*-session.md")
-        if not f.name.startswith("context-")
+        f for f in session_dir.glob("*-session.md") if not f.name.startswith("context-")
     ]
 
     if not session_files:
@@ -81,10 +80,10 @@ def parse_session_header(session_path: Path) -> dict[str, Any]:
             # We care about Story Context, Workflow Phase, and Workflow State sections
             section_name = line[3:].strip().lower()
             in_relevant_section = (
-                "story context" in section_name or
-                "workflow phase" in section_name or
-                "workflow state" in section_name or
-                "branch" in section_name
+                "story context" in section_name
+                or "workflow phase" in section_name
+                or "workflow state" in section_name
+                or "branch" in section_name
             )
             # Stop at assessment sections (too far down)
             if "assessment" in section_name:
@@ -416,6 +415,76 @@ def get_phase_team_config(
         return None
     except Exception:
         return None
+
+
+def get_step_tandem_config(
+    workflow_name: str, step_number: int, project_root: Path | None = None
+) -> dict[str, Any] | None:
+    """Extract tandem configuration for a specific stepped workflow step.
+
+    Reads the workflow YAML and returns the tandem block for the given step
+    number, or None if the step has no tandem configuration.
+
+    Args:
+        workflow_name: Workflow name (architecture, research, etc.)
+        step_number: Step number (1-based)
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Dict with tandem config (partner, scope, model, token_budget)
+        or None if no tandem config on this step.
+    """
+    return _get_step_config_block(workflow_name, step_number, "tandem", project_root)
+
+
+def get_step_team_config(
+    workflow_name: str, step_number: int, project_root: Path | None = None
+) -> dict[str, Any] | None:
+    """Extract team configuration for a specific stepped workflow step.
+
+    Reads the workflow YAML and returns the team block for the given step
+    number, or None if the step has no team configuration.
+
+    Args:
+        workflow_name: Workflow name (architecture, research, etc.)
+        step_number: Step number (1-based)
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Dict with team config (teammates list, model, etc.)
+        or None if no team config on this step.
+    """
+    return _get_step_config_block(workflow_name, step_number, "team", project_root)
+
+
+def _get_step_config_block(
+    workflow_name: str, step_number: int, block: str, project_root: Path | None = None
+) -> dict[str, Any] | None:
+    """Shared helper to extract a config block from a stepped workflow step."""
+    root = project_root or get_project_root()
+    dist_root = get_dist_root(project_root=root)
+    base = dist_root if dist_root else root / "pennyfarthing-dist"
+
+    # Try flat file first, then directory-based workflow
+    for candidate in [
+        base / "workflows" / f"{workflow_name}.yaml",
+        base / "workflows" / workflow_name / "workflow.yaml",
+    ]:
+        if not candidate.exists():
+            continue
+        try:
+            data = yaml.safe_load(candidate.read_text())
+            steps_cfg = data.get("workflow", {}).get("steps", {})
+            config = steps_cfg.get("config", {})
+            step_cfg = config.get(step_number, {})
+            if isinstance(step_cfg, dict):
+                value = step_cfg.get(block)
+                if isinstance(value, dict):
+                    return dict(value)
+            return None
+        except Exception:
+            return None
+    return None
 
 
 def get_phase_gate_recovery(

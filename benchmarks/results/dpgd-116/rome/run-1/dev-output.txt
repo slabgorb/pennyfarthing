@@ -1,0 +1,22 @@
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `Cargo.toml` — added workspace dependencies: clap_complete, comfy-table, csv, dirs, reqwest, toml; enabled clap `env` feature
+- `crates/axiathon-client/Cargo.toml` — added all required dependencies; overrode unsafe_code lint from forbid→deny for edition 2024 test compat
+- `crates/axiathon-client/src/lib.rs` — added module declarations
+- `crates/axiathon-client/src/cli.rs` — Cli struct with Parser derive, Commands enum, all 11 command groups, 7 global flags
+- `crates/axiathon-client/src/error.rs` — CliError enum (#[non_exhaustive]) with exit_code() mapping, security-safe Display
+- `crates/axiathon-client/src/output.rs` — OutputFormat enum (Table/Json/Csv), OutputFormatter with table/json/csv formatting
+- `crates/axiathon-client/src/client.rs` — SiemClient with base_url, token/tenant (validated + unvalidated), HTTP status mapping
+- `crates/axiathon-client/src/config.rs` — ClientConfig with TOML parsing, env var overrides, XDG path, token rejection
+- `crates/axiathon-client/src/commands/*.rs` — 10 command modules (query, rules, alerts, ingest, config, status, tenant, login, completion, init) with stub handlers referencing stories
+- `crates/axiathon-client/tests/config_test.rs` — wrapped set_var/remove_var in unsafe blocks for edition 2024
+- `crates/axiathon-client/tests/global_flags_test.rs` — wrapped set_var/remove_var in unsafe blocks for edition 2024
+
+**Tests:** 107/107 passing (GREEN)
+**Clippy:** Clean (0 warnings)
+**Branch:** feat/story-6.1-cli-framework (pushed)
+
+**Handoff:** To next phase (verify or review)

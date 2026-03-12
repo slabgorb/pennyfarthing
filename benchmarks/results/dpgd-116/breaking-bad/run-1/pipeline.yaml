@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: breaking-bad
+run_id: 1
+timestamp: '2026-03-08T19:02:11.738704+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-breaking-bad-run-1
+phases:
+  tea:
+    token_usage:
+      input: 22
+      output: 23887
+    duration_s: 413.4
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 47
+      output: 32839
+    duration_s: 639.1
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 13
+      output: 4270
+    duration_s: 98.67
+    exit_code: 0
