@@ -591,6 +591,66 @@ def _print_heatmap(scenario, scores):
     click.echo(totals_row)
 
 
+@replay.command("narrate")
+@click.argument("run_dir", type=click.Path(exists=True))
+@click.option("--yes", "skip_confirm", is_flag=True, help="Skip cost confirmation")
+@click.option("--force", is_flag=True, help="Regenerate even if cached")
+@click.option("--finding", default=None, help="Focus on a specific finding ID")
+@click.option("--model", default=None, help="Claude model (default: claude-sonnet-4-6)")
+def replay_narrate(run_dir, skip_confirm, force, finding, model):
+    """Generate an LLM-narrated trace of a pipeline run.
+
+    Produces a narrative.md file explaining what the agent did, what it
+    missed, and why. Costs ~$0.50 per narration.
+
+    \b
+    Examples:
+        pf benchmark replay narrate runs/run-1 --yes
+        pf benchmark replay narrate runs/run-1 --finding I3
+        pf benchmark replay narrate runs/run-1 --force --yes
+    """
+    from pf.benchmark.narrate import generate_narrative
+
+    run_path = Path(run_dir)
+
+    # Load scenario metadata from pipeline.yaml if available
+    pipeline_file = run_path / "pipeline.yaml"
+    scenario_id = "unknown"
+    title = "Pipeline Run"
+    phases = ["tea", "dev", "reviewer"]
+    if pipeline_file.exists():
+        pipeline_data = yaml.safe_load(pipeline_file.read_text())
+        scenario_id = pipeline_data.get("scenario_id", scenario_id)
+        if "phases" in pipeline_data and isinstance(pipeline_data["phases"], dict):
+            phases = list(pipeline_data["phases"].keys())
+
+    # Check cache first
+    narrative_path = run_path / "narrative.md"
+    if narrative_path.exists() and not force:
+        click.echo(f"Cached narrative found: {narrative_path}")
+        click.echo(narrative_path.read_text())
+        return
+
+    # Cost warning
+    click.echo("Narration costs ~$0.50 per run (LLM call).", err=True)
+    if not skip_confirm:
+        if not click.confirm("Proceed?"):
+            return
+
+    click.echo(f"Generating narrative for {run_path.name}...")
+    result_path = generate_narrative(
+        run_path,
+        scenario_id,
+        phases,
+        title,
+        model=model,
+        finding_id=finding,
+        force=force,
+        project_dir=Path.cwd(),
+    )
+    click.echo(f"Narrative saved to {result_path}")
+
+
 @replay.command("backfill-versions")
 @click.option(
     "--results-dir",
