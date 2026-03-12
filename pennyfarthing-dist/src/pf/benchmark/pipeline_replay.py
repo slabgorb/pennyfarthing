@@ -783,10 +783,13 @@ def run_phase(
     model: str | None = None,
     otel_collector: OTELFileCollector | None = None,
     project_dir: Path | None = None,
+    resume_session_id: str | None = None,
 ) -> PhaseResult:
     """Run a single pipeline phase via ``claude -p`` in the worktree.
 
     CLAUDE.md must already be in place before calling this.
+    When *resume_session_id* is set, resumes the given session so the
+    model has full conversation history from previous phases.
     When *otel_collector* is set, injects OTEL env vars so telemetry
     flows to the file-based collector.
     When *project_dir* is set, ``CLAUDE_PROJECT_DIR`` is set so hooks
@@ -802,6 +805,8 @@ def run_phase(
         f"Your task:\n{task_prompt}"
     )
     cmd = ["claude", "-p", wrapped_prompt, "--output-format", "json"]
+    if resume_session_id:
+        cmd.extend(["--resume", resume_session_id])
     if model:
         cmd.extend(["--model", model])
 
@@ -1026,7 +1031,8 @@ def _run_reviewer_fanout(
 
         return "reviewer-preflight", "\n".join(checks)
 
-    print("  [FANOUT] Spawning 7 subagents + preflight...")
+    n = len(_REVIEWER_SUBAGENTS)
+    print(f"  [FANOUT] Spawning {n} subagents + preflight...")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         futures = {
@@ -1121,6 +1127,17 @@ def run_pipeline(
     if not is_bmad:
         setup_worktree_pf_context(wt_path, project_dir)
 
+    # Create session file for cross-phase context passing
+    session_dir = wt_path / ".session"
+    session_dir.mkdir(exist_ok=True)
+    session_file = session_dir / "pipeline-session.md"
+    session_file.write_text(
+        f"# Pipeline Session — {scenario.id}\n\n"
+        f"**Scenario:** {scenario.id}\n"
+        f"**Commit:** {scenario.base_commit}\n\n"
+        "---\n\n"
+    )
+
     # Verify worktree is clean before proceeding
     verify_worktree(wt_path, scenario.base_commit)
 
@@ -1172,8 +1189,12 @@ def run_pipeline(
             # BMAD has no TEA equivalent — use a minimal prompt
             return f"# {role.upper()} Phase\n\nBegin {role} phase for: {scenario.title}\n"
 
+    # Session ID for cross-phase continuity via --resume
+    pipeline_session_id: str | None = None
+
     def _run_single_phase(role: str, task_prompt: str, phase_key: str | None = None) -> PhaseResult:
         """Run one phase and record it in result.phases."""
+        nonlocal pipeline_session_id
         key = phase_key or role
 
         if is_bmad:
@@ -1196,7 +1217,12 @@ def run_pipeline(
             model=model,
             otel_collector=collector,
             project_dir=project_dir,
+            resume_session_id=pipeline_session_id,
         )
+        # Capture session ID from first phase, reuse for all subsequent
+        if phase_result.session_id and not pipeline_session_id:
+            pipeline_session_id = phase_result.session_id
+            print(f"  [SESSION] Established: {pipeline_session_id[:8]}")
         result.phases[key] = phase_result
 
         tokens = phase_result.token_usage
@@ -1252,7 +1278,7 @@ def run_pipeline(
         print(f"  [{tag}-SCAN] Done")
         return output
 
-    # Pre-phase scout configs: which scouts run before which phase
+    # Pre-phase scout configs: specialist scans on full codebase before each phase
     _PHASE_SCOUTS: dict[str, list[tuple[str, str, str]]] = {
         "tea": [
             ("reviewer-test-analyzer",
@@ -1297,8 +1323,8 @@ def run_pipeline(
                         if findings:
                             task_prompt += (
                                 f"\n\n## {heading}\n\n"
-                                f"The following issues were found in the existing "
-                                f"codebase. Address any that fall within your scope.\n\n"
+                                f"Do not proceed with implementation until you have "
+                                f"addressed the following pre-existing issues:\n\n"
                                 f"{findings}"
                             )
 
