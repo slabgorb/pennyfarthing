@@ -924,6 +924,143 @@ def _build_reviewer_task_prompt(base_prompt: str) -> str:
     return base_prompt + _REVIEWER_VERDICT_INSTRUCTION
 
 
+# ---------------------------------------------------------------------------
+# Reviewer subagent fan-out (harness-driven)
+# ---------------------------------------------------------------------------
+
+_REVIEWER_SUBAGENTS = [
+    "reviewer-edge-hunter",
+    "reviewer-silent-failure-hunter",
+    "reviewer-test-analyzer",
+    "reviewer-comment-analyzer",
+    "reviewer-type-design",
+    "reviewer-security",
+    "reviewer-simplifier",
+]
+
+
+def _run_reviewer_fanout(
+    worktree_path: Path,
+    project_dir: Path,
+    *,
+    diff: str,
+    model: str | None = None,
+) -> str:
+    """Fan out reviewer subagents as parallel claude -p calls.
+
+    Runs all 7 diff-based subagents concurrently using haiku, collects
+    their findings, and returns a consolidated findings block to inject
+    into the main reviewer prompt.
+
+    Also runs reviewer-preflight in the worktree for tests/lint.
+    """
+    import concurrent.futures
+
+    agents_dir = project_dir / ".pennyfarthing" / "agents"
+
+    def _run_subagent(name: str) -> tuple[str, str]:
+        """Run a single subagent and return (name, output)."""
+        agent_file = agents_dir / f"{name}.md"
+        if not agent_file.exists():
+            return name, f"ERROR: agent file not found: {agent_file}"
+
+        agent_prompt = agent_file.read_text()
+        # Strip frontmatter
+        agent_prompt = re.sub(
+            r"^---\n.*?^---\n", "", agent_prompt,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+
+        task = (
+            f"Analyze this diff and report findings in structured YAML.\n\n"
+            f"## Agent Instructions\n\n{agent_prompt}\n\n"
+            f"## Diff to Analyze\n\n```diff\n{diff}\n```\n"
+        )
+
+        cmd = ["claude", "-p", task, "--output-format", "json", "--model",
+               "claude-haiku-4-5-20251001"]
+
+        try:
+            result = subprocess.run(
+                cmd,
+                cwd=str(worktree_path),
+                capture_output=True,
+                text=True,
+                timeout=120,
+                env={**os.environ},
+            )
+            # Extract text from JSON output
+            try:
+                parsed = json.loads(result.stdout)
+                text = parsed.get("result", result.stdout)
+            except (json.JSONDecodeError, TypeError):
+                text = result.stdout
+            return name, text
+        except subprocess.TimeoutExpired:
+            return name, "TIMEOUT: subagent exceeded 120s"
+        except Exception as e:
+            return name, f"ERROR: {e}"
+
+    def _run_preflight() -> tuple[str, str]:
+        """Run preflight checks (tests + lint) in the worktree."""
+        checks = []
+        # Run tests
+        test_result = subprocess.run(
+            ["cargo", "test", "--workspace"],
+            cwd=str(worktree_path),
+            capture_output=True, text=True, timeout=120,
+        )
+        checks.append(f"## Tests\nExit code: {test_result.returncode}\n"
+                       f"```\n{test_result.stdout[-2000:]}\n```")
+        if test_result.stderr:
+            checks.append(f"```stderr\n{test_result.stderr[-1000:]}\n```")
+
+        # Run clippy
+        lint_result = subprocess.run(
+            ["cargo", "clippy", "--workspace", "--", "-W", "clippy::all"],
+            cwd=str(worktree_path),
+            capture_output=True, text=True, timeout=120,
+        )
+        checks.append(f"## Clippy\nExit code: {lint_result.returncode}\n"
+                       f"```\n{lint_result.stderr[-2000:]}\n```")
+
+        return "reviewer-preflight", "\n".join(checks)
+
+    print("  [FANOUT] Spawning 7 subagents + preflight...")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+        futures = {
+            pool.submit(_run_subagent, name): name
+            for name in _REVIEWER_SUBAGENTS
+        }
+        futures[pool.submit(_run_preflight)] = "reviewer-preflight"
+
+        results: dict[str, str] = {}
+        for future in concurrent.futures.as_completed(futures):
+            name = futures[future]
+            try:
+                agent_name, output = future.result()
+                results[agent_name] = output
+                print(f"  [FANOUT] {agent_name} done")
+            except Exception as e:
+                results[name] = f"ERROR: {e}"
+                print(f"  [FANOUT] {name} failed: {e}")
+
+    # Build consolidated findings block
+    parts = ["## Subagent Findings (Harness Fan-Out)\n"]
+    parts.append("The following findings were produced by specialist "
+                 "subagents analyzing the diff. Review each finding, "
+                 "confirm or dismiss with rationale, and incorporate "
+                 "confirmed findings into your assessment.\n")
+
+    for name in ["reviewer-preflight"] + _REVIEWER_SUBAGENTS:
+        tag = name.replace("reviewer-", "").upper()
+        output = results.get(name, "NO OUTPUT")
+        parts.append(f"### [{tag}] {name}\n\n{output}\n")
+
+    return "\n".join(parts)
+
+
 def run_pipeline(
     scenario: Scenario,
     *,
@@ -1083,8 +1220,24 @@ def run_pipeline(
         for role in scenario.phases:
             task_prompt = scenario.phase_prompts.get(role, f"Begin {role} phase.")
 
-            # Append verdict instruction to reviewer prompts
-            if role == "reviewer":
+            # Reviewer: fan out subagents from harness, inject findings
+            if role == "reviewer" and not is_bmad:
+                # Get diff for subagents
+                diff_result = subprocess.run(
+                    ["git", "diff", scenario.base_commit + "...HEAD"],
+                    cwd=str(wt_path),
+                    capture_output=True, text=True, timeout=30,
+                )
+                diff_text = diff_result.stdout or "(no diff)"
+
+                fanout_findings = _run_reviewer_fanout(
+                    wt_path, project_dir, diff=diff_text, model=model,
+                )
+                task_prompt = (
+                    task_prompt + "\n\n" + fanout_findings
+                )
+                task_prompt = _build_reviewer_task_prompt(task_prompt)
+            elif role == "reviewer":
                 task_prompt = _build_reviewer_task_prompt(task_prompt)
 
             _run_single_phase(role, task_prompt)
