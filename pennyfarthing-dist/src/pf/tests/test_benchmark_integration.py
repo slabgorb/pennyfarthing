@@ -11,20 +11,16 @@ import pytest
 from pf.benchmark.integration import (
     VALID_DIMENSIONS,
     VALID_ROLES,
-    BenchmarkResult,
     CorrelationResult,
-    ErrorTypeCell,
     OceanErrorCorrelation,
     OceanScores,
     OptimalProfile,
-    PerformerResult,
     RoleRecommendations,
     calculate_error_type_correlation,
     calculate_ocean_correlation,
     find_top_performers,
     generate_correlation_report,
     generate_ocean_error_heat_map,
-    get_benchmark_with_face,
     get_optimal_profile,
     get_role_recommendations,
     load_benchmark_data,
@@ -32,13 +28,12 @@ from pf.benchmark.integration import (
     query_benchmarks,
 )
 
-
 # ===========================================================================
 # parse_ocean_filter
 # ===========================================================================
 
-class TestParseOceanFilter:
 
+class TestParseOceanFilter:
     def test_basic_gte(self):
         result = parse_ocean_filter("O>=4")
         assert result["dimension"] == "O"
@@ -76,8 +71,8 @@ class TestParseOceanFilter:
 # load_benchmark_data
 # ===========================================================================
 
-class TestLoadBenchmarkData:
 
+class TestLoadBenchmarkData:
     def test_returns_list(self):
         results = load_benchmark_data("nonexistent-scenario", "dev")
         assert isinstance(results, list)
@@ -91,8 +86,8 @@ class TestLoadBenchmarkData:
 # calculate_ocean_correlation
 # ===========================================================================
 
-class TestCalculateOceanCorrelation:
 
+class TestCalculateOceanCorrelation:
     def test_returns_correlation_result(self):
         result = calculate_ocean_correlation("nonexistent", "dev")
         assert isinstance(result, CorrelationResult)
@@ -112,8 +107,8 @@ class TestCalculateOceanCorrelation:
 # get_optimal_profile
 # ===========================================================================
 
-class TestGetOptimalProfile:
 
+class TestGetOptimalProfile:
     def test_returns_optimal_profile(self):
         result = get_optimal_profile("dev")
         assert isinstance(result, OptimalProfile)
@@ -136,8 +131,8 @@ class TestGetOptimalProfile:
 # get_role_recommendations
 # ===========================================================================
 
-class TestGetRoleRecommendations:
 
+class TestGetRoleRecommendations:
     def test_returns_recommendations(self):
         result = get_role_recommendations("dev")
         assert isinstance(result, RoleRecommendations)
@@ -152,8 +147,8 @@ class TestGetRoleRecommendations:
 # find_top_performers
 # ===========================================================================
 
-class TestFindTopPerformers:
 
+class TestFindTopPerformers:
     def test_empty_without_scenario(self):
         result = find_top_performers()
         assert result == []
@@ -167,8 +162,8 @@ class TestFindTopPerformers:
 # query_benchmarks
 # ===========================================================================
 
-class TestQueryBenchmarks:
 
+class TestQueryBenchmarks:
     def test_empty_without_scenario(self):
         result = query_benchmarks()
         assert result == []
@@ -182,8 +177,8 @@ class TestQueryBenchmarks:
 # calculate_error_type_correlation
 # ===========================================================================
 
-class TestCalculateErrorTypeCorrelation:
 
+class TestCalculateErrorTypeCorrelation:
     def test_returns_correlation_structure(self):
         result = calculate_error_type_correlation([], [])
         assert isinstance(result, OceanErrorCorrelation)
@@ -212,8 +207,8 @@ class TestCalculateErrorTypeCorrelation:
 # generate_ocean_error_heat_map
 # ===========================================================================
 
-class TestGenerateOceanErrorHeatMap:
 
+class TestGenerateOceanErrorHeatMap:
     def test_returns_markdown(self):
         corr = calculate_error_type_correlation([], [])
         result = generate_ocean_error_heat_map(corr)
@@ -230,8 +225,8 @@ class TestGenerateOceanErrorHeatMap:
 # generate_correlation_report
 # ===========================================================================
 
-class TestGenerateCorrelationReport:
 
+class TestGenerateCorrelationReport:
     def test_returns_markdown_string(self):
         report = generate_correlation_report("nonexistent", "dev")
         assert isinstance(report, str)
@@ -242,8 +237,8 @@ class TestGenerateCorrelationReport:
 # Constants validation
 # ===========================================================================
 
-class TestConstants:
 
+class TestConstants:
     def test_valid_roles(self):
         assert "dev" in VALID_ROLES
         assert "reviewer" in VALID_ROLES

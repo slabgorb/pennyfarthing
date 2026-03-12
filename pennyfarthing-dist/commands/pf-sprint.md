@@ -50,13 +50,12 @@ Start work on a story. Primary entry point for development.
 | `next` | Auto-select highest priority story |
 
 ```bash
-# MERGE GATE: Check for open PRs first (blocks if any exist)
-OPEN_PRS=$(gh pr list --state open --json number --jq 'length' 2>/dev/null || echo "0")
-if [[ "$OPEN_PRS" -gt 0 ]]; then
-  echo "⛔ BLOCKED: $OPEN_PRS open PR(s) - merge or close before starting new work"
-  gh pr list --state open
-  # Don't proceed until PRs are cleared
-fi
+# MERGE GATE: Enforced by gates/merge-ready
+# Blocks if non-draft PRs exist for stories NOT in in_review status.
+# PRs for in_review stories are allowed — they're awaiting external review
+# and can't be self-merged per repo rules.
+# Draft PRs are always allowed.
+pf handoff resolve-gate merge-ready
 
 # Check if story is available
 pf sprint check <story-id>
@@ -66,7 +65,7 @@ pf sprint check <story-id>
 
 <workflow>
 When starting work, this command:
-1. **Checks merge gate** - blocks if open PRs exist
+1. **Checks merge gate** - blocks if non-draft PRs exist for stories not in `in_review`
 2. Validates story availability
 3. Loads SM agent
 4. SM creates context and claims Jira

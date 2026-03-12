@@ -1,0 +1,24 @@
+scenario_id: dpgd-116
+theme: alice-in-wonderland
+run_id: 2
+timestamp: '2026-03-08T10:25:23.463389+00:00'
+worktree_path: /tmp/pf-replay/dpgd-116-alice-in-wonderland-run-2
+phases:
+  tea:
+    token_usage:
+      input: 36
+      output: 23726
+    duration_s: 475.92
+    exit_code: 0
+  dev:
+    token_usage:
+      input: 29
+      output: 19508
+    duration_s: 402.3
+    exit_code: 0
+  reviewer:
+    token_usage:
+      input: 1338
+      output: 6000
+    duration_s: 219.66
+    exit_code: 0

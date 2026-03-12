@@ -1,0 +1,102 @@
+scenario_id: dpgd-117
+theme: null
+run_id: 3
+judge_version: v2
+total_caught: 2
+total_findings: 10
+weighted_caught: 13
+total_weight: 52
+score_pct: 25.0
+findings:
+- finding_id: I1
+  title: Dependencies inline instead of workspace level
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The reviewer flagged 6 unused dependencies but did not flag that dependencies
+    specify versions inline instead of using workspace = true. The Cargo.toml shows
+    chrono, uuid, tower-http added with versions inline, not workspace references.
+- finding_id: I2
+  title: 'FieldErrorCode missing #[non_exhaustive]'
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: 'No phase mentioned #[non_exhaustive] on FieldErrorCode or any similar
+    enum in the server code.'
+- finding_id: I3
+  title: Hardcoded trace_id 'none'
+  weight: 5
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: "Dev implemented X-Trace-Id header forwarding into meta.trace_id, but\
+    \ the reviewer noted the trace middleware is dead code (stores trace_id in response\
+    \ extensions after handler runs). Neither phase flagged the hardcoded 'none' fallback\
+    \ as a problem \u2014 the reviewer's finding about the middleware being dead code\
+    \ is adjacent but doesn't call out the 'none' default specifically as breaking\
+    \ distributed tracing."
+- finding_id: I4
+  title: Zero structured logging
+  weight: 5
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding [MEDIUM]: 'No structured logging / tracing instrumentation\
+    \ \u2014 entire lib.rs. tracing is listed as a dependency but never imported or\
+    \ used. Zero tracing::info!, tracing::error!, or #[instrument] annotations.'"
+- finding_id: I5
+  title: Security comment claims tracing that doesn't exist
+  weight: 3
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: No phase flagged a SECURITY comment claiming logging exists when it doesn't.
+    The reviewer noted zero tracing calls but didn't specifically call out a misleading
+    security comment.
+- finding_id: I6
+  title: Non-ASCII tenant header silently treated as missing
+  weight: 8
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No test was written for non-ASCII tenant header handling and no phase
+    flagged this edge case.
+- finding_id: I7
+  title: "CWE-209 test gap \u2014 no body assertion"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA wrote CWE-209 tests in security.rs and the reviewer verified 'Error
+    responses do not leak internal paths, stack traces, or error type names,' but
+    neither explicitly noted that the CWE-209 test only checks status code without
+    asserting on response body content.
+- finding_id: I8
+  title: CORS preflight test doesn't verify CORS headers
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: TEA listed 'CORS preflight' in security tests. The reviewer flagged CORS
+    allow_origin(Any) as CRITICAL but did not flag that the CORS preflight test only
+    checks status code without verifying CORS headers in the response.
+- finding_id: I9
+  title: "Wrong log levels \u2014 error! for 4xx client errors"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: The reviewer flagged zero structured logging (I4) but since no logging
+    was added, the wrong-log-level issue never arose. This finding is about what happens
+    after I4 is fixed, and no phase addressed it.
+- finding_id: I10
+  title: CORS allows Any origin/method/header (CWE-942)
+  weight: 8
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer finding [CRITICAL]: 'CORS policy allows any origin \u2014 lib.rs:450-453.\
+    \ allow_origin(Any) combined with allow_headers(Any) means any website can make\
+    \ authenticated cross-origin requests... This is a security vulnerability (CWE-942).'"

@@ -1,0 +1,100 @@
+Confirmed. Now I have everything needed for my review.
+
+---
+
+# Code Review: Story 6.1 — CLI Framework & Structure
+
+*Fascinating. The implementation demonstrates considerable logical rigor. However, pure logic demands I report what I found, not what I wished to find.*
+
+---
+
+## Observations
+
+### `[HIGH]` Unsupported shell completion silently exits 0 — at `completion.rs:13-16`, `main.rs:34-37`
+
+The `generate_completion()` function prints an error to stderr for unsupported shells but returns `()`. The caller in `main.rs:35` wraps it in `Ok(())`, meaning `axiathon completion garbage` exits with code **0** (success). Per AC-3, errors must exit with code 1. This is a correctness bug — scripts checking `$?` will falsely believe completion succeeded.
+
+**Dr. McCoy says:** *Dammit Jim, the function returns nothing! How's main supposed to know it failed?*
+
+### `[HIGH]` Nightly `rustfmt` check fails — 366 lines of diff across `client.rs`, `output.rs`, `main.rs`, and test files
+
+Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval." Primary issues: import ordering in `main.rs:3-7` (external `clap` before internal `axiathon_client`), line-length violations in `client.rs:73-76` and `output.rs:132,136`. This will fail CI.
+
+### `[MEDIUM]` `SiemClient` does not actually wrap `reqwest::Client` — at `client.rs:8-12`
+
+AC-7 states: "SiemClient wraps `reqwest::Client`." The current struct contains only `server_url`, `token`, `tenant` — no `reqwest::Client` field. It functions as a URL/header builder. While the HTTP calls are deferred to later stories, the AC is explicit about wrapping reqwest. At minimum, the struct should hold a `reqwest::Client` field even if unused methods aren't implemented yet.
+
+### `[MEDIUM]` URL validation accepts `"httpgarbage"` as valid — at `config.rs:51`
+
+```rust
+if url.starts_with("http") {
+    config.server_url = url;
+}
+```
+
+This accepts `"httpnotaurl"`, `"httpsomething"`, etc. Should be `starts_with("http://") || starts_with("https://")`. The current check is too permissive.
+
+### `[MEDIUM]` Unknown TOML fields silently ignored — at `config.rs:15-22`
+
+`RawConfig` uses default serde deserialization which silently discards unknown fields. A user with `sever_url = "..."` (typo) gets the default with no warning. Consider `#[serde(deny_unknown_fields)]` or at least logging a warning for unrecognized keys. The `token` field is intentionally deserialized and ignored (with a good security comment), but this makes the deny_unknown_fields approach trickier — a `#[serde(skip)]` on `token` would solve that.
+
+### `[MEDIUM]` `keyring` missing from workspace dependencies — at `Cargo.toml`
+
+The story spec explicitly says: "Add to `[workspace.dependencies]`: ... `keyring` 3 ...". All other listed dependencies (`reqwest`, `comfy-table`, `clap_complete`, `dirs`, `csv`, `toml`) were added, but `keyring` was not. While keyring isn't used until Story 9.1, the story scope includes adding it to workspace deps now.
+
+### `[MEDIUM]` No test for Logout dispatch path — at `main.rs:30`
+
+`Commands::Logout => commands::login::handle_login()` dispatches to the *login* handler. This is technically correct for stubs but the coupling is fragile. There's no test verifying the Logout arm specifically. If someone later changes the Logout dispatch and breaks it, there's no regression coverage. The `stub_handlers.rs` tests cover `handle_login()` but don't exercise the Logout dispatch.
+
+### `[LOW]` `expect()` in production output formatters — at `output.rs:108,132,136,139,140`
+
+Five `expect()` calls in `CsvFormatter::format()` and `JsonFormatter::format()`. While writing to `Vec<u8>` can't fail for I/O, the Rust rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The messages ("CSV header write should not fail") are explanatory but not actionable. This is borderline acceptable since these truly can't fail, but worth noting.
+
+### `[VERIFIED]` CRLF header injection prevention — `client.rs:56-72`
+
+Explicit `\r` and `\n` checks on both tenant and token before header construction. Empty tenant correctly skipped. Tests cover all injection paths.
+
+### `[VERIFIED]` CWE-209 error sanitization — `error.rs:26-27`
+
+`ServerError` Display impl returns generic "server error, please try again later" instead of echoing the raw server body. The internal string is stored for debug logging but never shown to users.
+
+### `[VERIFIED]` Exit code mapping complete — `error.rs:48-58`
+
+All variants map correctly: 3 for auth, 4 for authz, 1 for everything else. No variant maps to 0.
+
+### `[VERIFIED]` Dependency isolation — `Cargo.toml:12-27`
+
+Only `axiathon-core` is imported. No server-side crates. The dependency boundary is correctly enforced.
+
+### `[VERIFIED]` Token never stored in config — `config.rs:20-21,64,87-91`
+
+The `token` field is deserialized and explicitly ignored. `ClientConfig::token()` always returns `None`. Security comment explains why.
+
+### `[VERIFIED]` Clap declarative-only (AC-6) — `cli.rs`
+
+100% derive macros (`#[derive(Parser)]`, `#[derive(Subcommand)]`, `#[derive(ValueEnum)]`). No imperative command building anywhere.
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 0 | — |
+| High | 2 | YES |
+| Medium | 5 | NO |
+| Low | 1 | NO |
+| Verified | 5 | — |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Two High-severity issues must be resolved:
+
+1. **Unsupported shell exits 0** — `generate_completion` must return `Result` so the caller can propagate exit code 1 for invalid shells.
+2. **Nightly fmt failures** — Run `cargo +nightly fmt --all` to fix all formatting issues.
+
+The Medium findings (reqwest wrapper, URL validation, unknown field handling, missing keyring dep, logout test gap) should be addressed but are not blocking individually. The security fundamentals (CRLF injection, CWE-209, token handling, dependency isolation) are all solid.
+
+*Logic dictates: fix the two blocking issues, re-run the preflight, and this implementation merits approval. The architecture is sound. Live long and prosper.*

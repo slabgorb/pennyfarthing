@@ -1,0 +1,34 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 is the REST API foundation — requires endpoint, auth, rate limiting, and envelope validation.
+
+**Test Files:**
+- `crates/axiathon-server/tests/rest_api_foundation.rs` — 40 integration tests
+
+**Tests Written:** 40 tests covering 5 ACs
+
+| AC | Tests | Coverage |
+|----|-------|----------|
+| **REST endpoints exist** | 8 tests | health (200, status fields, no-auth-required), events/alerts/rules/queries exist (not 404), nonexistent route → 404 |
+| **ApiResponse envelope** | 8 tests | success has `data`, empty errors on success, `meta.request_id` as UUID, `meta.timestamp` ISO 8601, `meta.trace_id`, error has null data, error has code/message, error has meta, unique request_ids |
+| **Authentication** | 10 tests | valid Bearer → 200, missing token → 401, expired → 401, malformed "NotBearer" → 401, empty Bearer value → 401, wrong scope → 403, valid API key → 200, revoked key → 401, wrong scope key → 403, tenant context extraction |
+| **Rate limiting** | 4 tests | exceeded → 429, 429 includes `Retry-After` header, 429 body uses ApiResponse envelope, per-tenant independence |
+| **API versioning** | 4 tests | `/api/v1/` works, `/api/v2/` → 404, no version prefix → 404, bare `/api` → 404 or redirect |
+| **Security (CWE-209)** | 4 tests | no stack traces leaked, no internal paths leaked, auth errors use generic messages, 404 doesn't reveal DB internals |
+| **Edge cases** | 4 tests | malformed JSON → 400/422 with envelope, DELETE on health → 405, extremely long URL handled, `#![forbid(unsafe_code)]` verified |
+| **Consistency** | 1 test | all 5 endpoints return consistent envelope format |
+
+**Status:** RED (fails to compile — `axiathon_server::app()` does not exist)
+
+**Handoff:** To Dev for implementation. The dev needth to:
+1. Export `pub fn app() -> Router` from `axiathon-server/src/lib.rs`
+2. Implement `AppState` with `FromRef` substates
+3. Wire up routes under `/api/v1/`
+4. Add auth middleware (JWT + API key)
+5. Add rate limiting middleware (tower-governor)
+6. Ensure all responses use the `ApiResponse<T>` envelope with `meta` containing `request_id` (UUID), `timestamp` (ISO 8601), and `trace_id`
+
+## Delivery Findings
+
+- No upstream findings during test design.

@@ -1,0 +1,18 @@
+## Dev Assessment
+
+**Implementation Complete:** Yes
+
+**Files Changed:**
+- `Cargo.toml` (workspace) — added `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml` to workspace dependencies
+- `crates/axiathon-client/Cargo.toml` — added production dependencies (clap, clap_complete, comfy-table, csv, dirs, reqwest, serde, serde_json, toml), set edition to 2021 (tests use `std::env::set_var` without unsafe blocks)
+- `crates/axiathon-client/src/lib.rs` — added module re-exports
+- `crates/axiathon-client/src/error.rs` — `CliError` enum with `#[non_exhaustive]`, thiserror derive, exit code mapping (1/3/4), CWE-209 sanitized Display
+- `crates/axiathon-client/src/output.rs` — `OutputFormat` enum (Table/Json/Csv with FromStr), `OutputFormatter` trait, `TableFormatter` (comfy-table), `JsonFormatter` (with `format_with_metadata` + `ResponseMetadata`), `CsvFormatter` (csv crate)
+- `crates/axiathon-client/src/config.rs` — `ClientConfig` with TOML loading, env var overrides (AXIATHON_API_URL/SERVER/TIMEOUT), URL validation (http/https only), timeout validation (>0, <=3600), XDG default path
+- `crates/axiathon-client/src/client.rs` — `SiemClient` with reqwest, header injection (X-Tenant-ID, Authorization: Bearer), CRLF/null byte validation, HTTP status code mapping, trailing slash stripping
+- `crates/axiathon-client/src/cli.rs` — `Cli` (#[derive(Parser)]), `Commands` (#[derive(Subcommand)]) with 10 command groups, `GlobalFlags` with all global flags (format, verbose, quiet, tenant, server, config, no-color), after_help examples
+- `crates/axiathon-client/src/commands/` — 10 command modules (query, rules, alerts, ingest, config, status, tenant, login, completion, init) with Args structs and `handle_stub()` functions referencing correct story numbers
+- `crates/axiathon-client/src/commands/completion.rs` — functional `generate_completions()` using `clap_complete` for bash/zsh/fish/PowerShell
+
+**Tests:** 117/117 passing (GREEN)
+**Branch:** current branch (not pushed yet — no branch context from session file)

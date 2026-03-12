@@ -1,0 +1,99 @@
+Good. Now I have a complete picture. Let me compile my findings.
+
+---
+
+# Adversarial Code Review: Story 6.1 — CLI Framework & Structure
+
+*"Well, darlings. You built a CLI. Let's see how badly you f—ked it up."*
+
+## Review Findings
+
+### [HIGH] `main.rs` does not dispatch commands or handle errors — binary is a no-op at `main.rs:7-9`
+
+The `main.rs` parses arguments via `Cli::parse()` and then **discards** the result (`let _cli`). No command dispatch, no error handling, no exit codes. The binary compiles and parses args, but **does nothing**. This means:
+- No stub handlers are called
+- No exit code mapping occurs (`CliError::exit_code()` is dead code from the binary's perspective)
+- No errors are written to stderr
+- AC-3 (exit codes from the binary) is not satisfied at the integration level
+- AC-10 (stubs print "not yet implemented") never happens from running the binary
+
+The unit tests pass because they test the library functions directly, but running `cargo run -p axiathon-client -- status` silently exits 0.
+
+### [HIGH] `with_token()` and `with_tenant()` silently discard invalid input at `client.rs:26-38`
+
+When a token or tenant ID contains newlines, the method **silently does nothing** — no error, no warning, no log. The builder pattern means the caller has no indication their value was rejected. Per the Rust rules: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." Silent drops are the error-swallowing equivalent. A `Result` return or at minimum a `tracing::warn!` is needed.
+
+### [HIGH] `RawConfig` uses `#[derive(Deserialize)]` with `deny_unknown_fields` absent — unknown fields silently ignored at `config.rs:7-12`
+
+A TOML file with `token = "secret"` is **silently accepted** without error. The token field is simply ignored because `RawConfig` doesn't have it. This is technically correct for the "don't load tokens" requirement, but means a user who thinks their token is being loaded from config gets **zero feedback**. An operator typo like `api_ur = "..."` is also silently ignored. Consider `#[serde(deny_unknown_fields)]` to fail loudly on unrecognized keys.
+
+### [MEDIUM] `JsonFormatter` uses hardcoded dummy metadata at `output.rs:88-92`
+
+`ResponseMetadata` is filled with `"cli-request"`, `"1970-01-01T00:00:00Z"`, and `"v1"` — clearly placeholder values. The `request_id` should be a UUID, the `timestamp` should be `chrono::Utc::now()`. While this is a stub-phase artifact, the tests assert this structure exists and pass with dummy data, which means the tests won't catch when real metadata injection is needed.
+
+### [MEDIUM] `SiemClient` path traversal "sanitization" is naive at `client.rs:15`
+
+```rust
+let url = url.replace("../", "");
+```
+
+This can be bypassed with `....//` (after removing `../`, the remaining `../` re-forms). A single pass of `replace` doesn't handle nested path traversal. Also, `base_url` sanitization is the wrong layer — the real protection should be URL parsing validation (e.g., `url::Url::parse()`).
+
+### [MEDIUM] `CompletionArgs.shell` is `String` instead of `clap_complete::Shell` enum at `cli.rs:168`
+
+The shell argument is a raw `String`, and validation happens deep inside `generate_completions()` which returns an empty string for invalid shells. Using `Shell` (or a custom enum with `ValueEnum`) at the clap level gives free validation, help text listing valid values, and tab-completion of shell names.
+
+### [MEDIUM] Missing `logout` command — AC-1 requires `login`/`logout` at `cli.rs:41-63`
+
+AC-1 explicitly says: "login/logout". The `Commands` enum has `Login` but no `Logout`. The `--help` text won't show `logout`.
+
+### [MEDIUM] Missing `tui` command — AC-1 requires it at `cli.rs:41-63`
+
+AC-1 says `--help` must show: "tui". The `Commands` enum does not include a `Tui` variant.
+
+### [LOW] `output.rs` implements both `FromStr` and `ValueEnum` for `OutputFormat` at `output.rs:4,11`
+
+`#[derive(clap::ValueEnum)]` already provides string parsing for clap. The manual `FromStr` impl is redundant and could diverge from clap's behavior. The tests exercise `FromStr` but clap uses `ValueEnum` — testing the wrong path.
+
+### [LOW] Nightly `rustfmt` fails — import ordering violations in multiple files
+
+Per the gotchas file: "Always include `cargo +nightly fmt --all --check` in the preflight." The formatter found ordering issues in `completion.rs`, `commands/mod.rs`, `main.rs`, and test files.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in `lib.rs:2` and `main.rs:1`
+
+### [VERIFIED] Workspace dependencies correctly declared in root `Cargo.toml:52-58`
+
+### [VERIFIED] `CliError` exit code mapping covers all documented codes (1, 3, 4) at `error.rs:41-48`
+
+### [VERIFIED] CWE-113 header injection protection exists for token and tenant at `client.rs:26-38`
+
+### [VERIFIED] Config token exclusion — `token()` always returns `None` at `config.rs:83-85`
+
+### [VERIFIED] HTTP status code mapping is comprehensive (401/403/404/429/5xx/connect/timeout) at `client.rs:76-100`
+
+---
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 3 |
+| Medium | 4 |
+| Low | 2 |
+| Verified | 5 |
+
+The High findings are:
+1. **`main.rs` is a no-op** — commands are parsed but never dispatched, exit codes never applied. The binary doesn't actually do anything.
+2. **Silent input rejection** in `SiemClient` builder methods — violated values are swallowed without feedback.
+3. **Unknown config fields silently ignored** — operator typos and misplaced `token` get no warning.
+
+*"You wrote a lovely library, darlings. Shame nobody plugged it into the binary. The engine runs, but there's no transmission. Fix the dispatch, stop swallowing errors like they're compliments, and come back when the CLI actually does what it claims."*
+
+— Chrisjen
+
+## Verdict
+
+**CHANGES_REQUESTED**
+
+The binary not dispatching commands is a blocking issue — it means AC-3 (exit codes) and AC-10 (stub messages) are not satisfied at the integration level, only at the unit test level. The silent input rejection in `SiemClient` and the missing `logout`/`tui` commands per AC-1 compound this.

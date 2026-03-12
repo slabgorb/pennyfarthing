@@ -75,14 +75,10 @@ def resolve_step_gate(
     return _resolve_gate_tag_from_file(step_file)
 
 
-def _resolve_external_gate(
-    gate_file_ref: str, project_root: Path | None
-) -> dict:
+def _resolve_external_gate(gate_file_ref: str, project_root: Path | None) -> dict:
     """Load and validate an external gate YAML file."""
     if project_root is None:
-        return _result(
-            success=False, error="project_root required for external gate files"
-        )
+        return _result(success=False, error="project_root required for external gate files")
 
     gate_path = project_root / gate_file_ref
     if not gate_path.exists():

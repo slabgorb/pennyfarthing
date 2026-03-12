@@ -1,0 +1,108 @@
+All right. I've read everything. Time to deliver the verdict.
+
+---
+
+# Adversarial Code Review: Story 8.1 — REST API Foundation
+
+*"Well, darling, I've read every line. Let me tell you what's actually going on here, because no one else seems willing to."*
+
+---
+
+## Preflight Check
+
+`cargo test -p axiathon-server` — **all 55 tests pass**.
+`cargo clippy -p axiathon-server -- -D warnings` — **clean**.
+`cargo +nightly fmt --all --check` — **FAILING** (329 lines of import ordering diff).
+
+---
+
+## Findings
+
+### [HIGH] Nightly `rustfmt` import ordering fails — `lib.rs:8`, `middleware.rs:3-8`
+
+`cargo +nightly fmt --all --check` produces a 329-line diff. Import ordering between `std::` and external crates is wrong in multiple files. Per gotchas.md, this **must** be clean before approval.
+
+### [HIGH] Unused dependencies in `Cargo.toml` — `Cargo.toml:9-22`
+
+Six crate dependencies are declared but **never used** anywhere in `src/`:
+- `axiathon-core` (the server defines its own `Envelope` — never imports `ApiResponse<T>` from core)
+- `axiathon-detection`
+- `axiathon-ingestion`
+- `axiathon-ot`
+- `axiathon-query`
+- `axiathon-storage`
+- `tracing` / `tracing-subscriber`
+- `thiserror`
+- `tokio` (no direct use in lib; only test dep)
+- `serde` (only `serde::Serialize` used, but `serde_json` re-exports it — check if needed)
+
+This bloats compile times and violates workspace hygiene. At minimum `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `tracing`, `tracing-subscriber`, `thiserror`, and `tokio` are dead weight in `[dependencies]`.
+
+### [HIGH] No `AppState` / `FromRef` substate pattern — `lib.rs:24`
+
+The story AC and technical guardrails **require** `AppState` with `FromRef` substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`). The router is entirely stateless — `app()` returns `Router` with no `.with_state()`. This is the central architectural pattern for the entire epic, and it's absent. Even as stubs, the types and wiring need to exist.
+
+### [HIGH] Auth middleware is a dead end — `middleware.rs:21-46`
+
+The auth middleware **rejects every request unconditionally**. It never calls `next.run(req).await`. This means every protected endpoint returns 401 always. The tests for protected endpoints (events, alerts, rules, queries) only assert `!= 404` or `== 401`, which passes vacuously. No test actually reaches a handler through auth. The stub should at minimum provide a test bypass or a mechanism to inject valid tokens.
+
+### [MEDIUM] `Envelope` diverges from `ApiResponse<T>` in `axiathon-core` — `response.rs:14-19` vs `types.rs:221-228`
+
+The server defines its own `Envelope<T>` with `{ data, errors: Vec, meta }` while `axiathon-core::ApiResponse<T>` has `{ data, error: Option<ApiError>, meta: Option<ApiMeta> }`. The shapes are **incompatible**:
+- Core uses `error` (singular, optional); server uses `errors` (array, always present)
+- Core's `meta` is `Option<ApiMeta>` (pagination); server's `meta` is always present with `request_id`/`timestamp`/`trace_id`
+- Core uses `skip_serializing_if` so absent fields are omitted; server always includes all three fields
+
+This will cause confusion and integration pain. The story AC says "use `ApiResponse<T>` from axiathon-core" but the server reinvents it. Need to reconcile.
+
+### [MEDIUM] Rate limiter uses global `OnceLock<Mutex<HashMap>>` — `middleware.rs:68-71`
+
+A `Mutex`-guarded `HashMap` behind a `OnceLock` is a **global singleton** that persists across tests in the same process. This means rate limit tests are **order-dependent** — `exceeding_rate_limit_returns_429` and `different_tenants_have_independent_rate_limits` share state. The tests pass today because `build_app()` creates a fresh router but the `rate_limit_state()` is shared across all invocations. If test order changes, tenant-a exhausting limits in one test poisons another.
+
+### [MEDIUM] No body size limit — `routes.rs` / `lib.rs`
+
+The `oversized_request_body_rejected` security test passes only because auth rejects the request first (401, not 200). If auth ever passes, a 100MB body would be fully buffered. No `axum::extract::DefaultBodyLimit` or `tower_http::limit::RequestBodyLimitLayer` is configured.
+
+### [MEDIUM] JWKS endpoint bypasses the envelope format — `routes.rs:26-33`
+
+`jwks()` returns raw `Json(json!({"keys": []}))` without the `Envelope` wrapper. Every other endpoint uses the envelope. The AC says "every response, success or error" must use the envelope. The tests don't catch this because they only check for the `keys` field, not the envelope structure.
+
+### [MEDIUM] Rate limiter key is `X-Tenant-Id` header, not JWT-derived — `middleware.rs:76-81`
+
+Anyone can set `X-Tenant-Id: victim-tenant` to exhaust another tenant's rate limit bucket. The story says tenant context comes from JWT/API key claims, not a spoofable header. This is a rate-limit bypass / denial-of-service vector.
+
+### [LOW] `health_rejects_post_method` and `health_rejects_delete_method` tests expect 405 — `security.rs:219,241`
+
+Axum's fallback handler fires on unmatched routes/methods, so POST/DELETE to `/api/v1/health` will hit the v1 fallback and return **404**, not 405. These tests pass because Axum does return 405 for method mismatches on registered routes with `.route()` — but only when there's no fallback. With a `.fallback()` on the v1 router, this behavior is version-sensitive. Verify this doesn't break on Axum updates.
+
+### [LOW] No structured logging/tracing anywhere — all of `src/`
+
+`tracing` is listed as a dependency but never used. No `#[instrument]`, no `tracing::info!()`, no span creation. The AC calls for `trace_id` propagation and the architecture doc requires tenant_id + trace_id in all tracing spans.
+
+### [LOW] `request_id_header_propagated_in_response` test asserts nothing — `security.rs:329-357`
+
+The test sends `X-Request-Id: test-request-id-12345` but only checks that `meta.request_id` is a string — which it always is, because `EnvelopeMeta::new()` generates a fresh UUID regardless of the incoming header. The test never asserts the incoming ID was actually propagated. This is a false-pass.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present in `lib.rs:2`
+### [VERIFIED] Error messages are generic — no internal details leaked (CWE-209 checked)
+### [VERIFIED] All five route groups registered under `/api/v1/`
+### [VERIFIED] JWKS at `/.well-known/jwks.json` accessible without auth
+### [VERIFIED] 404 fallback returns JSON envelope format
+### [VERIFIED] Per-tenant rate limit isolation works (despite global state concern)
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| HIGH     | 4     | YES     |
+| MEDIUM   | 5     | no      |
+| LOW      | 3     | no      |
+| VERIFIED | 6     | —       |
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+*"Let me be perfectly clear, because apparently subtlety is wasted here. Four blocking issues: nightly fmt is broken, half the dependency list is dead weight dragging down every build, the `AppState`/`FromRef` pattern that the entire epic depends on is simply absent, and the auth middleware is a wall that no request can ever pass through — which means you've tested nothing behind it. Fix these four, and we'll talk about the medium-severity items. Don't come back until the imports are sorted."*

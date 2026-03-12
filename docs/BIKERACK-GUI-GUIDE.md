@@ -36,10 +36,8 @@ open http://localhost:1898
 ### Development Mode
 
 ```bash
-# Hot reload mode (browser)
-cd packages/cyclist
-pnpm install
-pnpm run dev:web
+# Start WheelHub server with GUI
+pf bikerack start
 
 # Then open http://localhost:1898
 ```
@@ -559,7 +557,7 @@ BikeRack GUI uses bicycle-themed codenames for major subsystems:
 
 ### WheelHub
 
-The central coordination server (implemented in `packages/cyclist/src/server.ts`) where all communication converges:
+The central coordination server (implemented in `pennyfarthing-dist/src/pf/wheelhub/app.py`, Python FastAPI) where all communication converges:
 
 - API endpoints for stats, personas, git, stories, settings
 - WebSocket servers for real-time communication

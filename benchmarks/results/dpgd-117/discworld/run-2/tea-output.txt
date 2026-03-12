@@ -1,0 +1,26 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 8.1 is a feature story with 5 acceptance criteria requiring server implementation.
+
+**Test Files:**
+| File | Tests | Covers |
+|---|---|---|
+| `api_routes_integration.rs` | 16 tests | AC: REST endpoints exist (5 route groups, health detail, 404 fallback, content-type) |
+| `api_envelope_integration.rs` | 13 tests | AC: ApiResponse envelope (data/error/meta fields, request_id UUID, ISO 8601 timestamp, trace_id, unique IDs) |
+| `api_auth_integration.rs` | 15 tests | AC: Authentication (JWT valid/missing/expired/malformed/wrong-scope, API key valid/revoked/wrong-scope, auth header edge cases) |
+| `api_rate_limit_integration.rs` | 5 tests | AC: Rate limiting (429 status, Retry-After header, envelope, tenant isolation, config type) |
+| `api_versioning_integration.rs` | 7 tests | AC: API versioning (v1 prefix, v2/v0 404, no-version 404, deprecation header mechanism, trailing slash) |
+| `api_security_integration.rs` | 12 tests | Security: CWE-209 (no token echo, no stack traces, no internal names), input validation (bad JSON, empty body), security headers (X-Content-Type-Options, X-Frame-Options), CORS, AppState substate pattern |
+
+**Tests Written:** 68 tests covering all 5 ACs + security edge cases
+**Status:** RED (failing — `axiathon_server::app`, `axiathon_server::config::RateLimitConfig`, `axiathon_server::state::AppState` do not exist yet)
+
+**Handoff:** To Dev for implementation. The tests expect:
+1. `pub fn app() -> Router` — returns the configured Axum router
+2. `pub mod config` with `RateLimitConfig` struct
+3. `pub mod state` with `AppState` (implementing `Default`)
+4. All responses wrapped in `ApiResponse<T>` with `meta` containing `request_id` (UUID), `timestamp` (ISO 8601), `trace_id`
+5. Auth middleware checking `Authorization: Bearer <token>` and `X-API-Key` headers
+6. Rate limiting returning 429 with `Retry-After` header
+7. Security headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`

@@ -1,0 +1,26 @@
+Right then. I've systematically proven this parrot is deceased — I mean, I've methodically written **125 failing tests** across **9 test files** that prove beyond all doubt that the CLI framework doesn't exist yet. Norwegian Blue Verification complete.
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 is a feature story creating the entire CLI framework — extensive test coverage needed.
+
+**Test Files:**
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `cli_command_structure.rs` | 27 | AC-1 (command groups), AC-2 (subcommand help), AC-6 (clap derive) |
+| `cli_exit_codes.rs` | 14 | AC-3 (exit code mapping 0/1/2/3/4) |
+| `cli_output_format.rs` | 16 | AC-4 (table/json/csv, metadata, escaping, empty data) |
+| `cli_global_flags.rs` | 19 | AC-5 (-v repeatable, --quiet, --server, --tenant, --config, --no-color, global=true) |
+| `cli_siem_client.rs` | 14 | AC-7 (construction, header injection, HTTP status mapping) |
+| `cli_config.rs` | 12 | AC-8 (TOML loading, env overrides, precedence, XDG path, no token in config) |
+| `cli_completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell, subcommand presence) |
+| `cli_stubs.rs` | 7 | AC-10 (stub message format, story references, exit code 1) |
+| `cli_security.rs` | 10 | CWE-209 error exposure, header injection, null bytes, config validation, Send+Sync |
+
+**Tests Written:** 125 tests covering all 10 ACs
+**Status:** RED (failing — won't compile, types don't exist yet)
+**Handoff:** To Dev for implementation
+
+**Public API surface expected by tests:** `Cli` (Parser), `CliError` (with `exit_code()`, `from_http_status()`), `OutputFormat`, `OutputFormatter`, `SiemClient`, `ClientConfig`, `generate_completions()`.

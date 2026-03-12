@@ -140,14 +140,14 @@ gui *args:
 
     case "$mode" in
         web)
-            echo "Starting BikeRack GUI (Web dev mode)..."
+            echo "Starting BikeRack GUI (Vite dev mode)..."
             echo "  Project: $project_dir"
-            eval $env_vars npm run dev:web
+            eval $env_vars pnpm run dev:vite
             ;;
         server)
-            echo "Starting BikeRack GUI (Web server)..."
+            echo "Starting BikeRack (WheelHub Python server)..."
             echo "  Project: $project_dir"
-            eval $env_vars npm start
+            eval $env_vars pf bikerack start
             ;;
     esac
 
@@ -283,6 +283,13 @@ validate-subagents:
 validate-sprint *args:
     PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.sprint.validator {{args}}
 
+<<<<<<< HEAD
+# Check if wheelhub.mjs bundle is stale vs TypeScript source
+check-bundle-drift:
+    ./scripts/check-bundle-drift.sh
+
+=======
+>>>>>>> origin/develop
 # Run all validations
 validate: validate-agents validate-subagents validate-sprint
 

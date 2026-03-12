@@ -1,0 +1,27 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers the foundational CLI binary — all structural, behavioral, and security contracts must be tested.
+
+**Test Files:**
+| File | Tests | Coverage |
+|------|-------|----------|
+| `tests/cli_structure.rs` | 31 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive) |
+| `tests/exit_codes.rs` | 14 | AC-3 (CliError enum, exit_code() mapping 0/1/2/3/4) |
+| `tests/output_format.rs` | 16 | AC-4 (OutputFormatter trait, table/json/csv, RFC 4180 escaping, TTY detection) |
+| `tests/siem_client.rs` | 13 | AC-7 (HTTP wrapper, header injection, 401/403/404/429/5xx mapping) |
+| `tests/config_loading.rs` | 10 | AC-8 (TOML loading, env var overrides, XDG paths, missing file defaults) |
+| `tests/shell_completion.rs` | 8 | AC-9 (bash/zsh/fish/powershell generation, stderr instructions) |
+| `tests/stub_handlers.rs` | 13 | AC-10 ("not yet implemented" messages, exit code 1, story references) |
+| `tests/security.rs` | 13 | CWE-209 error exposure, CRLF header injection, credential leakage, unsafe_code forbid |
+
+**Tests Written:** 118 tests covering all 10 ACs
+**Status:** RED (failing — 6 files fail to compile due to missing modules, 2 files fail at runtime due to missing binary)
+
+**Security tests cover:**
+- CWE-209: Error messages don't leak stack traces or server paths
+- Header injection: CRLF in tenant ID and auth token rejected/sanitized
+- Credential safety: Token never in config file, never printed in verbose output
+- `#![forbid(unsafe_code)]` verified in source
+
+**Handoff:** To Dev for implementation (GREEN phase)

@@ -1,0 +1,37 @@
+*They ALL float down here, Georgie. Every. Single. Module.*
+
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 introduces the entire CLI framework — foundational crate with complex public API surface
+
+**Test Files:**
+| File | Tests | Covers |
+|------|-------|--------|
+| `tests/cli_structure.rs` | 22 | AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (derive macros) |
+| `tests/exit_codes.rs` | 14 | AC-3 (exit code mapping 0/1/2/3/4), CWE-209 error exposure |
+| `tests/output_format.rs` | 11 | AC-4 (OutputFormatter trait, table/json/csv, no-color, metadata) |
+| `tests/siem_client.rs` | 15 | AC-7 (HTTP wrapper, header injection, status code mapping, security) |
+| `tests/config_loading.rs` | 14 | AC-8 (TOML loading, env var overrides, precedence, validation) |
+| `tests/completion.rs` | 6 | AC-9 (bash/zsh/fish/powershell generation) |
+| `tests/stub_handlers.rs` | 10 | AC-10 (not-yet-implemented messages with story refs) |
+
+**Tests Written:** 92 tests covering all 10 ACs
+**Status:** RED (failing — all 7 test files fail to compile due to missing modules: `cli`, `error`, `output`, `client`, `config`, `commands::completion`)
+
+**Security tests included:**
+- CWE-209: Error messages don't leak stack traces or internal paths
+- Header injection: Token/tenant values with `\r\n` are rejected
+- Raw 5xx body echo prevention
+- Token not stored in config file
+- Config validation (empty URLs, negative timeouts)
+
+**Required modules for Dev to implement:**
+- `axiathon_client::cli` — `Cli` (Parser), `Commands` (Subcommand)
+- `axiathon_client::error` — `CliError` with `exit_code()` method
+- `axiathon_client::output` — `OutputFormat`, `OutputFormatter`
+- `axiathon_client::client` — `SiemClient` with `new()`, `get()`
+- `axiathon_client::config` — `ClientConfig` with TOML/env/CLI loading
+- `axiathon_client::commands::completion` — `generate_completion()`
+
+**Handoff:** To Dev for implementation (GREEN phase)

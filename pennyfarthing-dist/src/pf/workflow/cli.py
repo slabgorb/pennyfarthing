@@ -182,11 +182,16 @@ def workflow_phases(story_id: str | None, output_json: bool):
         if output_json:
             import json
 
-            click.echo(json.dumps({
-                "error": f"Workflow not found: {workflow_name}",
-                "code": "WORKFLOW_NOT_FOUND",
-                "detail": None,
-            }, indent=2))
+            click.echo(
+                json.dumps(
+                    {
+                        "error": f"Workflow not found: {workflow_name}",
+                        "code": "WORKFLOW_NOT_FOUND",
+                        "detail": None,
+                    },
+                    indent=2,
+                )
+            )
             raise SystemExit(1)
         click.echo(f"Error: Workflow '{workflow_name}' not found", err=True)
         raise SystemExit(1)
@@ -209,12 +214,14 @@ def workflow_phases(story_id: str | None, output_json: bool):
             status = "done"
         else:
             status = "pending"
-        phases.append({
-            "name": name,
-            "agent": p.get("agent", ""),
-            "label": p.get("label", name),
-            "status": status,
-        })
+        phases.append(
+            {
+                "name": name,
+                "agent": p.get("agent", ""),
+                "label": p.get("label", name),
+                "status": status,
+            }
+        )
 
     result = {
         "workflow": workflow_name,
@@ -318,9 +325,13 @@ def workflow_route_cmd(story_id: str, output_json: bool):
         workflows_dirs = get_all_workflows_dirs(root)
         wf_file = find_workflow_file(workflows_dirs, story_workflow)
         if wf_file:
-            result = {"workflow": story_workflow, "reason": f"Explicit workflow field '{story_workflow}' on story"}
+            result = {
+                "workflow": story_workflow,
+                "reason": f"Explicit workflow field '{story_workflow}' on story",
+            }
             if output_json:
                 import json
+
                 click.echo(json.dumps(result, indent=2))
             else:
                 click.echo(f"Workflow: {result['workflow']}")
@@ -349,9 +360,13 @@ def workflow_route_cmd(story_id: str, output_json: bool):
         for wf_name, wf in all_workflows:
             trigger_tags = wf.get("triggers", {}).get("tags", [])
             if trigger_tags and any(t in trigger_tags for t in non_wf_tags):
-                result = {"workflow": wf_name, "reason": f"Matched trigger tag to workflow '{wf_name}'"}
+                result = {
+                    "workflow": wf_name,
+                    "reason": f"Matched trigger tag to workflow '{wf_name}'",
+                }
                 if output_json:
                     import json
+
                     click.echo(json.dumps(result, indent=2))
                 else:
                     click.echo(f"Workflow: {result['workflow']}")
@@ -363,9 +378,13 @@ def workflow_route_cmd(story_id: str, output_json: bool):
         for wf_name, wf in all_workflows:
             trigger_types = wf.get("triggers", {}).get("types", [])
             if trigger_types and story_type in trigger_types:
-                result = {"workflow": wf_name, "reason": f"Matched type '{story_type}' to workflow '{wf_name}'"}
+                result = {
+                    "workflow": wf_name,
+                    "reason": f"Matched type '{story_type}' to workflow '{wf_name}'",
+                }
                 if output_json:
                     import json
+
                     click.echo(json.dumps(result, indent=2))
                 else:
                     click.echo(f"Workflow: {result['workflow']}")
@@ -379,10 +398,16 @@ def workflow_route_cmd(story_id: str, output_json: bool):
             if trigger_points:
                 pts_min = trigger_points.get("min")
                 pts_max = trigger_points.get("max")
-                if (pts_min is None or story_points >= pts_min) and (pts_max is None or story_points <= pts_max):
-                    result = {"workflow": wf_name, "reason": f"Matched points {story_points} to workflow '{wf_name}'"}
+                if (pts_min is None or story_points >= pts_min) and (
+                    pts_max is None or story_points <= pts_max
+                ):
+                    result = {
+                        "workflow": wf_name,
+                        "reason": f"Matched points {story_points} to workflow '{wf_name}'",
+                    }
                     if output_json:
                         import json
+
                         click.echo(json.dumps(result, indent=2))
                     else:
                         click.echo(f"Workflow: {result['workflow']}")
@@ -395,6 +420,7 @@ def workflow_route_cmd(story_id: str, output_json: bool):
             result = {"workflow": wf_name, "reason": f"Using default workflow '{wf_name}'"}
             if output_json:
                 import json
+
                 click.echo(json.dumps(result, indent=2))
             else:
                 click.echo(f"Workflow: {result['workflow']}")
@@ -404,7 +430,17 @@ def workflow_route_cmd(story_id: str, output_json: bool):
     # No match
     if output_json:
         import json
-        click.echo(json.dumps({"error": f"No workflow matched for story {story_id}", "code": "NO_MATCH", "detail": None}, indent=2))
+
+        click.echo(
+            json.dumps(
+                {
+                    "error": f"No workflow matched for story {story_id}",
+                    "code": "NO_MATCH",
+                    "detail": None,
+                },
+                indent=2,
+            )
+        )
     else:
         click.echo(f"Error: No workflow matched for story {story_id}", err=True)
     raise SystemExit(1)
@@ -456,7 +492,7 @@ def workflow_list_cmd():
         wf = data.get("workflow", {})
 
         name = wf.get("name", wf_file.stem)
-        desc = (wf.get("description") or "-")
+        desc = wf.get("description") or "-"
         if isinstance(desc, str):
             desc = desc.split("\n")[0][:80]
         is_default = wf.get("triggers", {}).get("default", False)
@@ -569,11 +605,16 @@ def workflow_show_cmd(name: str | None, output_json: bool):
         if output_json:
             import json
 
-            click.echo(json.dumps({
-                "error": f"Workflow not found: {workflow_name}",
-                "code": "WORKFLOW_NOT_FOUND",
-                "detail": None,
-            }, indent=2))
+            click.echo(
+                json.dumps(
+                    {
+                        "error": f"Workflow not found: {workflow_name}",
+                        "code": "WORKFLOW_NOT_FOUND",
+                        "detail": None,
+                    },
+                    indent=2,
+                )
+            )
             raise SystemExit(1)
         click.echo(f"Error: Workflow '{workflow_name}' not found", err=True)
         click.echo("", err=True)
@@ -598,7 +639,9 @@ def workflow_show_cmd(name: str | None, output_json: bool):
                 {
                     "name": p.get("name", "?"),
                     "agent": p.get("agent", "?"),
-                    "gate": p.get("gate", {}).get("type") if isinstance(p.get("gate"), dict) else None,
+                    "gate": p.get("gate", {}).get("type")
+                    if isinstance(p.get("gate"), dict)
+                    else None,
                 }
                 for p in phases
             ],
@@ -633,7 +676,9 @@ def workflow_show_cmd(name: str | None, output_json: bool):
         for p in phases:
             pname = p.get("name", "?")
             pagent = p.get("agent", "?")
-            pgate = p.get("gate", {}).get("type", "none") if isinstance(p.get("gate"), dict) else "none"
+            pgate = (
+                p.get("gate", {}).get("type", "none") if isinstance(p.get("gate"), dict) else "none"
+            )
             click.echo(f"| {pname} | {pagent} | {pgate} |")
         click.echo("")
 
@@ -705,14 +750,19 @@ def workflow_start_cmd(name: str, mode: str | None):
     has_steps = wf.get("steps") is not None
     if wf_type != "stepped" and not has_steps:
         click.echo(f"Error: '{name}' is a phased workflow, not stepped", err=True)
-        click.echo("Use TDD workflow commands (/sm, /tea, /dev, /reviewer) for phased workflows", err=True)
+        click.echo(
+            "Use TDD workflow commands (/sm, /tea, /dev, /reviewer) for phased workflows", err=True
+        )
         raise SystemExit(1)
 
     # Validate mode
     if mode:
         valid_modes = {"create", "validate", "edit"}
         if mode not in valid_modes:
-            click.echo(f"Error: Invalid mode '{mode}'. Must be one of: {', '.join(sorted(valid_modes))}", err=True)
+            click.echo(
+                f"Error: Invalid mode '{mode}'. Must be one of: {', '.join(sorted(valid_modes))}",
+                err=True,
+            )
             raise SystemExit(1)
 
     # Resolve mode
@@ -925,9 +975,7 @@ def workflow_resume_cmd(name: str | None):
     import re
 
     updated_content = re.sub(
-        r"^- \*\*Last Updated:\*\*.*$",
-        f"- **Last Updated:** {now}",
-        content, flags=re.MULTILINE
+        r"^- \*\*Last Updated:\*\*.*$", f"- **Last Updated:** {now}", content, flags=re.MULTILINE
     )
     session_file.write_text(updated_content)
 
@@ -1170,19 +1218,27 @@ def workflow_fix_phase_cmd(story_id: str, target_phase: str, dry_run: bool):
     try:
         current_idx = phases.index(current_phase)
     except ValueError as err:
-        click.echo(f"Error: Current phase '{current_phase}' not found in {workflow_name} workflow", err=True)
+        click.echo(
+            f"Error: Current phase '{current_phase}' not found in {workflow_name} workflow",
+            err=True,
+        )
         click.echo(f"Valid phases: {', '.join(phases)}", err=True)
         raise SystemExit(1) from err
 
     try:
         target_idx = phases.index(target_phase)
     except ValueError as err:
-        click.echo(f"Error: Target phase '{target_phase}' not found in {workflow_name} workflow", err=True)
+        click.echo(
+            f"Error: Target phase '{target_phase}' not found in {workflow_name} workflow", err=True
+        )
         click.echo(f"Valid phases: {', '.join(phases)}", err=True)
         raise SystemExit(1) from err
 
     if target_idx <= current_idx:
-        click.echo(f"Error: Target phase '{target_phase}' is not ahead of current phase '{current_phase}'", err=True)
+        click.echo(
+            f"Error: Target phase '{target_phase}' is not ahead of current phase '{current_phase}'",
+            err=True,
+        )
         click.echo(f"Phase sequence: {', '.join(phases)}", err=True)
         raise SystemExit(1)
 
@@ -1257,8 +1313,13 @@ def workflow_fix_phase_cmd(story_id: str, target_phase: str, dry_run: bool):
 
 @workflow.command("complete-step")
 @click.argument("name", required=False, default=None)
-@click.option("--step", "step_override", type=int, default=None,
-              help="Complete a specific step number instead of current step")
+@click.option(
+    "--step",
+    "step_override",
+    type=int,
+    default=None,
+    help="Complete a specific step number instead of current step",
+)
 def workflow_complete_step_cmd(name: str | None, step_override: int | None):
     """Complete the current step of a stepped workflow.
 
@@ -1361,27 +1422,23 @@ def workflow_complete_step_cmd(name: str | None, step_override: int | None):
     content = re.sub(
         r"^- \*\*Current Step:\*\*.*$",
         f"- **Current Step:** {next_step}",
-        content, flags=re.MULTILINE
+        content,
+        flags=re.MULTILINE,
     )
     content = re.sub(
         r"^- \*\*Steps Completed:\*\*.*$",
         f"- **Steps Completed:** {new_steps_completed}",
-        content, flags=re.MULTILINE
+        content,
+        flags=re.MULTILINE,
     )
     content = re.sub(
-        r"^- \*\*Last Updated:\*\*.*$",
-        f"- **Last Updated:** {now}",
-        content, flags=re.MULTILINE
+        r"^- \*\*Last Updated:\*\*.*$", f"- **Last Updated:** {now}", content, flags=re.MULTILINE
     )
     content = re.sub(
-        r"^- \*\*Status:\*\*.*$",
-        f"- **Status:** {new_status}",
-        content, flags=re.MULTILINE
+        r"^- \*\*Status:\*\*.*$", f"- **Status:** {new_status}", content, flags=re.MULTILINE
     )
     content = re.sub(
-        r"^- Completion:.*$",
-        f"- Completion: {completion_pct}%",
-        content, flags=re.MULTILINE
+        r"^- Completion:.*$", f"- Completion: {completion_pct}%", content, flags=re.MULTILINE
     )
 
     session_file.write_text(content)
@@ -1389,6 +1446,7 @@ def workflow_complete_step_cmd(name: str | None, step_override: int | None):
     # Archive completed session
     if new_status == "completed":
         import shutil
+
         archive_dir = project_root / "sprint" / "archive"
         archive_dir.mkdir(parents=True, exist_ok=True)
         archived_path = archive_dir / session_file.name

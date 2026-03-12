@@ -327,10 +327,31 @@ If no teammates found issues: `**Overall:** simplify: clean`
 If a teammate timed out: note it in the table as `timeout — no result`.
 </verify-workflow>
 
+<deviation-tracking>
+## Design Deviations (Real-Time)
+
+**When your test design diverges from the AC or story spec, log it immediately** in the session file's `## Design Deviations` section. Do this at the moment of the decision, not during exit.
+
+Append under a `### TEA (test design)` subheading:
+
+```markdown
+### TEA (test design)
+- **{what you changed}:** Spec said {X}, tests use {Y}. Reason: {why in one sentence}.
+```
+
+**Examples:**
+- **Validation strategy:** AC says "reject invalid input", tests use property-based generation instead of example list. Reason: catches more edge cases than enumerated examples.
+- **Error granularity:** AC says "return error", tests assert specific error variant. Reason: string-bag errors violate SOUL.md #5.
+
+**If no deviations:** Write `### TEA (test design)\n- No deviations from spec.`
+</deviation-tracking>
+
 <assessment-template>
 ## TEA Assessment Template
 
-Write to session file BEFORE starting exit protocol:
+Write to session file BEFORE starting exit protocol.
+
+### Red Phase (test writing)
 
 ```markdown
 ## TEA Assessment
@@ -345,6 +366,36 @@ Write to session file BEFORE starting exit protocol:
 **Status:** RED (failing - ready for Dev)
 
 **Handoff:** To Dev for implementation
+```
+
+### Verify Phase (simplify + quality-pass)
+
+```markdown
+## TEA Assessment
+
+**Phase:** verify
+**Status:** GREEN confirmed
+
+### Simplify Report
+
+**Teammates:** reuse, quality, efficiency
+**Files Analyzed:** {N}
+
+| Teammate | Status | Findings |
+|----------|--------|----------|
+| simplify-reuse | clean / {N} findings | {summary} |
+| simplify-quality | clean / {N} findings | {summary} |
+| simplify-efficiency | clean / {N} findings | {summary} |
+
+**Applied:** {N} high-confidence fixes
+**Flagged for Review:** {N} medium-confidence findings
+**Noted:** {N} low-confidence observations
+**Reverted:** {N} (details: {which finding, which check failed})
+
+**Overall:** simplify: clean | simplify: applied {N} fixes | simplify: reverted
+
+**Quality Checks:** All passing
+**Handoff:** To Reviewer for code review
 ```
 
 ### Delivery Findings Capture
@@ -383,9 +434,10 @@ Append your findings under a `### TEA (test design)` subheading after the marker
 </finding-capture>
 
 <exit>
-1. Capture delivery findings (see <finding-capture>)
-2. Write TEA Assessment to session file (see <assessment-template>)
-3. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
+1. Verify deviations logged (gate: `gates/deviations-logged` with AGENT=tea)
+2. Capture delivery findings (see <finding-capture>)
+3. Write TEA Assessment to session file (see <assessment-template>)
+4. Follow <agent-exit-protocol> from agent-behavior guide (resolve-gate → complete-phase → marker)
 
 Nothing after the marker. EXIT.
 </exit>
@@ -407,7 +459,7 @@ Stay within the token budget. Be focused — answer the specific question, not e
 </tandem-consultation>
 
 <research-tools>
-Use Context7 to verify test framework APIs and assertion patterns for unfamiliar external libraries. See `guides/agent-coordination.md` → Research Tools.
+Use Context7 to verify test framework APIs and assertion patterns for unfamiliar external libraries. Use Perplexity for test pattern discovery — `perplexity_ask` for quick lookups on testing approaches, `perplexity_reason` for analyzing complex testing strategies. Trust but verify: never assume a Perplexity-suggested test approach works without running it. See `guides/agent-coordination.md` → Research Tools.
 </research-tools>
 
 <skills>

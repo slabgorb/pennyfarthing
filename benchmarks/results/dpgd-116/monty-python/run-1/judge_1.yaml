@@ -1,0 +1,75 @@
+scenario_id: dpgd-116
+theme: monty-python
+run_id: 1
+judge_version: v2
+judge_pass: 1
+total_caught: 3
+total_findings: 7
+weighted_caught: 15
+total_weight: 37
+score_pct: 40.5
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged from_file_or_default swallowing all error types. Config
+    tests exist but none distinguish NotFound from parse/permission errors.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA explicitly listed ''CWE-209: Error display must not leak server internals
+    or token details'' as a security test. Reviewer F10 also flagged ConfigError Display
+    leaking raw config content, same vulnerability class.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA included 'CWE-113: Header injection via CR/LF in tenant ID and auth\
+    \ token'. Dev implemented CR/LF stripping in with_token and with_tenant. Reviewer\
+    \ verified. However, the specific finding about using raw String instead of TenantId\
+    \ from axiathon-core was not flagged \u2014 the pipeline mitigated the symptom\
+    \ (injection) but not the root cause (type safety bypass)."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged that 6 dependencies use direct version strings instead
+    of workspace = true. The reviewer noted a toml version mismatch (F5) but never
+    addressed the workspace inheritance pattern.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: 'Reviewer F7 flagged exactly this: ''RawConfig silently ignores unknown
+    fields including token... a token = "secret" field in cli.toml is silently eaten
+    by serde... giving users a false sense that it''s being used. A warning should
+    be emitted, or unknown fields should be explicitly handled.'''
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: "Reviewer explicitly stated '[VERIFIED] Tests are thorough and non-vacuous\
+    \ \u2014 assertions check specific values, not just is_ok()' \u2014 opposite conclusion.\
+    \ The vacuous None || true assertion was not identified."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: Reviewer verified tests as non-vacuous, reaching the opposite conclusion.
+    The zero-assertion test with 'let _ = config;' was not flagged by any phase.

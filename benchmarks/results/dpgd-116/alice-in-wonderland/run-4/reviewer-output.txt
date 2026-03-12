@@ -1,0 +1,132 @@
+Good. I have all the data I need. Here is my verdict.
+
+---
+
+# **OFF WITH THEIR HEADS!** Code Review: Story 6.1 — CLI Framework & Structure
+
+## VERDICT: **CHANGES_REQUESTED**
+
+---
+
+## Blocking Findings
+
+### 1. [CRITICAL] Nightly rustfmt formatting violations — `src/cli.rs`, `src/dispatch.rs`, `src/main.rs`, 4 test files
+
+`cargo +nightly fmt --all --check` reports ~12 formatting diffs across 7 files. Per `gotchas.md`: *"Always include cargo +nightly fmt --all --check in the preflight. If it fails, flag it before approval — don't let it slip to post-merge."* This **will fail CI**.
+
+**Fix:** Run `cargo +nightly fmt --all`.
+
+### 2. [CRITICAL] Missing `tui` and `logout` commands — AC-1 violation at `cli.rs:44-110`
+
+AC-1 states: *"`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init."*
+
+The `Commands` enum has `Login` but is missing:
+- `Logout` — required by AC-1 (login/**logout** pair)
+- `Tui` — required by AC-1, launches TUI (Epic 4 stub)
+
+Both should be stub commands referencing their downstream stories.
+
+### 3. [CRITICAL] `init` command is a stub, must be functional — `dispatch.rs:39-41`
+
+The story scope explicitly says: *"In scope: `axiathon init` first-time setup **(functional, not stub)**"* and *"Any command handler implementation beyond stubs **(except completion and init which are functional)**"*.
+
+Currently:
+```rust
+Commands::Init => {
+    Err(CliError::NotImplemented("Story 6.1".to_string()))
+}
+```
+
+This must create `~/.config/axiathon/cli.toml` with defaults and print instructions to stderr.
+
+### 4. [HIGH] `completion` silently does nothing for unknown shells — `commands/completion.rs:17`
+
+```rust
+_ => return,
+```
+
+An unrecognized shell silently returns with exit code 0 (success). This violates AC-9 which expects installation instructions to stderr, and violates AC-3 which says errors go to stderr. "Success" when nothing happened is a silent failure. Should return an error or at least use `clap::ValueEnum` for the `Shell` type to get clap validation.
+
+### 5. [HIGH] `apply_env_overrides` silently ignores invalid env var values — `config.rs:78-93`
+
+```rust
+/// Apply environment variable overrides. Invalid values are silently ignored.
+pub fn apply_env_overrides(&mut self, env_vars: &[(&str, &str)]) {
+```
+
+The doc comment says "silently ignored" like it's a feature, but `AXIATHON_API_URL` has **no validation at all** in this path — no scheme check, nothing. A user sets `AXIATHON_API_URL=ftp://evil.com` and it's accepted without the http/https check that `from_file` enforces. Inconsistent validation is a bug.
+
+### 6. [HIGH] `toml` version mismatch: workspace declares `0.8`, story spec says `0.9` — `Cargo.toml:49`
+
+The story's Technical Guardrails say `toml 0.9`, workspace `Cargo.toml` has `toml = "0.8"`. Minor version mismatch — `0.9` may not exist yet, but the spec should be reconciled. If `0.8` is correct, fine, but document the deviation.
+
+---
+
+## Non-Blocking Findings
+
+### 7. [MEDIUM] Missing `keyring` dependency — no credential storage path
+
+AC-8 requires OS keychain via `keyring` crate. It's not in `Cargo.toml`. The story scope says credential *storage* is in scope, though login *implementation* is Story 9.1. At minimum the dependency should be declared and the SiemClient should have a `load_token_from_keychain()` method (even if login doesn't populate it yet).
+
+### 8. [MEDIUM] `SiemClient` CRLF rejection is silent — `client.rs:29-31`
+
+```rust
+if tenant_id.contains('\r') || tenant_id.contains('\n') {
+    return self;  // silently swallowed
+}
+```
+
+Builder pattern silently ignores bad input. The caller has no way to know the tenant ID was rejected. Should return `Result` or log a warning via `tracing::warn!`.
+
+### 9. [MEDIUM] CSV writer errors silently swallowed — `output.rs:82-87`
+
+```rust
+let _ = wtr.write_record(headers);
+```
+
+Three `let _ =` calls discarding write results. If CSV serialization fails, the output is silently truncated with no error.
+
+### 10. [MEDIUM] `RawConfig` accepts unknown TOML fields without warning — `config.rs:10-14`
+
+`#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]` means a typo like `servar_url` is silently ignored. Users will get defaults with no hint their config is wrong.
+
+### 11. [LOW] `main.rs` doesn't load config or initialize SiemClient — `main.rs:9-16`
+
+The main function is Parse → Dispatch → Exit. There's no config loading, no SiemClient construction, no tracing initialization. While stubs don't need these, the wiring skeleton should exist so subsequent stories have a pattern to follow. The story says *"tracing init"* in the `main.rs` file description.
+
+### 12. [LOW] `OutputFormat` default should auto-detect TTY — AC-4
+
+AC-4 says: *"Table default for TTY, JSON for piped output."* The code has `format: Option<OutputFormat>` but no TTY detection logic anywhere. `std::io::IsTerminal` is mentioned in the spec but not used.
+
+---
+
+## Verified Good
+
+- [VERIFIED] `#![forbid(unsafe_code)]` in both `lib.rs:2` and `main.rs:2`
+- [VERIFIED] All 94 tests pass, clippy clean
+- [VERIFIED] Exit code mapping correct: 3=auth, 4=authz, 1=other at `error.rs:41-48`
+- [VERIFIED] `#[non_exhaustive]` on `CliError` at `error.rs:11`
+- [VERIFIED] CRLF injection checks present on both tenant and token at `client.rs:29,38`
+- [VERIFIED] HTTP status code mapping covers 401/403/404/429/5xx at `client.rs:54-62`
+- [VERIFIED] JSON output includes `ResponseMetadata` with request_id, timestamp, api_version at `output.rs:67-74`
+- [VERIFIED] No `unwrap()` without fallback in production code
+- [VERIFIED] Plural noun command names (rules, alerts) per architecture doc
+- [VERIFIED] Global flags all have `global = true` at `cli.rs:12-37`
+- [VERIFIED] No server-side crate imports — only `axiathon-core` dependency
+
+---
+
+## Summary
+
+| Severity | Count | Blocks? |
+|----------|-------|---------|
+| Critical | 3 | YES |
+| High | 3 | YES |
+| Medium | 4 | No |
+| Low | 2 | No |
+
+**The King of Hearts whispers:** *"Consider, my dear... the bones are solid. The architecture is clean, tests are thorough, security checks are present. Fix the six blocking items and this is ready."*
+
+**The Queen roars:** Six blocking issues. Missing commands. Silent failures. A stub masquerading as functional code. Formatting that will explode CI. **OFF WITH THEIR HEADS!**
+
+**CHANGES_REQUESTED** — fix items 1-6, then resubmit for re-review.

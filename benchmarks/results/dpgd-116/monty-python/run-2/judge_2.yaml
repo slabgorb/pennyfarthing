@@ -1,0 +1,77 @@
+scenario_id: dpgd-116
+theme: monty-python
+run_id: 2
+judge_version: v2
+judge_pass: 2
+total_caught: 4
+total_findings: 7
+weighted_caught: 18
+total_weight: 37
+score_pct: 48.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase addressed from_file_or_default swallowing all errors. TEA's config
+    tests don't distinguish NotFound from parse/permission errors. Reviewer didn't
+    flag it. The config_does_not_store_token_field test and RawConfig findings are
+    about different issues.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: dev
+  evidence: Dev implemented CWE-209 safe Display on CliError. TEA wrote cli_security.rs
+    tests for CWE-209 error exposure. Reviewer verified ServerError Display does not
+    leak. Same vulnerability class (CWE-209) addressed, though the specific Io(transparent)
+    variant forwarding OS details was not individually flagged.
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: TEA wrote cli_siem_client.rs tests (14 tests) and cli_security.rs tests
+    for header injection. Dev implemented CRLF/null prevention in with_tenant(). Reviewer
+    verified header injection prevention at client.rs:31-52. Same CWE-113 class caught,
+    though using validated TenantId type from axiathon-core was not flagged.
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [MEDIUM] 'Non-workspace dependencies \u2014 Cargo.toml:11-20'\
+    \ noting clap_complete, comfy-table, csv, dirs, toml, tempfile are pinned directly\
+    \ instead of using [workspace.dependencies]."
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged [HIGH] 'RawConfig silently ignores unknown fields at\
+    \ config.rs:11-14' \u2014 specifically called out token = 'my-secret' scenario,\
+    \ secrets left in config files, and recommended #[serde(deny_unknown_fields)]."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the vacuously true assertion pattern (is_none() ||
+    ...). The reviewer did not flag test quality issues of this kind. TEA wrote the
+    flawed test and neither Dev nor Reviewer caught it.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase identified the zero-assertion test (let _ = config). TEA wrote
+    the test with no assertions, and neither Dev nor Reviewer flagged the missing
+    assert_eq! checks on default config values.

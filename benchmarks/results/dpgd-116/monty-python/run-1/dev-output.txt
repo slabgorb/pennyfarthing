@@ -1,0 +1,29 @@
+All clean. **118 tests passing, 0 clippy warnings.**
+
+## Summary
+
+**Files changed:**
+
+| File | Description |
+|------|-------------|
+| `Cargo.toml` | Added workspace deps: clap_complete, comfy-table, csv, dirs, reqwest, toml |
+| `crates/axiathon-client/Cargo.toml` | Added all required dependencies |
+| `crates/axiathon-client/src/lib.rs` | Module declarations for cli, client, commands, config, error, output |
+| `crates/axiathon-client/src/cli.rs` | `Cli` (Parser) + `Commands` (Subcommand) with all global flags |
+| `crates/axiathon-client/src/error.rs` | `CliError` enum with exit_code() mapping and sanitized Display |
+| `crates/axiathon-client/src/output.rs` | `OutputFormat`, `OutputFormatter` trait, Table/Json/Csv formatters |
+| `crates/axiathon-client/src/client.rs` | `SiemClient` HTTP wrapper with header injection prevention |
+| `crates/axiathon-client/src/config.rs` | `ClientConfig` TOML loading with env var overrides and validation |
+| `crates/axiathon-client/src/commands/mod.rs` | Re-exports all command modules |
+| `crates/axiathon-client/src/commands/query.rs` | Query stub → Story 5.5 |
+| `crates/axiathon-client/src/commands/rules.rs` | Rules stub → Story 6.1 |
+| `crates/axiathon-client/src/commands/alerts.rs` | Alerts stub → Story 6.5 |
+| `crates/axiathon-client/src/commands/ingest.rs` | Ingest stub → Story 6.4 |
+| `crates/axiathon-client/src/commands/config.rs` | Config stub → Story 6.3 |
+| `crates/axiathon-client/src/commands/status.rs` | Status stub → Story 6.2 |
+| `crates/axiathon-client/src/commands/tenant.rs` | Tenant stub → Story 6.1 |
+| `crates/axiathon-client/src/commands/login.rs` | Login stub → Story 9.1 |
+| `crates/axiathon-client/src/commands/completion.rs` | Functional shell completion generation (bash/zsh/fish/powershell) |
+| `crates/axiathon-client/src/commands/init.rs` | Init args struct |
+
+**Tests:** 118/118 passing (GREEN)

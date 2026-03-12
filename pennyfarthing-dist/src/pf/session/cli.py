@@ -83,5 +83,3 @@ def session_continue(list_only: bool, story_id: str | None):
 
     click.echo("\nTo resume, load the agent with checkpoint context:")
     click.echo(f"  Read: {target}")
-
-

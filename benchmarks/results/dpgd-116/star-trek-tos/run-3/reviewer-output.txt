@@ -1,0 +1,88 @@
+All data gathered. Let me compile my adversarial review.
+
+---
+
+# Story 6.1 Review — Mr. Spock's Analysis
+
+*raises eyebrow*
+
+Fascinating. The implementation compiles, tests pass, clippy is clean. Most reviewers would stop here. I am not most reviewers. Let me proceed with logical precision.
+
+---
+
+## Observations
+
+### [HIGH] Missing `tui` and `logout` commands — AC-1 violation at `cli.rs:42-85`
+
+AC-1 explicitly requires: *"`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."* The `Commands` enum has no `Tui` or `Logout` variants. This is a spec violation. Both should be present as stubs. The test suite also doesn't check for their absence — the tests would need updating too.
+
+### [HIGH] SiemClient discards the auth token — `client.rs:51-56`
+
+The constructor accepts `token: Option<&str>` but only stores `has_token: bool`. The actual token value is thrown away. When future stories need to inject `Authorization: Bearer <token>` headers into HTTP requests, the token won't be available. The `SiemClient` is supposed to "inject Authorization: Bearer headers" per AC-7, but the implementation makes that impossible. This is an architectural time bomb — future stories will need to refactor the constructor and every call site.
+
+### [HIGH] Nightly `rustfmt` check fails — `client.rs`, `completion.rs`
+
+Per `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."* The check fails with formatting diffs in `client.rs:27` (function signature layout) and `completion.rs:15` (multiline format string). This is a blocking pre-merge gate per project conventions.
+
+### [MEDIUM] Config silently accepts unknown fields including `token` — `config.rs:11-16`
+
+`RawConfig` uses serde's default deserialization which silently ignores unknown fields. A config file containing `token = "my-secret"` is silently accepted and the token is discarded. While the test at `config_loading.rs:155-170` verifies `config.token()` returns `None`, this is weak — serde's `#[serde(deny_unknown_fields)]` would actively reject configs containing a `token` field, preventing operators from believing their token is being used when it's silently dropped. The current behavior creates a dangerous false-sense-of-security: an operator writes `token = "..."` in the config, thinks they're authenticated, but the token is ignored.
+
+### [MEDIUM] `axiathon-core` dependency declared but entirely unused — `Cargo.toml:13`
+
+The crate depends on `axiathon-core` but imports zero types from it. No `TenantId`, no `AxiathonError`, no `ApiResponse`. The `--tenant` flag is `Option<String>` (raw, unvalidated) instead of using the `TenantId` newtype that `axiathon-core` provides with UUID validation. This contradicts the project's Rust rules: *"Newtypes for IDs: TenantId(String) — prevents mixing ID types"* and *"Validated constructors at trust boundaries."* The dependency should either be used or removed to avoid dead weight.
+
+### [MEDIUM] Output formatters silently swallow errors — `output.rs:113, 118-123`
+
+- `format_json` at line 113: `serde_json::to_string_pretty(&data).unwrap_or_default()` — if JSON serialization fails, the user gets an empty string with no error indication.
+- `format_csv` at lines 118-122: Three `.ok()` calls silently discard CSV write errors. A write failure produces silently truncated or empty output.
+
+These violate the project's Rust rule: *"No `unwrap()` in production code"* (the spirit extends to `unwrap_or_default` that hides failures). Silent data loss in operator tooling is dangerous — an operator running `axiathon alerts list --format csv > report.csv` could get a truncated or empty file with exit code 0.
+
+### [MEDIUM] `Completion` variant uses raw `String` instead of `clap_complete::Shell` — `cli.rs:79`
+
+The `shell` field is `String`, requiring manual parsing in `completion.rs:11-22`. Clap has native support for `clap_complete::Shell` as a `ValueEnum`, which would give free validation at parse time, better `--help` output showing valid values, and eliminate the manual match block.
+
+### [MEDIUM] No `after_help` usage examples on commands — AC-2 partial violation at `cli.rs:42-85`
+
+AC-2 requires: *"include `after_help` usage examples for each command group."* No command variant has `after_help` attributes. This means `axiathon query --help` shows only the description, not usage examples. This is a usability gap for operators.
+
+### [LOW] `toml` version mismatch — `Cargo.toml:50`
+
+The story spec says `toml 0.9` but the workspace declares `toml = "0.8"`. Minor, since 0.8 works correctly here, but it's a spec deviation worth noting.
+
+### [LOW] `init` command is vacuous — `main.rs:33-35`
+
+The `init` command just prints "Axiathon first-time setup complete." without performing any actual setup (creating config directory, writing default config file, initializing keychain entry). The story says init should be "functional, not stub," but the current implementation is effectively a stub with a success message.
+
+### [VERIFIED] CWE-113 header injection prevention — `client.rs:43-48`
+
+Tenant ID validation correctly rejects `\r`, `\n`, and `\0` characters. Tests at `siem_client.rs:147-171` verify this.
+
+### [VERIFIED] CWE-209 error information exposure — `error.rs:9-35`
+
+`Display` impls use fixed user-facing messages. Internal details (like server response bodies) are not exposed in Display. The `ServerError(String)` variant stores the detail but Display shows only "server error". Test at `exit_codes.rs:120-131` confirms paths aren't leaked.
+
+### [VERIFIED] Token not exposed in Debug output — `client.rs:16-24`
+
+Custom `Debug` impl excludes the token. Test at `siem_client.rs:179-191` confirms.
+
+### [VERIFIED] Exit code mapping correct — `error.rs:45-51`
+
+Auth → 3, Authz → 4, all others → 1. Comprehensive test coverage.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present — `lib.rs:2`, `main.rs:1`
+
+Both the library and binary entry points forbid unsafe code.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three HIGH findings block approval:
+
+1. **Missing `tui` and `logout` commands** — direct AC-1 violation
+2. **SiemClient discards auth token** — makes future Authorization header injection impossible without refactoring
+3. **Nightly fmt check fails** — per project `gotchas.md`, this is a pre-merge gate
+
+Dr. McCoy would say the implementation is "dead, Jim" — but that would be illogical. The foundation is structurally sound. The error handling, security posture, and test coverage are above average. However, the three HIGH issues must be resolved before this can proceed. The MEDIUM findings should be addressed but are non-blocking.

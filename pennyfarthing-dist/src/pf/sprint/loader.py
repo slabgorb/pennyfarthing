@@ -373,9 +373,7 @@ def find_story(epic: dict[str, Any] | None, story_id: str) -> dict[str, Any] | N
     return None
 
 
-def get_story_field(
-    sprint_data: dict[str, Any], story_id: str, field_name: str
-) -> Any | None:
+def get_story_field(sprint_data: dict[str, Any], story_id: str, field_name: str) -> Any | None:
     """Get a specific field from a story in sprint data.
 
     Extracts the epic number from the story ID (e.g., "63-7" -> epic 63)

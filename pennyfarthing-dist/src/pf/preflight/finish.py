@@ -16,6 +16,7 @@ from typing import Any
 @dataclass
 class PreflightIssue:
     """A blocking issue found during preflight."""
+
     severity: str  # "critical" or "warning"
     issue: str
     fix: str | None = None
@@ -24,6 +25,7 @@ class PreflightIssue:
 @dataclass
 class PRStatus:
     """PR status from GitHub."""
+
     state: str | None = None
     merged: bool = False
     mergeable: str | None = None
@@ -34,6 +36,7 @@ class PRStatus:
 @dataclass
 class LintResult:
     """Lint check result."""
+
     clean: bool = False
     output: str = ""
     error: str | None = None
@@ -42,6 +45,7 @@ class LintResult:
 @dataclass
 class JiraStatus:
     """Jira issue status."""
+
     current: str | None = None
     key: str | None = None
     error: str | None = None
@@ -51,6 +55,7 @@ class JiraStatus:
 @dataclass
 class AcceptanceCriteria:
     """Acceptance criteria check result."""
+
     total: int = 0
     checked: int = 0
     unchecked: list[str] = field(default_factory=list)
@@ -60,6 +65,7 @@ class AcceptanceCriteria:
 @dataclass
 class PreflightResult:
     """Aggregated preflight check results."""
+
     status: str  # "success" or "blocked"
     ready_to_finish: bool
     story_id: str
@@ -102,8 +108,7 @@ class PreflightResult:
 
         if self.issues:
             result["issues"] = [
-                {"severity": i.severity, "issue": i.issue, "fix": i.fix}
-                for i in self.issues
+                {"severity": i.severity, "issue": i.issue, "fix": i.fix} for i in self.issues
             ]
 
         if self.warnings:
@@ -169,7 +174,9 @@ async def check_lint(project_root: Path | None = None) -> LintResult:
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            "npm", "run", "lint",
+            "npm",
+            "run",
+            "lint",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=cwd,
@@ -195,7 +202,11 @@ async def check_jira_status(jira_key: str) -> JiraStatus:
     try:
         # Use --raw for JSON output (much easier to parse)
         proc = await asyncio.create_subprocess_exec(
-            "jira", "issue", "view", jira_key, "--raw",
+            "jira",
+            "issue",
+            "view",
+            jira_key,
+            "--raw",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -216,7 +227,9 @@ async def check_jira_status(jira_key: str) -> JiraStatus:
     return result
 
 
-async def check_acceptance_criteria(story_id: str, project_root: Path | None = None) -> AcceptanceCriteria:
+async def check_acceptance_criteria(
+    story_id: str, project_root: Path | None = None
+) -> AcceptanceCriteria:
     """Check acceptance criteria from session file."""
     result = AcceptanceCriteria()
 
@@ -261,34 +274,42 @@ def aggregate_results(
     # Check PR status
     if pr.error:
         if "no pull requests found" in pr.error.lower():
-            issues.append(PreflightIssue(
-                severity="critical",
-                issue="No PR found for branch",
-                fix="Create PR with: gh pr create",
-            ))
+            issues.append(
+                PreflightIssue(
+                    severity="critical",
+                    issue="No PR found for branch",
+                    fix="Create PR with: gh pr create",
+                )
+            )
         else:
             warnings.append(f"PR check failed: {pr.error}")
     elif not pr.merged:
         if pr.state == "OPEN":
-            issues.append(PreflightIssue(
-                severity="critical",
-                issue="PR is still open (not merged)",
-                fix="Merge the PR before finishing",
-            ))
+            issues.append(
+                PreflightIssue(
+                    severity="critical",
+                    issue="PR is still open (not merged)",
+                    fix="Merge the PR before finishing",
+                )
+            )
         elif pr.state == "CLOSED":
-            issues.append(PreflightIssue(
-                severity="critical",
-                issue="PR was closed without merging",
-                fix="Reopen and merge, or create new PR",
-            ))
+            issues.append(
+                PreflightIssue(
+                    severity="critical",
+                    issue="PR was closed without merging",
+                    fix="Reopen and merge, or create new PR",
+                )
+            )
 
     # Check lint
     if lint.error and not lint.clean:
-        issues.append(PreflightIssue(
-            severity="critical",
-            issue="Lint check failed",
-            fix="Run 'npm run lint' and fix errors",
-        ))
+        issues.append(
+            PreflightIssue(
+                severity="critical",
+                issue="Lint check failed",
+                fix="Run 'npm run lint' and fix errors",
+            )
+        )
 
     # Check Jira (if not skipped)
     if not jira.skipped:
@@ -301,11 +322,13 @@ def aggregate_results(
     if acceptance.error:
         warnings.append(f"Acceptance criteria check failed: {acceptance.error}")
     elif acceptance.unchecked:
-        issues.append(PreflightIssue(
-            severity="critical",
-            issue=f"{len(acceptance.unchecked)} unchecked acceptance criteria",
-            fix=f"Complete: {acceptance.unchecked[0]}" if acceptance.unchecked else None,
-        ))
+        issues.append(
+            PreflightIssue(
+                severity="critical",
+                issue=f"{len(acceptance.unchecked)} unchecked acceptance criteria",
+                fix=f"Complete: {acceptance.unchecked[0]}" if acceptance.unchecked else None,
+            )
+        )
 
     # Determine overall status
     ready = len(issues) == 0
@@ -361,13 +384,25 @@ async def run_finish_preflight(
     results = await asyncio.gather(*checks, return_exceptions=True)
 
     # Unpack results
-    pr_result = results[0] if not isinstance(results[0], Exception) else PRStatus(error=str(results[0]))
-    lint_result = results[1] if not isinstance(results[1], Exception) else LintResult(error=str(results[1]))
-    acceptance_result = results[2] if not isinstance(results[2], Exception) else AcceptanceCriteria(error=str(results[2]))
+    pr_result = (
+        results[0] if not isinstance(results[0], Exception) else PRStatus(error=str(results[0]))
+    )
+    lint_result = (
+        results[1] if not isinstance(results[1], Exception) else LintResult(error=str(results[1]))
+    )
+    acceptance_result = (
+        results[2]
+        if not isinstance(results[2], Exception)
+        else AcceptanceCriteria(error=str(results[2]))
+    )
 
     # Handle Jira result
     if jira_key:
-        jira_result = results[3] if not isinstance(results[3], Exception) else JiraStatus(error=str(results[3]))
+        jira_result = (
+            results[3]
+            if not isinstance(results[3], Exception)
+            else JiraStatus(error=str(results[3]))
+        )
     else:
         jira_result = JiraStatus(skipped=True)
 

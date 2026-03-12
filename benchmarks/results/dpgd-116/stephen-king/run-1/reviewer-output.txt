@@ -1,0 +1,142 @@
+Now I have everything I need. Here is my review.
+
+---
+
+# Review: Story 6.1 — CLI Framework & Structure
+
+*The man in black fled across the desert, and the gunslinger followed. I have followed this code through every file, every module, every test. Here is what the Eld demands.*
+
+## Observations
+
+### CRITICAL
+
+**1. [CRITICAL] CWE-209: `ServerError` Display impl leaks the inner string — `error.rs:9`**
+
+The `CliError::ServerError` variant carries a `String` payload, but `#[error("server error: the server encountered an internal error")]` ignores it in the Display impl. The `{0}` is NOT interpolated in the `#[error(...)]` attribute — the inner string is discarded during Display. This is actually **accidentally secure** right now (CWE-209 is prevented by accident), but it means the inner string in `ServerError(String)` is dead data. If anyone changes the error format to include `{0}`, they'll immediately leak server internals. The dead field is a trap. Either remove the payload and make it a unit variant, or use it safely (e.g., for debug-only logging).
+
+**Verdict: Fragile but not currently exploitable. Downgrade to HIGH.**
+
+### HIGH
+
+**2. [HIGH] Missing `main.rs` — binary entry point does not exist**
+
+AC-3 requires exit code handling via `std::process::exit()` in `main.rs`. AC-7 requires `SiemClient` construction. AC-8 requires config loading orchestration. The story explicitly lists `main.rs` as a required file. Without it, `cargo build --bin axiathon` will fail — there is no binary. The crate is library-only right now. This is a **blocking incompleteness** for Story 6.1.
+
+**3. [HIGH] Missing 9 of 10 command stub files — `commands/` directory**
+
+Per the story spec, `commands/query.rs`, `commands/rules.rs`, `commands/alerts.rs`, `commands/ingest.rs`, `commands/config.rs`, `commands/status.rs`, `commands/tenant.rs`, `commands/login.rs`, `commands/init.rs` are all required. Only `commands/completion.rs` exists. `commands/mod.rs` only re-exports `completion`. AC-10 requires stub handlers that print "not yet implemented (Story X.Y)" — but those handlers don't exist as callable functions. The tests for AC-10 only test the `CliError::NotImplemented` variant directly, not actual command dispatch.
+
+**4. [HIGH] `toml` version mismatch — `Cargo.toml:21`**
+
+Story spec requires `toml` 0.9. The workspace `Cargo.toml` doesn't declare `toml` as a workspace dependency. The crate uses `toml = "0.8"`. At time of writing `toml` 0.9 doesn't exist yet, so 0.8 is acceptable — but the spec says 0.9 and the dep is not managed at workspace level unlike other dependencies, creating inconsistency.
+
+**5. [HIGH] `clap_complete` not declared as workspace dependency — `Cargo.toml:12`**
+
+`clap_complete = "4"` is declared directly in the crate, not via `[workspace.dependencies]`. The story spec says to add it to workspace deps. Same for `comfy-table`, `keyring`, `dirs`, `csv`, `toml`. This violates the workspace dependency management pattern established in the root `Cargo.toml`.
+
+### MEDIUM
+
+**6. [MEDIUM] `--server` flag missing `env` attribute — `cli.rs:28`**
+
+AC-5 states: "`--server` supports `AXIATHON_SERVER` env var." The clap `#[arg]` attribute should include `env = "AXIATHON_SERVER"` so clap automatically reads the environment variable. Currently there's no env var integration for this flag at the clap level, and `config.rs` only handles `AXIATHON_API_URL` — not `AXIATHON_SERVER`.
+
+**7. [MEDIUM] No TTY auto-detection for output format — missing `IsTerminal` usage**
+
+AC-4 states: "Table default for TTY, JSON for piped output." The code defaults to `Table` always. There's no `std::io::IsTerminal` check anywhere. The spec explicitly says to use `std::io::IsTerminal` (not deprecated `atty` crate). The auto-detection between Table/JSON based on TTY is missing.
+
+**8. [MEDIUM] `OutputFormatter` uses `expect()` in 6 places — `output.rs:105-118`**
+
+The Rust rules say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` calls here have messages, so they technically comply, but writing to a `Vec<u8>` CSV writer and then `expect`ing is arguably safe (won't fail in practice). Still, `format_as_csv` and `format_as_json` could return `Result` for cleaner error propagation.
+
+**9. [MEDIUM] `RawConfig.timeout` uses `i64` but `ClientConfig.timeout_secs` is `u64` — `config.rs:11,17`**
+
+The `as u64` cast at line 63 is unchecked. While the `t <= 0` guard above prevents negative values from reaching the cast, there's no upper-bound check. An `i64::MAX` TOML value would become a `u64` — absurd but not exploitable. A maximum timeout validation (e.g., 3600s) would be more defensive.
+
+**10. [MEDIUM] Stub handler tests are vacuous — `stub_handlers.rs`**
+
+The stub tests construct `CliError::NotImplemented` directly and check its `Display` output. They don't test actual command dispatch. When `main.rs` and command modules exist, a user running `axiathon status` should get the NotImplemented error — but that code path doesn't exist and isn't tested. These tests verify the error type, not the integration.
+
+**11. [MEDIUM] `config_handles_unknown_fields_gracefully` test has vacuous assertion — `config_loading.rs:219-222`**
+
+```rust
+assert!(config.is_ok() || config.is_err(), "Unknown fields must not panic");
+```
+This assertion is **always true**. A `Result` is always either `Ok` or `Err`. The test verifies only that the function doesn't panic, which any `Result`-returning function satisfies. The `RawConfig` uses `#[serde(deny_unknown_fields)]`, so this will return `Err` — the test should assert that explicitly.
+
+**12. [MEDIUM] `exit_code_success_is_zero` test is vacuous — `exit_codes.rs:15`**
+
+```rust
+assert_eq!(0i32, 0, "Success exit code must be 0");
+```
+This asserts a literal equals itself. It doesn't test any code. The comment says "handled by main.rs" — but main.rs doesn't exist.
+
+**13. [MEDIUM] `server_flag_rejects_non_url_input` test is vacuous — `cli_structure.rs:243`**
+
+```rust
+assert!(result.is_ok() || result.is_err());
+```
+Always true. Tests nothing.
+
+### LOW
+
+**14. [LOW] `--server` flag is `hide = true` — `cli.rs:28`**
+
+The `--server` flag is hidden from help output. AC-5 lists it as a global flag that should be visible. Hiding it means operators won't discover it via `--help`.
+
+**15. [LOW] `client_config_does_not_store_token_in_toml` test relies on `deny_unknown_fields` as implicit rejection — `config_loading.rs:161-178`**
+
+The test passes because `deny_unknown_fields` rejects the `token` field. The test comment says "Either: parsing should ignore the token field, or it should error." Since `deny_unknown_fields` is set, it errors — which is fine. But if someone removes `deny_unknown_fields` later, the token would silently parse into... nothing (since `RawConfig` has no `token` field). The defense works by coincidence.
+
+**16. [VERIFIED] Header injection prevention — `client.rs:19-23, 31-35`**
+
+Explicit `\n`/`\r` checks before `HeaderValue::from_str`. Double defense: reqwest's `HeaderValue::from_str` also rejects invalid header bytes. Good.
+
+**17. [VERIFIED] `#![forbid(unsafe_code)]` present — `lib.rs:2`**
+
+Compliant with Rust rules.
+
+**18. [VERIFIED] `#[non_exhaustive]` on `CliError` — `error.rs:8`**
+
+Compliant with type design rules.
+
+**19. [VERIFIED] `CliError::exit_code()` mapping is correct — `error.rs:38-49`**
+
+0=success (implicit), 1=general, 3=auth, 4=authz. Matches AC-3.
+
+**20. [VERIFIED] `deny_unknown_fields` on `RawConfig` — `config.rs:8`**
+
+Prevents silent config drift. Good security practice.
+
+---
+
+## Summary
+
+| Severity | Count | Blocking? |
+|----------|-------|-----------|
+| Critical | 0 (downgraded) | — |
+| High | 4 | YES |
+| Medium | 8 | No |
+| Low | 3 | No |
+
+The High findings are:
+- **No `main.rs`** — no binary can be built. The entire dispatch/exit-code/config-loading integration is missing.
+- **9 missing command module files** — the command stubs AC-10 requires don't exist as dispatchable handlers.
+- **Workspace dependency hygiene** — 6 deps declared locally instead of at workspace level.
+- **`toml` version** — minor but deviates from spec.
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+*The gunslinger does not approve. The tower stands, but the foundation is incomplete.*
+
+The code that exists is well-structured, secure (header injection prevention, `deny_unknown_fields`, `#[non_exhaustive]`, CWE-209 mitigation), and the tests are solid for what they cover. But Story 6.1 requires a working `axiathon` binary with command dispatch, and the binary entry point (`main.rs`) doesn't exist. Nine of ten command modules are missing. The nightly `rustfmt` check fails with 324 lines of diff. These are not polish issues — they're structural incompleteness.
+
+**Required before approval:**
+1. Create `main.rs` with command dispatch, config loading, exit code handling
+2. Create all 9 missing command stub files under `commands/`
+3. Wire `commands/mod.rs` to export all modules
+4. Run `cargo +nightly fmt --all` to fix formatting
+5. Move `clap_complete`, `comfy-table`, `keyring`, `dirs`, `csv`, `toml` to `[workspace.dependencies]`
+6. Fix vacuous test assertions (lines that assert `is_ok() || is_err()`)
+7. Add `env = "AXIATHON_SERVER"` to the `--server` flag or document why it's deferred

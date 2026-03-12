@@ -1,0 +1,85 @@
+Right. I've seen enough. Time for the verdict.
+
+---
+
+*puts on the Pointy Hat of Judgment*
+
+# Review: Story 8.1 — REST API Foundation
+
+## Preflight
+
+- `cargo test -p axiathon-server`: **47 tests, all pass**
+- `cargo clippy -p axiathon-server -- -D warnings`: **clean**
+- `cargo +nightly fmt --all --check`: **FAILS** — import ordering issues in `lib.rs`, `middleware.rs`, `routes.rs`
+
+---
+
+## Findings
+
+### `[HIGH]` Nightly fmt check fails — `lib.rs:17`, `middleware.rs:8-9`, `routes.rs:3-7`
+
+Nightly `rustfmt` enforces import ordering that stable does not. Four files have misordered imports. Per `gotchas.md`, this must be fixed before approval. This *will* fail CI.
+
+### `[HIGH]` CORS policy is `allow_origin(Any)` — `lib.rs:66`
+
+The CORS layer allows **any origin**, **any method**, **any header**. The story context specifies JWT auth with scoped permissions for a security platform. Wide-open CORS means any website can make authenticated cross-origin requests if a user's browser has a valid token. For a security product, this is CWE-942 (Permissive CORS Policy). Should at minimum be configurable, not hardcoded `Any`.
+
+### `[HIGH]` Rate limiter counters never reset — `middleware.rs:147-159`
+
+The `rate_limit_counters` HashMap monotonically increments per tenant and **never resets**. Once a tenant hits the limit, they are permanently locked out until the process restarts. This is a denial-of-service vulnerability against legitimate tenants. The story AC says "configurable per-tenant limits" — a limit that never resets is not a rate limit, it's a request quota. Even for a stub, this breaks the AC intent.
+
+### `[HIGH]` `std::sync::Mutex` in async context — `middleware.rs:147`
+
+Using `std::sync::Mutex` inside an `async fn` that holds it across `.await` boundaries is a classic async antipattern. Here the lock is held briefly (no `.await` inside the critical section), so it won't deadlock — but it blocks the tokio runtime thread while held. The story says to use `tower-governor` for rate limiting. `Mutex<HashMap>` is a hand-rolled replacement that doesn't match the spec. Should use `tokio::sync::Mutex` at minimum, or follow the spec and use `tower-governor`.
+
+### `[MEDIUM]` `data` field omitted instead of `null` on errors — `response.rs:44`
+
+`#[serde(skip_serializing_if = "Option::is_none")]` causes error responses to **omit** the `data` field entirely. The AC explicitly says: *"error response has `data` null"*. The test at `api_response_envelope.rs:124` accepts both (`is_none() || is_null()`), masking the deviation. The envelope contract is `data` is always present — null on error, populated on success.
+
+### `[MEDIUM]` Five unused dependencies in Cargo.toml — `Cargo.toml:9-14,19,23-24`
+
+`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber` are declared as dependencies but **none** are imported anywhere in the `src/` directory. The `chrono`, `uuid`, and `tower-http` deps are used. Dead dependencies bloat compile times and create false coupling. (Note: `axiathon-core` in dev-deps is also redundant since it's already a regular dep.)
+
+### `[MEDIUM]` No `FromRef` substate pattern — `lib.rs:34-39`
+
+The story guardrails explicitly require: *"Handlers must declare domain-scoped substates (`DetectionServices`, `StorageServices`, etc.) — never full `AppState`."* The current `AppState` is a flat struct with config and a mutex. No substates, no `FromRef`. This is called out as a compile-time least-privilege enforcement (CWE-653). The architecture decision was validated in spike PR #29.
+
+### `[MEDIUM]` `path_to_required_scope` uses `contains()` for path matching — `middleware.rs:169-179`
+
+`path.contains("/events")` matches any path containing "/events" anywhere, not just the route segment. A path like `/api/v1/health?redirect=/events` or `/api/v1/queries?filter=events` would incorrectly require `events:read` scope. Should match on the route segment properly.
+
+### `[MEDIUM]` No structured logging / tracing anywhere — all files
+
+The story context says Axiathon uses `tracing` for observability. Zero `tracing::info!`, `tracing::warn!`, or span instrumentation in any handler or middleware. Auth failures, rate limit hits, and request processing are invisible to operators. `tracing` and `tracing-subscriber` are declared as deps but never used.
+
+### `[LOW]` `use IntoResponse` at bottom of file — `middleware.rs:182`
+
+`use axum::response::IntoResponse;` is at line 182, separated from the other imports at the top. Unconventional placement. Nightly fmt would likely move it.
+
+### `[LOW]` `ServerConfig` has no TOML/YAML deserialization — `lib.rs:20-31`
+
+AC says: *"Rate limit configuration should be loadable from TOML/YAML."* `ServerConfig` has no `Deserialize` derive or file-loading mechanism. Minor for a foundation story, but noted.
+
+### `[VERIFIED]` `#![forbid(unsafe_code)]` is present at `lib.rs:2`
+### `[VERIFIED]` All responses use the three-field envelope structure
+### `[VERIFIED]` Health endpoint does not require authentication
+### `[VERIFIED]` 401/403/429 error responses return correct status codes with envelope format
+### `[VERIFIED]` Different tenants get independent rate limit counters
+### `[VERIFIED]` `/api/v2/` returns 404
+### `[VERIFIED]` Deprecation header mechanism works
+### `[VERIFIED]` Error messages do not leak internal details (CWE-209 clean)
+### `[VERIFIED]` Request body size limit is enforced (1MB via `RequestBodyLimitLayer`)
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+Three `[HIGH]` issues block this PR:
+
+1. **Nightly fmt fails** — must pass before merge per `gotchas.md`
+2. **CORS `allow_origin(Any)`** — unacceptable for a security platform; needs to be configurable or restricted
+3. **Rate limiter never resets** — permanent lockout after N requests is a DoS, not a rate limit
+
+The `[MEDIUM]` issues (missing `data: null`, unused deps, no `FromRef`, `contains()` path matching, zero tracing) should also be addressed — they represent spec deviations and technical debt that will compound as subsequent stories build on this foundation.
+
+*I don't do "nice." I do right. Fix these and come back.*

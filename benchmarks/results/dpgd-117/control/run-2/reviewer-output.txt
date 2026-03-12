@@ -1,0 +1,114 @@
+Good — the `expect()` has an actionable message per the Rust rules. Now I have enough to write the review.
+
+---
+
+# Adversarial Code Review — Story 8.1: REST API Foundation
+
+## Preflight
+
+- `cargo test -p axiathon-server`: **All 56 tests pass** (6 rate_limiting + 16 authentication + 14 endpoints + 12 envelope + 14 security + 8 versioning - some counted per file)
+- `cargo clippy -p axiathon-server -- -D warnings`: **Clean**
+- `cargo +nightly fmt --all --check`: **FAILS — 36 diffs** (import ordering, line wrapping)
+
+---
+
+## Observations
+
+### [HIGH] Nightly fmt check fails — 36 formatting diffs at `src/lib.rs:9`, `src/middleware/auth.rs:77`, and 34 other locations
+
+Per reviewer gotchas, `cargo +nightly fmt --all --check` must pass. Nightly enforces import ordering that stable does not. There are 36 diffs across the crate. This will fail CI post-merge.
+
+### [HIGH] Six unused dependencies declared in `Cargo.toml:9-14` — `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`
+
+None of these crate dependencies are actually imported or used anywhere in `src/`. They add unnecessary compile-time cost and create false coupling. Additionally, `tracing`, `tracing-subscriber`, `thiserror`, and `bytes` are declared as dependencies but never used in the source. That's **10 unused dependencies** total.
+
+### [HIGH] `Mutex` used inside async context at `src/middleware/rate_limit.rs:8,37`
+
+`std::sync::Mutex` is held across no `.await` points here (just the `check` method), so it won't block the runtime *today*. However, this is inside an async middleware path, and a `std::sync::Mutex` that gets contended under high concurrency will spin-wait and block the Tokio thread pool. The correct choice for async rate limiting is `tokio::sync::Mutex` or, better, a lock-free approach. Under load testing this will become a bottleneck. Given the AC says "configurable per-tenant limits" and production will face concurrent requests, this is a correctness-under-load concern.
+
+### [MEDIUM] `ServerConfig` has no builder, no TOML/YAML loading at `src/config.rs:4-22`
+
+The AC explicitly states: "Rate limit configuration should be loadable from TOML/YAML (SOUL principle 13: behavior is configuration)." The current `ServerConfig` is a struct with a single field and `Default` impl. There's no `serde::Deserialize` derive, no config file loading, no environment variable support. The test `rate_limit_configuration_is_loadable` only checks `default() > 0`, which doesn't test config loading at all.
+
+### [MEDIUM] Scope checking only implemented on `POST /events`, not on other endpoints at `src/routes/events.rs:33-41`
+
+The events POST handler checks `events:write` scope. But `GET /events`, `GET /alerts`, `GET /rules`, `GET /queries` have **no scope checking whatsoever**. A token with zero read scopes can read everything. The AC says "valid token but wrong scope (403)" — the test at `api_authentication.rs:176` weakly asserts `200 || 403`, papering over this gap. For a foundation story, at minimum the GET handlers should check their corresponding read scopes.
+
+### [MEDIUM] Health `uptime` field is hardcoded `"0s"` at `src/routes/health.rs:22`
+
+The AC says "The health endpoint should return actual server health (uptime, version)." Version is correctly sourced from `CARGO_PKG_VERSION`, but uptime is hardcoded. A real uptime would require tracking server start time in state. This is a stub that will mislead monitoring systems.
+
+### [MEDIUM] `AuthLayer` struct is dead code at `src/middleware/auth.rs:69`
+
+`pub struct AuthLayer;` is declared but never used. Dead public types pollute the API surface.
+
+### [MEDIUM] No structured logging or tracing anywhere in the crate
+
+The story's technical guardrails specify `tracing` for observability and mention "Include `tenant_id()` and `trace_id()` in all tracing spans." There are zero `tracing::info!`, `tracing::warn!`, or `#[instrument]` calls in the entire crate. Auth failures, rate limit hits, and request handling are completely silent. The `tracing` and `tracing-subscriber` dependencies are declared but unused.
+
+### [MEDIUM] `trace_id` in `Meta` is a random UUID, not correlated to distributed tracing at `src/response.rs:48`
+
+The AC says `meta.trace_id` should be a string for trace correlation. Currently it's `Uuid::new_v4()` — completely independent from any OpenTelemetry or distributed tracing context. The `request_id` is also `Uuid::new_v4()`. Both are random and disconnected from any request context, making distributed tracing impossible. This should at minimum propagate a `traceparent` header if present.
+
+### [MEDIUM] `MAX_BODY_SIZE` constant is defined but not exposed or configurable at `src/routes/events.rs:15`
+
+The 5MB body limit is a magic number. Per SOUL principle 13, this should be configurable. It's also not documented in any config struct.
+
+### [LOW] `json_body` helper duplicated across 5 test files
+
+Each test file defines its own `async fn json_body()`. This should be a shared test utility module.
+
+### [LOW] CORS preflight test at `api_security.rs:194-216` asserts `200 || 204` but CORS is configured with an empty allowed origins list
+
+The CORS layer at `lib.rs:26` uses `AllowOrigin::list(Vec::<http::HeaderValue>::new())` — an empty list. This means **no origin is allowed**, which is correct for security but means the CORS preflight test passes vacuously (the middleware doesn't reject the request — Axum just routes it normally). The test doesn't actually verify CORS headers are returned.
+
+### [VERIFIED] `#![forbid(unsafe_code)]` present at `src/lib.rs:2`
+### [VERIFIED] Response envelope structure (`data`, `errors`, `meta`) correctly implemented at `src/response.rs:14-18`
+### [VERIFIED] JWT and API key auth paths correctly return 401 for invalid/missing credentials
+### [VERIFIED] Rate limiter correctly isolates tenants at `src/middleware/rate_limit.rs:36-57`
+### [VERIFIED] Fallback handler returns 404 in envelope format at `src/lib.rs:66-72`
+### [VERIFIED] JWKS endpoint exists at `/.well-known/jwks.json` and returns `keys` array
+
+---
+
+## Data Flow Trace
+
+Traced: unauthenticated request to `GET /api/v1/events`
+
+1. Request enters `build_router()` → nested under `/api/v1`
+2. Falls into `protected` router → hits auth middleware layer (`from_fn`)
+3. `auth_middleware`: no `Authorization` header, no `X-API-Key` header → returns 401 envelope
+4. Response has `data: null`, `errors: [{type, title, status}]`, `meta: {request_id, timestamp, trace_id}` — **correct**
+
+Traced: authenticated POST to `/api/v1/events` with readonly token
+
+1. Auth middleware finds `Bearer valid-readonly-token` → validates → inserts `TenantInfo` with scopes `[events:read, alerts:read]`
+2. Rate limiter reads `TenantInfo` → checks bucket → passes
+3. `post_events` handler → checks `events:write` scope → not found → returns 403 — **correct**
+
+---
+
+## Hard Questions
+
+- **What happens with `\r\n` in Authorization header?** `to_str()` rejects non-visible ASCII, so binary attacks return `Err` → 401. **OK.**
+- **What if rate limiter `Mutex` is poisoned?** `expect()` will panic, crashing the request handler. In production this would crash the thread. Should use `.lock().unwrap_or_else(|e| e.into_inner())` for resilience, or at minimum return 500.
+- **What if two requests arrive with the same tenant at the exact Instant boundary?** One resets the window, the other may see a stale bucket. The `Mutex` serializes access, so this is safe but the window reset is not sliding — it's a fixed window that can allow 2x burst at window boundaries. The AC says "sliding window" is not required, but the doc comment at `rate_limit.rs:14` says "sliding window counter" which is inaccurate.
+- **Memory growth:** The `HashMap<String, TenantBucket>` in the rate limiter grows unboundedly. Every unique tenant ID adds an entry that is never cleaned up. Under a tenant-ID-guessing attack, this is unbounded memory growth (DoS vector).
+
+---
+
+## Verdict: **CHANGES_REQUESTED**
+
+### Blocking Issues (must fix)
+
+1. **[HIGH] `cargo +nightly fmt --all --check` fails** — Run `cargo +nightly fmt --all` to fix. Per gotchas, this is a pre-approval requirement.
+2. **[HIGH] 10 unused dependencies** — Remove `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `tracing`, `tracing-subscriber`, `thiserror`, and `bytes` from `[dependencies]` in `Cargo.toml`. They are not used and create false coupling.
+3. **[HIGH] `std::sync::Mutex` in async rate limiter** — Either switch to `tokio::sync::Mutex`, use `dashmap`, or document why `std::sync::Mutex` is acceptable (held for nanoseconds, no await across lock). At minimum the doc comment claiming "sliding window" should be corrected to "fixed window."
+
+### Non-blocking (should fix before next story)
+
+4. **[MEDIUM]** Add `serde::Deserialize` to `ServerConfig` and basic TOML loading to satisfy the "loadable from TOML/YAML" AC.
+5. **[MEDIUM]** Add scope checking to GET handlers or document that it's deferred.
+6. **[MEDIUM]** Remove dead `AuthLayer` struct.
+7. **[MEDIUM]** Add at minimum `tracing::warn!` for auth failures and rate limit hits, or remove the unused tracing dependencies.
+8. **[MEDIUM]** Fix the hardcoded uptime in health endpoint.

@@ -61,12 +61,14 @@ def reconcile(
     yaml_stories = []
     for epic in sprint_data.get("epics", []):
         for story in epic.get("stories", []):
-            yaml_stories.append({
-                "id": story.get("id", ""),
-                "jira": story.get("jira", ""),
-                "status": story.get("status", "backlog"),
-                "title": story.get("title", ""),
-            })
+            yaml_stories.append(
+                {
+                    "id": story.get("id", ""),
+                    "jira": story.get("jira", ""),
+                    "status": story.get("status", "backlog"),
+                    "title": story.get("title", ""),
+                }
+            )
 
     status_mismatches = []
     missing_jira = []
@@ -93,11 +95,13 @@ def reconcile(
         # Compare normalized statuses
         expected_jira = map_status_to_jira(yaml_status)
         if _normalize_status(jira_status) != _normalize_status(expected_jira):
-            status_mismatches.append({
-                "jira_key": jira_key,
-                "yaml_status": yaml_status,
-                "jira_status": jira_status,
-            })
+            status_mismatches.append(
+                {
+                    "jira_key": jira_key,
+                    "yaml_status": yaml_status,
+                    "jira_status": jira_status,
+                }
+            )
 
     # --- Check Jira sprint against YAML ---
     print("## Checking Jira Sprint Against YAML...\n")
@@ -118,11 +122,13 @@ def reconcile(
             if key not in yaml_keys and key not in yaml_ids:
                 status = get_jira_field(issue, "fields.status.name", "Unknown")
                 summary = get_jira_field(issue, "fields.summary", "Unknown")
-                orphans.append({
-                    "jira_key": key,
-                    "status": status,
-                    "summary": summary,
-                })
+                orphans.append(
+                    {
+                        "jira_key": key,
+                        "status": status,
+                        "summary": summary,
+                    }
+                )
 
         # Find YAML stories not in sprint
         print("## Checking for Issues Not in Sprint...\n")
@@ -137,10 +143,12 @@ def reconcile(
             key = issue.get("key", "")
             if key in yaml_keys or key in yaml_ids:
                 summary = get_jira_field(issue, "fields.summary", "Unknown")
-                not_in_sprint.append({
-                    "jira_key": key,
-                    "summary": summary,
-                })
+                not_in_sprint.append(
+                    {
+                        "jira_key": key,
+                        "summary": summary,
+                    }
+                )
 
     # --- Build report ---
     report_lines = [
@@ -165,11 +173,13 @@ def reconcile(
                 f"| {m['jira_key']} | {m['yaml_status']} | {m['jira_status']} | Update YAML or Jira |"
             )
 
-    report_lines.extend([
-        "",
-        f"## YAML Stories Missing Jira Key ({len(missing_jira)})",
-        "",
-    ])
+    report_lines.extend(
+        [
+            "",
+            f"## YAML Stories Missing Jira Key ({len(missing_jira)})",
+            "",
+        ]
+    )
 
     if not missing_jira:
         report_lines.append("All YAML stories have Jira keys.")
@@ -178,15 +188,15 @@ def reconcile(
         report_lines.append("|---------|-------|--------|--------|")
         for m in missing_jira:
             title = m["title"][:40]
-            report_lines.append(
-                f"| {m['id']} | {title} | {m['status']} | Create Jira issue |"
-            )
+            report_lines.append(f"| {m['id']} | {title} | {m['status']} | Create Jira issue |")
 
-    report_lines.extend([
-        "",
-        f"## Jira Issues Not in YAML ({len(orphans)})",
-        "",
-    ])
+    report_lines.extend(
+        [
+            "",
+            f"## Jira Issues Not in YAML ({len(orphans)})",
+            "",
+        ]
+    )
 
     if not orphans:
         report_lines.append("All sprint issues are tracked in YAML.")
@@ -200,15 +210,15 @@ def reconcile(
                 if o["status"] == "Done"
                 else "Add to YAML or remove from sprint"
             )
-            report_lines.append(
-                f"| {o['jira_key']} | {o['status']} | {summary} | {action} |"
-            )
+            report_lines.append(f"| {o['jira_key']} | {o['status']} | {summary} | {action} |")
 
-    report_lines.extend([
-        "",
-        f"## YAML Stories Not in Jira Sprint ({len(not_in_sprint)})",
-        "",
-    ])
+    report_lines.extend(
+        [
+            "",
+            f"## YAML Stories Not in Jira Sprint ({len(not_in_sprint)})",
+            "",
+        ]
+    )
 
     if not not_in_sprint:
         report_lines.append("All YAML stories are in Jira sprint.")
@@ -217,9 +227,7 @@ def reconcile(
         report_lines.append("|----------|---------|--------|")
         for n in not_in_sprint:
             summary = n["summary"][:50]
-            report_lines.append(
-                f"| {n['jira_key']} | {summary} | Add to sprint {sprint_id} |"
-            )
+            report_lines.append(f"| {n['jira_key']} | {summary} | Add to sprint {sprint_id} |")
 
     # Epic sync check
     report_lines.extend(["", "## Epic Sync Check", ""])

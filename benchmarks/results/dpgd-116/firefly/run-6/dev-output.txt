@@ -1,0 +1,33 @@
+**All 97 tests GREEN. Zero clippy warnings.**
+
+## Summary
+
+### Files Changed/Created
+
+**Workspace config:**
+- `Cargo.toml` — added workspace deps: `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml`
+- `crates/axiathon-client/Cargo.toml` — added production deps, overrode `unsafe_code` lint from `forbid` to `deny` (tests need `set_var`/`remove_var` which are unsafe in edition 2024; lib.rs retains `#![forbid(unsafe_code)]`)
+
+**Production code (all new):**
+- `src/lib.rs` — module re-exports
+- `src/error.rs` — `CliError` enum with 9 variants, `exit_code()` mapping (1/3/4), sanitized `Display` (no internal IPs/tokens)
+- `src/output.rs` — `OutputFormat` enum (FromStr, case-insensitive), `OutputFormatter` trait, `TableFormatter` (comfy-table), `JsonFormatter` (with metadata), `CsvFormatter` (RFC 4180)
+- `src/config.rs` — `ClientConfig` (TOML loading, env var overrides, CLI overrides, XDG path), `load_token()` from `AXIATHON_API_TOKEN`
+- `src/client.rs` — `SiemClient` wrapping `reqwest::Client` with header injection, status code mapping, URL construction, CRLF-safe headers
+- `src/cli.rs` — `Cli` struct (clap derive), `Commands` enum with 12 subcommands, 7 global flags
+- `src/commands/` — `mod.rs`, `query.rs`, `rules.rs`, `alerts.rs`, `ingest.rs`, `config.rs`, `status.rs`, `tenant.rs`, `login.rs`, `init.rs`, `completion.rs` (functional shell completion generation)
+
+**Test fixes (edition 2024 compat):**
+- `tests/config_loading.rs` — `#![allow(unsafe_code)]`, wrapped `set_var`/`remove_var` in `unsafe`
+- `tests/security.rs` — same
+
+### Tests: 97/97 passing (GREEN)
+- cli_structure: 10
+- exit_codes: 13
+- global_flags: 15
+- output_format: 12
+- siem_client: 10
+- config_loading: 6
+- shell_completion: 6
+- security: 16
+- stub_handlers: 9

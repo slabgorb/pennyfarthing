@@ -42,10 +42,13 @@ Someone on your team already ran `/pf-setup`. You just need the CLI.
 ### 1. Install
 
 ```bash
-brew install 1898andco/pf/pennyfarthing
+# Pick one:
+pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
+# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+# or: curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
 ```
 
-> Don't have brew? See [Alternative installs](#alternative-installs) below.
+> See [Alternative installs](#alternative-installs) for more options.
 
 ### 2. Clone and go
 
@@ -79,11 +82,12 @@ You're bringing Pennyfarthing into a repo for the first time.
 # Authenticate with GitHub (required — private repo)
 gh auth login
 
-# Install the CLI
-brew install 1898andco/pf/pennyfarthing
+# Install the CLI (pick one)
+pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
+# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
 ```
 
-> Don't have brew? See [Alternative installs](#alternative-installs) below.
+> See [Alternative installs](#alternative-installs) for more options.
 
 ### 2. Initialize your project
 
@@ -200,8 +204,8 @@ just claude       # starts Claude Code with OTEL telemetry pre-configured
 | **`.pennyfarthing/`** | Standalone files from `pf init` | Symlinks to `pennyfarthing/pennyfarthing-dist/` |
 | **Edits to agents/guides/workflows** | Not recommended | Edit in `pennyfarthing/pennyfarthing-dist/`, changes are live |
 | **Git repos** | One repo | Two repos — orchestrator (`main`) and framework (`develop`) |
-| **Install method** | `brew install` | `just setup` (editable install) |
-| **Framework changes** | Receive via `brew upgrade` | Commit directly to `pennyfarthing/` |
+| **Install method** | `pipx install` / `uv tool install` | `just setup` (editable install) |
+| **Framework changes** | Receive via `pipx upgrade` / `uv tool upgrade` | Commit directly to `pennyfarthing/` |
 
 > See the [orchestrator README](https://github.com/1898andCo/orc-penny) for the full two-repo workflow.
 
@@ -209,19 +213,19 @@ just claude       # starts Claude Code with OTEL telemetry pre-configured
 
 ## Alternative installs
 
-If Homebrew isn't available, use one of these to install the `pf` CLI:
+Multiple ways to install the `pf` CLI:
 
 ```bash
-# Shell script — auto-detects best package manager (brew → uv → pipx → pip)
+# Auto-detect — tries uv, pipx, pip in order
 curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
+
+# With pipx (recommended — isolated environment)
+pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
 
 # With uv (fastest)
 uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
 
-# With pipx
-pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
-
-# With pip
+# With pip (last resort — installs into current environment)
 pip install "git+https://github.com/1898andCo/pennyfarthing.git"
 ```
 
@@ -235,7 +239,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 Add that line to your `~/.zshrc` or `~/.bashrc` to make it permanent.
 
-Verify with `pf --version` — you should see `pf, version 12.3.0` (or later).
+Verify with `pf --version` — you should see `pf, version 12.6.2` (or later).
 
 ---
 
@@ -427,24 +431,22 @@ Stories have types (feature, fix, chore), point estimates, and workflow assignme
 
 ## Updating
 
-### Homebrew
-
 ```bash
-brew upgrade pennyfarthing
-pf doctor
-```
-
-### uv / pipx / pip
-
-```bash
-# uv
-uv tool upgrade pennyfarthing-scripts
-
 # pipx
 pipx upgrade pennyfarthing-scripts
 
+# uv
+uv tool upgrade pennyfarthing-scripts
+
 # pip
 pip install --upgrade "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+```
+
+After upgrading the CLI, re-initialize your project to pick up new commands and skills:
+
+```bash
+pf init
+pf doctor
 ```
 
 ---
@@ -487,9 +489,9 @@ The agent reads the session file and determines what phase it should be in.
 ### Fresh reinstall
 
 ```bash
-pf uninstall              # Remove Pennyfarthing files from project
-brew reinstall pennyfarthing  # Reinstall CLI (or your original install method)
-pf init                   # Re-initialize project
+rm -rf .pennyfarthing/ .claude/commands/ .claude/skills/  # Remove project files
+pipx reinstall pennyfarthing-scripts  # Reinstall CLI (or your original install method)
+pf init                               # Re-initialize project
 ```
 
 ---

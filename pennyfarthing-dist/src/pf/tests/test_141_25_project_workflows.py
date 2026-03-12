@@ -19,9 +19,7 @@ import pytest
 
 from pf.workflow.helpers import (
     find_workflow_file,
-    get_workflows_dir,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

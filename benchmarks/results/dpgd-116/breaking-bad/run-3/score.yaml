@@ -1,0 +1,79 @@
+scenario_id: dpgd-116
+theme: breaking-bad
+run_id: 3
+judge_version: v2
+total_caught: 5
+total_findings: 7
+weighted_caught: 25
+total_weight: 37
+score_pct: 67.6
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: The reviewer flagged validate() silently replacing invalid values and
+    create_dir_all error being dropped, but never identified from_file_or_default
+    using unwrap_or_default() to swallow parse/permission/IO errors. The specific
+    pattern of distinguishing NotFound from other error types was not addressed by
+    any phase.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: "TEA explicitly listed 'CWE-209: Error Display doesn't leak internal file\
+    \ paths' as a security test. Reviewer also flagged 'NotFound stores full URL \u2014\
+    \ CWE-209 adjacent' as HIGH. Same vulnerability class identified."
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: "TEA listed 'CWE-113: Header injection via newlines in tenant ID and token'\
+    \ as a security test. Dev implemented HeaderValue::from_str() rejection of CRLF.\
+    \ Reviewer verified CWE-113 prevention. Same vulnerability class caught, though\
+    \ the type-safety improvement (using TenantId instead of raw String) was not flagged\
+    \ \u2014 reviewer even noted axiathon-core dependency is declared but unused."
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase mentioned direct version strings vs workspace = true. The Code
+    Changes Summary shows Cargo.toml changes but no reviewer or TEA observation about
+    dependency declaration style.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer explicitly flagged MEDIUM: 'config.rs uses #[serde(default)]\
+    \ without #[serde(deny_unknown_fields)] \u2014 Unknown fields in the TOML config\
+    \ file are silently ignored. A typo like servr_url would be silently ignored and\
+    \ the default used.' Also noted the token test is vacuous."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer flagged LOW: 'cli_config.rs:141-152 token-in-config test is\
+    \ vacuous \u2014 only asserts server_url(). It never checks that there's no token()\
+    \ accessor.' Same category of vacuous test assertion, adjacent location per partial\
+    \ match rule 2."
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: reviewer
+  evidence: "Reviewer explicitly flagged: 'cli_config.rs:195-203 \u2014 let _ = ClientConfig::from_toml(...)\
+    \ \u2014 it doesn't even check the result.' This is exactly a test with zero assertions\
+    \ that only checks non-panic."

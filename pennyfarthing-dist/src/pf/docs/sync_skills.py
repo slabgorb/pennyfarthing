@@ -21,9 +21,11 @@ from pf.common.config import get_dist_root, get_project_root
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CommandOption:
     """A CLI option or argument."""
+
     name: str
     required: bool
     type: str  # "Arg" or "Option"
@@ -33,6 +35,7 @@ class CommandOption:
 @dataclass
 class ParsedCommand:
     """A single CLI command parsed from --help output."""
+
     name: str
     description: str
     options: list[CommandOption] = field(default_factory=list)
@@ -41,6 +44,7 @@ class ParsedCommand:
 @dataclass
 class CommandGroup:
     """A group of commands (possibly nested)."""
+
     name: str
     prefix: list[str]  # e.g. ["sprint", "story"]
     description: str
@@ -50,6 +54,7 @@ class CommandGroup:
 # ---------------------------------------------------------------------------
 # Registry loading
 # ---------------------------------------------------------------------------
+
 
 def _load_registries(dist_root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     """Load skill-registry.yaml and command-registry.yaml."""
@@ -86,12 +91,14 @@ def _get_skills_with_commands(
         group_data = groups.get(command_group, {})
         cli_prefix = group_data.get("cli", "")  # e.g. "pf sprint"
 
-        results.append({
-            "skill_name": skill_name,
-            "command_group": command_group,
-            "cli_prefix": cli_prefix,
-            "group_data": group_data,
-        })
+        results.append(
+            {
+                "skill_name": skill_name,
+                "command_group": command_group,
+                "cli_prefix": cli_prefix,
+                "group_data": group_data,
+            }
+        )
 
     return results
 
@@ -99,6 +106,7 @@ def _get_skills_with_commands(
 # ---------------------------------------------------------------------------
 # CLI introspection
 # ---------------------------------------------------------------------------
+
 
 def _run_help(cmd_parts: list[str], timeout: int = 10) -> str | None:
     """Run `pf <parts...> --help` and return stdout, or None on failure."""
@@ -235,6 +243,7 @@ def _extract_group_description(help_text: str) -> str:
 # Help text parsing
 # ---------------------------------------------------------------------------
 
+
 def _parse_command_help(name: str, help_text: str) -> ParsedCommand:
     """Parse a Click command's --help output into structured data."""
     description = _extract_group_description(help_text)
@@ -276,12 +285,14 @@ def _parse_options_and_args(help_text: str) -> list[CommandOption]:
                 is_optional = token.startswith("[")
                 name = token.strip("[]<>")
                 desc = arg_descriptions.get(name, "")
-                options.append(CommandOption(
-                    name=name,
-                    required=not is_optional,
-                    type="Arg",
-                    description=desc,
-                ))
+                options.append(
+                    CommandOption(
+                        name=name,
+                        required=not is_optional,
+                        type="Arg",
+                        description=desc,
+                    )
+                )
 
     # Parse Options section (skip --help)
     opts_section = _extract_section(help_text, "Options")
@@ -289,8 +300,8 @@ def _parse_options_and_args(help_text: str) -> list[CommandOption]:
         # Match option lines: "  --name TEXT  Description" or "  -s, --name  Description"
         opt_pattern = re.compile(
             r"^\s+(-[\w-]+(?:,\s*-[\w-]+)*)"  # option flags
-            r"(?:\s+(\S+))?"                    # optional metavar
-            r"\s{2,}(.+?)$",                    # description
+            r"(?:\s+(\S+))?"  # optional metavar
+            r"\s{2,}(.+?)$",  # description
             re.MULTILINE,
         )
         for match in opt_pattern.finditer(opts_section):
@@ -301,12 +312,14 @@ def _parse_options_and_args(help_text: str) -> list[CommandOption]:
                 continue
 
             required = "[required]" in desc.lower()
-            options.append(CommandOption(
-                name=flag,
-                required=required,
-                type="Option",
-                description=re.sub(r"\s*\[required\]", "", desc, flags=re.IGNORECASE).strip(),
-            ))
+            options.append(
+                CommandOption(
+                    name=flag,
+                    required=required,
+                    type="Option",
+                    description=re.sub(r"\s*\[required\]", "", desc, flags=re.IGNORECASE).strip(),
+                )
+            )
 
     return options
 
@@ -328,6 +341,7 @@ def _extract_section(help_text: str, section_name: str) -> str | None:
 # ---------------------------------------------------------------------------
 # Markdown generation
 # ---------------------------------------------------------------------------
+
 
 def _generate_usage_md(
     skill_name: str,
@@ -383,6 +397,7 @@ def _generate_usage_md(
 # Orchestrator
 # ---------------------------------------------------------------------------
 
+
 def run_sync_skills(
     dry_run: bool = False,
     skill_filter: str | None = None,
@@ -423,11 +438,13 @@ def run_sync_skills(
         cli_prefix = entry["cli_prefix"]
 
         if not cli_prefix:
-            results.append({
-                "skill": skill_name,
-                "status": "skipped",
-                "reason": "no cli prefix in command-registry",
-            })
+            results.append(
+                {
+                    "skill": skill_name,
+                    "status": "skipped",
+                    "reason": "no cli prefix in command-registry",
+                }
+            )
             skipped += 1
             continue
 
@@ -438,11 +455,13 @@ def run_sync_skills(
         groups = _walk_command_tree(prefix_parts)
 
         if not groups:
-            results.append({
-                "skill": skill_name,
-                "status": "skipped",
-                "reason": "no commands discovered (CLI may not be available)",
-            })
+            results.append(
+                {
+                    "skill": skill_name,
+                    "status": "skipped",
+                    "reason": "no commands discovered (CLI may not be available)",
+                }
+            )
             skipped += 1
             continue
 
@@ -453,21 +472,25 @@ def run_sync_skills(
         usage_path = dist_root / "skills" / skill_name / "usage.md"
 
         if dry_run:
-            results.append({
-                "skill": skill_name,
-                "status": "dry_run",
-                "path": str(usage_path.relative_to(root)),
-                "commands": total_commands,
-            })
+            results.append(
+                {
+                    "skill": skill_name,
+                    "status": "dry_run",
+                    "path": str(usage_path.relative_to(root)),
+                    "commands": total_commands,
+                }
+            )
         else:
             usage_path.parent.mkdir(parents=True, exist_ok=True)
             usage_path.write_text(markdown)
-            results.append({
-                "skill": skill_name,
-                "status": "written",
-                "path": str(usage_path.relative_to(root)),
-                "commands": total_commands,
-            })
+            results.append(
+                {
+                    "skill": skill_name,
+                    "status": "written",
+                    "path": str(usage_path.relative_to(root)),
+                    "commands": total_commands,
+                }
+            )
             written += 1
 
     parts = []

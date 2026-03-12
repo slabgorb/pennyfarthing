@@ -1,0 +1,24 @@
+## TEA Assessment
+
+**Tests Required:** Yes
+**Reason:** Story 6.1 delivers a full CLI framework with multiple modules requiring validation
+
+**Test Files:**
+| File | Tests | ACs Covered | Description |
+|------|-------|-------------|-------------|
+| `cli_commands.rs` | 25 | AC-1, AC-2 | Command group parsing, plural naming, help rendering |
+| `exit_codes.rs` | 13 | AC-3 | CliError variants and exit_code() mapping (0/1/2/3/4) |
+| `output_format.rs` | 16 | AC-4 | OutputFormat enum, Table/JSON/CSV formatters, trait object safety |
+| `global_flags.rs` | 23 | AC-5, AC-6 | --format, -v/-vv, --quiet, --tenant, --server, --config, --no-color; global=true; Parser derive |
+| `siem_client.rs` | 14 | AC-7 | SiemClient construction, Authorization/X-Tenant-ID injection, HTTP status→CliError mapping (401→AuthenticationExpired, 403→Unauthorized, 404→NotFound, 429→RateLimited, 5xx→ServerError, refused→ServerUnavailable) |
+| `config_loading.rs` | 10 | AC-8 | TOML loading, env var overrides (AXIATHON_API_URL, AXIATHON_TIMEOUT), default path, partial config, missing/invalid file errors |
+| `shell_completion.rs` | 9 | AC-9 | bash/zsh/fish/powershell acceptance, generate_completions output |
+| `stub_handlers.rs` | 10 | AC-10 | NotImplemented error message + exit code, stub handlers for 8 command groups |
+| `security.rs` | 11 | Security | CWE-209 error exposure, header injection (CRLF in tenant/token), silent error swallowing, config validation (empty URL, negative/zero timeout), credential storage, trailing slash |
+
+**Tests Written:** 131 tests covering all 10 ACs + security
+**Status:** RED (failing — all tests fail to compile because modules don't exist yet)
+**Handoff:** To Dev for implementation
+
+### Delivery Findings
+- No upstream findings during test design.

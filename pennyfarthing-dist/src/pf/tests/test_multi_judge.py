@@ -16,8 +16,8 @@ from __future__ import annotations
 import pytest
 
 from pf.benchmark.multi_judge import (
-    JudgeVerdict,
     DimensionScore,
+    JudgeVerdict,
     MultiJudgeResult,
     SingleJudgeResult,
     aggregate_judge_scores,
@@ -28,10 +28,10 @@ from pf.benchmark.multi_judge import (
     validate_multi_judge_count,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_verdict(weighted_total: float, assessment: str = "test") -> JudgeVerdict:
     return JudgeVerdict(
@@ -49,6 +49,7 @@ def _make_verdict(weighted_total: float, assessment: str = "test") -> JudgeVerdi
 # ===========================================================================
 # AC1: Validation of --multi-judge N
 # ===========================================================================
+
 
 class TestValidateMultiJudgeCount:
     """AC1: --multi-judge N must be 1-5."""
@@ -88,6 +89,7 @@ class TestValidateMultiJudgeCount:
 # ===========================================================================
 # AC2: Randomized presentation order
 # ===========================================================================
+
 
 class TestRandomizePresentationOrder:
     """AC2: Each judge invocation randomizes section ordering."""
@@ -130,6 +132,7 @@ class TestRandomizePresentationOrder:
 # AC3: Judge verdict filenames
 # ===========================================================================
 
+
 class TestBuildJudgeFilenames:
     """AC3: Judge verdicts stored as judge_{i}.json."""
 
@@ -155,6 +158,7 @@ class TestBuildJudgeFilenames:
 # ===========================================================================
 # AC4: Aggregated score is mean of weighted_totals
 # ===========================================================================
+
 
 class TestAggregateJudgeScores:
     """AC4: Canonical score = mean of weighted_totals."""
@@ -187,6 +191,7 @@ class TestAggregateJudgeScores:
 # ===========================================================================
 # AC5: --multi-judge 1 behaves identically to single-judge
 # ===========================================================================
+
 
 class TestFormatMultiJudgeResult:
     """AC5: n=1 returns SingleJudgeResult, n>1 returns MultiJudgeResult."""
@@ -240,6 +245,7 @@ class TestFormatMultiJudgeResult:
 # ===========================================================================
 # AC6: Summary YAML includes judge_agreement section
 # ===========================================================================
+
 
 class TestBuildMultiJudgeSummary:
     """AC6: Summary dict includes judge_agreement when n>1."""

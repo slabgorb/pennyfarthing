@@ -1,0 +1,80 @@
+scenario_id: dpgd-116
+theme: rome
+run_id: 1
+judge_version: v2
+total_caught: 2
+total_findings: 7
+weighted_caught: 10
+total_weight: 37
+score_pct: 27.0
+findings:
+- finding_id: C1
+  title: from_file_or_default swallows ALL errors including parse and permission failures
+  weight: 8
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: No phase flagged from_file_or_default swallowing all errors via unwrap_or_default().
+    TEA config tests cover TOML loading and env overrides but not error-type discrimination.
+    Reviewer did not mention this pattern.
+- finding_id: I1
+  title: CliError Display leaks internal details to stderr (CWE-209)
+  weight: 5
+  phase_ideal: reviewer
+  caught: true
+  caught_by: tea
+  evidence: 'TEA explicitly listed ''CWE-209: CliError::Display must not leak server
+    internals'' as a security test. Dev implemented ''security-safe Display'' and
+    Reviewer verified V2 showing ServerError Display writes generic message. Same
+    vulnerability class caught, though the specific Io(transparent) forwarding variant
+    was not isolated.'
+- finding_id: I2
+  title: "SiemClient.tenant_id uses raw String \u2014 header injection risk (CWE-113)"
+  weight: 5
+  phase_ideal: tea
+  caught: true
+  caught_by: tea
+  evidence: 'TEA wrote siem_client_test.rs with 14 tests including ''CWE-113: Header
+    injection via newlines in token/tenant ID''. Dev implemented with_tenant_validated
+    rejecting CR/LF. However, the raw String path (set_tenant_id) still exists alongside
+    the validated path, so the core issue (using String instead of TenantId from axiathon-core)
+    persists. Pipeline demonstrated awareness of the risk class.'
+- finding_id: I3
+  title: Dependencies use direct version strings instead of workspace = true
+  weight: 3
+  phase_ideal: dev
+  caught: false
+  caught_by: null
+  evidence: Dev added dependencies with direct version strings. Reviewer noted F10
+    (toml version mismatch 0.8 vs 0.9) but did not flag the broader issue of 6 deps
+    using direct versions instead of workspace = true.
+- finding_id: I4
+  title: "Config token field silently ignored \u2014 secret left on disk"
+  weight: 5
+  phase_ideal: reviewer
+  caught: false
+  caught_by: null
+  evidence: "Reviewer examined the exact code in V5 and concluded it was CORRECT:\
+    \ 'Config Tokens Blocked \u2014 token() always returns None. RawConfig.token field\
+    \ is silently dropped. Tokens cannot leak from config file.' This is the opposite\
+    \ conclusion from the ground truth, which says the silent ignoring leaves a secret\
+    \ on disk while the user believes they're authenticated. F9 (deny_unknown_fields)\
+    \ is adjacent but doesn't cover a known-but-dropped field."
+- finding_id: I5
+  title: "Vacuously true test \u2014 assertion is None || true"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the vacuously true assertion pattern (is_none() || ...
+    always true). TEA wrote config_test.rs but the problematic assertion pattern was
+    not identified or tested against.
+- finding_id: I6
+  title: "Test with zero assertions \u2014 only checks non-panic"
+  weight: 5
+  phase_ideal: tea
+  caught: false
+  caught_by: null
+  evidence: No phase flagged the zero-assertion test with 'let _ = config;'. TEA wrote
+    config tests but did not identify or prevent assertion-free tests that only verify
+    non-panic.

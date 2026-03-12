@@ -260,9 +260,7 @@ class TestResolveStepGateContract:
         )
         assert isinstance(result, dict)
 
-    def test_result_has_success_field(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_result_has_success_field(self, step_file_with_gate: str, project: Path) -> None:
         """AC1: Result dict has 'success' boolean field."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_INLINE,
@@ -273,9 +271,7 @@ class TestResolveStepGateContract:
         assert "success" in result
         assert isinstance(result["success"], bool)
 
-    def test_result_has_gate_result_field(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_result_has_gate_result_field(self, step_file_with_gate: str, project: Path) -> None:
         """AC1: Result dict has 'gate_result' dict field."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_INLINE,
@@ -286,9 +282,7 @@ class TestResolveStepGateContract:
         assert "gate_result" in result
         assert isinstance(result["gate_result"], dict)
 
-    def test_result_has_error_field(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_result_has_error_field(self, step_file_with_gate: str, project: Path) -> None:
         """AC1: Result dict has 'error' field (None on success)."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_INLINE,
@@ -298,9 +292,7 @@ class TestResolveStepGateContract:
         )
         assert "error" in result
 
-    def test_result_has_gate_used_field(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_result_has_gate_used_field(self, step_file_with_gate: str, project: Path) -> None:
         """AC1: Result dict has 'gate_used' field indicating gate source."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_INLINE,
@@ -332,9 +324,7 @@ class TestResolveStepGateContract:
 class TestCompleteStepGateIntegration:
     """AC2: complete-step extended to call gate validation."""
 
-    def test_gate_true_triggers_validation(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_gate_true_triggers_validation(self, step_file_with_gate: str, project: Path) -> None:
         """AC2: When step-meta has gate: true, resolve_step_gate is called."""
         # resolve_step_gate should return a non-skipped result
         result = resolve_step_gate(
@@ -346,9 +336,7 @@ class TestCompleteStepGateIntegration:
         # gate: true without inline criteria or gate_file still runs gate
         assert result["gate_used"] != "skipped"
 
-    def test_gate_false_skips_validation(
-        self, step_file_without_gate: str, project: Path
-    ) -> None:
+    def test_gate_false_skips_validation(self, step_file_without_gate: str, project: Path) -> None:
         """AC2: When step-meta has gate: false, gate validation is skipped."""
         result = resolve_step_gate(
             step_meta=STEP_META_GATE_FALSE,
@@ -372,9 +360,7 @@ class TestCompleteStepGateIntegration:
         assert result["gate_used"] == "skipped"
         assert result["success"] is True
 
-    def test_gate_blocks_on_failure(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_gate_blocks_on_failure(self, step_file_with_gate: str, project: Path) -> None:
         """AC2: Gate failure should set success=False."""
         # With gate: true but no inline or file criteria, the gate
         # should parse <gate> from step file — criteria should be found
@@ -395,9 +381,7 @@ class TestCompleteStepGateIntegration:
 class TestInlineGateCriteria:
     """AC3: Support for inline gate criteria from step-meta gate_inline."""
 
-    def test_inline_criteria_parsed(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_inline_criteria_parsed(self, step_file_with_gate: str, project: Path) -> None:
         """AC3: Inline criteria from step-meta are parsed into gate_result."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_INLINE,
@@ -409,9 +393,7 @@ class TestInlineGateCriteria:
         assert "criteria" in result["gate_result"]
         assert len(result["gate_result"]["criteria"]) == 2
 
-    def test_inline_criteria_names_preserved(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_inline_criteria_names_preserved(self, step_file_with_gate: str, project: Path) -> None:
         """AC3: Criterion names from inline criteria are preserved in result."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_INLINE,
@@ -424,9 +406,7 @@ class TestInlineGateCriteria:
         assert "components documented" in names
         assert "risks assessed" in names
 
-    def test_empty_inline_criteria_not_valid(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_empty_inline_criteria_not_valid(self, step_file_with_gate: str, project: Path) -> None:
         """AC3: Empty inline criteria list should produce an error."""
         result = resolve_step_gate(
             step_meta=STEP_META_EMPTY_INLINE,
@@ -441,9 +421,7 @@ class TestInlineGateCriteria:
 class TestExternalGateFile:
     """AC3: Support for external gate_file references."""
 
-    def test_external_gate_file_loaded(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_external_gate_file_loaded(self, step_file_with_gate: str, project: Path) -> None:
         """AC3: External gate file is loaded and parsed."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_GATE_FILE,
@@ -467,9 +445,7 @@ class TestExternalGateFile:
         # architecture-components.yaml has 2 criteria
         assert len(result["gate_result"]["criteria"]) == 2
 
-    def test_external_gate_file_not_found(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_external_gate_file_not_found(self, step_file_with_gate: str, project: Path) -> None:
         """AC3: Missing gate file returns error."""
         meta = {
             **STEP_META_WITH_GATE_FILE,
@@ -508,9 +484,7 @@ class TestExternalGateFile:
 class TestGateFilePriority:
     """AC3: When both inline and external are present, external takes priority."""
 
-    def test_both_present_uses_external(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_both_present_uses_external(self, step_file_with_gate: str, project: Path) -> None:
         """AC3: gate_file takes precedence over gate_inline when both present."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_BOTH,
@@ -524,9 +498,7 @@ class TestGateFilePriority:
 class TestGateTagParsing:
     """AC3: Support for <gate> tag in step file content."""
 
-    def test_gate_tag_parsed_from_step_file(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_gate_tag_parsed_from_step_file(self, step_file_with_gate: str, project: Path) -> None:
         """AC3: <gate> tag content is extracted when gate: true but no inline/file."""
         result = resolve_step_gate(
             step_meta=STEP_META_GATE_TRUE,
@@ -561,9 +533,7 @@ class TestGateTagParsing:
 class TestSkipGateFlag:
     """AC4: --skip-gate override flag bypasses gate validation."""
 
-    def test_skip_gate_returns_success(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_skip_gate_returns_success(self, step_file_with_gate: str, project: Path) -> None:
         """AC4: skip_gate=True always returns success=True."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_INLINE,
@@ -587,9 +557,7 @@ class TestSkipGateFlag:
         )
         assert result["gate_used"] == "skipped"
 
-    def test_skip_gate_has_no_error(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_skip_gate_has_no_error(self, step_file_with_gate: str, project: Path) -> None:
         """AC4: skip_gate=True should not produce an error."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_INLINE,
@@ -600,9 +568,7 @@ class TestSkipGateFlag:
         )
         assert result["error"] is None
 
-    def test_skip_gate_with_external_file(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_skip_gate_with_external_file(self, step_file_with_gate: str, project: Path) -> None:
         """AC4: skip_gate=True skips even when gate_file is specified."""
         result = resolve_step_gate(
             step_meta=STEP_META_WITH_GATE_FILE,
@@ -674,9 +640,7 @@ class TestArchitectureGateFiles:
         )
         assert len(result["gate_result"]["criteria"]) >= 1
 
-    def test_architecture_risks_gate_loads(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_architecture_risks_gate_loads(self, step_file_with_gate: str, project: Path) -> None:
         """AC5: architecture-risks.yaml gate file loads successfully."""
         meta = {
             **STEP_META_GATE_TRUE,
@@ -700,9 +664,7 @@ class TestArchitectureGateFiles:
 class TestReleaseGateFiles:
     """AC6: Stepped gate files for release workflow."""
 
-    def test_release_version_bump_gate_loads(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_release_version_bump_gate_loads(self, step_file_with_gate: str, project: Path) -> None:
         """AC6: release-version-bump.yaml gate file loads successfully."""
         meta = {
             **STEP_META_GATE_TRUE,
@@ -717,9 +679,7 @@ class TestReleaseGateFiles:
         assert result["gate_used"] == "external"
         assert result["gate_result"] is not None
 
-    def test_release_commit_gate_loads(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_release_commit_gate_loads(self, step_file_with_gate: str, project: Path) -> None:
         """AC6: release-commit.yaml gate file loads successfully."""
         meta = {
             **STEP_META_GATE_TRUE,
@@ -754,14 +714,10 @@ class TestEdgeCases:
         assert result["success"] is False
         assert result["error"] is not None
 
-    def test_gate_file_with_empty_criteria(
-        self, step_file_with_gate: str, project: Path
-    ) -> None:
+    def test_gate_file_with_empty_criteria(self, step_file_with_gate: str, project: Path) -> None:
         """Edge: Gate file with empty criteria list returns error."""
         empty_gate = project / "gates" / "stepped" / "empty.yaml"
-        empty_gate.write_text(
-            yaml.dump({"gate": {"name": "empty", "criteria": []}})
-        )
+        empty_gate.write_text(yaml.dump({"gate": {"name": "empty", "criteria": []}}))
         meta = {
             **STEP_META_GATE_TRUE,
             "gate_file": "gates/stepped/empty.yaml",

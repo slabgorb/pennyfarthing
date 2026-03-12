@@ -3,9 +3,11 @@
 # Story 44-1: Multi-Judge Validation + Python port of TS benchmark modules
 #
 # Modules:
-#   multi_judge  — Ensemble judge scoring (44-1)
-#   aggregator   — Job-Fair result aggregation (ported from job-fair-aggregator.ts)
-#   integration  — OCEAN correlation + benchmark queries (ported from benchmark-integration.ts)
+#   multi_judge      — Ensemble judge scoring (44-1)
+#   aggregator       — Job-Fair result aggregation (ported from job-fair-aggregator.ts)
+#   integration      — OCEAN correlation + benchmark queries (ported from benchmark-integration.ts)
+#   pipeline_replay  — Pipeline replay benchmark (TEA→Dev→Reviewer against real code)
+#   cli              — Click commands for `pf benchmark`
 
 from pf.benchmark.multi_judge import (
     aggregate_judge_scores,

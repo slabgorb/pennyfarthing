@@ -67,10 +67,15 @@ def npm_project(tmp_path: Path) -> Path:
     # --- .pennyfarthing with old manifest ---
     pf_dir = project / ".pennyfarthing"
     pf_dir.mkdir()
-    (pf_dir / "manifest.json").write_text(json.dumps({
-        "version": "10.0.0",
-        "installed_at": "2025-01-01T00:00:00Z",
-    }) + "\n")
+    (pf_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "version": "10.0.0",
+                "installed_at": "2025-01-01T00:00:00Z",
+            }
+        )
+        + "\n"
+    )
 
     # --- .claude with npm-era settings ---
     claude_dir = project / ".claude"
@@ -121,9 +126,7 @@ def npm_project(tmp_path: Path) -> Path:
             ],
         }
     }
-    (claude_dir / "settings.local.json").write_text(
-        json.dumps(npm_settings, indent=2) + "\n"
-    )
+    (claude_dir / "settings.local.json").write_text(json.dumps(npm_settings, indent=2) + "\n")
 
     return project
 
@@ -140,7 +143,9 @@ class TestFreshInit:
         """Init creates .pennyfarthing/ with commands, skills, scripts."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result = init_project(fresh_project, REAL_DIST)
 
         assert result["success"], f"init failed: {result.get('error')}"
@@ -154,7 +159,9 @@ class TestFreshInit:
         """Init creates .claude/ with commands and skills."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result = init_project(fresh_project, REAL_DIST)
 
         assert result["success"]
@@ -165,7 +172,9 @@ class TestFreshInit:
         """Init copies actual pf-*.md commands from real dist."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result = init_project(fresh_project, REAL_DIST)
 
         assert result["success"]
@@ -182,7 +191,9 @@ class TestFreshInit:
         """Init copies actual pf-* skill directories from real dist."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result = init_project(fresh_project, REAL_DIST)
 
         assert result["success"]
@@ -190,7 +201,8 @@ class TestFreshInit:
         assert skills_copied > 0, "No skills were copied"
 
         pf_skills = [
-            d for d in (fresh_project / ".pennyfarthing" / "skills").iterdir()
+            d
+            for d in (fresh_project / ".pennyfarthing" / "skills").iterdir()
             if d.is_dir() and d.name.startswith("pf-")
         ]
         assert len(pf_skills) == skills_copied
@@ -199,7 +211,9 @@ class TestFreshInit:
         """Init writes settings.local.json with all infrastructure hooks."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result = init_project(fresh_project, REAL_DIST)
 
         assert result["success"]
@@ -221,23 +235,21 @@ class TestFreshInit:
                 for hook in entry.get("hooks", []):
                     if hook.get("type") == "command":
                         cmd = hook["command"]
-                        is_pf_hook = (
-                            "pf hooks" in cmd or ".pennyfarthing/bin/pf" in cmd
-                        )
+                        is_pf_hook = "pf hooks" in cmd or ".pennyfarthing/bin/pf" in cmd
                         is_user_hook = not is_pf_hook
                         if not is_user_hook:
                             assert "npx pennyfarthing" not in cmd, (
                                 f"Hook command still uses npx: {cmd}"
                             )
-                            assert "pf.sh" not in cmd, (
-                                f"Hook command still uses pf.sh: {cmd}"
-                            )
+                            assert "pf.sh" not in cmd, f"Hook command still uses pf.sh: {cmd}"
 
     def test_writes_init_manifest(self, fresh_project: Path) -> None:
         """Init writes init-manifest.json with version and counts."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result = init_project(fresh_project, REAL_DIST)
 
         assert result["success"]
@@ -254,7 +266,9 @@ class TestFreshInit:
         """Init appends Pennyfarthing entries to .gitignore."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result = init_project(fresh_project, REAL_DIST)
 
         assert result["success"]
@@ -293,9 +307,7 @@ class TestUpgradeFromNpm:
         assert len(result["hooks_removed"]) > 0, "No npm hooks were removed"
 
         # Verify settings file now has Python hooks
-        settings = json.loads(
-            (npm_project / ".claude" / "settings.local.json").read_text()
-        )
+        settings = json.loads((npm_project / ".claude" / "settings.local.json").read_text())
         for _event, hook_list in settings["hooks"].items():
             for entry in hook_list:
                 for hook in entry.get("hooks", []):
@@ -332,9 +344,7 @@ class TestUpgradeFromNpm:
         assert (npm_project / ".pennyfarthing" / "scripts" / "lib").is_dir()
 
         # Settings should have Python hooks
-        settings = json.loads(
-            (npm_project / ".claude" / "settings.local.json").read_text()
-        )
+        settings = json.loads((npm_project / ".claude" / "settings.local.json").read_text())
         all_commands = []
         for _event, hook_list in settings["hooks"].items():
             for entry in hook_list:
@@ -351,7 +361,9 @@ class TestUpgradeFromNpm:
         from pf.upgrade.core import run_upgrade
 
         # First init to create init-manifest.json (needed for old manifest detection)
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             init_project(npm_project, REAL_DIST)
 
         result = run_upgrade(npm_project, clean=True)
@@ -395,16 +407,16 @@ class TestUpgradeFromNpm:
 class TestDryRun:
     """Dry-run produces accurate plans without side effects."""
 
-    def test_init_dry_run_returns_plan_without_creating_files(
-        self, fresh_project: Path
-    ) -> None:
+    def test_init_dry_run_returns_plan_without_creating_files(self, fresh_project: Path) -> None:
         """pf init --dry-run returns a plan but creates no files."""
         from pf.init.core import init_project
 
         # Snapshot before
         before = set(fresh_project.rglob("*"))
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result = init_project(fresh_project, REAL_DIST, dry_run=True)
 
         assert result["success"]
@@ -423,13 +435,9 @@ class TestDryRun:
 
         # No files should have been created
         after = set(fresh_project.rglob("*"))
-        assert before == after, (
-            f"Dry-run created files: {after - before}"
-        )
+        assert before == after, f"Dry-run created files: {after - before}"
 
-    def test_dry_run_plan_matches_real_execution(
-        self, tmp_path: Path
-    ) -> None:
+    def test_dry_run_plan_matches_real_execution(self, tmp_path: Path) -> None:
         """Dry-run plan accurately predicts what real init creates."""
         from pf.init.core import init_project
 
@@ -438,7 +446,9 @@ class TestDryRun:
         dry_project.mkdir()
         (dry_project / ".git").mkdir()
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             dry_result = init_project(dry_project, REAL_DIST, dry_run=True)
 
         # Run real init on a separate directory
@@ -446,7 +456,9 @@ class TestDryRun:
         real_project.mkdir()
         (real_project / ".git").mkdir()
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             real_result = init_project(real_project, REAL_DIST)
 
         # Commands count should match
@@ -477,7 +489,9 @@ class TestDryRun:
         from pf.upgrade.core import cleanup_artifacts
 
         # Create init-manifest.json so old manifest gets flagged
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             init_project(npm_project, REAL_DIST)
 
         result = cleanup_artifacts(npm_project, dry_run=True)
@@ -505,7 +519,9 @@ class TestIdempotency:
         """Second init does not duplicate or corrupt directory structure."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result1 = init_project(fresh_project, REAL_DIST)
             result2 = init_project(fresh_project, REAL_DIST)
 
@@ -520,7 +536,9 @@ class TestIdempotency:
         """Second init does not overwrite existing settings.local.json."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             init_project(fresh_project, REAL_DIST)
 
         # Add a custom key to settings
@@ -529,7 +547,9 @@ class TestIdempotency:
         settings["custom_key"] = "user_value"
         settings_path.write_text(json.dumps(settings, indent=2) + "\n")
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result2 = init_project(fresh_project, REAL_DIST)
 
         assert result2["success"]
@@ -543,7 +563,9 @@ class TestIdempotency:
         """Second init does not duplicate .gitignore entries."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             init_project(fresh_project, REAL_DIST)
             init_project(fresh_project, REAL_DIST)
 
@@ -558,14 +580,18 @@ class TestIdempotency:
         """Second init updates manifest timestamp (not stale)."""
         from pf.init.core import init_project
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             init_project(fresh_project, REAL_DIST)
 
         manifest_path = fresh_project / ".pennyfarthing" / "init-manifest.json"
         manifest1 = json.loads(manifest_path.read_text())
         ts1 = manifest1["initialized_at"]
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             init_project(fresh_project, REAL_DIST)
 
         manifest2 = json.loads(manifest_path.read_text())
@@ -585,9 +611,7 @@ class TestIdempotency:
         assert result2["success"]
 
         # Settings should be valid JSON after both runs
-        settings = json.loads(
-            (npm_project / ".claude" / "settings.local.json").read_text()
-        )
+        settings = json.loads((npm_project / ".claude" / "settings.local.json").read_text())
         assert "hooks" in settings
 
 
@@ -604,7 +628,9 @@ class TestCIReadiness:
         from pf.init.core import init_project
 
         # Mock verify_pf_cli to avoid requiring installed pf
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result = init_project(fresh_project, REAL_DIST)
 
         assert result["success"]
@@ -617,16 +643,16 @@ class TestCIReadiness:
         project.mkdir()
         (project / ".git").mkdir()
 
-        with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}):
+        with patch(
+            "pf.init.core.verify_pf_cli", return_value={"success": True, "version": "11.5.0"}
+        ):
             result = init_project(project, REAL_DIST)
 
         assert result["success"]
 
         # All created files should be under tmp_path
         for f in project.rglob("*"):
-            assert str(f).startswith(str(tmp_path)), (
-                f"File created outside tmp_path: {f}"
-            )
+            assert str(f).startswith(str(tmp_path)), f"File created outside tmp_path: {f}"
 
     def test_upgrade_on_clean_project_is_noop(self, fresh_project: Path) -> None:
         """Upgrade on a project without npm artifacts is a safe no-op."""

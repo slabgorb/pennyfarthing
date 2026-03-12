@@ -124,13 +124,15 @@ def test_archive_epic_no_duplicate_stories(sprint_tree: Path) -> None:
     # Pre-populate one story
     archive_path = sprint_tree / "sprint" / "archive" / "sprint-2699-completed.yaml"
     archive_data = _load_archive_file(archive_path)
-    archive_data["completed_stories"].append({
-        "id": "50-1",
-        "epic": "MSSCI-99999",
-        "title": "First story",
-        "points": 2,
-        "completed": "2026-02-10",
-    })
+    archive_data["completed_stories"].append(
+        {
+            "id": "50-1",
+            "epic": "MSSCI-99999",
+            "title": "First story",
+            "points": 2,
+            "completed": "2026-02-10",
+        }
+    )
     _write_archive_file(archive_path, archive_data)
 
     # Now archive the epic
