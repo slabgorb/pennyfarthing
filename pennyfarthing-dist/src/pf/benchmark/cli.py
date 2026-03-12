@@ -591,6 +591,108 @@ def _print_heatmap(scenario, scores):
     click.echo(totals_row)
 
 
+@replay.command("phase")
+@click.argument("scenario_path", type=click.Path(exists=True))
+@click.option("--run", "run_num", required=True, type=int, help="Run number to replay against")
+@click.option("--phase", "phase_name", required=True, help="Phase to re-run (e.g. reviewer, tea, dev)")
+@click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
+@click.option("--rejudge", is_flag=True, help="Re-judge using the new phase output")
+@click.option("--model", default=None, help="Claude model for the phase agent")
+@click.option("--judge-model", default="claude-sonnet-4-6", help="Claude model for scoring judge")
+@click.option("--judge-count", default=3, type=int, help="Number of judge passes (default: 3)")
+@click.option(
+    "--theme", default=None,
+    help="Theme tag for result lookup (default: control)",
+)
+@click.option(
+    "--results-dir", default=None, type=click.Path(exists=True),
+    help="Base results directory",
+)
+@click.option(
+    "--worktree-base", default="/tmp/pf-replay", type=click.Path(),
+    help="Base directory for git worktrees",
+)
+@click.option(
+    "--project-dir", default=None, type=click.Path(exists=True),
+    help="Project with pennyfarthing installed",
+)
+@click.option(
+    "--output-dir", default=None, type=click.Path(),
+    help="Where results are stored (default: internal/results/pipeline-replay/)",
+)
+def replay_phase(
+    scenario_path, run_num, phase_name, keep_worktree, rejudge,
+    model, judge_model, judge_count, theme, results_dir,
+    worktree_base, project_dir, output_dir,
+):
+    """Re-run a single phase against an existing run's state.
+
+    Useful for testing agent changes without re-running the full pipeline.
+    For example, re-run just the reviewer after fixing a rubber-stamp gate.
+
+    \b
+    Examples:
+        pf benchmark replay phase scenarios/dpgd-116.yaml --run 19 --phase reviewer
+        pf benchmark replay phase scenarios/dpgd-116.yaml --run 19 --phase reviewer --rejudge
+        pf benchmark replay phase scenarios/dpgd-116.yaml --run 19 --phase reviewer --keep-worktree
+    """
+    from pf.benchmark.pipeline_replay import (
+        compute_run_dir,
+        load_scenario,
+        run_phase_replay,
+    )
+
+    project = Path(project_dir) if project_dir else Path.cwd()
+    wt_base = Path(worktree_base)
+    out_dir = (
+        Path(output_dir) if output_dir else project / "internal" / "results" / "pipeline-replay"
+    )
+    base_results = Path(results_dir) if results_dir else out_dir
+
+    scenario = load_scenario(scenario_path, project_dir=project)
+    tag = theme or "control"
+
+    run_dir = compute_run_dir(base_results, scenario.id, tag, run_num)
+    if not run_dir.exists():
+        click.echo(f"Error: run directory not found: {run_dir}", err=True)
+        raise SystemExit(1)
+
+    if phase_name not in scenario.phases:
+        click.echo(
+            f"Error: phase '{phase_name}' not in scenario phases: {scenario.phases}",
+            err=True,
+        )
+        raise SystemExit(1)
+
+    click.echo(f"=== Phase Replay: {scenario.id} / run-{run_num} / {phase_name} ===")
+    click.echo(f"  Run dir:  {run_dir}")
+    click.echo(f"  Phase:    {phase_name}")
+    click.echo(f"  Rejudge:  {'yes' if rejudge else 'no'}")
+    click.echo()
+
+    result = run_phase_replay(
+        scenario,
+        run_dir,
+        phase_name,
+        project_dir=project,
+        worktree_base=wt_base,
+        model=model,
+        keep_worktree=keep_worktree,
+        rejudge=rejudge,
+        judge_model=judge_model,
+        judge_count=judge_count,
+    )
+
+    click.echo()
+    click.echo(f"=== Phase replay complete (retry {result['retry_num']}) ===")
+    if "majority_vote" in result:
+        mv = result["majority_vote"]
+        click.echo(f"  Score: {mv['weighted_caught']}/{mv['total_weight']} ({mv['score_pct']}%)")
+    elif "scores" in result and result["scores"]:
+        sc = result["scores"][0]
+        click.echo(f"  Score: {sc['weighted_caught']}/{sc['total_weight']} ({sc['score_pct']}%)")
+
+
 @replay.command("narrate")
 @click.argument("run_dir", type=click.Path(exists=True))
 @click.option("--yes", "skip_confirm", is_flag=True, help="Skip cost confirmation")

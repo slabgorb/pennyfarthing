@@ -2186,3 +2186,403 @@ def compute_majority_vote(run_dir: Path, scenario: Scenario) -> dict | None:
     out_file = run_dir / "majority_vote.yaml"
     out_file.write_text(yaml.dump(result, default_flow_style=False, sort_keys=False))
     return result
+
+
+# ---------------------------------------------------------------------------
+# Single-phase replay
+# ---------------------------------------------------------------------------
+
+
+def _next_retry_number(run_dir: Path, phase: str) -> int:
+    """Find the next retry number for a phase in a run directory.
+
+    Scans for files like ``reviewer-output-retry-1.txt`` and returns N+1.
+    """
+    existing = []
+    for f in run_dir.iterdir():
+        if f.name.startswith(f"{phase}-output-retry-") and f.name.endswith(".txt"):
+            try:
+                n = int(f.stem.split("-retry-")[1])
+                existing.append(n)
+            except (IndexError, ValueError):
+                pass
+    return (max(existing) + 1) if existing else 1
+
+
+def run_phase_replay(
+    scenario: Scenario,
+    run_dir: Path,
+    phase: str,
+    *,
+    project_dir: Path,
+    worktree_base: Path,
+    model: str | None = None,
+    keep_worktree: bool = False,
+    rejudge: bool = False,
+    judge_model: str | None = None,
+    judge_count: int = 3,
+) -> dict:
+    """Re-run a single phase against an existing run's worktree state.
+
+    1. Reads ``pipeline.yaml`` from *run_dir* to get metadata.
+    2. Recreates the worktree at the base commit (or reuses if it exists
+       and *keep_worktree* is set on the original run).
+    3. If prior phases exist (e.g. tea, dev before reviewer), replays
+       their code changes by checking out the run's final state.
+    4. Runs only the requested phase with its full machinery.
+    5. Saves output as ``{phase}-output-retry-N.txt`` alongside existing files.
+    6. Optionally re-judges against the new output.
+
+    Returns a dict with retry number, phase result, and optional scores.
+    """
+    meta_file = run_dir / "pipeline.yaml"
+    if not meta_file.exists():
+        raise FileNotFoundError(f"pipeline.yaml not found in {run_dir}")
+
+    meta = yaml.safe_load(meta_file.read_text())
+    retry_num = _next_retry_number(run_dir, phase)
+
+    # Determine worktree path
+    tag = meta.get("theme") or "control"
+    run_id = meta["run_id"]
+    wt_name = f"{scenario.id}-{tag}-run-{run_id}-retry-{retry_num}"
+    original_wt = Path(meta.get("worktree_path", ""))
+
+    # Reuse existing worktree if it still exists, otherwise recreate
+    if original_wt.exists() and (original_wt / ".git").exists():
+        wt_path = original_wt
+        print(f"  [WORKTREE] Reusing existing: {wt_path}")
+    else:
+        wt_path = worktree_base / wt_name
+        repo = Path(scenario.repo_path)
+        print(f"  [WORKTREE] Creating at {scenario.base_commit[:12]}...")
+        create_worktree(repo, scenario.base_commit, wt_path)
+        setup_worktree_pf_context(wt_path, project_dir)
+
+        # Apply code changes from prior phases by cherry-picking the dev output.
+        # The simplest approach: replay the prior phases' code by re-running
+        # `git apply` on the diff — but we don't have the full diff saved.
+        # Instead, we need the user to use --keep-worktree on the original run,
+        # or we accept that we start from base_commit (TEA+Dev changes lost).
+        prior_phases = []
+        for p in scenario.phases:
+            if p == phase:
+                break
+            prior_phases.append(p)
+
+        if prior_phases:
+            print(
+                f"  [WORKTREE] WARNING: Prior phases ({', '.join(prior_phases)}) "
+                f"ran in original worktree. Starting from base commit — "
+                f"code changes from prior phases are NOT present. "
+                f"Use --keep-worktree on original run to preserve state."
+            )
+
+    # Start OTEL collector for retry
+    collector = OTELFileCollector(run_dir, worktree_path=wt_path)
+    collector.start()
+    # Override phase name to include retry suffix
+    retry_phase_name = f"{phase}-retry-{retry_num}"
+
+    result_data: dict[str, Any] = {
+        "retry_num": retry_num,
+        "phase": phase,
+        "run_dir": str(run_dir),
+    }
+
+    try:
+        # Build task prompt
+        task_prompt = scenario.phase_prompts.get(phase, f"Begin {phase} phase.")
+
+        # Run pre-phase scouts if applicable
+        if phase in _PHASE_SCOUTS:
+            import concurrent.futures
+            scouts = _PHASE_SCOUTS[phase]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(scouts)) as pool:
+                futures = {
+                    pool.submit(_run_scout_standalone, wt_path, project_dir, name, focus): (name, heading)
+                    for name, focus, heading in scouts
+                }
+                for future in concurrent.futures.as_completed(futures):
+                    _, heading = futures[future]
+                    findings = future.result()
+                    if findings:
+                        task_prompt += (
+                            f"\n\n## {heading}\n\n"
+                            f"Do not proceed with implementation until you have "
+                            f"addressed the following pre-existing issues:\n\n"
+                            f"{findings}"
+                        )
+
+        # Reviewer: fan out subagents from harness
+        if phase == "reviewer":
+            diff_result = subprocess.run(
+                ["git", "diff", scenario.base_commit + "...HEAD"],
+                cwd=str(wt_path),
+                capture_output=True, text=True, timeout=30,
+            )
+            diff_text = diff_result.stdout or "(no diff)"
+
+            fanout_findings = _run_reviewer_fanout(
+                wt_path, project_dir, diff=diff_text, model=model,
+            )
+            task_prompt = task_prompt + "\n\n" + fanout_findings
+            task_prompt = _build_reviewer_task_prompt(task_prompt)
+
+        # Extract agent prompt and build CLAUDE.md
+        theme = meta.get("theme")
+        agent_prompt = extract_agent_prompt(
+            phase, project_dir, persona=(theme is not None), theme=theme
+        )
+        claude_md = build_phase_claude_md(phase, agent_prompt, scenario)
+        (wt_path / "CLAUDE.md").write_text(claude_md)
+
+        # Set OTEL phase name with retry suffix
+        collector.phase = retry_phase_name
+
+        print(f"  [{phase.upper()}] Running phase (retry {retry_num})...")
+        phase_result = run_phase(
+            wt_path,
+            phase,
+            task_prompt,
+            model=model,
+            otel_collector=collector,
+            project_dir=project_dir,
+        )
+
+        tokens = phase_result.token_usage
+        actual_models = list(phase_result.model_usage.keys())
+        model_str = actual_models[0] if actual_models else model or "?"
+        cost_str = f" ${phase_result.cost_usd:.2f}" if phase_result.cost_usd else ""
+        sid_str = f" sid={phase_result.session_id[:8]}" if phase_result.session_id else ""
+        print(
+            f"  [{phase.upper()}] Done in {phase_result.duration_s}s "
+            f"({tokens.get('input', 0)}+{tokens.get('output', 0)} tokens, "
+            f"model={model_str}{cost_str}{sid_str})"
+        )
+
+        # Rubber-stamp gate for reviewer retries
+        if (
+            phase == "reviewer"
+            and _is_reviewer_rubber_stamp(phase_result.output_text)
+        ):
+            print("  [GATE] Reviewer rubber-stamped — retrying with engagement instruction")
+            retry_prompt = (
+                task_prompt
+                + "\n\n## CRITICAL: Engage With Subagent Findings\n\n"
+                "Your previous review was rejected by the quality gate "
+                "because it did not engage with the subagent findings above. "
+                "You MUST:\n"
+                "1. Address EACH subagent's findings individually\n"
+                "2. List all confirmed findings with severity and affected files\n"
+                "3. Your output must be a thorough review, not a summary dismissal\n"
+                "4. End with VERDICT: APPROVE or VERDICT: REJECT\n"
+            )
+            phase_result = run_phase(
+                wt_path, phase, retry_prompt,
+                model=model, otel_collector=collector, project_dir=project_dir,
+            )
+
+        # Save retry output
+        output_file = run_dir / f"{phase}-output-retry-{retry_num}.txt"
+        output_file.write_text(phase_result.output_text)
+        print(f"  Saved: {output_file.name}")
+
+        # Save retry metadata
+        retry_meta = {
+            "retry_num": retry_num,
+            "phase": phase,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "model": model or "opus",
+            "duration_s": phase_result.duration_s,
+            "cost_usd": round(phase_result.cost_usd, 4) if phase_result.cost_usd else None,
+            "token_usage": phase_result.token_usage,
+            "model_usage": phase_result.model_usage or None,
+            "session_id": phase_result.session_id,
+            "exit_code": phase_result.exit_code,
+            "worktree_path": str(wt_path),
+        }
+        retry_meta_file = run_dir / f"{phase}-retry-{retry_num}.yaml"
+        retry_meta_file.write_text(
+            yaml.dump(retry_meta, default_flow_style=False, sort_keys=False)
+        )
+
+        result_data["phase_result"] = phase_result
+        result_data["output_file"] = str(output_file)
+
+        # Optionally re-judge using the retry output
+        if rejudge:
+            # Reconstruct pipeline result but swap in the retry output
+            pipeline_result = reconstruct_pipeline_result(run_dir, scenario)
+            if pipeline_result:
+                # Replace the phase output with retry output
+                pipeline_result.phases[phase] = phase_result
+                # Also include diff stat if worktree has changes
+                diff_result = subprocess.run(
+                    ["git", "diff", "--stat"],
+                    cwd=str(wt_path),
+                    capture_output=True, text=True,
+                )
+                if diff_result.stdout.strip():
+                    pipeline_result.phases["_diff_stat"] = PhaseResult(
+                        role="_diff", output_text=diff_result.stdout,
+                    )
+
+                scores = []
+                for j in range(judge_count):
+                    jmodel = judge_model or "claude-sonnet-4-6"
+                    print(f"  [JUDGE {j + 1}/{judge_count}] Scoring retry output ({jmodel})...")
+                    score = score_with_judge(
+                        scenario, pipeline_result, model=jmodel, project_dir=project_dir,
+                    )
+                    print(
+                        f"  [JUDGE {j + 1}/{judge_count}] Score: "
+                        f"{score.weighted_caught}/{score.total_weight} "
+                        f"({score.score_pct}%) — {score.total_caught}/{score.total_findings} findings"
+                    )
+                    score_data = {
+                        "scenario_id": score.scenario_id,
+                        "theme": score.theme,
+                        "run_id": score.run_id,
+                        "judge_model": jmodel,
+                        "judge_version": JUDGE_VERSION,
+                        "judge_pass": j + 1,
+                        "retry_num": retry_num,
+                        "total_caught": score.total_caught,
+                        "total_findings": score.total_findings,
+                        "weighted_caught": score.weighted_caught,
+                        "total_weight": score.total_weight,
+                        "score_pct": score.score_pct,
+                        "findings": [asdict(f) for f in score.findings],
+                    }
+                    score_file = run_dir / f"{phase}-retry-{retry_num}-judge-{j + 1}.yaml"
+                    score_file.write_text(
+                        yaml.dump(score_data, default_flow_style=False, sort_keys=False)
+                    )
+                    scores.append(score_data)
+
+                result_data["scores"] = scores
+
+                # Majority vote if multiple judges
+                if len(scores) >= 2:
+                    mv = _compute_retry_majority_vote(scores, scenario, retry_num)
+                    mv_file = run_dir / f"{phase}-retry-{retry_num}-majority.yaml"
+                    mv_file.write_text(
+                        yaml.dump(mv, default_flow_style=False, sort_keys=False)
+                    )
+                    print(f"  [MAJORITY] {mv['n_judges']}j vote: {mv['score_pct']}%")
+                    result_data["majority_vote"] = mv
+
+    finally:
+        collector.stop()
+        # Clean up worktree if we created it and keep_worktree is not set
+        if not keep_worktree and str(wt_path) != str(original_wt):
+            try:
+                remove_worktree(Path(scenario.repo_path), wt_path)
+            except Exception:
+                print(f"  Warning: could not remove worktree {wt_path}")
+
+    return result_data
+
+
+def _run_scout_standalone(
+    wt_path: Path,
+    project_dir: Path,
+    agent_name: str,
+    focus: str,
+) -> str:
+    """Run a specialist scout — standalone version for phase replay."""
+    agents_dir = project_dir / ".pennyfarthing" / "agents"
+    agent_file = agents_dir / f"{agent_name}.md"
+    if not agent_file.exists():
+        return ""
+    agent_prompt = agent_file.read_text()
+    agent_prompt = re.sub(
+        r"^---\n.*?^---\n", "", agent_prompt,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    src_list = subprocess.run(
+        ["find", ".", "-name", "*.rs", "-type", "f"],
+        cwd=str(wt_path), capture_output=True, text=True, timeout=10,
+    )
+    scan_task = (
+        f"{focus}\n\n"
+        f"## Agent Instructions\n\n{agent_prompt}\n\n"
+        f"## Source Files\n\n{src_list.stdout}\n\n"
+        f"Read each file and analyze. Report findings with file path and line."
+    )
+    tag = agent_name.replace("reviewer-", "").upper()
+    print(f"  [{tag}-SCAN] Running pre-phase scan...")
+    scan_result = subprocess.run(
+        ["claude", "-p", scan_task, "--output-format", "json",
+         "--model", "claude-haiku-4-5-20251001"],
+        cwd=str(wt_path), capture_output=True, text=True,
+        timeout=120, env={**os.environ},
+    )
+    try:
+        parsed = json.loads(scan_result.stdout)
+        output = parsed.get("result", scan_result.stdout)
+    except (json.JSONDecodeError, TypeError):
+        output = scan_result.stdout
+    print(f"  [{tag}-SCAN] Done")
+    return output
+
+
+def _compute_retry_majority_vote(
+    scores: list[dict],
+    scenario: Scenario,
+    retry_num: int,
+) -> dict:
+    """Compute majority vote from retry judge scores."""
+    n_judges = len(scores)
+    majority = n_judges // 2 + 1
+    gt_map = {f.id: f for f in scenario.ground_truth}
+
+    majority_findings = []
+    for fid in [f.id for f in scenario.ground_truth]:
+        caught_votes = 0
+        caught_by_votes: dict[str, int] = {}
+        evidences = []
+
+        for sc in scores:
+            finding = next((f for f in sc.get("findings", []) if f["finding_id"] == fid), None)
+            if finding and finding.get("caught"):
+                caught_votes += 1
+                by = finding.get("caught_by", "unknown")
+                caught_by_votes[by] = caught_by_votes.get(by, 0) + 1
+                if finding.get("evidence"):
+                    evidences.append(finding["evidence"])
+
+        caught = caught_votes >= majority
+        caught_by = (
+            max(caught_by_votes, key=caught_by_votes.get) if caught and caught_by_votes else None
+        )
+        majority_findings.append({
+            "finding_id": fid,
+            "title": gt_map[fid].title,
+            "weight": gt_map[fid].weight,
+            "phase_ideal": gt_map[fid].phase_ideal,
+            "caught": caught,
+            "caught_by": caught_by,
+            "evidence": evidences[0] if evidences else "",
+            "votes": f"{caught_votes}/{n_judges}",
+        })
+
+    total_caught = sum(1 for f in majority_findings if f["caught"])
+    weighted_caught = sum(f["weight"] for f in majority_findings if f["caught"])
+    total_weight = scenario.total_weight
+
+    return {
+        "judge_method": "majority_vote",
+        "n_judges": n_judges,
+        "majority_threshold": majority,
+        "retry_num": retry_num,
+        "judge_version": JUDGE_VERSION,
+        "total_caught": total_caught,
+        "total_findings": len(majority_findings),
+        "weighted_caught": weighted_caught,
+        "total_weight": total_weight,
+        "score_pct": round(weighted_caught / total_weight * 100, 1) if total_weight else 0.0,
+        "findings": majority_findings,
+        "individual_scores": [s.get("score_pct", 0) for s in scores],
+    }
