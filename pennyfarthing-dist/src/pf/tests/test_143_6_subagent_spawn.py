@@ -128,7 +128,7 @@ def project_with_session(tmp_path: Path, native_agents_dir: Path) -> Path:
     # Repos topology
     pf_dir = tmp_path / ".pennyfarthing"
     (pf_dir / "repos.yaml").write_text(
-        yaml.dump({"repos": [{"name": "pennyfarthing", "path": "pennyfarthing"}]})
+        yaml.dump({"repos": {"pennyfarthing": {"path": "pennyfarthing", "type": "framework"}}})
     )
 
     return tmp_path
