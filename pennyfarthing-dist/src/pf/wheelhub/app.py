@@ -121,7 +121,11 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok"}
+        result: dict[str, str] = {"status": "ok"}
+        project_dir = _resolve_project_dir()
+        if project_dir:
+            result["project_dir"] = str(project_dir)
+        return result
 
     # --- OTLP endpoints ---
 

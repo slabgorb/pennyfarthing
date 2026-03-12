@@ -193,6 +193,27 @@ def _probe_wheelhub(port: int, timeout: float = 1.0) -> bool:
         return False
 
 
+def _probe_wheelhub_project(port: int, project_dir: Path, timeout: float = 1.0) -> bool:
+    """Probe /health and verify the server belongs to *this* project.
+
+    Returns True only if the server responds AND its project_dir matches.
+    """
+    import json
+
+    try:
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/health")
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            if resp.status != 200:
+                return False
+            body = json.loads(resp.read())
+            server_dir = body.get("project_dir")
+            if server_dir is None:
+                return False
+            return Path(server_dir).resolve() == project_dir.resolve()
+    except (urllib.error.URLError, OSError, ValueError, json.JSONDecodeError):
+        return False
+
+
 def _default_port() -> int:
     """Resolve default WheelHub port from WHEELHUB_PORT env or 2898."""
     return int(os.environ.get("WHEELHUB_PORT", "2898"))
@@ -226,9 +247,10 @@ def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]
     elif pid is not None and port is None:
         cleanup_files(project_dir)
 
-    # Fall through: no valid files — probe default port to detect orphaned servers
+    # Fall through: no valid files — probe default port to detect orphaned servers.
+    # Only claim it if the server belongs to THIS project (project_dir match).
     default = _default_port()
-    if _probe_wheelhub(default):
+    if _probe_wheelhub_project(default, project_dir):
         return (True, None, default)
 
     return (False, None, None)
