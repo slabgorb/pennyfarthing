@@ -8,22 +8,15 @@ Tests the ``pf benchmark replay phase`` command's supporting functions:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
 import pytest
 import yaml
 
 from pf.benchmark.pipeline_replay import (
     Finding,
-    PhaseResult,
-    PipelineResult,
     Scenario,
     _compute_retry_majority_vote,
     _next_retry_number,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -1,10 +1,6 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-<<<<<<< HEAD
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 12.7.0. Python runtime + React GUI. Python (≥3.11) for CLI, server, and hooks. Node (≥18) for GUI build only. pnpm monorepo.
-=======
 Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 13.0.0-alpha.0. Python-first architecture.
->>>>>>> origin/develop
 
 <critical>
 ## Implementation Rules
@@ -49,16 +45,8 @@ pf validate                                          # Framework validation
 | Directory | Purpose |
 |-----------|---------|
 | `pennyfarthing-dist/` | Published package (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
-<<<<<<< HEAD
-| `pennyfarthing-dist/src/pf/` | Python package — CLI, WheelHub server (FastAPI), hooks, jira, sprint, workflow, prime |
-| `pennyfarthing-dist/src/pf/wheelhub/` | Python FastAPI server — OTLP receiver, WebSocket channels, API routes |
-| `packages/core/` | `@pennyfarthing/core` — React GUI components, workflow engine, shared utilities |
-| `packages/cyclist/` | React entry points (minimal — 3 files) |
-| `tests/` | Framework tests (Python + TypeScript) |
-=======
 | `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime, wheelhub, bikerack) |
 | `tests/` | Framework tests |
->>>>>>> origin/develop
 | `scripts/` | Framework dev only (NOT distributed) |
 
 **Display:** BikeRack TUI — `pf bikerack start` launches Textual terminal panels alongside Claude Code CLI.
@@ -83,11 +71,7 @@ BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (pro
 
 **Handoff:** Agent writes assessment → `pf handoff resolve-gate` → `complete-phase` → `marker` → next agent activates.
 
-<<<<<<< HEAD
-**Codenames:** WheelHub (Python FastAPI server), JobFair (benchmarking), BikeRack (panel viewer), Peloton (pipeline replay benchmarks)
-=======
 **Codenames:** WheelHub (server), TirePump (context clearing), JobFair (benchmarking), BikeRack (TUI dashboard), Peloton (pipeline replay benchmarks)
->>>>>>> origin/develop
 
 **Glossary:**
 

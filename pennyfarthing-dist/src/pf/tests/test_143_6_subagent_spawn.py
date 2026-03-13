@@ -9,11 +9,9 @@ Tests the infrastructure for SM to spawn native Claude Code subagents:
 """
 
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 import yaml
-
 
 # =============================================================================
 # Fixtures

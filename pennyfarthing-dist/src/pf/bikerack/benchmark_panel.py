@@ -12,8 +12,6 @@ Subscribes to two WS channels:
 
 from __future__ import annotations
 
-import json
-import math
 from datetime import UTC, datetime
 from time import time
 from typing import Any
@@ -26,7 +24,6 @@ from pf.bikerack.base_panel import (
     PANEL_ICONS,
     BasePanel,
     format_duration,
-    render_progress_bar,
 )
 
 # Sparkline bar characters (8 levels of fill) — shared with audit_log_panel

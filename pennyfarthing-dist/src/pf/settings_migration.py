@@ -39,7 +39,6 @@ def migrate_settings(raw: dict) -> dict:
     )
 
     # Handle permission_mode migration
-    valid_modes = ("plan", "manual", "accept")
     permission_mode = workflow.get("permission_mode")
 
     if permission_mode == "turbo":

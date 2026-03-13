@@ -17,7 +17,6 @@ import urllib.request
 from pathlib import Path
 from typing import NoReturn
 
-
 # --- Per-project port derivation ---
 _PORT_BASE = 2898
 _PORT_RANGE = 100  # 2898–2997

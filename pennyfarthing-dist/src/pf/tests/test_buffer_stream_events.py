@@ -9,10 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from pf.benchmark.pipeline_replay import buffer_stream_events
-
 
 # ---------------------------------------------------------------------------
 # Fixtures — The Mushroom provides different states

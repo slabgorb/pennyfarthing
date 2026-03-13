@@ -19,6 +19,15 @@ from pf.validate import ValidateReport
 VALID_MODELS = {"haiku", "sonnet", "opus"}
 BUILTIN_AGENTS = {"Explore", "Plan"}
 
+# Valid tools that can appear in native agent allowed-tools
+VALID_TOOLS = {"Read", "Write", "Edit", "Bash", "Glob", "Grep", "Agent", "Skill"}
+
+# Read-only roles: CANNOT have Write or Edit in allowed-tools
+READ_ONLY_ROLES = {"reviewer", "architect", "pm", "ba", "ux-designer"}
+
+# Write-capable roles: MUST have Write and Edit in allowed-tools
+WRITE_ROLES = {"dev", "tea", "devops", "orchestrator", "tech-writer"}
+
 # Mindset tag required per primary agent (shell script lines 85-96)
 MINDSET_TAGS: dict[str, str] = {
     "sm": "coordination-discipline",
@@ -386,6 +395,73 @@ def validate_subagent(path: Path) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+def validate_native_agent(path: Path) -> tuple[list[str], list[str]]:
+    """Validate a native agent definition file.
+
+    Native agents live in agents/native/ and must have frontmatter with
+    name, description, model, and allowed-tools. Tool restrictions are
+    validated against the role's intended capabilities.
+
+    Returns:
+        (errors, warnings) — two lists of message strings.
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+    content = path.read_text()
+
+    fm = _parse_frontmatter(content)
+    if not fm:
+        errors.append("Missing or invalid YAML frontmatter")
+        return errors, warnings
+
+    # Required frontmatter fields
+    for field in ("name", "description", "model", "allowed-tools"):
+        if field not in fm:
+            errors.append(f"Missing required frontmatter field: {field}")
+
+    # Model must be opus for native (strategic) agents
+    if "model" in fm:
+        model_val = str(fm["model"]).lower()
+        if model_val != "opus":
+            warnings.append(f"Native agent model is '{fm['model']}', expected 'opus'")
+
+    tools = fm.get("allowed-tools")
+    if tools is None:
+        return errors, warnings
+
+    if not isinstance(tools, list):
+        errors.append("allowed-tools must be a YAML list")
+        return errors, warnings
+
+    tool_set = set(tools)
+
+    # All agents must have Read
+    if "Read" not in tool_set:
+        errors.append("Missing required tool: Read")
+
+    # Check for invalid tool names
+    unknown = tool_set - VALID_TOOLS
+    if unknown:
+        errors.append(f"Unknown tools: {', '.join(sorted(unknown))}")
+
+    # Role-based tool restriction checks
+    role = path.stem.lower()
+
+    if role in READ_ONLY_ROLES:
+        if "Write" in tool_set:
+            errors.append(f"Read-only role '{role}' must not have Write tool")
+        if "Edit" in tool_set:
+            errors.append(f"Read-only role '{role}' must not have Edit tool")
+
+    if role in WRITE_ROLES:
+        if "Write" not in tool_set:
+            errors.append(f"Write-capable role '{role}' must have Write tool")
+        if "Edit" not in tool_set:
+            errors.append(f"Write-capable role '{role}' must have Edit tool")
+
+    return errors, warnings
+
+
 def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateReport:
     """Validate all agent definition files."""
     report = ValidateReport(validator="agent")
@@ -442,5 +518,27 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
 
         if not file_errors:
             report.passed += 1
+
+    # Validate native agent definitions
+    native_dir = agents_dir / "native"
+    if native_dir.is_dir():
+        native_files = sorted(native_dir.glob("*.md"))
+        for path in native_files:
+            file_errors, file_warnings = validate_native_agent(path)
+
+            for e in file_errors:
+                report.errors += 1
+                report.details.append(f"[ERROR] native/{path.name}: {e}")
+
+            for w in file_warnings:
+                if strict:
+                    report.errors += 1
+                    report.details.append(f"[ERROR] native/{path.name}: {w}")
+                else:
+                    report.warnings += 1
+                    report.details.append(f"[WARN] native/{path.name}: {w}")
+
+            if not file_errors:
+                report.passed += 1
 
     return report

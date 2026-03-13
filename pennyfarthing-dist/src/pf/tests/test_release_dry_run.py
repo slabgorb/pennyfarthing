@@ -16,7 +16,6 @@ from click.testing import CliRunner
 
 from pf.release.dry_run import _bump_version, _discover_packages, dry_run_release
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

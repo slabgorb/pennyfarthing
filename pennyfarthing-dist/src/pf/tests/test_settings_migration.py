@@ -16,13 +16,10 @@ from __future__ import annotations
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Import under test — will fail until function is implemented
 # ---------------------------------------------------------------------------
-
 from pf.settings_migration import migrate_settings
-
 
 # ---------------------------------------------------------------------------
 # Migration Path 1: permission_mode 'turbo'
