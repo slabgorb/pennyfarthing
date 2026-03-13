@@ -23,22 +23,70 @@ class TestGetProtectedBranches:
         assert "develop" in result
         assert "master" in result
 
-    def test_reads_from_repos_yaml(self, tmp_path):
-        pf_dir = tmp_path / ".pennyfarthing"
-        pf_dir.mkdir()
-        repos_yaml = pf_dir / "repos.yaml"
-        repos_yaml.write_text(
-            "repos:\n  api:\n    default_branch: release\n"
-        )
-        result = _get_protected_branches(tmp_path)
-        assert "release" in result
-        assert "main" in result  # defaults still present
-
     def test_handles_missing_repos_yaml(self, tmp_path):
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()
         result = _get_protected_branches(tmp_path)
         assert "main" in result
+
+    def test_trunk_based_allows_default_branch(self, tmp_path):
+        """Trunk-based repos should NOT protect their own default branch."""
+        pf_dir = tmp_path / ".pennyfarthing"
+        pf_dir.mkdir()
+        (pf_dir / "repos.yaml").write_text(
+            "repos:\n"
+            "  orchestrator:\n"
+            "    path: .\n"
+            "    default_branch: main\n"
+            "    branch_strategy: trunk-based\n"
+        )
+        with patch(
+            "pf.hooks.branch_protection._detect_current_repo",
+            return_value="orchestrator",
+        ):
+            result = _get_protected_branches(tmp_path)
+        assert "main" not in result
+
+    def test_gitflow_protects_default_branch(self, tmp_path):
+        """Gitflow repos should protect their default branch."""
+        pf_dir = tmp_path / ".pennyfarthing"
+        pf_dir.mkdir()
+        (pf_dir / "repos.yaml").write_text(
+            "repos:\n"
+            "  framework:\n"
+            "    path: framework\n"
+            "    default_branch: develop\n"
+            "    branch_strategy: gitflow\n"
+        )
+        with patch(
+            "pf.hooks.branch_protection._detect_current_repo",
+            return_value="framework",
+        ):
+            result = _get_protected_branches(tmp_path)
+        assert "develop" in result
+
+    def test_trunk_based_still_protects_other_gitflow_branches(self, tmp_path):
+        """Trunk-based repo should still protect other repos' gitflow branches."""
+        pf_dir = tmp_path / ".pennyfarthing"
+        pf_dir.mkdir()
+        (pf_dir / "repos.yaml").write_text(
+            "repos:\n"
+            "  orchestrator:\n"
+            "    path: .\n"
+            "    default_branch: main\n"
+            "    branch_strategy: trunk-based\n"
+            "  framework:\n"
+            "    path: framework\n"
+            "    default_branch: develop\n"
+            "    branch_strategy: gitflow\n"
+        )
+        with patch(
+            "pf.hooks.branch_protection._detect_current_repo",
+            return_value="orchestrator",
+        ):
+            result = _get_protected_branches(tmp_path)
+        assert "main" not in result
+        assert "develop" in result
 
 
 class TestExtractPushTarget:

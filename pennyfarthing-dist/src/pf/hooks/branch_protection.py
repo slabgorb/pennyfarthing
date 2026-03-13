@@ -31,29 +31,75 @@ _PUSH_PATTERN = re.compile(r"\bgit\s+push\b")
 _CHECKOUT_PATTERN = re.compile(r"\bgit\s+(?:checkout|switch)\s+(?!-b\b)(\S+)")
 
 
+def _detect_current_repo(project_root: Path, repos: dict) -> str | None:
+    """Determine which repo we're in by matching git root to repo paths."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return None
+        git_root = Path(result.stdout.strip()).resolve()
+    except Exception:
+        return None
+
+    for name, config in repos.items():
+        repo_path = (project_root / config.get("path", name)).resolve()
+        if git_root == repo_path:
+            return name
+    return None
+
+
 def _get_protected_branches(project_root: Path | None) -> set[str]:
-    """Read protected branches from repos.yaml default_branch fields."""
-    protected = {"main", "develop", "master"}
+    """Read protected branches from repos.yaml, respecting branch_strategy.
+
+    Trunk-based repos allow commits/pushes to their default branch.
+    Only gitflow repos have their default branch protected.
+    """
+    fallback = {"main", "develop", "master"}
 
     if not project_root:
-        return protected
+        return fallback
 
     import yaml
 
     repos_yaml = project_root / ".pennyfarthing" / "repos.yaml"
     if not repos_yaml.exists():
-        return protected
+        return fallback
 
     try:
         data = yaml.safe_load(repos_yaml.read_text()) or {}
-        for repo_config in (data.get("repos") or {}).values():
-            branch = repo_config.get("default_branch")
-            if branch:
-                protected.add(branch)
+        repos = data.get("repos") or {}
     except Exception:
-        pass
+        return fallback
 
-    return protected
+    if not repos:
+        return fallback
+
+    current_repo = _detect_current_repo(project_root, repos)
+
+    if current_repo:
+        config = repos[current_repo]
+        strategy = config.get("branch_strategy", "trunk-based")
+        if strategy == "trunk-based":
+            # Trunk-based repos allow direct commits to their default branch.
+            # Still protect other repos' gitflow branches (e.g. block pushing
+            # to develop from the orchestrator).
+            protected = set()
+            for name, rc in repos.items():
+                if name != current_repo and rc.get("branch_strategy") == "gitflow":
+                    branch = rc.get("default_branch")
+                    if branch:
+                        protected.add(branch)
+            return protected
+        else:
+            # Gitflow: protect this repo's default branch
+            return {config.get("default_branch", "develop")}
+
+    return fallback
 
 
 def _get_current_branch() -> str | None:
