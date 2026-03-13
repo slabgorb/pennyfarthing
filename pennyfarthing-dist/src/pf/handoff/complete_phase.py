@@ -75,6 +75,20 @@ def complete_phase(
             ),
         }
 
+    # Subgate: approval gate requires specialist subagent tags in Reviewer Assessment
+    if gate_type == "approval":
+        missing = _check_subagent_dispatch(content)
+        if missing:
+            return {
+                "status": "error",
+                "session_file": str(session_path),
+                "error": (
+                    f"Reviewer Assessment missing specialist subagent tags: {', '.join(sorted(missing))}. "
+                    "To fix: Incorporate findings from all 7 specialist subagents in the "
+                    "Reviewer Assessment using tags: [EDGE], [SILENT], [TEST], [DOC], [TYPE], [SEC], [SIMPLE]."
+                ),
+            }
+
     now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     from_agent = _get_phase_agent(project_root, workflow, from_phase)
@@ -264,6 +278,26 @@ def _load_workflow_phases(project_root: Path, workflow: str) -> list[dict]:
             except Exception:
                 pass
     return []
+
+
+SUBAGENT_DISPATCH_TAGS = {"[EDGE]", "[SILENT]", "[TEST]", "[DOC]", "[TYPE]", "[SEC]", "[SIMPLE]"}
+
+
+def _check_subagent_dispatch(content: str) -> set[str]:
+    """Check Reviewer Assessment for required specialist subagent tags.
+
+    Returns set of missing tags, or empty set if all present.
+    """
+    # Extract content after "## Reviewer Assessment"
+    match = re.search(r"^## Reviewer Assessment\b.*", content, re.MULTILINE)
+    if not match:
+        return SUBAGENT_DISPATCH_TAGS
+    assessment = content[match.start():]
+    # Truncate at next ## heading
+    next_heading = re.search(r"^## (?!Reviewer Assessment)", assessment, re.MULTILINE)
+    if next_heading:
+        assessment = assessment[:next_heading.start()]
+    return {tag for tag in SUBAGENT_DISPATCH_TAGS if tag not in assessment}
 
 
 def _find_project_root() -> Path:
