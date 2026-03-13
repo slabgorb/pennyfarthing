@@ -39,11 +39,20 @@ def is_tmux_running() -> bool:
 
 
 def get_session_name() -> dict:
-    """Get the first session name on the pf socket.
+    """Get the current attached session name on the pf socket.
+
+    Uses display-message to resolve the attached session rather than
+    listing all sessions (which would pick the first alphabetically).
 
     Returns:
-        {success: True, data: "pf-pf-3-0"} or {success: False, error: ...}
+        {success: True, data: "pf-pf-2-0"} or {success: False, error: ...}
     """
+    # Try attached session first
+    result = _run_tmux("display-message", "-p", "#{session_name}")
+    if result["success"] and result["data"]:
+        return result
+
+    # Fallback: list sessions (e.g. when called outside tmux)
     result = _run_tmux("list-sessions", "-F", "#{session_name}")
     if not result["success"]:
         return result
