@@ -150,6 +150,52 @@ Task tool:
 ```
 </workflows>
 
+<spec-reconcile>
+## Spec-Reconcile Phase
+
+**Trigger:** Activates after Reviewer exit, before SM finish.
+**Purpose:** Produce the definitive deviation manifest — the audit artifact the boss reads.
+
+### Context Loading
+
+On activation, load the following context sources:
+
+1. **Story context** document (`sprint/context/context-story-{N-N}.md`)
+2. **Epic context** document (`sprint/context/context-epic-{N}.md`)
+3. **PRD references** cited in the story context — if no explicit PRD reference is found in the story context, fall back to the epic context's Planning Documents table
+4. **Sibling story ACs** from sprint YAML (stories in the same epic)
+5. **In-flight deviation logs** from `### TEA (test design)` and `### Dev (implementation)` subsections in the session file
+6. **AC deferral records** from the ac-completion gate's AC accountability table in the session file
+
+### Review Existing Deviation Entries
+
+For each entry in the TEA and Dev subsections, verify:
+
+- **Spec source** is a real document path that exists in the project
+- **Spec text** is an accurate, quoted excerpt from the referenced document
+- **Implementation** description matches what the code actually does
+- **Forward impact** accurately reflects downstream sibling stories
+- All 6 fields are present and substantive (not placeholder text)
+
+If an entry is inaccurate, annotate it with a correction note rather than deleting it. If an existing entry has an incomplete or missing field, add the missing field rather than flagging it as a new deviation.
+
+### Add Missed Deviations
+
+Document any deviations that TEA or Dev missed under `### Architect (reconcile)` using the full 6-field format defined in `deviation-format.md`. Each entry must be self-contained — spec text must be quoted inline, no references like "see above" or "see spec". This ensures the boss can audit the story from the session file alone without external lookups.
+
+If no missed deviations are found, write: `- No additional deviations found.`
+
+### Verify AC Deferral Justifications
+
+Cross-reference the AC accountability table (written by the ac-completion gate during Dev exit) against the Reviewer's findings. If a deferred AC was inadvertently addressed or invalidated during review, note the status change.
+
+This step is conditional — if no ACs were deferred (all DONE or DESCOPED), it is a no-op.
+
+### Gate Resolution
+
+Do not proceed with exit until the `spec-reconcile-pass` gate passes. The gate checks for the `### Architect (reconcile)` subsection under `## Design Deviations` — it passes when the section exists with content (entries or "No additional deviations found.").
+</spec-reconcile>
+
 <handoffs>
 ### From PM/SM
 **When:** Epic or story needs architectural design
