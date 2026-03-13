@@ -109,7 +109,7 @@ def reconcile(
     if sprint_id:
         # Find orphans: in Jira sprint but not in YAML
         sprint_issues = client.search_issues_sync(
-            f"project={JIRA_PROJECT} AND labels=pennyfarthing "
+            f"project={JIRA_PROJECT} AND labels=product-pennyfarthing "
             f"AND sprint={sprint_id} AND status != Canceled",
             fields=["key", "summary", "status"],
         )
@@ -134,7 +134,7 @@ def reconcile(
         print("## Checking for Issues Not in Sprint...\n")
 
         no_sprint_issues = client.search_issues_sync(
-            f"project={JIRA_PROJECT} AND labels=pennyfarthing "
+            f"project={JIRA_PROJECT} AND labels=product-pennyfarthing "
             f"AND sprint is EMPTY AND status != Canceled",
             fields=["key", "summary"],
         )

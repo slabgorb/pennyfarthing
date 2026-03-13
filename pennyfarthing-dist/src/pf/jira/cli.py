@@ -345,7 +345,7 @@ def create_standalone(title, points, description, dry_run):
             "summary": title,
             "description": _build_adf_description(description),
             "issuetype": {"name": "Story"},
-            "labels": ["pennyfarthing"],
+            "labels": ["product-pennyfarthing"],
         }
     }
 

@@ -28,7 +28,7 @@ PRIORITY_MAP = {
     "P3": "Low",
 }
 
-PROJECT_LABEL = "pennyfarthing"
+PROJECT_LABEL = "product-pennyfarthing"
 
 
 def _get_sprint_path() -> Path:
