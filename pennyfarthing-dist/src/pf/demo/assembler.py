@@ -38,18 +38,42 @@ def _render_mermaid(mmd_path: str, png_path: str) -> None:
     )
 
 
+def _add_content_slide(
+    prs: Presentation,
+    title: str,
+    body_text: str,
+    *,
+    title_size: int = 28,
+    body_size: int = 16,
+) -> None:
+    """Add a slide with a title heading and body text."""
+    blank = prs.slide_layouts[6]
+    slide = prs.slides.add_slide(blank)
+    header = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
+    hf = header.text_frame
+    hf.word_wrap = True
+    hf.paragraphs[0].text = title
+    hf.paragraphs[0].font.size = Pt(title_size)
+    hf.paragraphs[0].font.bold = True
+    body = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(5))
+    bf = body.text_frame
+    bf.word_wrap = True
+    bf.paragraphs[0].text = body_text
+    bf.paragraphs[0].font.size = Pt(body_size)
+
+
 def _build_slides(
     prs: Presentation,
     gc: GeneratedContent,
     cs: ClassifiedStory,
 ) -> None:
     """Add slides to the presentation based on content and story type."""
-    blank = prs.slide_layouts[6]  # blank layout
+    blank = prs.slide_layouts[6]
 
-    # 1. Title slide
+    # 1. Title slide (custom layout — two text blocks)
     slide = prs.slides.add_slide(blank)
-    txBox = slide.shapes.add_textbox(Inches(1), Inches(2), Inches(8), Inches(2))
-    tf = txBox.text_frame
+    tx = slide.shapes.add_textbox(Inches(1), Inches(2), Inches(8), Inches(2))
+    tf = tx.text_frame
     tf.word_wrap = True
     p = tf.paragraphs[0]
     p.text = f"Story {gc.story_id}"
@@ -59,71 +83,19 @@ def _build_slides(
     p2.text = cs.signals.title if cs.signals else gc.story_id
     p2.font.size = Pt(20)
 
-    # 2. Problem slide
-    slide = prs.slides.add_slide(blank)
-    txBox = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
-    tf = txBox.text_frame
-    tf.word_wrap = True
-    p = tf.paragraphs[0]
-    p.text = "Problem"
-    p.font.size = Pt(28)
-    p.font.bold = True
-    body = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(5))
-    bf = body.text_frame
-    bf.word_wrap = True
-    bf.paragraphs[0].text = gc.problem_statement
-    bf.paragraphs[0].font.size = Pt(16)
+    # 2–4. Content slides
+    _add_content_slide(prs, "Problem", gc.problem_statement)
+    _add_content_slide(prs, "What We Built", gc.what_changed)
+    _add_content_slide(prs, "Why This Approach", gc.why_this_approach)
 
-    # 3. What We Built slide
-    slide = prs.slides.add_slide(blank)
-    txBox = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
-    tf = txBox.text_frame
-    tf.word_wrap = True
-    p = tf.paragraphs[0]
-    p.text = "What We Built"
-    p.font.size = Pt(28)
-    p.font.bold = True
-    body = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(5))
-    bf = body.text_frame
-    bf.word_wrap = True
-    bf.paragraphs[0].text = gc.what_changed
-    bf.paragraphs[0].font.size = Pt(16)
-
-    # 4. Why This Approach slide
-    slide = prs.slides.add_slide(blank)
-    txBox = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
-    tf = txBox.text_frame
-    tf.word_wrap = True
-    p = tf.paragraphs[0]
-    p.text = "Why This Approach"
-    p.font.size = Pt(28)
-    p.font.bold = True
-    body = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(5))
-    bf = body.text_frame
-    bf.word_wrap = True
-    bf.paragraphs[0].text = gc.why_this_approach
-    bf.paragraphs[0].font.size = Pt(16)
-
-    # 5. Before/After slide (conditional — refactor/bugfix with content)
+    # 5. Before/After slide (conditional)
     if gc.before_after:
-        slide = prs.slides.add_slide(blank)
-        txBox = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
-        tf = txBox.text_frame
-        tf.word_wrap = True
-        p = tf.paragraphs[0]
-        p.text = "Before / After"
-        p.font.size = Pt(28)
-        p.font.bold = True
-        body = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(5))
-        bf = body.text_frame
-        bf.word_wrap = True
-        bf.paragraphs[0].text = gc.before_after
-        bf.paragraphs[0].font.size = Pt(16)
+        _add_content_slide(prs, "Before / After", gc.before_after)
 
-    # 6. CTA / Questions slide (always last)
+    # 6. CTA / Questions slide (custom layout — centered)
     slide = prs.slides.add_slide(blank)
-    txBox = slide.shapes.add_textbox(Inches(2), Inches(2.5), Inches(6), Inches(2))
-    tf = txBox.text_frame
+    tx = slide.shapes.add_textbox(Inches(2), Inches(2.5), Inches(6), Inches(2))
+    tf = tx.text_frame
     tf.word_wrap = True
     p = tf.paragraphs[0]
     p.text = "Questions?"

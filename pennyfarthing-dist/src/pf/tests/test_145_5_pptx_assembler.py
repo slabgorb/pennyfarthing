@@ -35,7 +35,7 @@ from pf.demo.models import (
 # ---------------------------------------------------------------------------
 
 
-def _make_signals(story_id: str = "145-5", story_type_hint: str = "backend") -> SignalBundle:
+def _make_signals(story_id: str = "145-5") -> SignalBundle:
     """Build a minimal SignalBundle for testing."""
     return SignalBundle(
         story_id=story_id,
