@@ -481,7 +481,7 @@ CHANNEL_FETCHERS: dict[str, Any] = {
 }
 
 # Channels that should be polled periodically (their data changes externally)
-POLL_CHANNELS = {"git", "diffs", "sprint", "story", "context", "benchmark-history"}
+POLL_CHANNELS = {"git", "diffs", "sprint", "story", "context", "benchmark-history", "persona"}
 
 
 async def send_initial_data(websocket: Any, channel: str) -> None:
