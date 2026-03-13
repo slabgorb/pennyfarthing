@@ -451,10 +451,10 @@ def fetch_subagent_transitions() -> dict[str, Any]:
 
 
 def fetch_spans() -> dict[str, Any]:
-    """Fetch enriched spans."""
-    from pf.wheelhub.routes.state import _enriched_spans
+    """Fetch accumulated spans from the OTLP receiver."""
+    from pf.wheelhub.app import _receiver
 
-    return {"type": "init", "spans": _enriched_spans}
+    return {"type": "init", "spans": _receiver.get_spans()}
 
 
 def fetch_todos() -> dict[str, Any]:

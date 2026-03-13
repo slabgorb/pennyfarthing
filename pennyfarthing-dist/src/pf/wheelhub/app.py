@@ -135,7 +135,9 @@ def create_app() -> FastAPI:
     async def otlp_logs(request: Request) -> JSONResponse:
         try:
             body = await request.json()
-            _receiver.process_logs(body)
+            new_spans = _receiver.process_logs(body)
+            for span in new_spans:
+                await broadcast("spans", {"type": "span", "span": span})
         except Exception:
             pass
         return JSONResponse({"partialSuccess": {}})
@@ -153,7 +155,9 @@ def create_app() -> FastAPI:
     async def otlp_traces(request: Request) -> JSONResponse:
         try:
             body = await request.json()
-            _receiver.process_traces(body)
+            new_spans = _receiver.process_traces(body)
+            for span in new_spans:
+                await broadcast("spans", {"type": "span", "span": span})
         except Exception:
             pass
         return JSONResponse({"partialSuccess": {}})
