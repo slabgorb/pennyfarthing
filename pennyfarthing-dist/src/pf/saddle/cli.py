@@ -1,4 +1,4 @@
-"""Saddle CLI — pf saddle start/stop/status commands.
+"""Saddle CLI — pf saddle start/stop/status/summon commands.
 
 Wires the saddle core module into the pf CLI for interactive agent management.
 
@@ -39,6 +39,21 @@ def stop():
     """Stop the running agent in the saddle pane."""
     project_root = get_project_root()
     result = core.stop_agent(project_root=project_root)
+
+    if not result.get("success"):
+        click.echo(json.dumps(result, indent=2), err=True)
+        raise SystemExit(1)
+
+    click.echo(json.dumps(result, indent=2))
+
+
+@saddle.command()
+@click.argument("agent_name")
+@click.option("--task", default=None, help="Task description for the summoned agent.")
+def summon(agent_name: str, task: str | None):
+    """Summon an agent into the saddle pane with full prime context."""
+    project_root = get_project_root()
+    result = core.summon_agent(agent_name=agent_name, project_root=project_root, task=task)
 
     if not result.get("success"):
         click.echo(json.dumps(result, indent=2), err=True)

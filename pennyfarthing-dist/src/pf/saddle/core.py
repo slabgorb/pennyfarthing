@@ -11,6 +11,7 @@ Story 143-17
 from __future__ import annotations
 
 import json
+import shlex
 from pathlib import Path
 
 from pf.tmux import panes as _panes
@@ -180,6 +181,77 @@ def stop_agent(project_root: Path) -> dict:
     _save_state(project_root, state)
 
     return {"success": True, "data": {"agent_stopped": agent_stopped}}
+
+
+def summon_agent(agent_name: str, project_root: Path, *, task: str | None = None) -> dict:
+    """Summon an agent into the saddle pane with full prime context.
+
+    Unlike start_agent which sends `claude /pf-{agent}`, summon builds a
+    command that includes `pf agent start` context and an optional task description.
+
+    Args:
+        agent_name: The agent role to summon (e.g., "dev", "tea").
+        project_root: Path to the project root.
+        task: Optional task description for the summoned agent.
+
+    Returns:
+        {success: True, data: {agent, pane_id, command, task?}} or error dict
+    """
+    if not agent_name:
+        return {"success": False, "error": "Agent name cannot be empty"}
+
+    if agent_name not in VALID_AGENTS:
+        return {"success": False, "error": f"Unknown agent: {agent_name}"}
+
+    if not _panes.is_tmux_running():
+        return {"success": False, "error": "tmux is not running on pf socket"}
+
+    # Stop any existing agent before summoning a new one
+    state = _load_state(project_root)
+    if state.get("active") and state.get("agent"):
+        stop_agent(project_root)
+
+    pane_result = ensure_saddle_pane(project_root)
+    if not pane_result["success"]:
+        return pane_result
+
+    pane_id = pane_result["data"]["pane_id"]
+
+    # Build command with full prime context via pf agent start
+    if task:
+        # Close double quotes BEFORE the task so shlex.quote() operates at
+        # the top quoting level where single quotes ARE protective.
+        # Shell sees: "...Your task: " (double-quoted) + 'safe-task' (single-quoted).
+        command = (
+            f'claude -p "$(pf agent start {agent_name})\n\n'
+            f'Your task: "{shlex.quote(task)}'
+        )
+    else:
+        command = f'claude -p "$(pf agent start {agent_name})"'
+
+    # Send command to saddle pane
+    send_result = _panes.send_keys(pane_id, command)
+    if not send_result["success"]:
+        return {"success": False, "error": f"Failed to send command: {send_result['error']}"}
+
+    # Emit telemetry (fire-and-forget)
+    try:
+        from pf.wheelhub.subagent_events import emit_subagent_event
+
+        emit_subagent_event("agent_summon", agent=agent_name)
+    except Exception:
+        pass
+
+    state["active"] = True
+    state["agent"] = agent_name
+    state["pane_id"] = pane_id
+    _save_state(project_root, state)
+
+    data: dict = {"agent": agent_name, "pane_id": pane_id, "command": command}
+    if task:
+        data["task"] = task  # Return original task value for visibility
+
+    return {"success": True, "data": data}
 
 
 def status(project_root: Path) -> dict:
