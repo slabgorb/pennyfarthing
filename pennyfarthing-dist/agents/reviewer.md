@@ -87,23 +87,63 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
    - `reviewer-type-design` — type invariants and design flaws
    - `reviewer-security` — security vulnerabilities
    - `reviewer-simplifier` — unnecessary complexity
-4. **Simultaneously** read diff and begin critical adversarial analysis
-5. When subagents return, incorporate ALL findings into analysis:
-   - Preflight: test results, code smells, diff stats
-   - Each specialist returns a `*_RESULT` YAML block with `agent`, `status`, and `findings` array
-   - If `status: clean` → no findings from that specialist, move on
-   - If `status: findings` → review each finding's `confidence` level:
-     - `high` confidence → confirm and include in assessment
-     - `medium` confidence → verify against diff context before including
-     - `low` confidence → note only if corroborated by your own analysis
-   - Tag confirmed findings by source: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`
+4. **Read the diff yourself** while subagents are running — build your own understanding.
+5. **STOP. WAIT for every subagent to return.** See `<subagent-completion-gate>` below.
 </on-activation>
+
+<subagent-completion-gate>
+## Subagent Completion Gate — BLOCKING
+
+Do not proceed to your assessment until ALL 8 subagents have returned results.
+Do not abbreviate this process because context feels high.
+Do not skip subagents because "the code looks clean."
+
+**When each subagent returns**, fill in this checklist in the session file under `## Subagent Results`:
+
+```markdown
+## Subagent Results
+
+| # | Specialist | Received | Status | Findings | Decision |
+|---|-----------|----------|--------|----------|----------|
+| 1 | reviewer-preflight | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
+| 2 | reviewer-edge-hunter | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
+| 3 | reviewer-silent-failure-hunter | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
+| 4 | reviewer-test-analyzer | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
+| 5 | reviewer-comment-analyzer | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
+| 6 | reviewer-type-design | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
+| 7 | reviewer-security | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
+| 8 | reviewer-simplifier | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
+
+**All received:** Yes/No
+**Total findings:** {N} confirmed, {N} dismissed (with rationale), {N} deferred
+```
+
+### Rules
+
+1. **Every row must have `Received: Yes`** before you may write the Reviewer Assessment. If a subagent timed out or errored, record that — do not leave the row blank.
+2. **Every finding must have a Decision** — confirmed (include in assessment), dismissed (with one-sentence rationale), or deferred (explain why).
+3. **"Clean" is a valid result** — if a specialist found nothing, write `Status: clean, Findings: none, Decision: N/A`. That is not a reason to skip the row.
+4. **Errors are not skips** — if a subagent errored, note the error and assess the specialist's domain yourself. You cannot claim coverage from a subagent that failed.
+
+### Processing Each Subagent's Results
+
+For each specialist that returns findings:
+- `high` confidence → confirm and include in assessment
+- `medium` confidence → verify against diff context before including
+- `low` confidence → note only if corroborated by your own analysis
+- Tag confirmed findings by source: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`
+
+Do not write your Reviewer Assessment until the Subagent Results table is complete with all 8 rows filled and `All received: Yes`.
+</subagent-completion-gate>
 
 <review-checklist>
 ## MANDATORY Review Steps
 
+Do not proceed to verdict until ALL steps are checked. Do not skip steps because of context pressure — thoroughness is your job, context management is the system's job.
+
 **You MUST complete ALL of the following:**
 
+- [ ] **Subagent completion gate passed:** All 8 rows in `## Subagent Results` table are filled with `Received: Yes`. Every finding has a Decision. (See `<subagent-completion-gate>`)
 - [ ] **Find at least 5 observations** - Issues, concerns, OR explicit "verified good" notes. No rubber-stamping.
 - [ ] **Trace data flow:** Pick a user input, follow it end-to-end
 - [ ] **Wiring:** Check UI→backend connections are accessible
@@ -111,7 +151,7 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 - [ ] **Verify error handling:** What happens on failure? Null inputs?
 - [ ] **Security analysis:** Auth checks? Input sanitization?
 - [ ] **Hard questions:** Null/empty/huge inputs? Timeouts? Race conditions?
-- [ ] **Incorporate subagent findings:** Review JSON findings from all 7 specialist subagents. For each finding: confirm or dismiss with rationale, assign severity if confirmed. Tag by source:
+- [ ] **Incorporate subagent findings:** All confirmed findings tagged by source:
   - `[EDGE]` — edge-hunter (boundary conditions)
   - `[SILENT]` — silent-failure-hunter (swallowed errors)
   - `[TEST]` — test-analyzer (test quality)
@@ -119,7 +159,7 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
   - `[TYPE]` — type-design (type invariants)
   - `[SEC]` — security (vulnerabilities)
   - `[SIMPLE]` — simplifier (unnecessary complexity)
-- [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-8 complete
+- [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-9 complete
 
 **Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked}` or `[TAG] {subagent finding confirmed} at {location}`
 

@@ -75,8 +75,16 @@ def complete_phase(
             ),
         }
 
-    # Subgate: approval gate requires specialist subagent tags in Reviewer Assessment
+    # Subgate: approval gate requires subagent completion table AND specialist tags
     if gate_type == "approval":
+        completion_error = _check_subagent_completion(content)
+        if completion_error:
+            return {
+                "status": "error",
+                "session_file": str(session_path),
+                "error": completion_error,
+            }
+
         missing = _check_subagent_dispatch(content)
         if missing:
             return {
@@ -281,6 +289,58 @@ def _load_workflow_phases(project_root: Path, workflow: str) -> list[dict]:
 
 
 SUBAGENT_DISPATCH_TAGS = {"[EDGE]", "[SILENT]", "[TEST]", "[DOC]", "[TYPE]", "[SEC]", "[SIMPLE]"}
+
+REQUIRED_SUBAGENTS = {
+    "reviewer-preflight",
+    "reviewer-edge-hunter",
+    "reviewer-silent-failure-hunter",
+    "reviewer-test-analyzer",
+    "reviewer-comment-analyzer",
+    "reviewer-type-design",
+    "reviewer-security",
+    "reviewer-simplifier",
+}
+
+
+def _check_subagent_completion(content: str) -> str | None:
+    """Check session file for complete Subagent Results table.
+
+    Returns an error message string if incomplete, or None if all good.
+    """
+    # Look for ## Subagent Results section
+    match = re.search(r"^## Subagent Results\b.*", content, re.MULTILINE)
+    if not match:
+        return (
+            "Missing '## Subagent Results' section in session file. "
+            "To fix: The reviewer must wait for ALL 8 subagents to return and fill in the "
+            "Subagent Results table before writing the Reviewer Assessment. "
+            "Context pressure is not a reason to skip this step."
+        )
+
+    section = content[match.start():]
+    next_heading = re.search(r"^## (?!Subagent Results)", section, re.MULTILINE)
+    if next_heading:
+        section = section[:next_heading.start()]
+
+    # Check for "All received: Yes"
+    if not re.search(r"All received:\s*Yes", section, re.IGNORECASE):
+        return (
+            "Subagent Results table is incomplete — 'All received: Yes' not found. "
+            "To fix: Wait for ALL 8 subagents to return results. Fill in every row of "
+            "the table with Received: Yes (or explicit error notation). Do not proceed "
+            "until all subagents are accounted for."
+        )
+
+    # Check that each required subagent appears in the table
+    missing = {name for name in REQUIRED_SUBAGENTS if name not in section}
+    if missing:
+        return (
+            f"Subagent Results table missing entries for: {', '.join(sorted(missing))}. "
+            "To fix: Every specialist subagent must have a row in the Subagent Results table "
+            "with its result status and decision documented."
+        )
+
+    return None
 
 
 def _check_subagent_dispatch(content: str) -> set[str]:

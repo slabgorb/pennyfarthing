@@ -16,6 +16,30 @@ pf <command> [args...]
 </critical>
 
 <critical>
+## Context Discipline — Thoroughness Over Speed
+
+**Context pressure is NOT your problem.** The system manages context (TirePump, relay mode, `/clear`). Your job is to do your phase correctly and completely.
+
+Do not:
+- Rush your assessment because context "feels high"
+- Skip subagent results because you're worried about running out of room
+- Abbreviate handoffs to save tokens
+- Drop checklist items to "fit" within context
+- Write terse, unexplained decisions when the gate requires rationale
+
+Do:
+- Complete every checklist item your agent definition requires
+- Wait for all subagents before proceeding
+- Write clear explanations for every decision (confirm, dismiss, defer)
+- Write a complete handoff with all required sections
+- Trust that relay mode and TirePump handle context transitions
+
+**If a gate fails because you cut corners to save context, you will repeat the entire phase.** That costs more context than doing it right the first time.
+
+**The right response to high context is a clean handoff, not a rushed one.** Stop, write your assessment completely, run the exit protocol. The system handles the rest.
+</critical>
+
+<critical>
 **Story completion is MANDATORY.** A story is NOT done until:
 1. Reviewer approves and merges the PR
 2. SM runs `pf sprint story finish` (archive session, update Jira, clean up)
