@@ -1116,6 +1116,32 @@ def _run_reviewer_fanout(
     return "\n".join(parts)
 
 
+# Pre-phase scout configs: specialist scans on full codebase before each phase
+_PHASE_SCOUTS: dict[str, list[tuple[str, str, str]]] = {
+    "tea": [
+        ("reviewer-test-analyzer",
+         "Scan ALL test files for quality issues — vacuous assertions, "
+         "tests that prove nothing, missing edge cases, zero-assertion tests.",
+         "Pre-existing Test Quality Issues"),
+    ],
+    "dev": [
+        ("reviewer-silent-failure-hunter",
+         "Scan ALL source files for silent failures — swallowed errors, "
+         "empty catches, fallbacks that hide problems. Focus on functions "
+         "that return defaults instead of propagating errors.",
+         "Pre-existing Silent Failures"),
+        ("reviewer-security",
+         "Scan ALL source files for security vulnerabilities — injection "
+         "risks, raw string APIs that should use newtypes, auth bypasses.",
+         "Pre-existing Security Issues"),
+        ("reviewer-type-design",
+         "Scan ALL source files for type design issues — stringly-typed "
+         "APIs, missing newtypes, unsafe casts, weak type invariants.",
+         "Pre-existing Type Design Issues"),
+    ],
+}
+
+
 def run_pipeline(
     scenario: Scenario,
     *,
@@ -1357,31 +1383,6 @@ def run_pipeline(
             output = scan_result.stdout
         print(f"  [{tag}-SCAN] Done")
         return output
-
-    # Pre-phase scout configs: specialist scans on full codebase before each phase
-    _PHASE_SCOUTS: dict[str, list[tuple[str, str, str]]] = {
-        "tea": [
-            ("reviewer-test-analyzer",
-             "Scan ALL test files for quality issues — vacuous assertions, "
-             "tests that prove nothing, missing edge cases, zero-assertion tests.",
-             "Pre-existing Test Quality Issues"),
-        ],
-        "dev": [
-            ("reviewer-silent-failure-hunter",
-             "Scan ALL source files for silent failures — swallowed errors, "
-             "empty catches, fallbacks that hide problems. Focus on functions "
-             "that return defaults instead of propagating errors.",
-             "Pre-existing Silent Failures"),
-            ("reviewer-security",
-             "Scan ALL source files for security vulnerabilities — injection "
-             "risks, raw string APIs that should use newtypes, auth bypasses.",
-             "Pre-existing Security Issues"),
-            ("reviewer-type-design",
-             "Scan ALL source files for type design issues — stringly-typed "
-             "APIs, missing newtypes, unsafe casts, weak type invariants.",
-             "Pre-existing Type Design Issues"),
-        ],
-    }
 
     try:
         # Run initial phases linearly

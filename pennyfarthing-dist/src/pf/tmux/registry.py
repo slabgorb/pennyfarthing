@@ -13,7 +13,6 @@ from pathlib import Path
 
 from pf.tmux.panes import is_pane_idle, list_live_panes
 
-
 PROTECTED_ROLES = {"claude", "tui"}
 DEFAULT_MAX_PANES = 5
 
@@ -106,7 +105,6 @@ def reconcile(registry: dict, live_panes: list[dict]) -> dict:
     3. Update dimensions from live data
     """
     live_ids = {p["pane_id"] for p in live_panes}
-    live_by_id = {p["pane_id"]: p for p in live_panes}
 
     # Remove stale entries
     registry["panes"] = [p for p in registry["panes"] if p["pane_id"] in live_ids]

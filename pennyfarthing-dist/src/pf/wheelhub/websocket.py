@@ -18,8 +18,9 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -87,7 +88,6 @@ class ChannelManager:
         config = self._channels.get(path)
         if config is None:
             return 0
-        payload = json.dumps(message)
         sent = 0
         dead: list[WebSocket] = []
         for ws in config.clients:
@@ -126,7 +126,7 @@ class ChannelManager:
 
     def mount(self, app: FastAPI) -> None:
         """Mount all registered WebSocket channels as routes on a FastAPI app."""
-        for path, config in self._channels.items():
+        for _path, config in self._channels.items():
             self._mount_channel(app, config)
 
     def _mount_channel(self, app: FastAPI, config: _ChannelConfig) -> None:

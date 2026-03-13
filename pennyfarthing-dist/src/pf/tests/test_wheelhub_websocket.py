@@ -21,9 +21,7 @@ Acceptance Criteria:
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -33,7 +31,6 @@ from pf.wheelhub.websocket import (
     setup_file_watchers,
     setup_websocket_channels,
 )
-
 
 # ===========================================================================
 # AC1: ChannelManager — broadcast pattern matching Node.js behavior

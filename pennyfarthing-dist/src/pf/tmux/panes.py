@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import subprocess
 
-
 SOCKET = "pf"
 IDLE_SHELLS = {"zsh", "bash", "fish", "sh", "-zsh", "-bash"}
 

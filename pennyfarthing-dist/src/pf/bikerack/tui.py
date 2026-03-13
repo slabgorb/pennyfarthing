@@ -28,8 +28,8 @@ from textual.widgets import Header, Rule, Static, Tab, Tabs
 from pf.bc.focus import get_last_panel, save_last_panel
 from pf.bikerack import layout_order as _layout_order
 from pf.bikerack.audit_log_panel import AuditLogPanel
-from pf.bikerack.benchmark_panel import BenchmarkPanel
 from pf.bikerack.base_panel import get_panel_icon
+from pf.bikerack.benchmark_panel import BenchmarkPanel
 from pf.bikerack.context_meter_footer import StatusFooter
 from pf.bikerack.debug_panel import DebugPanel
 from pf.bikerack.diffs_panel import DiffsPanel

@@ -21,10 +21,9 @@ from pf.validate.adapters.agent import (
     READ_ONLY_ROLES,
     VALID_TOOLS,
     WRITE_ROLES,
-    validate_native_agent,
     run,
+    validate_native_agent,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

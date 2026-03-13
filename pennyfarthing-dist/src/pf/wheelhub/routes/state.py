@@ -448,8 +448,9 @@ async def post_benchmark_phase(request: Request) -> JSONResponse:
 
     # Broadcast to benchmark-events channel
     try:
-        from pf.wheelhub.app import broadcast
         import asyncio
+
+        from pf.wheelhub.app import broadcast
         asyncio.ensure_future(broadcast("benchmark-events", event))
     except Exception:
         pass

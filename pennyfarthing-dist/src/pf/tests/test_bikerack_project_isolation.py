@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pf.bikerack.launcher import is_already_running, read_port_file, _probe_wheelhub_project
+from pf.bikerack.launcher import is_already_running, read_port_file
 from pf.bikerack.ws_client import WheelHubClient
 
 

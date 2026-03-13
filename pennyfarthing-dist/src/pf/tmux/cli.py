@@ -16,16 +16,15 @@ from pf.common.config import get_project_root
 from pf.tmux import panes
 from pf.tmux.registry import (
     DEFAULT_MAX_PANES,
+    _classify_pane,
+    _empty_registry,
     choose_direction,
     find_idle_worker,
     find_split_target,
     load_registry,
     next_worker_number,
-    reconcile,
     resolve_pane_ref,
     save_registry,
-    _classify_pane,
-    _empty_registry,
 )
 
 

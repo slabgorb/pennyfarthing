@@ -6,10 +6,7 @@ of all 7 specialist subagent tags in the Reviewer Assessment.
 
 from __future__ import annotations
 
-import pytest
-
 from pf.handoff.complete_phase import SUBAGENT_DISPATCH_TAGS, _check_subagent_dispatch
-
 
 ALL_TAGS = "[EDGE] [SILENT] [TEST] [DOC] [TYPE] [SEC] [SIMPLE]"
 
