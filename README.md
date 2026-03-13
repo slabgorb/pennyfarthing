@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v12.7.0** | *The outer loop goes once, the inner loop goes many times.*
+**v13.0.0-alpha.2** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -15,12 +15,13 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
 - **11 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator, BA
-- **35 BikeLane Workflows** - 14 local (TDD, BDD, Trivial, 2pTDD, TDD-Tandem, BDD-Tandem, TDD-Team, BDD-Team, Review-Tandem, Patch, Agent-Docs, Architecture, Release, Git Cleanup) + 21 reference workflows (PRD, Sprint Planning, UX Design, Research, and more)
+- **11 BikeLane Workflows** - TDD, BDD, Trivial, 2-Party TDD, TDD-Team, BDD-Team, Patch, Agent-Docs, Architecture, Release, Git Cleanup
 - **37 Slash Commands** - Entry points for agent activation and workflows
 - **22 Skills** - Reusable knowledge domains (testing, code-review, jira, settings, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
 - **Agent Sidecars** - Persistent learning files where agents record patterns, gotchas, and decisions across stories
+- **BikeRack TUI** - Textual-based terminal dashboard running alongside Claude Code CLI
 
 ### 2. Personality Research
 
@@ -31,7 +32,7 @@ A scientific study of how strong personalities affect AI agent behavior:
 - **Benchmarking System** - `/solo`, `/benchmark-control`, `/benchmark` for statistical evaluation
 - **JobFair** - Discovering which characters excel at roles beyond their native specialization
 
-The 100 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
+The 45 persona themes (Discworld, Star Trek, Breaking Bad, Alice in Wonderland, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
 
 ### 3. Integration & Tooling
 
@@ -183,7 +184,7 @@ BikeRack renders tool use as human-readable summaries instead of raw JSON. Conse
 
 ### Agent Portraits
 
-Each of the 1101 persona characters across 100 themes has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
+Each persona character has a unique portrait displayed in the conversation stream, making multi-agent workflows visually distinct.
 
 ### Workflow Modes
 
@@ -322,11 +323,11 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | [Peloton Testing](pennyfarthing-dist/guides/peloton.md) | Pipeline replay benchmarks from real PR reviews |
 | [Benchmarks](packages/benchmark/docs/benchmarks-guide.md) | Persona evaluation system (JobFair) |
 
-## Available Themes (100)
+## Available Themes (45)
 
-All 100 themes are bundled with `pf init` — no separate packages required. Themes span sci-fi, prestige TV, literature, mythology, comedy, history, and more:
+All 45 themes are bundled with `pf init` — no separate packages required. Themes span sci-fi, prestige TV, literature, mythology, comedy, history, and more:
 
-`the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `fifth-element`, `succession`, `the-wire`, `mad-men`, `shakespeare`, `jane-austen`, `dune`, `game-of-thrones`, `the-office`, `monty-python`, `greek-mythology`, `blade-runner`, `doctor-who`, `harry-potter`, `foundation`, `ted-lasso`, and 80 more.
+`the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `fifth-element`, `succession`, `the-wire`, `mad-men`, `shakespeare`, `jane-austen`, `dune`, `game-of-thrones`, `the-office`, `monty-python`, `greek-mythology`, `blade-runner`, `doctor-who`, `harry-potter`, `foundation`, `ted-lasso`, `alice-in-wonderland`, `firefly`, and more.
 
 All themes include OCEAN (Big Five) personality profiles. See [Personas](docs/PERSONAS.md) for personality analysis.
 
@@ -369,24 +370,25 @@ your-project/
     └── {story-id}-session.md # Active work session
 ```
 
-## What's New in v12.7.0
+## What's New in v13.0.0
 
-- **Judge versioning and partial-match rubrics** — Benchmark judges support version tracking and partial-match scoring
-- **Pipeline replay framework** — Replay benchmark pipelines from stored results for regression testing
-- **Theme YAML schema and git snapshot** — Structured theme validation plus `pf git snapshot` for point-in-time repo captures
-- **Kitchen-sink workflow** — Extended gate coverage with language-specific review checklists
+- **Python-first architecture (ADR-0034)** — Python owns the runtime: CLI, WheelHub server (FastAPI/uvicorn), hooks, benchmarks. TypeScript/React is GUI-only
+- **BikeRack TUI** — Textual-based terminal dashboard running alongside Claude Code CLI via `pf bikerack start`
+- **WheelHub rewrite** — Python FastAPI server replaces Node.js, serving API endpoints, WebSocket channels, and OTLP telemetry
+- **Spec-check and spec-reconcile phases** — Architect validates implementation alignment before review, reconciles deviations after
+- **RepoFieldSpec registry** — Typed metadata for repos.yaml fields, enabling TUI editing of project topology
+- **Saddle mode** — Background observer agent summon via `pf saddle summon`
+- **Demo pipeline** — `pf demo generate` builds presentation artifacts from sprint work
+- **Pipeline replay benchmarks** — Full TDD pipeline testing against real PR review findings via `pf benchmark replay`
+- **OTEL telemetry** — Traces, logs, and spans via WheelHub WebSocket channels
 
 ### Previous Highlights
 
-- **v12.6** - Consumer E2E test suite, WheelHub Node 24 CJS fix, gold standard calibration, difficulty profiles
-- **v12.4** - SOUL.md bootstrap, PR title config, consumer gate extensions, in-review status, result objects
-- **v12.0** - Python-first installation, monorepo consolidation, workflow gates, handoff CLI, tandem consultation, output styles, codebase analysis tools
-- **v10.3** - BikeRack Dockview migration, BikeRack launcher CLI, repos topology system, BA agent
-- **v10.2** - Tandem backseat protocol, tandem workflows (TDD/BDD-tandem), CI quality gates, schema validation
-- **v10.1** - Codebase health dashboard, tool dialog system, 2party-TDD workflow, cross-file reference validator
-- **v10.0** - Clean install consolidation, tool use approval system, plan mode exit UI
-- **v9.3** - Theme expansion (100 themes bundled), release workflow, shadcn/ui migration
-- **v9.0** - Dockview panel system, React 19 rewrite, tool visualization, prime context, bell/relay modes
+- **v12.7** - Judge versioning, pipeline replay framework, theme YAML schema, kitchen-sink workflow
+- **v12.6** - Consumer E2E test suite, gold standard calibration, difficulty profiles
+- **v12.0** - Python-first installation, monorepo consolidation, workflow gates, handoff CLI, output styles
+- **v10.x** - BikeRack Dockview, repos topology, tandem protocol, codebase health dashboard
+- **v9.x** - Theme expansion, release workflow, shadcn/ui migration, prime context, bell/relay modes
 - **v8.x** - BikeLane workflows, scientific benchmarking, JobFair, agent sidecars
 
 See [CHANGELOG.md](CHANGELOG.md) for full details.
