@@ -443,6 +443,13 @@ def fetch_benchmark_history() -> dict[str, Any]:
     return {"type": "init", "runs": runs}
 
 
+def fetch_subagent_transitions() -> dict[str, Any]:
+    """Fetch recent subagent transition events."""
+    from pf.wheelhub.routes.state import _subagent_events
+
+    return {"type": "init", "events": _subagent_events}
+
+
 def fetch_spans() -> dict[str, Any]:
     """Fetch enriched spans."""
     from pf.wheelhub.routes.state import _enriched_spans
@@ -470,6 +477,7 @@ CHANNEL_FETCHERS: dict[str, Any] = {
     "spans": fetch_spans,
     "todos": fetch_todos,
     "benchmark-history": fetch_benchmark_history,
+    "subagent-transitions": fetch_subagent_transitions,
 }
 
 # Channels that should be polled periodically (their data changes externally)

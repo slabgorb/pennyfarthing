@@ -153,6 +153,22 @@ def resolve_gate(
         if all_extensions:
             gate_extensions = all_extensions
 
+    # Emit gate_check event to BikeRack (Story 143-16)
+    try:
+        from pf.wheelhub.subagent_events import emit_subagent_event
+
+        emit_subagent_event(
+            "gate_check",
+            story_id=story_id,
+            workflow=workflow,
+            phase=phase,
+            gate_type=gate_type or "",
+            gate_passed=True,
+            next_agent=next_agent or "",
+        )
+    except Exception:
+        pass
+
     return _result(
         status="ready",
         gate_type=gate_type,

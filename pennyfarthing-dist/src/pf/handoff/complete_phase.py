@@ -172,6 +172,23 @@ def complete_phase(
         except Exception:
             pass  # Non-fatal — status-sync gate will catch mismatches
 
+    # Emit subagent transition event to BikeRack (Story 143-16)
+    try:
+        from pf.wheelhub.subagent_events import emit_subagent_event
+
+        emit_subagent_event(
+            "phase_complete",
+            agent=from_agent,
+            story_id=story_id,
+            workflow=workflow,
+            from_phase=from_phase,
+            to_phase=to_phase,
+            gate_type=gate_type,
+            next_agent=to_agent,
+        )
+    except Exception:
+        pass  # Non-fatal — observability should never block workflow
+
     return {
         "status": "success",
         "session_file": f".session/{story_id}-session.md",

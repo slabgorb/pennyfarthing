@@ -464,6 +464,43 @@ async def get_benchmark_status() -> JSONResponse:
 
 
 # ---------------------------------------------------------------------------
+# Subagent transitions router (Story 143-16)
+# ---------------------------------------------------------------------------
+
+subagent_router = APIRouter(prefix="/api", tags=["subagent"])
+
+# In-memory ring buffer of recent transition events
+MAX_SUBAGENT_EVENTS = 200
+_subagent_events: list[dict[str, Any]] = []
+
+
+@subagent_router.post("/subagent-event")
+async def post_subagent_event(request: Request) -> JSONResponse:
+    """Receive subagent transition event and broadcast on subagent-transitions."""
+    body = await request.json()
+    _subagent_events.append(body)
+    if len(_subagent_events) > MAX_SUBAGENT_EVENTS:
+        del _subagent_events[: len(_subagent_events) - MAX_SUBAGENT_EVENTS]
+
+    # Broadcast to connected TUI panels
+    try:
+        import asyncio
+
+        from pf.wheelhub.app import broadcast
+        asyncio.ensure_future(broadcast("subagent-transitions", {"type": "event", "event": body}))
+    except Exception:
+        pass
+
+    return JSONResponse({"success": True})
+
+
+@subagent_router.get("/subagent-events")
+async def get_subagent_events() -> JSONResponse:
+    """Return recent subagent transition events."""
+    return JSONResponse({"events": _subagent_events, "total": len(_subagent_events)})
+
+
+# ---------------------------------------------------------------------------
 # All state routers
 # ---------------------------------------------------------------------------
 
@@ -477,4 +514,5 @@ all_state_routers = [
     evaluation_router,
     spans_router,
     benchmark_router,
+    subagent_router,
 ]

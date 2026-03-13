@@ -536,6 +536,22 @@ def prime(
     if greeting and agent_name:
         _emit_greeting(agent_name, result.persona, root)
 
+    # Emit agent_start event to BikeRack (Story 143-16)
+    if agent_name:
+        try:
+            from pf.wheelhub.subagent_events import emit_subagent_event
+
+            ws = result.workflow_status
+            emit_subagent_event(
+                "agent_start",
+                agent=agent_name,
+                story_id=ws.story_id if ws else "",
+                workflow=ws.workflow if ws else "",
+                phase=ws.phase if ws else "",
+            )
+        except Exception:
+            pass
+
     # ==========================================================================
     # PRIORITY 4: Agent behavior guide
     # ==========================================================================

@@ -41,16 +41,8 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
-
-      - name: Install dependencies
-        run: pnpm install
-
       - name: Run markdownlint
-        run: pnpm run lint:md
+        run: npx markdownlint-cli2 'pennyfarthing-dist/**/*.md' --config .markdownlint.yaml
 
   yaml-lint:
     runs-on: [self-hosted, Ubuntu, Common]
