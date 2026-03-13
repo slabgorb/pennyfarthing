@@ -206,7 +206,7 @@ def collect_tui(project_root: Path) -> dict[str, Any]:
     """Collect TUI/WheelHub running status."""
     import os
 
-    pid_file = project_root / ".pennyfarthing" / "wheelhub.pid"
+    pid_file = project_root / ".pennyfarthing" / "frame.pid"
     if pid_file.exists():
         try:
             pid = int(pid_file.read_text().strip())

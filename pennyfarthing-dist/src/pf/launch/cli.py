@@ -1,12 +1,12 @@
 """Launch CLI — mid-session GUI/TUI launcher commands.
 
 Usage:
-    pf gui                 # Ensure WheelHub, open browser
+    pf gui                 # Ensure Frame, open browser
     pf tui                 # Start TUI (auto-detects interactivity)
     pf launch gui          # Full path
     pf launch tui          # Full path
-    pf launch status       # Is WheelHub running?
-    pf launch stop         # Kill WheelHub
+    pf launch status       # Is Frame running?
+    pf launch stop         # Kill Frame
 """
 
 from __future__ import annotations
@@ -18,16 +18,16 @@ from pathlib import Path
 import click
 
 
-def _ensure_wheelhub(project_dir: Path) -> tuple[int, int, bool]:
-    """Ensure WheelHub is running. Returns (port, pid, was_already_running).
+def _ensure_frame(project_dir: Path) -> tuple[int, int, bool]:
+    """Ensure Frame is running. Returns (port, pid, was_already_running).
 
     If already running, reuses existing instance.
     If not, starts a new one and prints a mid-session OTEL note.
     """
-    from pf.bikerack.launcher import (
+    from pf.frame.launcher import (
         is_already_running,
         poll_for_port_file,
-        start_wheelhub,
+        start_frame,
         write_pid_file,
     )
 
@@ -35,13 +35,13 @@ def _ensure_wheelhub(project_dir: Path) -> tuple[int, int, bool]:
     if running:
         return port, pid, True
 
-    click.echo("Starting WheelHub server...", err=True)
-    proc = start_wheelhub(project_dir)
+    click.echo("Starting Frame server...", err=True)
+    proc = start_frame(project_dir)
     if isinstance(proc, dict):
         raise RuntimeError(proc["error"])
     write_pid_file(project_dir, proc.pid)
     port = poll_for_port_file(project_dir, proc=proc)
-    click.echo(f"WheelHub listening on http://localhost:{port}", err=True)
+    click.echo(f"Frame listening on http://localhost:{port}", err=True)
     return port, proc.pid, False
 
 
@@ -51,10 +51,10 @@ def launch():
 
     \b
     Commands:
-      gui     - Open BikeRack dashboard in browser
+      gui     - Open dashboard in browser
       tui     - Launch terminal UI
-      status  - Show WheelHub running state
-      stop    - Stop WheelHub server
+      status  - Show Frame running state
+      stop    - Stop Frame server
     """
     pass
 
@@ -64,20 +64,20 @@ def launch():
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to FRAME_PROJECT_DIR env var, then cwd.",
 )
-def wheelhub(project_dir):
-    """Start WheelHub server (idempotent).
+def frame(project_dir):
+    """Start Frame server (idempotent).
 
-    Starts WheelHub if not already running, prints the port number.
+    Starts Frame if not already running, prints the port number.
     Safe to call multiple times — reuses existing instance.
     """
-    from pf.bikerack.launcher import resolve_project_dir
+    from pf.frame.launcher import resolve_project_dir
 
     project_dir = resolve_project_dir(project_dir)
 
     try:
-        port, pid, reused = _ensure_wheelhub(project_dir)
+        port, pid, reused = _ensure_frame(project_dir)
     except (TimeoutError, RuntimeError) as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
@@ -90,33 +90,33 @@ def wheelhub(project_dir):
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to FRAME_PROJECT_DIR env var, then cwd.",
 )
 @click.option("--no-open", is_flag=True, help="Print URL only, don't open browser.")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes.")
 def gui(project_dir, no_open, dry_run):
-    """Open BikeRack dashboard in browser.
+    """Open dashboard in browser.
 
-    Ensures WheelHub is running (starts it if needed), then opens
+    Ensures Frame is running (starts it if needed), then opens
     the dashboard URL. Safe to call multiple times — reuses existing server.
     """
-    from pf.bikerack.launcher import resolve_project_dir
+    from pf.frame.launcher import resolve_project_dir
 
     project_dir = resolve_project_dir(project_dir)
 
     if dry_run:
-        click.echo("[DRY-RUN] Would launch BikeRack GUI")
+        click.echo("[DRY-RUN] Would launch GUI")
         click.echo(f"  Project: {project_dir}")
-        click.echo("  Actions: ensure WheelHub running, open browser to dashboard")
+        click.echo("  Actions: ensure Frame running, open browser to dashboard")
         return
 
     try:
-        port, pid, reused = _ensure_wheelhub(project_dir)
+        port, pid, reused = _ensure_frame(project_dir)
     except (TimeoutError, RuntimeError) as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
-    url = f"http://localhost:{port}/bikerack"
+    url = f"http://localhost:{port}/dashboard"
 
     if no_open:
         click.echo(f"Dashboard: {url}")
@@ -130,16 +130,16 @@ def gui(project_dir, no_open, dry_run):
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to FRAME_PROJECT_DIR env var, then cwd.",
 )
 @click.option(
     "--foreground", "mode", flag_value="foreground", help="Force TUI in current terminal."
 )
 @click.option("--detach", "mode", flag_value="detach", help="Force TUI in new Terminal.app window.")
-@click.option("--port", type=int, default=None, help="WheelHub port (skip auto-start).")
+@click.option("--port", type=int, default=None, help="Frame port (skip auto-start).")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes.")
 def tui(project_dir, mode, port, dry_run):
-    """Launch BikeRack TUI.
+    """Launch TUI.
 
     Auto-detects terminal interactivity:
     - Interactive terminal → runs TUI in foreground
@@ -147,7 +147,7 @@ def tui(project_dir, mode, port, dry_run):
 
     Use --foreground or --detach to override auto-detection.
     """
-    from pf.bikerack.launcher import resolve_project_dir
+    from pf.frame.launcher import resolve_project_dir
 
     project_dir = resolve_project_dir(project_dir)
 
@@ -156,25 +156,25 @@ def tui(project_dir, mode, port, dry_run):
         mode = "foreground" if sys.stdin.isatty() else "detach"
 
     if dry_run:
-        click.echo("[DRY-RUN] Would launch BikeRack TUI")
+        click.echo("[DRY-RUN] Would launch TUI")
         click.echo(f"  Project: {project_dir}")
         click.echo(f"  Mode: {mode}")
         if port:
-            click.echo(f"  Port: {port} (user-specified, skip WheelHub start)")
+            click.echo(f"  Port: {port} (user-specified, skip Frame start)")
         else:
-            click.echo("  Actions: ensure WheelHub running, launch TUI")
+            click.echo("  Actions: ensure Frame running, launch TUI")
         return
 
-    # Resolve port — either user-specified or ensure WheelHub is running
+    # Resolve port — either user-specified or ensure Frame is running
     if port is None:
         try:
-            port, _pid, _reused = _ensure_wheelhub(project_dir)
+            port, _pid, _reused = _ensure_frame(project_dir)
         except (TimeoutError, RuntimeError) as e:
             click.echo(f"Error: {e}", err=True)
             sys.exit(1)
 
     if mode == "foreground":
-        from pf.bikerack.tui import main as tui_main
+        from pf.tui.app import main as tui_main
 
         tui_main(port=port, project_dir=project_dir)
     else:
@@ -186,7 +186,7 @@ def _launch_tui_detached(project_dir: Path, port: int) -> None:
     import subprocess
 
     python = sys.executable
-    cmd = f"{python} -m pf.bikerack.tui --port {port} --project-dir {project_dir}"
+    cmd = f"{python} -m pf.tui --port {port} --project-dir {project_dir}"
 
     applescript = f'''
     tell application "Terminal"
@@ -209,24 +209,24 @@ def _launch_tui_detached(project_dir: Path, port: int) -> None:
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to FRAME_PROJECT_DIR env var, then cwd.",
 )
 def status(project_dir):
-    """Show WheelHub running state."""
-    from pf.bikerack.launcher import get_status, resolve_project_dir
+    """Show Frame running state."""
+    from pf.frame.launcher import get_status, resolve_project_dir
 
     project_dir = resolve_project_dir(project_dir)
     result = get_status(project_dir)
 
     if result["running"]:
-        click.echo("WheelHub is running")
+        click.echo("Frame is running")
         click.echo(f"  PID: {result['pid']}")
         click.echo(f"  Port: {result['port']}")
         click.echo(f"  Dashboard: {result['dashboard']}")
         if result.get("tui_pid"):
             click.echo(f"  TUI PID: {result['tui_pid']}")
     else:
-        click.echo("WheelHub is not running")
+        click.echo("Frame is not running")
 
 
 @launch.command()
@@ -234,21 +234,21 @@ def status(project_dir):
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to FRAME_PROJECT_DIR env var, then cwd.",
 )
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes.")
 def stop(project_dir, dry_run):
-    """Stop WheelHub server."""
-    from pf.bikerack.launcher import resolve_project_dir, stop_bikerack
+    """Stop Frame server."""
+    from pf.frame.launcher import resolve_project_dir, stop_frame
 
     project_dir = resolve_project_dir(project_dir)
 
     if dry_run:
-        click.echo("[DRY-RUN] Would stop WheelHub server")
+        click.echo("[DRY-RUN] Would stop Frame server")
         click.echo(f"  Project: {project_dir}")
         return
 
-    result = stop_bikerack(project_dir)
+    result = stop_frame(project_dir)
 
     if result["success"]:
         click.echo(result["message"])

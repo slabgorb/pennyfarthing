@@ -14,12 +14,16 @@ from pathlib import Path
 # of inline justfiles when the import approach is adopted.
 FRAMEWORK_RECIPES: frozenset[str] = frozenset(
     {
-        "wheelhub",
+        "frame",
+        "dashboard",
         "tui",
         "gui",
         "claude",
         "tmux-dev",
         "tmux",
+        # Legacy names (still migrated if found in old justfiles)
+        "wheelhub",
+        "bikerack",
     }
 )
 

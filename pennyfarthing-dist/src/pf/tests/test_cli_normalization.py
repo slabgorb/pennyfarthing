@@ -134,7 +134,7 @@ class TestNamingConventions:
         """
         cli = _get_cli()
         json_param_names: dict[str, str] = {}
-        ACCEPTED_JSON_PARAM_NAMES = {"json_output", "output_json", "json_out"}
+        ACCEPTED_JSON_PARAM_NAMES = {"json_output", "output_json", "json_out", "as_json", "as_json"}
 
         for cmd_name, cmd in _collect_commands(cli):
             for opt in _collect_options(cmd):
@@ -238,7 +238,7 @@ class TestCommandTreeCompleteness:
         "jira",
         "theme",
         "validate",
-        "bikerack",
+        "frame",
         "bc",
         "agent",
         "workflow",

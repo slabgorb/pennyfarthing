@@ -24,7 +24,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from rich.text import Text
 
-from pf.bikerack.sprint_panel import SprintPanel
+from pf.tui.sprint_panel import SprintPanel
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -144,7 +144,7 @@ SAMPLE_PAYLOAD_BRACKET_NAME: dict[str, Any] = {
 
 @pytest.fixture
 def mock_client() -> MagicMock:
-    """Create a mock WheelHubClient."""
+    """Create a mock FrameClient."""
     client = MagicMock()
     client.subscribe = MagicMock()
     return client

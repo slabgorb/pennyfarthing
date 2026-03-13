@@ -1,5 +1,5 @@
 """
-PreToolUse Hook — forward tool inputs to WheelHub for audit log enrichment.
+PreToolUse Hook — forward tool inputs to Frame for audit log enrichment.
 
 Consolidates pretooluse_hook.py into the hooks subpackage.
 """
@@ -12,7 +12,7 @@ from pathlib import Path
 from pf.hooks import (
     find_project_root,
     read_stdin_json,
-    send_to_wheelhub,
+    send_to_frame,
 )
 
 
@@ -22,17 +22,17 @@ def _forward_tool_input(
     tool_input: dict,
     project_root: Path | None,
 ) -> None:
-    """Forward tool input to WheelHub for OTEL span correlation.
+    """Forward tool input to Frame for OTEL span correlation.
 
-    Story 120-13: BikeRack's audit log needs tool inputs for Read, Grep, Edit,
+    Story 120-13: TUI audit log needs tool inputs for Read, Grep, Edit,
     Write, etc. OTEL tool_result events don't include tool_parameters for these
-    tools. This function sends tool inputs to WheelHub's pending-tool-input
+    tools. This function sends tool inputs to Frame's pending-tool-input
     endpoint so the OTLP receiver can correlate them with incoming spans.
     """
     if not project_root:
         return
     try:
-        send_to_wheelhub(
+        send_to_frame(
             endpoint="/api/pending-tool-input",
             data={
                 "toolName": tool_name,

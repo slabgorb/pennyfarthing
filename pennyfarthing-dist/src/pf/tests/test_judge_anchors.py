@@ -23,7 +23,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 _REPO = Path(__file__).resolve().parents[3]  # pennyfarthing-dist/
-_SKILL_MD = _REPO / "skills" / "pf-judge" / "SKILL.md"
+_SKILL_MD = _REPO / "skills" / "pf-judge" / "judge.md"
 _ANCHORS_MD = _REPO / "guides" / "rubric-anchors.md"
 
 DIMENSIONS = ["correctness", "depth", "quality", "persona"]

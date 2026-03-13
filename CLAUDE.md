@@ -18,7 +18,7 @@ Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workf
 
 This repo is inlined at `pennyfarthing/` inside `pennyfarthing-orchestrator`. The `.pennyfarthing/` directory lives at the **orchestrator root**, not here.
 
-TUI dashboard: `pf bikerack start`
+TUI dashboard: `pf frame start`
 (must run from orchestrator root where `.pennyfarthing/` exists)
 </critical>
 
@@ -45,11 +45,11 @@ pf validate                                          # Framework validation
 | Directory | Purpose |
 |-----------|---------|
 | `pennyfarthing-dist/` | Published package (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
-| `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime, wheelhub, bikerack) |
+| `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime, frame, tui) |
 | `tests/` | Framework tests |
 | `scripts/` | Framework dev only (NOT distributed) |
 
-**Display:** BikeRack TUI — `pf bikerack start` launches Textual terminal panels alongside Claude Code CLI.
+**Display:** TUI — `pf frame start` launches Textual terminal panels alongside Claude Code CLI.
 
 **Scripts:** `pennyfarthing-dist/scripts/` (distributed, bash) and `pennyfarthing-dist/src/pf/` (distributed, Python). Path resolution via `find-root.sh` (walks up looking for `.pennyfarthing/`).
 </info>
@@ -71,7 +71,7 @@ BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (pro
 
 **Handoff:** Agent writes assessment → `pf handoff resolve-gate` → `complete-phase` → `marker` → next agent activates.
 
-**Codenames:** WheelHub (server), TirePump (context clearing), JobFair (benchmarking), BikeRack (TUI dashboard), Peloton (pipeline replay benchmarks)
+**Codenames:** Frame (server), TirePump (context clearing), JobFair (benchmarking), TUI (terminal dashboard), Peloton (pipeline replay benchmarks)
 
 **Glossary:**
 
@@ -92,7 +92,7 @@ Read guides for detailed behavior, key files, and APIs. All paths relative to `p
 | Component | Guide | Purpose |
 |-----------|-------|---------|
 | BikeLane | `guides/bikelane.md` | Workflow engine — phased, stepped, procedural |
-| BikeRack | `guides/bikerack.md` | TUI dashboard for CLI-first dev |
+| TUI | `guides/bikerack.md` | TUI dashboard for CLI-first dev |
 | Gates | `guides/gates.md` | Phase transition quality checks |
 | Handoff CLI | `guides/handoff-cli.md` | Gate resolution, session transitions, markers |
 | Hooks | `guides/hooks.md` | Claude Code hooks — session, pre/post tool use |

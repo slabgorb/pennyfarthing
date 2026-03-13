@@ -4,7 +4,7 @@ SessionStart hook — initialize environment for Claude Code session.
 Handles:
 1. Session directory setup and logging
 2. Checkpoint validation (cross-session drift detection)
-3. WheelHub auto-start (ensure BikeRack server is running)
+3. Frame auto-start (ensure Frame server is running)
 4. OTEL auto-configuration via CLAUDE_ENV_FILE
 5. Setup auto-detection (Story 126-12) — nudge if pf init ran but /pf-setup did not
 6. Startup agent context injection
@@ -123,12 +123,12 @@ def _validate_checkpoint(project_dir: Path) -> None:
 # =============================================================================
 
 
-def _ensure_wheelhub(project_dir: Path) -> int | None:
-    """Auto-start WheelHub if not already running. Returns port or None."""
-    from pf.bikerack.launcher import (
+def _ensure_frame(project_dir: Path) -> int | None:
+    """Auto-start Frame if not already running. Returns port or None."""
+    from pf.frame.launcher import (
         is_already_running,
         poll_for_port_file,
-        start_wheelhub,
+        start_frame,
         write_pid_file,
     )
 
@@ -136,9 +136,9 @@ def _ensure_wheelhub(project_dir: Path) -> int | None:
     if running:
         return port
 
-    # Start WheelHub
+    # Start Frame
     try:
-        proc = start_wheelhub(project_dir)
+        proc = start_frame(project_dir)
         if isinstance(proc, dict):
             return None
         write_pid_file(project_dir, proc.pid)
@@ -165,9 +165,9 @@ def _write_env_file(project_dir: Path, session_id: str, otel_port: int | None) -
     ]
 
     if otel_port is not None:
-        from pf.bikerack.launcher import build_otel_env
+        from pf.frame.launcher import build_otel_env
 
-        lines.append("# OTEL auto-configuration for WheelHub")
+        lines.append("# OTEL auto-configuration for Frame")
         for key, value in build_otel_env(otel_port).items():
             lines.append(f'export {key}="{value}"')
 
@@ -365,7 +365,7 @@ def main() -> None:
                 )
             )
 
-        otel_port = _ensure_wheelhub(project_dir)
+        otel_port = _ensure_frame(project_dir)
         _write_env_file(project_dir, session_id, otel_port)
         _ensure_theme_portraits(project_dir)
         _sync_spinner_settings(project_dir)

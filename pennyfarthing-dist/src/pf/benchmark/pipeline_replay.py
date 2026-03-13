@@ -1220,14 +1220,14 @@ def run_pipeline(
     otel_base = output_dir or (project_dir / "internal" / "results" / "pipeline-replay")
     run_dir = compute_run_dir(output_base=otel_base, scenario_id=scenario.id, tag=tag, run_id=run_id)
 
-    # Auto-detect WheelHub for dual-write (disabled by PF_BENCHMARK_NO_WHEELHUB)
+    # Auto-detect Frame for dual-write (disabled by PF_BENCHMARK_NO_FRAME)
     forward_to: str | None = None
-    port_file = project_dir / ".bikerack-port"
-    if port_file.exists() and not os.environ.get("PF_BENCHMARK_NO_WHEELHUB"):
+    port_file = project_dir / ".frame-port"
+    if port_file.exists() and not os.environ.get("PF_BENCHMARK_NO_FRAME"):
         try:
             port = int(port_file.read_text().strip())
             forward_to = f"http://127.0.0.1:{port}"
-            print(f"  [OTEL] WheelHub detected on :{port} — dual-write enabled")
+            print(f"  [OTEL] Frame detected on :{port} — dual-write enabled")
         except (ValueError, OSError):
             pass
 
@@ -1275,8 +1275,8 @@ def run_pipeline(
             # BMAD has no TEA equivalent — use a minimal prompt
             return f"# {role.upper()} Phase\n\nBegin {role} phase for: {scenario.title}\n"
 
-    def _notify_wheelhub_phase(phase: str, status: str) -> None:
-        """Notify WheelHub of a phase transition (best-effort)."""
+    def _notify_frame_phase(phase: str, status: str) -> None:
+        """Notify Frame of a phase transition (best-effort)."""
         if not forward_to:
             return
         try:
@@ -1312,7 +1312,7 @@ def run_pipeline(
 
         (wt_path / "CLAUDE.md").write_text(claude_md)
 
-        _notify_wheelhub_phase(key, "started")
+        _notify_frame_phase(key, "started")
         print(f"  [{key.upper()}] Running phase...")
         phase_result = run_phase(
             wt_path,
@@ -1340,7 +1340,7 @@ def run_pipeline(
             f"model={model_str}{cost_str}{otel_str})"
         )
 
-        _notify_wheelhub_phase(key, "completed")
+        _notify_frame_phase(key, "completed")
 
         if phase_result.exit_code != 0:
             print(f"  [{key.upper()}] WARNING: non-zero exit ({phase_result.exit_code})")

@@ -273,25 +273,25 @@ def parse_transcript(transcript_path: Path) -> tuple[int | None, int | None]:
 
 
 def detect_gui(project_dir: str | None = None) -> bool:
-    """Detect if running inside a GUI (BikeRack).
+    """Detect if running inside a GUI (Frame).
 
     Checks:
     1. PF_GUI env var set to '1' (primary)
-    2. .bikerack-port file exists AND port is responding (Web mode)
+    2. .frame-port file exists AND port is responding (Web mode)
     """
     # PF_GUI is the primary env var
     if os.environ.get("PF_GUI") == "1":
         return True
 
-    # Port file check - verify BikeRack is actually running
+    # Port file check - verify Frame is actually running
     project_dir = (
         project_dir
-        or os.environ.get("WHEELHUB_PROJECT_DIR")
+        or os.environ.get("FRAME_PROJECT_DIR")
         or os.environ.get("PROJECT_ROOT")
         or os.getcwd()
     )
 
-    port_file = Path(project_dir) / ".bikerack-port"
+    port_file = Path(project_dir) / ".frame-port"
     if port_file.exists():
         try:
             port = int(port_file.read_text().strip())

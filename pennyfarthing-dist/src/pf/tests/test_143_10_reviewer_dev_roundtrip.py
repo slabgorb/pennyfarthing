@@ -547,14 +547,38 @@ class TestDevFixesToReview:
             project_root=project,
         )
 
-        # Now Reviewer approves
+        # Now Reviewer approves — must include Subagent Results and
+        # Reviewer Assessment with all specialist tags for approval gate.
         content = session.read_text()
         content += textwrap.dedent("""\
 
-            ## Reviewer Re-Review Assessment
+            ## Subagent Results
+
+            | Subagent | Received | Result |
+            |----------|----------|--------|
+            | reviewer-preflight | Yes | PASS |
+            | reviewer-edge-hunter | Yes | PASS |
+            | reviewer-silent-failure-hunter | Yes | PASS |
+            | reviewer-test-analyzer | Yes | PASS |
+            | reviewer-comment-analyzer | Yes | PASS |
+            | reviewer-type-design | Yes | PASS |
+            | reviewer-security | Yes | PASS |
+            | reviewer-simplifier | Yes | PASS |
+
+            All received: Yes
+
+            ## Reviewer Assessment
 
             **Verdict:** APPROVED
             **Findings:** 0 blocking, 0 minor
+
+            [EDGE] No edge cases found.
+            [SILENT] No silent failures.
+            [TEST] Tests adequate.
+            [DOC] Docs adequate.
+            [TYPE] Types correct.
+            [SEC] No security issues.
+            [SIMPLE] Code is simple enough.
         """)
         session.write_text(content)
 

@@ -536,10 +536,10 @@ def prime(
     if greeting and agent_name:
         _emit_greeting(agent_name, result.persona, root)
 
-    # Emit agent_start event to BikeRack (Story 143-16)
+    # Emit agent_start event to Frame (Story 143-16)
     if agent_name:
         try:
-            from pf.wheelhub.subagent_events import emit_subagent_event
+            from pf.frame.subagent_events import emit_subagent_event
 
             ws = result.workflow_status
             emit_subagent_event(

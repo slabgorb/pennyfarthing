@@ -6,7 +6,7 @@ Provides common functionality for all hooks:
 - Port file discovery
 - Settings loading (relay_mode, permission_mode)
 - Context state checking
-- HTTP communication with WheelHub
+- HTTP communication with Frame
 
 All hooks should import from this module for consistency.
 
@@ -28,14 +28,14 @@ import yaml
 # Port File Constants
 # =============================================================================
 
-# WheelHub port file - central coordination server for all communication
+# Frame port file - central coordination server for all communication
 # Per ADR-0004: "the hub where all communication converges"
-BIKERACK_PORT_FILE = ".bikerack-port"
+FRAME_PORT_FILE = ".frame-port"
 
 # Default port if file not found — now project-aware via launcher.port_for_project
-DEFAULT_BIKERACK_PORT = 2898  # legacy fallback only
+DEFAULT_FRAME_PORT = 2898  # legacy fallback only
 
-# HTTP timeout for WheelHub communication
+# HTTP timeout for Frame communication
 HTTP_TIMEOUT_SECONDS = 120
 
 
@@ -48,7 +48,7 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
     """Find the project root by looking for marker files.
 
     Searches for (in order):
-    1. .bikerack-port (WheelHub is running)
+    1. .frame-port (Frame is running)
     2. .pennyfarthing directory
     3. .claude directory
 
@@ -62,8 +62,8 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
     current = current.resolve()
 
     while current != current.parent:
-        # Check for port file first (indicates WheelHub is running)
-        if (current / BIKERACK_PORT_FILE).exists():
+        # Check for port file first (indicates Frame is running)
+        if (current / FRAME_PORT_FILE).exists():
             return current
         # Fall back to directory markers
         if (current / ".pennyfarthing").is_dir():
@@ -81,10 +81,10 @@ def find_project_root(start_dir: Path | None = None) -> Path | None:
 
 
 def read_port_file(file_name: str, project_root: Path | None = None) -> int | None:
-    """Read a port number from a WheelHub port file.
+    """Read a port number from a Frame port file.
 
     Args:
-        file_name: Name of the port file (e.g. .bikerack-port)
+        file_name: Name of the port file (e.g. .frame-port)
         project_root: Project root directory (auto-detected if not provided)
 
     Returns:
@@ -109,10 +109,10 @@ def read_port_file(file_name: str, project_root: Path | None = None) -> int | No
     return None
 
 
-def get_bikerack_port(project_root: Path | None = None) -> int:
-    """Get the WheelHub server port.
+def get_frame_port(project_root: Path | None = None) -> int:
+    """Get the Frame server port.
 
-    WheelHub is the central coordination server for all Pennyfarthing
+    Frame is the central coordination server for all Pennyfarthing
     communication, including hook requests, OTEL, REST APIs, and WebSocket.
 
     Args:
@@ -121,19 +121,19 @@ def get_bikerack_port(project_root: Path | None = None) -> int:
     Returns:
         Port number (default if file not found)
     """
-    port = read_port_file(BIKERACK_PORT_FILE, project_root)
+    port = read_port_file(FRAME_PORT_FILE, project_root)
     if port:
         return port
 
     # Derive per-project port when no port file exists
     if project_root:
         try:
-            from pf.bikerack.launcher import port_for_project
+            from pf.frame.launcher import port_for_project
             return port_for_project(project_root)
         except ImportError:
             pass
 
-    return DEFAULT_BIKERACK_PORT
+    return DEFAULT_FRAME_PORT
 
 
 # =============================================================================
@@ -261,9 +261,9 @@ class ContextState:
 
 
 def get_context_state(project_root: Path | None = None) -> ContextState:
-    """Get current context usage from WheelHub API.
+    """Get current context usage from Frame API.
 
-    Calls WheelHub's /api/context endpoint which runs pf context.
+    Calls Frame's /api/context endpoint which runs pf context.
 
     Args:
         project_root: Project root directory (auto-detected if not provided)
@@ -273,7 +273,7 @@ def get_context_state(project_root: Path | None = None) -> ContextState:
     """
     state = ContextState()
 
-    port = get_bikerack_port(project_root)
+    port = get_frame_port(project_root)
     url = f"http://127.0.0.1:{port}/api/context"
 
     try:
@@ -286,27 +286,27 @@ def get_context_state(project_root: Path | None = None) -> ContextState:
             state.is_high = state.percentage > 60
             state.is_critical = state.percentage > 80
     except (urllib.error.URLError, json.JSONDecodeError, OSError):
-        # WheelHub not running or error - return defaults
+        # Frame not running or error - return defaults
         pass
 
     return state
 
 
 # =============================================================================
-# WheelHub HTTP Communication
+# Frame HTTP Communication
 # =============================================================================
 
 
-def send_to_wheelhub(
+def send_to_frame(
     endpoint: str,
     data: dict[str, Any],
     port: int | None = None,
     project_root: Path | None = None,
     timeout: int = HTTP_TIMEOUT_SECONDS,
 ) -> dict[str, Any] | None:
-    """Send a POST request to WheelHub.
+    """Send a POST request to Frame.
 
-    All endpoints go through WheelHub per ADR-0004.
+    All endpoints go through Frame per ADR-0004.
 
     Args:
         endpoint: API endpoint path (e.g., "/api/hook-request")
@@ -319,7 +319,7 @@ def send_to_wheelhub(
         Response JSON as dict, or None on error
     """
     if port is None:
-        port = get_bikerack_port(project_root)
+        port = get_frame_port(project_root)
 
     url = f"http://127.0.0.1:{port}{endpoint}"
     json_data = json.dumps(data).encode("utf-8")
@@ -335,7 +335,7 @@ def send_to_wheelhub(
         with urllib.request.urlopen(request, timeout=timeout) as response:
             return json.loads(response.read().decode())
     except urllib.error.URLError as e:
-        # Connection refused means WheelHub isn't running
+        # Connection refused means Frame isn't running
         if "Connection refused" in str(e):
             return None
         raise

@@ -368,7 +368,7 @@ class TestPerformance:
                         top_level_imports.append(alias.name)
 
         # Should not import heavy subsystems at top level
-        heavy = {"pf.doctor", "pf.sprint", "pf.git", "pf.bikerack"}
+        heavy = {"pf.doctor", "pf.sprint", "pf.git", "pf.frame"}
         found = [m for m in top_level_imports if any(m.startswith(h) for h in heavy)]
         assert found == [], (
             f"Heavy imports at module level: {found} — use lazy imports inside the command"

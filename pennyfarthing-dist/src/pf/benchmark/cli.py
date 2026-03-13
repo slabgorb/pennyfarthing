@@ -480,9 +480,9 @@ def replay():
     help="Path to BMAD-METHOD repo (uses BMAD adapter instead of PF agents)",
 )
 @click.option(
-    "--no-wheelhub",
+    "--no-frame",
     is_flag=True,
-    help="Disable dual-write forwarding to WheelHub even if BikeRack is running",
+    help="Disable dual-write forwarding to Frame even if it is running",
 )
 def replay_run(
     scenario_path,
@@ -498,7 +498,7 @@ def replay_run(
     keep_worktree,
     max_rework_cycles,
     bmad_root,
-    no_wheelhub,
+    no_frame,
 ):
     """Run the TDD pipeline against a scenario."""
     from pf.benchmark.pipeline_replay import (
@@ -524,10 +524,10 @@ def replay_run(
     if bmad and not theme:
         theme = "bmad"
 
-    # Set env var to disable WheelHub forwarding if requested
-    if no_wheelhub:
+    # Set env var to disable Frame forwarding if requested
+    if no_frame:
         import os
-        os.environ["PF_BENCHMARK_NO_WHEELHUB"] = "1"
+        os.environ["PF_BENCHMARK_NO_FRAME"] = "1"
 
     scenario = load_scenario(scenario_path, project_dir=project)
 

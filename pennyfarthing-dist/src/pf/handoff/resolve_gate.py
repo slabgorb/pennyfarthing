@@ -158,7 +158,7 @@ def resolve_gate(
 
     # Emit gate_check event to BikeRack (Story 143-16)
     try:
-        from pf.wheelhub.subagent_events import emit_subagent_event
+        from pf.frame.subagent_events import emit_subagent_event
 
         emit_subagent_event(
             "gate_check",

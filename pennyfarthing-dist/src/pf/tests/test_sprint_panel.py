@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from rich.text import Text
 
-from pf.bikerack.sprint_panel import (
+from pf.tui.sprint_panel import (
     SprintPanel,
     _build_epic_label,
     _build_story_label,
@@ -182,7 +182,7 @@ SAMPLE_MULTI_EPIC_PAYLOAD: dict[str, Any] = {
 
 @pytest.fixture
 def mock_client() -> MagicMock:
-    """Create a mock WheelHubClient."""
+    """Create a mock FrameClient."""
     client = MagicMock()
     client.subscribe = MagicMock()
     return client
@@ -606,13 +606,13 @@ class TestSprintPanelMetrics:
 class TestDefaultPanel:
     """AC5: SprintPanel is the default panel on TUI launch."""
 
-    async def test_bikerack_app_mounts_sprint_panel(self) -> None:
-        """BikeRackApp should mount SprintPanel in main-content on startup."""
-        from pf.bikerack.tui import BikeRackApp
+    async def test_tui_app_mounts_sprint_panel(self) -> None:
+        """TuiApp should mount SprintPanel in main-content on startup."""
+        from pf.tui.app import TuiApp
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
-        app = BikeRackApp(client=mock_client)
+        app = TuiApp(client=mock_client)
 
         async with app.run_test():
             panels = app.query(SprintPanel)

@@ -19,8 +19,8 @@ from __future__ import annotations
 import time
 from unittest.mock import MagicMock, patch
 
-from pf.bikerack.tui import BikeRackApp
-from pf.bikerack.ws_client import WheelHubClient
+from pf.tui.app import TuiApp
+from pf.tui.client import FrameClient
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -28,10 +28,10 @@ from pf.bikerack.ws_client import WheelHubClient
 
 
 def make_app(client=None):
-    """Create a BikeRackApp with optional mock client."""
+    """Create a TuiApp with optional mock client."""
     if client is None:
-        client = MagicMock(spec=WheelHubClient)
-    return BikeRackApp(client=client)
+        client = MagicMock(spec=FrameClient)
+    return TuiApp(client=client)
 
 
 def focus_msg(panel: str | None, msg_type: str = "update") -> dict:
@@ -39,12 +39,12 @@ def focus_msg(panel: str | None, msg_type: str = "update") -> dict:
     return {"type": msg_type, "focus": panel}
 
 
-def get_posted_focus_updates(app: BikeRackApp) -> list:
+def get_posted_focus_updates(app: TuiApp) -> list:
     """Return all FocusUpdate messages posted via post_message mock."""
     return [
         call.args[0]
         for call in app.post_message.call_args_list
-        if isinstance(call.args[0], BikeRackApp.FocusUpdate)
+        if isinstance(call.args[0], TuiApp.FocusUpdate)
     ]
 
 
@@ -54,12 +54,12 @@ def get_posted_focus_updates(app: BikeRackApp) -> list:
 
 
 class TestFocusSubscription:
-    """AC1: BikeRackApp subscribes to the focus channel on mount."""
+    """AC1: TuiApp subscribes to the focus channel on mount."""
 
     def test_subscribes_to_focus_channel(self) -> None:
         """on_mount should subscribe to the 'focus' channel via client."""
-        client = MagicMock(spec=WheelHubClient)
-        app = BikeRackApp(client=client)
+        client = MagicMock(spec=FrameClient)
+        app = TuiApp(client=client)
 
         # Simulate what on_mount does — it should subscribe to "focus"
         # We check by looking at all subscribe calls on the client
@@ -76,7 +76,7 @@ class TestFocusSubscription:
         loop = asyncio.new_event_loop()
         try:
             # Patch run_worker to prevent actual worker start
-            with patch.object(BikeRackApp, "run_worker"):
+            with patch.object(TuiApp, "run_worker"):
                 loop.run_until_complete(app.on_mount())
         finally:
             loop.close()
@@ -90,14 +90,14 @@ class TestFocusSubscription:
 
     def test_focus_handler_is_handle_focus_message(self) -> None:
         """The handler registered for 'focus' channel should be _handle_focus_message."""
-        client = MagicMock(spec=WheelHubClient)
-        app = BikeRackApp(client=client)
+        client = MagicMock(spec=FrameClient)
+        app = TuiApp(client=client)
 
         import asyncio
 
         loop = asyncio.new_event_loop()
         try:
-            with patch.object(BikeRackApp, "run_worker"):
+            with patch.object(TuiApp, "run_worker"):
                 loop.run_until_complete(app.on_mount())
         finally:
             loop.close()
@@ -111,13 +111,13 @@ class TestFocusSubscription:
 
     def test_no_subscription_without_client(self) -> None:
         """App with no client should not attempt focus subscription."""
-        app = BikeRackApp(client=None)
+        app = TuiApp(client=None)
 
         import asyncio
 
         loop = asyncio.new_event_loop()
         try:
-            with patch("pf.bikerack.tui.get_last_panel", return_value={"success": False}):
+            with patch("pf.tui.app.get_last_panel", return_value={"success": False}):
                 loop.run_until_complete(app.on_mount())
         finally:
             loop.close()
@@ -394,14 +394,14 @@ class TestGuiCompatibility:
         """TUI should subscribe to 'focus' — same channel the GUI's useFocusPanel uses."""
         # The React hook connects to /ws/focus
         # WheelHub routes /ws/{channel} — so channel name is "focus"
-        client = MagicMock(spec=WheelHubClient)
-        app = BikeRackApp(client=client)
+        client = MagicMock(spec=FrameClient)
+        app = TuiApp(client=client)
 
         import asyncio
 
         loop = asyncio.new_event_loop()
         try:
-            with patch.object(BikeRackApp, "run_worker"):
+            with patch.object(TuiApp, "run_worker"):
                 loop.run_until_complete(app.on_mount())
         finally:
             loop.close()

@@ -196,14 +196,41 @@ def session_at_setup(project: Path) -> Path:
 
 
 def _add_assessment(session_file: Path, agent: str, phase: str) -> None:
-    """Add an agent assessment section to the session file."""
+    """Add an agent assessment section to the session file.
+
+    For Reviewer, also adds Subagent Results table and specialist tags
+    required by the approval gate.
+    """
     content = session_file.read_text()
-    assessment = (
-        f"\n## {agent.upper()} Assessment\n\n"
-        f"**Phase:** {phase}\n"
-        f"**Status:** Complete\n"
-        f"**Handoff:** To next agent\n"
-    )
+    if agent.lower() == "reviewer":
+        assessment = (
+            "\n## Subagent Results\n\n"
+            "| Subagent | Received | Result |\n"
+            "|----------|----------|--------|\n"
+            "| reviewer-preflight | Yes | PASS |\n"
+            "| reviewer-edge-hunter | Yes | PASS |\n"
+            "| reviewer-silent-failure-hunter | Yes | PASS |\n"
+            "| reviewer-test-analyzer | Yes | PASS |\n"
+            "| reviewer-comment-analyzer | Yes | PASS |\n"
+            "| reviewer-type-design | Yes | PASS |\n"
+            "| reviewer-security | Yes | PASS |\n"
+            "| reviewer-simplifier | Yes | PASS |\n\n"
+            "All received: Yes\n\n"
+            "## Reviewer Assessment\n\n"
+            f"**Phase:** {phase}\n"
+            f"**Status:** Complete\n"
+            f"**Handoff:** To next agent\n\n"
+            "[EDGE] No edge cases. [SILENT] No silent failures. "
+            "[TEST] Tests pass. [DOC] Docs ok. "
+            "[TYPE] Types ok. [SEC] No issues. [SIMPLE] Clean.\n"
+        )
+    else:
+        assessment = (
+            f"\n## {agent.upper()} Assessment\n\n"
+            f"**Phase:** {phase}\n"
+            f"**Status:** Complete\n"
+            f"**Handoff:** To next agent\n"
+        )
     content += assessment
     session_file.write_text(content)
 

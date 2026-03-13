@@ -165,6 +165,9 @@ def complete_phase(
     for i, line in enumerate(lines):
         if "### Handoff History" in line:
             in_handoff = True
+            continue
+        if in_handoff and line.strip().startswith("#"):
+            break
         if in_handoff and line.strip().startswith("|"):
             insert_after = i
     if insert_after is not None:
@@ -191,9 +194,9 @@ def complete_phase(
         except Exception:
             pass  # Non-fatal — status-sync gate will catch mismatches
 
-    # Emit subagent transition event to BikeRack (Story 143-16)
+    # Emit subagent transition event to Frame (Story 143-16)
     try:
-        from pf.wheelhub.subagent_events import emit_subagent_event
+        from pf.frame.subagent_events import emit_subagent_event
 
         emit_subagent_event(
             "phase_complete",

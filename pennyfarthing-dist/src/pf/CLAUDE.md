@@ -13,7 +13,7 @@ Python Click CLI for Pennyfarthing. Entry point: `pf/cli.py`. Invoked as `pf`.
 | `pf validate` | Project validators | `validate/cli.py` |
 | `pf agent` | Agent session management | `cli.py` (inline) |
 | `pf workflow` | Workflow state and phase management | `workflow/cli.py` |
-| `pf bikerack` | BikeRack dashboard launcher | `bikerack/cli.py` |
+| `pf frame` | Frame dashboard launcher | `frame/cli.py` |
 | `pf git` | Repository operations (status, branches, worktree, hooks) | `git_group/cli.py` |
 | `pf benchmark` | Pipeline replay, scoring, comparison | `benchmark/cli.py` |
 | `pf debug` | Analysis tools (hotspots, deadcode, healthscore) | `cli.py` (inline group) |
@@ -153,13 +153,13 @@ Options: `--session-id`, `--no-persona`, `--json`, `--minimal`, `--full`, `--qui
 | `pf workflow fix-phase ID PHASE [--dry-run]` | Repair session phase | `workflow/cli.py` |
 | `pf workflow complete-step [NAME] [--step N]` | Complete current step | `workflow/cli.py` |
 
-## pf bikerack
+## pf frame
 
 | Command | Description | Source |
 |---------|-------------|--------|
-| `pf bikerack start` | Start BikeRack + Claude CLI | `bikerack/cli.py` |
-| `pf bikerack stop` | Stop running instance | `bikerack/cli.py` |
-| `pf bikerack status` | Show running state | `bikerack/cli.py` |
+| `pf frame start` | Start Frame + Claude CLI | `frame/cli.py` |
+| `pf frame stop` | Stop running instance | `frame/cli.py` |
+| `pf frame status` | Show running state | `frame/cli.py` |
 
 ## pf git
 
@@ -202,13 +202,13 @@ All hooks are in `hooks/` subpackage, invoked via `pf hooks <name>`.
 
 | Command | Hook Type | Purpose |
 |---------|-----------|---------|
-| `pf hooks session-start` | SessionStart | Session setup, checkpoint, WheelHub, welcome |
+| `pf hooks session-start` | SessionStart | Session setup, checkpoint, Frame, welcome |
 | `pf hooks session-stop` | Stop | Save checkpoint for cross-session continuity |
 | `pf hooks reflector-check` | Stop | Enforce CYCLIST reflector markers |
 | `pf hooks pre-edit-check` | PreToolUse | Block edits to protected files |
 | `pf hooks context-warning` | PreToolUse | Warn when context usage is high |
 | `pf hooks context-breaker` | PreToolUse | Block tool execution at critical context |
-| `pf hooks cyclist-pretooluse` | PreToolUse | Route approval through WheelHub |
+| `pf hooks cyclist-pretooluse` | PreToolUse | Route approval through Frame |
 | `pf hooks schema-validation` | PreToolUse:Write | Validate session/skill/step schema |
 | `pf hooks bell-mode` | PostToolUse | Bell queue + tandem injection |
 | `pf hooks sprint-yaml` | PostToolUse | Validate sprint YAML (YAML 1.2) |

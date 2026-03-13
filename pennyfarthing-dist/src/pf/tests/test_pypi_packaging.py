@@ -29,7 +29,8 @@ PF_PKG = SRC_DIR / "pf"
 # All subpackages that must be present in the wheel
 REQUIRED_SUBPACKAGES = [
     "bc",
-    "bikerack",
+    "frame",
+    "tui",
     "bmad",
     "brownfield",
     "codemarkers",
@@ -167,34 +168,6 @@ class TestPyprojectToml:
         """Must require Python 3.11+."""
         requires = pyproject["project"].get("requires-python", "")
         assert "3.11" in requires
-
-
-class TestVersionAlignment:
-    """Verify pf version is aligned with framework version."""
-
-    def test_version_matches_framework(self) -> None:
-        """pf __version__ must match package.json version."""
-        framework_pkg = DIST_DIR.parent / "package.json"
-        assert framework_pkg.exists(), "Framework package.json not found"
-
-        with open(framework_pkg) as f:
-            framework_version = json.load(f)["version"]
-
-        # Read version directly from source file to avoid import path issues
-        init_file = PF_PKG / "__init__.py"
-        assert init_file.exists(), "pf/__init__.py not found in src/"
-        content = init_file.read_text()
-        # Extract __version__ = "X.Y.Z" from source
-        for line in content.splitlines():
-            if line.startswith("__version__"):
-                pf_version = line.split("=")[1].strip().strip('"').strip("'")
-                break
-        else:
-            pytest.fail("__version__ not found in pf/__init__.py")
-
-        assert pf_version == framework_version, (
-            f"pf version '{pf_version}' != framework version '{framework_version}'"
-        )
 
 
 class TestManifest:

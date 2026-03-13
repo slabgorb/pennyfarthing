@@ -138,7 +138,7 @@ def start_agent(agent_name: str, project_root: Path) -> dict:
 
     # Emit telemetry (fire-and-forget, Story 143-16)
     try:
-        from pf.wheelhub.subagent_events import emit_subagent_event
+        from pf.frame.subagent_events import emit_subagent_event
 
         emit_subagent_event("agent_start", agent=agent_name)
     except Exception:

@@ -33,10 +33,9 @@ from pf.bc.split import set_split_layout
 
 
 def _get_current_layout() -> dict | None:
-    """Fetch the current layout from a running Cyclist or BikeRack server.
+    """Fetch the current layout from a running Frame server.
 
-    Reads .bikerack-port (shared by both Cyclist and BikeRack) and fetches
-    the layout endpoint.
+    Reads .frame-port and fetches the layout endpoint.
 
     Returns:
         Layout dict, or None if no server is running or fetch fails.
@@ -46,7 +45,7 @@ def _get_current_layout() -> dict | None:
     root = _get_root()
 
     candidates = [
-        (root / ".bikerack-port", "/api/settings/bikerack-layout"),
+        (root / ".frame-port", "/api/settings/layout"),
     ]
 
     for port_file, endpoint in candidates:

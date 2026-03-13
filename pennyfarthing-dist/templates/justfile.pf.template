@@ -15,20 +15,20 @@ pf *args:
         "{{root}}/.pennyfarthing/bin/pf" {{args}}
     fi
 
-# Start WheelHub server (API + WebSocket + OTEL ingestion)
-# Stops existing instance first if running. Writes .bikerack-port and bikerack-pid.
-wheelhub:
+# Start Frame server (API + WebSocket + OTEL ingestion)
+# Stops existing instance first if running. Writes .frame-port and frame.pid.
+frame:
     #!/usr/bin/env bash
     set -euo pipefail
     project_dir="{{root}}"
-    pid_file="$project_dir/bikerack-pid"
-    port_file="$project_dir/.bikerack-port"
+    pid_file="$project_dir/.pennyfarthing/frame.pid"
+    port_file="$project_dir/.frame-port"
 
     # Stop if already running
     if [[ -f "$pid_file" ]]; then
         old_pid=$(cat "$pid_file" 2>/dev/null)
         if [[ "$old_pid" =~ ^[0-9]+$ ]] && kill -0 "$old_pid" 2>/dev/null; then
-            echo "[wheelhub] Stopping existing instance (PID $old_pid)" >&2
+            echo "[frame] Stopping existing instance (PID $old_pid)" >&2
             kill "$old_pid" 2>/dev/null || true
             sleep 0.5
         fi
@@ -37,15 +37,15 @@ wheelhub:
 
     just pf launch gui --no-open
 
-# Open BikeRack dashboard in browser (starts WheelHub if needed)
-bikerack:
+# Open dashboard in browser (starts Frame if needed)
+dashboard:
     just pf launch gui
 
-# Launch TUI panel viewer (starts WheelHub if needed)
+# Launch TUI panel viewer (starts Frame if needed)
 tui:
     just pf launch tui --foreground
 
-# Launch Claude with OTEL pre-configured for WheelHub/BikeRack
+# Launch Claude with OTEL pre-configured for Frame
 claude:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -53,7 +53,7 @@ claude:
     project_dir="{{root}}"
     PORT=""
 
-    port_file="$project_dir/.bikerack-port"
+    port_file="$project_dir/.frame-port"
     if [[ -f "$port_file" ]]; then
         candidate=$(cat "$port_file" 2>/dev/null)
         if [[ "$candidate" =~ ^[0-9]+$ ]]; then
@@ -71,8 +71,8 @@ claude:
         export OTEL_LOGS_EXPORTER="otlp"
         export OTEL_METRICS_EXPORTER="otlp"
     else
-        echo "[just claude] No WheelHub/BikeRack running — launching without OTEL" >&2
-        echo "[just claude] Start one first: just wheelhub" >&2
+        echo "[just claude] No Frame running — launching without OTEL" >&2
+        echo "[just claude] Start one first: just frame" >&2
     fi
 
     exec claude

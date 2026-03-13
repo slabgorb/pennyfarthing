@@ -33,7 +33,7 @@ def generate_marker(
 
     # Emit handoff event to BikeRack (Story 143-16)
     try:
-        from pf.wheelhub.subagent_events import emit_subagent_event
+        from pf.frame.subagent_events import emit_subagent_event
 
         emit_subagent_event("handoff", next_agent=next_agent)
     except Exception:

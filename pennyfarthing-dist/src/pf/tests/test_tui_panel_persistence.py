@@ -26,8 +26,8 @@ from pf.bc.focus import (
     get_last_panel,
     save_last_panel,
 )
-from pf.bikerack.tui import BikeRackApp
-from pf.bikerack.ws_client import WheelHubClient
+from pf.tui.app import TuiApp
+from pf.tui.client import FrameClient
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -60,10 +60,10 @@ def focus_msg(panel: str | None, msg_type: str = "update") -> dict:
 
 
 def make_app(client=None, project_dir=None):
-    """Create a BikeRackApp with optional mock client and project_dir."""
+    """Create a TuiApp with optional mock client and project_dir."""
     if client is None:
-        client = MagicMock(spec=WheelHubClient)
-    return BikeRackApp(client=client)
+        client = MagicMock(spec=FrameClient)
+    return TuiApp(client=client)
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +221,7 @@ class TestSaveLastPanel:
 
 
 class TestTuiRestore:
-    """AC3: BikeRackApp restores last-viewed panel on mount."""
+    """AC3: TuiApp restores last-viewed panel on mount."""
 
     def test_restores_last_panel_on_mount(self, tmp_path: Path) -> None:
         """on_mount should read last_panel from config and set _focused_panel."""
@@ -230,15 +230,15 @@ class TestTuiRestore:
         project_dir = _make_config_dir(tmp_path)
         _write_config(project_dir, "last_panel: git\n")
 
-        client = MagicMock(spec=WheelHubClient)
-        app = BikeRackApp(client=client)
+        client = MagicMock(spec=FrameClient)
+        app = TuiApp(client=client)
 
         loop = asyncio.new_event_loop()
         try:
             with (
-                patch.object(BikeRackApp, "run_worker"),
+                patch.object(TuiApp, "run_worker"),
                 patch(
-                    "pf.bikerack.tui.get_last_panel",
+                    "pf.tui.app.get_last_panel",
                     return_value={"success": True, "last_panel": "git"},
                 ),
             ):
@@ -261,15 +261,15 @@ class TestTuiRestore:
         project_dir = _make_config_dir(tmp_path)
         _write_config(project_dir, "theme: fifth-element\n")
 
-        client = MagicMock(spec=WheelHubClient)
-        app = BikeRackApp(client=client)
+        client = MagicMock(spec=FrameClient)
+        app = TuiApp(client=client)
 
         loop = asyncio.new_event_loop()
         try:
             with (
-                patch.object(BikeRackApp, "run_worker"),
+                patch.object(TuiApp, "run_worker"),
                 patch(
-                    "pf.bikerack.tui.get_last_panel",
+                    "pf.tui.app.get_last_panel",
                     return_value={"success": True, "last_panel": None},
                 ),
             ):
@@ -286,15 +286,15 @@ class TestTuiRestore:
         """on_mount should not crash if config read fails."""
         import asyncio
 
-        client = MagicMock(spec=WheelHubClient)
-        app = BikeRackApp(client=client)
+        client = MagicMock(spec=FrameClient)
+        app = TuiApp(client=client)
 
         loop = asyncio.new_event_loop()
         try:
             with (
-                patch.object(BikeRackApp, "run_worker"),
+                patch.object(TuiApp, "run_worker"),
                 patch(
-                    "pf.bikerack.tui.get_last_panel",
+                    "pf.tui.app.get_last_panel",
                     return_value={"success": False, "error": "File not found"},
                 ),
             ):
@@ -312,7 +312,7 @@ class TestTuiRestore:
 
 
 class TestTuiPersist:
-    """AC4: BikeRackApp saves last_panel when focus changes."""
+    """AC4: TuiApp saves last_panel when focus changes."""
 
     def test_persists_panel_on_focus_update(self, tmp_path: Path) -> None:
         """on_bike_rack_app_focus_update should save panel to config when focus changes.
@@ -325,9 +325,9 @@ class TestTuiPersist:
 
         app = make_app()
 
-        with patch("pf.bikerack.tui.save_last_panel") as mock_save:
+        with patch("pf.tui.app.save_last_panel") as mock_save:
             mock_save.return_value = {"success": True, "data": "git"}
-            event = BikeRackApp.FocusUpdate("git")
+            event = TuiApp.FocusUpdate("git")
             app.on_bike_rack_app_focus_update(event)
 
         mock_save.assert_called_once_with("git", project_dir=None)
@@ -336,8 +336,8 @@ class TestTuiPersist:
         """Reset (null focus) should NOT overwrite saved last_panel."""
         app = make_app()
 
-        with patch("pf.bikerack.tui.save_last_panel") as mock_save:
-            event = BikeRackApp.FocusUpdate(None)
+        with patch("pf.tui.app.save_last_panel") as mock_save:
+            event = TuiApp.FocusUpdate(None)
             app.on_bike_rack_app_focus_update(event)
 
         (
@@ -353,11 +353,11 @@ class TestTuiPersist:
         """
         app = make_app()
 
-        with patch("pf.bikerack.tui.save_last_panel") as mock_save:
+        with patch("pf.tui.app.save_last_panel") as mock_save:
             mock_save.return_value = {"success": True}
-            app.on_bike_rack_app_focus_update(BikeRackApp.FocusUpdate("sprint"))
-            app.on_bike_rack_app_focus_update(BikeRackApp.FocusUpdate("git"))
-            app.on_bike_rack_app_focus_update(BikeRackApp.FocusUpdate("diffs"))
+            app.on_bike_rack_app_focus_update(TuiApp.FocusUpdate("sprint"))
+            app.on_bike_rack_app_focus_update(TuiApp.FocusUpdate("git"))
+            app.on_bike_rack_app_focus_update(TuiApp.FocusUpdate("diffs"))
 
         # Sprint is the initial _focused_panel so switching to it is a no-op.
         # "git" and "diffs" each trigger a save → 2 calls total.
@@ -375,7 +375,7 @@ class TestTuiPersist:
         app = make_app()
         app.post_message = MagicMock()
 
-        with patch("pf.bikerack.tui.save_last_panel") as mock_save:
+        with patch("pf.tui.app.save_last_panel") as mock_save:
             app._handle_focus_message(focus_msg("sprint", msg_type="init"))
 
         mock_save.assert_not_called(), ("Init messages should not trigger persistence")

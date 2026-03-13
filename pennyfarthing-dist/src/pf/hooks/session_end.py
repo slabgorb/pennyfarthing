@@ -1,7 +1,7 @@
 """
 SessionEnd hook — cleanup when Claude Code session terminates.
 
-Stops BikeRack/WheelHub if running, cleans up tmux status files,
+Stops Frame if running, cleans up tmux status files,
 and writes a final checkpoint. This is the true teardown signal
 (Stop fires when the agent stops responding, SessionEnd fires
 when the session actually ends).
@@ -16,14 +16,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 
-def _cleanup_bikerack(project_dir: Path) -> str | None:
-    """Stop BikeRack/WheelHub if running. Returns message or None."""
+def _cleanup_frame(project_dir: Path) -> str | None:
+    """Stop Frame if running. Returns message or None."""
     try:
-        from pf.bikerack.launcher import stop_bikerack
+        from pf.frame.launcher import stop_frame
 
-        result = stop_bikerack(project_dir)
+        result = stop_frame(project_dir)
         if result.get("success"):
-            return result.get("message", "BikeRack stopped")
+            return result.get("message", "Frame stopped")
     except Exception:
         pass
     return None
@@ -65,7 +65,7 @@ def main() -> None:
         session_id = input_data.get("session_id", "unknown")
         project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
 
-        # Don't stop WheelHub on session end — it's shared across
+        # Don't stop Frame on session end — it's shared across
         # tmux panes and should outlive individual Claude sessions.
         # Use `pf launch stop` to stop it explicitly.
         _cleanup_tmux_status(project_dir)

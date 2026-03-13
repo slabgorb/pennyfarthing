@@ -69,7 +69,7 @@ _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
     "bmad": ("pf.bmad.cli", "bmad"),
     "theme": ("pf.theme.cli", "theme"),
     "validate": ("pf.validate.cli", "validate"),
-    "bikerack": ("pf.bikerack.cli", "bikerack"),
+    "frame": ("pf.frame.cli", "frame"),
     "launch": ("pf.launch.cli", "launch"),
     "bc": ("pf.bc.cli", "bc"),
     "handoff": ("pf.handoff.cli", "handoff"),
