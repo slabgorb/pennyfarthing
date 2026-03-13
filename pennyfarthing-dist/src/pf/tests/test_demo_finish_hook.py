@@ -461,7 +461,6 @@ class TestDemoHookStepOrdering:
 
         # Track session file deletion
         session_path = tmp_path / ".session" / "42-1-session.md"
-        original_unlink = session_path.unlink.__class__.unlink
 
         from pf.sprint.story_finish import finish_story
 
