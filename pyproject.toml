@@ -18,6 +18,7 @@ dependencies = [
     "watchfiles>=1.0",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
+    "python-pptx>=1.0",
 ]
 
 [project.optional-dependencies]
