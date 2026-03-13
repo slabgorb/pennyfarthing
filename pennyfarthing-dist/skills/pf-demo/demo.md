@@ -25,7 +25,7 @@ Main commands:
 
 ### `/pf-demo generate <story-id>`
 
-Generate demo artifacts (script, summary, diagrams) for a completed story.
+Generate demo artifacts (narrative, demo script, metadata, diagrams) for a completed story.
 
 **Run:**
 ```bash
@@ -42,11 +42,11 @@ pf demo generate <story-id>
 
 <example>
 pf demo generate 42-1
-# Generated demo artifacts in: docs/demos/42-1/
+# Generated demo artifacts in: sprint/demos/42-1/
 # Files generated (3):
-#   docs/demos/42-1/script.md
-#   docs/demos/42-1/summary.md
-#   docs/demos/42-1/diagram.mmd
+#   sprint/demos/42-1/narrative.md
+#   sprint/demos/42-1/demo-script.md
+#   sprint/demos/42-1/metadata.yaml
 </example>
 
 ---
@@ -62,7 +62,7 @@ pf demo generate <story-id> --dry-run
 
 <example>
 pf demo generate 42-1 --dry-run
-# Dry run — would generate to: docs/demos/42-1/
+# Dry run — would generate to: sprint/demos/42-1/
 </example>
 
 ---
@@ -78,9 +78,9 @@ pf demo generate <story-id> --corrections "Focus more on the API changes"
 
 <example>
 pf demo generate 42-1 --corrections "Emphasize the new WebSocket endpoint"
-# Generated demo artifacts in: docs/demos/42-1/
+# Generated demo artifacts in: sprint/demos/42-1/
 # Files generated (3):
-#   docs/demos/42-1/script.md
-#   docs/demos/42-1/summary.md
-#   docs/demos/42-1/diagram.mmd
+#   sprint/demos/42-1/narrative.md
+#   sprint/demos/42-1/demo-script.md
+#   sprint/demos/42-1/metadata.yaml
 </example>
