@@ -195,21 +195,13 @@ _SPECS: list[SettingSpec] = [
         group="TUI",
         description="Show action feedback toasts (t to toggle)",
     ),
-    SettingSpec(
-        key="display.colorPreset",
-        label="Color Preset",
-        widget_type="input",
-        group="Display",
-        description="Terminal color scheme",
-        hidden=True,
-    ),
 ]
 
 for _spec in _SPECS:
     SETTINGS_META[_spec.key] = _spec
 
 # Keys to exclude from the settings panel
-HIDDEN_KEYS: set[str] = {"last_panel", "layout", "split", "display.colorPreset"}
+HIDDEN_KEYS: set[str] = {"last_panel", "layout", "split"}
 
 
 def _flatten_defaults(data: dict[str, Any], prefix: str = "") -> list[tuple[str, Any]]:
