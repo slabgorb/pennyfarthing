@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.0.0-alpha.2] - 2026-03-13
+
+### Added
+
+- **Spec-check and spec-reconcile phases** — Architect validates Dev implementation against story context before review, then produces definitive deviation manifest after review (144-6, 144-7, 144-9, #1386, #1376, #1377)
+- **AC-completion gate** — Validates acceptance criteria accountability at Dev exit (144-3, #1377)
+- **Deviation logging** — TEA and Dev log real-time spec deviations with 6-field format; Reviewer audits and stamps entries (144-2, #1383)
+- **Saddle mode** — Background observer agent workspace: `pf saddle summon` launches agent in tmux pane (143-17, 143-18, 147-10, #1374, #1379, #1394)
+- **Demo pipeline** — `pf demo generate` CLI, DemoOrchestrator pipeline entry point, demo.yaml branding config, PPTX assembler for slide decks (145-7, 146-1, 146-3, MSSCI-16401, MSSCI-16409, #1375, #1380, #1385, #1390, #1397)
+- **Mermaid diagram generation** — Module for architecture diagrams in demo artifacts (145-6, #1384)
+- **RepoFieldSpec registry** — Typed metadata for repos.yaml fields, enabling TUI rendering of repo settings (147-4)
+- **Jira and settings TUI enhancements** — Jira config in DEFAULTS and settings panel (147-1), saddle_mode SettingSpec (147-2)
+- **Native subagent support** — `.claude/agents/` symlink and init support for Claude Code native subagents (#1382)
+- **Reviewer-Dev fix round-trip** — Reviewer can reject back to Dev with fix instructions (143-10, #1381)
+- **OTEL spans WebSocket channel** — Traces and logs wired to WheelHub spans channel (MSSCI-16426, #1392)
+- **Tmux pane discoverability** — Icons, borders, and env vars for tmux integration (MSSCI-16440, #1391)
+
+### Changed
+
+- **Tandem workflow files removed** — Tandem YAML files consolidated; tandem config now inline in workflow definitions (144-8, #1378)
+
+### Fixed
+
+- **WheelHub portrait pane updates** — Added persona to POLL_CHANNELS so portrait follows agent changes (#1399)
+- **Tmux session resolution** — Resolve attached session instead of first alphabetically
+- **Settings cleanup** — Removed colorPreset and display.fonts dead config (147-3)
+- **Jira label** — Updated from `pennyfarthing` to `product-pennyfarthing` (#1395)
+
 ## [13.0.0-alpha.0] - 2026-03-10
 
 ### Added
@@ -3080,7 +3108,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.2...HEAD
+[13.0.0-alpha.2]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.0...v13.0.0-alpha.2
 [13.0.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.7.0...v13.0.0-alpha.0
 [12.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.2...v12.7.0
 [12.6.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.1...v12.6.2
