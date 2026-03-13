@@ -135,7 +135,7 @@ def complete_phase(
             # Insert after Phase Started line
             content = re.sub(
                 r"(\*\*Phase Started:\*\*[^\n]*)",
-                rf"\1\n**Round-Trip Count:** 1",
+                r"\1\n**Round-Trip Count:** 1",
                 content,
                 count=1,
             )

@@ -7,14 +7,14 @@ sprint/demos/{story_id}/.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-from pf.demo.collector import collect_signals
 from pf.demo.classifier import classify_story
+from pf.demo.collector import collect_signals
 from pf.demo.generator import generate_content
 from pf.demo.mermaid import generate_diagram
 from pf.demo.models import GeneratedContent
@@ -53,7 +53,14 @@ def generate(
     signals = collect_result["data"]
 
     # --- Stage 2: Classify story ---
-    classify_result = classify_story(signals)
+    # Locate demo.yaml for config-based classification overrides
+    config_path = None
+    if project_root:
+        candidate = Path(project_root) / "pennyfarthing-dist" / "demo.yaml"
+        if candidate.exists():
+            config_path = candidate
+
+    classify_result = classify_story(signals, config_path=config_path)
     if not classify_result["success"]:
         return {"success": False, "error": classify_result["error"]}
 
@@ -103,7 +110,7 @@ def generate(
         metadata_path = output_dir / "metadata.yaml"
         metadata = {
             "story_id": story_id,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "story_type": classified.story_type.value,
             "diagram_generated": diagram_result["success"],
             "script_generated": script_result["success"],

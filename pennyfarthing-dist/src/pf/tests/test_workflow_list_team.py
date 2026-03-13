@@ -86,10 +86,6 @@ class TestWorkflowListTeamIndicator:
             if "Workflow" in line or "---" in line:
                 continue
 
-            # Check columns (split by |)
-            cols = [c.strip() for c in line.split("|")]
-            name_col = cols[1] if len(cols) > 1 else ""
-
             # Plain workflows like tdd, trivial, bdd should not show team
             # in their mode/indicator columns (but "team" might appear
             # in description text, which is fine — we check indicator columns)

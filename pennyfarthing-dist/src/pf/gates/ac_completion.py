@@ -10,9 +10,8 @@ Story: 144-3
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
-
 
 # Status values recognized in the session file
 VALID_STATUSES = frozenset({"DONE", "DEFERRED", "DESCOPED"})

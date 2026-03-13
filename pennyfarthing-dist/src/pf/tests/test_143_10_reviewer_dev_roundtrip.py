@@ -31,7 +31,6 @@ from pf.handoff.complete_phase import complete_phase
 from pf.handoff.resolve_gate import resolve_gate
 from pf.prime.workflow import detect_workflow_state, parse_session_header
 
-
 # ---------------------------------------------------------------------------
 # TDD workflow with review-phase recovery (the target state)
 # ---------------------------------------------------------------------------
@@ -333,7 +332,7 @@ class TestBackwardPhaseTransition:
         lines = content.splitlines()
 
         # Find all green entries in phase history
-        green_entries = [l for l in lines if l.strip().startswith("| green")]
+        green_entries = [line for line in lines if line.strip().startswith("| green")]
         # Should have at least 2 green entries (original + rework)
         assert len(green_entries) >= 2, (
             f"Expected at least 2 green phase entries after round-trip, got {len(green_entries)}"

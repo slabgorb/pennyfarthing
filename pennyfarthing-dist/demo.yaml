@@ -1,0 +1,94 @@
+# demo.yaml — Branding, format preferences, and classification rules
+# for the demo artifact generation pipeline (pf demo generate).
+
+branding:
+  company_name: "1898 & Co."
+  tagline: "Possibilities Powered by Experience"
+  description: "We turn business and technology insights into strategic solutions for critical infrastructure industries."
+  parent_company: "Burns & McDonnell"
+  website: "https://1898andco.burnsmcd.com/"
+
+  colors:
+    primary: "#ff6a39"
+    text: "#393a3c"
+    background: "#ffffff"
+
+  font:
+    family: "Manrope"
+    fallback: "sans-serif"
+
+  industries:
+    - Power
+    - Water
+    - "Oil & Gas"
+    - Transportation
+    - "Government & Military"
+    - Manufacturing
+    - "Ports & Maritime"
+
+  services:
+    - "Acquisition & Divestment"
+    - "Asset Planning & Management"
+    - "Business Strategy & Transformation"
+    - "Data, Analytics & AI"
+    - "Enterprise Technology"
+    - "Financial Analysis"
+    - "Industrial Cybersecurity"
+    - "Policy & Regulatory"
+
+format_preferences:
+  slide_deck:
+    title_font_size: 32
+    body_font_size: 18
+    max_bullets_per_slide: 5
+    include_speaker_notes: true
+    footer_text: "1898 & Co. | Confidential"
+
+  narrative:
+    tone: "executive-friendly"
+    max_sections: 5
+    include_before_after: true
+
+  demo_script:
+    scene_timing: true
+    include_presenter_notes: true
+    max_scenes: 4
+
+  diagram:
+    theme: "default"
+    direction: "LR"
+    include_png: true
+
+# Classification rules — evaluated before built-in keyword/extension rules.
+# Each rule is a mapping with:
+#   pattern:   regex matched against story title (case-insensitive, re.search)
+#   type:      one of: ui, backend, infrastructure, refactor, bugfix
+#   artifacts: list of artifact types to generate; valid values:
+#              ui_screenshots, slide_deck, demo_script, mermaid_diagram,
+#              narrative, before_after_comparison, problem_statement
+# First matching rule wins. If no rule matches, built-in rules apply.
+classification:
+  rules:
+    - pattern: "cybersecurity|security.*assessment|vulnerability"
+      type: "infrastructure"
+      artifacts: ["mermaid_diagram", "narrative", "demo_script"]
+
+    - pattern: "data.*analytics|AI.*model|machine.*learning"
+      type: "backend"
+      artifacts: ["mermaid_diagram", "narrative", "demo_script"]
+
+    - pattern: "asset.*management|asset.*planning"
+      type: "backend"
+      artifacts: ["mermaid_diagram", "narrative", "demo_script"]
+
+    - pattern: "dashboard|report.*view|visualization"
+      type: "ui"
+      artifacts: ["ui_screenshots", "slide_deck", "demo_script"]
+
+    - pattern: "pipeline|ci/cd|terraform|helm"
+      type: "infrastructure"
+      artifacts: ["mermaid_diagram", "narrative", "demo_script"]
+
+    - pattern: "migration|data.*transform"
+      type: "backend"
+      artifacts: ["mermaid_diagram", "narrative", "demo_script"]

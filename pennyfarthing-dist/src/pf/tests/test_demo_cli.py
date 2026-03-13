@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
 from pf.cli import cli

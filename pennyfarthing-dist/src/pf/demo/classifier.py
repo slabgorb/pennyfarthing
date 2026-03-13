@@ -196,14 +196,39 @@ def _try_config_classification(
     """Try to classify using config rules. Returns None if no rule matches."""
     config_result = load_classification_config(config_path)
     if not config_result["success"]:
-        return None
+        return config_result
 
     config = config_result["data"]
-    rules = config.get("classification", {}).get("rules", [])
+    classification = config.get("classification", {})
+    if not isinstance(classification, dict):
+        return {
+            "success": False,
+            "error": "Config 'classification' must be a mapping",
+        }
+    rules = classification.get("rules", [])
+    if not isinstance(rules, list):
+        return {
+            "success": False,
+            "error": "Config 'classification.rules' must be a list",
+        }
 
     for rule in rules:
+        if not isinstance(rule, dict):
+            return {
+                "success": False,
+                "error": f"Config rule must be a mapping, got {type(rule).__name__}",
+            }
         pattern = rule.get("pattern", "")
-        if re.search(pattern, signals.title, re.IGNORECASE):
+        if not pattern:
+            continue
+        try:
+            match = re.search(pattern, signals.title, re.IGNORECASE)
+        except re.error as exc:
+            return {
+                "success": False,
+                "error": f"Invalid regex in config rule: {pattern!r} — {exc}",
+            }
+        if match:
             type_str = rule.get("type", "")
             try:
                 story_type = StoryType(type_str)
