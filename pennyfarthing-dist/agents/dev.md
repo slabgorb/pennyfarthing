@@ -139,25 +139,36 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 **DO NOT create a PR.** PR creation is handled by SM in the finish phase.
 </workflow>
 
-<deviation-tracking>
+<deviation-logging>
 ## Design Deviations (Real-Time)
 
-**When your implementation diverges from the spec or test expectations, log it immediately** in the session file's `## Design Deviations` section. Do this at the moment of the decision, not during exit.
+Log every deviation from spec **at the moment of the decision**, not at phase exit. The `deviations-logged` gate validates the 6-field format at exit — rushed entries written at the last minute will miss fields and the gate will fail.
 
-Append under a `### Dev (implementation)` subheading:
+**Spec sources to check against:** story context, epic context, sibling story ACs, and the tests TEA wrote. Never assume simplification is acceptable — log it as a deviation.
+
+Append entries under `### Dev (implementation)` in the session file's `## Design Deviations` section. Do not write under any other agent's subsection.
+
+**Format:** See `pennyfarthing-dist/guides/deviation-format.md` for the full specification. Each entry requires all 6 fields:
 
 ```markdown
 ### Dev (implementation)
-- **{what you changed}:** Spec said {X}, implemented {Y}. Reason: {why in one sentence}.
+- **{Short description}**
+  - Spec source: context-story-5-1.md, AC-2
+  - Spec text: "use nested AliasEntry with provenance tracking"
+  - Implementation: Used flat HashMap<String, FieldRef> without provenance
+  - Rationale: Simpler for scaffold stage, provenance tracking deferred to 5.2
+  - Severity: minor
+  - Forward impact: minor — Story 5-2 assumes AliasEntry has provenance field
 ```
 
-**Examples:**
-- **Binary And/Or:** Spec used Vec<FilterExpr>, implemented binary tree. Reason: Chumsky foldl produces binary trees, matches DataFusion Expr::and().
-- **Flat alias HashMap:** Spec called for AliasEntry with provenance, used flat HashMap<String, FieldRef>. Reason: simpler for scaffold stage, provenance tracking deferred to 5.2.
-- **IN CIDR syntax:** Spec had single CIDR keyword, implemented two-keyword IN CIDR. Reason: reads as natural English, consistent with Sumo Logic.
+**What counts as a deviation:**
+- Simplifying a data structure the spec called complex
+- Using a different algorithm or approach than specified
+- Adding abstractions not required by any test (scope creep)
+- Implementation choices that affect sibling story assumptions
 
 **If no deviations:** Write `### Dev (implementation)\n- No deviations from spec.`
-</deviation-tracking>
+</deviation-logging>
 
 <assessment-template>
 ## Dev Assessment Template

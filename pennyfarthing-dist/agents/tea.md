@@ -327,24 +327,35 @@ If no teammates found issues: `**Overall:** simplify: clean`
 If a teammate timed out: note it in the table as `timeout — no result`.
 </verify-workflow>
 
-<deviation-tracking>
+<deviation-logging>
 ## Design Deviations (Real-Time)
 
-**When your test design diverges from the AC or story spec, log it immediately** in the session file's `## Design Deviations` section. Do this at the moment of the decision, not during exit.
+Log every deviation from spec **at the moment of the decision**, not at phase exit. The `deviations-logged` gate validates the 6-field format at exit — rushed entries written at the last minute will miss fields and the gate will fail.
 
-Append under a `### TEA (test design)` subheading:
+**Spec sources to check against:** story context, epic context, and sibling story ACs. Never assume simplification is acceptable — log it as a deviation.
+
+Append entries under `### TEA (test design)` in the session file's `## Design Deviations` section. Do not write under any other agent's subsection.
+
+**Format:** See `pennyfarthing-dist/guides/deviation-format.md` for the full specification. Each entry requires all 6 fields:
 
 ```markdown
 ### TEA (test design)
-- **{what you changed}:** Spec said {X}, tests use {Y}. Reason: {why in one sentence}.
+- **{Short description}**
+  - Spec source: context-story-5-1.md, AC-3
+  - Spec text: "reject invalid input with specific error messages"
+  - Implementation: Tests use property-based generation instead of example list
+  - Rationale: Catches more edge cases than enumerated examples
+  - Severity: minor
+  - Forward impact: none
 ```
 
-**Examples:**
-- **Validation strategy:** AC says "reject invalid input", tests use property-based generation instead of example list. Reason: catches more edge cases than enumerated examples.
-- **Error granularity:** AC says "return error", tests assert specific error variant. Reason: string-bag errors violate SOUL.md #5.
+**What counts as a deviation:**
+- Test omissions — deciding not to test something the spec requires
+- Partial AC coverage — testing fewer cases than specified
+- Different test strategy — e.g., property-based vs enumerated examples when the AC implies one approach
 
 **If no deviations:** Write `### TEA (test design)\n- No deviations from spec.`
-</deviation-tracking>
+</deviation-logging>
 
 <assessment-template>
 ## TEA Assessment Template
