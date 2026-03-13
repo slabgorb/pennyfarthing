@@ -168,6 +168,20 @@ _SPECS: list[SettingSpec] = [
         description="Agent to auto-invoke when starting a new session",
     ),
     SettingSpec(
+        key="jira.project",
+        label="Jira Project Key",
+        widget_type="input",
+        group="Jira",
+        description="Jira project key (e.g., MSSCI)",
+    ),
+    SettingSpec(
+        key="jira.url",
+        label="Jira Instance URL",
+        widget_type="input",
+        group="Jira",
+        description="Jira Cloud instance URL",
+    ),
+    SettingSpec(
         key="tui.toasts",
         label="Toast Notifications",
         widget_type="switch",

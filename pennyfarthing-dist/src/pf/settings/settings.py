@@ -40,6 +40,10 @@ DEFAULTS: dict[str, Any] = {
         "startup_agent": "sm",
         "saddle_mode": False,
     },
+    "jira": {
+        "project": "MSSCI",
+        "url": "https://1898andco.atlassian.net",
+    },
     "display": {
         "colorPreset": "catppuccin",
     },
