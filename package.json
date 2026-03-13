@@ -2,7 +2,6 @@
   "name": "@pennyfarthing/core",
   "version": "13.0.0-alpha.1",
   "description": "Claude Code agent framework with TDD workflow and persona system",
-<<<<<<< HEAD
   "type": "module",
   "main": "./packages/core/dist/index.js",
   "types": "./packages/core/dist/index.d.ts",
@@ -13,8 +12,6 @@
     },
     "./dist/*": "./packages/core/dist/*"
   },
-=======
->>>>>>> origin/develop
   "files": [
     "pennyfarthing-dist/agents/",
     "pennyfarthing-dist/commands/",
@@ -42,7 +39,6 @@
   "scripts": {
     "prepublishOnly": "find pennyfarthing-dist/scripts -name '*.sh' ! -name 'find-root.sh' -exec chmod +x {} + && ./tests/unit/test_package_contents.sh && ./pennyfarthing-dist/scripts/git/changelog-links.sh --validate",
     "docs": "./scripts/generate-skill-docs.sh",
-<<<<<<< HEAD
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
     "lint": "eslint 'packages/*/src/**/*.ts' --max-warnings 0",
@@ -58,10 +54,6 @@
     "inquirer": "^9.2.12",
     "open": "^11.0.0",
     "yaml": "^2.8.2"
-=======
-    "lint": "npm run lint:md",
-    "lint:md": "markdownlint-cli2 'pennyfarthing-dist/**/*.md'"
->>>>>>> origin/develop
   },
   "devDependencies": {
     "markdownlint-cli2": "^0.21.0"
