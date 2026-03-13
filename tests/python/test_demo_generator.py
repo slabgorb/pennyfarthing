@@ -11,13 +11,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
-
 import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from pf.demo.classifier import ARTIFACT_MAP  # noqa: E402
 from pf.demo.generator import build_prompt, generate_content, parse_response  # noqa: E402
 from pf.demo.models import (  # noqa: E402
     ArtifactType,
@@ -78,14 +77,7 @@ def _make_classified(
     type_hint = story_type.value
     signals = _make_signals(title=title, story_type_hint=type_hint)
     if artifacts is None:
-        artifact_map = {
-            StoryType.UI: [ArtifactType.UI_SCREENSHOTS, ArtifactType.SLIDE_DECK, ArtifactType.DEMO_SCRIPT],
-            StoryType.BACKEND: [ArtifactType.MERMAID_DIAGRAM, ArtifactType.NARRATIVE, ArtifactType.DEMO_SCRIPT],
-            StoryType.INFRASTRUCTURE: [ArtifactType.MERMAID_DIAGRAM, ArtifactType.NARRATIVE, ArtifactType.DEMO_SCRIPT],
-            StoryType.REFACTOR: [ArtifactType.BEFORE_AFTER_COMPARISON, ArtifactType.NARRATIVE],
-            StoryType.BUGFIX: [ArtifactType.PROBLEM_STATEMENT, ArtifactType.NARRATIVE],
-        }
-        artifacts = artifact_map[story_type]
+        artifacts = list(ARTIFACT_MAP[story_type])
     return ClassifiedStory(signals=signals, story_type=story_type, artifacts=artifacts)
 
 
