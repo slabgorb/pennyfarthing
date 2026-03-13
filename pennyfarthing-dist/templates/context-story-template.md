@@ -35,6 +35,18 @@ Include:
 - What are the edge cases?
 - How would a test verify this?}
 
+## Assumptions
+
+{Assumptions the team is making about this story's implementation.
+Include:
+- Technical assumptions (e.g., "existing API supports X")
+- Domain assumptions (e.g., "users always have Y configured")
+- Dependency assumptions (e.g., "story Z-N is merged before this starts")
+
+If an assumption proves wrong during implementation, log it as a
+Design Deviation and notify SM. Wrong assumptions are the #1 source
+of scope creep and rework.}
+
 ## Interaction Patterns
 
 {Optional: UI flows, user journeys, state transitions.
