@@ -14,6 +14,7 @@ import click
 
 from pf.common.config import get_project_root
 from pf.tmux import panes
+from pf.tmux import registry as _registry
 from pf.tmux.registry import (
     DEFAULT_MAX_PANES,
     _classify_pane,
@@ -21,7 +22,6 @@ from pf.tmux.registry import (
     choose_direction,
     find_idle_worker,
     find_split_target,
-    load_registry,
     next_worker_number,
     resolve_pane_ref,
     save_registry,
@@ -67,7 +67,7 @@ def list_panes(as_json: bool):
     """Show all panes with role, idle/busy status, and protection."""
     root, session = _get_context()
 
-    reg_result = load_registry(root, session)
+    reg_result = _registry.load_registry(root, session)
     if not reg_result["success"]:
         click.echo(f"Error: {reg_result['error']}", err=True)
         raise SystemExit(1)
@@ -82,6 +82,7 @@ def list_panes(as_json: bool):
             live = live_by_id.get(entry["pane_id"], {})
             output.append({
                 **entry,
+                "icon": panes.get_pane_icon(entry["role"]),
                 "command": live.get("command", ""),
                 "idle": panes.is_pane_idle(live.get("command", "")),
                 "width": live.get("width", 0),
@@ -91,8 +92,8 @@ def list_panes(as_json: bool):
         return
 
     click.echo(f"Session: {session}  (max_panes: {reg['max_panes']})")
-    click.echo(f"{'ID':<8} {'Role':<10} {'Title':<20} {'Status':<12} {'Protected'}")
-    click.echo("-" * 62)
+    click.echo(f"{'':3} {'ID':<8} {'Role':<10} {'Title':<20} {'Status':<12} {'Protected'}")
+    click.echo("-" * 65)
 
     for entry in reg["panes"]:
         live = live_by_id.get(entry["pane_id"], {})
@@ -100,7 +101,8 @@ def list_panes(as_json: bool):
         idle = panes.is_pane_idle(cmd)
         status = "idle" if idle else f"busy ({cmd})"
         prot = "yes" if entry["protected"] else ""
-        click.echo(f"{entry['pane_id']:<8} {entry['role']:<10} {entry['title']:<20} {status:<12} {prot}")
+        icon = panes.get_pane_icon(entry["role"])
+        click.echo(f"{icon:3} {entry['pane_id']:<8} {entry['role']:<10} {entry['title']:<20} {status:<12} {prot}")
 
 
 @tmux.command("run")
@@ -113,7 +115,7 @@ def run_command(command: str, title: str | None):
     """
     root, session = _get_context()
 
-    reg_result = load_registry(root, session)
+    reg_result = _registry.load_registry(root, session)
     if not reg_result["success"]:
         click.echo(f"Error: {reg_result['error']}", err=True)
         raise SystemExit(1)
@@ -193,7 +195,7 @@ def create_pane(role: str, title: str | None, owner: str | None):
     """Create a new pane with the given role."""
     root, session = _get_context()
 
-    reg_result = load_registry(root, session)
+    reg_result = _registry.load_registry(root, session)
     if not reg_result["success"]:
         click.echo(f"Error: {reg_result['error']}", err=True)
         raise SystemExit(1)
@@ -257,7 +259,7 @@ def send_command(pane_ref: str, command: str):
     """
     root, session = _get_context()
 
-    reg_result = load_registry(root, session)
+    reg_result = _registry.load_registry(root, session)
     if not reg_result["success"]:
         click.echo(f"Error: {reg_result['error']}", err=True)
         raise SystemExit(1)
@@ -287,7 +289,7 @@ def close_pane(pane_ref: str):
     """Close a pane by reference. Protected panes are refused."""
     root, session = _get_context()
 
-    reg_result = load_registry(root, session)
+    reg_result = _registry.load_registry(root, session)
     if not reg_result["success"]:
         click.echo(f"Error: {reg_result['error']}", err=True)
         raise SystemExit(1)
