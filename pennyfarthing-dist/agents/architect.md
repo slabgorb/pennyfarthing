@@ -150,6 +150,33 @@ Task tool:
 ```
 </workflows>
 
+<spec-check>
+## Spec-Check Phase
+
+**Trigger:** Activates after Dev green phase, before TEA verify.
+**Purpose:** Validate that the Dev's implementation aligns with the story context and acceptance criteria. Catches specification drift before the code enters review.
+
+### What This Phase Does
+
+The spec-check gate runs structural validation via `pf.gates.spec_check.validate_spec_alignment()`:
+
+1. **AC coverage** — every AC from the context file has a corresponding entry in the Dev Assessment
+2. **Implementation complete** — the Dev marked implementation as complete
+3. **Deviation logging** — both TEA and Dev have properly formatted deviation subsections
+
+### Your Role
+
+1. Run `pf handoff resolve-gate` to execute the spec-check gate
+2. If the gate **passes**: write your Architect Assessment confirming spec alignment, then proceed to exit
+3. If the gate **fails**: review each failing check, determine whether it's a real gap or a false positive
+   - **Real gap**: hand back to Dev with specific instructions on what to fix
+   - **False positive**: document why in your assessment and override
+
+### Gate Resolution
+
+Do not proceed with exit until the `spec-check` gate passes. The gate checks AC coverage, implementation completeness, and deviation logging quality.
+</spec-check>
+
 <spec-reconcile>
 ## Spec-Reconcile Phase
 

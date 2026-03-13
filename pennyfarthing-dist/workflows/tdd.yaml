@@ -1,7 +1,7 @@
 # TDD Workflow - Test-Driven Development
 # Default workflow for feature development in Pennyfarthing
 #
-# Flow: SM → TEA → Dev → TEA (verify) → Reviewer → SM
+# Flow: SM → TEA → Dev → Architect (spec-check) → TEA (verify) → Reviewer → Architect (spec-reconcile) → SM
 # Scale routing: 1-2 pts use 'trivial' workflow instead
 
 workflow:
@@ -49,6 +49,15 @@ workflow:
         type: dev_exit
         condition: Tests green, tree clean, no debug code, correct branch
 
+    - name: spec-check
+      agent: architect
+      input: [implementation, story_context]
+      output: [spec_check_result]
+      gate:
+        file: gates/spec-check
+        type: spec_check
+        condition: All ACs addressed, no undocumented spec drift, deviations logged
+
     - name: verify
       agent: tea
       input: [implementation, passing_tests]
@@ -84,9 +93,18 @@ workflow:
             target_phase: green
             max_attempts: 3
 
+    - name: spec-reconcile
+      agent: architect
+      input: [approval]
+      output: [reconciliation_decisions]
+      gate:
+        file: gates/spec-reconcile-pass
+        type: spec_reconcile
+        condition: All spec-check failures reconciled, Architect reconcile section present
+
     - name: finish
       agent: sm
-      input: [approval]
+      input: [reconciliation_decisions]
       output: [archived_session, story_summary]
       entry_gate:
         file: gates/status-sync
