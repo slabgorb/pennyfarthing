@@ -156,25 +156,79 @@ Task tool:
 **Trigger:** Activates after Dev green phase, before TEA verify.
 **Purpose:** Validate that the Dev's implementation aligns with the story context and acceptance criteria. Catches specification drift before the code enters review.
 
-### What This Phase Does
+### Step 1: Run the Gate
 
-The spec-check gate runs structural validation via `pf.gates.spec_check.validate_spec_alignment()`:
+Run `pf handoff resolve-gate` to execute the spec-check gate. The gate runs structural validation via `pf.gates.spec_check.validate_spec_alignment()`:
 
 1. **AC coverage** — every AC from the context file has a corresponding entry in the Dev Assessment
 2. **Implementation complete** — the Dev marked implementation as complete
 3. **Deviation logging** — both TEA and Dev have properly formatted deviation subsections
 
-### Your Role
+If all checks pass, proceed to Step 2. If any check fails, fix the structural issue first (hand back to Dev or correct the session file) before continuing.
 
-1. Run `pf handoff resolve-gate` to execute the spec-check gate
-2. If the gate **passes**: write your Architect Assessment confirming spec alignment, then proceed to exit
-3. If the gate **fails**: review each failing check, determine whether it's a real gap or a false positive
-   - **Real gap**: hand back to Dev with specific instructions on what to fix
-   - **False positive**: document why in your assessment and override
+### Step 2: Mismatch Analysis
+
+The gate checks structure. You check substance. Read the story context, the Dev Assessment, and the code changes. For each AC, compare what the spec says to what the code does and classify any mismatch:
+
+**Mismatch categories:**
+
+| Category | Meaning |
+|----------|---------|
+| Missing in code | Spec requires it, code doesn't have it |
+| Extra in code | Code implements something spec doesn't mention |
+| Different behavior | Spec says X, code does Y |
+| Ambiguous spec | Spec was unclear, code made an assumption |
+
+**For each mismatch found, assess:**
+
+- **Type:** Architectural (affects system design), Behavioral (changes functionality), or Cosmetic (naming, organization)
+- **Severity:** Critical (breaking/security/data-loss), Major (behavior change, API contract), Minor (non-breaking addition), or Trivial (implementation detail)
+- **Impact:** User-facing vs internal, breaking vs non-breaking
+
+Skip this step if the gate passed and a quick read of the Dev Assessment confirms clean alignment — not every story has drift.
+
+### Step 3: Resolution Recommendation
+
+For each mismatch found in Step 2, recommend one of four resolutions:
+
+| Option | When to use | Result |
+|--------|-------------|--------|
+| **A — Update spec** | Implementation reveals a better approach than the spec described | Spec changes to match code. Log as deviation with rationale. |
+| **B — Fix code** | Code deviates from intended design; spec is correct | Hand back to Dev with specific instructions. |
+| **C — Clarify spec** | Spec was ambiguous; code made a reasonable assumption | Spec gets expanded detail; code unchanged. Log for traceability. |
+| **D — Defer** | Mismatch is known but resolution belongs to a future story | Document as known deviation with plan to address. |
+
+**Severity guides the decision:**
+- **Critical/Major** — always recommend explicitly; never auto-resolve
+- **Minor** — recommend A or C if the code improvement is obvious
+- **Trivial** — recommend A and note it in passing
+
+### Step 4: Write Architect Assessment
+
+Write your assessment in the session file with findings from Steps 1-3:
+
+```markdown
+## Architect Assessment (spec-check)
+
+**Spec Alignment:** {Aligned | Drift detected}
+**Mismatches Found:** {count, or "None"}
+
+{For each mismatch:}
+- **{Short description}** ({category} — {type}, {severity})
+  - Spec: {what spec says}
+  - Code: {what code does}
+  - Recommendation: {A|B|C|D} — {one-line rationale}
+
+**Decision:** {Proceed to review | Hand back to Dev}
+```
+
+If no mismatches: write "Spec Alignment: Aligned" and proceed to exit.
+
+If recommending Option B for any mismatch: hand back to Dev with the specific fix instructions. Do not proceed to exit.
 
 ### Gate Resolution
 
-Do not proceed with exit until the `spec-check` gate passes. The gate checks AC coverage, implementation completeness, and deviation logging quality.
+Do not proceed with exit until the `spec-check` gate passes AND your mismatch analysis is complete. The gate ensures structural compliance; your assessment ensures substantive alignment.
 </spec-check>
 
 <spec-reconcile>
