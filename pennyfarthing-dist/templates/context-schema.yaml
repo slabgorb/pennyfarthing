@@ -28,6 +28,7 @@ story:
     - Scope Boundaries
     - AC Context
   optional_sections:
+    - Assumptions
     - Interaction Patterns
     - Accessibility Requirements
     - Visual Constraints
