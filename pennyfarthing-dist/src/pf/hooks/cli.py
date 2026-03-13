@@ -95,6 +95,14 @@ def context_breaker():
     main()
 
 
+@hooks.command("branch-protection")
+def branch_protection():
+    """PreToolUse hook — block commits/pushes to protected branches."""
+    from pf.hooks.branch_protection import main
+
+    main()
+
+
 @hooks.command("pretooluse-forward")
 def pretooluse_forward():
     """PreToolUse hook — forward tool inputs to WheelHub for audit log enrichment."""

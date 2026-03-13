@@ -23,6 +23,7 @@ DISPATCH_REGISTRY: dict[str, list[tuple[str, str | None, str]]] = {
         ("context-warning", "Edit|Write|Bash|Task", "pf.hooks.context_warning"),
         ("context-breaker", "Edit|Write|Bash|Task", "pf.hooks.context_breaker"),
         ("schema-validation", "Write", "pf.hooks.schema_validation"),
+        ("branch-protection", "Bash", "pf.hooks.branch_protection"),
         ("pretooluse-forward", None, "pf.hooks.pretooluse_forward"),
         ("plan-exit-reload", "ExitPlanMode", "pf.hooks.plan_exit_reload"),
     ],
