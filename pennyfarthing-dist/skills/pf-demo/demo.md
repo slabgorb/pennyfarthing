@@ -1,61 +1,86 @@
 ---
 name: demo
 description: |
-  Generate demo artifacts for completed stories. Produces slide content, diagrams,
-  and demo scripts from story session data. Use when creating demos, presentations,
-  or showcasing completed work.
-args: "[generate] [STORY_ID] [--dry-run] [--corrections TEXT]"
+  Generate demo artifacts for completed stories. Use when creating demo scripts,
+  summaries, or presentation materials from story session data.
+args: "[generate] <story-id> [--dry-run] [--corrections TEXT]"
 ---
 
-# /demo - Demo Artifact Generator
+# /pf-demo - Demo Artifact Generator
 
-Generate presentation-ready demo artifacts from completed story data.
+<run>
+Main commands:
+- `pf demo generate <story-id>` - Generate demo artifacts for a completed story
+- `pf demo generate <story-id> --dry-run` - Preview what would be generated
+- `pf demo generate <story-id> --corrections "feedback"` - Regenerate with developer feedback
+</run>
 
-## Quick Reference
+<output>
+- `generate` outputs the directory path where artifacts were written, plus a list of generated files
+- `--dry-run` outputs the target directory without writing files
+- Warnings are printed for missing or incomplete session data
+</output>
 
-| Command | CLI | Purpose |
-|---------|-----|---------|
-| `/demo generate 42-1` | `pf demo generate 42-1` | Generate demo artifacts for story 42-1 |
-| `/demo generate 42-1 --dry-run` | `pf demo generate 42-1 --dry-run` | Preview what would be generated |
-| `/demo generate 42-1 --corrections "focus on API changes"` | `pf demo generate 42-1 --corrections "..."` | Regenerate with developer feedback |
+## Commands
 
-## Pipeline
+### `/pf-demo generate <story-id>`
 
-The generator runs a sequential pipeline:
+Generate demo artifacts (script, summary, diagrams) for a completed story.
 
-1. **Collector** — gathers signals from session file, git diff, PR, Jira
-2. **Classifier** — categorizes the story (feature, bugfix, refactor, etc.)
-3. **Generator** — produces slide content and talking points
-4. **Mermaid** — generates architecture/flow diagrams
-5. **ScriptGenerator** — creates a demo walkthrough script
-
-Output is written to `sprint/demos/{story_id}/`.
-
-## Options
-
-| Option | Description |
-|--------|-------------|
-| `STORY_ID` | Required. Story identifier (e.g., `42-1`) |
-| `--dry-run` | Show what would be generated without writing files |
-| `--corrections TEXT` | Developer feedback for regeneration passes |
-
-## Examples
-
+**Run:**
 ```bash
-# Generate demo for a completed story
-pf demo generate 148-2
-
-# Preview without writing files
-pf demo generate 148-2 --dry-run
-
-# Regenerate with corrections
-pf demo generate 148-2 --corrections "emphasize the polling mechanism fix"
+pf demo generate <story-id>
 ```
 
-## Output
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `story-id` | Yes | Story identifier (e.g., `42-1`) |
+| `--dry-run` | No | Preview without writing files |
+| `--corrections` | No | Developer feedback for regeneration |
+</args>
 
-Generated artifacts are written to `sprint/demos/{story_id}/`:
-- Slide content (title, bullets, talking points)
-- Mermaid diagrams (architecture, data flow)
-- Demo script (walkthrough steps)
-- Metadata YAML (classification, signals summary)
+<example>
+pf demo generate 42-1
+# Generated demo artifacts in: docs/demos/42-1/
+# Files generated (3):
+#   docs/demos/42-1/script.md
+#   docs/demos/42-1/summary.md
+#   docs/demos/42-1/diagram.mmd
+</example>
+
+---
+
+### `/pf-demo generate <story-id> --dry-run`
+
+Preview what would be generated without writing any files.
+
+**Run:**
+```bash
+pf demo generate <story-id> --dry-run
+```
+
+<example>
+pf demo generate 42-1 --dry-run
+# Dry run — would generate to: docs/demos/42-1/
+</example>
+
+---
+
+### `/pf-demo generate <story-id> --corrections "feedback"`
+
+Regenerate artifacts with developer feedback to refine the output.
+
+**Run:**
+```bash
+pf demo generate <story-id> --corrections "Focus more on the API changes"
+```
+
+<example>
+pf demo generate 42-1 --corrections "Emphasize the new WebSocket endpoint"
+# Generated demo artifacts in: docs/demos/42-1/
+# Files generated (3):
+#   docs/demos/42-1/script.md
+#   docs/demos/42-1/summary.md
+#   docs/demos/42-1/diagram.mmd
+</example>

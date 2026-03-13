@@ -411,3 +411,23 @@ skills:
       - Don't use complex expressions without testing first
     related_skills: [pf-just]
     keywords: [yaml, jq, parsing, query, mikefarah]
+
+  pf-demo:
+    name: pf-demo
+    description: Generate demo artifacts (scripts, summaries, diagrams) for completed stories
+    category: documentation
+    tags: [demo, artifacts, presentation]
+    version: "1.0.0"
+    command_group: demo
+    prerequisites: []
+    examples:
+      - context: Generating demo artifacts for a story
+        invocation: /pf-demo generate 42-1
+      - context: Previewing what would be generated
+        invocation: /pf-demo generate 42-1 --dry-run
+      - context: Regenerating with feedback
+        invocation: /pf-demo generate 42-1 --corrections "Focus on API changes"
+    anti_patterns:
+      - Don't generate demos for stories that haven't been completed
+    related_skills: [pf-sprint]
+    keywords: [demo, artifacts, script, summary, presentation, story]
