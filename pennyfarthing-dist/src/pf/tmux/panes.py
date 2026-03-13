@@ -136,3 +136,30 @@ def send_keys(pane_id: str, keys: str) -> dict:
 def kill_pane(pane_id: str) -> dict:
     """Kill a pane."""
     return _run_tmux("kill-pane", "-t", pane_id)
+
+
+def get_pane_icon(role: str) -> str:
+    """Return a distinctive icon for a pane role.
+
+    Each role (claude, tui, worker, saddle) gets a unique icon
+    for instant visual identification in tmux borders and CLI output.
+    """
+    raise NotImplementedError("get_pane_icon")
+
+
+def configure_pane_borders(session: str) -> dict:
+    """Enable pane-border-status with role labels and icons.
+
+    Sets tmux options so each pane's border shows its role icon and title,
+    making panes instantly identifiable.
+    """
+    raise NotImplementedError("configure_pane_borders")
+
+
+def set_pane_env(pane_id: str, role: str) -> dict:
+    """Inject PF_PANE_ROLE environment variable into a pane.
+
+    Allows scripts running inside a pane to detect their role
+    programmatically.
+    """
+    raise NotImplementedError("set_pane_env")
