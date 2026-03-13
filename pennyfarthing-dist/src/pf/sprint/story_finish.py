@@ -188,6 +188,7 @@ def finish_story(
         steps.append(
             {"step": 4, "action": f"Update sprint YAML (status: done, completed: {today})"}
         )
+        steps.append({"step": "4c", "action": "Generate demo artifacts"})
         steps.append({"step": 5, "action": "Archive completed epics"})
         steps.append({"step": 6, "action": f"Delete local branch: {branch}"})
         steps.append({"step": 7, "action": "Remove session file"})
@@ -300,6 +301,32 @@ def finish_story(
                 _add_story_to_completed(project_root, story_id, story)
     except Exception:
         pass
+
+    # --- Step 4c: Generate demo artifacts (non-fatal) ---
+    try:
+        from pf.demo import orchestrator as demo_orchestrator
+
+        demo_result = demo_orchestrator.generate(
+            story_id, project_root=project_root
+        )
+        if demo_result.get("success"):
+            steps.append({"step": "4c", "action": "demo_generate"})
+        else:
+            steps.append(
+                {
+                    "step": "4c",
+                    "action": "demo_generate",
+                    "warning": demo_result.get("error", "Demo generation failed"),
+                }
+            )
+    except Exception as exc:
+        steps.append(
+            {
+                "step": "4c",
+                "action": "demo_generate",
+                "warning": f"Demo generation error: {exc}",
+            }
+        )
 
     # --- Step 5: Archive completed epics ---
     result = _run(

@@ -25,7 +25,7 @@ class ContextConfig:
     imminent_threshold: int = 65
     warning_threshold: int = 60
     critical_threshold: int = 85
-    max_tokens: int = 200000
+    max_tokens: int = 1000000
     tirepump_threshold: int = 60
     permission_mode: str = "manual"
     relay_mode: bool = False
