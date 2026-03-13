@@ -3,6 +3,29 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
+
+
+class StoryType(Enum):
+    """Deterministic story classification types."""
+
+    UI = "ui"
+    BACKEND = "backend"
+    INFRASTRUCTURE = "infrastructure"
+    REFACTOR = "refactor"
+    BUGFIX = "bugfix"
+
+
+class ArtifactType(Enum):
+    """Artifact types produced by the demo pipeline."""
+
+    UI_SCREENSHOTS = "ui_screenshots"
+    SLIDE_DECK = "slide_deck"
+    DEMO_SCRIPT = "demo_script"
+    MERMAID_DIAGRAM = "mermaid_diagram"
+    NARRATIVE = "narrative"
+    BEFORE_AFTER_COMPARISON = "before_after_comparison"
+    PROBLEM_STATEMENT = "problem_statement"
 
 
 @dataclass
@@ -19,3 +42,12 @@ class SignalBundle:
     session_fields: dict[str, str]
     review_findings: str | None
     file_extensions: set[str] = field(default_factory=set)
+
+
+@dataclass
+class ClassifiedStory:
+    """A story classified with its type and artifact list."""
+
+    signals: SignalBundle
+    story_type: StoryType
+    artifacts: list[ArtifactType]
