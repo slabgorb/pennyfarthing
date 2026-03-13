@@ -356,18 +356,18 @@ def _build_demo_script(
         "",
         "### Scene 1: Setup (30 sec)",
         f'**Presenter says:** "Today we\'re going to show you what we built for {title}."',
-        f"**Show:** The project overview",
+        "**Show:** The project overview",
         "",
         "### Scene 2: Demo (1 min)",
     ]
 
     if acs:
-        scenes.append(f'**Presenter says:** "Here\'s what this delivers:"')
+        scenes.append('**Presenter says:** "Here\'s what this delivers:"')
         for ac in acs:
             scenes.append(f"**Show:** {ac}")
     else:
-        scenes.append(f'**Presenter says:** "Let me show you the changes."')
-        scenes.append(f"**Show:** The implementation in action")
+        scenes.append('**Presenter says:** "Let me show you the changes."')
+        scenes.append("**Show:** The implementation in action")
 
     scenes.extend([
         "",
