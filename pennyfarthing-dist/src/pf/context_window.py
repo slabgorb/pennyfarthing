@@ -29,6 +29,7 @@ class ContextConfig:
     tirepump_threshold: int = 60
     permission_mode: str = "manual"
     relay_mode: bool = False
+    saddle_mode: bool = False
 
 
 @dataclass
@@ -53,6 +54,7 @@ class ContextResult:
     # Mode settings
     permission_mode: str = "manual"
     relay_mode: bool = False
+    saddle_mode: bool = False
     handoff_mode: str = "ask"  # ask, auto
     use_tirepump: bool = False
     is_gui: bool = False
@@ -168,6 +170,7 @@ def _apply_config(config: ContextConfig, data: dict) -> None:
         wf = data["workflow"]
         config.permission_mode = wf.get("permission_mode", config.permission_mode)
         config.relay_mode = wf.get("relay_mode", False) is True
+        config.saddle_mode = wf.get("saddle_mode", False) is True
 
 
 def get_claude_project_path(project_dir: str | None = None) -> Path:
@@ -324,6 +327,7 @@ def check_context(
     config = load_config(project_dir)
     result.permission_mode = config.permission_mode
     result.relay_mode = config.relay_mode
+    result.saddle_mode = config.saddle_mode
 
     # Find transcript
     project_path = get_claude_project_path(project_dir)

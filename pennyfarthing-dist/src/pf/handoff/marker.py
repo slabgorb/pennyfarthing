@@ -41,7 +41,6 @@ def generate_marker(
 
     ctx = check_context()
 
-    cmd = f"/pf-{next_agent}"
     pct = ctx.usable_percent if not ctx.error else "unknown"
 
     if pct != "unknown" and pct >= 60:
@@ -50,6 +49,26 @@ def generate_marker(
         context_warning = f" (context: {pct}%)"
     else:
         context_warning = ""
+
+    saddle_mode = getattr(ctx, "saddle_mode", False)
+
+    if saddle_mode:
+        saddle_cmd = f"pf saddle start {next_agent}"
+        if ctx.relay_mode:
+            return _block(
+                relay=True,
+                saddle_command=saddle_cmd,
+                fallback=f"Run `{saddle_cmd}` to continue",
+                context_percent=pct,
+            )
+        else:
+            return _block(
+                fallback=f"Run `{saddle_cmd}` to continue{context_warning}",
+                relay_mode=False,
+                context_percent=pct,
+            )
+
+    cmd = f"/pf-{next_agent}"
 
     if not ctx.relay_mode:
         # Relay off — user invokes next agent manually

@@ -38,6 +38,7 @@ DEFAULTS: dict[str, Any] = {
         "tui_statusbar": True,
         "statusbar": True,
         "startup_agent": "sm",
+        "saddle_mode": False,
     },
     "display": {
         "colorPreset": "catppuccin",
