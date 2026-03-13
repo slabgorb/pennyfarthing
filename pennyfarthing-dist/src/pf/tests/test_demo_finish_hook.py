@@ -13,7 +13,7 @@ import textwrap
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
+import pytest  # noqa: F401
 
 
 def _create_session_file(tmp_path: Path, story_id: str = "42-1") -> Path:
@@ -451,16 +451,13 @@ class TestDemoHookStepOrdering:
 
         call_order: list[str] = []
 
-        original_generate = mock_demo_generate.side_effect
-
         def track_demo_call(*args, **kwargs):
             call_order.append("demo_generate")
             return {"success": True, "data": {"files": []}}
 
         mock_demo_generate.side_effect = track_demo_call
 
-        # Track session file deletion
-        session_path = tmp_path / ".session" / "42-1-session.md"
+        # Session file is created in _setup_finish_env
 
         from pf.sprint.story_finish import finish_story
 
