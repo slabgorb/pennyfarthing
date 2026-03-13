@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +21,7 @@ from pptx import Presentation
 from pptx.util import Inches, Pt
 
 from pf.common.config import get_project_root
-from pf.demo.models import ClassifiedStory, GeneratedContent, StoryType
+from pf.demo.models import ClassifiedStory, GeneratedContent
 
 
 def _has_mmdc() -> bool:
@@ -165,7 +165,7 @@ def assemble(
         meta_data = {
             "story_id": gc.story_id,
             "story_type": gc.story_type.value,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
         meta.write_text(yaml.dump(meta_data, default_flow_style=False))
         files.append("metadata.yaml")
