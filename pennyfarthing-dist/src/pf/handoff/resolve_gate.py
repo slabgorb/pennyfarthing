@@ -117,6 +117,9 @@ def resolve_gate(
             assessment_found=True,
         )
 
+    # Extract recovery config if present on the gate
+    recovery_config = gate.get("recovery") or None
+
     # Resolve consumer gate extensions from repos.yaml
     gate_extensions: list[str] | None = None
     if gate_file:
@@ -174,6 +177,7 @@ def resolve_gate(
         gate_type=gate_type,
         gate_file=gate_file,
         gate_extensions=gate_extensions,
+        recovery_config=recovery_config,
         next_agent=next_agent,
         next_phase=next_phase,
         assessment_found=True,
@@ -185,12 +189,13 @@ def _result(
     gate_type: str | None = None,
     gate_file: str | None = None,
     gate_extensions: list[str] | None = None,
+    recovery_config: dict | None = None,
     next_agent: str | None = None,
     next_phase: str | None = None,
     assessment_found: bool = False,
     error: str | None = None,
 ) -> dict:
-    return {
+    result = {
         "status": status,
         "gate_type": gate_type,
         "gate_file": gate_file,
@@ -200,6 +205,9 @@ def _result(
         "assessment_found": assessment_found,
         "error": error,
     }
+    if recovery_config:
+        result["recovery_config"] = recovery_config
+    return result
 
 
 def _find_workflow_yaml(project_root: Path, workflow: str) -> Path | None:

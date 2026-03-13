@@ -121,6 +121,25 @@ def complete_phase(
     # Update all **Phase Started:** lines to now
     content = re.sub(r"(\*\*Phase Started:\*\*) \S+", rf"\1 {now}", content)
 
+    # Track round-trip count for rework transitions
+    if gate_type and "rework" in gate_type:
+        rt_match = re.search(r"\*\*Round-Trip Count:\*\*\s*(\d+)", content)
+        if rt_match:
+            new_count = int(rt_match.group(1)) + 1
+            content = re.sub(
+                r"\*\*Round-Trip Count:\*\*\s*\d+",
+                f"**Round-Trip Count:** {new_count}",
+                content,
+            )
+        else:
+            # Insert after Phase Started line
+            content = re.sub(
+                r"(\*\*Phase Started:\*\*[^\n]*)",
+                rf"\1\n**Round-Trip Count:** 1",
+                content,
+                count=1,
+            )
+
     # Update Phase History: fill Ended/Duration for from_phase, add new row
     lines = content.splitlines()
     result_lines = []

@@ -144,6 +144,40 @@ def parse_story_id(story_id: str) -> tuple[str, str]:
     return match.group(1), story_id
 
 
+def get_rework_recovery(
+    recovery_config: dict,
+    round_trip_count: int,
+) -> dict | None:
+    """Check if a recovery config contains a rework action and whether it's allowed.
+
+    Args:
+        recovery_config: Recovery section from workflow phase gate config.
+        round_trip_count: How many round-trips have already occurred.
+
+    Returns:
+        Dict with status/target_phase/reason if rework action found, None otherwise.
+    """
+    for entry in recovery_config.values():
+        if not isinstance(entry, dict) or entry.get("action") != "rework":
+            continue
+
+        max_attempts = entry.get("max_attempts", 1)
+        target_phase = entry.get("target_phase")
+
+        if round_trip_count >= max_attempts:
+            return {
+                "status": "blocked",
+                "reason": f"Max_attempts ({max_attempts}) reached after {round_trip_count} round-trips",
+            }
+
+        return {
+            "status": "rework",
+            "target_phase": target_phase,
+        }
+
+    return None
+
+
 def _is_recoverable(check: dict) -> bool:
     """Check if a failed gate check is recoverable (missing vs invalid).
 
