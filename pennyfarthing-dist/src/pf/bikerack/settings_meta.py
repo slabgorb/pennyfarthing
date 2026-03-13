@@ -147,6 +147,13 @@ _SPECS: list[SettingSpec] = [
         description="Show Claude Code status line",
     ),
     SettingSpec(
+        key="workflow.saddle_mode",
+        label="Saddle Mode",
+        widget_type="switch",
+        group="Workflow",
+        description="Use saddle commands for agent handoffs",
+    ),
+    SettingSpec(
         key="workflow.startup_agent",
         label="Startup Agent",
         widget_type="select",
