@@ -45,6 +45,7 @@ class RepoConfig:
     ui_layer: str = "none"
     pr_strategy: str = "standard"  # "standard" or "stacked"
     stack_tool: str = ""  # "graphite" when pr_strategy is stacked
+    simplify: bool = False  # Enable simplify subagents during TEA verify phase
 
     @property
     def is_gitflow(self) -> bool:
@@ -83,6 +84,7 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         ui_layer=data.get("ui_layer", "none"),
         pr_strategy=data.get("pr_strategy", "standard"),
         stack_tool=data.get("stack_tool", ""),
+        simplify=data.get("simplify", False),
     )
 
 

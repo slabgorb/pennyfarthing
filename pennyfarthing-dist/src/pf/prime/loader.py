@@ -465,6 +465,9 @@ def load_repos_topology(project_root: Path | None = None) -> str | None:
         if components_path:
             lines.append(f"Components: {components_path}")
 
+        if config.get("simplify"):
+            lines.append("Simplify: enabled")
+
         lines.append("")
 
     return "\n".join(lines).strip() if lines else None
