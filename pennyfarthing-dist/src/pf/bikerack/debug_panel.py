@@ -462,7 +462,7 @@ def _render_token_stats(stats: dict[str, Any]) -> Any:
     if cache_write is not None:
         rows.append(("Cache Write", f"{cache_write:,}"))
 
-    cost = _safe_float(stats.get("totalCostUsd"))
+    cost = _safe_float(stats.get("totalCost"))
     if cost is not None and cost > 0:
         rows.append(("Cost", f"${cost:.4f}"))
 

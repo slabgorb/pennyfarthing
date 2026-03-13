@@ -146,7 +146,11 @@ def create_app() -> FastAPI:
     async def otlp_metrics(request: Request) -> JSONResponse:
         try:
             body = await request.json()
-            _receiver.process_metrics(body)
+            from .otlp import parse_otlp_metrics
+            parsed = parse_otlp_metrics(body)
+            if parsed:
+                _receiver.process_metrics(body)
+                await broadcast("token-stats", _receiver.get_token_stats())
         except Exception:
             pass
         return JSONResponse({"partialSuccess": {}})

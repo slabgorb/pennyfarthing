@@ -464,6 +464,13 @@ def fetch_todos() -> dict[str, Any]:
     return {"type": "init", "todos": _web_mode_todos}
 
 
+def fetch_token_stats() -> dict[str, Any]:
+    """Fetch accumulated token stats from the OTLP receiver."""
+    from pf.wheelhub.app import _receiver
+
+    return _receiver.get_token_stats()
+
+
 # Channel → fetcher mapping
 # Channels not listed here get no initial data push (they're event-driven)
 CHANNEL_FETCHERS: dict[str, Any] = {
@@ -476,6 +483,7 @@ CHANNEL_FETCHERS: dict[str, Any] = {
     "persona": fetch_persona,
     "spans": fetch_spans,
     "todos": fetch_todos,
+    "token-stats": fetch_token_stats,
     "benchmark-history": fetch_benchmark_history,
     "subagent-transitions": fetch_subagent_transitions,
 }
