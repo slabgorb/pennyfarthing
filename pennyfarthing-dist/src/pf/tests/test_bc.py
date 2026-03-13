@@ -99,7 +99,7 @@ class TestConfigPreservation:
         config_dir = tmp_path / ".pennyfarthing"
         config_dir.mkdir()
         config_path = config_dir / "config.local.yaml"
-        config_path.write_text("theme: the-expanse\ndisplay:\n  colorPreset: tokyo-night\n")
+        config_path.write_text("theme: the-expanse\ntui:\n  toasts: true\n")
 
         set_panel_focus("sprint", project_dir=tmp_path)
 
@@ -114,7 +114,7 @@ class TestConfigPreservation:
         original = {
             "theme": "the-expanse",
             "workflow": {"permission_mode": "accept", "bell_mode": True},
-            "display": {"colorPreset": "tokyo-night"},
+            "tui": {"toasts": True},
         }
         config_path.write_text(yaml.dump(original, default_flow_style=False))
 
@@ -124,7 +124,7 @@ class TestConfigPreservation:
         assert config["theme"] == "the-expanse"
         assert config["workflow"]["permission_mode"] == "accept"
         assert config["workflow"]["bell_mode"] is True
-        assert config["display"]["colorPreset"] == "tokyo-night"
+        assert config["tui"]["toasts"] is True
         assert config["focus"] == "git"
 
     def test_preserves_layout_key(self, tmp_path: Path) -> None:
@@ -191,14 +191,14 @@ class TestClearPanelFocus:
         config_dir.mkdir()
         config_path = config_dir / "config.local.yaml"
         config_path.write_text(
-            "theme: the-expanse\nfocus: git\ndisplay:\n  colorPreset: tokyo-night\n"
+            "theme: the-expanse\nfocus: git\ntui:\n  toasts: true\n"
         )
 
         clear_panel_focus(project_dir=tmp_path)
 
         config = yaml.safe_load(config_path.read_text())
         assert config["theme"] == "the-expanse"
-        assert config["display"]["colorPreset"] == "tokyo-night"
+        assert config["tui"]["toasts"] is True
         assert "focus" not in config
 
     def test_success_when_no_focus_key(self, tmp_path: Path) -> None:

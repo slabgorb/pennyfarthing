@@ -35,18 +35,13 @@ Settings live in `.pennyfarthing/config.local.yaml`. Keys are nested — always 
 | `workflow.permission_mode` | string | Permission level (standard, accept) |
 | `workflow.pr_mode` | string | PR creation mode (draft, ready) |
 | `workflow.pr_merge` | string | PR merge strategy (auto, manual) |
-| `display.colorPreset` | string | UI color theme |
-| `display.fonts.uiFont` | string | UI font (system, custom) |
-| `display.fonts.codeFont` | string | Code font (system, custom) |
-| `display.fonts.customUiFont` | string | Custom UI font family |
-| `display.fonts.customCodeFont` | string | Custom code font family |
 
 **Keys that are NOT top-level** (common mistakes):
 - `statusbar` → use `workflow.statusbar`
 - `bell_mode` → use `workflow.bell_mode`
 - `relay_mode` → use `workflow.relay_mode`
 - `permission_mode` → use `workflow.permission_mode`
-- `colorPreset` → use `display.colorPreset`
+
 
 ## Examples
 
@@ -57,15 +52,11 @@ pf settings show
 # Get a specific value
 pf settings get theme                    # → mash
 pf settings get workflow.relay_mode       # → True
-pf settings get display.colorPreset      # → Midnight
 
 # Set workflow flags (these are under workflow.*, not top-level)
 pf settings set workflow.bell_mode false
 pf settings set workflow.relay_mode true
 pf settings set workflow.statusbar true
-
-# Set display settings
-pf settings set display.colorPreset monokai
 
 # Set top-level values
 pf settings set theme discworld

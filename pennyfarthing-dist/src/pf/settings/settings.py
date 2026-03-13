@@ -20,7 +20,7 @@ SHOW_KEYS = (
     "workflow",
     "tui",
     "jira",
-    "display",
+
     "split",
     "last_panel",
 )
@@ -44,9 +44,7 @@ DEFAULTS: dict[str, Any] = {
         "project": "MSSCI",
         "url": "https://1898andco.atlassian.net",
     },
-    "display": {
-        "colorPreset": "catppuccin",
-    },
+
     "portrait_size": "auto",
     "portrait_position": "left",
     "portrait_dock": "top",
