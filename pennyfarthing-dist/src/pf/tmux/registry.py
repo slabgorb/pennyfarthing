@@ -13,13 +13,14 @@ from pathlib import Path
 
 from pf.tmux.panes import is_pane_idle, list_live_panes
 
-PROTECTED_ROLES = {"claude", "tui"}
+PROTECTED_ROLES = {"claude", "tui", "saddle"}
 DEFAULT_MAX_PANES = 5
 
 # Title patterns for auto-classification
 _TITLE_CLASSIFIERS = {
     "Claude Code": ("claude", True),
     "TUI": ("tui", True),
+    "Saddle": ("saddle", True),
 }
 
 

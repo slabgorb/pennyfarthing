@@ -108,8 +108,8 @@ def emit_subagent_event(
         payload["error"] = error
 
     try:
-        import urllib.request
         import json
+        import urllib.request
 
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
