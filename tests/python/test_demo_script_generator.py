@@ -21,7 +21,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from pf.demo.models import GeneratedContent, StoryType  # noqa: E402
 from pf.demo.script_generator import generate_demo_script  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -237,7 +236,7 @@ class TestSceneStructure:
             r"\*\*Show:\*\*",
         ]
         found = sum(1 for p in direction_patterns if re.search(p, md))
-        assert found >= 1, f"Expected presenter directions, got none in output"
+        assert found >= 1, "Expected presenter directions, got none in output"
 
     def test_scenes_in_order(self) -> None:
         """Scenes appear in order: Setup → Act 1 → Act 2 → Closing."""
