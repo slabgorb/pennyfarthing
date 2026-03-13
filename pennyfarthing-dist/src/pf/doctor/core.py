@@ -9,6 +9,7 @@ from pathlib import Path
 
 from pf.doctor.checks import (
     CHECKS,
+    check_agents,
     check_commands,
     check_config_file,
     check_content_dirs,
@@ -29,6 +30,7 @@ _CHECK_FNS = {
     "config_file": check_config_file,
     "settings_hooks": check_settings_hooks,
     "content_dirs": check_content_dirs,
+    "agents": check_agents,
     "commands": check_commands,
     "skills": check_skills,
     "node_packages": check_node_packages,

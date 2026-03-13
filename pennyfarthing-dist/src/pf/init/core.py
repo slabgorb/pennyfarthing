@@ -62,6 +62,7 @@ _PENNYFARTHING_DIRS: list[str] = [
 
 _CLAUDE_DIRS: list[str] = [
     ".claude",
+    ".claude/agents",
     ".claude/commands",
     ".claude/skills",
 ]
@@ -97,6 +98,7 @@ _DOGFOODING_SYMLINKS: dict[str, str] = {
     ".pennyfarthing/skills": "pennyfarthing/pennyfarthing-dist/skills",
     ".pennyfarthing/templates": "pennyfarthing/pennyfarthing-dist/templates",
     ".pennyfarthing/workflows": "pennyfarthing/pennyfarthing-dist/workflows",
+    ".claude/agents": "pennyfarthing/pennyfarthing-dist/agents",
     ".claude/commands": "pennyfarthing/pennyfarthing-dist/commands",
     ".claude/skills": "pennyfarthing/pennyfarthing-dist/skills",
 }
@@ -462,6 +464,9 @@ def init_project(
                 dest.unlink()
             _copy_tree(dist_root / dir_name, dest)
             content_dirs_copied += 1
+            # Also copy agents to .claude/agents/ for native subagent support
+            if dir_name == "agents":
+                _copy_tree(dist_root / dir_name, target_dir / ".claude" / "agents")
 
         # --- Centralize portraits to shared XDG location ---
         portrait_result = _install_portraits(dist_root)

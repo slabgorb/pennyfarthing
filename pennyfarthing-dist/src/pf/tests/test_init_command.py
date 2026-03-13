@@ -65,6 +65,13 @@ def mock_dist(tmp_path: Path) -> Path:
     dist = tmp_path / "pennyfarthing-dist"
     dist.mkdir()
 
+    # Agents
+    agents_dir = dist / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "dev.md").write_text("# Dev Agent\n")
+    (agents_dir / "tea.md").write_text("# TEA Agent\n")
+    (agents_dir / "sm.md").write_text("# SM Agent\n")
+
     # Commands
     commands_dir = dist / "commands"
     commands_dir.mkdir()
@@ -163,6 +170,14 @@ class TestClaudeDirCreation:
         init_project(target_dir=target_dir, dist_root=mock_dist)
 
         assert (target_dir / ".claude" / "commands").is_dir()
+
+    def test_creates_claude_agents(self, target_dir: Path, mock_dist: Path) -> None:
+        """Should create .claude/agents/ for native subagent support."""
+        from pf.init.core import init_project
+
+        init_project(target_dir=target_dir, dist_root=mock_dist)
+
+        assert (target_dir / ".claude" / "agents").is_dir()
 
     def test_creates_claude_skills(self, target_dir: Path, mock_dist: Path) -> None:
         """Should create .claude/skills/ for Claude Code skill access."""
@@ -280,6 +295,25 @@ class TestSkillsCopy:
         claude_skills = target_dir / ".claude" / "skills"
         pf_skills = [d for d in claude_skills.iterdir() if d.name.startswith("pf-")]
         assert len(pf_skills) >= 2
+
+
+# ===================================================================
+# AC 5a: Agent definitions copied to .claude/agents/
+# ===================================================================
+
+
+class TestAgentsCopy:
+    """AC: Agent definitions copied to .claude/agents/ for native subagent support."""
+
+    def test_copies_agents_to_claude_dir(self, target_dir: Path, mock_dist: Path) -> None:
+        """Should copy agent definitions to .claude/agents/ for native subagents."""
+        from pf.init.core import init_project
+
+        init_project(target_dir=target_dir, dist_root=mock_dist)
+
+        claude_agents = target_dir / ".claude" / "agents"
+        agent_files = list(claude_agents.glob("*.md"))
+        assert len(agent_files) >= 1
 
 
 # ===================================================================

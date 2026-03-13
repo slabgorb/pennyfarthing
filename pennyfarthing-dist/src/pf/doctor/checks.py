@@ -107,6 +107,17 @@ def check_content_dirs(root: Path) -> CheckResult:
     return CheckResult(name="content_dirs", status="pass", detail="All content directories present")
 
 
+def check_agents(root: Path) -> CheckResult:
+    """Check .claude/agents/ has expected agent definition files."""
+    agents_dir = root / ".claude" / "agents"
+    if not agents_dir.is_dir():
+        return CheckResult(name="agents", status="fail", detail=".claude/agents/ missing")
+    agent_files = [f for f in agents_dir.glob("*.md") if f.is_file() and f.name != "README.md"]
+    if not agent_files:
+        return CheckResult(name="agents", status="fail", detail="No agent definitions found")
+    return CheckResult(name="agents", status="pass", detail=f"{len(agent_files)} agent definitions found")
+
+
 def check_commands(root: Path) -> CheckResult:
     """Check .claude/commands/ has expected pf-* command files."""
     cmd_dir = root / ".claude" / "commands"
@@ -202,6 +213,7 @@ CHECKS: list[tuple[str, str]] = [
     ("config_file", "config.local.yaml is valid"),
     ("settings_hooks", "Claude Code hooks configured"),
     ("content_dirs", "Content directories present"),
+    ("agents", "Native subagent definitions installed"),
     ("commands", "pf-* commands installed"),
     ("skills", "pf-* skills installed"),
     ("node_packages", "Node packages installed"),

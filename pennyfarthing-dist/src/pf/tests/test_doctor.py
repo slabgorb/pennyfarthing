@@ -20,6 +20,7 @@ from click.testing import CliRunner
 
 from pf.doctor.checks import (
     CHECKS,
+    check_agents,
     check_commands,
     check_config_file,
     check_content_dirs,
@@ -88,6 +89,11 @@ def healthy_project(tmp_path: Path) -> Path:
     commands_dir.mkdir()
     (commands_dir / "pf-sprint.md").write_text("# Sprint")
     (commands_dir / "pf-dev.md").write_text("# Dev")
+
+    agents_dir = claude_dir / "agents"
+    agents_dir.mkdir()
+    (agents_dir / "dev.md").write_text("# Dev Agent")
+    (agents_dir / "tea.md").write_text("# TEA Agent")
 
     skills_dir = claude_dir / "skills"
     skills_dir.mkdir()
@@ -233,6 +239,17 @@ class TestIndividualChecks:
     def test_check_content_dirs_fails_when_dirs_missing(self, broken_project):
         """check_content_dirs returns fail when .pennyfarthing/ subdirs missing."""
         result = check_content_dirs(broken_project)
+        assert result.status == "fail"
+
+    def test_check_agents_passes(self, healthy_project):
+        """check_agents returns pass when agent definitions exist."""
+        result = check_agents(healthy_project)
+        assert result.status == "pass"
+        assert result.name == "agents"
+
+    def test_check_agents_fails(self, broken_project):
+        """check_agents returns fail when .claude/agents/ missing."""
+        result = check_agents(broken_project)
         assert result.status == "fail"
 
     def test_check_commands_passes(self, healthy_project):
