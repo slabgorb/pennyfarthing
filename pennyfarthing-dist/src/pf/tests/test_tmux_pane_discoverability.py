@@ -35,27 +35,10 @@ from pf.tmux.registry import _classify_pane
 class TestGetPaneIcon:
     """AC1: Each role has a distinctive icon."""
 
-    def test_claude_has_icon(self) -> None:
-        """Claude role returns a non-empty icon string."""
-        icon = get_pane_icon("claude")
-        assert isinstance(icon, str)
-        assert len(icon) > 0
-
-    def test_tui_has_icon(self) -> None:
-        """TUI role returns a non-empty icon string."""
-        icon = get_pane_icon("tui")
-        assert isinstance(icon, str)
-        assert len(icon) > 0
-
-    def test_worker_has_icon(self) -> None:
-        """Worker role returns a non-empty icon string."""
-        icon = get_pane_icon("worker")
-        assert isinstance(icon, str)
-        assert len(icon) > 0
-
-    def test_saddle_has_icon(self) -> None:
-        """Saddle role returns a non-empty icon string."""
-        icon = get_pane_icon("saddle")
+    @pytest.mark.parametrize("role", ["claude", "tui", "worker", "saddle"])
+    def test_role_has_icon(self, role: str) -> None:
+        """Each known role returns a non-empty icon string."""
+        icon = get_pane_icon(role)
         assert isinstance(icon, str)
         assert len(icon) > 0
 
