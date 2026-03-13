@@ -51,3 +51,16 @@ class ClassifiedStory:
     signals: SignalBundle
     story_type: StoryType
     artifacts: list[ArtifactType]
+
+
+@dataclass
+class GeneratedContent:
+    """Content generated from classified story signals via Claude ELI5 translation."""
+
+    problem_statement: str
+    what_changed: str
+    why_this_approach: str
+    before_after: str | None
+    demo_script: str
+    diagram_source: str | None
+    slide_outline: list[dict]
