@@ -84,8 +84,8 @@ FILE_LIST: "{comma-separated file paths}"
 ```
 
 **Phase names must match workflow YAML exactly.** Use the phase `name` field from the workflow definition:
-- `tdd`/`tdd-tandem`: setup → `red` → green → review → finish
-- `bdd`/`bdd-tandem`: setup → `design` → red → green → review → finish
+- `tdd`: setup → `red` → green → review → finish
+- `bdd`: setup → `design` → red → green → review → finish
 - `trivial`: setup → `implement` → review → finish
 </parameters>
 

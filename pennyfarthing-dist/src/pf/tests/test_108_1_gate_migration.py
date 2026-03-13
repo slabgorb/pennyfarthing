@@ -306,38 +306,6 @@ class TestBddWorkflowGateFiles:
         assert _get_gate_type(bdd, "review") == "approval"
 
 
-class TestTddTandemWorkflowGateFiles:
-    """AC2: tdd-tandem.yaml has gate.file for red and review."""
-
-    @pytest.fixture
-    def tdd_tandem(self) -> dict:
-        return _load_workflow("tdd-tandem")
-
-    def test_red_phase_has_gate_file(self, tdd_tandem: dict) -> None:
-        """AC2: tdd-tandem red phase must have gate.file = 'gates/tests-fail'."""
-        assert _get_gate_file(tdd_tandem, "red") == "gates/tests-fail"
-
-    def test_review_phase_has_gate_file(self, tdd_tandem: dict) -> None:
-        """AC2: tdd-tandem review phase must have gate.file = 'gates/approval'."""
-        assert _get_gate_file(tdd_tandem, "review") == "gates/approval"
-
-
-class TestBddTandemWorkflowGateFiles:
-    """AC2: bdd-tandem.yaml has gate.file for red and review."""
-
-    @pytest.fixture
-    def bdd_tandem(self) -> dict:
-        return _load_workflow("bdd-tandem")
-
-    def test_red_phase_has_gate_file(self, bdd_tandem: dict) -> None:
-        """AC2: bdd-tandem red phase must have gate.file = 'gates/tests-fail'."""
-        assert _get_gate_file(bdd_tandem, "red") == "gates/tests-fail"
-
-    def test_review_phase_has_gate_file(self, bdd_tandem: dict) -> None:
-        """AC2: bdd-tandem review phase must have gate.file = 'gates/approval'."""
-        assert _get_gate_file(bdd_tandem, "review") == "gates/approval"
-
-
 class TestTwoPartyTddWorkflowGateFiles:
     """AC2: 2party-tdd.yaml has gate.file for all tests_fail and approval phases."""
 
@@ -416,10 +384,6 @@ class TestGateTypeRetainedDuringTransition:
             ("trivial", "review", "approval"),
             ("bdd", "red", "tests_fail"),
             ("bdd", "review", "approval"),
-            ("tdd-tandem", "red", "tests_fail"),
-            ("tdd-tandem", "review", "approval"),
-            ("bdd-tandem", "red", "tests_fail"),
-            ("bdd-tandem", "review", "approval"),
             ("2party-tdd", "red", "tests_fail"),
             ("2party-tdd", "review", "approval"),
             ("2party-tdd", "review-fix-tea", "tests_fail"),

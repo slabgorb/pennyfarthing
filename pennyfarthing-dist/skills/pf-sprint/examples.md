@@ -73,7 +73,7 @@ pf sprint story update 91-3 --status in_progress
 pf sprint story update 91-3 --status done
 pf sprint story update 91-3 --points 5 --priority P0
 pf sprint story update 91-3 --assigned-to keith.avery@1898andco.io
-pf sprint story update 91-3 --workflow tdd-tandem
+pf sprint story update 91-3 --workflow tdd-team
 pf sprint story update 91-3 --status done --dry-run
 
 # Get single field

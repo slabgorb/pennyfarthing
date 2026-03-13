@@ -20,9 +20,7 @@ from pf.bikerack.base_panel import render_progress_bar
 # Phase maps for known workflows
 _WORKFLOW_PHASES: dict[str, list[str]] = {
     "tdd": ["setup", "red", "green", "verify", "review", "finish"],
-    "tdd-tandem": ["setup", "red", "green", "verify", "review", "finish"],
     "bdd": ["setup", "design", "red", "green", "review", "finish"],
-    "bdd-tandem": ["setup", "design", "red", "green", "review", "finish"],
     "trivial": ["setup", "implement", "review", "finish"],
     "agent-docs": ["setup", "orchestrate", "write", "review", "finish"],
 }

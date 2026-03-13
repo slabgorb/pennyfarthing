@@ -1,14 +1,9 @@
 # TDD Team Workflow - TDD with Native Team Collaboration
 #
 # When to use: Best for 5+ point feature stories where sustained parallel
-# collaboration provides more value than periodic tandem consultation.
-# Use this instead of tdd-tandem when teammates need to work alongside the
-# lead for the full phase — e.g., Architect reviewing patterns as Dev
-# implements, not just answering a single question.
-#
-# Compared to tdd-tandem: Tandem spawns a Haiku subagent for a single
-# request/response exchange. Team mode spawns full teammate sessions that
-# work in parallel with the lead for the entire phase duration.
+# collaboration provides more value than solo execution. Teammates work
+# alongside the lead for the full phase — e.g., Architect reviewing
+# patterns as Dev implements.
 #
 # Team pairings:
 #   - GREEN phase: Dev (lead) + Architect — Architect reviews implementation
@@ -18,8 +13,7 @@
 #
 # Fallback: When native teams are unavailable (non-interactive mode, feature
 # flag off, or CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS not set), phases with
-# team blocks fall back to solo execution. The lead agent works alone —
-# consider using tdd-tandem as an alternative that works in all modes.
+# team blocks fall back to solo execution. The lead agent works alone.
 #
 # Flow: SM → TEA → Dev (+Architect) → Reviewer (+Architect) → SM
 

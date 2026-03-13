@@ -512,46 +512,6 @@ class TestAC4BackwardCompatibility:
             f"Legacy tandem (partner+scope) should pass, got: {errors}"
         )
 
-    def test_real_tdd_tandem_yaml_passes(self):
-        """Actual tdd-tandem.yaml from pennyfarthing-dist passes validation."""
-        root = Path(__file__).resolve().parents[2]
-        workflows_dir = root / "pennyfarthing-dist" / "workflows"
-        agents_dir = root / "pennyfarthing-dist" / "agents"
-        tdd_tandem_path = workflows_dir / "tdd-tandem.yaml"
-
-        if not tdd_tandem_path.exists():
-            pytest.skip("tdd-tandem.yaml not found")
-
-        content = tdd_tandem_path.read_text()
-        data = _parse_workflow(content)
-
-        errors, _ = validate_phased(data, tdd_tandem_path, agents_dir)
-
-        tandem_errors = [e for e in errors if "tandem" in e.lower()]
-        assert tandem_errors == [], (
-            f"Real tdd-tandem.yaml should pass, got tandem errors: {tandem_errors}"
-        )
-
-    def test_real_bdd_tandem_yaml_passes(self):
-        """Actual bdd-tandem.yaml from pennyfarthing-dist passes validation."""
-        root = Path(__file__).resolve().parents[2]
-        workflows_dir = root / "pennyfarthing-dist" / "workflows"
-        agents_dir = root / "pennyfarthing-dist" / "agents"
-        bdd_tandem_path = workflows_dir / "bdd-tandem.yaml"
-
-        if not bdd_tandem_path.exists():
-            pytest.skip("bdd-tandem.yaml not found")
-
-        content = bdd_tandem_path.read_text()
-        data = _parse_workflow(content)
-
-        errors, _ = validate_phased(data, bdd_tandem_path, agents_dir)
-
-        tandem_errors = [e for e in errors if "tandem" in e.lower()]
-        assert tandem_errors == [], (
-            f"Real bdd-tandem.yaml should pass, got tandem errors: {tandem_errors}"
-        )
-
     def test_zero_false_positives_with_tandem_validation(self):
         """All real workflow files still pass with tandem validation active."""
         root = Path(__file__).resolve().parents[2]

@@ -341,7 +341,7 @@ def get_phase_tandem_config(
     or None if the phase has no tandem configuration.
 
     Args:
-        workflow_name: Workflow name (tdd-tandem, bdd-tandem, etc.)
+        workflow_name: Workflow name (tdd-team, bdd-team, etc.)
         phase_name: Phase name (red, green, review, etc.)
         project_root: Project root path (auto-detected if not provided)
 

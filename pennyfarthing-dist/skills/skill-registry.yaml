@@ -408,7 +408,7 @@ skills:
     anti_patterns:
       - Don't switch workflows mid-story unless requirements fundamentally changed
     related_skills: [pf-sprint]
-    keywords: [tdd, tdd-tandem, trivial, agent-docs, bdd, bdd-tandem, architecture, bikelane, stepped, phased]
+    keywords: [tdd, trivial, agent-docs, bdd, architecture, bikelane, stepped, phased]
 
   pf-yq:
     name: pf-yq

@@ -402,8 +402,8 @@ Agent-driven workflows where agents hand off between phases:
 | **bdd** | Behavior-driven development | SM → UX → TEA → Dev → Reviewer → SM |
 | **trivial** | Quick fixes (1-2 pts) | SM → Dev → Reviewer → SM |
 | **2party-tdd** | Two-party TDD | SM → TEA → Dev → Reviewer → SM |
-| **tdd-tandem** | TDD with observers | SM → TEA+Architect → Dev+TEA → Reviewer+PM → SM |
-| **bdd-tandem** | BDD with observers | SM → UX+Architect → TEA → Dev+UX → Reviewer+PM → SM |
+| **tdd-team** | TDD with team collaboration | SM → TEA → Dev+Architect → Reviewer+Architect → SM |
+| **bdd-team** | BDD with team collaboration | SM → UX+Architect → TEA → Dev+TEA → Reviewer → SM |
 | **agent-docs** | Documentation work | SM → Orchestrator → Tech Writer → SM |
 | **patch** | Interrupt-driven fix | SM → Dev → Reviewer → SM |
 

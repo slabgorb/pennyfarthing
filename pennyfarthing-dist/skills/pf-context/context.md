@@ -130,7 +130,6 @@ Determine the tandem partner based on the story's workflow field from Step 2. Th
 | `tdd` | architect | Technical guardrails, dependencies, constraints |
 | `trivial` | architect | Technical guardrails, dependencies, constraints |
 | `bdd` | ux-designer | Interaction patterns, accessibility, visual constraints |
-| `bdd-tandem` | ux-designer | Interaction patterns, accessibility, visual constraints |
 
 **Override flags:**
 
@@ -233,7 +232,7 @@ Report any validation errors. If the validator is not yet installed, skip this s
 ## Constraints — Story Context
 
 - **Schema-driven:** Always read `context-schema.yaml` for sections (ADR-0029 Rule #2)
-- **Tandem selection:** Workflow field determines partner — tdd/trivial→architect, bdd/bdd-tandem→ux-designer (ADR-0029 Rule #5)
+- **Tandem selection:** Workflow field determines partner — tdd/trivial→architect, bdd→ux-designer (ADR-0029 Rule #5)
 - **Tandem optional:** `--no-tandem` skips partner spawn; backseat failure continues solo (ADR-0029 Rule #9)
 - **Parent required:** Must validate parent epic context exists before creating story context
 - **Frontmatter required:** Story contexts must include `parent:` field in YAML frontmatter

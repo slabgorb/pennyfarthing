@@ -41,7 +41,7 @@ from pf.consultation.dialogue_manager import (
 
 VALID_HEADER = DialogueHeader(
     story_id="86-3",
-    workflow="tdd-tandem",
+    workflow="tdd",
     leader="dev",
     leader_character="Jack Torrance",
     partner="architect",
@@ -86,7 +86,7 @@ class TestCreateDialogueContent:
 
     def test_includes_workflow(self):
         content = create_dialogue_content(VALID_HEADER)
-        assert "**Workflow:** tdd-tandem" in content
+        assert "**Workflow:** tdd" in content
 
     def test_includes_leader_agent(self):
         content = create_dialogue_content(VALID_HEADER)
@@ -108,7 +108,7 @@ class TestCreateDialogueContent:
     def test_handles_missing_character_names(self):
         header = DialogueHeader(
             story_id="86-3",
-            workflow="tdd-tandem",
+            workflow="tdd",
             leader="dev",
             partner="architect",
             started_at="2026-02-16T10:00:00Z",
@@ -848,7 +848,7 @@ class TestConsultationCLI:
             session_dir.mkdir()
             result = self.runner.invoke(
                 cli,
-                ["consultation", "init", "86-3", "tdd-tandem", "dev", "architect"],
+                ["consultation", "init", "86-3", "tdd", "dev", "architect"],
             )
             # Should succeed (exit 0) and create the file
             assert result.exit_code == 0
@@ -862,6 +862,6 @@ class TestConsultationCLI:
             Path(".session").mkdir()
             result = self.runner.invoke(
                 cli,
-                ["consultation", "init", "86-3", "tdd-tandem", "dev", "architect"],
+                ["consultation", "init", "86-3", "tdd", "dev", "architect"],
             )
             assert "Created" in result.output or "created" in result.output

@@ -90,10 +90,6 @@ class TestWorkflowListTeamIndicator:
             cols = [c.strip() for c in line.split("|")]
             name_col = cols[1] if len(cols) > 1 else ""
 
-            # tdd-tandem and bdd-tandem are tandem, not team
-            if "tandem" in name_col:
-                continue
-
             # Plain workflows like tdd, trivial, bdd should not show team
             # in their mode/indicator columns (but "team" might appear
             # in description text, which is fine — we check indicator columns)
@@ -108,24 +104,14 @@ class TestWorkflowListTeamColumnOrTag:
     def runner(self) -> CliRunner:
         return CliRunner()
 
-    def test_workflow_list_distinguishes_team_from_tandem(self, runner: CliRunner) -> None:
-        """Team workflows should be distinguishable from tandem workflows."""
+    def test_workflow_list_shows_team_workflows(self, runner: CliRunner) -> None:
+        """Team workflows should appear in the workflow list."""
         result = runner.invoke(cli, ["workflow", "list"])
         assert result.exit_code == 0
 
         tdd_team_line = None
-        tdd_tandem_line = None
         for line in result.output.splitlines():
             if "tdd-team" in line and "|" in line:
                 tdd_team_line = line
-            elif "tdd-tandem" in line and "|" in line:
-                tdd_tandem_line = line
 
         assert tdd_team_line is not None, "tdd-team should be in the list"
-        assert tdd_tandem_line is not None, "tdd-tandem should be in the list"
-
-        # They should have different indicators — team vs tandem
-        # At minimum, the descriptions should be distinct
-        assert tdd_team_line != tdd_tandem_line, (
-            "tdd-team and tdd-tandem should have different rows"
-        )

@@ -33,10 +33,8 @@ Pennyfarthing uses YAML-defined workflows to control agent sequences. The defaul
 | Workflow | Flow | Triggers |
 |----------|------|----------|
 | `tdd` (default) | SM > TEA > Dev > Reviewer > SM | features, 3+ points |
-| `tdd-tandem` | SM > TEA(+Arch) > Dev(+TEA) > Rev(+PM) > SM | `tandem` tag, 3+ points |
 | `trivial` | SM > Dev > Reviewer > SM | chores/fixes, 1-2 points |
 | `bdd` | SM > UX > TEA > Dev > Reviewer > SM | UI/UX features |
-| `bdd-tandem` | SM > UX(+Arch) > TEA > Dev(+UX) > Rev(+PM) > SM | `bdd-tandem` tag |
 | `agent-docs` | SM > Orchestrator > Tech Writer > SM | docs, agent-file label |
 | `architecture` | 7 stepped phases with gates | architecture/design/ADR |
 

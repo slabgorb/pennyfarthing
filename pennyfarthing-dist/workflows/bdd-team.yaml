@@ -1,14 +1,8 @@
 # BDD Team Workflow - BDD with Native Team Collaboration
 #
 # When to use: Best for UI/UX-heavy stories where sustained parallel
-# collaboration during design and implementation provides more value than
-# periodic tandem consultation. Use this instead of bdd-tandem when the
-# designer-architect and dev-tester pairings need continuous interaction
-# throughout their respective phases.
-#
-# Compared to bdd-tandem: Tandem spawns a Haiku subagent for a single
-# request/response exchange. Team mode spawns full teammate sessions that
-# work in parallel with the lead for the entire phase duration.
+# collaboration during design and implementation phases provides more
+# value than solo execution.
 #
 # Team pairings:
 #   - DESIGN phase: UX-Designer (lead) + Architect — Architect validates
@@ -18,8 +12,7 @@
 #
 # Fallback: When native teams are unavailable (non-interactive mode, feature
 # flag off, or CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS not set), phases with
-# team blocks fall back to solo execution. The lead agent works alone —
-# consider using bdd-tandem as an alternative that works in all modes.
+# team blocks fall back to solo execution. The lead agent works alone.
 #
 # Flow: SM → UX-Designer (+Architect) → TEA → Dev (+TEA) → Reviewer → SM
 

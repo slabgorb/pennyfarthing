@@ -26,7 +26,7 @@ Primary Agent                 Backseat Agent (Haiku, background)
 
 ## Prerequisites
 
-- Workflow must have `tandem:` block on the phase (e.g., `tdd-tandem`, `bdd-tandem`)
+- Workflow must have `tandem:` block on the phase (e.g., in team workflow YAMLs)
 - Session file must contain `**Tandem:** {partner} ({scope})` line (written by handoff subagent)
 
 No configuration required. Tandem injection is always active in the PostToolUse hook — the presence of observation files in `.session/` is the only signal needed. Works in both CLI and BikeRack GUI.
@@ -126,22 +126,7 @@ Each entry follows this format (matches `observation-writer.ts`):
 
 ## Tandem Workflow Pairings
 
-From `tdd-tandem.yaml`:
-
-| Phase | Primary | Backseat | Scope |
-|-------|---------|----------|-------|
-| red | TEA | Architect | file-watch |
-| green | Dev | TEA | file-watch |
-| review | Reviewer | PM | file-watch |
-
-From `bdd-tandem.yaml`:
-
-| Phase | Primary | Backseat | Scope |
-|-------|---------|----------|-------|
-| design | UX Designer | Architect | file-watch |
-| red | TEA | Architect | file-watch |
-| green | Dev | UX Designer | file-watch |
-| review | Reviewer | PM | file-watch |
+Tandem pairings are defined in the `tandem:` block of each workflow phase YAML. Check the active workflow YAML (e.g., `tdd-team.yaml`, `bdd-team.yaml`) for current pairings.
 
 ## Tandem Consultation Protocol
 

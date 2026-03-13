@@ -27,7 +27,7 @@ Handoff documents are the inter-agent communication contract for native subagent
     <from-phase>{completing phase name}</from-phase>
     <to-phase>{next phase name}</to-phase>
     <timestamp>{ISO 8601 datetime}</timestamp>
-    <workflow>{workflow name: tdd|trivial|bdd|tdd-tandem|bdd-tandem}</workflow>
+    <workflow>{workflow name: tdd|trivial|bdd}</workflow>
     <verdict>{OPTIONAL: approved|rejected — reviewer only}</verdict>
   </header>
 
@@ -197,7 +197,7 @@ to-phase: red | implement | design
 
 ## Workflow Phase Maps
 
-### `tdd` / `tdd-tandem`
+### `tdd`
 ```
 setup → red → green → review → finish
   SM     TEA    Dev   Reviewer   SM
@@ -213,7 +213,7 @@ setup → implement → review → finish
 
 Handoff chain: `handoff-setup.md` → `handoff-implement.md` → `handoff-review.md`
 
-### `bdd` / `bdd-tandem`
+### `bdd`
 ```
 setup → design → red → green → review → finish
   SM      Dev     TEA    Dev   Reviewer   SM

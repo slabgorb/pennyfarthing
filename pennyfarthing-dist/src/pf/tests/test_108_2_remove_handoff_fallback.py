@@ -261,8 +261,6 @@ PHASED_WORKFLOWS = [
     "tdd",
     "trivial",
     "bdd",
-    "bdd-tandem",
-    "tdd-tandem",
     "2party-tdd",
     "agent-docs",
     "patch",
