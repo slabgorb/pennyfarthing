@@ -1,11 +1,10 @@
-"""Peloton CLI — persistent agent panes + replay benchmarking.
+"""Peloton CLI — team mode agents + replay benchmarking.
 
-Live mode (148-9):
-  pf peloton start              — Spawn persistent panes for current story's workflow
-  pf peloton next               — Activate next phase's agent in its pane
-  pf peloton switch <role>      — Jump to any agent's pane
-  pf peloton status             — Show pane states
-  pf peloton stop               — Tear down all peloton panes
+Live mode:
+  pf peloton start              — Initialize team mode session for current story
+  pf peloton next               — Get team-mode data for next agent (JSON output)
+  pf peloton status             — Show session state
+  pf peloton stop               — Clear peloton state
 
 Replay mode (148-8):
   pf peloton replay <scenario>  — Benchmark pipeline against a scenario
@@ -19,24 +18,22 @@ from pathlib import Path
 import click
 
 from pf.common.config import get_project_root
-from pf.tmux.panes import is_tmux_running
 
 
 @click.group()
 def peloton():
-    """Peloton mode — persistent agent panes for story work.
+    """Peloton mode — team mode agents for story work.
 
     \b
-    Pre-spawns tmux panes for each agent role in the workflow.
-    Panes persist through the full story. User drives advancement.
+    Initializes workflow state and provides team-mode activation data.
+    Agents run as teammates via TeamCreate, not in tmux panes.
 
     \b
     Commands:
-      start    — Spawn panes for current story
-      next     — Activate next phase's agent
-      switch   — Jump to any agent's pane
-      status   — Show pane states
-      stop     — Tear down panes
+      start    — Initialize team mode session
+      next     — Get next agent's team-mode data (JSON)
+      status   — Show session state
+      stop     — Clear peloton state
       replay   — Benchmark pipeline (separate from live mode)
     """
     pass
@@ -46,19 +43,15 @@ def peloton():
 @click.option("--workflow", default=None, help="Workflow override (default: from session)")
 @click.option("--story-id", default=None, help="Story ID override (default: from session)")
 def start(workflow: str | None, story_id: str | None):
-    """Spawn persistent panes for the current story's workflow.
+    """Initialize team mode session for the current story's workflow.
 
-    Reads the active story's workflow to determine which agents are needed,
-    then pre-spawns one tmux pane per role. Panes start as idle shells —
-    agents are launched when you run 'pf peloton next'.
+    Reads the active story's workflow to determine which agents are needed
+    and records the agent order in peloton state. Does NOT spawn tmux panes —
+    agents run as teammates via TeamCreate.
     """
     from pf.peloton import live
 
     root = get_project_root()
-
-    if not is_tmux_running():
-        click.echo("Error: No tmux server running. Start with: pf frame start", err=True)
-        raise SystemExit(1)
 
     # Determine workflow and story from session if not provided
     wf_name = workflow or _detect_workflow(root)
@@ -71,22 +64,22 @@ def start(workflow: str | None, story_id: str | None):
         click.echo("Error: No story ID found. Provide --story-id or start a story first.", err=True)
         raise SystemExit(1)
 
-    result = live.spawn_panes(root, sid, wf_name)
+    result = live.start_session(root, sid, wf_name)
     if not result["success"]:
         click.echo(f"Error: {result['error']}", err=True)
         raise SystemExit(1)
 
-    click.echo(f"Peloton: spawned {len(result['data'])} panes for story {sid} ({wf_name})")
-    for role, pane_id in result["data"].items():
-        click.echo(f"  {pane_id} → peloton-{role}")
+    agents = result["data"]["agents"]
+    click.echo(f"Peloton: initialized session for story {sid} ({wf_name})")
+    click.echo(f"Agents: {', '.join(agents)}")
     click.echo("\nRun 'pf peloton next' to activate the first agent.")
 
 
 @peloton.command("next")
 def next_phase():
-    """Activate the next workflow phase's agent in its pane.
+    """Activate the next workflow phase's agent.
 
-    Launches claude with the agent prompt in the appropriate pane.
+    Outputs team-mode JSON data for the caller to spawn via TeamCreate.
     """
     from pf.peloton import live
 
@@ -98,32 +91,13 @@ def next_phase():
         raise SystemExit(1)
 
     data = result["data"]
-    click.echo(f"Activated {data['role']} in pane {data['pane_id']}")
-
-
-@peloton.command("switch")
-@click.argument("role")
-def switch(role: str):
-    """Switch to a specific agent's pane.
-
-    ROLE is the agent name (tea, dev, reviewer, architect, sm).
-    """
-    from pf.peloton import live
-
-    root = get_project_root()
-    result = live.switch_to(root, role)
-
-    if not result["success"]:
-        click.echo(f"Error: {result['error']}", err=True)
-        raise SystemExit(1)
-
-    click.echo(f"Switched to {result['data']['role']} ({result['data']['pane_id']})")
+    click.echo(json.dumps(data))
 
 
 @peloton.command("status")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 def status(as_json: bool):
-    """Show current peloton pane state."""
+    """Show current peloton session state."""
     from pf.peloton import live
 
     root = get_project_root()
@@ -144,17 +118,14 @@ def status(as_json: bool):
         return
 
     click.echo(f"Story: {data['story_id']}  Workflow: {data['workflow']}  Active: {data['active_role'] or 'none'}")
-    click.echo(f"{'Role':<12} {'Pane':<8} {'Agent Started'}")
-    click.echo("-" * 35)
-    for role, info in data.get("panes", {}).items():
-        started = "yes" if info.get("agent_started") else "no"
-        active = " ←" if role == data.get("active_role") else ""
-        click.echo(f"{role:<12} {info['pane_id']:<8} {started}{active}")
+    agents = data.get("agents", [])
+    if agents:
+        click.echo(f"Agents: {', '.join(agents)}")
 
 
 @peloton.command("stop")
 def stop_cmd():
-    """Tear down all peloton panes and clear state."""
+    """Clear peloton state and stop any active session."""
     from pf.peloton import live
 
     root = get_project_root()
@@ -164,11 +135,7 @@ def stop_cmd():
         click.echo(f"Error: {result['error']}", err=True)
         raise SystemExit(1)
 
-    killed = result["data"].get("killed", [])
-    if killed:
-        click.echo(f"Stopped peloton: killed {len(killed)} panes")
-    else:
-        click.echo("No peloton panes to stop.")
+    click.echo("Peloton session stopped.")
 
 
 @peloton.command("replay")
@@ -183,7 +150,7 @@ def replay(scenario_path: str, theme: str | None, model: str | None):
     from pf.peloton.pane_orchestrator import PaneOrchestrator
     from pf.peloton.result_aggregator import ResultAggregator
     from pf.peloton.workflow_driver import WorkflowDriver
-    from pf.tmux.panes import get_session_name
+    from pf.tmux.panes import get_session_name, is_tmux_running
 
     root = get_project_root()
 

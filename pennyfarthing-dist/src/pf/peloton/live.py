@@ -1,8 +1,11 @@
-"""Peloton live mode — persistent tmux panes for team mode agents.
+"""Peloton live mode — team mode agents for story workflows.
 
-Pre-spawns tmux panes at story start, one per agent role in the workflow.
-Panes persist through the full story lifecycle. User drives phase advancement
-with `pf peloton next` and can switch to any pane with `pf peloton switch`.
+Initializes workflow state and provides team-mode activation data for the
+SM agent to spawn teammates via TeamCreate. Does NOT spawn tmux panes —
+team mode agents run within the current Claude Code session.
+
+Legacy spawn_panes() is retained for backward compatibility but
+start_session() is the preferred entry point.
 
 This is NOT the replay/benchmark mode (see pane_orchestrator.py, result_aggregator.py).
 This is the live working mode for real stories.
@@ -49,7 +52,7 @@ def load_state(project_root: Path) -> dict[str, Any]:
             return json.loads(path.read_text())
         except (json.JSONDecodeError, OSError):
             pass
-    return {"active": False, "story_id": None, "workflow": None, "panes": {}, "active_role": None}
+    return {"active": False, "story_id": None, "workflow": None, "panes": {}, "agents": [], "active_role": None}
 
 
 def save_state(project_root: Path, state: dict[str, Any]) -> dict[str, Any]:
@@ -206,6 +209,39 @@ def spawn_panes(
     return {"success": True, "data": pane_map}
 
 
+def start_session(
+    project_root: Path,
+    story_id: str,
+    workflow_name: str,
+) -> dict[str, Any]:
+    """Initialize peloton state for team mode — no tmux panes.
+
+    Records workflow agent order in state so activate_next can advance
+    through the team. Does NOT spawn tmux panes — team mode agents run
+    as teammates within the current Claude Code session.
+
+    Returns:
+        {success: True, data: {agents: [...]}} or error
+    """
+    agents_result = get_workflow_agents(workflow_name, project_root)
+    if not agents_result["success"]:
+        return agents_result
+
+    agents = agents_result["data"]
+
+    state = {
+        "active": True,
+        "story_id": story_id,
+        "workflow": workflow_name,
+        "agents": agents,
+        "active_role": None,
+        "created_at": datetime.now(UTC).isoformat(),
+    }
+    save_state(project_root, state)
+
+    return {"success": True, "data": {"agents": agents}}
+
+
 def activate_next(project_root: Path) -> dict[str, Any]:
     """Activate the next agent in the peloton workflow.
 
@@ -225,12 +261,14 @@ def activate_next(project_root: Path) -> dict[str, Any]:
 
     story_id = state.get("story_id")
 
-    # Get ordered agents from workflow
-    agents_result = get_workflow_agents(workflow_name, project_root)
-    if not agents_result["success"]:
-        return agents_result
+    # Use agents from state (start_session) or fall back to workflow query (spawn_panes)
+    agents = state.get("agents")
+    if not agents:
+        agents_result = get_workflow_agents(workflow_name, project_root)
+        if not agents_result["success"]:
+            return agents_result
+        agents = agents_result["data"]
 
-    agents = agents_result["data"]
     current = state.get("active_role")
 
     # Determine next role
@@ -308,6 +346,7 @@ def get_status(project_root: Path) -> dict[str, Any]:
         "data": {
             "story_id": state.get("story_id"),
             "workflow": state.get("workflow"),
+            "agents": state.get("agents", []),
             "panes": state.get("panes", {}),
             "active_role": state.get("active_role"),
         },
@@ -340,6 +379,7 @@ def stop(project_root: Path) -> dict[str, Any]:
         "story_id": None,
         "workflow": None,
         "panes": {},
+        "agents": [],
         "active_role": None,
     }
     save_state(project_root, cleared)
