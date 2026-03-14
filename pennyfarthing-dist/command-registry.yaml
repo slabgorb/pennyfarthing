@@ -236,6 +236,23 @@ groups:
       marker: { description: "Generate handoff marker", args: "<next-agent>" }
       resolve: { description: "Resolve phase gate" }
 
+  tmux:
+    description: Tmux pane management
+    cli: "pf tmux"
+    commands:
+      read: { description: "Read pane content", args: "<pane-ref>" }
+      send: { description: "Send text to pane", args: "<pane-ref> <text>" }
+      run: { description: "Run command in worker pane", args: "<command>" }
+      list: { description: "List panes with roles" }
+      tui: { description: "Find TUI pane" }
+      window: { description: "List panes in current window" }
+
+  demo:
+    description: Demo artifact generation
+    cli: "pf demo"
+    commands:
+      generate: { description: "Generate demo artifacts for a story", args: "<story-id>" }
+
 standalone:
   ci:
     description: Detect and run CI locally
