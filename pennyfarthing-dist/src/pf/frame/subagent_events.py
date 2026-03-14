@@ -23,7 +23,7 @@ def _get_frame_url() -> str | None:
         return f"http://127.0.0.1:{port}"
 
     project_dir = os.environ.get(
-        "WHEELHUB_PROJECT_DIR",
+        "FRAME_PROJECT_DIR",
         os.environ.get("PF_PROJECT_DIR", ""),
     )
     if project_dir:

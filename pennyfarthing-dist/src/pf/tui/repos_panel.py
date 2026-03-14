@@ -1,4 +1,4 @@
-"""ReposPanel — Repo configuration panel for BikeRack TUI.
+"""ReposPanel — Repo configuration panel for TUI.
 
 Renders per-repo settings from repos.yaml with collapsible sections,
 using the RepoFieldSpec registry from repos_meta.py.

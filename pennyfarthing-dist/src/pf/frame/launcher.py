@@ -26,7 +26,7 @@ def port_for_project(project_dir: Path) -> int:
     """Derive a stable, unique Frame port from the project directory.
 
     Hash the resolved path so each project gets its own port in the range
-    2898-2997.  FRAME_PORT or WHEELHUB_PORT env-var overrides for manual control.
+    2898-2997.  FRAME_PORT env-var overrides for manual control.
     """
     env = os.environ.get("FRAME_PORT")
     if env:
@@ -92,7 +92,7 @@ def resolve_project_dir(project_dir: str | None) -> Path:
     """
     if project_dir:
         return Path(project_dir)
-    env = os.environ.get("WHEELHUB_PROJECT_DIR") or os.environ.get("PF_PROJECT_DIR")
+    env = os.environ.get("FRAME_PROJECT_DIR") or os.environ.get("PF_PROJECT_DIR")
     if env:
         return Path(env)
     return Path.cwd()
@@ -116,7 +116,7 @@ def start_frame(project_dir: Path) -> subprocess.Popen | dict:
     port = port_for_project(project_dir)
 
     env = os.environ.copy()
-    env["WHEELHUB_PROJECT_DIR"] = str(project_dir)
+    env["FRAME_PROJECT_DIR"] = str(project_dir)
     env["FRAME_PORT"] = str(port)
 
     # Forward session ID so Frame resolves the correct agent persona

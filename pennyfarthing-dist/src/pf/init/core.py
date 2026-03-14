@@ -40,6 +40,10 @@ _GITIGNORE_ENTRIES: list[str] = [
     ".session/",
     ".claude/settings.local.json",
     ".pennyfarthing/config.local.yaml",
+    "# Frame server runtime files",
+    ".frame-port",
+    "frame-pid",
+    "tui-pid",
     "# Local pf shim (machine-specific absolute paths)",
     ".pennyfarthing/bin/",
     "# tmux runtime cache files",
@@ -908,6 +912,18 @@ def _clean_stale_artifacts(target_dir: Path) -> None:
                     if not link.resolve().exists():
                         link.unlink()
 
+    # Remove stale wheelhub/bikerack-era runtime files (renamed to frame/tui)
+    for name in (".bikerack-port", "bikerack-pid", "bikerack-tui-pid", ".wheelhub-pid"):
+        path = target_dir / name
+        if path.is_file():
+            path.unlink()
+    # Remove old wheelhub.mjs Node.js server bundle if present
+    old_server = pf_dir / "server" / "wheelhub.mjs"
+    if old_server.is_file():
+        old_server.unlink()
+    # Remove old .gitignore entries for bikerack/wheelhub
+    _clean_old_gitignore_entries(target_dir)
+
     # Remove @pennyfarthing/* deps from package.json if present
     _clean_package_json(target_dir)
 
@@ -939,6 +955,19 @@ def _clean_package_json(target_dir: Path) -> bool:
         pkg_json.write_text(json.dumps(data, indent=2) + "\n")
 
     return changed
+
+
+def _clean_old_gitignore_entries(target_dir: Path) -> None:
+    """Remove stale wheelhub/bikerack gitignore entries from consumer repos."""
+    gitignore_path = target_dir / ".gitignore"
+    if not gitignore_path.is_file():
+        return
+    content = gitignore_path.read_text()
+    stale = [".wheelhub-*", ".bikerack-*", "bikerack-*", "bikerack-pid", "bikerack-tui-pid", ".bikerack-port"]
+    lines = content.splitlines(keepends=True)
+    filtered = [line for line in lines if line.strip() not in stale]
+    if len(filtered) != len(lines):
+        gitignore_path.write_text("".join(filtered))
 
 
 def _get_portraits_data_dir() -> Path:

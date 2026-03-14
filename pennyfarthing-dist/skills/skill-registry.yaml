@@ -25,9 +25,9 @@ skills:
 
   pf-bc:
     name: pf-bc
-    description: Panel focus management for BikeRack — set, clear, save, and load panel layouts
+    description: Panel focus management for TUI — set, clear, save, and load panel layouts
     category: tools
-    tags: [panels, layout, bikerack]
+    tags: [panels, layout, tui]
     version: "1.0.0"
     prerequisites: []
     examples:

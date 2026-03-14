@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from pf.bikerack.repos_meta import (
+from pf.tui.repos_meta import (
     GLOBAL_REPO_FIELDS,
     REPO_FIELDS_META,
     RepoFieldSpec,
