@@ -19,6 +19,34 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 
+@pytest.fixture(autouse=True)
+def textual_app_context():
+    """Provide a Textual app context for all tests.
+
+    Many Textual widgets (Input, Switch, Select) access self.app during
+    initialization. This sets the active_app context variable so widgets
+    can be created outside a running event loop.
+    """
+    from unittest.mock import MagicMock, PropertyMock, patch
+
+    from textual._context import active_app, active_message_pump
+    from textual.app import App
+
+    class _MinimalApp(App):
+        pass
+
+    app = _MinimalApp()
+    # Mock the screen property to avoid ScreenStackError
+    mock_screen = MagicMock()
+    mock_screen.scroll_target_y = 0
+    with patch.object(type(app), "screen", new_callable=PropertyMock, return_value=mock_screen):
+        token = active_app.set(app)
+        pump_token = active_message_pump.set(app)
+        yield app
+        active_message_pump.reset(pump_token)
+        active_app.reset(token)
+
+
 @pytest.fixture
 def project_root() -> Path:
     """Return the project root path."""

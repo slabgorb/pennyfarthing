@@ -30,6 +30,7 @@ PANEL_ICONS: dict[str, tuple[str, str]] = {
     "tty": ("\uf120", ">"),  # nf-fa-terminal
     "progress": ("\uf200", "P"),  # nf-fa-pie_chart
     "benchmark": ("\uf080", "B"),  # nf-fa-bar_chart
+    "repos": ("\uf1c0", "R"),  # nf-fa-database
 }
 
 

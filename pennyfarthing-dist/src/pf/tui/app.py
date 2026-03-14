@@ -35,6 +35,7 @@ from pf.tui.debug_panel import DebugPanel
 from pf.tui.diffs_panel import DiffsPanel
 from pf.tui.git_panel import GitPanel
 from pf.tui.progress_panel import ProgressPanel
+from pf.tui.repos_panel import ReposPanel
 from pf.tui.settings_panel import SettingsPanel
 from pf.tui.sprint_panel import SprintPanel
 from pf.tui.client import ConnectionState, FrameClient
@@ -85,6 +86,7 @@ PANEL_REGISTRY: list[tuple[str, str]] = [
     ("debug", "Debug"),
     ("progress", "Progress"),
     ("settings", "Settings"),
+    ("repos", "Repos"),
     ("benchmark", "Benchmark"),
 ]
 
@@ -100,6 +102,7 @@ PANEL_DISPLAY_NAMES: dict[str, str] = {
     "debug": "Debug",
     "progress": "Progress",
     "settings": "Settings",
+    "repos": "Repos",
     "benchmark": "Benchmark",
     "tty": "TTY",
 }
@@ -644,6 +647,7 @@ class TuiApp(App):
                     yield DebugPanel(client=self._client, id="panel-debug")
                     yield ProgressPanel(client=self._client, id="panel-progress")
                     yield SettingsPanel(id="panel-settings")
+                    yield ReposPanel(id="panel-repos")
                     yield BenchmarkPanel(client=self._client, id="panel-benchmark")
                 with Horizontal(id="split-container"):
                     yield VerticalScroll(id="split-left")
