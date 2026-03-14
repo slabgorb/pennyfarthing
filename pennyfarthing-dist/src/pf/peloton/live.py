@@ -307,8 +307,24 @@ def stop(project_root: Path) -> dict[str, Any]:
     return {"success": True, "data": {"killed": killed}}
 
 
+def _is_real_project(project_root: Path) -> bool:
+    """Check if this is a real project root (not a test tmp_path).
+
+    Real projects have .pennyfarthing/ with actual config files.
+    Test tmp_paths only have the bare .pennyfarthing/ directory.
+    """
+    return (project_root / ".pennyfarthing" / "config.local.yaml").exists()
+
+
 def _allocate_pane(project_root: Path, role: str) -> str:
-    """Allocate a tmux pane for the given role, or generate a mock ID."""
+    """Allocate a tmux pane for the given role, or generate a mock ID.
+
+    Only creates real tmux panes when running against a real project root.
+    Test environments get mock pane IDs to avoid spawning actual panes.
+    """
+    if not _is_real_project(project_root):
+        return _next_pane_id()
+
     title = f"peloton-{role}"
 
     try:
@@ -333,5 +349,4 @@ def _allocate_pane(project_root: Path, role: str) -> str:
     except Exception:
         pass
 
-    # Fallback: mock pane ID for tests
     return _next_pane_id()

@@ -215,8 +215,12 @@ class PaneOrchestrator:
         return pane
 
     def _allocate_pane(self, cwd: str | None = None) -> str:
-        """Allocate a tmux pane, or generate a mock ID for tests."""
-        if self._use_tmux:
+        """Allocate a tmux pane, or generate a mock ID for tests.
+
+        Only creates real tmux panes when running against a real project root
+        (has .pennyfarthing/config.local.yaml). Test tmp_paths get mock IDs.
+        """
+        if self._use_tmux and (self.project_root / ".pennyfarthing" / "config.local.yaml").exists():
             try:
                 from pf.tmux.panes import get_session_name, split_pane
                 from pf.tmux.registry import find_split_target, load_registry
