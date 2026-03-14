@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from pf.tmux import panes as _panes
+from pf.tmux.registry import registry_path, save_registry
 from pf.workflow.helpers import find_workflow_file, load_workflow_data, get_all_workflows_dirs
 from pf.common.config import get_project_root
 
@@ -124,6 +125,40 @@ def _extract_agents(data: dict[str, Any]) -> list[str] | None:
     return agents if agents else None
 
 
+def _register_panes_in_tmux_registry(
+    project_root: Path,
+    pane_state: dict[str, dict[str, Any]],
+) -> None:
+    """Register peloton panes in the tmux registry.
+
+    Loads existing registry (or creates one), appends peloton pane entries,
+    and saves. This makes peloton panes visible to pf tmux read/send/list.
+    """
+    reg_file = registry_path(project_root)
+    if reg_file.exists():
+        try:
+            reg = json.loads(reg_file.read_text())
+        except (json.JSONDecodeError, OSError):
+            reg = {"session": "", "socket": "pf", "max_panes": 10, "panes": []}
+    else:
+        reg = {"session": "", "socket": "pf", "max_panes": 10, "panes": []}
+
+    # Remove any existing peloton entries (in case of restart)
+    reg["panes"] = [p for p in reg["panes"] if not p.get("title", "").startswith("peloton-")]
+
+    # Add new peloton entries
+    for role, info in pane_state.items():
+        reg["panes"].append({
+            "pane_id": info["pane_id"],
+            "role": "worker",
+            "title": info["title"],
+            "protected": False,
+            "owner": "peloton",
+        })
+
+    save_registry(project_root, reg)
+
+
 def spawn_panes(
     project_root: Path,
     story_id: str,
@@ -163,6 +198,9 @@ def spawn_panes(
         "created_at": datetime.now(UTC).isoformat(),
     }
     save_state(project_root, state)
+
+    # Register panes in tmux registry so pf tmux read/send/list works
+    _register_panes_in_tmux_registry(project_root, pane_state)
 
     return {"success": True, "data": pane_map}
 

@@ -52,6 +52,7 @@ def tmux():
     \b
     Commands:
       list      - Show all panes with role and status
+      read      - Capture content from a pane
       run       - Run a command in an idle worker pane
       create    - Create a new worker pane
       send      - Send keys to a pane by reference
@@ -281,6 +282,33 @@ def send_command(pane_ref: str, command: str):
         raise SystemExit(1)
 
     click.echo(f"Sent to {entry['pane_id']}")
+
+
+@tmux.command("read")
+@click.argument("pane_ref")
+@click.option("--lines", "-n", default=100, help="Number of lines to capture (default 100)")
+def read_pane(pane_ref: str, lines: int):
+    """Capture and display content from a pane by reference (pane_id, role, or title)."""
+    root, session = _get_context()
+
+    reg_result = _registry.load_registry(root, session)
+    if not reg_result["success"]:
+        click.echo(f"Error: {reg_result['error']}", err=True)
+        raise SystemExit(1)
+
+    reg = reg_result["data"]
+    entry = resolve_pane_ref(reg, pane_ref)
+
+    if entry is None:
+        click.echo(f"Error: No pane matching '{pane_ref}'.", err=True)
+        raise SystemExit(1)
+
+    result = panes.capture_pane(entry["pane_id"], lines)
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        raise SystemExit(1)
+
+    click.echo(result["data"])
 
 
 @tmux.command("close")

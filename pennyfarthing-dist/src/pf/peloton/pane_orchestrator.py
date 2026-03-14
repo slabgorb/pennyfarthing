@@ -153,9 +153,9 @@ class PaneOrchestrator:
         """
         if self._use_tmux:
             try:
-                from pf.tmux.panes import _run_tmux
+                from pf.tmux.panes import capture_pane
 
-                result = _run_tmux("capture-pane", "-t", pane_id, "-p")
+                result = capture_pane(pane_id)
                 if result["success"]:
                     return {"success": True, "data": result.get("data", "")}
                 return {"success": True, "data": ""}

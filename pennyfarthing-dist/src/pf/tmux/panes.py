@@ -138,6 +138,23 @@ def kill_pane(pane_id: str) -> dict:
     return _run_tmux("kill-pane", "-t", pane_id)
 
 
+def capture_pane(pane_id: str, lines: int = 100) -> dict:
+    """Capture visible content from a pane.
+
+    Args:
+        pane_id: target pane (e.g. %251)
+        lines: number of lines to capture from the end of the scrollback.
+               Negative start means "from the end". Default 100.
+
+    Returns:
+        {success: True, data: "captured text..."} or {success: False, error: ...}
+    """
+    return _run_tmux(
+        "capture-pane", "-t", pane_id, "-p",
+        "-S", str(-lines),
+    )
+
+
 _PANE_ICONS = {
     "claude": "󰚩",
     "tui": "󰓩",
