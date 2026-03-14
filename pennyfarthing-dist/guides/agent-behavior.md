@@ -16,6 +16,17 @@ pf <command> [args...]
 </critical>
 
 <critical>
+## Git Branching — Follow repos.yaml
+
+**Before any git operation (branch, diff, PR, push), read `repos.yaml` for the correct base branch.** Each repo has its own branching strategy:
+
+- Orchestrator (`.`) targets `main`
+- Pennyfarthing (`pennyfarthing/`) targets `develop`
+
+Do not assume `main` for all repos. Do not run `git diff main` or create PRs targeting `main` for repos that use `develop`. The topology is loaded in your prime context under "Repos Topology" — check it before every git operation.
+</critical>
+
+<critical>
 ## Context Discipline — Thoroughness Over Speed
 
 **Context pressure is NOT your problem.** The system manages context (TirePump, relay mode, `/clear`). Your job is to do your phase correctly and completely.
