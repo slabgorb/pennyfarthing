@@ -12,7 +12,6 @@ import pytest
 from pf.peloton.result_aggregator import PipelineOutput, ResultAggregator, ScoreResult
 from pf.peloton.workflow_driver import PhaseExecution
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

@@ -133,27 +133,6 @@ def send_keys(pane_id: str, keys: str) -> dict:
     return _run_tmux("send-keys", "-t", pane_id, keys, "Enter")
 
 
-def capture_pane(pane_id: str, history: int = 0) -> dict:
-    """Capture the visible content of a pane.
-
-    Args:
-        pane_id: Target pane (e.g. %257).
-        history: Number of scrollback lines to include (0 = visible only).
-
-    Returns:
-        {success: True, data: "captured text..."} or {success: False, error: ...}
-    """
-    args = ["capture-pane", "-t", pane_id, "-p"]
-    if history > 0:
-        args.extend(["-S", f"-{history}"])
-    return _run_tmux(*args)
-
-
-def kill_pane(pane_id: str) -> dict:
-    """Kill a pane."""
-    return _run_tmux("kill-pane", "-t", pane_id)
-
-
 def capture_pane(pane_id: str, lines: int = 100) -> dict:
     """Capture visible content from a pane.
 
@@ -169,6 +148,11 @@ def capture_pane(pane_id: str, lines: int = 100) -> dict:
         "capture-pane", "-t", pane_id, "-p",
         "-S", str(-lines),
     )
+
+
+def kill_pane(pane_id: str) -> dict:
+    """Kill a pane."""
+    return _run_tmux("kill-pane", "-t", pane_id)
 
 
 _PANE_ICONS = {

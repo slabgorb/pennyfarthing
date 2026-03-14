@@ -27,7 +27,6 @@ from pf.peloton.live import (
     switch_to,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -163,7 +162,7 @@ class TestSpawnPanes:
         result = spawn_panes(project_root, "148-9", "tdd")
         assert result["success"] is True
         state = load_state(project_root)
-        for role, pane_info in state["panes"].items():
+        for _role, pane_info in state["panes"].items():
             # Title should be recorded and contain peloton + role
             assert "pane_id" in pane_info
 
@@ -172,7 +171,7 @@ class TestSpawnPanes:
         result = spawn_panes(project_root, "148-9", "tdd")
         assert result["success"] is True
         state = load_state(project_root)
-        for role, pane_info in state["panes"].items():
+        for _role, pane_info in state["panes"].items():
             assert pane_info.get("agent_started") is False
 
 

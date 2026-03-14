@@ -16,8 +16,8 @@ from textual.timer import Timer
 from textual.widget import Widget
 from textual.widgets import Collapsible, Input, Label, Select, Static, Switch
 
-from pf.tui.settings_meta import SettingSpec, build_setting_specs
 from pf.settings.settings import set_setting, set_setting_typed
+from pf.tui.settings_meta import SettingSpec, build_setting_specs
 
 
 def _key_to_id(key: str) -> str:

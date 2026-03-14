@@ -111,7 +111,6 @@ _SUGAR_SHORTCUTS: dict[str, tuple[str, str, str]] = {
     "backlog": ("pf.sprint.cli", "sprint", "backlog"),
     "work": ("pf.sprint.cli", "sprint", "work"),
     "story": ("pf.sprint.cli", "sprint", "story"),
-    "gui": ("pf.launch.cli", "launch", "gui"),
     "tui": ("pf.launch.cli", "launch", "tui"),
 }
 

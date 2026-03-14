@@ -10,15 +10,12 @@ are properly populated.
 
 from __future__ import annotations
 
-import pytest
-
 from pf.tui.repos_meta import (
     GLOBAL_REPO_FIELDS,
     REPO_FIELDS_META,
     RepoFieldSpec,
     build_repo_field_specs,
 )
-
 
 # ---------------------------------------------------------------------------
 # AC-2: RepoFieldSpec dataclass structure

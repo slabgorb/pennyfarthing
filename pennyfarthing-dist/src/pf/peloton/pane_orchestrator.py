@@ -115,7 +115,8 @@ class PaneOrchestrator:
         """
         if self._use_tmux:
             try:
-                from pf.tmux.panes import is_pane_idle as _tmux_idle, list_live_panes
+                from pf.tmux.panes import is_pane_idle as _tmux_idle
+                from pf.tmux.panes import list_live_panes
 
                 live_result = list_live_panes(self.session_name)
                 if not live_result["success"]:
@@ -222,7 +223,7 @@ class PaneOrchestrator:
         """
         if self._use_tmux and (self.project_root / ".pennyfarthing" / "config.local.yaml").exists():
             try:
-                from pf.tmux.panes import get_session_name, split_pane
+                from pf.tmux.panes import split_pane
                 from pf.tmux.registry import find_split_target, load_registry
 
                 reg_result = load_registry(self.project_root, self.session_name)

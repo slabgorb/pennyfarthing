@@ -24,8 +24,6 @@ from pf.tmux.panes import (
     get_pane_icon,
     set_pane_env,
 )
-from pf.tmux.registry import _classify_pane
-
 
 # ---------------------------------------------------------------------------
 # AC1: get_pane_icon returns a distinctive icon for each role

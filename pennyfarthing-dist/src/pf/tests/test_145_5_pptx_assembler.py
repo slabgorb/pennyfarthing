@@ -19,8 +19,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from pf.demo.models import (
     ArtifactType,
     ClassifiedStory,
@@ -28,7 +26,6 @@ from pf.demo.models import (
     SignalBundle,
     StoryType,
 )
-
 
 # ---------------------------------------------------------------------------
 # Test fixtures
@@ -329,8 +326,9 @@ class TestOutputDirectory:
 
     def test_default_output_dir_pattern(self, tmp_path: Path) -> None:
         """Without output_dir override, assembler uses sprint/demos/<story-id>/."""
-        from pf.demo.assembler import assemble
         from unittest.mock import patch
+
+        from pf.demo.assembler import assemble
 
         gc = _make_generated_content(story_id="99-2")
         cs = _make_classified_story(story_id="99-2")
@@ -387,8 +385,9 @@ class TestGracefulDegradation:
 
     def test_succeeds_without_mmdc(self, tmp_path: Path) -> None:
         """Assembly succeeds even when mmdc is not on PATH."""
-        from pf.demo.assembler import assemble
         from unittest.mock import patch
+
+        from pf.demo.assembler import assemble
 
         gc = _make_generated_content(diagram_source="graph TD\n  X-->Y")
         cs = _make_classified_story()
@@ -405,8 +404,9 @@ class TestGracefulDegradation:
 
     def test_diagram_png_created_when_mmdc_available(self, tmp_path: Path) -> None:
         """When mmdc is available, diagram.png should be rendered."""
-        from pf.demo.assembler import assemble
         from unittest.mock import patch
+
+        from pf.demo.assembler import assemble
 
         gc = _make_generated_content(diagram_source="graph LR\n  A-->B")
         cs = _make_classified_story()
@@ -573,8 +573,9 @@ class TestPptxValidity:
 
     def test_all_story_types_produce_valid_pptx(self, tmp_path: Path) -> None:
         """Every StoryType should produce a valid PPTX."""
-        from pf.demo.assembler import assemble
         from pptx import Presentation
+
+        from pf.demo.assembler import assemble
 
         for stype in StoryType:
             out = tmp_path / stype.value
@@ -630,8 +631,9 @@ class TestEdgeCases:
 
     def test_deterministic_output(self, tmp_path: Path) -> None:
         """Same input should produce same slide structure."""
-        from pf.demo.assembler import assemble
         from pptx import Presentation
+
+        from pf.demo.assembler import assemble
 
         gc = _make_generated_content()
         cs = _make_classified_story()

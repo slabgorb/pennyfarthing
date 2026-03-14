@@ -21,14 +21,13 @@ input, toolParameters (see audit_log_panel.py:385-406).
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 from starlette.testclient import TestClient
 
 from pf.frame.app import create_app
-from pf.frame.otlp import OTLPReceiver, parse_otlp_logs, parse_otlp_traces
-
+from pf.frame.otlp import OTLPReceiver, parse_otlp_traces
 
 # ---------------------------------------------------------------------------
 # Helpers: OTLP payload builders
@@ -402,7 +401,6 @@ class TestOTLPEndpointBroadcast:
         from pf.frame import app as app_module
 
         broadcast_calls: list[tuple[str, dict]] = []
-        original_broadcast = app_module.broadcast
 
         async def mock_broadcast(channel: str, data: dict) -> None:
             broadcast_calls.append((channel, data))

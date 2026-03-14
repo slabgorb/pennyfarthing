@@ -12,7 +12,6 @@ These tests verify:
 7. Version is aligned with Pennyfarthing framework version
 """
 
-import json
 import subprocess
 import sys
 import zipfile

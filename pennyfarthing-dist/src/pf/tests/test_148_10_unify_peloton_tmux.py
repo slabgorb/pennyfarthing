@@ -15,21 +15,19 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from pf.peloton.live import (
-    spawn_panes,
     load_state,
+    spawn_panes,
 )
 from pf.peloton.pane_orchestrator import PaneOrchestrator
 from pf.tmux.registry import (
-    load_registry,
     registry_path,
     resolve_pane_ref,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

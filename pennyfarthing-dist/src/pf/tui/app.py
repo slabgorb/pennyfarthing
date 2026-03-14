@@ -30,6 +30,7 @@ from pf.tui import layout_order as _layout_order
 from pf.tui.audit_log_panel import AuditLogPanel
 from pf.tui.base_panel import get_panel_icon
 from pf.tui.benchmark_panel import BenchmarkPanel
+from pf.tui.client import ConnectionState, FrameClient
 from pf.tui.context_meter_footer import StatusFooter
 from pf.tui.debug_panel import DebugPanel
 from pf.tui.diffs_panel import DiffsPanel
@@ -38,7 +39,6 @@ from pf.tui.progress_panel import ProgressPanel
 from pf.tui.repos_panel import ReposPanel
 from pf.tui.settings_panel import SettingsPanel
 from pf.tui.sprint_panel import SprintPanel
-from pf.tui.client import ConnectionState, FrameClient
 
 STATE_DISPLAY: dict[ConnectionState, str] = {
     ConnectionState.CONNECTED: "[green]● Connected[/green]",

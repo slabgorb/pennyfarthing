@@ -18,11 +18,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from pf.common.config import get_project_root
 from pf.tmux import panes as _panes
 from pf.tmux.registry import registry_path, save_registry
-from pf.workflow.helpers import find_workflow_file, load_workflow_data, get_all_workflows_dirs
-from pf.common.config import get_project_root
-
+from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load_workflow_data
 
 _STATE_FILE = "peloton-state.json"
 
@@ -89,7 +88,7 @@ def get_workflow_agents(workflow_name: str, project_root: Path | None = None) ->
             agents = _extract_agents(data)
             if agents is not None:
                 return {"success": True, "data": agents}
-    
+
     # Fallback to system workflows
     try:
         system_root = get_project_root()
@@ -102,20 +101,20 @@ def get_workflow_agents(workflow_name: str, project_root: Path | None = None) ->
                 return {"success": True, "data": agents}
     except Exception:
         pass
-    
+
     return {"success": False, "error": f"Workflow '{workflow_name}' not found"}
 
 
 def _extract_agents(data: dict[str, Any]) -> list[str] | None:
     """Extract unique agent roles from workflow data.
-    
+
     Returns:
         List of agents or None if data is invalid.
     """
     phases = data.get("workflow", {}).get("phases", [])
     if not phases:
         return None
-    
+
     # Extract unique agent roles, preserving first-seen order
     # Exclude SM — SM is the team lead in the main session, not a teammate
     seen: set[str] = set()
@@ -151,7 +150,7 @@ def _register_panes_in_tmux_registry(
     reg["panes"] = [p for p in reg["panes"] if not p.get("title", "").startswith("peloton-")]
 
     # Add new peloton entries
-    for role, info in pane_state.items():
+    for _role, info in pane_state.items():
         reg["panes"].append({
             "pane_id": info["pane_id"],
             "role": "worker",
@@ -364,7 +363,7 @@ def stop(project_root: Path) -> dict[str, Any]:
     state = load_state(project_root)
     killed: list[str] = []
 
-    for role, pane_info in state.get("panes", {}).items():
+    for _role, pane_info in state.get("panes", {}).items():
         pane_id = pane_info.get("pane_id")
         if pane_id:
             try:

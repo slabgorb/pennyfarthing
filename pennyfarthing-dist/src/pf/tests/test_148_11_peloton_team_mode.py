@@ -19,10 +19,8 @@ import pytest
 from pf.peloton.live import (
     activate_next,
     get_workflow_agents,
-    load_state,
     spawn_panes,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

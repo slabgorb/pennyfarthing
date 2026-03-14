@@ -7,13 +7,11 @@ and AC-6 (phase transition coordination via gate resolution).
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pf.peloton.pane_orchestrator import ManagedPane, PaneOrchestrator
 from pf.peloton.workflow_driver import PhaseConfig, PhaseExecution, WorkflowDriver
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

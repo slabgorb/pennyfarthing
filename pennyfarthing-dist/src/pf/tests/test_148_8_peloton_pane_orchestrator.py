@@ -8,12 +8,10 @@ and register them in .pennyfarthing/tmux-panes.json with correct metadata.
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
-from pf.peloton.pane_orchestrator import ManagedPane, PaneOrchestrator, PaneSpec
-
+from pf.peloton.pane_orchestrator import ManagedPane, PaneOrchestrator
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -21,8 +21,6 @@ FRAMEWORK_RECIPES: frozenset[str] = frozenset(
         "claude",
         "tmux-dev",
         "tmux",
-        # Legacy names (still migrated if found in old justfiles)
-        "frame",
     }
 )
 

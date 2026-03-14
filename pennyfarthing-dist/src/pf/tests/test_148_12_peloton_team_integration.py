@@ -24,11 +24,9 @@ from pf.peloton.live import (
     get_status,
     get_workflow_agents,
     load_state,
-    save_state,
     start_session,
     stop,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

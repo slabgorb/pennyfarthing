@@ -9,14 +9,12 @@ RED state: Tests will fail until ReposPanel is fully implemented.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pf.tui.repos_panel import REPOS_CSS, ReposPanel
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -626,8 +624,9 @@ class TestEdgeCases:
 
     def test_single_repo(self, sample_repos_yaml_raw):
         """Single repo should produce exactly one repo collapsible."""
-        from pf.git.repos import _parse_repo_entry
         from textual.widgets import Collapsible
+
+        from pf.git.repos import _parse_repo_entry
 
         single = {"solo": _parse_repo_entry("solo", {"type": "api", "default_branch": "main", "branch_strategy": "trunk-based"})}
         with patch("pf.tui.repos_panel.load_repos_config", return_value=single):
@@ -640,8 +639,8 @@ class TestEdgeCases:
 
     def test_repo_with_empty_optional_fields(self, sample_repos_yaml_raw):
         """Repo with empty strings and empty lists should render without errors."""
+
         from pf.git.repos import _parse_repo_entry
-        from textual.widgets import Collapsible
 
         minimal = {"bare": _parse_repo_entry("bare", {"type": "library", "default_branch": "main", "branch_strategy": "trunk-based"})}
         with patch("pf.tui.repos_panel.load_repos_config", return_value=minimal):

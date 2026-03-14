@@ -17,11 +17,16 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pptx import Presentation
-from pptx.util import Inches, Pt
 
 from pf.common.config import get_project_root
 from pf.demo.models import ClassifiedStory, GeneratedContent
+
+
+def _pptx():
+    """Lazy-load python-pptx. Returns (Presentation, Inches, Pt)."""
+    from pptx import Presentation
+    from pptx.util import Inches, Pt
+    return Presentation, Inches, Pt
 
 
 def _has_mmdc() -> bool:
@@ -39,9 +44,11 @@ def _render_mermaid(mmd_path: str, png_path: str) -> None:
 
 
 def _add_content_slide(
-    prs: Presentation,
+    prs: Any,
     title: str,
     body_text: str,
+    inches: Any,
+    pt: Any,
     *,
     title_size: int = 28,
     body_size: int = 16,
@@ -49,61 +56,63 @@ def _add_content_slide(
     """Add a slide with a title heading and body text."""
     blank = prs.slide_layouts[6]
     slide = prs.slides.add_slide(blank)
-    header = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
+    header = slide.shapes.add_textbox(inches(0.5), inches(0.5), inches(9), inches(1))
     hf = header.text_frame
     hf.word_wrap = True
     hf.paragraphs[0].text = title
-    hf.paragraphs[0].font.size = Pt(title_size)
+    hf.paragraphs[0].font.size = pt(title_size)
     hf.paragraphs[0].font.bold = True
-    body = slide.shapes.add_textbox(Inches(0.5), Inches(1.5), Inches(9), Inches(5))
+    body = slide.shapes.add_textbox(inches(0.5), inches(1.5), inches(9), inches(5))
     bf = body.text_frame
     bf.word_wrap = True
     bf.paragraphs[0].text = body_text
-    bf.paragraphs[0].font.size = Pt(body_size)
+    bf.paragraphs[0].font.size = pt(body_size)
 
 
 def _build_slides(
-    prs: Presentation,
+    prs: Any,
     gc: GeneratedContent,
     cs: ClassifiedStory,
+    inches: Any,
+    pt: Any,
 ) -> None:
     """Add slides to the presentation based on content and story type."""
     blank = prs.slide_layouts[6]
 
     # 1. Title slide (custom layout — two text blocks)
     slide = prs.slides.add_slide(blank)
-    tx = slide.shapes.add_textbox(Inches(1), Inches(2), Inches(8), Inches(2))
+    tx = slide.shapes.add_textbox(inches(1), inches(2), inches(8), inches(2))
     tf = tx.text_frame
     tf.word_wrap = True
     p = tf.paragraphs[0]
     p.text = f"Story {gc.story_id}"
-    p.font.size = Pt(36)
+    p.font.size = pt(36)
     p.font.bold = True
     p2 = tf.add_paragraph()
     p2.text = cs.signals.title if cs.signals else gc.story_id
-    p2.font.size = Pt(20)
+    p2.font.size = pt(20)
 
     # 2–4. Content slides
-    _add_content_slide(prs, "Problem", gc.problem_statement)
-    _add_content_slide(prs, "What We Built", gc.what_changed)
-    _add_content_slide(prs, "Why This Approach", gc.why_this_approach)
+    _add_content_slide(prs, "Problem", gc.problem_statement, inches, pt)
+    _add_content_slide(prs, "What We Built", gc.what_changed, inches, pt)
+    _add_content_slide(prs, "Why This Approach", gc.why_this_approach, inches, pt)
 
     # 5. Before/After slide (conditional)
     if gc.before_after:
-        _add_content_slide(prs, "Before / After", gc.before_after)
+        _add_content_slide(prs, "Before / After", gc.before_after, inches, pt)
 
     # 6. CTA / Questions slide (custom layout — centered)
     slide = prs.slides.add_slide(blank)
-    tx = slide.shapes.add_textbox(Inches(2), Inches(2.5), Inches(6), Inches(2))
+    tx = slide.shapes.add_textbox(inches(2), inches(2.5), inches(6), inches(2))
     tf = tx.text_frame
     tf.word_wrap = True
     p = tf.paragraphs[0]
     p.text = "Questions?"
-    p.font.size = Pt(36)
+    p.font.size = pt(36)
     p.font.bold = True
     p2 = tf.add_paragraph()
     p2.text = "Next steps and call to action"
-    p2.font.size = Pt(18)
+    p2.font.size = pt(18)
 
 
 def assemble(
@@ -122,6 +131,11 @@ def assemble(
         {success: True, data: {output_dir, files}} on success,
         {success: False, error: str} on failure.
     """
+    try:
+        Presentation, Inches, Pt = _pptx()
+    except ImportError:
+        return {"success": False, "error": "python-pptx not installed. Run: pip install python-pptx"}
+
     try:
         gc = generated_content
         cs = classified_story
@@ -143,7 +157,7 @@ def assemble(
 
         # --- Build PPTX ---
         prs = Presentation()
-        _build_slides(prs, gc, cs)
+        _build_slides(prs, gc, cs, Inches, Pt)
         pptx_path = out / "deck.pptx"
         prs.save(str(pptx_path))
         files.append("deck.pptx")
