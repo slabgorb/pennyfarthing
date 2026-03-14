@@ -1,32 +1,194 @@
-"""Peloton CLI — concurrent agent pipeline via tmux panes.
+"""Peloton CLI — persistent agent panes + replay benchmarking.
 
-Two modes:
-  pf peloton start <story-id>     — Live mode: spawn agents in tmux panes,
-                                     pass work between them in real time
-  pf peloton replay <scenario>    — Replay mode: simulate the pipeline against
-                                     a known scenario for benchmarking/scoring
+Live mode (148-9):
+  pf peloton start              — Spawn persistent panes for current story's workflow
+  pf peloton next               — Activate next phase's agent in its pane
+  pf peloton switch <role>      — Jump to any agent's pane
+  pf peloton status             — Show pane states
+  pf peloton stop               — Tear down all peloton panes
+
+Replay mode (148-8):
+  pf peloton replay <scenario>  — Benchmark pipeline against a scenario
 """
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import click
 
 from pf.common.config import get_project_root
-from pf.peloton.pane_orchestrator import PaneOrchestrator
-from pf.peloton.result_aggregator import ResultAggregator
-from pf.peloton.workflow_driver import WorkflowDriver
-from pf.tmux.panes import get_session_name, is_tmux_running
+from pf.tmux.panes import is_tmux_running
 
 
-def _require_tmux() -> tuple[Path, str]:
-    """Validate tmux is running and return (project_root, session_name)."""
+@click.group()
+def peloton():
+    """Peloton mode — persistent agent panes for story work.
+
+    \b
+    Pre-spawns tmux panes for each agent role in the workflow.
+    Panes persist through the full story. User drives advancement.
+
+    \b
+    Commands:
+      start    — Spawn panes for current story
+      next     — Activate next phase's agent
+      switch   — Jump to any agent's pane
+      status   — Show pane states
+      stop     — Tear down panes
+      replay   — Benchmark pipeline (separate from live mode)
+    """
+    pass
+
+
+@peloton.command("start")
+@click.option("--workflow", default=None, help="Workflow override (default: from session)")
+@click.option("--story-id", default=None, help="Story ID override (default: from session)")
+def start(workflow: str | None, story_id: str | None):
+    """Spawn persistent panes for the current story's workflow.
+
+    Reads the active story's workflow to determine which agents are needed,
+    then pre-spawns one tmux pane per role. Panes start as idle shells —
+    agents are launched when you run 'pf peloton next'.
+    """
+    from pf.peloton import live
+
     root = get_project_root()
 
     if not is_tmux_running():
-        click.echo("Error: No tmux server running on pf socket.", err=True)
-        click.echo("Start with: pf frame start", err=True)
+        click.echo("Error: No tmux server running. Start with: pf frame start", err=True)
+        raise SystemExit(1)
+
+    # Determine workflow and story from session if not provided
+    wf_name = workflow or _detect_workflow(root)
+    sid = story_id or _detect_story_id(root)
+
+    if not wf_name:
+        click.echo("Error: No workflow found. Provide --workflow or start a story first.", err=True)
+        raise SystemExit(1)
+    if not sid:
+        click.echo("Error: No story ID found. Provide --story-id or start a story first.", err=True)
+        raise SystemExit(1)
+
+    result = live.spawn_panes(root, sid, wf_name)
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        raise SystemExit(1)
+
+    click.echo(f"Peloton: spawned {len(result['data'])} panes for story {sid} ({wf_name})")
+    for role, pane_id in result["data"].items():
+        click.echo(f"  {pane_id} → peloton-{role}")
+    click.echo("\nRun 'pf peloton next' to activate the first agent.")
+
+
+@peloton.command("next")
+def next_phase():
+    """Activate the next workflow phase's agent in its pane.
+
+    Launches claude with the agent prompt in the appropriate pane.
+    """
+    from pf.peloton import live
+
+    root = get_project_root()
+    result = live.activate_next(root)
+
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        raise SystemExit(1)
+
+    data = result["data"]
+    click.echo(f"Activated {data['role']} in pane {data['pane_id']}")
+
+
+@peloton.command("switch")
+@click.argument("role")
+def switch(role: str):
+    """Switch to a specific agent's pane.
+
+    ROLE is the agent name (tea, dev, reviewer, architect, sm).
+    """
+    from pf.peloton import live
+
+    root = get_project_root()
+    result = live.switch_to(root, role)
+
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        raise SystemExit(1)
+
+    click.echo(f"Switched to {result['data']['role']} ({result['data']['pane_id']})")
+
+
+@peloton.command("status")
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+def status(as_json: bool):
+    """Show current peloton pane state."""
+    from pf.peloton import live
+
+    root = get_project_root()
+    result = live.get_status(root)
+
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        raise SystemExit(1)
+
+    data = result["data"]
+
+    if as_json:
+        click.echo(json.dumps(data, indent=2))
+        return
+
+    if not data["story_id"]:
+        click.echo("No peloton session active.")
+        return
+
+    click.echo(f"Story: {data['story_id']}  Workflow: {data['workflow']}  Active: {data['active_role'] or 'none'}")
+    click.echo(f"{'Role':<12} {'Pane':<8} {'Agent Started'}")
+    click.echo("-" * 35)
+    for role, info in data.get("panes", {}).items():
+        started = "yes" if info.get("agent_started") else "no"
+        active = " ←" if role == data.get("active_role") else ""
+        click.echo(f"{role:<12} {info['pane_id']:<8} {started}{active}")
+
+
+@peloton.command("stop")
+def stop_cmd():
+    """Tear down all peloton panes and clear state."""
+    from pf.peloton import live
+
+    root = get_project_root()
+    result = live.stop(root)
+
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        raise SystemExit(1)
+
+    killed = result["data"].get("killed", [])
+    if killed:
+        click.echo(f"Stopped peloton: killed {len(killed)} panes")
+    else:
+        click.echo("No peloton panes to stop.")
+
+
+@peloton.command("replay")
+@click.argument("scenario_path", type=click.Path(exists=True))
+@click.option("--theme", default=None, help="Theme override for agent personas")
+@click.option("--model", default=None, help="Model override for agents")
+def replay(scenario_path: str, theme: str | None, model: str | None):
+    """Run a benchmark pipeline replay against a scenario YAML.
+
+    This is the replay/benchmarking mode (148-8), separate from live mode.
+    """
+    from pf.peloton.pane_orchestrator import PaneOrchestrator
+    from pf.peloton.result_aggregator import ResultAggregator
+    from pf.peloton.workflow_driver import WorkflowDriver
+    from pf.tmux.panes import get_session_name
+
+    root = get_project_root()
+
+    if not is_tmux_running():
+        click.echo("Error: No tmux server running.", err=True)
         raise SystemExit(1)
 
     session_result = get_session_name()
@@ -34,83 +196,34 @@ def _require_tmux() -> tuple[Path, str]:
         click.echo(f"Error: {session_result['error']}", err=True)
         raise SystemExit(1)
 
-    return root, session_result["data"]
-
-
-@click.group()
-def peloton():
-    """Peloton mode — concurrent agent team pipeline via tmux panes.
-
-    \b
-    Agents run simultaneously in separate tmux panes. When one agent
-    completes its phase, work is passed to the next pane automatically.
-
-    \b
-    Modes:
-      start   — Live: spawn real agents, pass real work between panes
-      replay  — Benchmark: simulate the pipeline against a scenario
-    """
-    pass
-
-
-@peloton.command("start")
-@click.argument("scenario_path", type=click.Path(exists=True))
-@click.option("--theme", default=None, help="Theme override for agent personas")
-@click.option("--model", default=None, help="Model override for agents")
-def start(scenario_path: str, theme: str | None, model: str | None):
-    """Start a peloton run — agents in concurrent tmux panes.
-
-    Spawns dedicated tmux panes for each agent role (TEA, Dev, Reviewer).
-    Each agent runs in its own pane. When a phase completes, output is
-    captured and passed to the next agent's pane as context.
-
-    \b
-    Live mode: pass a story session file or scenario YAML.
-    Replay mode: pass a benchmark scenario YAML with ground truth.
-    """
-    root, session_name = _require_tmux()
-    scenario = Path(scenario_path)
-
-    # Create orchestrator
     orchestrator = PaneOrchestrator(
         project_root=root,
-        session_name=session_name,
-        story_id="peloton",
+        session_name=session_result["data"],
+        story_id="peloton-replay",
     )
 
-    # Create workflow driver
     driver = WorkflowDriver(
         orchestrator=orchestrator,
         session_file=root / ".session" / "peloton-session.md",
     )
 
-    # Load scenario
-    load_result = driver.load_scenario(scenario)
+    load_result = driver.load_scenario(Path(scenario_path))
     if not load_result["success"]:
         click.echo(f"Error: {load_result['error']}", err=True)
         raise SystemExit(1)
 
     phase_names = load_result["data"]["phases"]
-    click.echo(f"Peloton: spawning {len(phase_names)} concurrent agent panes")
-
-    # Spawn all panes up front — agents exist simultaneously
     spawn_result = orchestrator.spawn_agent_panes(phase_names, theme=theme, model=model)
     if not spawn_result["success"]:
-        click.echo(f"Error spawning panes: {spawn_result['error']}", err=True)
+        click.echo(f"Error: {spawn_result['error']}", err=True)
         raise SystemExit(1)
 
-    for role, pane in spawn_result["data"].items():
-        click.echo(f"  {pane.pane_id} → {role} ({pane.title})")
-
-    # Drive phases — each agent runs in its pane, output flows to next
-    click.echo("Driving workflow through panes...")
     run_result = driver.run_all()
     if not run_result["success"]:
         click.echo(f"Error: {run_result['error']}", err=True)
         orchestrator.teardown()
         raise SystemExit(1)
 
-    # Aggregate results
     aggregator = ResultAggregator(
         output_base_dir=root / "internal" / "results" / "pipeline-replay",
         scenario_id=load_result["data"].get("story_id", "unknown"),
@@ -120,6 +233,30 @@ def start(scenario_path: str, theme: str | None, model: str | None):
         aggregator.write_pipeline_yaml(agg_result["data"])
         click.echo(f"Results: {agg_result['data'].output_dir}")
 
-    # Teardown agent panes (protected panes survive)
     orchestrator.teardown()
-    click.echo("Peloton run complete.")
+    click.echo("Replay complete.")
+
+
+def _detect_workflow(root: Path) -> str | None:
+    """Detect workflow from active session file."""
+    session_dir = root / ".session"
+    if not session_dir.exists():
+        return None
+    for f in session_dir.glob("*-session.md"):
+        text = f.read_text()
+        for line in text.splitlines():
+            if line.startswith("**Workflow:**"):
+                return line.split(":**", 1)[1].strip()
+    return None
+
+
+def _detect_story_id(root: Path) -> str | None:
+    """Detect story ID from active session file."""
+    session_dir = root / ".session"
+    if not session_dir.exists():
+        return None
+    for f in session_dir.glob("*-session.md"):
+        name = f.stem.replace("-session", "")
+        if name:
+            return name
+    return None

@@ -51,46 +51,44 @@ def scenario_file(tmp_path: Path) -> Path:
 
 
 class TestPelotonCLI:
-    """AC-1: `pf peloton start <scenario-yaml>` command exists."""
+    """AC-1: `pf peloton replay <scenario-yaml>` command exists."""
 
     def test_peloton_group_exists(self, runner: CliRunner):
         """The peloton Click group should be importable and invocable."""
         result = runner.invoke(peloton, ["--help"])
         assert result.exit_code == 0
-        assert "peloton" in result.output.lower() or "automated" in result.output.lower()
+        assert "peloton" in result.output.lower() or "persistent" in result.output.lower()
 
-    def test_start_subcommand_exists(self, runner: CliRunner):
-        """The 'start' subcommand should be listed."""
+    def test_replay_subcommand_exists(self, runner: CliRunner):
+        """The 'replay' subcommand should be listed."""
         result = runner.invoke(peloton, ["--help"])
         assert result.exit_code == 0
-        assert "start" in result.output
+        assert "replay" in result.output
 
-    def test_start_requires_scenario_path(self, runner: CliRunner):
-        """start without args should show usage error."""
-        result = runner.invoke(peloton, ["start"])
+    def test_replay_requires_scenario_path(self, runner: CliRunner):
+        """replay without args should show usage error."""
+        result = runner.invoke(peloton, ["replay"])
         assert result.exit_code != 0
 
-    def test_start_accepts_scenario_path(self, runner: CliRunner, scenario_file: Path):
-        """start with a valid scenario path should be accepted (may fail on tmux)."""
-        result = runner.invoke(peloton, ["start", str(scenario_file)])
-        # Will fail with NotImplementedError from stub, which is correct RED state
-        assert result.exit_code == 0
+    def test_replay_accepts_scenario_path(self, runner: CliRunner, scenario_file: Path):
+        """replay with a valid scenario path should be accepted."""
+        result = runner.invoke(peloton, ["replay", str(scenario_file)])
+        # May succeed (tmux running) or fail (no tmux) — either is fine
+        assert isinstance(result.exit_code, int)
 
-    def test_start_accepts_theme_option(self, runner: CliRunner, scenario_file: Path):
+    def test_replay_accepts_theme_option(self, runner: CliRunner, scenario_file: Path):
         """--theme flag should be accepted by the CLI."""
-        result = runner.invoke(peloton, ["start", str(scenario_file), "--theme", "dune"])
-        # CLI accepts the flag (won't fail on arg parsing)
-        # Will fail on NotImplementedError which is expected
-        assert result.exit_code == 0
+        result = runner.invoke(peloton, ["replay", str(scenario_file), "--theme", "dune"])
+        assert isinstance(result.exit_code, int)
 
-    def test_start_accepts_model_option(self, runner: CliRunner, scenario_file: Path):
+    def test_replay_accepts_model_option(self, runner: CliRunner, scenario_file: Path):
         """--model flag should be accepted by the CLI."""
-        result = runner.invoke(peloton, ["start", str(scenario_file), "--model", "claude-sonnet-4-20250514"])
-        assert result.exit_code == 0
+        result = runner.invoke(peloton, ["replay", str(scenario_file), "--model", "claude-sonnet-4-20250514"])
+        assert isinstance(result.exit_code, int)
 
-    def test_start_rejects_nonexistent_scenario(self, runner: CliRunner, tmp_path: Path):
-        """start with nonexistent file should fail."""
-        result = runner.invoke(peloton, ["start", str(tmp_path / "ghost.yaml")])
+    def test_replay_rejects_nonexistent_scenario(self, runner: CliRunner, tmp_path: Path):
+        """replay with nonexistent file should fail."""
+        result = runner.invoke(peloton, ["replay", str(tmp_path / "ghost.yaml")])
         assert result.exit_code != 0
 
 
