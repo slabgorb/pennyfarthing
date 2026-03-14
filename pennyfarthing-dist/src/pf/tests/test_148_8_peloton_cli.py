@@ -74,19 +74,19 @@ class TestPelotonCLI:
         """start with a valid scenario path should be accepted (may fail on tmux)."""
         result = runner.invoke(peloton, ["start", str(scenario_file)])
         # Will fail with NotImplementedError from stub, which is correct RED state
-        assert result.exit_code != 0 or result.exception is not None
+        assert result.exit_code == 0
 
     def test_start_accepts_theme_option(self, runner: CliRunner, scenario_file: Path):
         """--theme flag should be accepted by the CLI."""
         result = runner.invoke(peloton, ["start", str(scenario_file), "--theme", "dune"])
         # CLI accepts the flag (won't fail on arg parsing)
         # Will fail on NotImplementedError which is expected
-        assert result.exit_code != 0 or result.exception is not None
+        assert result.exit_code == 0
 
     def test_start_accepts_model_option(self, runner: CliRunner, scenario_file: Path):
         """--model flag should be accepted by the CLI."""
         result = runner.invoke(peloton, ["start", str(scenario_file), "--model", "claude-sonnet-4-20250514"])
-        assert result.exit_code != 0 or result.exception is not None
+        assert result.exit_code == 0
 
     def test_start_rejects_nonexistent_scenario(self, runner: CliRunner, tmp_path: Path):
         """start with nonexistent file should fail."""
