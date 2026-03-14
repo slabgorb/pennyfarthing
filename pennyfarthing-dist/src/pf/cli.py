@@ -111,6 +111,7 @@ _SUGAR_SHORTCUTS: dict[str, tuple[str, str, str]] = {
     "backlog": ("pf.sprint.cli", "sprint", "backlog"),
     "work": ("pf.sprint.cli", "sprint", "work"),
     "story": ("pf.sprint.cli", "sprint", "story"),
+    "gui": ("pf.launch.cli", "launch", "frame"),
     "tui": ("pf.launch.cli", "launch", "tui"),
 }
 
@@ -177,7 +178,7 @@ def cli():
       backlog  - Show available stories (= sprint backlog)
       work     - Start work on a story (= sprint work)
       story    - Story operations (= sprint story)
-      gui      - Open Frame TUI dashboard (= launch gui)
+      gui      - Start Frame server (= launch frame)
       tui      - Launch terminal UI (= launch tui)
     """
     pass

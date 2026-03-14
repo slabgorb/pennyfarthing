@@ -35,11 +35,11 @@ frame:
         rm -f "$pid_file" "$port_file"
     fi
 
-    just pf launch gui --no-open
+    just pf launch frame
 
-# Open dashboard in browser (starts Frame if needed)
+# Start Frame server and open dashboard
 dashboard:
-    just pf launch gui
+    just pf launch frame
 
 # Launch TUI panel viewer (starts Frame if needed)
 tui:

@@ -43,13 +43,13 @@ def mock_dist(tmp_path: Path) -> Path:
         'root := justfile_directory() / ".."\n'
         "\n"
         "frame *args:\n"
-        "    pf launch gui --no-open\n"
+        "    pf launch frame\n"
         "\n"
         "tui:\n"
         "    pf launch tui --foreground\n"
         "\n"
-        "gui:\n"
-        "    pf launch gui\n"
+        "dashboard:\n"
+        "    pf launch frame\n"
         "\n"
         "claude:\n"
         "    exec claude\n"
@@ -238,7 +238,7 @@ class TestLegacyMigration:
             "\n"
             "# Start Frame\n"
             "frame *args:\n"
-            "    pf launch gui --no-open\n"
+            "    pf launch frame\n"
             "\n"
             "# My custom recipe\n"
             "test-all:\n"
@@ -260,7 +260,7 @@ class TestLegacyMigration:
             "\n"
             "# Start Frame\n"
             "frame *args:\n"
-            "    pf launch gui --no-open\n"
+            "    pf launch frame\n"
             "\n"
             "test-all:\n"
             "    pytest\n"
@@ -285,7 +285,7 @@ class TestLegacyMigration:
             "    @just --list\n"
             "\n"
             "frame *args:\n"
-            "    pf launch gui\n"
+            "    pf launch frame\n"
             "\n"
             "test-all:\n"
             "    pytest\n"
@@ -309,7 +309,7 @@ class TestLegacyMigration:
             "    @just --list\n"
             "\n"
             "frame *args:\n"
-            "    pf launch gui\n"
+            "    pf launch frame\n"
             "\n"
             "tui:\n"
             "    pf launch tui\n"
@@ -339,10 +339,10 @@ class TestLegacyMigration:
             "    @just --list\n"
             "\n"
             "frame *args:\n"
-            "    pf launch gui\n"
+            "    pf launch frame\n"
             "\n"
             "gui:\n"
-            "    pf launch gui\n"
+            "    pf launch frame\n"
         )
 
         result = update_framework_justfile(target_dir, mock_dist)
@@ -402,7 +402,7 @@ class TestIdempotency:
             "    @just --list\n"
             "\n"
             "frame *args:\n"
-            "    pf launch gui\n"
+            "    pf launch frame\n"
         )
 
         update_framework_justfile(target_dir, mock_dist)
@@ -468,7 +468,7 @@ class TestDryRun:
             "    @just --list\n"
             "\n"
             "frame *args:\n"
-            "    pf launch gui\n"
+            "    pf launch frame\n"
         )
 
         result = update_framework_justfile(target_dir, mock_dist, dry_run=True)
