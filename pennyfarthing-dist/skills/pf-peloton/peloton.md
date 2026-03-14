@@ -1,32 +1,47 @@
 ---
 name: peloton
 description: |
-  Automated team pipeline via tmux panes. Run a full TDD workflow (TEA → Dev → Reviewer)
-  against a peloton scenario, aggregate results, and score against ground truth.
-  Use when running benchmark pipeline replays or automated team assessments.
+  Concurrent agent team pipeline via tmux panes. Agents (TEA, Dev, Reviewer) run
+  simultaneously in separate tmux panes, with work passing between them in real time.
+  Peloton replay simulates this flow against a known scenario for benchmarking and scoring.
 args: "start <scenario.yaml> [--theme NAME] [--model MODEL]"
 ---
 
-# /peloton - Automated Team Pipeline
+# /peloton - Concurrent Agent Pipeline
 
-Run a full TDD agent pipeline in tmux panes with scoring against ground truth.
+Run a full agent team in parallel tmux panes with automated work handoff.
+
+## Concept
+
+**Peloton** = the cycling term for the main group riding together. In Pennyfarthing,
+it means agents running concurrently in separate tmux panes:
+
+- **TEA** pane — writes failing tests (RED phase)
+- **Dev** pane — implements to make tests pass (GREEN phase)
+- **Reviewer** pane — evaluates code quality and spec compliance
+
+All panes exist simultaneously. When one agent completes its phase, its output
+is captured and injected into the next agent's pane as context. The pipeline
+flows through the panes like riders in a peloton drafting off each other.
+
+## Two Modes
+
+### Live Mode
+Spawn real agents against real work. Agents run the full TDD workflow with
+gate resolution and phase markers, producing real commits and assessments.
+
+### Replay Mode
+Simulate the pipeline against a benchmark scenario with known ground truth.
+Score the pipeline's ability to catch findings. Used for measuring agent
+effectiveness across themes, models, and prompt configurations.
 
 ## Quick Reference
 
-| Command | CLI | Purpose |
-|---------|-----|---------|
-| `/peloton start <file>` | `pf peloton start <scenario.yaml>` | Run full pipeline from scenario |
-| `/peloton start <file> --theme dune` | `pf peloton start <file> --theme dune` | Override agent theme |
-| `/peloton start <file> --model <m>` | `pf peloton start <file> --model <m>` | Override agent model |
-
-## What It Does
-
-1. **Loads scenario** — reads peloton scenario YAML (phases, ground truth, context)
-2. **Spawns panes** — creates dedicated tmux panes for TEA, Dev, and Reviewer
-3. **Drives workflow** — injects agent prompts, waits for completion, captures output
-4. **Resolves gates** — validates phase transitions via BikeLane gate resolution
-5. **Aggregates results** — collects findings into `pipeline.yaml`
-6. **Scores** — compares against ground truth, produces `score.yaml` with precision/recall
+| Command | Purpose |
+|---------|---------|
+| `pf peloton start <scenario.yaml>` | Run pipeline from scenario |
+| `pf peloton start <file> --theme dune` | Override agent theme |
+| `pf peloton start <file> --model <m>` | Override agent model |
 
 ## Scenario YAML Format
 
@@ -42,7 +57,7 @@ phases:
   - tea
   - dev
   - reviewer
-ground_truth:
+ground_truth:        # For replay scoring
   - id: F1
     title: Missing null check
     severity: medium
@@ -57,16 +72,16 @@ ground_truth:
 ```
 internal/results/pipeline-replay/<scenario-id>/run-N/
 ├── pipeline.yaml    # Aggregated phase outputs
-└── score.yaml       # Precision/recall metrics
+└── score.yaml       # Precision/recall metrics (replay mode)
 ```
 
 ## Prerequisites
 
 - tmux server running on `pf` socket (`pf frame start`)
-- Valid scenario YAML file
+- Scenario YAML file
 
 ## Related
 
 - `/tmux` — pane management
 - `guides/peloton.md` — peloton benchmark methodology
-- `pf benchmark replay` — existing benchmark CLI
+- `pf benchmark replay` — lower-level benchmark harness

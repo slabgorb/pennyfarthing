@@ -1,6 +1,10 @@
-"""Peloton CLI — `pf peloton start <scenario.yaml>`.
+"""Peloton CLI — concurrent agent pipeline via tmux panes.
 
-Launches the automated team pipeline via tmux panes.
+Two modes:
+  pf peloton start <story-id>     — Live mode: spawn agents in tmux panes,
+                                     pass work between them in real time
+  pf peloton replay <scenario>    — Replay mode: simulate the pipeline against
+                                     a known scenario for benchmarking/scoring
 """
 
 from __future__ import annotations
@@ -16,22 +20,8 @@ from pf.peloton.workflow_driver import WorkflowDriver
 from pf.tmux.panes import get_session_name, is_tmux_running
 
 
-@click.group()
-def peloton():
-    """Peloton mode — automated team pipeline via tmux panes."""
-    pass
-
-
-@peloton.command("start")
-@click.argument("scenario_path", type=click.Path(exists=True))
-@click.option("--theme", default=None, help="Theme override for agent personas")
-@click.option("--model", default=None, help="Model override for agents")
-def start(scenario_path: str, theme: str | None, model: str | None):
-    """Start a peloton run from a scenario YAML file.
-
-    Spawns agent panes (TEA, Dev, Reviewer), drives the TDD workflow,
-    aggregates results, and scores against ground truth.
-    """
+def _require_tmux() -> tuple[Path, str]:
+    """Validate tmux is running and return (project_root, session_name)."""
     root = get_project_root()
 
     if not is_tmux_running():
@@ -44,7 +34,41 @@ def start(scenario_path: str, theme: str | None, model: str | None):
         click.echo(f"Error: {session_result['error']}", err=True)
         raise SystemExit(1)
 
-    session_name = session_result["data"]
+    return root, session_result["data"]
+
+
+@click.group()
+def peloton():
+    """Peloton mode — concurrent agent team pipeline via tmux panes.
+
+    \b
+    Agents run simultaneously in separate tmux panes. When one agent
+    completes its phase, work is passed to the next pane automatically.
+
+    \b
+    Modes:
+      start   — Live: spawn real agents, pass real work between panes
+      replay  — Benchmark: simulate the pipeline against a scenario
+    """
+    pass
+
+
+@peloton.command("start")
+@click.argument("scenario_path", type=click.Path(exists=True))
+@click.option("--theme", default=None, help="Theme override for agent personas")
+@click.option("--model", default=None, help="Model override for agents")
+def start(scenario_path: str, theme: str | None, model: str | None):
+    """Start a peloton run — agents in concurrent tmux panes.
+
+    Spawns dedicated tmux panes for each agent role (TEA, Dev, Reviewer).
+    Each agent runs in its own pane. When a phase completes, output is
+    captured and passed to the next agent's pane as context.
+
+    \b
+    Live mode: pass a story session file or scenario YAML.
+    Replay mode: pass a benchmark scenario YAML with ground truth.
+    """
+    root, session_name = _require_tmux()
     scenario = Path(scenario_path)
 
     # Create orchestrator
@@ -67,17 +91,19 @@ def start(scenario_path: str, theme: str | None, model: str | None):
         raise SystemExit(1)
 
     phase_names = load_result["data"]["phases"]
-    click.echo(f"Loaded scenario with phases: {', '.join(phase_names)}")
+    click.echo(f"Peloton: spawning {len(phase_names)} concurrent agent panes")
 
-    # Spawn panes
+    # Spawn all panes up front — agents exist simultaneously
     spawn_result = orchestrator.spawn_agent_panes(phase_names, theme=theme, model=model)
     if not spawn_result["success"]:
         click.echo(f"Error spawning panes: {spawn_result['error']}", err=True)
         raise SystemExit(1)
 
-    click.echo(f"Spawned {len(spawn_result['data'])} agent panes")
+    for role, pane in spawn_result["data"].items():
+        click.echo(f"  {pane.pane_id} → {role} ({pane.title})")
 
-    # Run all phases
+    # Drive phases — each agent runs in its pane, output flows to next
+    click.echo("Driving workflow through panes...")
     run_result = driver.run_all()
     if not run_result["success"]:
         click.echo(f"Error: {run_result['error']}", err=True)
@@ -92,8 +118,8 @@ def start(scenario_path: str, theme: str | None, model: str | None):
     agg_result = aggregator.aggregate(run_result["data"])
     if agg_result["success"]:
         aggregator.write_pipeline_yaml(agg_result["data"])
-        click.echo(f"Results written to {agg_result['data'].output_dir}")
+        click.echo(f"Results: {agg_result['data'].output_dir}")
 
-    # Teardown
+    # Teardown agent panes (protected panes survive)
     orchestrator.teardown()
     click.echo("Peloton run complete.")
