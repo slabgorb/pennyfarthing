@@ -98,6 +98,7 @@ _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
     "gate": ("pf.gates.cli", "gate"),
     "saddle": ("pf.saddle.cli", "saddle"),
     "demo": ("pf.demo.cli", "demo"),
+    "peloton": ("pf.peloton.cli", "peloton"),
 }
 
 
