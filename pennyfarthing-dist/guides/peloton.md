@@ -4,18 +4,83 @@ Peloton has two modes: **live mode** for real story work and **replay mode** for
 
 ## Live Mode
 
-Live mode runs workflow agents as teammates within the current Claude Code session. SM acts as team lead, advancing agents one at a time via `pf peloton next`.
+Live mode uses **Claude Code native agent teams** to run a story through the full pipeline. SM is the team lead. Each agent (Architect, TEA, Dev, Reviewer) is a persistent teammate with its own tmux pane. SM orchestrates the flow — dispatching work, reading results, routing back to agents as needed.
 
-No tmux panes are spawned — agents run via `TeamCreate`.
+### Prerequisites
+
+Enable agent teams (one-time setup):
+```json
+// .claude/settings.json or .pennyfarthing/config.local.yaml
+{
+  "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" },
+  "teammateMode": "tmux"
+}
+```
+
+### Cold Start → Peloton (step by step)
+
+**1. Start the environment** (from a regular terminal):
+```bash
+just start
+```
+Launches tmux with Claude Code + TUI + Frame server. You land in the Claude Code pane — this becomes the **MAIN** pane where SM runs.
+
+**2. Activate SM and pick a story:**
+```
+/pf-sm
+```
+SM checks the backlog, you pick a story, SM claims it in Jira, creates the session file, and sets up the workflow.
+
+**3. Start peloton:**
+```
+/pf-peloton
+```
+SM calls `TeamCreate` to spawn teammates: Architect, TEA, Dev, Reviewer. With `teammateMode: "tmux"`, each teammate automatically gets its own tmux pane. Each teammate is a full, independent Claude Code instance loaded with its agent definition.
+
+```
+┌──────────────────────────────────────────────┐
+│  MAIN (SM)  │  ARCHITECT  │  TEA             │
+│  team lead   │             │                  │
+│  orchestrates├─────────────┼──────────────────┤
+│              │  DEV        │  REVIEWER        │
+│              │             │                  │
+└──────────────┴─────────────┴──────────────────┘
+  + TUI pane (bottom or side, per layout preference)
+```
+
+**4. SM orchestrates the flow:**
+
+SM dispatches work to teammates via `SendMessage` and the shared task list:
+
+1. SM sends task to **Architect** → designs the approach, writes to session file
+2. SM reads result, sends task to **TEA** → writes failing tests (RED)
+3. SM reads result, sends task to **Dev** → makes tests pass (GREEN)
+4. SM reads result, sends task to **TEA** again → verifies tests
+5. SM reads result, sends task to **Reviewer** → adversarial code review
+6. If Reviewer flags issues → SM routes back to Dev, TEA, or Architect as needed
+7. Loop until Reviewer approves
+
+SM decides routing based on each agent's output. The agents gate themselves (each runs its own exit checks), but SM controls sequencing and re-entry. You can also click into any teammate's pane to interact with them directly.
+
+**5. Finish:**
+SM runs the finish flow — creates PR, merges, archives session, updates Jira. Calls `TeamDelete` to clean up.
+
+### Key design points
+
+- **Native agent teams:** Uses Claude Code's built-in `TeamCreate` / `SendMessage` / `TeamDelete`. Each teammate is an independent Claude Code instance with its own context window and tmux pane. No custom pane management needed.
+- **SM is the team lead:** SM creates the team, dispatches tasks, reads results, decides routing. No linear state machine — SM controls the flow based on agent output.
+- **Persistent teammates:** Teammates stay alive for the duration of the story. Context is preserved across re-entries. SM can `SendMessage` to any teammate at any time.
+- **Session file is the coordination layer:** All agents read from and write to the same session file. SM doesn't relay content — agents pick it up from the file.
+- **Re-entry is natural:** If Reviewer says "tests are wrong," SM sends a message to TEA. TEA is still alive with its full context, picks up from where it left off.
+- **Human can interact directly:** Click into any teammate's tmux pane to give additional instructions, ask questions, or redirect their approach.
 
 | Command | Purpose |
 |---------|---------|
-| `pf peloton start` | Initialize session (reads story/workflow from session file) |
-| `pf peloton next` | Output JSON for next agent's team-mode activation |
-| `pf peloton status` | Show active session state |
-| `pf peloton stop` | Clear peloton state |
+| `pf peloton start` | SM creates team, spawns teammates, initializes state |
+| `pf peloton status` | Show active team, teammates, current task |
+| `pf peloton stop` | `TeamDelete`, clean up state |
 
-See the `/pf-peloton` skill for the full live mode reference including JSON format and state schema.
+The `pf peloton` CLI is thin — it sets up the story context and triggers SM to use native team tools. The heavy lifting is Claude Code's agent teams.
 
 ---
 

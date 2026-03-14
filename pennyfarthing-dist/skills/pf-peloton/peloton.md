@@ -1,108 +1,103 @@
 ---
 name: peloton
 description: |
-  Agent team mode for story workflows. SM initializes a peloton session, then
-  advances agents (TEA, Dev, Reviewer) as teammates via TeamCreate. Separate
-  replay mode benchmarks the pipeline against known scenarios.
-args: "[start|next|status|stop]"
+  Agent team mode for story workflows. Uses Claude Code native agent teams
+  (TeamCreate / SendMessage / TeamDelete) with teammateMode tmux for persistent
+  panes per agent role. SM is the team lead, orchestrating Architect, TEA, Dev,
+  and Reviewer as teammates.
+args: "[start|status|stop]"
 ---
 
 # /peloton - Agent Team Mode
 
-Run a full agent team through a story workflow using Claude Code's native team mode.
+Run a full agent team through a story workflow using Claude Code's native agent teams.
 
 ## Concept
 
 **Peloton** = the cycling term for the main group riding together. In Pennyfarthing,
-it means the SM (team lead) spawns workflow agents as teammates who run within the
-same Claude Code session. No tmux panes are created — agents coordinate through
-team mode (`TeamCreate` / `SendMessage`).
+SM creates a team of agent teammates — each in a persistent tmux pane — and
+orchestrates them through the story workflow.
 
-## Two Modes
+## Prerequisites
 
-### Live Mode
-
-SM initializes a peloton session for the active story, then advances agents one at
-a time. Each `pf peloton next` call returns JSON with the team-mode data needed to
-spawn the next agent as a teammate.
-
-**Flow:**
-1. SM runs `pf peloton start` (auto-detects story and workflow from session)
-2. SM runs `pf peloton next` to get team-mode JSON for the first agent
-3. SM calls `TeamCreate` with `team_name` and spawns an `Agent` with the returned `prompt`
-4. Agent completes its phase, SM runs `pf peloton next` again for the next agent
-5. Repeat until all agents have run
-6. SM runs `pf peloton stop` to clear state
-
-### Replay Mode
-
-Benchmark the pipeline against a scenario with known ground truth findings.
-Uses tmux panes (separate from live mode). See `guides/peloton.md` for methodology.
-
-```bash
-pf benchmark replay run scenarios/dpgd-116.yaml --theme dune --n 4
-```
-
-## CLI Reference
-
-### Live Mode
-
-| Command | Purpose |
-|---------|---------|
-| `pf peloton start` | Initialize session (reads story/workflow from session file) |
-| `pf peloton start --story-id X-Y --workflow tdd` | Initialize with explicit values |
-| `pf peloton next` | Output JSON for next agent's team-mode activation |
-| `pf peloton status` | Show active session, agents, current role |
-| `pf peloton status --json` | Machine-readable status |
-| `pf peloton stop` | Clear peloton state |
-
-### Replay Mode
-
-| Command | Purpose |
-|---------|---------|
-| `pf benchmark replay run <scenario>` | Run pipeline against scenario |
-| `pf benchmark replay score <dir> <scenario>` | Re-score an existing run |
-| `pf benchmark replay compare <scenario>` | Compare results across themes |
-
-## Team-Mode JSON (`pf peloton next` output)
-
+Enable agent teams (one-time):
 ```json
+// .claude/settings.json
 {
-  "role": "tea",
-  "team_name": "peloton-148-12",
-  "prompt": "Run `pf agent start tea`. Story: 148-12.",
-  "story_id": "148-12"
+  "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" },
+  "teammateMode": "tmux"
 }
 ```
 
-The caller (SM) uses these fields to:
-1. `TeamCreate` with `team_name`
-2. Spawn an `Agent` with `prompt` as the task
-3. The agent activates via `pf agent start <role>` and picks up the story
+## Cold Start
+
+```bash
+just start          # tmux: Claude Code + TUI + Frame
+```
+Then in Claude Code:
+```
+/pf-sm              # SM picks story, creates session
+/pf-peloton         # SM creates team, spawns agent panes
+```
+
+## How It Works
+
+1. `pf peloton start` reads the story's workflow and outputs a `TeamCreate` prompt
+2. SM executes `TeamCreate` — teammates spawn in tmux panes (Architect, TEA, Dev, Reviewer)
+3. SM dispatches work via `SendMessage` to each teammate in sequence
+4. Each teammate loads its agent definition, reads the session file, does its phase work
+5. SM reads results, decides next routing — can go back to any teammate
+6. When Reviewer approves, SM runs finish flow (PR, merge, archive)
+7. `pf peloton stop` + `TeamDelete` to clean up
+
+## CLI Reference
+
+| Command | Purpose |
+|---------|---------|
+| `pf peloton start` | Initialize state, output TeamCreate prompt for SM |
+| `pf peloton start --story-id X-Y --workflow tdd` | Initialize with explicit values |
+| `pf peloton status` | Show active team, agents |
+| `pf peloton status --json` | Machine-readable status |
+| `pf peloton stop` | Clear peloton state file |
+
+## SM Orchestration Flow
+
+SM stays in the MAIN pane and uses `SendMessage` to drive agents:
+
+```
+Architect → TEA (RED) → Dev (GREEN) → TEA (verify) → Reviewer
+                                                        ↓
+                                          Issues? → route back to Dev/TEA/Architect
+                                          Clean?  → SM finish flow
+```
+
+SM can re-enter any teammate at any time. Teammates are persistent — context preserved.
 
 ## State
 
-Peloton state is stored at `.pennyfarthing/peloton-state.json`:
+Peloton state at `.pennyfarthing/peloton-state.json`:
 
 ```json
 {
   "active": true,
   "story_id": "148-12",
   "workflow": "tdd",
-  "agents": ["tea", "dev", "architect", "reviewer"],
-  "active_role": "tea",
-  "created_at": "2026-03-14T10:35:00Z"
+  "team_name": "peloton-148-12",
+  "agents": ["architect", "tea", "dev", "reviewer"]
 }
 ```
 
-SM is excluded from the agents list — SM is the team lead, not a teammate.
+## Replay Mode (Benchmarking)
 
-## Prerequisites
+For benchmarking the pipeline against known scenarios, use the separate replay harness:
 
-- **Live mode:** An active story session (`.session/*-session.md`)
-- **Replay mode:** tmux server running (`pf frame start`), scenario YAML file
+```bash
+pf benchmark replay run scenarios/dpgd-116.yaml --theme firefly --n 4
+```
+
+See `guides/peloton.md` for the full replay methodology and scoring.
 
 ## Related
 
-- `guides/peloton.md` — benchmark methodology and scoring
-- `pf benchmark replay` — lower-level benchmark harness
+- `guides/peloton.md` — full guide with cold start walkthrough, replay mode, scoring
+- `pf benchmark replay` — benchmark harness
