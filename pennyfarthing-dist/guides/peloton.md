@@ -1,4 +1,25 @@
-o# Peloton Testing Guide
+# Peloton Guide
+
+Peloton has two modes: **live mode** for real story work and **replay mode** for benchmarking.
+
+## Live Mode
+
+Live mode runs workflow agents as teammates within the current Claude Code session. SM acts as team lead, advancing agents one at a time via `pf peloton next`.
+
+No tmux panes are spawned — agents run via `TeamCreate`.
+
+| Command | Purpose |
+|---------|---------|
+| `pf peloton start` | Initialize session (reads story/workflow from session file) |
+| `pf peloton next` | Output JSON for next agent's team-mode activation |
+| `pf peloton status` | Show active session state |
+| `pf peloton stop` | Clear peloton state |
+
+See the `/pf-peloton` skill for the full live mode reference including JSON format and state schema.
+
+---
+
+## Replay Mode (Benchmarking)
 
 ## What is a Peloton Test?
 
