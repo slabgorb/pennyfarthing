@@ -464,9 +464,9 @@ pf doctor --fix
 | FAIL | Red | Needs attention |
 | FIX | Green | Auto-repaired |
 
-## BikeRack GUI Debugging
+## Frame GUI Debugging
 
-Use BikeRack GUI for visual session debugging.
+Use Frame GUI for visual session debugging.
 
 ### Audit Log
 
@@ -506,5 +506,5 @@ Monitor in real-time:
 ## See Also
 
 - [Troubleshooting Guide](TROUBLESHOOTING.md) - Error catalog with solutions
-- [BikeRack GUI Guide](BIKERACK-GUI-GUIDE.md) - Visual debugging terminal
+- [Frame GUI Guide](FRAME-GUI-GUIDE.md) - Visual debugging terminal
 - [Configuration](CONFIGURATION.md) - Settings reference

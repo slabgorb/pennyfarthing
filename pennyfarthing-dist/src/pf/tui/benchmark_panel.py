@@ -1,4 +1,4 @@
-"""BenchmarkPanel — Pipeline replay results + live run visibility for BikeRack TUI.
+"""BenchmarkPanel — Pipeline replay results + live run visibility for Frame TUI TUI.
 
 Single panel with three sub-views (keybind 1/2/3 within panel):
 - History: scored run results with sparklines, drill-through

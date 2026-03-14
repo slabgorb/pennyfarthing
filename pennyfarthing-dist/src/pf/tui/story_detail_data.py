@@ -1,4 +1,4 @@
-"""Story detail data fetching for BikeRack TUI.
+"""Story detail data fetching for Frame TUI TUI.
 
 Story 110-2: Fetch story detail data (AC, session, workflow) via file read or API.
 Returns enriched story data for StoryDetailScreen dossier layout.

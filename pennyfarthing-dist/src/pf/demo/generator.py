@@ -12,10 +12,14 @@ Three public functions:
 
 from __future__ import annotations
 
+import logging
 import re
+import subprocess
 from typing import Any
 
 from pf.demo.models import ClassifiedStory, GeneratedContent, StoryType
+
+logger = logging.getLogger(__name__)
 
 MAX_DIFF_CHARS = 50_000
 
@@ -75,38 +79,53 @@ def generate_content(
     if not signals.title:
         return {"success": False, "error": "story title is required"}
 
+    # Try AI-powered generation via Claude CLI
+    prompt = build_prompt(classified, corrections)
+    try:
+        proc = subprocess.run(
+            ["claude", "-p", "--model", "claude-sonnet-4-6"],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            result = parse_response(proc.stdout, classified)
+            if result["success"]:
+                result["data"].ai_generated = True
+                return result
+            logger.warning("AI parse failed (%s), falling back to templates", result["error"])
+        else:
+            logger.warning("Claude CLI failed (rc=%d): %s", proc.returncode, proc.stderr.strip())
+    except Exception as exc:
+        logger.warning("AI generation failed (%s), falling back to templates", exc)
+
+    # Template fallback
     story_type = classified.story_type
     title = signals.title
     acs = signals.acceptance_criteria
 
-    # Problem statement
     problem_statement = _build_problem_statement(title, story_type)
-
-    # What changed
     what_changed = _build_what_changed(title, acs, signals.commit_messages)
-
-    # Why this approach
     why_this_approach = _build_why_this_approach(title, story_type)
 
-    # Before/after (refactor and bugfix only)
     before_after: str | None = None
     if story_type in _BEFORE_AFTER_TYPES:
         before_after = _build_before_after(title, story_type)
 
-    # Demo script
     demo_script = _build_demo_script(title, story_type, acs)
 
-    # Diagram source (backend and infrastructure only)
     diagram_source: str | None = None
     if story_type in _DIAGRAM_TYPES:
         diagram_source = _build_diagram_source(title, story_type)
 
-    # Slide outline
     slide_outline = _build_slide_outline(
         title, story_type, problem_statement, what_changed, signals.story_id,
     )
 
     content = GeneratedContent(
+        story_id=signals.story_id,
+        story_type=classified.story_type,
         problem_statement=problem_statement,
         what_changed=what_changed,
         why_this_approach=why_this_approach,
@@ -198,8 +217,18 @@ def build_prompt(
         "- ## Problem Statement — 'Problem: X. Why it matters: Y.'",
         "- ## What Changed — ELI5 summary of the technical changes",
         "- ## Why This Approach — Engineering reasoning in simple terms",
-        "- ## Demo Script — Scene-by-scene presenter walkthrough",
+        "- ## Demo Script — Detailed, actionable presenter walkthrough. MUST include:",
+        "  - Scene-by-scene breakdown with exact timing",
+        "  - Each scene references the specific slide number it corresponds to (e.g., 'Slide 3: What We Built')",
+        "  - Specific data points, example values, and concrete outputs to show (NOT 'show results' but 'show the table with 47 failed logins from 10.0.0.1')",
+        "  - Exact terminal commands to type for live demo portions (full command with arguments)",
+        "  - Fallback instructions: if a live demo step fails, which slide to show instead",
+        "  - The deck structure is: Slide 1 (Title), Slide 2 (Problem), Slide 3 (What We Built), Slide 4 (Why This Approach), then optional Before/After, then Roadmap, then Questions",
         "- ## Slide Outline — Per-slide metadata (title, bullets, speaker_notes)",
+        "- ## Roadmap & Integration — How this fits into the broader product roadmap. "
+        "Reference sibling stories, upcoming features, and planned enhancements. "
+        "Explain what this enables for future work and how it integrates with "
+        "other system components.",
     ])
 
     if story_type in _DIAGRAM_TYPES:
@@ -266,11 +295,15 @@ def parse_response(
     before_after = sections.get("before/after", "").strip() or None
     diagram_raw = sections.get("diagram source", "").strip()
     diagram_source = _extract_mermaid(diagram_raw) if diagram_raw else None
+    roadmap = sections.get("roadmap & integration", "").strip() or None
 
     # Parse slide outline
     slide_outline = _parse_slide_outline(slide_outline_raw)
 
     content = GeneratedContent(
+        story_id=classified.signals.story_id,
+        story_type=classified.story_type,
+        roadmap=roadmap,
         problem_statement=problem_statement,
         what_changed=what_changed,
         why_this_approach=why_this_approach,

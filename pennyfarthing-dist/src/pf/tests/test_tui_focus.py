@@ -1,10 +1,10 @@
-"""Tests for BikeRack TUI panel focus via /ws/focus WebSocket.
+"""Tests for Frame TUI TUI panel focus via /ws/focus WebSocket.
 
-Story 103-7: /bc TUI panel focus (BikeRack TUI + GUI)
-Epic: 103 — BikeRack TUI
+Story 103-7: /bc TUI panel focus (Frame TUI TUI + GUI)
+Epic: 103 — Frame TUI TUI
 
 Acceptance Criteria:
-- [AC1] BikeRack TUI subscribes to /ws/focus WebSocket channel
+- [AC1] Frame TUI TUI subscribes to /ws/focus WebSocket channel
 - [AC2] pf bc <panel> switches the active panel in the TUI
 - [AC3] pf bc reset returns the TUI to its previous panel
 - [AC4] Panel switch completes in < 200ms
@@ -49,7 +49,7 @@ def get_posted_focus_updates(app: TuiApp) -> list:
 
 
 # ---------------------------------------------------------------------------
-# AC1: BikeRack TUI subscribes to /ws/focus WebSocket channel
+# AC1: Frame TUI TUI subscribes to /ws/focus WebSocket channel
 # ---------------------------------------------------------------------------
 
 
@@ -393,7 +393,7 @@ class TestGuiCompatibility:
     def test_subscribes_to_same_channel_as_gui(self) -> None:
         """TUI should subscribe to 'focus' — same channel the GUI's useFocusPanel uses."""
         # The React hook connects to /ws/focus
-        # WheelHub routes /ws/{channel} — so channel name is "focus"
+        # Frame routes /ws/{channel} — so channel name is "focus"
         client = MagicMock(spec=FrameClient)
         app = TuiApp(client=client)
 
@@ -412,7 +412,7 @@ class TestGuiCompatibility:
         )
 
     def test_handles_gui_message_format(self) -> None:
-        """TUI should handle the exact FocusMessage format from WheelHub."""
+        """TUI should handle the exact FocusMessage format from Frame."""
         app = make_app()
         app.post_message = MagicMock()
 

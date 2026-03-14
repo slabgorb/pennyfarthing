@@ -1,4 +1,4 @@
-"""Shared color thresholds and tier styles for BikeRack TUI panels.
+"""Shared color thresholds and tier styles for Frame TUI TUI panels.
 
 Story 136-4: Extracted from base_panel.py, debug_panel.py, and
 context_meter_footer.py to eliminate threshold duplication.

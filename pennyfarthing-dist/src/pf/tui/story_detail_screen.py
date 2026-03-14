@@ -1,4 +1,4 @@
-"""StoryDetailScreen — Mission dossier detail view for BikeRack TUI.
+"""StoryDetailScreen — Mission dossier detail view for Frame TUI TUI.
 
 Story 110-2: Story drill-through with dossier detail screen.
 Pushed via Screen.push() from SprintPanel when user presses Enter on a story.

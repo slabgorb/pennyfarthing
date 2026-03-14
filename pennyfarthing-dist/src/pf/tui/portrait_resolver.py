@@ -1,4 +1,4 @@
-"""Portrait path resolution for BikeRack TUI.
+"""Portrait path resolution for Frame TUI TUI.
 
 Resolves persona portrait image paths using the canonical theme discovery
 from ``pf.common.themes``.  Each theme directory that

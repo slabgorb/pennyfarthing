@@ -1,6 +1,6 @@
 """Tests for Story 136-5: Fix TUI data pipeline — error states, timeouts, recovery.
 
-TUI panels (DebugPanel, SprintPanel, StatusFooter) must handle WheelHub API
+TUI panels (DebugPanel, SprintPanel, StatusFooter) must handle Frame API
 errors gracefully. Each panel needs three-state rendering: loading → error → data,
 with automatic recovery when data starts flowing again.
 
@@ -13,7 +13,7 @@ Verifies:
   AC6: Backward compatibility — no changes when all endpoints succeed
   AC7: Channel independence — DebugPanel channels error independently
 
-Run with: python -m pytest tests/python/test_bikerack_tui_data_pipeline.py -v
+Run with: python -m pytest tests/python/test_tui_tui_data_pipeline.py -v
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from pf.tui.sprint_panel import SprintPanel
 from rich.console import Console
 
 # ---------------------------------------------------------------------------
-# Test data fixtures — WheelHub wire formats
+# Test data fixtures — Frame wire formats
 # ---------------------------------------------------------------------------
 
 # Error payload: context_window.py not found (server returns error)
@@ -459,7 +459,7 @@ class TestAutomaticRecovery:
 
 
 class TestBackwardCompatibility:
-    """AC6: No visual changes when WheelHub is running normally."""
+    """AC6: No visual changes when Frame is running normally."""
 
     def test_valid_payload_with_null_error_renders_normally(self):
         """Payload with error: null should render as normal (no error)."""

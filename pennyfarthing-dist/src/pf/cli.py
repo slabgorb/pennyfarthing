@@ -177,7 +177,7 @@ def cli():
       backlog  - Show available stories (= sprint backlog)
       work     - Start work on a story (= sprint work)
       story    - Story operations (= sprint story)
-      gui      - Open BikeRack dashboard (= launch gui)
+      gui      - Open Frame TUI dashboard (= launch gui)
       tui      - Launch terminal UI (= launch tui)
     """
     pass

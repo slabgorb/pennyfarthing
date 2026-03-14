@@ -1,6 +1,6 @@
 """Tests for Story Drill-Through with Dossier Detail Screen (Story 110-2).
 
-Epic: 110 — BikeRack TUI — Interactive Command Center (MSSCI-15186)
+Epic: 110 — Frame TUI TUI — Interactive Command Center (MSSCI-15186)
 
 Acceptance Criteria:
 - [AC1] Add per-story cursor to SprintPanel (arrow keys within expanded epic)
@@ -12,7 +12,7 @@ Acceptance Criteria:
 
 Tests should FAIL until implementation is complete (RED state).
 
-Run with: python -m pytest tests/python/test_bikerack_story_detail.py -v
+Run with: python -m pytest tests/python/test_tui_story_detail.py -v
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ SAMPLE_PAYLOAD: dict[str, Any] = {
     "epics": [
         {
             "id": "110",
-            "title": "BikeRack TUI — Interactive Command Center",
+            "title": "Frame TUI TUI — Interactive Command Center",
             "jiraKey": "MSSCI-15100",
             "stories": [
                 {
@@ -76,7 +76,7 @@ SAMPLE_PAYLOAD: dict[str, Any] = {
         },
         {
             "id": "103",
-            "title": "BikeRack TUI",
+            "title": "Frame TUI TUI",
             "jiraKey": "MSSCI-14510",
             "stories": [
                 {

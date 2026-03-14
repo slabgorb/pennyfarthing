@@ -320,7 +320,7 @@ def setup_worktree_pf_context(worktree_path: Path, project_dir: Path) -> None:
 
     The `.claude/settings.json` includes only the PreToolUse hook (pre-edit-check
     and schema-validation). UI hooks (statusline, bell-mode) and session-start
-    (which contacts WheelHub) are excluded.
+    (which contacts Frame) are excluded.
     """
     # Symlink .pennyfarthing/ from the project root
     pf_source = project_dir / ".pennyfarthing"
@@ -747,7 +747,7 @@ class OTELFileCollector:
                     with open(out_file, "a") as f:
                         f.write(json.dumps(record) + "\n")
 
-                    # Dual-write: forward to WheelHub if available
+                    # Dual-write: forward to Frame if available
                     if parent._forward_to:
                         try:
                             import urllib.request

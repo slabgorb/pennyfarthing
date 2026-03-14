@@ -56,7 +56,7 @@ def main() -> None:
         project_root = find_project_root()
 
         # Forward tool input for audit log enrichment (Story 120-13)
-        # Fails silently if no WheelHub running
+        # Fails silently if no Frame running
         _forward_tool_input(tool_name, tool_id, tool_input, project_root)
 
         sys.exit(0)

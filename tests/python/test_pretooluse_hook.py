@@ -3,8 +3,8 @@ Tests for MSSCI-14320: Update and register PreToolUse hook.
 
 Verifies the Python PreToolUse hook and its shared utilities correctly:
 - AC1: POSTs to /api/hook-request (not /approval-request)
-- AC3: Returns decision "ask" when WheelHub is unreachable (not "allow")
-- AC6: Port discovery reads .bikerack-port
+- AC3: Returns decision "ask" when Frame is unreachable (not "allow")
+- AC6: Port discovery reads .frame-port
 
 Run with: python -m pytest tests/python/test_pretooluse_hook.py -v
 """
@@ -23,11 +23,11 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from pf.hooks import (  # noqa: E402
-    BIKERACK_PORT_FILE,
-    DEFAULT_BIKERACK_PORT,
+    FRAME_PORT_FILE,
+    DEFAULT_FRAME_PORT,
     HookResponse,
     find_project_root,
-    get_bikerack_port,
+    get_frame_port,
     is_cyclist_running,
     read_port_file,
     send_to_cyclist,
@@ -135,7 +135,7 @@ class TestEndpointURL:
 
 
 class TestConnectionRefused:
-    """AC3: Returns decision 'ask' when WheelHub is unreachable."""
+    """AC3: Returns decision 'ask' when Frame is unreachable."""
 
     def test_send_to_cyclist_returns_none_on_connection_refused(self):
         """send_to_cyclist should return None when server is unreachable."""
@@ -153,12 +153,12 @@ class TestConnectionRefused:
         response = HookResponse(
             event_name="PreToolUse",
             decision="ask",
-            reason="WheelHub not running, deferring to Claude Code",
+            reason="Frame not running, deferring to Claude Code",
         )
         output = json.loads(response.to_json())
 
         assert output["hookSpecificOutput"]["permissionDecision"] == "ask"
-        assert "WheelHub" in output["hookSpecificOutput"]["permissionDecisionReason"]
+        assert "Frame" in output["hookSpecificOutput"]["permissionDecisionReason"]
 
 
 # =============================================================================
@@ -167,57 +167,57 @@ class TestConnectionRefused:
 
 
 class TestPortDiscovery:
-    """AC6: Port discovery reads .bikerack-port."""
+    """AC6: Port discovery reads .frame-port."""
 
     def test_constants_defined(self):
         """Port file constants should be defined in hooks module."""
-        assert BIKERACK_PORT_FILE == ".bikerack-port"
+        assert FRAME_PORT_FILE == ".frame-port"
 
-    def test_reads_wheelhub_port(self, tmp_project):
-        """get_bikerack_port should read from .bikerack-port."""
-        (tmp_project / BIKERACK_PORT_FILE).write_text("8001")
+    def test_reads_frame_port(self, tmp_project):
+        """get_frame_port should read from .frame-port."""
+        (tmp_project / FRAME_PORT_FILE).write_text("8001")
 
-        port = get_bikerack_port(tmp_project)
+        port = get_frame_port(tmp_project)
 
         assert port == 8001
 
     def test_returns_default_when_no_port_files(self, tmp_project):
-        """get_bikerack_port should return default port when no port files exist."""
-        port = get_bikerack_port(tmp_project)
+        """get_frame_port should return default port when no port files exist."""
+        port = get_frame_port(tmp_project)
 
-        assert port == DEFAULT_BIKERACK_PORT
+        assert port == DEFAULT_FRAME_PORT
 
     def test_read_port_file_returns_none_for_missing(self, tmp_project):
         """read_port_file should return None for missing file."""
         result = read_port_file(
-            BIKERACK_PORT_FILE, tmp_project
+            FRAME_PORT_FILE, tmp_project
         )
         assert result is None
 
     def test_read_port_file_returns_none_for_invalid(self, tmp_project):
         """read_port_file should return None for non-numeric content."""
-        (tmp_project / BIKERACK_PORT_FILE).write_text("not-a-number")
+        (tmp_project / FRAME_PORT_FILE).write_text("not-a-number")
 
-        result = read_port_file(BIKERACK_PORT_FILE, tmp_project)
+        result = read_port_file(FRAME_PORT_FILE, tmp_project)
         assert result is None
 
     def test_read_port_file_returns_none_for_out_of_range(self, tmp_project):
         """read_port_file should return None for port outside 1-65535."""
-        (tmp_project / BIKERACK_PORT_FILE).write_text("99999")
+        (tmp_project / FRAME_PORT_FILE).write_text("99999")
 
-        result = read_port_file(BIKERACK_PORT_FILE, tmp_project)
+        result = read_port_file(FRAME_PORT_FILE, tmp_project)
         assert result is None
 
     def test_read_port_file_returns_valid_port(self, tmp_project):
         """read_port_file should return parsed port for valid content."""
-        (tmp_project / BIKERACK_PORT_FILE).write_text("2898\n")
+        (tmp_project / FRAME_PORT_FILE).write_text("2898\n")
 
-        result = read_port_file(BIKERACK_PORT_FILE, tmp_project)
+        result = read_port_file(FRAME_PORT_FILE, tmp_project)
         assert result == 2898
 
     def test_find_project_root_finds_cyclist_port(self, tmp_project):
-        """find_project_root should find directory containing .bikerack-port."""
-        (tmp_project / BIKERACK_PORT_FILE).write_text("2898")
+        """find_project_root should find directory containing .frame-port."""
+        (tmp_project / FRAME_PORT_FILE).write_text("2898")
         subdir = tmp_project / "deep" / "nested"
         subdir.mkdir(parents=True)
 

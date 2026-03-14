@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI DebugPanel — Code quality tool triggers (Story 121-2).
+"""Tests for Frame TUI TUI DebugPanel — Code quality tool triggers (Story 121-2).
 
 Adds interactive keybindings and tool triggers to the debug panel so users
 can run hotspots, dead code, and health score analysis directly from the TUI.
@@ -15,7 +15,7 @@ Verifies:
   AC9:  Loading state prevents duplicate triggers
   AC10: Errors are displayed gracefully
 
-Run with: python -m pytest tests/python/test_bikerack_debug_panel_tools.py -v
+Run with: python -m pytest tests/python/test_tui_debug_panel_tools.py -v
 """
 
 from __future__ import annotations

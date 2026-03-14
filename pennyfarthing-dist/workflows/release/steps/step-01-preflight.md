@@ -97,7 +97,7 @@ git tag -l "v$NEW_VERSION" | grep -q . && echo "WARNING: Tag v$NEW_VERSION alrea
 
 ### 1.5 E2E Test Gate
 
-Run the consumer E2E test suite. These tests verify that `pf init`, WheelHub startup,
+Run the consumer E2E test suite. These tests verify that `pf init`, Frame startup,
 content preservation, and idempotency all work correctly in isolated environments.
 
 ```bash

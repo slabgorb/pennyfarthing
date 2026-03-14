@@ -1,4 +1,4 @@
-"""AuditLogPanel — Real-time tool event audit log for BikeRack TUI.
+"""AuditLogPanel — Real-time tool event audit log for Frame TUI TUI.
 
 Story 110-8: Subscribes to /ws/spans, displays tool events in a native
 Textual DataTable with timestamp, tool name, input excerpt, and result.

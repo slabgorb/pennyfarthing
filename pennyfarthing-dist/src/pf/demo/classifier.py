@@ -102,10 +102,12 @@ def classify_story(
     if _title_has_keyword(title, BUGFIX_KEYWORDS):
         matches.add(StoryType.BUGFIX)
 
-    # 4. Backend: requires backend extensions + backend keywords + no UI keywords
+    # 4. Backend: backend keywords + no UI keywords, plus either backend extensions
+    #    or no file extensions at all (story has no PR diff)
     has_backend_exts = bool(signals.file_extensions & BACKEND_EXTENSIONS)
+    no_extensions = len(signals.file_extensions) == 0
     has_ui_kw = StoryType.UI in matches
-    if has_backend_exts and _title_has_keyword(title, BACKEND_KEYWORDS) and not has_ui_kw:
+    if (has_backend_exts or no_extensions) and _title_has_keyword(title, BACKEND_KEYWORDS) and not has_ui_kw:
         matches.add(StoryType.BACKEND)
 
     # 5. Resolve matches

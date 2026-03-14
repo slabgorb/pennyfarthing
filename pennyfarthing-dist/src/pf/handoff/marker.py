@@ -31,7 +31,7 @@ def generate_marker(
     if not next_agent:
         return _block(fallback="No next agent specified", error=True)
 
-    # Emit handoff event to BikeRack (Story 143-16)
+    # Emit handoff event to Frame TUI (Story 143-16)
     try:
         from pf.frame.subagent_events import emit_subagent_event
 

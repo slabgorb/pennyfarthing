@@ -1,4 +1,4 @@
-"""SettingsPanel — Settings editor panel for BikeRack TUI.
+"""SettingsPanel — Settings editor panel for Frame TUI TUI.
 
 Renders all settings from DEFAULTS as native Textual form widgets
 (Switch, Select, Input) grouped by category. Auto-adapts to new

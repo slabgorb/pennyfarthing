@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI ChangedPanel — Changed file list with status (Story 103-14).
+"""Tests for Frame TUI TUI ChangedPanel — Changed file list with status (Story 103-14).
 
 Verifies:
   AC1: Panel subscribes to correct WebSocket channel for changed file data
@@ -6,7 +6,7 @@ Verifies:
   AC3: Updates in real-time when file changes are detected
   AC4: Handles edge cases (empty state, malformed data, multi-repo)
 
-Run with: python -m pytest tests/python/test_bikerack_changed_panel.py -v
+Run with: python -m pytest tests/python/test_tui_changed_panel.py -v
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from rich.text import Text
 from textual.widgets import Static
 
 # ---------------------------------------------------------------------------
-# Test data fixtures — matching WheelHub /ws/git wire format
+# Test data fixtures — matching Frame /ws/git wire format
 # ---------------------------------------------------------------------------
 
 SAMPLE_SINGLE_REPO: dict[str, Any] = {
@@ -156,7 +156,7 @@ class TestChangedPanelExists:
     """AC1: ChangedPanel implementation exists and follows BasePanel pattern."""
 
     def test_changed_panel_exists_and_importable(self):
-        """ChangedPanel should be importable from bikerack.changed_panel."""
+        """ChangedPanel should be importable from tui.changed_panel."""
         assert ChangedPanel is not None
 
     def test_inherits_from_base_panel(self):

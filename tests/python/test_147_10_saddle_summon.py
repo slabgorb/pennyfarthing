@@ -5,7 +5,7 @@ Covers:
   AC2: Summoned agent receives full `pf agent start` context (not a subagent)
   AC3: Optional `--task` flag to pass task description to the summoned agent
   AC4: Saddle state tracks the summoned agent (reuses existing state management)
-  AC5: Works when tmux/BikeRack is running; clear error when not
+  AC5: Works when tmux/Frame is running; clear error when not
   SEC: CWE-78 shell injection — task must be in separate quoting context (Reviewer round 3)
 """
 

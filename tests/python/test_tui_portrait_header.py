@@ -1,4 +1,4 @@
-"""Tests for BikeRack portrait image header (Story 110-3).
+"""Tests for Frame TUI portrait image header (Story 110-3).
 
 Verifies:
   AC1: textual-image added to [tui] optional dependencies
@@ -7,7 +7,7 @@ Verifies:
   AC4: Graceful fallback to text-only on unsupported terminals
   AC5: Portrait updates on agent/persona change via WebSocket
 
-Run with: python -m pytest tests/python/test_bikerack_portrait_header.py -v
+Run with: python -m pytest tests/python/test_tui_portrait_header.py -v
 """
 
 from __future__ import annotations

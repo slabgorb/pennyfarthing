@@ -221,22 +221,12 @@ groups:
       workflow: { description: "Workflow definition validation" }
       skill-command: { description: "Skill registry and command file validation" }
 
-  bikerack:
-    description: BikeRack dashboard launcher
-    cli: "pf bikerack"
-    commands:
-      start: { description: "Start BikeRack + Claude CLI" }
-      stop: { description: "Stop running instance" }
-      status: { description: "Show running state" }
-
   launch:
     description: Application launchers
     cli: "pf launch"
     commands:
-      gui: { description: "Open BikeRack dashboard" }
       tui: { description: "Launch terminal UI" }
     aliases:
-      - { shortcut: "pf gui", target: "launch gui" }
       - { shortcut: "pf tui", target: "launch tui" }
 
   handoff:

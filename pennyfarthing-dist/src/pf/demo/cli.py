@@ -6,6 +6,7 @@ Story 146-1: pf demo generate CLI command + dry-run
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 import click
 
@@ -32,7 +33,7 @@ def generate_cmd(story_id: str, dry_run: bool, corrections: str | None) -> None:
 
     STORY_ID is the story identifier (e.g., 42-1).
     """
-    result = generate(story_id=story_id, dry_run=dry_run, corrections=corrections)
+    result = generate(story_id=story_id, dry_run=dry_run, corrections=corrections, project_root=Path.cwd())
 
     if not result["success"]:
         click.echo(f"Error: {result['error']}", err=True)

@@ -1,4 +1,4 @@
-"""Layout order configuration for BikeRack TUI.
+"""Layout order configuration for Frame TUI TUI.
 
 Story 120-10: Customizable bar layout ordering (menu/profile/content/status).
 

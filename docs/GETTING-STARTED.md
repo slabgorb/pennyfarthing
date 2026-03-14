@@ -31,7 +31,7 @@ Pick the path that matches your situation:
 |------|-----|
 | **yq** | YAML processing (`brew install yq`) |
 | **jq** | JSON processing (`brew install jq`) |
-| **Node.js 18+** | Only needed for BikeRack visual dashboards — `pf init` installs this if needed |
+| **Node.js 18+** | Only needed for Frame visual dashboards — `pf init` installs this if needed |
 
 ---
 
@@ -128,7 +128,7 @@ This walks you through 11 interactive steps:
 7. **Theme selection** — pick a persona theme (100 themes bundled)
 8. **Theme packs** — optionally install additional theme plugins
 9. **Jira integration** — optional bidirectional sprint tracking
-10. **GUI setup** — optionally install BikeRack visual dashboard
+10. **GUI setup** — optionally install Frame visual dashboard
 11. **Validation** — confirms everything is configured correctly
 
 > `pf init` creates the directory structure. `/pf-setup` configures it interactively inside Claude Code.
@@ -369,10 +369,10 @@ Pennyfarthing works in any terminal. Optional dashboards add real-time visibilit
 | Mode | How to Start | What You Get |
 |------|-------------|--------------|
 | **CLI only** | `claude` | Agents in your terminal, no dashboard |
-| **BikeRack TUI** | `pf bikerack start` | Terminal dashboard alongside Claude Code |
-| **BikeRack GUI** | `just gui` + `just claude` | Dashboard in browser, Claude in terminal |
+| **Frame TUI** | `pf frame start` | Terminal dashboard alongside Claude Code |
+| **Frame GUI** | `just gui` + `just claude` | Dashboard in browser, Claude in terminal |
 
-**Start with CLI mode.** It requires no extra setup and gives you the full agent workflow. BikeRack adds visual panels (sprint boards, workflow state, git diffs, agent portraits) but is optional.
+**Start with CLI mode.** It requires no extra setup and gives you the full agent workflow. Frame adds visual panels (sprint boards, workflow state, git diffs, agent portraits) but is optional.
 
 ---
 
@@ -424,7 +424,7 @@ Stories have types (feature, fix, chore), point estimates, and workflow assignme
 | `pf sprint status` | Sprint overview |
 | `pf validate` | Run all validators |
 | `pf workflow list` | Show all workflows |
-| `pf bikerack start` | Launch BikeRack dashboard |
+| `pf frame start` | Launch Frame dashboard |
 | `pf package list` | Show installable theme plugins (if any) |
 
 ---
@@ -500,5 +500,5 @@ pf init                               # Re-initialize project
 
 - **[What Is Pennyfarthing?](../pennyfarthing-dist/guides/what-is-pennyfarthing.md)** — Concept quick reference
 - **[BikeLane Workflows](../pennyfarthing-dist/guides/bikelane.md)** — All workflow types and customization
-- **[BikeRack Guide](../pennyfarthing-dist/guides/bikerack.md)** — Dashboard setup and panels
+- **[Frame Guide](../pennyfarthing-dist/guides/frame.md)** — Dashboard setup and panels
 - **[CHANGELOG](../CHANGELOG.md)** — Release history

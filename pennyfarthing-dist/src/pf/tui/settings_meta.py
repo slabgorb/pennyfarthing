@@ -1,4 +1,4 @@
-"""Settings metadata registry for BikeRack TUI Settings panel.
+"""Settings metadata registry for Frame TUI TUI Settings panel.
 
 Maps each known setting to a SettingSpec that describes its UI widget type,
 group, and options. Unknown settings discovered in DEFAULTS are auto-inferred

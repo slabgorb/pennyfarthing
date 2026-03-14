@@ -94,5 +94,5 @@ When spawned as a teammate (you receive a task via spawn prompt, not a phase han
 <critical>
 **Never use SendMessage for inter-phase handoff.** Markers and `pf handoff` are the only way to transition between phases. SendMessage is for real-time collaboration within a phase.
 
-**Never use markers for intra-phase communication.** Markers are routing signals for BikeRack GUI and the handoff system. They have no meaning inside a team.
+**Never use markers for intra-phase communication.** Markers are routing signals for Frame GUI and the handoff system. They have no meaning inside a team.
 </critical>

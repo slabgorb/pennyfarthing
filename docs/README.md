@@ -69,8 +69,8 @@ Tooling to smooth out annoying development processes:
 ### Tools
 | Document | Description |
 |----------|-------------|
-| [BikeRack GUI Guide](BIKERACK-GUI-GUIDE.md) | BikeRack GUI user guide |
-| [BikeRack GUI Architecture](BIKERACK-GUI-ARCHITECTURE.md) | BikeRack GUI internals and API |
+| [Frame GUI Guide](FRAME-GUI-GUIDE.md) | Frame GUI user guide |
+| [Frame GUI Architecture](FRAME-GUI-ARCHITECTURE.md) | Frame GUI internals and API |
 | [Skills](SKILLS.md) | Skills reference |
 | [Debugging Sessions](DEBUGGING-SESSIONS.md) | Debug Claude Code sessions |
 

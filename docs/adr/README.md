@@ -37,8 +37,8 @@ What becomes easier or more difficult because of this change?
 |-----|-------|--------|------|
 | [0001](./0001-consolidate-code-duplication.md) | Consolidate Code Duplication | Accepted | 2025-12-31 |
 | [0002](./0002-context-budget-optimization.md) | Context Budget Optimization | Superseded | 2026-01-03 |
-| [0003](./0003-cyclist-claude-code-alignment.md) | BikeRack GUI Claude Code 2.1.0 Alignment | Superseded | 2026-01-09 |
-| [0004](./0004-wheelhub-background-agent-coordination.md) | Wheelhub Background Agent Coordination | Accepted | 2026-01-18 |
+| [0003](./0003-cyclist-claude-code-alignment.md) | Frame GUI Claude Code 2.1.0 Alignment | Superseded | 2026-01-09 |
+| [0004](./0004-frame-background-agent-coordination.md) | Wheelhub Background Agent Coordination | Accepted | 2026-01-18 |
 | [0005](./0005-single-source-of-truth-symlinks.md) | Single Source of Truth via Symlinks | Accepted | 2026-01-19 |
 | [0006](./0006-state-detection-pattern.md) | State Detection Over Explicit Commands | Accepted | 2026-01-19 |
 | [0007](./0007-subagent-delegation-model.md) | Subagent Delegation Model (Opus/Haiku) | Accepted | 2026-01-19 |

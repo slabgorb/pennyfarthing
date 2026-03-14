@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI AuditLogPanel — Real-time tool event audit log (Story 110-8).
+"""Tests for Frame TUI TUI AuditLogPanel — Real-time tool event audit log (Story 110-8).
 
 Uses native Textual DataTable widget (not Rich Table renderables).
 
@@ -8,7 +8,7 @@ Verifies:
   AC3: Panel accessible via keybinding (consistent with other panels)
   AC4: Scrollable history with newest events at bottom
 
-Run with: python -m pytest tests/python/test_bikerack_audit_log_panel.py -v
+Run with: python -m pytest tests/python/test_tui_audit_log_panel.py -v
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from pf.tui.client import FrameClient
 from textual.widgets import DataTable, Static
 
 # ---------------------------------------------------------------------------
-# Test data fixtures — matching WheelHub /ws/spans wire format
+# Test data fixtures — matching Frame /ws/spans wire format
 # ---------------------------------------------------------------------------
 
 SAMPLE_TOOL_EVENT: dict[str, Any] = {
@@ -80,7 +80,7 @@ class TestAuditLogPanelExists:
     """AC1: AuditLogPanel implementation exists and follows panel conventions."""
 
     def test_audit_log_panel_exists_and_importable(self):
-        """AuditLogPanel should be importable from bikerack.audit_log_panel."""
+        """AuditLogPanel should be importable from tui.audit_log_panel."""
         assert AuditLogPanel is not None
 
     def test_inherits_from_base_panel(self):

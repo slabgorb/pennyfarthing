@@ -332,7 +332,7 @@ async def get_mode() -> JSONResponse:
     return JSONResponse(
         {
             "mode": "web",
-            "isBikeRack": os.environ.get("BIKERACK_MODE") == "1",
+            "isFrame TUI": os.environ.get("FRAME_MODE") == "1",
             "version": "N/A",
             "nodeVersion": "N/A",
             "platform": sys.platform,

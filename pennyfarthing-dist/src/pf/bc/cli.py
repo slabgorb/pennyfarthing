@@ -138,7 +138,7 @@ def reset_focus(dry_run):
 def save_layout(name: str, dry_run: bool):
     """Save current layout under a name.
 
-    Fetches the active layout from the running Cyclist/BikeRack server
+    Fetches the active layout from the running Cyclist/Frame TUI server
     and stores it in config.local.yaml under the given name.
     """
     layout_data = _get_current_layout()
@@ -147,7 +147,7 @@ def save_layout(name: str, dry_run: bool):
             json.dumps(
                 {
                     "success": False,
-                    "error": "No running Cyclist/BikeRack server found, or layout is empty",
+                    "error": "No running Cyclist/Frame TUI server found, or layout is empty",
                 }
             ),
             err=True,

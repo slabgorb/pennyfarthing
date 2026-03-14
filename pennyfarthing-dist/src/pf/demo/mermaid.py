@@ -155,7 +155,7 @@ def _render_png(mmd_path: Path) -> Path | None:
     try:
         png_path = mmd_path.with_suffix(".png")
         result = subprocess.run(
-            [mmdc, "-i", str(mmd_path), "-o", str(png_path)],
+            [mmdc, "-i", str(mmd_path), "-o", str(png_path), "-w", "1920", "-H", "1080", "-s", "2"],
             capture_output=True,
             text=True,
             timeout=30,

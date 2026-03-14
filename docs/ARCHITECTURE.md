@@ -52,8 +52,8 @@ pennyfarthing/
 │   └── src/pf/                     # Python CLI package (hooks, jira, sprint, story, prime, handoff)
 │
 ├── packages/
-│   ├── core/                       # @pennyfarthing/core — CLI, WheelHub server, API routes
-│   ├── cyclist/                    # BikeRack GUI (React 19, Tailwind v4, dockview)
+│   ├── core/                       # @pennyfarthing/core — CLI, Frame server, API routes
+│   ├── cyclist/                    # Frame GUI (React 19, Tailwind v4, dockview)
 │   └── shared/                     # Shared types and utilities
 │
 └── tests/                          # Framework tests
@@ -79,7 +79,7 @@ your-project/
     ├── sidecars/                   # Agent learning files
     │   └── {agent}/                # patterns.md, gotchas.md, decisions.md
     ├── config.local.yaml           # Theme configuration
-    └── cyclist.yaml                # BikeRack GUI settings
+    └── cyclist.yaml                # Frame GUI settings
 ```
 
 ## Agent Hierarchy
@@ -235,7 +235,7 @@ Prime outputs context in priority order (highest attention first):
 # Via pf CLI (used by agent commands)
 pf agent start "<agent>" --quiet
 
-# TypeScript API (used by BikeRack GUI)
+# TypeScript API (used by Frame GUI)
 getPrimeContext(agentName, projectDir)
 getPrimeContextWithTier(agentName, projectDir, tier)
 ```
@@ -485,7 +485,7 @@ Enable telemetry by setting the OTLP endpoint:
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 ```
 
-BikeRack GUI's built-in OTLP receiver (port 4318) captures and displays this data in:
+Frame GUI's built-in OTLP receiver (port 4318) captures and displays this data in:
 - Stats strip (token counts, context %)
 - Audit log (tool execution history)
 - Cost calculator (USD estimates)

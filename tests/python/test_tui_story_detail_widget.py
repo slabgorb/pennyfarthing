@@ -1,6 +1,6 @@
 """Tests for StoryDetailWidget and enriched story detail views (Story 120-8).
 
-Epic: 120 — BikeRack TUI Enhancements (MSSCI-15396)
+Epic: 120 — Frame TUI TUI Enhancements (MSSCI-15396)
 
 Acceptance Criteria:
 - [AC1] New StoryDetailWidget exists as a reusable Textual Widget with compose()
@@ -16,7 +16,7 @@ Acceptance Criteria:
 
 Tests should FAIL until implementation is complete (RED state).
 
-Run with: python -m pytest tests/python/test_bikerack_story_detail_widget.py -v
+Run with: python -m pytest tests/python/test_tui_story_detail_widget.py -v
 """
 
 from __future__ import annotations
@@ -94,7 +94,7 @@ class TestStoryDetailWidgetExists:
     """AC1: StoryDetailWidget is importable and is a proper Textual Widget."""
 
     def test_importable(self) -> None:
-        """StoryDetailWidget should be importable from bikerack.story_detail_widget."""
+        """StoryDetailWidget should be importable from tui.story_detail_widget."""
         from pf.tui.story_detail_widget import StoryDetailWidget
 
         assert StoryDetailWidget is not None

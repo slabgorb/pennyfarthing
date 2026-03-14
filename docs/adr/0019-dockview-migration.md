@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 
-BikeRack GUI's panel system was originally intended to use [Dockview](https://dockview.dev/), a mature React docking library. The dependency `dockview-react@4.13.1` has been installed since early development. However, during implementation, a custom hand-rolled panel system was built instead.
+Frame GUI's panel system was originally intended to use [Dockview](https://dockview.dev/), a mature React docking library. The dependency `dockview-react@4.13.1` has been installed since early development. However, during implementation, a custom hand-rolled panel system was built instead.
 
 ### Current State (Hand-Rolled System)
 
@@ -220,7 +220,7 @@ useEffect(() => {
 - [ ] Panels draggable between sidebars
 - [ ] Layout persists to config.local.yaml
 - [ ] Responsive collapse at <1024px works
-- [ ] Theme matches current BikeRack GUI design
+- [ ] Theme matches current Frame GUI design
 - [ ] All existing panel functionality preserved
 - [ ] Tests pass (update as needed for new DOM structure)
 
@@ -255,7 +255,7 @@ Users can scroll horizontally through tabs using:
 
 ### 2. Overflow Dropdown (Secondary)
 
-When Dockview detects tab overflow, it can render an overflow dropdown (`.dv-tabs-overflow-dropdown-default`) that shows hidden tabs in a dropdown menu. The dropdown is styled to match the BikeRack GUI theme:
+When Dockview detects tab overflow, it can render an overflow dropdown (`.dv-tabs-overflow-dropdown-default`) that shows hidden tabs in a dropdown menu. The dropdown is styled to match the Frame GUI theme:
 
 ```css
 .cyclist-dockview .dv-tabs-overflow-dropdown-default {

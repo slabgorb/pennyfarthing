@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI GitPanel — multi-repo git status (Story 103-10).
+"""Tests for Frame TUI TUI GitPanel — multi-repo git status (Story 103-10).
 
 Verifies:
   AC1: GitPanel subscribes to /ws/git WebSocket channel and receives updates
@@ -7,7 +7,7 @@ Verifies:
   AC4: Panel updates in real-time when git state changes
   AC5: Error handling for missing/malformed WebSocket messages
 
-Run with: python -m pytest tests/python/test_bikerack_git_panel.py -v
+Run with: python -m pytest tests/python/test_tui_git_panel.py -v
 """
 
 from __future__ import annotations
@@ -114,7 +114,7 @@ class TestGitPanelSubscription:
     """AC1: GitPanel subscribes to /ws/git and receives updates."""
 
     def test_git_panel_exists_and_importable(self):
-        """GitPanel should be importable from bikerack.git_panel."""
+        """GitPanel should be importable from tui.git_panel."""
         assert GitPanel is not None
 
     def test_inherits_from_base_panel(self):

@@ -29,7 +29,7 @@ Run `pennyfarthing-dist/scripts/git/changelog-links.sh --validate`. Exit code 0 
 </check>
 
 <check name="e2e-consumer-tests">
-Consumer E2E test suite passes. Tests pf init, WheelHub startup,
+Consumer E2E test suite passes. Tests pf init, Frame startup,
 content preservation, and idempotency in isolated environments.
 Run `./tests/e2e/run.sh --local`. Exit code 0 = pass.
 </check>

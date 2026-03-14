@@ -2,7 +2,7 @@
 # Scenario 5: orc-ax snapshot — simulate a real consumer with dirty state
 #
 # Recreates the orc-ax situation: a consumer repo that has custom workflows,
-# modified gates, custom sidecars, and a potentially broken wheelhub.
+# modified gates, custom sidecars, and a potentially broken frame.
 # Tests that pf init handles this gracefully.
 
 source /lib.sh 2>/dev/null || source "$(dirname "$0")/../lib.sh"

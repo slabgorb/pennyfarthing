@@ -13,8 +13,8 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from pf.bikerack.story_detail_data import _find_session_file, fetch_story_detail
-from pf.bikerack.story_detail_screen import (
+from pf.tui.story_detail_data import _find_session_file, fetch_story_detail
+from pf.tui.story_detail_screen import (
     StoryDetailScreen,
     _render_workflow_dots,
 )

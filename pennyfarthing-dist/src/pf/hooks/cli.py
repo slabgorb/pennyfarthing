@@ -41,7 +41,7 @@ def dispatch(event):
 
 @hooks.command("session-start")
 def session_start():
-    """SessionStart hook — session setup, WheelHub auto-start, OTEL config."""
+    """SessionStart hook — session setup, Frame auto-start, OTEL config."""
     from pf.hooks.session_start import main
 
     main()
@@ -57,7 +57,7 @@ def session_stop():
 
 @hooks.command("session-end")
 def session_end():
-    """SessionEnd hook — cleanup BikeRack, tmux status, final checkpoint."""
+    """SessionEnd hook — cleanup Frame TUI, tmux status, final checkpoint."""
     from pf.hooks.session_end import main
 
     main()
@@ -105,7 +105,7 @@ def branch_protection():
 
 @hooks.command("pretooluse-forward")
 def pretooluse_forward():
-    """PreToolUse hook — forward tool inputs to WheelHub for audit log enrichment."""
+    """PreToolUse hook — forward tool inputs to Frame for audit log enrichment."""
     from pf.hooks.pretooluse_forward import main
 
     main()

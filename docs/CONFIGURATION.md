@@ -46,13 +46,13 @@ context_budget:
   critical_threshold: 85      # Context critical threshold (percent)
   max_tokens: 200000          # Maximum tokens
 
-# Display options (BikeRack GUI)
+# Display options (Frame GUI)
 display:
   show_flow: true             # Show workflow visualization
   show_ocean: false           # Show OCEAN personality scores
   sidebar_width: 300          # Sidebar width in pixels
 
-# Notifications (BikeRack GUI)
+# Notifications (Frame GUI)
 notifications:
   phase_change: true          # Notify on phase changes
   sound: false                # Play sounds
@@ -154,7 +154,7 @@ Controls agent-to-agent handoff behavior.
 
 #### `workflow.bell_mode`
 
-Enable or disable bell notifications in BikeRack GUI.
+Enable or disable bell notifications in Frame GUI.
 
 | Value | Description |
 |-------|-------------|
@@ -172,7 +172,7 @@ Enable or disable relay mode for agent coordination.
 
 #### `workflow.git_monitor`
 
-Enable or disable automatic git status monitoring. When enabled, WheelHub watches `.git/` metadata files and reacts to tool events to keep the GitPanel and DiffsPanel updated in real time. When disabled, no automatic git subprocess calls are made — git panels receive empty data and the statusline omits branch/dirty info.
+Enable or disable automatic git status monitoring. When enabled, Frame watches `.git/` metadata files and reacts to tool events to keep the GitPanel and DiffsPanel updated in real time. When disabled, no automatic git subprocess calls are made — git panels receive empty data and the statusline omits branch/dirty info.
 
 | Value | Description |
 |-------|-------------|
@@ -205,23 +205,23 @@ Maximum token budget. Default: `200000`.
 
 #### `display.show_flow`
 
-Show workflow visualization in BikeRack GUI. Default: `true`.
+Show workflow visualization in Frame GUI. Default: `true`.
 
 #### `display.show_ocean`
 
-Show OCEAN personality scores in BikeRack GUI. Default: `false`.
+Show OCEAN personality scores in Frame GUI. Default: `false`.
 
 #### `display.sidebar_width`
 
-Sidebar width in pixels for BikeRack GUI. Default: `300`.
+Sidebar width in pixels for Frame GUI. Default: `300`.
 
 #### `notifications.phase_change`
 
-Enable notifications on workflow phase changes in BikeRack GUI. Default: `true`.
+Enable notifications on workflow phase changes in Frame GUI. Default: `true`.
 
 #### `notifications.sound`
 
-Enable sound notifications in BikeRack GUI. Default: `false`.
+Enable sound notifications in Frame GUI. Default: `false`.
 
 ---
 

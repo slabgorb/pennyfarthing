@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI dev-mode auto-reload (Story 120-11).
+"""Tests for Frame TUI TUI dev-mode auto-reload (Story 120-11).
 
 Verifies:
   AC1: Dev mode launcher exists and is importable
@@ -6,7 +6,7 @@ Verifies:
   AC3: File change events trigger app restart with same arguments
   AC4: CSS hot-reload passthrough via Textual dev mode
 
-Run with: python -m pytest tests/python/test_bikerack_dev_reload.py -v
+Run with: python -m pytest tests/python/test_tui_dev_reload.py -v
 """
 
 from pathlib import Path

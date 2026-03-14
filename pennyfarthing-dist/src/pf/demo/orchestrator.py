@@ -13,6 +13,7 @@ from typing import Any
 
 import yaml
 
+from pf.demo.assembler import assemble
 from pf.demo.classifier import classify_story
 from pf.demo.collector import collect_signals
 from pf.demo.generator import generate_content
@@ -82,53 +83,68 @@ def generate(
     if not dry_run:
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # --- Stage 4: Mermaid diagram (non-fatal) ---
-        diagram_result = generate_diagram(content, str(output_dir))
-        if not diagram_result["success"]:
-            warnings.append(f"diagram: {diagram_result['error']}")
-
-        # --- Stage 5: Demo script (non-fatal) ---
-        script_result = generate_demo_script(content)
-        if not script_result["success"]:
-            warnings.append(f"script: {script_result['error']}")
-
-        # Narrative
-        narrative_path = output_dir / "narrative.md"
-        narrative_content = _build_narrative(content)
-        narrative_path.write_text(narrative_content, encoding="utf-8")
-        files.append(str(narrative_path))
-
-        # Demo script
-        demo_script_path = output_dir / "demo-script.md"
-        if script_result["success"]:
-            demo_script_path.write_text(script_result["data"], encoding="utf-8")
+        # --- Stage 4: PPTX assembly ---
+        # Assembler writes deck.pptx + narrative.md, demo-script.md,
+        # metadata.yaml, diagram.mmd/png. When it succeeds, it owns
+        # all file output — no duplicate writes from the orchestrator.
+        pptx_result = assemble(content, classified, output_dir=str(output_dir))
+        if pptx_result["success"]:
+            pptx_files = pptx_result["data"].get("files", [])
+            for f in pptx_files:
+                files.append(str(output_dir / f))
         else:
-            demo_script_path.write_text(content.demo_script, encoding="utf-8")
-        files.append(str(demo_script_path))
+            warnings.append(f"pptx: {pptx_result['error']}")
 
-        # Metadata
-        metadata_path = output_dir / "metadata.yaml"
-        metadata = {
-            "story_id": story_id,
-            "generated_at": datetime.now(UTC).isoformat(),
-            "story_type": classified.story_type.value,
-            "diagram_generated": diagram_result["success"],
-            "script_generated": script_result["success"],
-        }
-        metadata_path.write_text(
-            yaml.dump(metadata, default_flow_style=False, sort_keys=False),
-            encoding="utf-8",
-        )
-        files.append(str(metadata_path))
+            # --- Fallback: orchestrator writes files directly ---
+            diagram_result = generate_diagram(content, str(output_dir))
+            if not diagram_result["success"]:
+                warnings.append(f"diagram: {diagram_result['error']}")
 
-        # Diagram files (if generated)
-        if diagram_result["success"] and diagram_result.get("data"):
-            mmd_path = diagram_result["data"].get("mmd_path")
-            if mmd_path:
-                files.append(mmd_path)
-            png_path = diagram_result["data"].get("png_path")
-            if png_path:
-                files.append(png_path)
+            narrative_path = output_dir / "narrative.md"
+            demo_script_path = output_dir / "demo-script.md"
+            script_result = {"success": True}
+
+            if content.ai_generated:
+                narrative_content = _build_ai_narrative(content)
+                narrative_path.write_text(narrative_content, encoding="utf-8")
+                demo_script_path.write_text(content.demo_script, encoding="utf-8")
+            else:
+                script_result = generate_demo_script(content)
+                if not script_result["success"]:
+                    warnings.append(f"script: {script_result['error']}")
+
+                narrative_content = _build_narrative(content)
+                narrative_path.write_text(narrative_content, encoding="utf-8")
+
+                if script_result["success"]:
+                    demo_script_path.write_text(script_result["data"], encoding="utf-8")
+                else:
+                    demo_script_path.write_text(content.demo_script, encoding="utf-8")
+
+            files.append(str(narrative_path))
+            files.append(str(demo_script_path))
+
+            metadata_path = output_dir / "metadata.yaml"
+            metadata = {
+                "story_id": story_id,
+                "generated_at": datetime.now(UTC).isoformat(),
+                "story_type": classified.story_type.value,
+                "diagram_generated": diagram_result["success"],
+                "script_generated": content.ai_generated or script_result["success"],
+            }
+            metadata_path.write_text(
+                yaml.dump(metadata, default_flow_style=False, sort_keys=False),
+                encoding="utf-8",
+            )
+            files.append(str(metadata_path))
+
+            if diagram_result["success"] and diagram_result.get("data"):
+                mmd_path = diagram_result["data"].get("mmd_path")
+                if mmd_path:
+                    files.append(mmd_path)
+                png_path = diagram_result["data"].get("png_path")
+                if png_path:
+                    files.append(png_path)
 
     data: dict[str, Any] = {
         "output_dir": str(output_dir),
@@ -145,6 +161,27 @@ def generate(
 
 def _build_narrative(content: GeneratedContent) -> str:
     """Build narrative markdown from generated content."""
+    sections = [
+        "# Narrative",
+        "",
+        "## Problem Statement",
+        content.problem_statement,
+        "",
+        "## What Changed",
+        content.what_changed,
+        "",
+        "## Why This Approach",
+        content.why_this_approach,
+    ]
+
+    if content.before_after:
+        sections.extend(["", "## Before/After", content.before_after])
+
+    return "\n".join(sections) + "\n"
+
+
+def _build_ai_narrative(content: GeneratedContent) -> str:
+    """Build narrative markdown from AI-generated content, passed through directly."""
     sections = [
         "# Narrative",
         "",

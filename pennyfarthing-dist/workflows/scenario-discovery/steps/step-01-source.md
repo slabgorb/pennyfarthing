@@ -38,7 +38,7 @@ Present these options to the user:
 ### Divergent Sources (open-ended decisions)
 | Source | Where to Find | Example |
 |--------|---------------|---------|
-| **Project history** | Sprint sessions, ADRs, real decisions made | The WheelHub bundle packaging decision |
+| **Project history** | Sprint sessions, ADRs, real decisions made | The Frame bundle packaging decision |
 | **Sprint conflict** | Sprint retrospectives, blocked stories | Competing priorities with limited capacity |
 | **Architecture trade-off** | ADRs, architect sessions | Monorepo vs polyrepo for consumer projects |
 | **Stakeholder tension** | PM sessions, backlog prioritization | Feature requests vs tech debt paydown |

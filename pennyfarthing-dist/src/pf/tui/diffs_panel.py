@@ -1,4 +1,4 @@
-"""DiffsPanel — Rich diff rendering with syntax highlighting for BikeRack TUI.
+"""DiffsPanel — Rich diff rendering with syntax highlighting for Frame TUI TUI.
 
 Story 103-18: Subscribes to /ws/diffs, renders file diffs with syntax
 highlighting using Rich. File headers, added/removed line coloring, line numbers.

@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI base panel abstraction (Story 103-5).
+"""Tests for Frame TUI TUI base panel abstraction (Story 103-5).
 
 Verifies:
   AC1: Base panel class exists with channel subscription capability
@@ -9,7 +9,7 @@ Verifies:
   AC6: Panel subclasses can override render() with custom Rich rendering
   AC7: Base class handles subscribe/unsubscribe lifecycle
 
-Run with: python -m pytest tests/python/test_bikerack_base_panel.py -v
+Run with: python -m pytest tests/python/test_tui_base_panel.py -v
 """
 
 from __future__ import annotations
@@ -62,7 +62,7 @@ class TestBasePanelExists:
     """AC1: BasePanel is importable and has required structure."""
 
     def test_importable(self):
-        """BasePanel should be importable from bikerack.base_panel."""
+        """BasePanel should be importable from tui.base_panel."""
         assert BasePanel is not None
 
     def test_is_textual_widget(self):

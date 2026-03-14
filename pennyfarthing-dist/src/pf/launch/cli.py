@@ -1,9 +1,7 @@
-"""Launch CLI — mid-session GUI/TUI launcher commands.
+"""Launch CLI — mid-session TUI launcher commands.
 
 Usage:
-    pf gui                 # Ensure Frame, open browser
     pf tui                 # Start TUI (auto-detects interactivity)
-    pf launch gui          # Full path
     pf launch tui          # Full path
     pf launch status       # Is Frame running?
     pf launch stop         # Kill Frame
@@ -12,7 +10,6 @@ Usage:
 from __future__ import annotations
 
 import sys
-import webbrowser
 from pathlib import Path
 
 import click
@@ -47,11 +44,10 @@ def _ensure_frame(project_dir: Path) -> tuple[int, int, bool]:
 
 @click.group()
 def launch():
-    """Mid-session GUI/TUI launcher.
+    """Mid-session TUI launcher.
 
     \b
     Commands:
-      gui     - Open dashboard in browser
       tui     - Launch terminal UI
       status  - Show Frame running state
       stop    - Stop Frame server
@@ -83,46 +79,6 @@ def frame(project_dir):
         sys.exit(1)
 
     click.echo(f"{port}")
-
-
-@launch.command()
-@click.option(
-    "--project-dir",
-    type=click.Path(exists=True, file_okay=False, resolve_path=True),
-    default=None,
-    help="Project directory. Falls back to FRAME_PROJECT_DIR env var, then cwd.",
-)
-@click.option("--no-open", is_flag=True, help="Print URL only, don't open browser.")
-@click.option("--dry-run", is_flag=True, help="Show what would be done without making changes.")
-def gui(project_dir, no_open, dry_run):
-    """Open dashboard in browser.
-
-    Ensures Frame is running (starts it if needed), then opens
-    the dashboard URL. Safe to call multiple times — reuses existing server.
-    """
-    from pf.frame.launcher import resolve_project_dir
-
-    project_dir = resolve_project_dir(project_dir)
-
-    if dry_run:
-        click.echo("[DRY-RUN] Would launch GUI")
-        click.echo(f"  Project: {project_dir}")
-        click.echo("  Actions: ensure Frame running, open browser to dashboard")
-        return
-
-    try:
-        port, pid, reused = _ensure_frame(project_dir)
-    except (TimeoutError, RuntimeError) as e:
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
-
-    url = f"http://localhost:{port}/dashboard"
-
-    if no_open:
-        click.echo(f"Dashboard: {url}")
-    else:
-        click.echo(f"Opening {url}")
-        webbrowser.open(url)
 
 
 @launch.command()
@@ -222,7 +178,6 @@ def status(project_dir):
         click.echo("Frame is running")
         click.echo(f"  PID: {result['pid']}")
         click.echo(f"  Port: {result['port']}")
-        click.echo(f"  Dashboard: {result['dashboard']}")
         if result.get("tui_pid"):
             click.echo(f"  TUI PID: {result['tui_pid']}")
     else:

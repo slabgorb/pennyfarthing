@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from pf.bikerack.audit_log_panel import (
+from pf.tui.audit_log_panel import (
     AuditLogPanel,
     _render_detail_block,
 )
@@ -58,7 +58,7 @@ def _make_panel_with_spans(spans: list[dict[str, Any]]) -> AuditLogPanel:
 
 
 # ---------------------------------------------------------------------------
-# AC1-3: Hook forwarding — cyclist_pretooluse forwards tool input to WheelHub
+# AC1-3: Hook forwarding — cyclist_pretooluse forwards tool input to Frame
 #
 # _forward_tool_input must POST tool input to /api/pending-tool-input with
 # the correct payload structure. Tests mock send_to_cyclist and verify

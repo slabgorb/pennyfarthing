@@ -203,7 +203,7 @@ def collect_hooks(project_root: Path) -> dict[str, Any]:
 
 
 def collect_tui(project_root: Path) -> dict[str, Any]:
-    """Collect TUI/WheelHub running status."""
+    """Collect TUI/Frame running status."""
     import os
 
     pid_file = project_root / ".pennyfarthing" / "frame.pid"

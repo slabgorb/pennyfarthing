@@ -752,7 +752,7 @@ class TestSprintYamlValidation:
 
 
 class TestCyclistPretooluse:
-    """PreToolUse hook — forward tool inputs to WheelHub."""
+    """PreToolUse hook — forward tool inputs to Frame."""
 
     def test_exits_zero(self):
         from pf.hooks import cyclist_pretooluse

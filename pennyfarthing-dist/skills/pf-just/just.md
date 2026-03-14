@@ -2,7 +2,7 @@
 name: just
 description: |
   Run just recipes for project tasks. This skill should be used when starting dev servers,
-  running tests, managing BikeRack GUI, generating portraits, or writing new justfile recipes.
+  running tests, managing Frame GUI, generating portraits, or writing new justfile recipes.
 args: "[recipe] [args...]"
 ---
 
@@ -103,11 +103,11 @@ just install
 
 ## GUI Commands
 
-The `gui` recipe is the main entry point for BikeRack GUI operations.
+The `gui` recipe is the main entry point for Frame GUI operations.
 
 ### `/pf-just gui` (default)
 
-Launch BikeRack GUI in web dev mode with hot reload.
+Launch Frame GUI in web dev mode with hot reload.
 
 **Run:**
 ```bash
@@ -120,7 +120,7 @@ just gui
 
 ### `/pf-just gui here`
 
-Launch BikeRack GUI for the current directory.
+Launch Frame GUI for the current directory.
 
 **Run:**
 ```bash
@@ -133,7 +133,7 @@ just gui here
 
 ### `/pf-just gui server`
 
-Start BikeRack GUI web server only (no browser).
+Start Frame GUI web server only (no browser).
 
 **Run:**
 ```bash
@@ -162,7 +162,7 @@ just gui here verbose
 
 ### `/pf-just gui dir=<path>`
 
-Launch BikeRack GUI for a specific project directory.
+Launch Frame GUI for a specific project directory.
 
 **Run:**
 ```bash
@@ -178,7 +178,7 @@ just gui dir=/path/to/project
 
 ### `/pf-just gui setup`
 
-First-time setup for BikeRack GUI development.
+First-time setup for Frame GUI development.
 
 **Run:**
 ```bash
@@ -194,7 +194,7 @@ just gui setup
 
 ### `/pf-just gui doctor`
 
-Diagnose BikeRack GUI setup issues.
+Diagnose Frame GUI setup issues.
 
 **Run:**
 ```bash
@@ -213,7 +213,7 @@ just gui doctor --fix
 
 ### `/pf-just gui build`
 
-Build BikeRack GUI TypeScript only.
+Build Frame GUI TypeScript only.
 
 **Run:**
 ```bash
@@ -226,7 +226,7 @@ just gui build
 
 ### `/pf-just gui clean`
 
-Remove BikeRack GUI build artifacts.
+Remove Frame GUI build artifacts.
 
 **Run:**
 ```bash

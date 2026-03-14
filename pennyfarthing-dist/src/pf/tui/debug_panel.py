@@ -1,4 +1,4 @@
-"""DebugPanel — Context usage and token stats for BikeRack TUI.
+"""DebugPanel — Context usage and token stats for Frame TUI TUI.
 
 Story 103-17: Port of the React DebugPanel. Subscribes to /ws/context
 and /ws/token-stats, renders context usage (tokens, percent, tier) and
@@ -88,7 +88,7 @@ class DebugPanel(BasePanel):
             return
         ctx = message.get("context")
         if isinstance(ctx, dict):
-            # If WheelHub sent an error, try local Python fallback
+            # If Frame sent an error, try local Python fallback
             if ctx.get("error"):
                 ctx = self._local_context_fallback() or ctx
             self._context_data = ctx

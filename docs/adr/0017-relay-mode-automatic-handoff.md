@@ -6,7 +6,7 @@
 
 ## Context
 
-Pennyfarthing's multi-agent workflows (TDD, BDD, trivial) involve handoffs between agents: SM → TEA → Dev → Reviewer → SM. Each handoff emits a `<!-- PF:HANDOFF:/agent -->` marker that BikeRack GUI detects and displays as a "Continue with /agent" button.
+Pennyfarthing's multi-agent workflows (TDD, BDD, trivial) involve handoffs between agents: SM → TEA → Dev → Reviewer → SM. Each handoff emits a `<!-- PF:HANDOFF:/agent -->` marker that Frame GUI detects and displays as a "Continue with /agent" button.
 
 **Original behavior:** Users manually clicked the handoff button to proceed to the next agent.
 
@@ -31,7 +31,7 @@ Split auto-handoff into a separate **relay_mode** setting, orthogonal to permiss
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        BikeRack GUI                              │
+│                        Frame GUI                              │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │              Mode Switch (3 segments)                     │   │

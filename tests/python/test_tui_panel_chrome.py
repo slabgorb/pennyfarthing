@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI panel header chrome (Story 103-9).
+"""Tests for Frame TUI TUI panel header chrome (Story 103-9).
 
 Verifies:
   AC1: Panel header/footer displays current panel name
@@ -7,7 +7,7 @@ Verifies:
   AC4: Active panel indicator updates when switching panels
   AC5: Icon rendering works across terminal types (ASCII fallback)
 
-Run with: python -m pytest tests/python/test_bikerack_panel_chrome.py -v
+Run with: python -m pytest tests/python/test_tui_panel_chrome.py -v
 """
 
 from __future__ import annotations

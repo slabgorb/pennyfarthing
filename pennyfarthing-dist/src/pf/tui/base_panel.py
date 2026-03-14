@@ -1,4 +1,4 @@
-"""Base panel abstraction for BikeRack TUI.
+"""Base panel abstraction for Frame TUI TUI.
 
 Story 103-5: Base panel class that panels inherit from. Handles:
 subscribe to WebSocket channel by key, receive JSON payload, call
@@ -115,7 +115,7 @@ def humanize_theme(slug: str) -> str:
 
 
 class BasePanel(Static):
-    """Base class for BikeRack TUI panels.
+    """Base class for Frame TUI TUI panels.
 
     Subclasses set ``channel`` as a class attribute and implement
     ``render_panel(payload)`` to return a Rich renderable.

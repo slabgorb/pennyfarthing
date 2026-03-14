@@ -14,7 +14,7 @@ When Claude is working on a task, users often want to provide additional context
 - Breaking flow to wait for completion
 - No way to queue thoughts while Claude works
 
-Claude Code 2.1.0 introduced "real-time steering" which injects messages mid-stream. BikeRack GUI took a different approach: **queue-based injection via hooks**.
+Claude Code 2.1.0 introduced "real-time steering" which injects messages mid-stream. Frame GUI took a different approach: **queue-based injection via hooks**.
 
 ## Decision
 
@@ -24,7 +24,7 @@ Implement **Bell Mode** - a message queue system that injects user messages into
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        BikeRack GUI                              │
+│                        Frame GUI                              │
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │              TipTap Editor (message input)               │    │
 │  │                         │                                │    │
@@ -61,7 +61,7 @@ Implement **Bell Mode** - a message queue system that injects user messages into
 │  │  2. Read bell-queue.json                                 │    │
 │  │  3. If queue has messages:                               │    │
 │  │     - Return additionalContext JSON                      │    │
-│  │     - Signal BikeRack GUI to dequeue                     │    │
+│  │     - Signal Frame GUI to dequeue                     │    │
 │  │  4. If empty: return nothing                             │    │
 │  └──────────────────────────────────────────────────────────┘    │
 │                              │                                   │
@@ -93,7 +93,7 @@ workflow:
 ```
 
 **Why YAML, not just in-memory?**
-- Survives BikeRack GUI restart
+- Survives Frame GUI restart
 - Hook script can read it (no IPC needed)
 - Consistent with other workflow settings
 
@@ -143,7 +143,7 @@ cat << EOF
 }
 EOF
 
-# 4. Signal BikeRack GUI to dequeue (via HTTP or file marker)
+# 4. Signal Frame GUI to dequeue (via HTTP or file marker)
 ```
 
 ### UI Integration
@@ -198,7 +198,7 @@ Inject directly into active stream.
 
 **Rejected:** Requires Claude Code internals modification. Queue approach works with standard hooks.
 
-### 2. IPC Between BikeRack GUI and Hook
+### 2. IPC Between Frame GUI and Hook
 
 Use Unix socket or named pipe.
 
@@ -206,7 +206,7 @@ Use Unix socket or named pipe.
 
 ### 3. WebSocket Push to Hook
 
-BikeRack GUI pushes to hook via WebSocket.
+Frame GUI pushes to hook via WebSocket.
 
 **Rejected:** Hooks are short-lived scripts, not persistent processes.
 
@@ -216,4 +216,4 @@ BikeRack GUI pushes to hook via WebSocket.
 - Hook script: `pennyfarthing-dist/scripts/hooks/bell-mode-hook.sh`
 - Tests: `packages/cyclist/tests/MSSCI-12275-bell-mode.test.ts`
 - Story: MSSCI-12275 (Bell Mode implementation)
-- ADR-0003: BikeRack GUI Claude Code Alignment (documents queue vs steering decision)
+- ADR-0003: Frame GUI Claude Code Alignment (documents queue vs steering decision)

@@ -1,6 +1,6 @@
 ---
 name: otel
-description: Claude Code OTEL telemetry format documentation. Use when working with OTEL span interception, enrichment, or correlation in BikeRack GUI.
+description: Claude Code OTEL telemetry format documentation. Use when working with OTEL span interception, enrichment, or correlation in Frame GUI.
 allowed_tools: [Read, Glob, Grep, Task]
 ---
 

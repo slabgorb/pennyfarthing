@@ -1,6 +1,6 @@
 """Frame server — FastAPI application server for Pennyfarthing.
 
-Replaces WheelHub as the primary server package name.
+Replaces Frame as the primary server package name.
 """
 
 from pf.frame.app import broadcast, create_app

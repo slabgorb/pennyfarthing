@@ -1,16 +1,16 @@
-# TUI
+# Frame
 
 <info>
-Terminal dashboard using Textual TUI panels. TUI runs Frame (Python FastAPI server), serving dashboard data via WebSocket while Claude Code runs in your terminal.
+Terminal dashboard using Textual TUI panels. Frame runs Frame (Python FastAPI server), serving dashboard data via WebSocket while Claude Code runs in your terminal.
 </info>
 
 ## Overview
 
-TUI provides dashboard panels (sprint status, git diffs, workflow state, etc.) alongside Claude Code in your terminal using Textual TUI.
+Frame provides dashboard panels (sprint status, git diffs, workflow state, etc.) alongside Claude Code in your terminal using Textual TUI.
 
 ```
 ┌─────────────────┐       ┌──────────────────────┐
-│  Claude CLI      │       │  Frame (TUI)          │
+│  Claude CLI      │       │  Frame (Frame)  │
 │  (your terminal) │──────▶│  Port 2898            │
 │                  │ OTEL  │  WebSocket channels   │
 │                  │ files │  REST API             │
@@ -26,14 +26,14 @@ TUI provides dashboard panels (sprint status, git diffs, workflow state, etc.) a
 ## Quick Start
 
 ```bash
-# Launch TUI + Claude CLI together
+# Launch Frame + Claude CLI together
 pf frame start
 
 # Or via just recipe
-just bikerack
+just frame
 
 # With a specific project directory
-just bikerack dir=/path/to/project
+just frame dir=/path/to/project
 
 # Stop a running instance
 pf frame stop
@@ -42,11 +42,11 @@ pf frame stop
 pf frame status
 ```
 
-TUI starts Frame in the background. Claude CLI runs in the foreground. When Claude exits, TUI shuts down automatically via `trap EXIT`.
+Frame starts Frame in the background. Claude CLI runs in the foreground. When Claude exits, Frame shuts down automatically via `trap EXIT`.
 
 ## How It Works
 
-1. **Launcher** (`pf frame start`) starts Frame with `IS_BIKERACK=1`
+1. **Launcher** (`pf frame start`) starts Frame with `IS_FRAME=1`
 2. **Frame** listens on port 2898
 3. **OTEL telemetry** flows from Claude CLI to Frame's OTLP receiver
 4. **File watchers** detect changes to `.session/`, `sprint/`, and git state
@@ -63,7 +63,7 @@ Both are deleted on shutdown.
 
 ## Layout Persistence
 
-Save and restore TUI panel layouts:
+Save and restore Frame panel layouts:
 
 ```bash
 pf bc save my-layout      # Save current layout
@@ -136,7 +136,7 @@ uv pip install --python .venv/bin/python3 -e "pennyfarthing-dist"
 **`No module named 'pf'`**
 The justfile sets `PYTHONPATH` automatically. If running manually:
 ```bash
-PYTHONPATH=pennyfarthing-dist:$PYTHONPATH .venv/bin/python3 -m pf.tui.app
+PYTHONPATH=pennyfarthing-dist:$PYTHONPATH .venv/bin/python3 -m pf.frame.tui
 ```
 
 **Portrait images not rendering**
@@ -145,7 +145,7 @@ PYTHONPATH=pennyfarthing-dist:$PYTHONPATH .venv/bin/python3 -m pf.tui.app
 ## Constraints
 
 - **No MessagePanel** — Claude conversation stays in your terminal. This is intentional.
-- **Single session** — one Claude CLI per TUI instance.
+- **Single session** — one Claude CLI per Frame instance.
 
 ## Key Files
 
@@ -154,8 +154,8 @@ PYTHONPATH=pennyfarthing-dist:$PYTHONPATH .venv/bin/python3 -m pf.tui.app
 | `pf/frame/cli.py` | `pf frame` launcher CLI |
 | `pf/frame/launcher.py` | Frame process management |
 | `pf/frame/app.py` | FastAPI application |
-| `pf/tui/app.py` | Textual TUI application |
+| `pf/frame/tui.py` | Textual TUI application |
 
 <info>
-**ADR:** `docs/adr/0024-bikerack-mode.md`
+**ADR:** `docs/adr/0024-frame-mode.md`
 </info>

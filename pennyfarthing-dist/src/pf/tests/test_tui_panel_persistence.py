@@ -1,7 +1,7 @@
-"""Tests for BikeRack TUI panel persistence (extend ERB mechanism).
+"""Tests for Frame TUI TUI panel persistence (extend ERB mechanism).
 
 Story 103-8: Panel persistence (extend ERB mechanism)
-Epic: 103 — BikeRack TUI
+Epic: 103 — Frame TUI TUI
 Jira: MSSCI-14963
 
 Acceptance Criteria:

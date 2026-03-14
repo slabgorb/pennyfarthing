@@ -1,4 +1,4 @@
-"""BikeRack TUI — Terminal-native dashboard built on Textual.
+"""Frame TUI TUI — Terminal-native dashboard built on Textual.
 
 Story 103-1: Textual app scaffold with basic layout.
 Story 103-4: Connection status indicator in TUI header.
@@ -142,7 +142,7 @@ PORTRAIT_SKELETON = """\
 
 
 class AgentHeader(Static):
-    """Displays current agent persona from WheelHub /ws/persona channel.
+    """Displays current agent persona from Frame /ws/persona channel.
 
     When a portrait image is available (resolved locally or provided via
     portraitPath in persona data), mounts a Horizontal layout container.
@@ -425,7 +425,7 @@ class AgentHeader(Static):
 
 
 class ConnectionStatus(Static):
-    """Displays WheelHub connection state with colored indicator."""
+    """Displays Frame connection state with colored indicator."""
 
     connection_state: reactive[ConnectionState] = reactive(ConnectionState.DISCONNECTED)
     port: int | None = None
@@ -457,7 +457,7 @@ class PanelCommands(Provider):
 
 
 class TuiApp(App):
-    """BikeRack TUI application shell."""
+    """Frame TUI TUI application shell."""
 
     class PersonaUpdate(Message, bubble=False):
         """Persona data from WS — routed through Textual message system."""
@@ -481,7 +481,7 @@ class TuiApp(App):
             super().__init__()
             self.state = state
 
-    TITLE = "BikeRack"
+    TITLE = "Frame TUI"
 
     CSS = """
     #profile-separator {
@@ -1158,7 +1158,7 @@ class TuiApp(App):
         self.post_message(self.PersonaUpdate(message))
 
     def _on_ws_state_change(self, state: ConnectionState) -> None:
-        """Handle WheelHub connection state changes.
+        """Handle Frame connection state changes.
 
         Routes through Textual message system via post_message for proper repaint.
         """
@@ -1318,10 +1318,10 @@ def main(
     port: int | None = None,
     project_dir: Path | None = None,
 ) -> None:
-    """Launch BikeRack TUI as a standalone application.
+    """Launch Frame TUI TUI as a standalone application.
 
     Args:
-        port: Explicit WheelHub port. If None, reads from .frame-port file.
+        port: Explicit Frame port. If None, reads from .frame-port file.
         project_dir: Project directory for port file discovery. Defaults to cwd.
     """
     # Detect terminal image protocol BEFORE App.run() claims the terminal
@@ -1356,7 +1356,7 @@ def dev_main(
     port: int | None = None,
     project_dir: Path | None = None,
 ) -> None:
-    """Launch BikeRack TUI in dev mode with auto-reload on Python file changes.
+    """Launch Frame TUI TUI in dev mode with auto-reload on Python file changes.
 
     Sets TEXTUAL env var for CSS hot-reload and uses watchfiles for Python reload.
     """
@@ -1389,8 +1389,8 @@ def dev_main(
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="BikeRack TUI")
-    parser.add_argument("--port", type=int, default=None, help="WheelHub port")
+    parser = argparse.ArgumentParser(description="Frame TUI TUI")
+    parser.add_argument("--port", type=int, default=None, help="Frame port")
     parser.add_argument("--project-dir", type=str, default=None, help="Project directory")
     args = parser.parse_args()
 

@@ -1,4 +1,4 @@
-"""Tests for BikeRack layout order configuration (Story 120-10).
+"""Tests for Frame TUI layout order configuration (Story 120-10).
 
 Verifies:
   AC1: layout_order setting exists in config.local.yaml schema
@@ -8,7 +8,7 @@ Verifies:
   AC5: Rendering pipeline respects the configured order
   AC6: Disabled bars omitted from layout, remaining bars keep order
 
-Run with: python -m pytest tests/python/test_bikerack_layout_order.py -v
+Run with: python -m pytest tests/python/test_tui_layout_order.py -v
 """
 
 import pytest
@@ -160,7 +160,7 @@ class TestGetLayoutOrderFromConfig:
 class TestRenderingOrder:
     """The TUI compose/mount should arrange regions per layout_order config."""
 
-    def test_bikerack_app_has_get_region_widgets_method(self):
+    def test_tui_app_has_get_region_widgets_method(self):
         """TuiApp should expose a method to get ordered region widgets."""
         from pf.tui.app import TuiApp
 

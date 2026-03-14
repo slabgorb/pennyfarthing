@@ -290,13 +290,13 @@ workflow:
 
 ## Future Phases
 
-### Phase 2: BikeRack GUI Integration
+### Phase 2: Frame GUI Integration
 
-WheelHub routes real-time communication between sessions:
+Frame routes real-time communication between sessions:
 
 ```
 ┌─────────────────────────────────────────┐
-│            WheelHub                     │
+│            Frame                     │
 │                                         │
 │  ┌─────────┐  tandem   ┌─────────────┐  │
 │  │ Leader  │◄─channel─►│  Partner    │  │

@@ -1,6 +1,6 @@
 """Tests for Story 120-1: Markdown preview with context and session.
 
-Epic: 120 — BikeRack TUI
+Epic: 120 — Frame TUI TUI
 Story: 120-1 — Story detail screen: markdown preview with context and session
 
 Acceptance Criteria:
@@ -23,10 +23,10 @@ import os
 from typing import Any
 
 import pytest
-from pf.bikerack.story_detail_data import (
+from pf.tui.story_detail_data import (
     fetch_story_detail,
 )
-from pf.bikerack.story_detail_screen import StoryDetailScreen
+from pf.tui.story_detail_screen import StoryDetailScreen
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -59,7 +59,7 @@ SAMPLE_STORY_DATA: dict[str, Any] = {
 }
 
 EPIC_CONTEXT_MD = """\
-# Epic 120: BikeRack TUI
+# Epic 120: Frame TUI TUI
 
 Interactive command center for sprint management and story tracking.
 
@@ -231,7 +231,7 @@ class TestEpicContextContent:
         """epic_context_content should contain actual text from the context file."""
         result = fetch_story_detail("120-1", project_root=project_with_context)
         content = result.get("epic_context_content", "")
-        assert "BikeRack TUI" in content, (
+        assert "Frame TUI TUI" in content, (
             f"epic_context_content should contain text from context file, got: {content[:100]}"
         )
 
@@ -262,7 +262,7 @@ class TestEpicContextContent:
         # Check that the rendered content contains epic context text
         preview = preview_widgets[0]
         rendered = _extract_text(preview)
-        assert "BikeRack TUI" in rendered, (
+        assert "Frame TUI TUI" in rendered, (
             f"Preview should contain epic context text, got: {rendered[:200]}"
         )
 
@@ -574,7 +574,7 @@ class TestPreviewLayoutIntegration:
         preview_widgets = [w for w in widgets if getattr(w, "id", None) == "dossier-preview"]
         assert len(preview_widgets) == 1, "Should have exactly one dossier-preview"
         rendered = _extract_text(preview_widgets[0])
-        assert "BikeRack TUI" in rendered, "Should contain epic context text"
+        assert "Frame TUI TUI" in rendered, "Should contain epic context text"
         assert "Markdown Preview" in rendered, "Should contain story context text"
         assert "SM Assessment" in rendered, "Should contain session text"
 

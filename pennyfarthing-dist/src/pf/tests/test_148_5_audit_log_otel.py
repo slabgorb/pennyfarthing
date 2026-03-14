@@ -26,8 +26,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from starlette.testclient import TestClient
 
-from pf.wheelhub.app import create_app
-from pf.wheelhub.otlp import OTLPReceiver, parse_otlp_logs, parse_otlp_traces
+from pf.frame.app import create_app
+from pf.frame.otlp import OTLPReceiver, parse_otlp_logs, parse_otlp_traces
 
 
 # ---------------------------------------------------------------------------
@@ -399,7 +399,7 @@ class TestOTLPEndpointBroadcast:
 
     def test_traces_endpoint_broadcasts_to_spans_channel(self, client: TestClient):
         """POST /v1/traces broadcasts new spans to the 'spans' WebSocket channel."""
-        from pf.wheelhub import app as app_module
+        from pf.frame import app as app_module
 
         broadcast_calls: list[tuple[str, dict]] = []
         original_broadcast = app_module.broadcast
@@ -421,7 +421,7 @@ class TestOTLPEndpointBroadcast:
 
     def test_logs_endpoint_broadcasts_tool_results_to_spans_channel(self, client: TestClient):
         """POST /v1/logs broadcasts tool_result events to 'spans' channel."""
-        from pf.wheelhub import app as app_module
+        from pf.frame import app as app_module
 
         broadcast_calls: list[tuple[str, dict]] = []
 
@@ -441,7 +441,7 @@ class TestOTLPEndpointBroadcast:
 
     def test_logs_endpoint_does_not_broadcast_non_tool_events(self, client: TestClient):
         """POST /v1/logs with non-tool events does not broadcast to spans."""
-        from pf.wheelhub import app as app_module
+        from pf.frame import app as app_module
 
         broadcast_calls: list[tuple[str, dict]] = []
 
@@ -483,7 +483,7 @@ class TestFetchSpansIntegration:
 
     def test_fetch_spans_reflects_received_traces(self):
         """After processing traces, fetch_spans returns the accumulated spans."""
-        from pf.wheelhub.app import _receiver
+        from pf.frame.app import _receiver
 
         # Clear any prior state
         initial_count = len(_receiver.get_spans())

@@ -26,8 +26,8 @@ import pytest
 from rich.console import Console
 from starlette.testclient import TestClient
 
-from pf.wheelhub.app import create_app
-from pf.wheelhub.otlp import OTLPReceiver, parse_otlp_metrics
+from pf.frame.app import create_app
+from pf.frame.otlp import OTLPReceiver, parse_otlp_metrics
 
 
 def _render_to_text(renderable: Any) -> str:
@@ -117,7 +117,7 @@ class TestMetricsEndpointBroadcast:
         self, client: TestClient
     ):
         """POST /v1/metrics broadcasts token stats to the 'token-stats' channel."""
-        from pf.wheelhub import app as app_module
+        from pf.frame import app as app_module
 
         broadcast_calls: list[tuple[str, dict]] = []
 
@@ -142,7 +142,7 @@ class TestMetricsEndpointBroadcast:
 
     def test_metrics_broadcast_contains_aggregated_stats(self, client: TestClient):
         """Broadcasted token-stats contain the aggregated token counts."""
-        from pf.wheelhub import app as app_module
+        from pf.frame import app as app_module
 
         broadcast_calls: list[tuple[str, dict]] = []
 
@@ -165,7 +165,7 @@ class TestMetricsEndpointBroadcast:
         self, client: TestClient
     ):
         """POST /v1/metrics with no token.usage metrics does not broadcast."""
-        from pf.wheelhub import app as app_module
+        from pf.frame import app as app_module
 
         broadcast_calls: list[tuple[str, dict]] = []
 
@@ -184,7 +184,7 @@ class TestMetricsEndpointBroadcast:
 
     def test_metrics_broadcast_accumulates_across_calls(self, client: TestClient):
         """Multiple /v1/metrics POSTs accumulate token counts."""
-        from pf.wheelhub import app as app_module
+        from pf.frame import app as app_module
 
         broadcast_calls: list[tuple[str, dict]] = []
 
@@ -219,7 +219,7 @@ class TestTokenStatsFetcher:
 
     def test_channel_fetchers_has_token_stats(self):
         """'token-stats' key exists in CHANNEL_FETCHERS."""
-        from pf.wheelhub.ws_push import CHANNEL_FETCHERS
+        from pf.frame.ws_push import CHANNEL_FETCHERS
 
         assert "token-stats" in CHANNEL_FETCHERS, (
             "CHANNEL_FETCHERS is missing 'token-stats' — new WebSocket "
@@ -228,7 +228,7 @@ class TestTokenStatsFetcher:
 
     def test_token_stats_fetcher_is_callable(self):
         """The token-stats fetcher is a callable function."""
-        from pf.wheelhub.ws_push import CHANNEL_FETCHERS
+        from pf.frame.ws_push import CHANNEL_FETCHERS
 
         fetcher = CHANNEL_FETCHERS.get("token-stats")
         assert fetcher is not None, "No token-stats fetcher in CHANNEL_FETCHERS"
@@ -236,7 +236,7 @@ class TestTokenStatsFetcher:
 
     def test_token_stats_fetcher_returns_dict(self):
         """The token-stats fetcher returns a dict with token stat keys."""
-        from pf.wheelhub.ws_push import CHANNEL_FETCHERS
+        from pf.frame.ws_push import CHANNEL_FETCHERS
 
         fetcher = CHANNEL_FETCHERS.get("token-stats")
         assert fetcher is not None, "No token-stats fetcher in CHANNEL_FETCHERS"
@@ -245,8 +245,8 @@ class TestTokenStatsFetcher:
 
     def test_token_stats_fetcher_reflects_receiver_state(self):
         """After processing metrics, the fetcher returns updated stats."""
-        from pf.wheelhub.app import _receiver
-        from pf.wheelhub.ws_push import CHANNEL_FETCHERS
+        from pf.frame.app import _receiver
+        from pf.frame.ws_push import CHANNEL_FETCHERS
 
         fetcher = CHANNEL_FETCHERS.get("token-stats")
         assert fetcher is not None, "No token-stats fetcher in CHANNEL_FETCHERS"
@@ -282,7 +282,7 @@ class TestFieldNameConsistency:
 
     def test_render_token_stats_reads_total_cost(self):
         """_render_token_stats reads 'totalCost', not 'totalCostUsd'."""
-        from pf.bikerack.debug_panel import _render_token_stats
+        from pf.tui.debug_panel import _render_token_stats
 
         stats = {
             "inputTokens": 1000,
@@ -300,7 +300,7 @@ class TestFieldNameConsistency:
 
     def test_render_token_stats_does_not_use_total_cost_usd(self):
         """Verify that providing only totalCostUsd (wrong key) does NOT render cost."""
-        from pf.bikerack.debug_panel import _render_token_stats
+        from pf.tui.debug_panel import _render_token_stats
 
         stats_wrong_key = {
             "inputTokens": 1000,
@@ -328,7 +328,7 @@ class TestDebugPanelTokenStats:
 
     def test_handle_token_stats_stores_data(self):
         """_handle_token_stats_message stores the message for rendering."""
-        from pf.bikerack.debug_panel import DebugPanel
+        from pf.tui.debug_panel import DebugPanel
 
         panel = DebugPanel(client=None)
         message = {
@@ -344,7 +344,7 @@ class TestDebugPanelTokenStats:
 
     def test_handle_token_stats_none_message_no_crash(self):
         """None message is safely ignored."""
-        from pf.bikerack.debug_panel import DebugPanel
+        from pf.tui.debug_panel import DebugPanel
 
         panel = DebugPanel(client=None)
         panel._handle_token_stats_message(None)
@@ -352,7 +352,7 @@ class TestDebugPanelTokenStats:
 
     def test_render_normal_shows_token_stats(self):
         """When token stats are present, _render_normal includes them."""
-        from pf.bikerack.debug_panel import DebugPanel
+        from pf.tui.debug_panel import DebugPanel
 
         panel = DebugPanel(client=None)
         panel._token_stats = {
@@ -407,7 +407,7 @@ class TestTokenStatsEdgeCases:
 
     def test_render_token_stats_with_no_data(self):
         """Empty stats dict renders 'No token stats' message."""
-        from pf.bikerack.debug_panel import _render_token_stats
+        from pf.tui.debug_panel import _render_token_stats
 
         result = _render_token_stats({})
         rendered = _render_to_text(result)

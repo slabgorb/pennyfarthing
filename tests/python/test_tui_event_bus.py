@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI Cross-Panel Event Bus (Story 110-1).
+"""Tests for Frame TUI TUI Cross-Panel Event Bus (Story 110-1).
 
 Verifies:
   AC1: PanelEvent base message class and NavigateToFile event defined in events.py
@@ -7,7 +7,7 @@ Verifies:
   AC4: Footer shows context-sensitive bindings per active panel
   AC5: Existing j/k/e/n/p bindings continue to work unchanged
 
-Run with: python -m pytest tests/python/test_bikerack_event_bus.py -v
+Run with: python -m pytest tests/python/test_tui_event_bus.py -v
 """
 
 from __future__ import annotations

@@ -38,7 +38,7 @@ pf workflow type tdd
 pf workflow type architecture
 # Returns: stepped
 
-# Emit handoff marker for BikeRack GUI
+# Emit handoff marker for Frame GUI
 pf workflow handoff reviewer
 ```
 

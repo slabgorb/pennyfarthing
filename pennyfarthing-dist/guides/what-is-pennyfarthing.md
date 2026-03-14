@@ -8,7 +8,7 @@ A Claude Code agent orchestration framework. It coordinates multiple AI agents t
 |--------|-------------|
 | **Development Platform** | 11 agents hand off work through BikeLane workflows. Phased workflows (TDD, BDD, trivial, agent-docs, patch) drive agents through phases automatically. Stepped workflows (architecture, research, PRD) guide users through gated steps. |
 | **Personality Research** | 100 themed persona sets (Discworld, Star Trek, Breaking Bad, etc.) studied for how character traits affect agent behavior. OCEAN profiling, TRAIL error taxonomy, benchmarking. |
-| **Integration & Tooling** | Visual dashboards (BikeRack GUI and TUI panels), Jira sync, sprint tracking, codebase health analysis. |
+| **Integration & Tooling** | Visual dashboards (Frame GUI and TUI panels), Jira sync, sprint tracking, codebase health analysis. |
 
 ## How BikeLane Workflows Work
 
@@ -43,8 +43,8 @@ Each agent does its job, writes an assessment, passes the gate, and hands off to
 | Term | What It Is |
 |------|-----------|
 | **BikeLane** | Workflow engine — the core of Pennyfarthing. Defines phase order, agents, gates, tandem pairings, and team composition. Every structured task runs through a BikeLane. |
-| **BikeRack** | Dashboard panel viewer — browser (GUI) or terminal (TUI), alongside your Claude Code session |
-| **WheelHub** | Local server powering dashboard panels via API |
+| **Frame** | Dashboard panel viewer — browser (GUI) or terminal (TUI), alongside your Claude Code session |
+| **Frame** | Local server powering dashboard panels via API |
 | **Prime** | Context loader — assembles agent definition, persona, session state, and sidecar memory |
 | **TirePump** | Context clearing — resets conversation when approaching limits |
 | **Handoff** | Agent transition — assessment → gate check → phase complete → next agent activates |
@@ -66,8 +66,8 @@ Each agent does its job, writes an assessment, passes the gate, and hands off to
 | Mode | How | For |
 |------|-----|-----|
 | **CLI only** | `claude` | Agents in your terminal, no dashboard |
-| **BikeRack GUI** | `just gui` + `just claude` | Dashboard in browser, Claude in terminal |
-| **BikeRack TUI** | `pf bikerack start` or `just tui` + `just claude` | Dashboard in terminal alongside Claude |
+| **Frame GUI** | `just gui` + `just claude` | Dashboard in browser, Claude in terminal |
+| **Frame TUI** | `pf frame start` or `just tui` + `just claude` | Dashboard in terminal alongside Claude |
 
 ## What Pennyfarthing Is NOT
 
