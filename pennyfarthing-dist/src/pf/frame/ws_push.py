@@ -488,8 +488,11 @@ CHANNEL_FETCHERS: dict[str, Any] = {
     "subagent-transitions": fetch_subagent_transitions,
 }
 
-# Channels that should be polled periodically (their data changes externally)
-POLL_CHANNELS = {"git", "diffs", "sprint", "story", "context", "benchmark-history", "persona", "spans", "token-stats", "subagent-transitions", "settings"}
+# Channels that should be polled periodically (their data changes externally via files).
+# Event-driven channels (spans, token-stats, subagent-transitions) are broadcast in
+# real-time from OTLP/API endpoints and must NOT be polled — polling sends "init"
+# messages that clear panel state.
+POLL_CHANNELS = {"git", "diffs", "sprint", "story", "context", "benchmark-history", "persona", "settings"}
 
 
 async def send_initial_data(websocket: Any, channel: str) -> None:
@@ -507,7 +510,12 @@ async def send_initial_data(websocket: Any, channel: str) -> None:
 
 
 async def poll_and_broadcast(broadcast_fn: Any) -> None:
-    """Periodically fetch data for poll channels and broadcast to clients."""
+    """Periodically fetch data for poll channels and broadcast to clients.
+
+    Rewrites ``type`` from ``init`` to ``update`` so panels distinguish
+    between the initial connection payload (which may trigger a full
+    reload/clear) and periodic refreshes.
+    """
 
     from pf.frame.app import _ws_clients
 
@@ -521,6 +529,9 @@ async def poll_and_broadcast(broadcast_fn: Any) -> None:
                 continue
             try:
                 data = await asyncio.get_event_loop().run_in_executor(None, fetcher)
+                # Rewrite "init" → "update" so panels don't clear on poll
+                if isinstance(data, dict) and data.get("type") == "init":
+                    data = {**data, "type": "update"}
                 await broadcast_fn(channel, data)
             except Exception:
                 pass
