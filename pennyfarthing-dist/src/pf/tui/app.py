@@ -621,7 +621,7 @@ class TuiApp(App):
         return _layout_order.get_layout_order(config)
 
     def compose(self) -> ComposeResult:
-        project_dir_name = Path(os.environ.get("WHEELHUB_PROJECT_DIR") or os.getcwd()).name
+        project_dir_name = Path(os.environ.get("FRAME_PROJECT_DIR") or os.getcwd()).name
         self._status_footer = StatusFooter(
             project_dir=project_dir_name,
             client=self._client,

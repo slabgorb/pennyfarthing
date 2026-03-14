@@ -34,7 +34,7 @@ def frame(ctx):
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory (where .pennyfarthing/ lives). Falls back to WHEELHUB_PROJECT_DIR env var, then cwd.",
+    help="Project directory (where .pennyfarthing/ lives). Falls back to FRAME_PROJECT_DIR env var, then cwd.",
 )
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def start(project_dir, dry_run):
@@ -98,7 +98,7 @@ def start(project_dir, dry_run):
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to FRAME_PROJECT_DIR env var, then cwd.",
 )
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def stop(project_dir, dry_run):
@@ -125,7 +125,7 @@ def stop(project_dir, dry_run):
     "--project-dir",
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     default=None,
-    help="Project directory. Falls back to WHEELHUB_PROJECT_DIR env var, then cwd.",
+    help="Project directory. Falls back to FRAME_PROJECT_DIR env var, then cwd.",
 )
 def status(project_dir):
     """Show Frame running state."""

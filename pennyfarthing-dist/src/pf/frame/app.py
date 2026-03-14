@@ -76,8 +76,8 @@ def _resolve_port() -> int:
 
 
 def _resolve_project_dir() -> Path | None:
-    """Resolve project dir from WHEELHUB_PROJECT_DIR env."""
-    env = os.environ.get("WHEELHUB_PROJECT_DIR")
+    """Resolve project dir from FRAME_PROJECT_DIR env."""
+    env = os.environ.get("FRAME_PROJECT_DIR")
     return Path(env) if env else None
 
 

@@ -38,8 +38,8 @@ tips:
   # Tools and utilities
   - "Use /pf-git for multi-repo status and cleanup"
   - "Use /pf-check to run quality gates before handoff"
-  - "Run /pf-bc to manage BikeRack panel focus"
-  - "Use pf bikerack start for a panel dashboard alongside CLI"
+  - "Run /pf-bc to manage TUI panel focus"
+  - "Use pf frame start for a panel dashboard alongside CLI"
   - "/pf-ci detects and runs CI checks locally"
   - "Try /pf-brainstorming for structured problem solving"
   - "/pf-retro runs a sprint retrospective"

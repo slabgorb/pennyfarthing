@@ -1,4 +1,4 @@
-"""Repo field metadata registry for BikeRack TUI Repos panel.
+"""Repo field metadata registry for TUI Repos panel.
 
 Maps each known repo field to a RepoFieldSpec that describes its UI widget type,
 group, and options. Used by ReposPanel to render per-repo settings.

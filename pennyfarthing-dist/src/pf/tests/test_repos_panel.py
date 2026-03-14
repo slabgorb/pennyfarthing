@@ -475,12 +475,12 @@ class TestStatusBar:
 
 
 # ---------------------------------------------------------------------------
-# AC-9: Panel registered in BikeRack
+# AC-9: Panel registered in TUI
 # ---------------------------------------------------------------------------
 
 
 class TestPanelRegistration:
-    """ReposPanel is registered in the BikeRack app and accessible via pf bc repos."""
+    """ReposPanel is registered in the TUI app and accessible via pf bc repos."""
 
     def test_repos_in_panel_registry(self):
         """PANEL_REGISTRY should include ('repos', 'Repos')."""

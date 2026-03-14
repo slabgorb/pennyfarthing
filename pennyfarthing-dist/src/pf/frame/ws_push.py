@@ -15,7 +15,7 @@ POLL_INTERVAL_S = 5.0
 
 
 def _get_project_dir() -> str:
-    return os.environ.get("WHEELHUB_PROJECT_DIR", os.environ.get("PF_PROJECT_DIR", os.getcwd()))
+    return os.environ.get("FRAME_PROJECT_DIR", os.environ.get("PF_PROJECT_DIR", os.getcwd()))
 
 
 # ---------------------------------------------------------------------------

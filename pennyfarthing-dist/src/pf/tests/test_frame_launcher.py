@@ -66,7 +66,7 @@ class TestStartFrame:
             mock_popen.assert_called_once()
 
     def test_sets_project_dir_env_var(self, tmp_path: Path) -> None:
-        """start_frame should set WHEELHUB_PROJECT_DIR in subprocess env."""
+        """start_frame should set FRAME_PROJECT_DIR in subprocess env."""
         with patch("pf.frame.launcher.subprocess.Popen") as mock_popen:
             mock_popen.return_value = MagicMock(pid=12345)
 
@@ -76,10 +76,10 @@ class TestStartFrame:
             popen_kwargs = mock_popen.call_args
             env = popen_kwargs.kwargs.get("env") or popen_kwargs[1].get("env")
             assert env is not None, "Popen should be called with env parameter"
-            assert env.get("WHEELHUB_PROJECT_DIR") == str(tmp_path)
+            assert env.get("FRAME_PROJECT_DIR") == str(tmp_path)
 
     def test_sets_project_dir_env(self, tmp_path: Path) -> None:
-        """start_frame should set WHEELHUB_PROJECT_DIR in subprocess env."""
+        """start_frame should set FRAME_PROJECT_DIR in subprocess env."""
         with patch("pf.frame.launcher.subprocess.Popen") as mock_popen:
             mock_popen.return_value = MagicMock(pid=12345)
 
@@ -87,7 +87,7 @@ class TestStartFrame:
 
             popen_kwargs = mock_popen.call_args
             env = popen_kwargs.kwargs.get("env") or popen_kwargs[1].get("env")
-            assert env.get("WHEELHUB_PROJECT_DIR") == str(tmp_path)
+            assert env.get("FRAME_PROJECT_DIR") == str(tmp_path)
 
     def test_process_is_background(self, tmp_path: Path) -> None:
         """start_frame should not block (background process)."""

@@ -85,7 +85,7 @@ class StatusFooter(Static):
         self.last_update_time: float = 0.0
         self._pwd: str = ""
         self._project_root = (
-            os.environ.get("WHEELHUB_PROJECT_DIR")
+            os.environ.get("FRAME_PROJECT_DIR")
             or os.environ.get("CLAUDE_PROJECT_DIR")
             or os.getcwd()
         )

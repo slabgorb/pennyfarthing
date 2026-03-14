@@ -16,12 +16,12 @@ pf *args:
     fi
 
 # Start Frame server (API + WebSocket + OTEL ingestion)
-# Stops existing instance first if running. Writes .frame-port and frame.pid.
+# Stops existing instance first if running. Writes .frame-port and frame-pid.
 frame:
     #!/usr/bin/env bash
     set -euo pipefail
     project_dir="{{root}}"
-    pid_file="$project_dir/.pennyfarthing/frame.pid"
+    pid_file="$project_dir/frame-pid"
     port_file="$project_dir/.frame-port"
 
     # Stop if already running

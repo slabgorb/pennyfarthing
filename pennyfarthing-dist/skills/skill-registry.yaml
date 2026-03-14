@@ -25,9 +25,9 @@ skills:
 
   pf-bc:
     name: pf-bc
-    description: Panel focus management for BikeRack — set, clear, save, and load panel layouts
+    description: Panel focus management for TUI — set, clear, save, and load panel layouts
     category: tools
-    tags: [panels, layout, bikerack]
+    tags: [panels, layout, tui]
     version: "1.0.0"
     prerequisites: []
     examples:
@@ -294,26 +294,60 @@ skills:
 
   pf-tmux:
     name: tmux
-    description: Pane management for tmux sessions — run commands, list panes, protect claude/tui
+    description: Pane management for tmux sessions — read TUI content, run commands, discover panes, capture output
     category: tools
-    tags: [tmux, panes, terminal, agents]
-    version: "1.0.0"
+    tags: [tmux, panes, terminal, agents, tui, capture, read, screenshot]
+    version: "1.1.0"
     command_group: tmux
     prerequisites: []
     examples:
+      - context: Reading what the TUI pane shows right now
+        invocation: pf tmux read tui
+      - context: Finding which pane is the TUI for this session
+        invocation: pf tmux tui
+      - context: Seeing all panes in this window
+        invocation: pf tmux window
       - context: Running a command in a worker pane
         invocation: /tmux run "npm test"
-      - context: Listing available panes
+      - context: Listing all panes with role and status
         invocation: /tmux list
+      - context: Capturing content from a specific pane
+        invocation: pf tmux read %42
       - context: Creating a new worker pane
         invocation: /tmux create --title "Dev Agent"
       - context: Closing a worker pane
         invocation: /tmux close worker
     anti_patterns:
       - Never use raw tmux send-keys — use pf tmux run or pf tmux send
-      - Never target claude or tui panes
+      - Never use raw tmux capture-pane — use pf tmux read
+      - Never target claude or tui panes for send/close — they are protected
+      - Never guess pane IDs — use pf tmux tui or pf tmux window to discover them
     related_skills: [pf-just]
-    keywords: [tmux, panes, terminal, worker, split, send-keys, protected, idle]
+    keywords: [tmux, panes, terminal, worker, split, send-keys, protected, idle, tui, read, capture, screenshot, look, see, view, display, content, output, pane-id, discover, find, window]
+
+  pf-handoff:
+    name: handoff
+    description: Phase gate resolution, session transitions, and agent handoff markers — the exit protocol every agent runs
+    category: workflow
+    tags: [handoff, gate, phase, transition, exit, agent, marker, relay]
+    version: "1.0.0"
+    command_group: handoff
+    prerequisites: []
+    examples:
+      - context: Running the exit protocol (resolve gate, complete phase, emit marker)
+        invocation: pf handoff resolve-gate 105-1 tdd green
+      - context: Completing a phase transition
+        invocation: pf handoff complete-phase 105-1 tdd green review tests_pass
+      - context: Emitting a handoff marker to the next agent
+        invocation: pf handoff marker dev
+      - context: Checking current handoff state
+        invocation: pf handoff status --json
+    anti_patterns:
+      - Never skip resolve-gate — it validates the assessment exists
+      - Never call marker without complete-phase first — session won't update
+      - Always run in order: resolve-gate → complete-phase → marker
+    related_skills: [pf-workflow]
+    keywords: [handoff, gate, phase, transition, exit, agent, marker, relay, resolve, complete, session, assessment, next-agent, phase-check, exit-protocol, hand-off, hand off]
 
   pf-testing:
     name: pf-testing
