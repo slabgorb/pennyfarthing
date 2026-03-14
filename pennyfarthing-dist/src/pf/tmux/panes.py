@@ -133,6 +133,22 @@ def send_keys(pane_id: str, keys: str) -> dict:
     return _run_tmux("send-keys", "-t", pane_id, keys, "Enter")
 
 
+def capture_pane(pane_id: str, history: int = 0) -> dict:
+    """Capture the visible content of a pane.
+
+    Args:
+        pane_id: Target pane (e.g. %257).
+        history: Number of scrollback lines to include (0 = visible only).
+
+    Returns:
+        {success: True, data: "captured text..."} or {success: False, error: ...}
+    """
+    args = ["capture-pane", "-t", pane_id, "-p"]
+    if history > 0:
+        args.extend(["-S", f"-{history}"])
+    return _run_tmux(*args)
+
+
 def kill_pane(pane_id: str) -> dict:
     """Kill a pane."""
     return _run_tmux("kill-pane", "-t", pane_id)
@@ -162,6 +178,62 @@ _PANE_ICONS = {
     "saddle": "󱄅",
 }
 _FALLBACK_ICON = "◆"
+
+
+def get_window_for_pane(pane_id: str) -> dict:
+    """Get the window ID that contains a given pane.
+
+    Returns:
+        {success: True, data: "@1"} or {success: False, error: ...}
+    """
+    return _run_tmux("display-message", "-t", pane_id, "-p", "#{window_id}")
+
+
+def list_window_panes(window_id: str) -> dict:
+    """List all panes in a specific window.
+
+    Returns:
+        {success: True, data: [{pane_id, title, command, width, height}, ...]}
+    """
+    fmt = "#{pane_id}\t#{pane_title}\t#{pane_current_command}\t#{pane_width}\t#{pane_height}"
+    result = _run_tmux("list-panes", "-t", window_id, "-F", fmt)
+    if not result["success"]:
+        return result
+
+    panes = []
+    for line in result["data"].splitlines():
+        parts = line.split("\t")
+        if len(parts) >= 5:
+            panes.append({
+                "pane_id": parts[0],
+                "title": parts[1],
+                "command": parts[2],
+                "width": int(parts[3]),
+                "height": int(parts[4]),
+            })
+    return {"success": True, "data": panes}
+
+
+def find_sibling_tui(cli_pane_id: str) -> dict:
+    """Find the TUI pane in the same window as the given CLI pane.
+
+    Returns:
+        {success: True, data: {pane_id, title, width, height}} or {success: False, error: ...}
+    """
+    win_result = get_window_for_pane(cli_pane_id)
+    if not win_result["success"]:
+        return win_result
+
+    window_id = win_result["data"]
+    panes_result = list_window_panes(window_id)
+    if not panes_result["success"]:
+        return panes_result
+
+    for pane in panes_result["data"]:
+        if "tui" in pane["title"].lower():
+            return {"success": True, "data": pane}
+
+    return {"success": False, "error": f"No TUI pane found in window {window_id}"}
 
 
 def get_pane_icon(role: str) -> str:
