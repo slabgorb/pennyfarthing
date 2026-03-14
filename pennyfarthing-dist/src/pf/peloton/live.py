@@ -114,14 +114,15 @@ def _extract_agents(data: dict[str, Any]) -> list[str] | None:
         return None
     
     # Extract unique agent roles, preserving first-seen order
+    # Exclude SM — SM is the team lead in the main session, not a teammate
     seen: set[str] = set()
     agents: list[str] = []
     for phase in phases:
         agent = phase.get("agent")
-        if agent and agent not in seen:
+        if agent and agent not in seen and agent != "sm":
             seen.add(agent)
             agents.append(agent)
-    
+
     return agents if agents else None
 
 
@@ -206,21 +207,23 @@ def spawn_panes(
 
 
 def activate_next(project_root: Path) -> dict[str, Any]:
-    """Activate the next workflow phase's agent in its pane.
+    """Activate the next agent in the peloton workflow.
 
-    Determines which agent to activate based on state. On first call,
-    activates the first agent. On subsequent calls, advances to next.
+    Returns team-mode activation data for the caller (SM as team lead)
+    to spawn the agent as a teammate via TeamCreate/Agent/SendMessage.
 
     Returns:
-        {success: True, data: {role, pane_id, command}} or error
+        {success: True, data: {role, team_name, prompt, story_id}} or error
     """
     state = load_state(project_root)
-    if not state.get("active") or not state.get("panes"):
+    if not state.get("active"):
         return {"success": False, "error": "No peloton session active. Run 'pf peloton start' first."}
 
     workflow_name = state.get("workflow")
     if not workflow_name:
         return {"success": False, "error": "No workflow in peloton state"}
+
+    story_id = state.get("story_id")
 
     # Get ordered agents from workflow
     agents_result = get_workflow_agents(workflow_name, project_root)
@@ -242,25 +245,24 @@ def activate_next(project_root: Path) -> dict[str, Any]:
         except ValueError:
             next_role = agents[0]
 
-    pane_info = state["panes"].get(next_role)
-    if not pane_info:
-        return {"success": False, "error": f"No pane for role '{next_role}'"}
-
-    pane_id = pane_info["pane_id"]
-    command = f'claude -p "$(pf agent start {next_role})"'
-
-    # Try to send command to tmux pane (no-op in tests without tmux)
-    try:
-        _panes.send_keys(pane_id, command)
-    except Exception:
-        pass
+    team_name = f"peloton-{story_id}"
+    prompt = f'Run `pf agent start {next_role}`. Story: {story_id}.'
 
     # Update state
     state["active_role"] = next_role
-    state["panes"][next_role]["agent_started"] = True
+    if next_role in state.get("panes", {}):
+        state["panes"][next_role]["agent_started"] = True
     save_state(project_root, state)
 
-    return {"success": True, "data": {"role": next_role, "pane_id": pane_id, "command": command}}
+    return {
+        "success": True,
+        "data": {
+            "role": next_role,
+            "team_name": team_name,
+            "prompt": prompt,
+            "story_id": story_id,
+        },
+    }
 
 
 def switch_to(project_root: Path, role: str) -> dict[str, Any]:

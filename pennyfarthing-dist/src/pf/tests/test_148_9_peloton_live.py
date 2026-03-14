@@ -184,13 +184,14 @@ class TestSpawnPanes:
 class TestActivateNext:
     """AC-2: `pf peloton next` activates the next phase's agent."""
 
-    def test_activate_next_returns_role_and_pane(self, project_root: Path):
-        """Should return which role was activated and in which pane."""
+    def test_activate_next_returns_role_and_team_data(self, project_root: Path):
+        """Should return which role was activated and team-mode data."""
         spawn_panes(project_root, "148-9", "tdd")
         result = activate_next(project_root)
         assert result["success"] is True
         assert "role" in result["data"]
-        assert "pane_id" in result["data"]
+        assert "team_name" in result["data"]
+        assert "prompt" in result["data"]
 
     def test_activate_next_updates_active_role(self, project_root: Path):
         """State should track which role is currently active."""
@@ -214,13 +215,13 @@ class TestActivateNext:
         result = activate_next(project_root)
         assert result["success"] is False
 
-    def test_activate_next_includes_command(self, project_root: Path):
-        """Should return the claude command that was sent to the pane."""
+    def test_activate_next_includes_prompt(self, project_root: Path):
+        """Should return a prompt for the Agent tool with pf agent start."""
         spawn_panes(project_root, "148-9", "tdd")
         result = activate_next(project_root)
         assert result["success"] is True
-        assert "command" in result["data"]
-        assert "claude" in result["data"]["command"] or "pf" in result["data"]["command"]
+        assert "prompt" in result["data"]
+        assert "pf agent start" in result["data"]["prompt"]
 
 
 # ---------------------------------------------------------------------------
