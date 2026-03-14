@@ -288,9 +288,9 @@ class TestTuiHeaderFollowsAgentChange:
 
     @pytest.fixture
     def app(self):
-        from pf.tui.tui import Frame TUIApp
+        from pf.tui.app import TuiApp
 
-        return Frame TUIApp()
+        return TuiApp()
 
     async def test_header_updates_role_on_agent_change(self, app):
         """Header should show new role when agent changes sm → tea."""
