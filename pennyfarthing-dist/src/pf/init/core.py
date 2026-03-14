@@ -622,11 +622,11 @@ def _copy_tree(src: Path, dst: Path) -> None:
 
 
 def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
-    """Install tmux config samples and launcher to the project root.
+    """Install tmux config and session launcher to the project root.
 
-    Copies tmux.conf.template variants as *-sample files and installs
-    the tmux-dev launcher. Skips files that already exist (user may
-    have customized them).
+    Creates symlinks for tmux.conf.* pointing to templates, and installs
+    the start-session launcher. Symlinks are always recreated; the launcher
+    is always overwritten (framework code, not user-customizable).
 
     Returns:
         List of installed file names.
@@ -634,30 +634,42 @@ def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
     templates_dir = dist_root / "templates"
     installed: list[str] = []
 
-    # Map template files to their installed names
-    tmux_files = {
-        "tmux.conf.vert.template": "tmux.conf.vert-sample",
-        "tmux.conf.right.template": "tmux.conf.right-sample",
-        "tmux.conf.left.template": "tmux.conf.left-sample",
-        "tmux-dev.template": "tmux-dev",
+    # Symlink tmux config files to templates
+    tmux_configs = {
+        "tmux.conf.vert.template": "tmux.conf.vert",
+        "tmux.conf.right.template": "tmux.conf.right",
+        "tmux.conf.left.template": "tmux.conf.left",
     }
 
-    for template_name, dest_name in tmux_files.items():
+    for template_name, dest_name in tmux_configs.items():
         src = templates_dir / template_name
         dest = target_dir / dest_name
         if not src.is_file():
             continue
-        # Always overwrite tmux-dev (framework code), skip config samples if customized
-        if dest.exists() and dest_name != "tmux-dev":
-            continue
-        # Remove existing symlinks/files that resolve to the same path (avoids SameFileError)
-        if dest.is_symlink() or (dest.exists() and dest.resolve() == src.resolve()):
+        # Remove existing file/symlink before creating new symlink
+        if dest.exists() or dest.is_symlink():
             dest.unlink()
-        shutil.copy2(src, dest)
-        # Make tmux-dev executable
-        if dest_name == "tmux-dev":
-            dest.chmod(dest.stat().st_mode | 0o111)
+        dest.symlink_to(src.relative_to(target_dir))
         installed.append(dest_name)
+
+    # Copy start-session launcher (always overwrite — framework code)
+    launcher_src = templates_dir / "start-session.template"
+    launcher_dest = target_dir / "start-session"
+    if launcher_src.is_file():
+        if launcher_dest.is_symlink() or (
+            launcher_dest.exists()
+            and launcher_dest.resolve() == launcher_src.resolve()
+        ):
+            launcher_dest.unlink()
+        shutil.copy2(launcher_src, launcher_dest)
+        launcher_dest.chmod(launcher_dest.stat().st_mode | 0o111)
+        installed.append("start-session")
+
+    # Clean up legacy files from previous naming
+    for legacy in ("tmux-dev", "tmux.conf.vert-sample", "tmux.conf.right-sample", "tmux.conf.left-sample"):
+        legacy_path = target_dir / legacy
+        if legacy_path.exists() or legacy_path.is_symlink():
+            legacy_path.unlink()
 
     return installed
 

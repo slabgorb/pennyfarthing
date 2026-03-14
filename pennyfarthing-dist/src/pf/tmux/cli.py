@@ -29,13 +29,18 @@ from pf.tmux.registry import (
 
 
 def _get_context() -> tuple:
-    """Get project root and session name, or exit with error."""
+    """Get project root and session name, or exit with error.
+
+    Auto-starts a tmux server on the pf socket if none is running.
+    """
     root = get_project_root()
 
     if not panes.is_tmux_running():
-        click.echo("Error: No tmux server running on pf socket.", err=True)
-        click.echo("Start with: just dev", err=True)
-        raise SystemExit(1)
+        ensure_result = panes.ensure_server()
+        if not ensure_result["success"]:
+            click.echo(f"Error: Could not start tmux server: {ensure_result['error']}", err=True)
+            raise SystemExit(1)
+        click.echo("Started tmux server on pf socket.", err=True)
 
     session_result = panes.get_session_name()
     if not session_result["success"]:

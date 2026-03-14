@@ -93,6 +93,7 @@ Read guides for detailed behavior, key files, and APIs. All paths relative to `p
 |-----------|-------|---------|
 | BikeLane | `guides/bikelane.md` | Workflow engine — phased, stepped, procedural |
 | TUI | `guides/tui.md` | TUI dashboard for CLI-first dev |
+| tmux | `guides/tmux.md` | tmux integration — server lifecycle, panes, config, troubleshooting |
 | Gates | `guides/gates.md` | Phase transition quality checks |
 | Handoff CLI | `guides/handoff-cli.md` | Gate resolution, session transitions, markers |
 | Hooks | `guides/hooks.md` | Claude Code hooks — session, pre/post tool use |

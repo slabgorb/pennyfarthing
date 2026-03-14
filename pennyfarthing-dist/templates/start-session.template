@@ -7,9 +7,9 @@ if ! command -v tmux &>/dev/null; then
   exit 1
 fi
 
-# Pennyfarthing Development - tmux launcher
+# Pennyfarthing session launcher — Claude Code + TUI in tmux
 #
-# Usage: ./tmux-dev [layout] [split] [directory]
+# Usage: ./start-session [layout] [split] [directory]
 #   layout:    bottom (default), top, right, left
 #   split:     TUI pane size as percentage, e.g. 33 (default: 50 for top/bottom, 35 for right/left)
 #   directory: defaults to current working directory
@@ -52,14 +52,9 @@ case "$LAYOUT" in
   left)       CONF_SUFFIX="left" ;;
   right)      CONF_SUFFIX="right" ;;
 esac
-CONF=""
-if [[ -f "$SCRIPT_DIR/tmux.conf.${CONF_SUFFIX}" ]]; then
-  CONF="$SCRIPT_DIR/tmux.conf.${CONF_SUFFIX}"
-elif [[ -f "$SCRIPT_DIR/tmux.conf.${CONF_SUFFIX}-sample" ]]; then
-  CONF="$SCRIPT_DIR/tmux.conf.${CONF_SUFFIX}-sample"
-fi
-if [[ -z "$CONF" ]]; then
-  echo "Error: no tmux config found for layout '${LAYOUT}' (looked for tmux.conf.${CONF_SUFFIX})" >&2
+CONF="$SCRIPT_DIR/tmux.conf.${CONF_SUFFIX}"
+if [[ ! -f "$CONF" ]]; then
+  echo "Error: tmux config not found: $CONF" >&2
   exit 1
 fi
 

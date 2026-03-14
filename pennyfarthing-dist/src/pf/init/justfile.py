@@ -19,8 +19,8 @@ FRAMEWORK_RECIPES: frozenset[str] = frozenset(
         "tui",
         "gui",
         "claude",
-        "tmux-dev",
-        "tmux",
+        "start",
+        "start-at",
     }
 )
 

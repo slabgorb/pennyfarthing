@@ -77,13 +77,13 @@ claude:
 
     exec claude
 
-# Launch tmux dev layout (Claude + TUI in split panes)
-# Usage: just tmux-dev [layout] [split]
+# Start Pennyfarthing session (Claude Code + TUI in tmux split panes)
+# Usage: just start [layout] [split]
 #   layout: bottom (default), top, right, left — where to place the TUI
 #   split:  TUI pane size % (default: 50 for top/bottom, 35 for right/left)
-tmux-dev layout="bottom" split="":
-    exec "{{root}}/tmux-dev" "{{layout}}" {{split}}
+start layout="bottom" split="":
+    exec "{{root}}/start-session" "{{layout}}" {{split}}
 
-# Launch tmux dev layout for a specific directory
-tmux layout="bottom" split="" dir=invocation_directory():
-    exec "{{root}}/tmux-dev" "{{layout}}" {{split}} "{{dir}}"
+# Start Pennyfarthing session for a specific project directory
+start-at layout="bottom" split="" dir=invocation_directory():
+    exec "{{root}}/start-session" "{{layout}}" {{split}} "{{dir}}"

@@ -1,5 +1,5 @@
 # Pennyfarthing Development - tmux config (sidebar right)
-# Usage: ./tmux-dev (launcher script)
+# Usage: just start (or ./start-session)
 #
 # Layout (sidebar right):
 # ┌─────────────────────────┬────────────┐

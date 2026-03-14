@@ -38,11 +38,42 @@ def is_tmux_running() -> bool:
     return result["success"]
 
 
+BARE_SESSION_PREFIX = "pf-bare-"
+
+
+def ensure_server() -> dict:
+    """Ensure a tmux server is running on the pf socket.
+
+    If no server exists, creates a detached "bare" session so pane
+    commands work immediately without requiring `just start` first.
+    The bare session uses a distinct prefix (pf-bare-*) so it never
+    collides with start-session's naming scheme (pf-<project>-N).
+
+    Returns:
+        {success: True, data: "session_name"} or {success: False, error: ...}
+    """
+    if is_tmux_running():
+        return {"success": True, "data": "already_running"}
+
+    import os
+
+    project = os.path.basename(os.getcwd())
+    session_name = f"{BARE_SESSION_PREFIX}{project}"
+
+    result = _run_tmux("new-session", "-d", "-s", session_name)
+    if not result["success"]:
+        return result
+
+    return {"success": True, "data": session_name}
+
+
 def get_session_name() -> dict:
     """Get the current attached session name on the pf socket.
 
     Uses display-message to resolve the attached session rather than
     listing all sessions (which would pick the first alphabetically).
+    When listing, prefers real sessions (from start-session) over bare
+    auto-started sessions.
 
     Returns:
         {success: True, data: "pf-pf-2-0"} or {success: False, error: ...}
@@ -59,7 +90,10 @@ def get_session_name() -> dict:
     sessions = result["data"].splitlines()
     if not sessions:
         return {"success": False, "error": "No tmux sessions found on pf socket"}
-    return {"success": True, "data": sessions[0]}
+
+    # Prefer real sessions over bare auto-started ones
+    real = [s for s in sessions if not s.startswith(BARE_SESSION_PREFIX)]
+    return {"success": True, "data": real[0] if real else sessions[0]}
 
 
 def list_live_panes(session: str) -> dict:

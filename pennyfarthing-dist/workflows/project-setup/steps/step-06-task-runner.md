@@ -16,7 +16,7 @@ Create a justfile or Makefile in the orchestrator that proxies commands to subre
 - justfile or Makefile created/updated
 - Recipes for each subrepo
 - Common orchestrator commands (test-all, build-all, dev)
-- Framework recipes imported (frame, frame, tui, claude, tmux-dev)
+- Framework recipes imported (frame, frame, tui, claude, start)
 - User has approved the configuration
 </output>
 
@@ -192,7 +192,7 @@ tui
 claude
 
 # Launch tmux dev layout (Claude + TUI in split panes)
-tmux-dev
+start
 
 # Run any pf CLI command
 pf <command>
@@ -230,7 +230,7 @@ Generated recipes:
   ✓ test-all, build-all, install-all
   ✓ Per-repo: test-{repo}, build-{repo}, dev-{repo}
   ✓ Orchestrator: dev, status, clone-repos
-  ✓ Framework: frame, frame, tui, claude, tmux-dev, pf
+  ✓ Framework: frame, frame, tui, claude, start, pf
 
 (switch prompt presents options)
 ```

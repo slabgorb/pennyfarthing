@@ -54,11 +54,11 @@ def mock_dist(tmp_path: Path) -> Path:
         "claude:\n"
         "    exec claude\n"
         "\n"
-        "tmux-dev:\n"
-        '    exec "{{root}}/tmux-dev"\n'
+        "start:\n"
+        '    exec "{{root}}/start-session"\n'
         "\n"
-        "tmux dir=invocation_directory():\n"
-        '    "{{root}}/tmux-dev" "{{dir}}"\n'
+        "start-at dir=invocation_directory():\n"
+        '    "{{root}}/start-session" "{{dir}}"\n'
     )
 
     return dist
