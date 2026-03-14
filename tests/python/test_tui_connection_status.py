@@ -1,13 +1,13 @@
-"""Tests for BikeRack TUI connection status indicator (Story 103-4).
+"""Tests for Frame TUI TUI connection status indicator (Story 103-4).
 
 Verifies:
   AC1: TUI header shows connection status indicator
   AC2: Indicator displays three states: connected (green), disconnected (red), reconnecting (yellow)
-  AC3: Connection status updates within 5 seconds of WheelHub state change
+  AC3: Connection status updates within 5 seconds of Frame state change
   AC4: TUI remains responsive while disconnected
   AC5: Connection status persists through panel switches
 
-Run with: python -m pytest tests/python/test_bikerack_connection_status.py -v
+Run with: python -m pytest tests/python/test_tui_connection_status.py -v
 """
 
 from unittest.mock import AsyncMock, patch
@@ -81,7 +81,7 @@ class TestConnectionStatusWidget:
 
 
 class TestConnectionStatusWithClient:
-    """AC3: Connection status updates from WheelHub state changes."""
+    """AC3: Connection status updates from Frame state changes."""
 
     async def test_client_connected_updates_widget(self):
         """AC3: Widget updates when client transitions to CONNECTED."""
@@ -134,7 +134,7 @@ class TestTUIResponsiveness:
             assert pilot.app._exit
 
     async def test_app_without_client_is_functional(self):
-        """App is fully functional without a WheelHub client."""
+        """App is fully functional without a Frame client."""
         app = TuiApp()
         async with app.run_test():
             assert len(app.query("Header")) > 0

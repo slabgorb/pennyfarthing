@@ -478,7 +478,7 @@ class TestValidPanels:
     """Verify the VALID_PANELS constant is correct."""
 
     def test_contains_all_expected_panels(self) -> None:
-        """VALID_PANELS should contain all BikeRack + Cyclist panels."""
+        """VALID_PANELS should contain all Frame TUI + Cyclist panels."""
         expected = {
             "sprint",
             "git",

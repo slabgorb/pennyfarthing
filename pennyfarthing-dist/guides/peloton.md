@@ -137,15 +137,15 @@ Prints a detection heatmap showing which findings each theme catches and by whic
 
 ### OTEL Telemetry
 
-If WheelHub (BikeRack server) is running, benchmark runs auto-detect it and send OTEL traces for tool-use timing analysis:
+If Frame (Frame server) is running, benchmark runs auto-detect it and send OTEL traces for tool-use timing analysis:
 
 ```bash
 # Explicit endpoint
 pf benchmark replay run scenarios/dpgd-116.yaml --otel-endpoint http://localhost:3456
 
-# Auto-detect from running WheelHub (reads .bikerack-port)
+# Auto-detect from running Frame (reads .frame-port)
 pf benchmark replay run scenarios/dpgd-116.yaml
-# Output: [OTEL] Auto-detected WheelHub at http://localhost:3456
+# Output: [OTEL] Auto-detected Frame at http://localhost:3456
 ```
 
 ## How a Run Works

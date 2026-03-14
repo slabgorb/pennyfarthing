@@ -39,8 +39,8 @@ skills:
         invocation: /bc reset
     anti_patterns:
       - Don't manually edit config.local.yaml to set panel focus — use this skill
-    related_skills: [pf-gui]
-    keywords: [bikerack, panel, focus, layout, dockview, panel-focus, dashboard]
+    related_skills: []
+    keywords: [panel, focus, layout, panel-focus, dashboard]
 
   pf-changelog:
     name: pf-changelog
@@ -114,22 +114,7 @@ skills:
     related_skills: [pf-sprint, pf-context-engineering]
     keywords: [context, epic, story, template, schema, planning, creation]
 
-  pf-gui:
-    name: pf-gui
-    description: BikeRack GUI detection and status for Claude Code monitoring
-    category: tools
-    tags: [visual, monitoring, gui, bikerack]
-    version: "1.0.0"
-    prerequisites: []
-    examples:
-      - context: Checking GUI status
-        invocation: /gui
-      - context: Debugging sessions
-        invocation: /gui debug
-    anti_patterns:
-      - Don't run BikeRack GUI in headless environments
-    related_skills: []
-    keywords: [gui, bikerack, visualization, dashboard]
+
 
   pf-finalize-run:
     name: pf-finalize-run
@@ -225,11 +210,11 @@ skills:
     examples:
       - context: Working with OTEL spans
         invocation: /otel
-      - context: Enriching tool telemetry in BikeRack GUI
+      - context: Enriching tool telemetry in Frame
         invocation: /otel enrichment
     anti_patterns:
       - Don't assume fields exist - verify against this documentation
-    related_skills: [pf-gui]
+    related_skills: []
     keywords: [opentelemetry, spans, traces, enrichment, correlation]
 
   pf-settings:

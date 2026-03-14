@@ -1,4 +1,4 @@
-# ADR-0021: shadcn/ui Component Adoption for BikeRack GUI
+# ADR-0021: shadcn/ui Component Adoption for Frame GUI
 
 ## Status
 
@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-BikeRack GUI's React UI contained 41 hand-built components implementing common patterns: modals, command palettes, toggles, dropdowns, tooltips, progress bars, and more. Each reimplemented behavior that battle-tested libraries handle better -- focus trapping, keyboard navigation, ARIA semantics, click-outside dismissal, scroll management, and portal rendering.
+Frame GUI's React UI contained 41 hand-built components implementing common patterns: modals, command palettes, toggles, dropdowns, tooltips, progress bars, and more. Each reimplemented behavior that battle-tested libraries handle better -- focus trapping, keyboard navigation, ARIA semantics, click-outside dismissal, scroll management, and portal rendering.
 
 ### Problems with Hand-Rolled Components
 
@@ -28,7 +28,7 @@ BikeRack GUI's React UI contained 41 hand-built components implementing common p
 3. **No focus trapping** - Modals could leak focus to background elements
 4. **Browser-default tooltips** - `title` attributes render as ugly, inconsistent OS tooltips
 5. **Inconsistent styling** - Each component had its own button/badge/toggle patterns
-6. **Cross-project divergence** - conductor-ui already uses shadcn; BikeRack GUI had its own patterns
+6. **Cross-project divergence** - conductor-ui already uses shadcn; Frame GUI had its own patterns
 
 ### Why shadcn/ui
 
@@ -36,15 +36,15 @@ shadcn is not a component library -- it's a collection of copy-paste components 
 
 **Key properties:**
 - **Headless behavior from Radix** - Focus traps, keyboard nav, ARIA, portals, scroll lock
-- **Styled via Tailwind** - Integrates with BikeRack GUI's existing Tailwind v4 setup
+- **Styled via Tailwind** - Integrates with Frame GUI's existing Tailwind v4 setup
 - **Copy-paste ownership** - Components live in `src/public/components/ui/`, fully customizable
-- **CSS variable theming** - Maps cleanly to BikeRack GUI's runtime theme system (30+ presets)
+- **CSS variable theming** - Maps cleanly to Frame GUI's runtime theme system (30+ presets)
 - **Consistent API** - All components follow the same composition patterns
 - **Conductor alignment** - conductor-ui uses the same shadcn new-york style
 
 ## Decision
 
-Adopt shadcn/ui (new-york style) across BikeRack GUI's entire React UI in three tiers:
+Adopt shadcn/ui (new-york style) across Frame GUI's entire React UI in three tiers:
 
 1. **Tier 1 (High Impact):** Replace 6 complex custom components with shadcn equivalents
 2. **Tier 2 (Consistency):** Adopt Button, Badge, Tooltip, Switch, Select, Collapsible, ScrollArea across all components
@@ -67,12 +67,12 @@ Adopt shadcn/ui (new-york style) across BikeRack GUI's entire React UI in three 
 
 ### Setup: CSS Variable Bridge
 
-The critical enabler is a CSS variable bridge in `tailwind.config.js` that maps BikeRack GUI's runtime theme variables to shadcn's expected tokens:
+The critical enabler is a CSS variable bridge in `tailwind.config.js` that maps Frame GUI's runtime theme variables to shadcn's expected tokens:
 
 ```javascript
 // tailwind.config.js
 colors: {
-  // shadcn tokens → BikeRack GUI CSS variables
+  // shadcn tokens → Frame GUI CSS variables
   background: 'var(--bg-primary)',
   foreground: 'var(--text-primary)',
   primary: { DEFAULT: 'var(--bg-primary)', foreground: 'var(--text-primary)' },
@@ -85,7 +85,7 @@ colors: {
 }
 ```
 
-This means all 30+ BikeRack GUI theme presets automatically work with shadcn components -- no per-theme overrides needed.
+This means all 30+ Frame GUI theme presets automatically work with shadcn components -- no per-theme overrides needed.
 
 ### Infrastructure Created
 
@@ -160,7 +160,7 @@ tailwind-merge@3.4.0, lucide-react@0.563.0
 
 - **~600+ lines of custom UI infrastructure removed** across Tier 1 components
 - **Consistent accessibility** - Radix provides correct ARIA roles, keyboard nav, focus trapping across all components
-- **Theme-compatible** - All 30+ BikeRack GUI theme presets work via CSS variable bridge
+- **Theme-compatible** - All 30+ Frame GUI theme presets work via CSS variable bridge
 - **Cross-project alignment** - Same shadcn patterns as conductor-ui
 - **Better UX** - Styled tooltips replace browser `title` attrs, skeleton loading replaces "Loading..." text, proper focus management in modals
 - **New capabilities** - ThemePalette gained search, CommandPalette got better fuzzy matching via cmdk

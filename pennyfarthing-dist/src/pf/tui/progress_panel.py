@@ -1,4 +1,4 @@
-"""ProgressPanel — Unified story progress view for BikeRack TUI.
+"""ProgressPanel — Unified story progress view for Frame TUI TUI.
 
 Combines sprint-level metrics (burndown, epic progress, velocity, recently
 completed) with story context, workflow phase, acceptance criteria, todos,

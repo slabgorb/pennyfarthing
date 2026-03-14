@@ -1,7 +1,7 @@
-"""Tests for SprintPanel — Sprint status panel for BikeRack TUI.
+"""Tests for SprintPanel — Sprint status panel for Frame TUI TUI.
 
 Story 103-6: SprintPanel implementation
-Epic: 103 — BikeRack TUI (MSSCI-14951)
+Epic: 103 — Frame TUI TUI (MSSCI-14951)
 
 Acceptance Criteria:
 - [AC1] SprintPanel subscribes to /ws/sprint channel
@@ -51,7 +51,7 @@ SAMPLE_INIT_PAYLOAD: dict[str, Any] = {
     "epics": [
         {
             "id": "103",
-            "title": "BikeRack TUI",
+            "title": "Frame TUI TUI",
             "jiraKey": "MSSCI-14510",
             "stories": [
                 {
@@ -125,7 +125,7 @@ SAMPLE_MULTI_EPIC_PAYLOAD: dict[str, Any] = {
     "epics": [
         {
             "id": "101",
-            "title": "BikeRack Mode",
+            "title": "Frame TUI Mode",
             "jiraKey": "MSSCI-14000",
             "stories": [
                 {
@@ -139,7 +139,7 @@ SAMPLE_MULTI_EPIC_PAYLOAD: dict[str, Any] = {
         },
         {
             "id": "103",
-            "title": "BikeRack TUI",
+            "title": "Frame TUI TUI",
             "jiraKey": "MSSCI-14510",
             "stories": [
                 {
@@ -310,11 +310,11 @@ class TestEpicLabel:
     """Epic label builder produces correct Rich Text."""
 
     def test_includes_epic_id_fallback(self) -> None:
-        label = _build_epic_label("103", "BikeRack TUI", 4, 6)
+        label = _build_epic_label("103", "Frame TUI TUI", 4, 6)
         assert "103" in label.plain
 
     def test_includes_jira_key_when_provided(self) -> None:
-        label = _build_epic_label("103", "BikeRack TUI", 4, 6, jira_key="MSSCI-14510")
+        label = _build_epic_label("103", "Frame TUI TUI", 4, 6, jira_key="MSSCI-14510")
         assert "MSSCI-14510" in label.plain
 
     def test_long_id_gets_ellipsed(self) -> None:
@@ -328,12 +328,12 @@ class TestEpicLabel:
         assert len(id_part) <= 11
 
     def test_includes_progress(self) -> None:
-        label = _build_epic_label("103", "BikeRack TUI", 4, 6)
+        label = _build_epic_label("103", "Frame TUI TUI", 4, 6)
         assert "4/6 pts" in label.plain
 
     def test_includes_title(self) -> None:
-        label = _build_epic_label("103", "BikeRack TUI", 4, 6)
-        assert "BikeRack TUI" in label.plain
+        label = _build_epic_label("103", "Frame TUI TUI", 4, 6)
+        assert "Frame TUI TUI" in label.plain
 
     def test_zero_points(self) -> None:
         label = _build_epic_label("100", "Empty", 0, 0)

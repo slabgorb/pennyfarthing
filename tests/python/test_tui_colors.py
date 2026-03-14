@@ -1,6 +1,6 @@
 """Tests for Story 136-4: Extract shared TUI color thresholds and contrast constants.
 
-The BikeRack TUI has color threshold logic (green < 50, yellow <= 80, red > 80)
+The Frame TUI TUI has color threshold logic (green < 50, yellow <= 80, red > 80)
 duplicated across three modules. This story extracts them into a shared
 `colors.py` module. Tests verify the new module's API, that callers use it,
 and that visual output is unchanged.
@@ -12,7 +12,7 @@ Verifies:
   AC4: context_meter_footer.py uses shared warn_style
   AC5: No visual regression at boundary values
 
-Run with: python -m pytest tests/python/test_bikerack_colors.py -v
+Run with: python -m pytest tests/python/test_tui_colors.py -v
 """
 
 from __future__ import annotations

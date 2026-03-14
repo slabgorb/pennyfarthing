@@ -14,7 +14,7 @@ Pennyfarthing agents use Claude Code's `Task` tool with `run_in_background: true
 
 1. **Agents don't actually background properly** - They either don't use `run_in_background`, or they immediately block waiting for output with `TaskOutput { block: true }`, defeating the purpose.
 
-2. **No registration mechanism** - When a background task launches, WheelHub (the coordination server) has no way to know about it until completion.
+2. **No registration mechanism** - When a background task launches, Frame (the coordination server) has no way to know about it until completion.
 
 3. **No "running tasks" visibility** - Users can't see what background agents are currently executing.
 
@@ -33,7 +33,7 @@ Pennyfarthing agents use Claude Code's `Task` tool with `run_in_background: true
                                                 │ IPC on completion
                                                 ▼
                                        ┌─────────────────┐
-                                       │  BikeRack GUI   │
+                                       │  Frame GUI   │
                                        │  (notification) │
                                        └─────────────────┘
 ```
@@ -239,7 +239,7 @@ Keep current approach of only showing completion in message stream.
 - **Rejected:** No visibility into running tasks, no dedicated UI
 
 ### 3. Agent-Side State File
-Agents write to a file, BikeRack GUI watches it.
+Agents write to a file, Frame GUI watches it.
 - **Rejected:** Adds complexity, OTEL spans already provide this data
 
 ## References

@@ -21,7 +21,7 @@ A multi-agent system with customizable BikeLane workflows for structured softwar
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
 - **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
 - **Agent Sidecars** - Persistent learning files where agents record patterns, gotchas, and decisions across stories
-- **BikeRack TUI** - Textual-based terminal dashboard running alongside Claude Code CLI
+- **Frame TUI** - Textual-based terminal dashboard running alongside Claude Code CLI
 
 ### 2. Personality Research
 
@@ -36,7 +36,7 @@ The 45 persona themes (Discworld, Star Trek, Breaking Bad, Alice in Wonderland, 
 
 ### 3. Integration & Tooling
 
-- **BikeRack** - Dashboard panel viewer for CLI-first developers — browser GUI or terminal TUI alongside Claude Code
+- **Frame** - Dashboard panel viewer for CLI-first developers — browser GUI or terminal TUI alongside Claude Code
 - **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity
 - **Sprint Management** - Story tracking with `current-sprint.yaml`
 - **Codebase Analysis** - Hotspots, complexity, dead code, dependencies, code markers, and health score via `pf debug`
@@ -128,15 +128,15 @@ Pennyfarthing works in any terminal. Optional dashboards add real-time visibilit
 | I want to... | Mode | Command |
 |--------------|------|---------|
 | Just use agents in my terminal | **CLI only** | `claude` (no dashboard needed) |
-| See dashboards in my browser | **BikeRack GUI** | `just gui` + `just claude` |
-| Stay fully in the terminal | **BikeRack TUI** | `just tui` + `just claude` |
-| One command, everything | **BikeRack all-in-one** | `pf bikerack start` |
+| See dashboards in my browser | **Frame GUI** | `just gui` + `just claude` |
+| Stay fully in the terminal | **Frame TUI** | `just tui` + `just claude` |
+| One command, everything | **Frame all-in-one** | `pf frame start` |
 
-> **See the full [BikeRack Guide](pennyfarthing-dist/guides/bikerack.md)** for setup, panels, and OTEL telemetry.
+> **See the full [Frame Guide](pennyfarthing-dist/guides/frame.md)** for setup, panels, and OTEL telemetry.
 
 ## Visual Dashboards
 
-BikeRack provides 15 dashboard panels showing real-time agent activity:
+Frame provides 15 dashboard panels showing real-time agent activity:
 
 ### Panels
 
@@ -161,17 +161,17 @@ All panels are draggable, floatable, and splittable:
 
 ### Architecture
 
-BikeRack is powered by **WheelHub**, a Python FastAPI/uvicorn server that serves API endpoints, WebSocket channels, and the OTLP telemetry receiver:
+Frame is powered by **Frame**, a Python FastAPI/uvicorn server that serves API endpoints, WebSocket channels, and the OTLP telemetry receiver:
 
 ```mermaid
 graph TB
-    subgraph "BikeRack"
+    subgraph "Frame"
         BR["Python FastAPI server"]
     end
 
-    BR --> WH["WheelHub<br/>(uvicorn)"]
+    BR --> WH["Frame<br/>(uvicorn)"]
 
-    BR -- "writes" --> BP[".bikerack-port"]
+    BR -- "writes" --> BP[".frame-port"]
 
     WH --> API["/api/* endpoints"]
     WH --> WS["/ws/* channels"]
@@ -180,7 +180,7 @@ graph TB
 
 ### Tool Visualization
 
-BikeRack renders tool use as human-readable summaries instead of raw JSON. Consecutive identical tool calls are stacked, and results are collapsible.
+Frame renders tool use as human-readable summaries instead of raw JSON. Consecutive identical tool calls are stacked, and results are collapsible.
 
 ### Agent Portraits
 
@@ -293,7 +293,7 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | `pf theme list` | Show available themes |
 | `pf theme set <name>` | Change active theme |
 | `pf package list` | Show installable theme plugins |
-| `pf bikerack start` | Launch BikeRack dashboard |
+| `pf frame start` | Launch Frame dashboard |
 | `pf sprint status` | Current sprint overview |
 | `pf workflow list` | Show all workflows |
 | `pf debug hotspots analyze` | Git change frequency analysis |
@@ -308,7 +308,7 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 | Guide | Description |
 |-------|-------------|
 | [BikeLane](pennyfarthing-dist/guides/bikelane.md) | Workflow engine — phased, stepped, procedural |
-| [BikeRack](pennyfarthing-dist/guides/bikerack.md) | Standalone panel viewer for CLI-first development |
+| [Frame](pennyfarthing-dist/guides/frame.md) | Standalone panel viewer for CLI-first development |
 | [Gates](pennyfarthing-dist/guides/gates.md) | Workflow phase transition gates |
 | [Handoff CLI](pennyfarthing-dist/guides/handoff-cli.md) | Phase transitions and marker generation |
 | [Hooks](pennyfarthing-dist/guides/hooks.md) | Hook system configuration and reference |
@@ -372,22 +372,22 @@ your-project/
 
 ## What's New in v13.0.0
 
-- **Python-first architecture (ADR-0034)** — Python owns the runtime: CLI, WheelHub server (FastAPI/uvicorn), hooks, benchmarks. TypeScript/React is GUI-only
-- **BikeRack TUI** — Textual-based terminal dashboard running alongside Claude Code CLI via `pf bikerack start`
-- **WheelHub rewrite** — Python FastAPI server replaces Node.js, serving API endpoints, WebSocket channels, and OTLP telemetry
+- **Python-first architecture (ADR-0034)** — Python owns the runtime: CLI, Frame server (FastAPI/uvicorn), hooks, benchmarks. TypeScript/React is GUI-only
+- **Frame TUI** — Textual-based terminal dashboard running alongside Claude Code CLI via `pf frame start`
+- **Frame rewrite** — Python FastAPI server replaces Node.js, serving API endpoints, WebSocket channels, and OTLP telemetry
 - **Spec-check and spec-reconcile phases** — Architect validates implementation alignment before review, reconciles deviations after
 - **RepoFieldSpec registry** — Typed metadata for repos.yaml fields, enabling TUI editing of project topology
 - **Saddle mode** — Background observer agent summon via `pf saddle summon`
 - **Demo pipeline** — `pf demo generate` builds presentation artifacts from sprint work
 - **Pipeline replay benchmarks** — Full TDD pipeline testing against real PR review findings via `pf benchmark replay`
-- **OTEL telemetry** — Traces, logs, and spans via WheelHub WebSocket channels
+- **OTEL telemetry** — Traces, logs, and spans via Frame WebSocket channels
 
 ### Previous Highlights
 
 - **v12.7** - Judge versioning, pipeline replay framework, theme YAML schema, kitchen-sink workflow
 - **v12.6** - Consumer E2E test suite, gold standard calibration, difficulty profiles
 - **v12.0** - Python-first installation, monorepo consolidation, workflow gates, handoff CLI, output styles
-- **v10.x** - BikeRack Dockview, repos topology, tandem protocol, codebase health dashboard
+- **v10.x** - Frame Dockview, repos topology, tandem protocol, codebase health dashboard
 - **v9.x** - Theme expansion, release workflow, shadcn/ui migration, prime context, bell/relay modes
 - **v8.x** - BikeLane workflows, scientific benchmarking, JobFair, agent sidecars
 

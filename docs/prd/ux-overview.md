@@ -12,8 +12,8 @@ stepsCompleted:
   - step-10-nonfunctional
   - step-11-polish
 inputDocuments:
-  - docs/BIKERACK-GUI-GUIDE.md
-  - docs/BIKERACK-GUI-ARCHITECTURE.md
+  - docs/FRAME-GUI-GUIDE.md
+  - docs/FRAME-GUI-ARCHITECTURE.md
   - docs/USER-GUIDE.md
   - docs/CONFIGURATION.md
   - docs/BIKELANE.md
@@ -160,5 +160,5 @@ classification:
 
 ## User Journeys
 
-*Skipped for this focused improvement PRD. Primary user is the developer using BikeRack GUI for AI-assisted development. All improvements target their daily workflow.*
+*Skipped for this focused improvement PRD. Primary user is the developer using Frame GUI for AI-assisted development. All improvements target their daily workflow.*
 

@@ -1,6 +1,6 @@
-"""WheelHub WebSocket client with auto-reconnect.
+"""Frame WebSocket client with auto-reconnect.
 
-Story 103-2: Python WebSocket client that connects to WheelHub,
+Story 103-2: Python WebSocket client that connects to Frame,
 subscribes to panel channels, receives JSON payloads, dispatches
 to handlers, and auto-reconnects on disconnect with backoff.
 """
@@ -35,9 +35,9 @@ StateChangeCallback = Callable[[ConnectionState], None]
 
 
 class FrameClient:
-    """WebSocket client for WheelHub server.
+    """WebSocket client for Frame server.
 
-    Connects to WheelHub, subscribes to channels, dispatches
+    Connects to Frame, subscribes to channels, dispatches
     JSON messages to registered handlers, auto-reconnects on disconnect.
     """
 
@@ -123,7 +123,7 @@ class FrameClient:
         self._state_callbacks.append(callback)
 
     async def connect(self) -> None:
-        """Connect to WheelHub and start receiving messages.
+        """Connect to Frame and start receiving messages.
 
         Blocks while channel recv loops are running. Returns when all
         loops complete (via CancelledError or disconnect).
@@ -174,7 +174,7 @@ class FrameClient:
                 raise r
 
     async def disconnect(self) -> None:
-        """Disconnect from WheelHub and cancel reconnect timers."""
+        """Disconnect from Frame and cancel reconnect timers."""
         self._stopped = True
 
         for task in self._tasks:

@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-The **Reflector** system is Pennyfarthing's protocol for signaling UI actions from Claude agent output to the visual terminal (BikeRack GUI) and VS Code extension. It uses HTML comment markers that are parsed and converted to interactive UI elements.
+The **Reflector** system is Pennyfarthing's protocol for signaling UI actions from Claude agent output to the visual terminal (Frame GUI) and VS Code extension. It uses HTML comment markers that are parsed and converted to interactive UI elements.
 
 ---
 
@@ -31,7 +31,7 @@ The **Reflector** system is Pennyfarthing's protocol for signaling UI actions fr
               |                                           |
               v                                           v
    +------------------------+              +----------------------------+
-   |  BikeRack GUI          |              |  VS Code Extension         |
+   |  Frame GUI          |              |  VS Code Extension         |
    |  quick-actions.js      |              |  reflector.ts              |
    |  detectStructuredMarkers()            |  detectMarkers()           |
    +------------------------+              +----------------------------+
@@ -117,7 +117,7 @@ TirePump activates when:
 1. `permission_mode == "accept"` (auto-handoff enabled)
 2. `usable_percent > 60%` (tirepump_threshold)
 
-### IPC Channel Flow (BikeRack GUI)
+### IPC Channel Flow (Frame GUI)
 
 ```
 +-------------+   context:clearAndLoad    +--------------+
@@ -191,7 +191,7 @@ TirePump activates when:
 
 ## Implementation Locations
 
-### BikeRack GUI
+### Frame GUI
 
 **Parser:** `packages/cyclist/src/public/js/components/message-view/quick-actions.js`
 
@@ -235,7 +235,7 @@ Single source of truth for marker format. Handles:
 Outputs environment variables:
 - `CONTEXT_PERCENT` - Total context usage
 - `CONTEXT_USABLE_PERCENT` - User conversation usage
-- `IS_GUI` - Running in BikeRack GUI
+- `IS_GUI` - Running in Frame GUI
 - `USE_TIREPUMP` - Should use CONTEXT_CLEAR marker
 
 ---
@@ -285,7 +285,7 @@ packages/vscode-extension/
 |-----------|------|---------|
 | Marker Generator | `pf/handoff/marker.py` | Single source of truth for marker format |
 | Context Checker | `pennyfarthing-dist/scripts/core/check-context.sh` | Calculates context %, TirePump decision |
-| BikeRack GUI Parser | `packages/cyclist/src/public/js/components/message-view/quick-actions.js` | UI marker detection |
+| Frame GUI Parser | `packages/cyclist/src/public/js/components/message-view/quick-actions.js` | UI marker detection |
 | VS Code Parser | `packages/vscode-extension/src/adapters/reflector.ts` | VS Code marker detection |
 | IPC Channels | `packages/cyclist/src/ipc-channels.ts` | Channel constants for TirePump |
 | Preload API | `packages/cyclist/src/preload.ts` | `clearAndReload()` API |
@@ -306,7 +306,7 @@ The Reflector system provides a reliable, extensible mechanism for agent-to-UI c
 
 1. **Design shared marker package structure** - Where in `@pennyfarthing/shared`?
 2. **Extract shared code** - Move detection/stripping to shared package
-3. **Update consumers** - BikeRack GUI and VS Code extension import from shared
+3. **Update consumers** - Frame GUI and VS Code extension import from shared
 4. **Add configuration** - Make TirePump threshold configurable via YAML
 5. **Test coverage** - Unified tests for marker parsing
 6. **Consider marker versioning** - For future extensibility

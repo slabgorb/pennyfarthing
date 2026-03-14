@@ -39,13 +39,13 @@ Project-specific environment setup. Edit this file to:
 
 **Location:** `.pennyfarthing/scripts/hooks/otel-auto-config.sh`
 
-Auto-configures OTEL telemetry for BikeRack GUI. Checks for a `.bikerack-port` file and sets `OTEL_EXPORTER_OTLP_PROTOCOL` and `OTEL_EXPORTER_OTLP_ENDPOINT` to route Claude Code telemetry to the running BikeRack server.
+Auto-configures OTEL telemetry for Frame server. Checks for a `.frame-port` file and sets `OTEL_EXPORTER_OTLP_PROTOCOL` and `OTEL_EXPORTER_OTLP_ENDPOINT` to route Claude Code telemetry to the running Frame server.
 
 #### pf hooks session-start (welcome)
 
 **Location:** `pf hooks session-start`
 
-Welcome display is now folded into `pf hooks session-start`. In CLI mode, shows ASCII art. In BikeRack GUI mode, sends a WebSocket message to display the logo. Runs once per session (lock file guard).
+Welcome display is now folded into `pf hooks session-start`. In CLI mode, shows ASCII art. In Frame mode, sends a WebSocket message to display the logo. Runs once per session (lock file guard).
 
 ### PreToolUse Hooks
 
@@ -62,7 +62,7 @@ Protects sensitive files from accidental edits:
 
 **Location:** `pf hooks pretooluse-forward`
 
-BikeRack GUI pre-tool validation. Runs additional safety checks when operating inside BikeRack GUI.
+Frame pre-tool validation. Runs additional safety checks when operating inside Frame.
 
 #### pf hooks context-warning
 
@@ -110,7 +110,7 @@ Cleans up session state when Claude Code exits.
 
 > **Deprecated.** This hook is part of the legacy marker protocol. It may be removed in a future release.
 
-Stop hook enforcing that every agent turn ends with a reflector marker. Detects questions, handoff phrases, and validates marker presence. Blocks turns without valid markers in BikeRack GUI mode.
+Stop hook enforcing that every agent turn ends with a reflector marker. Detects questions, handoff phrases, and validates marker presence. Blocks turns without valid markers in Frame mode.
 
 ### Git Hooks
 

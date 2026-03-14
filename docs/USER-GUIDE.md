@@ -188,9 +188,9 @@ Pennyfarthing works in any terminal, but optional dashboards give you real-time 
 | I want to... | Mode | Command |
 |--------------|------|---------|
 | Just use agents in my terminal | **CLI only** | `claude` (no dashboard needed) |
-| See dashboards in my browser | **BikeRack GUI** | `just gui` + `just claude` |
-| Stay fully in the terminal | **BikeRack TUI** | `just tui` + `just claude` |
-| One command, everything | **BikeRack all-in-one** | `pf bikerack start` |
+| See dashboards in my browser | **Frame GUI** | `just gui` + `just claude` |
+| Stay fully in the terminal | **Frame TUI** | `just tui` + `just claude` |
+| One command, everything | **Frame all-in-one** | `pf frame start` |
 
 
 ```mermaid
@@ -199,14 +199,14 @@ graph LR
         A["claude"] --> B["Agents work in your terminal<br/>No dashboard"]
     end
 
-    subgraph "BikeRack (dashboard + your terminal)"
-        C["just gui / just tui"] --> D["WheelHub Server"]
+    subgraph "Frame (dashboard + your terminal)"
+        C["just gui / just tui"] --> D["Frame Server"]
         E["just claude"] --> D
         D --> F["Dashboard panels<br/>(browser or TUI)"]
     end
 
-    subgraph "BikeRack GUI (browser dashboard)"
-        G["pf bikerack start"] --> H["Browser dashboard<br/>Dashboard panels"]
+    subgraph "Frame GUI (browser dashboard)"
+        G["pf frame start"] --> H["Browser dashboard<br/>Dashboard panels"]
     end
 ```
 
@@ -214,37 +214,37 @@ graph LR
 
 Claude Code's OTEL SDK initializes before session hooks run. The `CLAUDE_ENV_FILE` mechanism injects vars into Bash subshells, not into Claude's own process. `just claude` sets all 5 OTEL env vars in the process environment *before* `exec claude`, ensuring the SDK picks them up at startup.
 
-`pf bikerack start` handles this automatically.
+`pf frame start` handles this automatically.
 
-> **See the full [BikeRack Guide](../pennyfarthing-dist/guides/bikerack.md)** for detailed quickstart paths, OTEL telemetry setup, and command reference.
+> **See the full [Frame Guide](../pennyfarthing-dist/guides/frame.md)** for detailed quickstart paths, OTEL telemetry setup, and command reference.
 
 ### Architecture
 
-Both display modes are wrappers around **WheelHub**, the Python FastAPI server:
+Both display modes are wrappers around **Frame**, the Python FastAPI server:
 
 ```mermaid
 graph TB
-    subgraph "BikeRack GUI (Browser)"
-        C["pf bikerack start<br/>React UI"]
+    subgraph "Frame GUI (Browser)"
+        C["pf frame start<br/>React UI"]
     end
-    subgraph "BikeRack TUI (Terminal)"
+    subgraph "Frame TUI (Terminal)"
         BR["Python FastAPI server"]
     end
 
-    C --> WH["WheelHub<br/>(uvicorn)"]
+    C --> WH["Frame<br/>(uvicorn)"]
     BR --> WH
 
-    C -- "writes" --> BP2[".bikerack-port"]
-    BR -- "writes" --> BP[".bikerack-port"]
+    C -- "writes" --> BP2[".frame-port"]
+    BR -- "writes" --> BP[".frame-port"]
 
     WH --> API["/api/* endpoints"]
     WH --> WS["/ws/* channels"]
     WH --> OTLP["/v1/* OTLP receiver"]
 ```
 
-WheelHub never writes a port file — the wrapper does. OTEL auto-configuration checks `.bikerack-port` with socket liveness checks, skipping stale files from crashed processes.
+Frame never writes a port file — the wrapper does. OTEL auto-configuration checks `.frame-port` with socket liveness checks, skipping stale files from crashed processes.
 
-> **See [BikeRack GUI Architecture](BIKERACK-GUI-ARCHITECTURE.md)** for the full component breakdown and codename glossary.
+> **See [Frame GUI Architecture](FRAME-GUI-ARCHITECTURE.md)** for the full component breakdown and codename glossary.
 
 ---
 
@@ -332,8 +332,8 @@ pf uninstall --dry-run     # Preview what would be removed
 |---------|-------------|
 | `pf theme list` | Show available themes |
 | `pf theme set <name>` | Change active theme |
-| `pf bikerack start` | Launch BikeRack GUI dashboard |
-| `pf bikerack start` | Launch BikeRack dashboard |
+| `pf frame start` | Launch Frame GUI dashboard |
+| `pf frame start` | Launch Frame dashboard |
 | `pf debug hotspots analyze` | Git change frequency analysis |
 | `pf debug complexity analyze` | Code complexity metrics |
 | `pf debug deadcode stale` | Find files with no recent commits |
@@ -581,7 +581,7 @@ Set by `pf hooks session-start`:
 | `PROJECT_ROOT` | Project root directory |
 | `SESSION_ID` | Current Claude Code session ID |
 
-Set by OTEL auto-configuration (when WheelHub is running):
+Set by OTEL auto-configuration (when Frame is running):
 
 | Variable | Purpose |
 |----------|---------|
@@ -798,20 +798,20 @@ pf setup
 
 **Cause:** Claude started without OTEL env vars.
 
-**Fix:** Use `just claude` instead of bare `claude`, or use `pf bikerack start` which handles OTEL automatically.
+**Fix:** Use `just claude` instead of bare `claude`, or use `pf frame start` which handles OTEL automatically.
 
 #### Stale Port File (Dashboard Won't Connect)
 
-**Cause:** WheelHub crashed without cleaning up `.bikerack-port`.
+**Cause:** Frame crashed without cleaning up `.frame-port`.
 
 **Fix:**
 ```bash
 # Check if port is actually alive
-just wheelhub status
+just frame status
 
 # If stale, stop and restart
-just wheelhub stop
-just wheelhub start
+just frame stop
+just frame start
 ```
 
 The OTEL auto-configuration hook now includes socket liveness checks, so stale port files are automatically skipped.
@@ -830,7 +830,7 @@ echo $PROJECT_ROOT
 echo $SESSION_ID
 
 # Server status
-just wheelhub status
+just frame status
 ```
 
 ### Getting Help

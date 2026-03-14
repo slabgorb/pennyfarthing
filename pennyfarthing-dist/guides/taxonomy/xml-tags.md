@@ -19,7 +19,7 @@ Tags that affect LLM behavior and attention.
 ```
 
 **Examples:**
-- "Subagent output is NOT visible to BikeRack GUI"
+- "Subagent output is NOT visible to Frame GUI"
 - "NEVER mark acceptance criteria as complete" (for subagents)
 - "Write assessment BEFORE starting exit protocol"
 
@@ -241,7 +241,7 @@ Return a `{SUBAGENT}_RESULT` block:
 - `status`: `success` | `blocked` | `warning`
 - `next_steps`: Array of instructions for the calling agent
 
-**Why this matters:** Subagent output is NOT visible to BikeRack GUI or users (only to the calling agent). Clear next steps ensure the caller knows exactly what to do with the result.
+**Why this matters:** Subagent output is NOT visible to Frame GUI or users (only to the calling agent). Clear next steps ensure the caller knows exactly what to do with the result.
 
 ## Specialized Tags (Single-Agent Use)
 

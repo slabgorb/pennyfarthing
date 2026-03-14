@@ -3,7 +3,7 @@
 CLI commands (handoff, agent start) call emit_subagent_event() to POST
 transition events to Frame. Frame broadcasts them on the
 ``subagent-transitions`` WebSocket channel. The SubagentPanel in
-BikeRack TUI renders them as a live timeline.
+Frame TUI TUI renders them as a live timeline.
 
 Story: 143-16
 """

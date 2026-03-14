@@ -21,7 +21,7 @@ NC='\033[0m'
 SCENARIOS=(
     fresh-init
     reinit-preserves-custom
-    wheelhub-node24
+    frame-node24
     upgrade-safety
     orc-ax-snapshot
     idempotency

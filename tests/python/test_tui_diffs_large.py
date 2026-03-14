@@ -1,4 +1,4 @@
-"""Tests for BikeRack DiffsPanel large diff handling (Story 103-19).
+"""Tests for Frame TUI DiffsPanel large diff handling (Story 103-19).
 
 Verifies:
   AC1: DiffsPanel handles 10K+ line diffs without blocking event loop
@@ -10,7 +10,7 @@ Verifies:
   AC7: Tests verify non-blocking behavior (async patterns)
   AC8: Temp files cleaned up on panel close
 
-Run with: python -m pytest tests/python/test_bikerack_diffs_large.py -v
+Run with: python -m pytest tests/python/test_tui_diffs_large.py -v
 """
 
 from __future__ import annotations

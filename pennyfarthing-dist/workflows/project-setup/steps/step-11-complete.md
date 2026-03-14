@@ -62,7 +62,7 @@ Directories:
   {✓|✗} .session/           - Work sessions
 
 Optional:
-  {✓|✗} BikeRack GUI configured
+  {✓|✗} Frame GUI configured
   {✓|✗} Subrepos cloned
 ```
 
@@ -96,7 +96,7 @@ Commands Available:
   just test-all          - Run all tests
   just build-all         - Build all repos
   just dev               - Start development
-  just gui               - Launch BikeRack GUI (if configured)
+  just gui               - Launch Frame GUI (if configured)
 ```
 
 ## QUICK-START GUIDE
@@ -123,10 +123,10 @@ Commands Available:
 4. WORKFLOW
    Story flow: SM → TEA → Dev → Reviewer → SM
 
-5. LAUNCH BIKERACK GUI (if configured)
+5. LAUNCH FRAME GUI (if configured)
    just gui              # Browser UI
    # OR
-   pf bikerack start     # Terminal panels
+   pf frame start     # Terminal panels
 
 6. GET HELP
    /help                 # Context-aware help
@@ -181,7 +181,7 @@ Quick commands:
   /help            - Get help
 
 {if gui_configured}
-Launch BikeRack GUI for the visual experience:
+Launch Frame GUI for the visual experience:
   just gui
 {/if}
 
@@ -224,7 +224,7 @@ This workflow is now complete. The user has:
 ✅ Selected a persona theme
 ✅ Optionally installed additional theme packs
 ✅ Configured Jira project key
-✅ Optionally configured BikeRack GUI
+✅ Optionally configured Frame GUI
 ✅ Validated the setup
 
 The project is ready for development with Pennyfarthing.

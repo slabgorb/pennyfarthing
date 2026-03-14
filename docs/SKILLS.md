@@ -312,11 +312,11 @@ Manage persona themes - list, show, set, create, and interactive maker wizard
 
 ### pf-bc
 
-Panel focus management for BikeRack — set, clear, save, and load panel layouts
+Panel focus management for Frame — set, clear, save, and load panel layouts
 
-**Tags:** panels, layout, bikerack
+**Tags:** panels, layout, frame
 
-**Keywords:** bikerack, panel, focus, layout, dockview
+**Keywords:** frame, panel, focus, layout, dockview
 
 **Examples:**
 - Focusing the Sprint panel: `/bc sprint`
@@ -330,18 +330,18 @@ Panel focus management for BikeRack — set, clear, save, and load panel layouts
 
 ### pf-gui
 
-BikeRack GUI detection and status for Claude Code monitoring
+Frame GUI detection and status for Claude Code monitoring
 
-**Tags:** visual, monitoring, gui, bikerack
+**Tags:** visual, monitoring, gui, frame
 
-**Keywords:** gui, bikerack, visualization, dashboard
+**Keywords:** gui, frame, visualization, dashboard
 
 **Examples:**
 - Checking GUI status: `/gui`
 - Debugging sessions: `/gui debug`
 
 **Anti-patterns:**
-- Don't run BikeRack GUI in headless environments
+- Don't run Frame GUI in headless environments
 
 ### pf-just
 
@@ -387,7 +387,7 @@ Claude Code OTEL telemetry format documentation for span interception and enrich
 
 **Examples:**
 - Working with OTEL spans: `/otel`
-- Enriching tool telemetry in BikeRack GUI: `/otel enrichment`
+- Enriching tool telemetry in Frame GUI: `/otel enrichment`
 
 **Anti-patterns:**
 - Don't assume fields exist - verify against this documentation

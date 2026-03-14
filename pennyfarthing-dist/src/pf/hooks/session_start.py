@@ -119,7 +119,7 @@ def _validate_checkpoint(project_dir: Path) -> None:
 
 
 # =============================================================================
-# WheelHub Auto-Start
+# Frame Auto-Start
 # =============================================================================
 
 
@@ -347,9 +347,9 @@ def main() -> None:
         _setup_session_dir(project_dir, session_id, source_type)
         _validate_checkpoint(project_dir)
 
-        # Set SESSION_ID in process env BEFORE starting WheelHub so the
+        # Set SESSION_ID in process env BEFORE starting Frame so the
         # subprocess inherits it. This is the single source of truth for
-        # agent identity — without it, WheelHub falls back to mtime-based
+        # agent identity — without it, Frame falls back to mtime-based
         # resolution which picks up stale agent files.
         os.environ["SESSION_ID"] = session_id
 

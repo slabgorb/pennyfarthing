@@ -1,7 +1,7 @@
 # Brownfield & Code Analysis Tools
 
 <info>
-CLI tools for analyzing existing codebases. Identify change hotspots, complexity bottlenecks, dead code, stale dependencies, and code markers (TODO/FIXME). Each tool produces table, JSON, or CSV output and has a corresponding WheelHub API route for panel integration.
+CLI tools for analyzing existing codebases. Identify change hotspots, complexity bottlenecks, dead code, stale dependencies, and code markers (TODO/FIXME). Each tool produces table, JSON, or CSV output and has a corresponding Frame API route for panel integration.
 </info>
 
 ## Overview
@@ -104,9 +104,9 @@ pf debug healthscore analyze --format json --output health.json
 | `--exclude PAT` | Exclude patterns (repeatable) | — |
 | `--days N` | Time window for analysis | Varies by tool |
 
-## WheelHub API Routes
+## Frame API Routes
 
-Each tool has a corresponding HTTP API in WheelHub for panel integration:
+Each tool has a corresponding HTTP API in Frame for panel integration:
 
 | Route | Tool |
 |-------|------|
@@ -117,7 +117,7 @@ Each tool has a corresponding HTTP API in WheelHub for panel integration:
 | `/api/code-markers` | Code marker scan |
 | `/api/health-score` | Composite health score |
 
-These power the **HotspotsPanel** in BikeRack.
+These power the **HotspotsPanel** in Frame.
 
 ## Key Files
 
@@ -130,4 +130,4 @@ These power the **HotspotsPanel** in BikeRack.
 | `pf/codemarkers/` | Code marker detection |
 | `pf/healthscore/` | Composite health score |
 | `pf/brownfield/` | Brownfield codebase discovery |
-| `packages/core/src/server/api/` | WheelHub API routes |
+| `packages/core/src/server/api/` | Frame API routes |

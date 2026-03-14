@@ -8,7 +8,7 @@
 
 The Reflector system provides agent-to-UI communication through HTML comment markers (`<!-- PF:TYPE:value -->`). This system is implemented in two locations:
 
-1. **BikeRack GUI:** `packages/cyclist/src/public/js/components/message-view/quick-actions.js`
+1. **Frame GUI:** `packages/cyclist/src/public/js/components/message-view/quick-actions.js`
 2. **VS Code Extension:** `packages/vscode-extension/src/adapters/reflector.ts`
 
 Both implementations contain:
@@ -31,7 +31,7 @@ Consolidate Reflector marker parsing into `@pennyfarthing/shared` as a new `mark
 
 ### Current Duplication
 
-| Component | BikeRack GUI (quick-actions.js) | VS Code (reflector.ts) |
+| Component | Frame GUI (quick-actions.js) | VS Code (reflector.ts) |
 |-----------|---------------------------|------------------------|
 | Regex pattern | Line 161 | Line 32 |
 | Detection function | `detectStructuredMarkers()` | `detectMarkers()` |
@@ -211,7 +211,7 @@ export {
 
 ## Consumer Updates
 
-### BikeRack GUI (quick-actions.js)
+### Frame GUI (quick-actions.js)
 
 ```javascript
 // Before
@@ -253,7 +253,7 @@ context_budget:
 
 ### 2. Unified Function Naming
 
-| Old (BikeRack GUI) | Old (VS Code) | New (Shared) |
+| Old (Frame GUI) | Old (VS Code) | New (Shared) |
 |--------------------|---------------|--------------|
 | `detectStructuredMarkers` | `detectMarkers` | `detectMarkers` |
 | inline | `stripMarkers` | `stripMarkers` |
@@ -278,11 +278,11 @@ Create `packages/shared/src/marker/detect.test.ts` with unified tests:
 4. Export from `packages/shared/src/index.ts`
 5. Build and verify
 
-### Phase 2: Migrate BikeRack GUI (1 story)
+### Phase 2: Migrate Frame GUI (1 story)
 1. Add `@pennyfarthing/shared` dependency (already workspace member)
 2. Import shared functions in `quick-actions.js`
 3. Remove duplicated code
-4. Verify BikeRack GUI tests pass
+4. Verify Frame GUI tests pass
 5. Manual testing in browser app
 
 ### Phase 3: Migrate VS Code Extension (1 story)
@@ -309,9 +309,9 @@ Create `packages/shared/src/marker/detect.test.ts` with unified tests:
 
 ### Negative
 
-- **Build dependency** - BikeRack GUI/VS Code now depend on shared package building first
+- **Build dependency** - Frame GUI/VS Code now depend on shared package building first
 - **Migration effort** - ~4 stories of work
-- **JavaScript consumer** - BikeRack GUI uses .js, will need to import from compiled output
+- **JavaScript consumer** - Frame GUI uses .js, will need to import from compiled output
 
 ### Neutral
 
@@ -332,7 +332,7 @@ New package just for markers.
 
 **Rejected:** Overkill for ~150 lines of code. Better to use existing `@pennyfarthing/shared`.
 
-### 3. Keep BikeRack GUI implementation in JS, VS Code in TS
+### 3. Keep Frame GUI implementation in JS, VS Code in TS
 
 Only share types, not implementation.
 

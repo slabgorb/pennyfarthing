@@ -16,7 +16,7 @@ Create a justfile or Makefile in the orchestrator that proxies commands to subre
 - justfile or Makefile created/updated
 - Recipes for each subrepo
 - Common orchestrator commands (test-all, build-all, dev)
-- Framework recipes imported (wheelhub, bikerack, tui, claude, tmux-dev)
+- Framework recipes imported (frame, frame, tui, claude, tmux-dev)
 - User has approved the configuration
 </output>
 
@@ -179,16 +179,16 @@ sprint:
 backlog:
     pf sprint backlog
 
-# Start WheelHub server (API + WebSocket + OTEL ingestion)
-wheelhub
+# Start Frame server (API + WebSocket + OTEL ingestion)
+frame
 
-# Open BikeRack dashboard in browser (starts WheelHub if needed)
-bikerack
+# Open Frame dashboard in browser (starts Frame if needed)
+frame
 
-# Launch TUI panel viewer (starts WheelHub if needed)
+# Launch TUI panel viewer (starts Frame if needed)
 tui
 
-# Launch Claude with OTEL pre-configured for WheelHub
+# Launch Claude with OTEL pre-configured for Frame
 claude
 
 # Launch tmux dev layout (Claude + TUI in split panes)
@@ -230,7 +230,7 @@ Generated recipes:
   ✓ test-all, build-all, install-all
   ✓ Per-repo: test-{repo}, build-{repo}, dev-{repo}
   ✓ Orchestrator: dev, status, clone-repos
-  ✓ Framework: wheelhub, bikerack, tui, claude, tmux-dev, pf
+  ✓ Framework: frame, frame, tui, claude, tmux-dev, pf
 
 (switch prompt presents options)
 ```
@@ -286,7 +286,7 @@ test-ui: ## Run UI tests
 ✅ All repos have standard recipes (test, build, dev, lint)
 ✅ Aggregated commands work (test-all, build-all)
 ✅ Orchestrator commands included
-✅ Framework recipes available (wheelhub, bikerack, tui via `.pennyfarthing/justfile.pf`)
+✅ Framework recipes available (frame, frame, tui via `.pennyfarthing/justfile.pf`)
 ✅ User has reviewed and approved
 
 ## NEXT STEP

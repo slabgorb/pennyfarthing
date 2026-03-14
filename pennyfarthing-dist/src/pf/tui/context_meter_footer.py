@@ -1,4 +1,4 @@
-"""StatusFooter — Unified status bar for BikeRack TUI.
+"""StatusFooter — Unified status bar for Frame TUI TUI.
 
 Consolidates project name, model indicator, and context usage into a
 single footer line.  Progress bar is right-aligned.
@@ -160,7 +160,7 @@ class StatusFooter(Static):
         ctx = msg.get("context")
         if ctx is None:
             return
-        # If WheelHub sent an error, try local Python fallback
+        # If Frame sent an error, try local Python fallback
         if isinstance(ctx, dict) and ctx.get("error"):
             local = self._local_context_fallback()
             if local:

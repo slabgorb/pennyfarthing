@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI ContextMeterFooter — Context usage footer bar (Story 110-5).
+"""Tests for Frame TUI TUI ContextMeterFooter — Context usage footer bar (Story 110-5).
 
 Persistent footer bar showing context window usage percentage with
 color-coded tier thresholds. Subscribes to /ws/context channel,
@@ -11,7 +11,7 @@ Verifies:
   AC3: Updates in real-time via /ws/context channel
   AC4: Does not interfere with keybinding footer display
 
-Run with: python -m pytest tests/python/test_bikerack_context_meter.py -v
+Run with: python -m pytest tests/python/test_tui_context_meter.py -v
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from rich.text import Text
 from textual.widgets import Footer, Static
 
 # ---------------------------------------------------------------------------
-# Test data fixtures — matching WheelHub /ws/context wire format
+# Test data fixtures — matching Frame /ws/context wire format
 # ---------------------------------------------------------------------------
 
 CONTEXT_FULL: dict[str, Any] = {

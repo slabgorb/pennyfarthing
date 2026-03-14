@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI scaffold (Story 103-1).
+"""Tests for Frame TUI TUI scaffold (Story 103-1).
 
 Verifies:
   AC1: Textual app launches with header, main content area, and footer
@@ -8,7 +8,7 @@ Verifies:
   AC5: App exits cleanly on quit keybinding (q)
   AC6: Entry point callable from Python
 
-Run with: python -m pytest tests/python/test_bikerack_tui.py -v
+Run with: python -m pytest tests/python/test_tui_tui.py -v
 """
 
 import pytest
@@ -18,26 +18,26 @@ from textual.app import App
 class TestImportAndEntryPoint:
     """AC6: Entry point callable from Python."""
 
-    def test_bikerack_app_importable(self):
-        """TuiApp should be importable from bikerack.tui."""
+    def test_tui_app_importable(self):
+        """TuiApp should be importable from tui.tui."""
         from pf.tui.app import TuiApp
 
         assert TuiApp is not None
 
-    def test_bikerack_app_is_textual_app(self):
+    def test_tui_app_is_textual_app(self):
         """TuiApp should be a subclass of textual.app.App."""
         from pf.tui.app import TuiApp
 
         assert issubclass(TuiApp, App)
 
-    def test_bikerack_app_has_title(self):
+    def test_tui_app_has_title(self):
         """TuiApp should have a meaningful TITLE."""
         from pf.tui.app import TuiApp
 
         app = TuiApp()
-        # Default App title is empty string or class name — we want "BikeRack" somewhere
+        # Default App title is empty string or class name — we want "Frame TUI" somewhere
         assert "bikerack" in app.title.lower(), (
-            f"App title should contain 'BikeRack', got: '{app.title}'"
+            f"App title should contain 'Frame TUI', got: '{app.title}'"
         )
 
 

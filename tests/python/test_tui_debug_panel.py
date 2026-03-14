@@ -1,12 +1,12 @@
-"""Tests for BikeRack TUI DebugPanel — Context usage and token stats (Story 103-17).
+"""Tests for Frame TUI TUI DebugPanel — Context usage and token stats (Story 103-17).
 
-Port of the React DebugPanel to BikeRack TUI. The React DebugPanel
+Port of the React DebugPanel to Frame TUI TUI. The React DebugPanel
 (packages/core/src/public/components/panels/DebugPanel.tsx) displays
 context usage, tier badges, and token stats via /ws/context and
 /ws/token-stats channels.
 
 Verifies:
-  AC1: DebugPanel extends BasePanel, registered in BikeRack TUI
+  AC1: DebugPanel extends BasePanel, registered in Frame TUI TUI
   AC2: Subscribes to /ws/context — displays tokens, percent, tier
   AC3: Subscribes to /ws/token-stats — displays input/output/cache/cost
   AC4: Tier badge with color coding
@@ -14,7 +14,7 @@ Verifies:
   AC6: Empty states for missing data
   AC7: Handles malformed/missing data gracefully
 
-Run with: python -m pytest tests/python/test_bikerack_debug_panel.py -v
+Run with: python -m pytest tests/python/test_tui_debug_panel.py -v
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from rich.console import Console
 from textual.widgets import Static
 
 # ---------------------------------------------------------------------------
-# Test data fixtures — matching WheelHub wire formats
+# Test data fixtures — matching Frame wire formats
 # ---------------------------------------------------------------------------
 
 SAMPLE_CONTEXT_INIT: dict[str, Any] = {
@@ -131,7 +131,7 @@ def _render_with_ansi(renderable: Any, width: int = 120) -> str:
 
 
 # ---------------------------------------------------------------------------
-# AC1: DebugPanel extends BasePanel, registered in BikeRack TUI
+# AC1: DebugPanel extends BasePanel, registered in Frame TUI TUI
 # ---------------------------------------------------------------------------
 
 
@@ -139,7 +139,7 @@ class TestDebugPanelExists:
     """AC1: DebugPanel implementation exists and follows BasePanel pattern."""
 
     def test_debug_panel_exists_and_importable(self):
-        """DebugPanel should be importable from bikerack.debug_panel."""
+        """DebugPanel should be importable from tui.debug_panel."""
         assert DebugPanel is not None
 
     def test_inherits_from_base_panel(self):

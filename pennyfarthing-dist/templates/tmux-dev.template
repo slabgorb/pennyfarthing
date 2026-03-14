@@ -84,19 +84,19 @@ TERM_LINES=$(tput lines)
 # (tmux overwrites TERM to tmux-256color, hiding the real terminal)
 ENV_ARGS=(-e "CLAUDECODE=" -e "KITTY_WINDOW_ID=${KITTY_WINDOW_ID:-}" -e "TERM_PROGRAM=${TERM_PROGRAM:-}")
 
-# Start WheelHub before tmux so both claude and tui can connect
-(cd "$DIR" && just wheelhub) &
-WHEELHUB_BG=$!
+# Start Frame server before tmux so both claude and tui can connect
+(cd "$DIR" && pf frame start) &
+FRAME_BG=$!
 
 # Wait for port file
-PORT_FILE="$DIR/.bikerack-port"
+PORT_FILE="$DIR/.frame-port"
 for i in $(seq 1 20); do
   [[ -f "$PORT_FILE" ]] && break
   sleep 0.25
 done
 if [[ ! -f "$PORT_FILE" ]]; then
-  echo "Warning: WheelHub failed to start (no .bikerack-port after 5s)" >&2
-  kill "$WHEELHUB_BG" 2>/dev/null || true
+  echo "Warning: Frame server failed to start (no .frame-port after 5s)" >&2
+  kill "$FRAME_BG" 2>/dev/null || true
 fi
 
 case "$LAYOUT" in

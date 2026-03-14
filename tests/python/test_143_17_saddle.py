@@ -219,8 +219,8 @@ class TestAgentLifecycle:
         assert "no agent" in result["error"].lower() or "not running" in result["error"].lower()
 
     def test_start_agent_emits_telemetry_event(self, tmp_project, mock_tmux):
-        """Agent start should emit subagent event to WheelHub (143-16 foundation)."""
-        with patch("pf.wheelhub.subagent_events.emit_subagent_event") as mock_emit:
+        """Agent start should emit subagent event to Frame (143-16 foundation)."""
+        with patch("pf.frame.subagent_events.emit_subagent_event") as mock_emit:
             start_agent("dev", project_root=tmp_project)
             mock_emit.assert_called_once()
             call_args = mock_emit.call_args

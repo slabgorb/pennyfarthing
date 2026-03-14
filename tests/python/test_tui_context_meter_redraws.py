@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI Context Meter Redraws — Story 110-12.
+"""Tests for Frame TUI TUI Context Meter Redraws — Story 110-12.
 
 The context meter footer needs more frequent redraws during active
 sessions. Currently it only redraws on WebSocket push. These tests
@@ -10,7 +10,7 @@ Verifies:
   AC2: Redraw trigger points are identified and optimized
   AC3: No noticeable performance degradation from increased redraw frequency
 
-Run with: python -m pytest tests/python/test_bikerack_context_meter_redraws.py -v
+Run with: python -m pytest tests/python/test_tui_context_meter_redraws.py -v
 """
 
 from __future__ import annotations

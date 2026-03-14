@@ -156,7 +156,7 @@ def resolve_gate(
         if all_extensions:
             gate_extensions = all_extensions
 
-    # Emit gate_check event to BikeRack (Story 143-16)
+    # Emit gate_check event to Frame TUI (Story 143-16)
     try:
         from pf.frame.subagent_events import emit_subagent_event
 

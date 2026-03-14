@@ -1,4 +1,4 @@
-"""Cross-panel event bus for BikeRack TUI (Story 110-1).
+"""Cross-panel event bus for Frame TUI TUI (Story 110-1).
 
 Defines Textual Message subclasses for inter-panel communication.
 """

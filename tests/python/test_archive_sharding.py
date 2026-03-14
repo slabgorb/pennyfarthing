@@ -67,7 +67,7 @@ def _make_archive_monolith(archive_dir: Path) -> Path:
             # Orphan story (no matching epic ref — stays in index)
             {"id": "MSSCI-14394", "title": "Subagent spans never clear", "points": 2, "completed": "2026-02-06"},
             # Another orphan (technical debt, no epic ref)
-            {"id": "td-3", "title": "BikeRack panel state persistence", "points": 2, "completed": "2026-02-12"},
+            {"id": "td-3", "title": "Frame panel state persistence", "points": 2, "completed": "2026-02-12"},
         ],
     }
     _write_archive_file(archive_file, data)

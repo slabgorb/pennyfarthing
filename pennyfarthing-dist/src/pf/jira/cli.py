@@ -151,7 +151,7 @@ def search(query, project, max_results, status, issue_type, json_out):
 
     \b
     Examples:
-      pf jira search "BikeRack reconnect"
+      pf jira search "Frame TUI reconnect"
       pf jira search "sprint fix" --project MSSCI
       pf jira search "status = 'In Progress' AND assignee = currentUser()"
       pf jira search "install" --status "To Do" --type Story

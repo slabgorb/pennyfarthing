@@ -67,5 +67,5 @@ pf settings set last_panel diffs
 
 - Dot-path notation traverses nested keys: `workflow.relay_mode` → `workflow: { relay_mode: ... }`
 - Value coercion: `true`/`false` → bool, numeric strings → int, else string
-- `show` skips large blobs (layout, bikerack_layout, panels, theme_characters) for readability
+- `show` skips large blobs (layout, frame_layout, panels, theme_characters) for readability
 - **Never set bare `statusbar`, `bell_mode`, or `relay_mode`** — these belong under `workflow.`

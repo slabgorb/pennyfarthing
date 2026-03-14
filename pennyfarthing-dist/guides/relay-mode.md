@@ -1,7 +1,7 @@
 # Relay Mode
 
 <info>
-Automatic agent handoff execution. When enabled, BikeRack GUI auto-executes handoff markers without waiting for user confirmation.
+Automatic agent handoff execution. When enabled, Frame GUI auto-executes handoff markers without waiting for user confirmation.
 </info>
 
 <critical>

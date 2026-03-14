@@ -236,7 +236,7 @@ def summon_agent(agent_name: str, project_root: Path, *, task: str | None = None
 
     # Emit telemetry (fire-and-forget)
     try:
-        from pf.wheelhub.subagent_events import emit_subagent_event
+        from pf.frame.subagent_events import emit_subagent_event
 
         emit_subagent_event("agent_summon", agent=agent_name)
     except Exception:

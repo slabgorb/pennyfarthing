@@ -71,7 +71,7 @@ RESEARCH_RESULT:
 <critical>
 Session file header MUST be: `# Story {STORY_ID}: {TITLE}`
 
-Other formats break BikeRack GUI detection.
+Other formats break Frame GUI detection.
 </critical>
 
 <gate>

@@ -1,4 +1,4 @@
-"""SprintPanel — Sprint status panel for BikeRack TUI.
+"""SprintPanel — Sprint status panel for Frame TUI TUI.
 
 Story 103-6: First panel implementation proving the BasePanel vertical slice.
 Story 110-2: Added per-story cursor navigation and drill-through.

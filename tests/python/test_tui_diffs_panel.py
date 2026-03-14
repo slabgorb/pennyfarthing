@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI DiffsPanel — Rich diff rendering (Story 103-18).
+"""Tests for Frame TUI TUI DiffsPanel — Rich diff rendering (Story 103-18).
 
 Verifies:
   AC1: DiffsPanel implementation exists in bikerack
@@ -8,7 +8,7 @@ Verifies:
   AC5: Real-time updates when new diffs arrive via WebSocket
   AC6: Error handling for invalid/malformed diff data
 
-Run with: python -m pytest tests/python/test_bikerack_diffs_panel.py -v
+Run with: python -m pytest tests/python/test_tui_diffs_panel.py -v
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from rich.text import Text
 from textual.widgets import Static
 
 # ---------------------------------------------------------------------------
-# Test data fixtures — matching actual WheelHub /ws/diffs wire format
+# Test data fixtures — matching actual Frame /ws/diffs wire format
 # ---------------------------------------------------------------------------
 
 SAMPLE_DIFF_MODIFIED = """\
@@ -206,7 +206,7 @@ class TestDiffsPanelExists:
     """AC1: DiffsPanel implementation exists and follows BasePanel pattern."""
 
     def test_diffs_panel_exists_and_importable(self):
-        """DiffsPanel should be importable from bikerack.diffs_panel."""
+        """DiffsPanel should be importable from tui.diffs_panel."""
         assert DiffsPanel is not None
 
     def test_inherits_from_base_panel(self):

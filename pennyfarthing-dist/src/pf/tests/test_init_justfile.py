@@ -42,7 +42,7 @@ def mock_dist(tmp_path: Path) -> Path:
         "\n"
         'root := justfile_directory() / ".."\n'
         "\n"
-        "wheelhub *args:\n"
+        "frame *args:\n"
         "    pf launch gui --no-open\n"
         "\n"
         "tui:\n"
@@ -87,7 +87,7 @@ class TestFreshInit:
 
         content = (target_dir / ".pennyfarthing" / "justfile.pf").read_text()
         assert "Framework recipes" in content
-        assert "wheelhub" in content
+        assert "frame" in content
 
     def test_creates_main_justfile(self, target_dir: Path, mock_dist: Path) -> None:
         from pf.init.justfile import update_framework_justfile
@@ -236,8 +236,8 @@ class TestLegacyMigration:
             "default:\n"
             "    @just --list\n"
             "\n"
-            "# Start WheelHub\n"
-            "wheelhub *args:\n"
+            "# Start Frame\n"
+            "frame *args:\n"
             "    pf launch gui --no-open\n"
             "\n"
             "# My custom recipe\n"
@@ -247,7 +247,7 @@ class TestLegacyMigration:
 
         result = update_framework_justfile(target_dir, mock_dist)
 
-        assert "wheelhub" in result["data"]["recipes_migrated"]
+        assert "frame" in result["data"]["recipes_migrated"]
 
     def test_migrated_recipes_commented_out(self, target_dir: Path, mock_dist: Path) -> None:
         from pf.init.justfile import update_framework_justfile
@@ -258,8 +258,8 @@ class TestLegacyMigration:
             "default:\n"
             "    @just --list\n"
             "\n"
-            "# Start WheelHub\n"
-            "wheelhub *args:\n"
+            "# Start Frame\n"
+            "frame *args:\n"
             "    pf launch gui --no-open\n"
             "\n"
             "test-all:\n"
@@ -270,9 +270,9 @@ class TestLegacyMigration:
 
         content = (target_dir / "justfile").read_text()
         assert "# [pf-migrated]" in content
-        # The wheelhub recipe header should be migrated
+        # The frame recipe header should be migrated
         for line in content.splitlines():
-            if "wheelhub" in line and "import" not in line:
+            if "frame" in line and "import" not in line:
                 assert line.startswith("# [pf-migrated]")
 
     def test_preserves_non_framework_recipes(self, target_dir: Path, mock_dist: Path) -> None:
@@ -284,7 +284,7 @@ class TestLegacyMigration:
             "default:\n"
             "    @just --list\n"
             "\n"
-            "wheelhub *args:\n"
+            "frame *args:\n"
             "    pf launch gui\n"
             "\n"
             "test-all:\n"
@@ -308,7 +308,7 @@ class TestLegacyMigration:
             "default:\n"
             "    @just --list\n"
             "\n"
-            "wheelhub *args:\n"
+            "frame *args:\n"
             "    pf launch gui\n"
             "\n"
             "tui:\n"
@@ -324,7 +324,7 @@ class TestLegacyMigration:
         result = update_framework_justfile(target_dir, mock_dist)
 
         migrated = result["data"]["recipes_migrated"]
-        assert "wheelhub" in migrated
+        assert "frame" in migrated
         assert "tui" in migrated
         assert "claude" in migrated
         assert "test-all" not in migrated
@@ -338,7 +338,7 @@ class TestLegacyMigration:
             "default:\n"
             "    @just --list\n"
             "\n"
-            "wheelhub *args:\n"
+            "frame *args:\n"
             "    pf launch gui\n"
             "\n"
             "gui:\n"
@@ -401,7 +401,7 @@ class TestIdempotency:
             "default:\n"
             "    @just --list\n"
             "\n"
-            "wheelhub *args:\n"
+            "frame *args:\n"
             "    pf launch gui\n"
         )
 
@@ -467,14 +467,14 @@ class TestDryRun:
             "default:\n"
             "    @just --list\n"
             "\n"
-            "wheelhub *args:\n"
+            "frame *args:\n"
             "    pf launch gui\n"
         )
 
         result = update_framework_justfile(target_dir, mock_dist, dry_run=True)
 
         assert result["data"]["import_added"] is True
-        assert "wheelhub" in result["data"]["recipes_migrated"]
+        assert "frame" in result["data"]["recipes_migrated"]
         # File should not be modified
         content = (target_dir / "justfile").read_text()
         assert "import" not in content
@@ -557,8 +557,8 @@ pf *args:
     set -euo pipefail
     "{{root}}/.pennyfarthing/bin/pf" {{args}}
 
-wheelhub:
-    just pf launch wheelhub
+frame:
+    just pf launch frame
 
 tui:
     just pf launch tui --foreground
@@ -567,8 +567,8 @@ claude:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    # Get port from WheelHub (starts it if needed)
-    PORT=$(just pf launch wheelhub 2>/dev/null | tail -1)
+    # Get port from Frame (starts it if needed)
+    PORT=$(just pf launch frame 2>/dev/null | tail -1)
     if ! [[ "$PORT" =~ ^[0-9]+$ ]]; then
         PORT=""
     fi

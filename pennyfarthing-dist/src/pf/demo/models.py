@@ -66,3 +66,5 @@ class GeneratedContent:
     slide_outline: list[dict]
     story_type: StoryType
     story_id: str
+    roadmap: str | None = None
+    ai_generated: bool = False

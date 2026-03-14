@@ -40,7 +40,7 @@ pf validate                                          # Framework validation
 <info>
 ## Directory Structure
 
-**Architecture:** Python runtime + React GUI. See ADR-0034.
+**Architecture:** Python runtime. See ADR-0034.
 
 | Directory | Purpose |
 |-----------|---------|
@@ -92,7 +92,7 @@ Read guides for detailed behavior, key files, and APIs. All paths relative to `p
 | Component | Guide | Purpose |
 |-----------|-------|---------|
 | BikeLane | `guides/bikelane.md` | Workflow engine — phased, stepped, procedural |
-| TUI | `guides/bikerack.md` | TUI dashboard for CLI-first dev |
+| TUI | `guides/tui.md` | TUI dashboard for CLI-first dev |
 | Gates | `guides/gates.md` | Phase transition quality checks |
 | Handoff CLI | `guides/handoff-cli.md` | Gate resolution, session transitions, markers |
 | Hooks | `guides/hooks.md` | Claude Code hooks — session, pre/post tool use |

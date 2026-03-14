@@ -1,4 +1,4 @@
-"""GitPanel — Multi-repo git status panel with diff drill-through for BikeRack TUI.
+"""GitPanel — Multi-repo git status panel with diff drill-through for Frame TUI TUI.
 
 Story 103-10: Subscribes to /ws/git, renders multi-repo git status
 as Rich table with Nerd Font glyphs for branch and status indicators.

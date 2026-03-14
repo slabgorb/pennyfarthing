@@ -269,7 +269,7 @@ def get_context_state(project_root: Path | None = None) -> ContextState:
         project_root: Project root directory (auto-detected if not provided)
 
     Returns:
-        ContextState with current usage (defaults if WheelHub not running)
+        ContextState with current usage (defaults if Frame not running)
     """
     state = ContextState()
 

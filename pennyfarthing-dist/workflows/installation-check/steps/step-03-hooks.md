@@ -24,11 +24,11 @@ Verify all 9 hook configurations in settings.local.json. Hooks are the runtime i
 
    **SessionStart hooks:**
    - **session-start-hook**: Exports `PROJECT_ROOT` env var. Without it, agents can't find project files. The most critical hook.
-   - **otel-auto-start**: Starts WheelHub server and configures 5 OTEL env vars for telemetry. Legacy `.sh` version only sets 2 of 5 vars.
+   - **otel-auto-start**: Starts Frame server and configures 5 OTEL env vars for telemetry. Legacy `.sh` version only sets 2 of 5 vars.
    - **auto-load-sm**: Auto-invokes `/sm` agent on new sessions. Without it, users must manually run `/sm` every time.
 
    **Stop hooks:**
-   - **stop-hook**: Runs reflector-check to enforce UI markers at turn end. Without it, BikeRack GUI QuickActions won't render.
+   - **stop-hook**: Runs reflector-check to enforce UI markers at turn end. Without it, Frame GUI QuickActions won't render.
 
    **PostToolUse hooks:**
    - **post-tool-use-hook**: Bell mode — injects queued messages via `additionalContext`. Without it, `/bell` messages are lost.

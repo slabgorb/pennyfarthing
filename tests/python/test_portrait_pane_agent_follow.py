@@ -31,7 +31,7 @@ class TestPersonaInPollChannels:
 
     def test_persona_channel_is_polled(self):
         """persona must be in POLL_CHANNELS for portrait to follow agent changes."""
-        from pf.wheelhub.ws_push import POLL_CHANNELS
+        from pf.frame.ws_push import POLL_CHANNELS
 
         assert "persona" in POLL_CHANNELS, (
             "persona channel must be in POLL_CHANNELS so agent changes "
@@ -40,7 +40,7 @@ class TestPersonaInPollChannels:
 
     def test_persona_channel_has_fetcher(self):
         """persona must have a registered fetcher in CHANNEL_FETCHERS."""
-        from pf.wheelhub.ws_push import CHANNEL_FETCHERS
+        from pf.frame.ws_push import CHANNEL_FETCHERS
 
         assert "persona" in CHANNEL_FETCHERS, (
             "persona channel must have a fetcher to provide data on poll"
@@ -48,7 +48,7 @@ class TestPersonaInPollChannels:
 
     def test_persona_fetcher_is_callable(self):
         """The persona fetcher must be a callable function."""
-        from pf.wheelhub.ws_push import CHANNEL_FETCHERS
+        from pf.frame.ws_push import CHANNEL_FETCHERS
 
         fetcher = CHANNEL_FETCHERS.get("persona")
         assert callable(fetcher), "persona fetcher must be callable"
@@ -73,7 +73,7 @@ class TestFetchPersonaDetectsAgentChanges:
 
     def test_fetch_persona_returns_latest_agent(self, tmp_path: Path, agents_dir: Path):
         """fetch_persona should return data for the most recently written agent file."""
-        from pf.wheelhub.ws_push import fetch_persona
+        from pf.frame.ws_push import fetch_persona
 
         # Write first agent
         (agents_dir / "sm").write_text("sm")
@@ -81,7 +81,7 @@ class TestFetchPersonaDetectsAgentChanges:
         # Write second agent (more recent)
         (agents_dir / "tea").write_text("tea")
 
-        with patch("pf.wheelhub.ws_push._get_project_dir", return_value=str(tmp_path)):
+        with patch("pf.frame.ws_push._get_project_dir", return_value=str(tmp_path)):
             with patch("pf.prime.persona.load_persona") as mock_load:
                 mock_persona = MagicMock()
                 mock_persona.character = "Amos Burton"
@@ -102,9 +102,9 @@ class TestFetchPersonaDetectsAgentChanges:
 
     def test_fetch_persona_changes_on_agent_switch(self, tmp_path: Path, agents_dir: Path):
         """When the active agent changes, fetch_persona should return different data."""
-        from pf.wheelhub.ws_push import fetch_persona
+        from pf.frame.ws_push import fetch_persona
 
-        with patch("pf.wheelhub.ws_push._get_project_dir", return_value=str(tmp_path)):
+        with patch("pf.frame.ws_push._get_project_dir", return_value=str(tmp_path)):
             # First agent: sm
             (agents_dir / "sm").write_text("sm")
 
@@ -145,17 +145,17 @@ class TestFetchPersonaDetectsAgentChanges:
 
     def test_fetch_persona_empty_agents_dir(self, tmp_path: Path, agents_dir: Path):
         """Empty agents dir should return empty dict, not crash."""
-        from pf.wheelhub.ws_push import fetch_persona
+        from pf.frame.ws_push import fetch_persona
 
-        with patch("pf.wheelhub.ws_push._get_project_dir", return_value=str(tmp_path)):
+        with patch("pf.frame.ws_push._get_project_dir", return_value=str(tmp_path)):
             result = fetch_persona()
             assert result == {}, "Empty agents dir should return empty dict"
 
     def test_fetch_persona_no_agents_dir(self, tmp_path: Path):
         """Missing agents dir should return empty dict, not crash."""
-        from pf.wheelhub.ws_push import fetch_persona
+        from pf.frame.ws_push import fetch_persona
 
-        with patch("pf.wheelhub.ws_push._get_project_dir", return_value=str(tmp_path)):
+        with patch("pf.frame.ws_push._get_project_dir", return_value=str(tmp_path)):
             result = fetch_persona()
             assert result == {}, "Missing agents dir should return empty dict"
 
@@ -175,7 +175,7 @@ class TestPollBroadcastIncludesPersona:
         should call fetch_persona and broadcast the result."""
         import asyncio
 
-        from pf.wheelhub.ws_push import POLL_CHANNELS, poll_and_broadcast
+        from pf.frame.ws_push import POLL_CHANNELS, poll_and_broadcast
 
         broadcast_calls: list[tuple[str, dict]] = []
 
@@ -196,9 +196,9 @@ class TestPollBroadcastIncludesPersona:
         }
 
         with (
-            patch("pf.wheelhub.app._ws_clients", mock_clients),
+            patch("pf.frame.app._ws_clients", mock_clients),
             patch(
-                "pf.wheelhub.ws_push.CHANNEL_FETCHERS",
+                "pf.frame.ws_push.CHANNEL_FETCHERS",
                 {"persona": lambda: persona_data},
             ),
         ):
@@ -225,7 +225,7 @@ class TestPollBroadcastIncludesPersona:
         """When no clients are connected to persona channel, skip broadcast."""
         import asyncio
 
-        from pf.wheelhub.ws_push import poll_and_broadcast
+        from pf.frame.ws_push import poll_and_broadcast
 
         broadcast_calls: list[tuple[str, dict]] = []
 
@@ -235,7 +235,7 @@ class TestPollBroadcastIncludesPersona:
         # No persona clients connected
         mock_clients: dict = {}
 
-        with patch("pf.wheelhub.app._ws_clients", mock_clients):
+        with patch("pf.frame.app._ws_clients", mock_clients):
             task = asyncio.create_task(poll_and_broadcast(mock_broadcast))
             await asyncio.sleep(5.5)
             task.cancel()
@@ -288,9 +288,9 @@ class TestTuiHeaderFollowsAgentChange:
 
     @pytest.fixture
     def app(self):
-        from pf.bikerack.tui import BikeRackApp
+        from pf.tui.app import TuiApp
 
-        return BikeRackApp()
+        return TuiApp()
 
     async def test_header_updates_role_on_agent_change(self, app):
         """Header should show new role when agent changes sm → tea."""

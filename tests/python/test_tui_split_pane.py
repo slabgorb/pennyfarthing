@@ -1,4 +1,4 @@
-"""Tests for BikeRack TUI split-pane layouts (Story 110-4).
+"""Tests for Frame TUI TUI split-pane layouts (Story 110-4).
 
 Verifies:
   AC1: Refactor layout to Horizontal(left_pane, right_pane) container structure
@@ -8,7 +8,7 @@ Verifies:
   AC5: /bc split <left> <right> command for custom splits
   AC6: Workflow-aware auto-layout via /ws/focus channel extension
 
-Run with: python -m pytest tests/python/test_bikerack_split_pane.py -v
+Run with: python -m pytest tests/python/test_tui_split_pane.py -v
 """
 
 import pytest
