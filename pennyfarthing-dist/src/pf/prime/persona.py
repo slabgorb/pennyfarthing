@@ -6,6 +6,7 @@ Loads agent personas from theme YAML files for character-driven agents.
 
 from __future__ import annotations
 
+import random
 from pathlib import Path
 from typing import Any
 
@@ -120,7 +121,7 @@ def load_persona(
         character=agent_data.get("character", "Unknown"),
         style=agent_data.get("style", ""),
         role=agent_data.get("role", ""),
-        quote=agent_data.get("quote"),
+        quote=random.choice(catchphrases) if (catchphrases := agent_data.get("catchphrases")) else agent_data.get("quote"),
         trait=agent_data.get("trait"),
         quirk=agent_data.get("quirk"),
         motto=agent_data.get("motto"),
