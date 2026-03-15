@@ -70,7 +70,7 @@ def complete_phase(
             "session_file": str(session_path),
             "error": (
                 "No assessment found in session file. "
-                "To fix: Add a `## {Agent} Assessment` heading (e.g. `## TEA Assessment` or `## Dev Assessment`) "
+                "To fix: Add a `## Reviewer Assessment` heading "
                 "to the session file before completing the phase."
             ),
         }
@@ -353,7 +353,10 @@ def _check_subagent_completion(content: str) -> str | None:
             "Missing '## Subagent Results' section in session file. "
             "To fix: The reviewer must wait for ALL 8 subagents to return and fill in the "
             "Subagent Results table before writing the Reviewer Assessment. "
-            "Context pressure is not a reason to skip this step."
+            "Context pressure is not a reason to skip this step. "
+            "Example row format:\n"
+            "| # | Specialist | Received | Status | Findings | Decision |\n"
+            "| 1 | reviewer-preflight | Yes | clean | none | N/A |"
         )
 
     section = content[match.start():]

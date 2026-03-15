@@ -118,6 +118,18 @@ Do not skip subagents because "the code looks clean."
 **Total findings:** {N} confirmed, {N} dismissed (with rationale), {N} deferred
 ```
 
+### Accepted "All received" formats
+
+The gate accepts these formats (case-insensitive):
+- Plain: `All received: Yes`
+- Bold key: `**All received:** Yes`
+- Bold key+value: `**All received:** **Yes**`
+- With parenthetical context: `**All received:** Yes (8 returned, 3 with findings)`
+
+Parenthetical context after `Yes` is accepted — e.g. `Yes (6 returned, 2 assessed)`.
+
+This line is validated by the gate programmatically — it is not just documentation. If this line is missing or not set to `Yes`, the gate will reject the phase transition.
+
 ### Rules
 
 1. **Every row must have `Received: Yes`** before you may write the Reviewer Assessment. If a subagent timed out or errored, record that — do not leave the row blank.
@@ -273,21 +285,44 @@ Append your findings under a `### Reviewer (code review)` subheading after the m
 2. Capture delivery findings (see <finding-capture>)
 3. Write Reviewer Assessment (verdict: APPROVED)
 4. Update story: `pf sprint story update {STORY_ID} --review-verdict approved`
-5. Follow <agent-exit-protocol> (resolve-gate → complete-phase review→finish → marker sm)
-5. **DO NOT merge PRs** — SM handles PR creation and merge in the finish phase.
+5. Run exit sequence (gate_type=approval):
+   ```bash
+   pf handoff resolve-gate {STORY_ID} {WORKFLOW} review
+   pf handoff complete-phase {STORY_ID} {WORKFLOW} review finish approval
+   pf workflow handoff sm
+   ```
+6. **DO NOT merge PRs** — SM handles PR creation and merge in the finish phase.
 
 ### If REJECTED:
 1. Audit design deviations (gate: `gates/deviations-audited`) — stamp every entry ACCEPTED or FLAGGED
 2. Capture delivery findings (see <finding-capture>)
 3. Write Reviewer Assessment (verdict: REJECTED, with severity table)
-3. Update story: `pf sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
-4. If findings are testable (logic bugs, missing edge cases):
-   - Follow <agent-exit-protocol> (resolve-gate → complete-phase → marker tea)
-5. If findings are lint/format/dead-code only:
-   - Follow <agent-exit-protocol> (resolve-gate → complete-phase → marker dev)
-6. **DO NOT merge or create PRs.**
+4. Update story: `pf sprint story update {STORY_ID} --review-verdict rejected --review-findings "summary of findings"`
+5. If findings are testable (logic bugs, missing edge cases):
+   ```bash
+   pf handoff resolve-gate {STORY_ID} {WORKFLOW} review
+   pf handoff complete-phase {STORY_ID} {WORKFLOW} review red rework
+   pf workflow handoff tea
+   ```
+6. If findings are lint/format/dead-code only:
+   ```bash
+   pf handoff resolve-gate {STORY_ID} {WORKFLOW} review
+   pf handoff complete-phase {STORY_ID} {WORKFLOW} review green rework
+   pf workflow handoff dev
+   ```
+7. **DO NOT merge or create PRs.**
 
 Nothing after the marker. EXIT.
+
+### Common Gate Errors (Troubleshooting)
+
+If the gate fails, check these common issues:
+
+1. **Missing `## Subagent Results` section** — The gate requires a `## Subagent Results` heading with a table of all 8 subagents. Add the section with the template from `<subagent-completion-gate>`.
+2. **`All received` not set to `Yes`** — The `**All received:** Yes` line must be present and set to `Yes`. The gate checks this programmatically.
+3. **Missing subagent rows** — Every one of the 8 specialist subagents must have a row. Check for typos in subagent names.
+4. **Missing dispatch tags in assessment** — Your `## Reviewer Assessment` must include all 7 tags: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`.
+5. **Missing `## Reviewer Assessment` heading** — The gate requires this exact heading before allowing phase transition.
 </exit>
 
 <tandem-consultation>
