@@ -55,6 +55,42 @@ def save_state(project_root: Path, state: dict[str, Any]) -> dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 
+def get_workflow_phases(workflow_name: str, project_root: Path | None = None) -> dict[str, Any]:
+    """Extract all phases from a workflow's YAML definition.
+
+    Returns:
+        {success: True, data: [{name, agent, gate_type}, ...]} or error
+    """
+    from pf.common.config import get_project_root
+
+    roots_to_try = []
+    if project_root is not None:
+        roots_to_try.append(project_root)
+    try:
+        roots_to_try.append(get_project_root())
+    except Exception:
+        pass
+
+    for root in roots_to_try:
+        workflows_dirs = get_all_workflows_dirs(root)
+        wf_file = find_workflow_file(workflows_dirs, workflow_name)
+        if wf_file is not None:
+            data = load_workflow_data(wf_file)
+            phases = data.get("workflow", {}).get("phases", [])
+            if phases:
+                result = []
+                for phase in phases:
+                    gate = phase.get("gate", {})
+                    result.append({
+                        "name": phase["name"],
+                        "agent": phase["agent"],
+                        "gate_type": gate.get("type") if gate else None,
+                    })
+                return {"success": True, "data": result}
+
+    return {"success": False, "error": f"Workflow '{workflow_name}' not found"}
+
+
 def get_workflow_agents(workflow_name: str, project_root: Path | None = None) -> dict[str, Any]:
     """Extract unique agent roles from a workflow's phases.
 
