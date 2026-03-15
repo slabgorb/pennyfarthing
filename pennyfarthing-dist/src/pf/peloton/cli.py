@@ -65,6 +65,9 @@ def start(workflow: str | None, story_id: str | None):
         raise SystemExit(1)
 
     data = result["data"]
+    stale = data.get("stale_cleaned", [])
+    if stale:
+        click.echo(f"Cleaned {len(stale)} stale team(s): {', '.join(stale)}")
     click.echo(f"Peloton: initialized for story {sid} ({wf_name})")
     click.echo(f"Team: {data['team_name']}")
     click.echo(f"Agents: {', '.join(data['agents'])}")
