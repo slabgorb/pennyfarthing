@@ -280,6 +280,56 @@ def check_stack_tool_health(project_root: Path | None = None) -> dict[str, Any]:
     }
 
 
+def set_repo_field(
+    repo_name: str,
+    field: str,
+    value: Any,
+    *,
+    project_root: Path | None = None,
+) -> dict[str, Any]:
+    """Set a single field on a repo entry in .pennyfarthing/repos.yaml.
+
+    Args:
+        repo_name: Name of the repo in repos.yaml.
+        field: Field name to set or update.
+        value: New value for the field.
+        project_root: Project root directory. Auto-detected if not provided.
+
+    Returns:
+        Result dict {success, data?, error?}. Never throws.
+    """
+    try:
+        if project_root is None:
+            project_root = get_project_root()
+
+        repos_path = project_root / ".pennyfarthing" / "repos.yaml"
+        if not repos_path.exists():
+            return {"success": False, "error": f"repos.yaml not found at {repos_path}"}
+
+        with open(repos_path) as f:
+            config = yaml.safe_load(f)
+
+        if not config or "repos" not in config:
+            return {"success": False, "error": "repos.yaml missing 'repos' key"}
+
+        if repo_name not in config["repos"]:
+            return {"success": False, "error": f"repo '{repo_name}' not found in repos.yaml"}
+
+        repo_data = config["repos"][repo_name]
+        old_value = repo_data.get(field)
+        repo_data[field] = value
+
+        with open(repos_path, "w") as f:
+            yaml.dump(config, f, default_flow_style=False)
+
+        return {
+            "success": True,
+            "data": {"old_value": old_value, "new_value": value},
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 def get_build_order(project_root: Path | None = None) -> list[str]:
     """Get repos in build/dependency order.
 
