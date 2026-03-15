@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from pf.peloton.pane_orchestrator import create_peloton_layout
 from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load_workflow_data
 
 
@@ -149,13 +150,41 @@ def start_session(
         f"Use teammateMode tmux so each agent gets a persistent pane."
     )
 
+    # Create peloton pane layout
+    live_panes: list[dict[str, Any]] = []
+    registry: dict[str, Any] = {"session": team_name, "socket": "pf", "max_panes": 10, "panes": []}
+    try:
+        from pf.tmux.panes import list_live_panes
+        from pf.tmux.registry import load_registry
+
+        live_result = list_live_panes(team_name)
+        if live_result["success"]:
+            live_panes = live_result["data"]
+
+        reg_result = load_registry(project_root, team_name)
+        if reg_result["success"]:
+            registry = reg_result["data"]
+    except Exception:
+        pass
+
+    layout_result = create_peloton_layout(
+        session=team_name,
+        registry=registry,
+        live_panes=live_panes,
+        agent_roles=agents,
+    )
+
+    result_data: dict[str, Any] = {
+        "team_name": team_name,
+        "agents": agents,
+        "prompt": prompt,
+    }
+    if layout_result["success"]:
+        result_data["layout"] = layout_result["data"]
+
     return {
         "success": True,
-        "data": {
-            "team_name": team_name,
-            "agents": agents,
-            "prompt": prompt,
-        },
+        "data": result_data,
     }
 
 
