@@ -179,6 +179,31 @@ def start_session(
         agent_roles=agents,
     )
 
+    # Build pane_mapping and enrich prompt with pane IDs if layout succeeded
+    pane_mapping: dict[str, str] = {}
+    if layout_result["success"]:
+        for ap in layout_result["data"].get("agent_panes", []):
+            pane_mapping[ap["role"]] = ap["pane_id"]
+
+        # Rebuild prompt with pane targeting info
+        agent_descriptions = []
+        for agent in agents:
+            pane_ref = pane_mapping.get(agent, "")
+            pane_note = f" Target tmux pane {pane_ref}." if pane_ref else ""
+            agent_descriptions.append(
+                f"- **{agent}**: Load agent with `/pf-{agent}`. "
+                f"Works on story {story_id}. Reads session file for context.{pane_note}"
+            )
+
+        prompt = (
+            f"Create a team called '{team_name}' with these teammates:\n"
+            + "\n".join(agent_descriptions)
+            + "\n\n"
+            f"Each teammate should activate their agent role and work on story {story_id}. "
+            f"The session file at .session/{story_id}-session.md has the full context. "
+            f"Use teammateMode tmux so each agent gets a persistent pane."
+        )
+
     result_data: dict[str, Any] = {
         "team_name": team_name,
         "agents": agents,
@@ -186,6 +211,7 @@ def start_session(
     }
     if layout_result["success"]:
         result_data["layout"] = layout_result["data"]
+        result_data["pane_mapping"] = pane_mapping
 
     return {
         "success": True,

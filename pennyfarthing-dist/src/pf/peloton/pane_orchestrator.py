@@ -45,6 +45,14 @@ def create_peloton_layout(
     if cli_pane_id is None:
         return {"success": False, "error": "No CLI (Claude Code) pane found in session"}
 
+    # Create TUI pane below CLI if not already present
+    if tui_pane_id is None:
+        tui_result = split_pane(session, cli_pane_id, "v")
+        if not tui_result["success"]:
+            return {"success": False, "error": tui_result.get("error", "Failed to create TUI pane")}
+        tui_pane_id = tui_result["data"]
+        set_pane_title(tui_pane_id, "TUI")
+
     # First split: horizontal off CLI to create right column
     first_result = split_pane(session, cli_pane_id, "h")
     if not first_result["success"]:
