@@ -20,6 +20,7 @@ from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load
 
 
 _STATE_FILE = "peloton-state.json"
+_CLAUDE_DIR = Path.home() / ".claude"
 
 
 def _state_path(project_root: Path) -> Path:
@@ -138,6 +139,49 @@ def _extract_agents(data: dict[str, Any]) -> list[str] | None:
     return agents if agents else None
 
 
+def cleanup_stale_teams(current_team: str | None = None) -> dict[str, Any]:
+    """Remove stale peloton team and task directories from ~/.claude/.
+
+    Scans ~/.claude/teams/ for directories matching 'peloton-*' and removes
+    them (along with their task lists) unless they match current_team.
+
+    Returns:
+        {success: True, data: {cleaned: [team_names]}} or error
+    """
+    import shutil
+
+    teams_dir = _CLAUDE_DIR / "teams"
+    tasks_dir = _CLAUDE_DIR / "tasks"
+    cleaned: list[str] = []
+
+    if not teams_dir.exists():
+        return {"success": True, "data": {"cleaned": []}}
+
+    for team_dir in sorted(teams_dir.iterdir()):
+        if not team_dir.is_dir():
+            continue
+        name = team_dir.name
+        if not name.startswith("peloton-"):
+            continue
+        if name == current_team:
+            continue
+        # Remove team directory
+        try:
+            shutil.rmtree(team_dir)
+        except OSError:
+            continue
+        # Remove corresponding task directory
+        task_dir = tasks_dir / name
+        if task_dir.exists():
+            try:
+                shutil.rmtree(task_dir)
+            except OSError:
+                pass
+        cleaned.append(name)
+
+    return {"success": True, "data": {"cleaned": cleaned}}
+
+
 def start_session(
     project_root: Path,
     story_id: str,
@@ -157,6 +201,10 @@ def start_session(
 
     agents = agents_result["data"]
     team_name = f"peloton-{story_id}"
+
+    # Clean up stale peloton teams before creating a new one
+    cleanup_result = cleanup_stale_teams(current_team=team_name)
+    stale_cleaned = cleanup_result.get("data", {}).get("cleaned", [])
 
     state = {
         "active": True,
@@ -191,6 +239,7 @@ def start_session(
             "team_name": team_name,
             "agents": agents,
             "prompt": prompt,
+            "stale_cleaned": stale_cleaned,
         },
     }
 
@@ -247,6 +296,10 @@ def stop(project_root: Path) -> dict[str, Any]:
             except OSError:
                 pass
 
+    # Clean up stale Claude Code team/task directories
+    cleanup_result = cleanup_stale_teams()
+    stale_cleaned = cleanup_result.get("data", {}).get("cleaned", [])
+
     # Clear peloton state
     cleared = {
         "active": False,
@@ -256,4 +309,4 @@ def stop(project_root: Path) -> dict[str, Any]:
         "agents": [],
     }
     save_state(project_root, cleared)
-    return {"success": True, "data": {"team_name": None, "killed": killed}}
+    return {"success": True, "data": {"team_name": None, "killed": killed, "stale_teams_cleaned": stale_cleaned}}
