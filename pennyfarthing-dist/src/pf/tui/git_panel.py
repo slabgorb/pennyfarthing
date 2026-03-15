@@ -240,30 +240,58 @@ class GitPanel(BasePanel):
         """Query whether a repo section is currently collapsed."""
         return repo_name in self._collapsed_repos
 
-    def action_toggle_collapse(self) -> None:
-        """Keybinding action: toggle collapse for the repo under selection."""
-        if self._viewing_diff or not self._last_payload:
-            return
-        # Find which repo the current selection belongs to
+    def _repo_for_selected_file(self) -> str | None:
+        """Find the repo name that owns the currently selected file."""
+        if not self._last_payload or not self._file_paths:
+            return None
         repos = self._last_payload.get("repos", [])
+        if not isinstance(repos, list):
+            return None
         idx = 0
         for repo in repos:
             if not isinstance(repo, dict):
                 continue
             name = repo.get("name", "")
-            if self.is_repo_collapsed(name):
+            if not name or self.is_repo_collapsed(name):
                 continue
             dirty_files = repo.get("dirtyFiles", [])
+            if not isinstance(dirty_files, list):
+                continue
             file_count = len([f for f in dirty_files if isinstance(f, dict)])
             if idx <= self._selected_index < idx + file_count:
+                return name
+            idx += file_count
+        return None
+
+    def action_toggle_collapse(self) -> None:
+        """Keybinding action: toggle collapse for the repo under selection."""
+        if self._viewing_diff or not self._last_payload:
+            return
+        # If files are visible, toggle the repo owning the selected file
+        target = self._repo_for_selected_file()
+        if target:
+            self.toggle_repo_collapsed(target)
+            self._build_file_paths(self._last_payload)
+            self._rerender()
+            return
+        # No visible files (all collapsed) — expand the first collapsed repo
+        repos = self._last_payload.get("repos", [])
+        if not isinstance(repos, list):
+            return
+        for repo in repos:
+            if not isinstance(repo, dict):
+                continue
+            name = repo.get("name", "")
+            if not name:
+                continue
+            if self.is_repo_collapsed(name):
                 self.toggle_repo_collapsed(name)
                 self._build_file_paths(self._last_payload)
                 self._rerender()
                 return
-            idx += file_count
 
     def handle_message(self, message: dict[str, Any] | None) -> None:
-        """Handle incoming git message — build file path index then render."""
+        """Handle incoming git message — set default collapse state and build file index."""
         if message is not None:
             # Set default collapse state for repos not explicitly toggled by user
             repos = message.get("repos", [])
