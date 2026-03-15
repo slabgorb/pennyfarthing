@@ -96,6 +96,16 @@ def main() -> None:
         )
         _checkpoint_save(project_dir, "session_state", checkpoint_data)
 
+        # Clean up main-pane marker if this is the main session exiting
+        # (subagents have PF_SUBAGENT set; main session does not)
+        if not os.environ.get("PF_SUBAGENT"):
+            try:
+                main_pane_file = session_dir / "main-pane"
+                if main_pane_file.exists():
+                    main_pane_file.unlink()
+            except OSError:
+                pass
+
         # Log session end
         try:
             timestamp = datetime.now(UTC).isoformat()
