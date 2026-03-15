@@ -9,13 +9,12 @@
 # └──────────────────────────────────────┘
 
 # --- Key passthrough ---
-# Enable extended keys (CSI u mode) so shift+enter, ctrl+enter, etc.
-# are properly distinguished from plain enter in Claude Code CLI.
-# "always" forces CSI u output without waiting for the app to request it
-# (Claude Code / Ink does not send the mode-1 request sequence).
-set -s extended-keys always
-set -s extended-keys-format csi-u
-set -as terminal-features ",*:extkeys"
+# extended-keys disabled: causes DA response leak (?62;22;52c) with Ghostty,
+# even on tmux next-3.7. Ghostty handles shift+enter natively via its own
+# CSI-u implementation, so tmux's extended-keys is unnecessary here.
+# set -s extended-keys always
+# set -s extended-keys-format csi-u
+# set -as terminal-features ",*:extkeys"
 set -as terminal-features ",*:clipboard"
 
 # --- Clipboard (OSC 52) ---

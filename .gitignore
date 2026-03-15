@@ -88,3 +88,15 @@ pennyfarthing-dist/src/.session/
 
 # Model checkpoints
 checkpoints/
+# Frame server runtime files
+frame-pid
+tui-pid
+# Local pf shim (machine-specific absolute paths)
+.pennyfarthing/bin/
+# tmux runtime cache files
+.pennyfarthing/tmux-status
+.pennyfarthing/tmux-status-left
+.pennyfarthing/tmux-status-right
+.pennyfarthing/tmux-activity
+# Local tmux config (copied from sample)
+tmux.conf

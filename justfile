@@ -3,6 +3,9 @@
 # Python interpreter — use venv when available, fall back to system python3
 venv_python := if path_exists(justfile_directory() / ".venv/bin/python3") == "true" { justfile_directory() / ".venv/bin/python3" } else { "python3" }
 
+import '.pennyfarthing/justfile.pf'
+
+
 # Default recipe - list available commands
 default:
     @just --list
@@ -129,73 +132,73 @@ validate: validate-agents validate-subagents validate-sprint
 # Frame / TUI
 # =============================================================================
 
-# Start Frame server
-# Run modes: here, dir=/path, stop, status
-frame *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
+# [pf-migrated] # Start Frame server
+# [pf-migrated] # Run modes: here, dir=/path, stop, status
+# [pf-migrated] frame *args:
+# [pf-migrated]     #!/usr/bin/env bash
+# [pf-migrated]     set -euo pipefail
 
-    set -- {{args}}
+# [pf-migrated]     set -- {{args}}
 
-    case "${1:-start}" in
-        stop)
-            shift
-            PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.frame stop "$@"
-            exit 0
-            ;;
-        status)
-            shift
-            PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.frame status "$@"
-            exit 0
-            ;;
-    esac
+# [pf-migrated]     case "${1:-start}" in
+# [pf-migrated]         stop)
+# [pf-migrated]             shift
+# [pf-migrated]             PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.frame stop "$@"
+# [pf-migrated]             exit 0
+# [pf-migrated]             ;;
+# [pf-migrated]         status)
+# [pf-migrated]             shift
+# [pf-migrated]             PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.frame status "$@"
+# [pf-migrated]             exit 0
+# [pf-migrated]             ;;
+# [pf-migrated]     esac
 
-    dir_flag=""
-    for arg in "$@"; do
-        case "$arg" in
-            here)
-                dir_flag="--project-dir $(pwd)"
-                ;;
-            dir=*)
-                dir_flag="--project-dir ${arg#dir=}"
-                ;;
-            start)
-                ;;
-            *)
-                echo "Unknown argument: $arg"
-                echo ""
-                echo "Usage:"
-                echo "  just frame              # Start Frame server"
-                echo "  just frame here         # Start pointing at invocation directory"
-                echo "  just frame dir=/path    # Start pointing at specific directory"
-                echo "  just frame stop         # Stop running instance"
-                echo "  just frame status       # Show running state"
-                exit 1
-                ;;
-        esac
-    done
+# [pf-migrated]     dir_flag=""
+# [pf-migrated]     for arg in "$@"; do
+# [pf-migrated]         case "$arg" in
+# [pf-migrated]             here)
+# [pf-migrated]                 dir_flag="--project-dir $(pwd)"
+# [pf-migrated]                 ;;
+# [pf-migrated]             dir=*)
+# [pf-migrated]                 dir_flag="--project-dir ${arg#dir=}"
+# [pf-migrated]                 ;;
+# [pf-migrated]             start)
+# [pf-migrated]                 ;;
+# [pf-migrated]             *)
+# [pf-migrated]                 echo "Unknown argument: $arg"
+# [pf-migrated]                 echo ""
+# [pf-migrated]                 echo "Usage:"
+# [pf-migrated]                 echo "  just frame              # Start Frame server"
+# [pf-migrated]                 echo "  just frame here         # Start pointing at invocation directory"
+# [pf-migrated]                 echo "  just frame dir=/path    # Start pointing at specific directory"
+# [pf-migrated]                 echo "  just frame stop         # Stop running instance"
+# [pf-migrated]                 echo "  just frame status       # Show running state"
+# [pf-migrated]                 exit 1
+# [pf-migrated]                 ;;
+# [pf-migrated]         esac
+# [pf-migrated]     done
 
-    PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.frame start $dir_flag
+# [pf-migrated]     PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.frame start $dir_flag
 
-# Launch TUI (connects to running Frame server)
-tui *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
+# [pf-migrated] # Launch TUI (connects to running Frame server)
+# [pf-migrated] tui *args:
+# [pf-migrated]     #!/usr/bin/env bash
+# [pf-migrated]     set -euo pipefail
 
-    port_flag=""
-    project_dir_flag=""
-    for arg in {{args}}; do
-        case "$arg" in
-            --port=*|port=*)
-                port_flag="--port ${arg#*=}"
-                ;;
-            dir=*)
-                project_dir_flag="--project-dir ${arg#dir=}"
-                ;;
-            here)
-                project_dir_flag="--project-dir $(pwd)"
-                ;;
-        esac
-    done
+# [pf-migrated]     port_flag=""
+# [pf-migrated]     project_dir_flag=""
+# [pf-migrated]     for arg in {{args}}; do
+# [pf-migrated]         case "$arg" in
+# [pf-migrated]             --port=*|port=*)
+# [pf-migrated]                 port_flag="--port ${arg#*=}"
+# [pf-migrated]                 ;;
+# [pf-migrated]             dir=*)
+# [pf-migrated]                 project_dir_flag="--project-dir ${arg#dir=}"
+# [pf-migrated]                 ;;
+# [pf-migrated]             here)
+# [pf-migrated]                 project_dir_flag="--project-dir $(pwd)"
+# [pf-migrated]                 ;;
+# [pf-migrated]         esac
+# [pf-migrated]     done
 
-    PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.tui $port_flag $project_dir_flag
+# [pf-migrated]     PYTHONPATH="{{justfile_directory()}}/pennyfarthing-dist:${PYTHONPATH:-}" {{venv_python}} -m pf.tui $port_flag $project_dir_flag
