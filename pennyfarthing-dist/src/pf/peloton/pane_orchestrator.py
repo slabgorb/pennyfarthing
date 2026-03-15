@@ -11,6 +11,81 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from pf.tmux.panes import kill_pane, set_pane_title, split_pane
+
+
+def create_peloton_layout(
+    session: str,
+    registry: dict[str, Any],
+    live_panes: list[dict[str, Any]],
+    agent_roles: list[str],
+) -> dict[str, Any]:
+    """Create the two-column peloton layout.
+
+    Left column: CLI (top) + TUI (bottom). Right column: agent panes stacked.
+    First split is horizontal off CLI pane to create the right column.
+    Subsequent splits are vertical within the right column for agent stacking.
+
+    Returns:
+        {success: True, data: {cli_pane, tui_pane, right_column, agent_panes, registry}}
+    """
+    if not agent_roles:
+        return {"success": False, "error": "No agent roles specified"}
+
+    # Find CLI and TUI panes
+    cli_pane_id = None
+    tui_pane_id = None
+    for pane in live_panes:
+        title = pane.get("title", "")
+        if "Claude" in title:
+            cli_pane_id = pane["pane_id"]
+        elif "TUI" in title:
+            tui_pane_id = pane["pane_id"]
+
+    if cli_pane_id is None:
+        return {"success": False, "error": "No CLI (Claude Code) pane found in session"}
+
+    # First split: horizontal off CLI to create right column
+    first_result = split_pane(session, cli_pane_id, "h")
+    if not first_result["success"]:
+        return {"success": False, "error": first_result.get("error", "Failed to create right column")}
+
+    right_column_id = first_result["data"]
+    agent_panes: list[dict[str, str]] = [{"pane_id": right_column_id, "role": agent_roles[0]}]
+    set_pane_title(right_column_id, agent_roles[0])
+
+    # Subsequent splits: vertical within right column for stacking
+    last_pane = right_column_id
+    for role in agent_roles[1:]:
+        result = split_pane(session, last_pane, "v")
+        if not result["success"]:
+            return {"success": False, "error": result.get("error", f"Failed to create pane for {role}")}
+        new_pane_id = result["data"]
+        agent_panes.append({"pane_id": new_pane_id, "role": role})
+        set_pane_title(new_pane_id, role)
+        last_pane = new_pane_id
+
+    # Register agent panes in the registry
+    for ap in agent_panes:
+        registry["panes"].append({
+            "pane_id": ap["pane_id"],
+            "role": ap["role"],
+            "title": ap["role"],
+            "protected": False,
+            "owner": "peloton",
+        })
+
+    return {
+        "success": True,
+        "data": {
+            "cli_pane": cli_pane_id,
+            "tui_pane": tui_pane_id,
+            "right_column": right_column_id,
+            "agent_panes": agent_panes,
+            "registry": registry,
+        },
+    }
+
 
 @dataclass
 class PaneSpec:
