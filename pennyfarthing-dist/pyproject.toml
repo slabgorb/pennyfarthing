@@ -41,6 +41,7 @@ exclude = ["pf.tests", "pf.tests.*"]
     "skills/**/*",
     "templates/**/*",
     "workflows/**/*",
+    "schemas/**/*",
     "server/**/*",
 ]
 

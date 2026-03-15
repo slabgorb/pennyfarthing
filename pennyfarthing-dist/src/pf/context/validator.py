@@ -14,9 +14,20 @@ from pf.context import ContextValidationResult, ValidationError
 
 
 def _default_schema_path() -> Path:
-    """Resolve the default context schema path from package location."""
-    # validator.py is at pennyfarthing-dist/src/pf/context/validator.py
-    # schema is at pennyfarthing-dist/schemas/context-schema.yaml
+    """Resolve the default context schema path from dist root.
+
+    Works in both source layout (pennyfarthing-dist/schemas/) and
+    installed package (pf/_dist/schemas/) via get_dist_root().
+    """
+    from pf.common.config import get_dist_root
+
+    dist_root = get_dist_root()
+    if dist_root is not None:
+        candidate = dist_root / "schemas" / "context-schema.yaml"
+        if candidate.exists():
+            return candidate
+
+    # Fallback: relative to this file (source layout only)
     return Path(__file__).resolve().parents[3] / "schemas" / "context-schema.yaml"
 
 
