@@ -203,6 +203,7 @@ class GitPanel(BasePanel):
         Binding("down", "select_next_key", "Down"),
         Binding("enter", "drill_into_file", "View diff"),
         Binding("escape", "back_to_overview", "Back"),
+        Binding("c", "toggle_collapse", "Toggle collapse"),
     ]
 
     def __init__(self, client=None, **kwargs):
@@ -212,6 +213,8 @@ class GitPanel(BasePanel):
         self._viewing_diff: bool = False
         self._diff_file_path: str | None = None
         self._diffs_payload: dict[str, Any] | None = None
+        self._collapsed_repos: set[str] = set()
+        self._user_toggled_repos: set[str] = set()
 
         # Subscribe to diffs channel for diff data
         if client is not None:
@@ -225,19 +228,73 @@ class GitPanel(BasePanel):
             if self._viewing_diff:
                 self._rerender()
 
+    def toggle_repo_collapsed(self, repo_name: str) -> None:
+        """Toggle the collapsed state of a repo section."""
+        self._user_toggled_repos.add(repo_name)
+        if repo_name in self._collapsed_repos:
+            self._collapsed_repos.discard(repo_name)
+        else:
+            self._collapsed_repos.add(repo_name)
+
+    def is_repo_collapsed(self, repo_name: str) -> bool:
+        """Query whether a repo section is currently collapsed."""
+        return repo_name in self._collapsed_repos
+
+    def action_toggle_collapse(self) -> None:
+        """Keybinding action: toggle collapse for the repo under selection."""
+        if self._viewing_diff or not self._last_payload:
+            return
+        # Find which repo the current selection belongs to
+        repos = self._last_payload.get("repos", [])
+        idx = 0
+        for repo in repos:
+            if not isinstance(repo, dict):
+                continue
+            name = repo.get("name", "")
+            if self.is_repo_collapsed(name):
+                continue
+            dirty_files = repo.get("dirtyFiles", [])
+            file_count = len([f for f in dirty_files if isinstance(f, dict)])
+            if idx <= self._selected_index < idx + file_count:
+                self.toggle_repo_collapsed(name)
+                self._build_file_paths(self._last_payload)
+                self._rerender()
+                return
+            idx += file_count
+
     def handle_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming git message — build file path index then render."""
         if message is not None:
+            # Set default collapse state for repos not explicitly toggled by user
+            repos = message.get("repos", [])
+            if isinstance(repos, list):
+                for repo in repos:
+                    if not isinstance(repo, dict):
+                        continue
+                    name = repo.get("name", "")
+                    if not name:
+                        continue
+                    if name in self._user_toggled_repos:
+                        continue
+                    clean = repo.get("clean", True)
+                    dirty_files = repo.get("dirtyFiles", [])
+                    if not clean and dirty_files:
+                        self._collapsed_repos.discard(name)
+                    else:
+                        self._collapsed_repos.add(name)
             self._build_file_paths(message)
         super().handle_message(message)
 
     def _build_file_paths(self, payload: dict[str, Any]) -> None:
-        """Extract flat list of file paths from repos payload."""
+        """Extract flat list of file paths from repos payload, skipping collapsed repos."""
         paths: list[str] = []
         repos = payload.get("repos", [])
         if isinstance(repos, list):
             for repo in repos:
                 if not isinstance(repo, dict):
+                    continue
+                name = repo.get("name", "")
+                if self.is_repo_collapsed(name):
                     continue
                 dirty_files = repo.get("dirtyFiles", [])
                 if not isinstance(dirty_files, list):
@@ -344,7 +401,7 @@ class GitPanel(BasePanel):
         if not repos:
             return Text("No repository data", style="dim italic")
 
-        parts: list[Any] = []
+        result = Text()
         flat_idx = 0
         for repo in repos:
             branch = repo.get("branch", "")
@@ -353,13 +410,13 @@ class GitPanel(BasePanel):
             clean = repo.get("clean", True)
             dirty_files = repo.get("dirtyFiles", [])
             name = repo.get("name", "")
+            collapsed = self.is_repo_collapsed(name)
 
             # Build repo header line
-            header = Text()
-            arrow = "▼" if not clean and dirty_files else "▶"
-            header.append(f"{arrow} ", style="bold")
-            header.append(name, style="bold cyan")
-            header.append(f"  \ue0a0 {branch}", style="dim")
+            arrow = "▶" if collapsed else "▼"
+            result.append(f"{arrow} ", style="bold")
+            result.append(name, style="bold cyan")
+            result.append(f"  \ue0a0 {branch}", style="dim")
 
             # Commits
             commit_parts = []
@@ -367,23 +424,27 @@ class GitPanel(BasePanel):
                 commit_parts.append(f"↑{ahead}")
             if behind:
                 commit_parts.append(f"↓{behind}")
-            header.append(f"  {' '.join(commit_parts) if commit_parts else '—'}", style="dim")
+            result.append(f"  {' '.join(commit_parts) if commit_parts else '—'}", style="dim")
 
             # File breakdown
-            header.append("  ")
-            header.append_text(_file_breakdown(dirty_files))
+            result.append("  ")
+            if collapsed and dirty_files:
+                file_count = len(dirty_files)
+                result.append(f"{file_count} file{'s' if file_count != 1 else ''}", style="yellow")
+            else:
+                result.append_text(_file_breakdown(dirty_files))
 
             # Status
-            header.append("  ")
+            result.append("  ")
             if clean:
-                header.append("✓ clean", style="green")
+                result.append("✓ clean", style="green")
             else:
-                header.append("✗ dirty", style="red")
+                result.append("✗ dirty", style="red")
 
-            parts.append(header)
+            result.append("\n")
 
             # Expanded file list for dirty repos — with selection highlight
-            if not clean and dirty_files:
+            if not collapsed and not clean and dirty_files:
                 for f in dirty_files:
                     if not isinstance(f, dict):
                         continue
@@ -391,28 +452,25 @@ class GitPanel(BasePanel):
                     path = f.get("path", "")
                     icon, label, style = _parse_file_status(status_code)
                     is_selected = flat_idx == self._selected_index
-                    file_line = Text()
                     if is_selected:
-                        file_line.append("  › ", style="bold reverse")
+                        result.append("  › ", style="bold reverse")
                     else:
-                        file_line.append("    ")
-                    file_line.append(icon, style=f"bold {style}")
-                    file_line.append(
+                        result.append("    ")
+                    result.append(icon, style=f"bold {style}")
+                    result.append(
                         f" {path}",
                         style="bold cyan reverse" if is_selected else style,
                     )
-                    parts.append(file_line)
+                    result.append("\n")
                     flat_idx += 1
 
-            parts.append(Text(""))  # spacer
+            result.append("\n")  # spacer
 
         # Hint line
         if self._file_paths:
-            hint = Text()
-            hint.append("↑↓", style="bold yellow")
-            hint.append(" select  ", style="dim")
-            hint.append("Enter", style="bold yellow")
-            hint.append(" view diff", style="dim")
-            parts.append(hint)
+            result.append("↑↓", style="bold yellow")
+            result.append(" select  ", style="dim")
+            result.append("Enter", style="bold yellow")
+            result.append(" view diff", style="dim")
 
-        return RichGroup(*parts)
+        return result
