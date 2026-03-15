@@ -22,6 +22,15 @@ from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load
 _STATE_FILE = "peloton-state.json"
 _CLAUDE_DIR = Path.home() / ".claude"
 
+# Badge colors for each agent role — used in the TeamCreate prompt
+# so SM instructs each teammate to run /color with the right value.
+AGENT_BADGE_COLORS: dict[str, str] = {
+    "tea": "blue",
+    "dev": "green",
+    "reviewer": "yellow",
+    "architect": "purple",
+}
+
 
 def _state_path(project_root: Path) -> Path:
     return project_root / ".pennyfarthing" / _STATE_FILE
@@ -219,9 +228,12 @@ def start_session(
     # Build the prompt that SM uses to create the team
     agent_descriptions = []
     for agent in agents:
+        color = AGENT_BADGE_COLORS.get(agent, "")
+        color_instruction = f" Run `/color {color}` first to set badge color." if color else ""
         agent_descriptions.append(
             f"- **{agent}**: Load agent with `/pf-{agent}`. "
             f"Works on story {story_id}. Reads session file for context."
+            f"{color_instruction}"
         )
 
     prompt = (
