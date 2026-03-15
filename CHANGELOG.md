@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.0.0-alpha.3] - 2026-03-15
+
+### Added
+
+- **Peloton team mode** — Native agent teams replace `claude -p` for pipeline replay benchmarks (148-11, 148-12, #1418, #1419, #1421)
+- **Peloton mode orchestration** — Concurrent tmux panes for TEA/Dev/Reviewer with live mode CLI commands (148-8, 148-9, #1408, #1409)
+- **Peloton pane management** — Unified pane management via tmux registry (148-10, #1415)
+- **ReposPanel TUI** — Per-repo collapsible sections in TUI dashboard (MSSCI-16416, #1407)
+- **PPTX assembler** — Slide deck generation for demo artifacts (145-5, #1411)
+- **/pf-demo skill wrapper** — Demo generation skill (146-2, #1412)
+- **Demo finish hook** — Auto-generate demo artifacts on story_finish (146-3, #1413)
+- **Tmux pane discoverability** — Icons, borders, env vars for pane identification (148-1, #1410)
+
+### Changed
+
+- **Frame rename** — WheelHub/BikeRack renamed to Frame/TUI across entire framework (#1403, #1420, #1424)
+- **GUI packages removed** — React packages dropped; Python-only architecture (bd292b7)
+- **Agent behavior guide** — Added critical repos.yaml branching rule
+
+### Fixed
+
+- **Double Claude CLI in tmux** — `tmux-dev` launcher used `pf frame start` (server + exec claude) instead of `pf launch frame` (server-only), spawning two CLI instances
+- **Portrait pane catchphrase** — Shows catchphrase correctly (MSSCI-16424, #1416)
+- **CLI startup performance** — Threshold 800ms, tmux/demo added to command registry (#1423)
+- **CI cleanup** — Ruff lint, YAML lint, dead GUI shortcut removal (#1422)
+- **Frame POLL_CHANNELS** — Removed event-driven channels (#1405)
+- **Token stats WebSocket** — Added spans, token-stats, settings, subagent-transitions to POLL_CHANNELS (#1404)
+- **Tmux template sync** — Updated stale templates with nesting guard, Frame rename, and double-CLI fix
+
 ## [13.0.0-alpha.2] - 2026-03-13
 
 ### Added
@@ -3108,7 +3137,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.2...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.3...HEAD
+[13.0.0-alpha.3]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.2...v13.0.0-alpha.3
 [13.0.0-alpha.2]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.0...v13.0.0-alpha.2
 [13.0.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.7.0...v13.0.0-alpha.0
 [12.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.2...v12.7.0
