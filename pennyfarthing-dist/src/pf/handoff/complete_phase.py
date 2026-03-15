@@ -361,8 +361,8 @@ def _check_subagent_completion(content: str) -> str | None:
     if next_heading:
         section = section[:next_heading.start()]
 
-    # Check for "All received: Yes"
-    if not re.search(r"All received:\s*Yes", section, re.IGNORECASE):
+    # Check for "All received: Yes" (tolerates bold markdown: **All received:** **Yes**)
+    if not re.search(r"\*{0,2}All received:\*{0,2}\s*\*{0,2}Yes\*{0,2}", section, re.IGNORECASE):
         return (
             "Subagent Results table is incomplete — 'All received: Yes' not found. "
             "To fix: Wait for ALL 8 subagents to return results. Fill in every row of "
