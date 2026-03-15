@@ -18,20 +18,15 @@ def create_peloton_layout(
     session: str,
     registry: dict[str, Any],
     live_panes: list[dict[str, Any]],
-    agent_roles: list[str],
 ) -> dict[str, Any]:
-    """Create the two-column peloton layout.
+    """Create the peloton layout: TUI pane below CLI.
 
-    Left column: CLI (top) + TUI (bottom). Right column: agent panes stacked.
-    First split is horizontal off CLI pane to create the right column.
-    Subsequent splits are vertical within the right column for agent stacking.
+    TeamCreate spawns its own panes via teammateMode=tmux, so this function
+    only handles TUI placement. No agent panes are pre-opened.
 
     Returns:
-        {success: True, data: {cli_pane, tui_pane, right_column, agent_panes, registry}}
+        {success: True, data: {cli_pane, tui_pane, registry}}
     """
-    if not agent_roles:
-        return {"success": False, "error": "No agent roles specified"}
-
     # Find CLI and TUI panes
     cli_pane_id = None
     tui_pane_id = None
@@ -45,43 +40,19 @@ def create_peloton_layout(
     if cli_pane_id is None:
         return {"success": False, "error": "No CLI (Claude Code) pane found in session"}
 
-    # First split: horizontal off CLI to create right column
-    first_result = split_pane(session, cli_pane_id, "h")
-    if not first_result["success"]:
-        return {"success": False, "error": first_result.get("error", "Failed to create right column")}
-
-    right_column_id = first_result["data"]
-    agent_panes: list[dict[str, str]] = [{"pane_id": right_column_id, "role": agent_roles[0]}]
-    set_pane_title(right_column_id, agent_roles[0])
-
-    # Subsequent splits: vertical within right column for stacking
-    last_pane = right_column_id
-    for role in agent_roles[1:]:
-        result = split_pane(session, last_pane, "v")
-        if not result["success"]:
-            return {"success": False, "error": result.get("error", f"Failed to create pane for {role}")}
-        new_pane_id = result["data"]
-        agent_panes.append({"pane_id": new_pane_id, "role": role})
-        set_pane_title(new_pane_id, role)
-        last_pane = new_pane_id
-
-    # Register agent panes in the registry
-    for ap in agent_panes:
-        registry["panes"].append({
-            "pane_id": ap["pane_id"],
-            "role": ap["role"],
-            "title": ap["role"],
-            "protected": False,
-            "owner": "peloton",
-        })
+    # Create TUI pane below CLI if not already present
+    if tui_pane_id is None:
+        tui_result = split_pane(session, cli_pane_id, "v")
+        if not tui_result["success"]:
+            return {"success": False, "error": tui_result.get("error", "Failed to create TUI pane")}
+        tui_pane_id = tui_result["data"]
+        set_pane_title(tui_pane_id, "TUI")
 
     return {
         "success": True,
         "data": {
             "cli_pane": cli_pane_id,
             "tui_pane": tui_pane_id,
-            "right_column": right_column_id,
-            "agent_panes": agent_panes,
             "registry": registry,
         },
     }
@@ -129,6 +100,7 @@ class PaneOrchestrator:
     story_id: str
     panes: list[ManagedPane] = field(default_factory=list)
     _use_tmux: bool = True
+    _portrait_info: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     def spawn_agent_panes(
         self,
@@ -156,6 +128,9 @@ class PaneOrchestrator:
                 return {"success": False, "error": f"Failed to create pane for {role}"}
             result[role] = pane
 
+            if theme:
+                self._try_create_portrait(role, theme, pane)
+
         return {"success": True, "data": result}
 
     def spawn_worker_pane(self, title: str, cwd: str | None = None) -> dict[str, Any]:
@@ -181,6 +156,18 @@ class PaneOrchestrator:
             if p.role == role:
                 return p
         return None
+
+    def get_portrait_pane(self, role: str) -> ManagedPane | None:
+        """Get portrait pane for a role, or None if no portrait exists."""
+        portrait_role = f"{role}-portrait"
+        for p in self.panes:
+            if p.role == portrait_role:
+                return p
+        return None
+
+    def get_portrait_info(self, role: str) -> dict[str, Any] | None:
+        """Get portrait metadata for a role (path, theme), or None."""
+        return self._portrait_info.get(role)
 
     def is_pane_idle(self, pane_id: str) -> dict[str, Any]:
         """Check if a pane is idle (at shell prompt).
@@ -289,6 +276,68 @@ class PaneOrchestrator:
         )
         self.panes.append(pane)
         return pane
+
+    def _try_create_portrait(
+        self, role: str, theme: str, agent_pane: ManagedPane
+    ) -> None:
+        """Attempt to create a portrait pane beside an agent's CLI pane."""
+        # Verify agent exists in the project's theme YAML before resolving
+        theme_yaml = (
+            self.project_root / ".pennyfarthing" / "personas" / "themes" / f"{theme}.yaml"
+        )
+        if theme_yaml.exists():
+            try:
+                import yaml
+
+                data = yaml.safe_load(theme_yaml.read_text()) or {}
+                if role not in data.get("agents", {}):
+                    return
+            except Exception:
+                return
+        else:
+            return
+
+        try:
+            from pf.tui.portrait_resolver import resolve_portrait_path
+
+            portrait_path = resolve_portrait_path(
+                theme=theme,
+                agent=role,
+                project_root=self.project_root,
+                preferred_size="small",
+            )
+        except Exception:
+            return
+
+        if portrait_path is None:
+            return
+
+        if self._use_tmux:
+            pane_id = self._split_portrait_pane(agent_pane.pane_id)
+        else:
+            pane_id = _next_pane_id()
+
+        portrait = ManagedPane(
+            pane_id=pane_id,
+            role=f"{role}-portrait",
+            title=f"{self.story_id}-{role}-portrait",
+            protected=False,
+            owner="peloton",
+        )
+        self.panes.append(portrait)
+        self._portrait_info[role] = {"path": portrait_path, "theme": theme}
+
+    def _split_portrait_pane(self, target_pane_id: str) -> str:
+        """Split a pane horizontally for a portrait (<=25% width)."""
+        try:
+            from pf.tmux.panes import split_pane
+
+            result = split_pane(self.session_name, target_pane_id, "h", 20)
+            if result["success"]:
+                return result["data"].strip()
+        except Exception:
+            pass
+        return _next_pane_id()
 
     def _allocate_pane(self, cwd: str | None = None) -> str:
         """Allocate a tmux pane, or generate a mock ID for tests.

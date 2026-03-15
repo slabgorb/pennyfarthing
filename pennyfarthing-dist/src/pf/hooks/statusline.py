@@ -435,6 +435,10 @@ def main() -> None:
         # Always write tmux cache (side-channel for tmux status line)
         _write_tmux_cache(project_root, pct, story_id, dir_name)
 
+        # Suppress statusline for subagent panes (teammates in tmux)
+        if os.environ.get("PF_SUBAGENT"):
+            sys.exit(0)
+
         # Check statusbar setting — skip Claude Code statusline when disabled
         # (tmux users can set workflow.statusbar: false to save vertical space)
         _settings = load_settings(Path(project_root) if project_root else None)

@@ -46,6 +46,42 @@ class WorkflowDriver:
     phases: list[PhaseConfig] = field(default_factory=list)
     results: list[PhaseExecution] = field(default_factory=list)
 
+    def load_workflow(self, wf_path: Path) -> dict[str, Any]:
+        """Load phases from a workflow YAML file.
+
+        Populates self.phases with PhaseConfig objects matching the YAML.
+
+        Returns:
+            {success: True, data: {phases: [...]}} or {success: False, error: ...}
+        """
+        if not wf_path.exists():
+            return {"success": False, "error": f"Workflow file not found: {wf_path}"}
+
+        try:
+            with open(wf_path) as f:
+                data = yaml.safe_load(f)
+        except Exception as e:
+            return {"success": False, "error": f"Failed to parse workflow YAML: {e}"}
+
+        yaml_phases = data.get("workflow", {}).get("phases", [])
+        if not yaml_phases:
+            return {"success": False, "error": "No phases found in workflow YAML"}
+
+        self.phases = []
+        for phase in yaml_phases:
+            gate = phase.get("gate", {})
+            gate_type = gate.get("type") if gate else None
+            self.phases.append(PhaseConfig(
+                role=phase["agent"],
+                prompt=f"pf agent start {phase['agent']}",
+                gate_type=gate_type,
+            ))
+
+        return {
+            "success": True,
+            "data": {"phases": [p["name"] for p in yaml_phases]},
+        }
+
     def load_scenario(self, scenario_path: Path) -> dict[str, Any]:
         """Load a peloton scenario YAML and configure phases.
 

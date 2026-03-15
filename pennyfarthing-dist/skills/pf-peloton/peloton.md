@@ -8,9 +8,50 @@ description: |
 args: "[start|status|stop]"
 ---
 
-# /peloton - Agent Team Mode
+# /pf-peloton - Agent Team Mode
 
 Run a full agent team through a story workflow using Claude Code's native agent teams.
+
+<run>
+pf peloton start
+</run>
+
+## Commands
+
+### `/pf-peloton` or `/pf-peloton start`
+
+Initialize peloton team for the current story. Reads the workflow and outputs a TeamCreate prompt for SM.
+
+<run>
+pf peloton start [--story-id ID] [--workflow NAME]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `--story-id` | No | Story ID (default: from session) |
+| `--workflow` | No | Workflow name (default: from session) |
+</args>
+
+---
+
+### `/pf-peloton status`
+
+Show current peloton team state.
+
+<run>
+pf peloton status [--json]
+</run>
+
+---
+
+### `/pf-peloton stop`
+
+Clear peloton state and clean up.
+
+<run>
+pf peloton stop
+</run>
 
 ## Concept
 
@@ -34,10 +75,10 @@ Enable agent teams (one-time):
 ```bash
 just start          # tmux: Claude Code + TUI + Frame
 ```
-Then in Claude Code:
-```
-/pf-sm              # SM picks story, creates session
-/pf-peloton         # SM creates team, spawns agent panes
+Then in Claude Code, SM picks a story and starts peloton:
+```bash
+pf agent start "sm"         # SM picks story, creates session
+pf peloton start            # SM creates team, spawns agent panes
 ```
 
 ## How It Works
@@ -50,15 +91,14 @@ Then in Claude Code:
 6. When Reviewer approves, SM runs finish flow (PR, merge, archive)
 7. `pf peloton stop` + `TeamDelete` to clean up
 
-## CLI Reference
+## Quick Reference
 
-| Command | Purpose |
-|---------|---------|
-| `pf peloton start` | Initialize state, output TeamCreate prompt for SM |
-| `pf peloton start --story-id X-Y --workflow tdd` | Initialize with explicit values |
-| `pf peloton status` | Show active team, agents |
-| `pf peloton status --json` | Machine-readable status |
-| `pf peloton stop` | Clear peloton state file |
+| Command | CLI | Purpose |
+|---------|-----|---------|
+| `/pf-peloton` | `pf peloton start` | Initialize state, output TeamCreate prompt |
+| `/pf-peloton start` | `pf peloton start [--story-id X-Y --workflow tdd]` | Initialize with explicit values |
+| `/pf-peloton status` | `pf peloton status [--json]` | Show active team, agents |
+| `/pf-peloton stop` | `pf peloton stop` | Clear peloton state file |
 
 ## SM Orchestration Flow
 

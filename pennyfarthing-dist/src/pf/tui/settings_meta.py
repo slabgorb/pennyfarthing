@@ -181,6 +181,20 @@ _SPECS: list[SettingSpec] = [
         group="TUI",
         description="Show action feedback toasts (t to toggle)",
     ),
+    SettingSpec(
+        key="jira.project",
+        label="Jira Project",
+        widget_type="input",
+        group="Jira",
+        description="Jira project key for story tracking",
+    ),
+    SettingSpec(
+        key="jira.url",
+        label="Jira URL",
+        widget_type="input",
+        group="Jira",
+        description="Jira instance base URL",
+    ),
 ]
 
 for _spec in _SPECS:

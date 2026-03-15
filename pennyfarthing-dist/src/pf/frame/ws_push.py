@@ -293,6 +293,17 @@ def fetch_persona() -> dict[str, Any]:
         if not persona:
             return {}
 
+        # Resolve portrait path server-side (AC-1)
+        portrait_path = None
+        try:
+            from pf.tui.portrait_resolver import resolve_portrait_path
+
+            resolved = resolve_portrait_path(theme, agent_name, project_root=Path(project_dir))
+            if resolved:
+                portrait_path = str(resolved)
+        except Exception:
+            pass  # AC-3: graceful degradation
+
         return {
             "character": persona.character,
             "role": agent_name,
@@ -301,6 +312,7 @@ def fetch_persona() -> dict[str, Any]:
             "theme": theme or "",
             "trait": persona.trait or "",
             "isStreaming": False,
+            "portraitPath": portrait_path,
         }
     except Exception:
         return {}

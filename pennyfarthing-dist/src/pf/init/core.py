@@ -649,7 +649,12 @@ def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
         # Remove existing file/symlink before creating new symlink
         if dest.exists() or dest.is_symlink():
             dest.unlink()
-        dest.symlink_to(src.relative_to(target_dir))
+        try:
+            # Try relative symlink (works when dist_root is under target_dir)
+            dest.symlink_to(src.relative_to(target_dir))
+        except ValueError:
+            # dist_root is outside target_dir (consumer mode) — copy instead
+            shutil.copy2(src, dest)
         installed.append(dest_name)
 
     # Copy start-session launcher (always overwrite — framework code)

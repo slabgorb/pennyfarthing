@@ -20,6 +20,19 @@ if str(SRC_DIR) not in sys.path:
 
 
 @pytest.fixture(autouse=True)
+def _no_real_tmux(monkeypatch):
+    """Block all real tmux calls globally.
+
+    Every tmux interaction goes through pf.tmux.panes._run_tmux.
+    Mock it to return a safe error dict so no panes are ever spawned.
+    """
+    from unittest.mock import MagicMock
+
+    mock = MagicMock(return_value={"success": False, "error": "blocked by test fixture"})
+    monkeypatch.setattr("pf.tmux.panes._run_tmux", mock)
+
+
+@pytest.fixture(autouse=True)
 def textual_app_context():
     """Provide a Textual app context for all tests.
 

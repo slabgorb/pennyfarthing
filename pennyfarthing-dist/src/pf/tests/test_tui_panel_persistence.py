@@ -328,7 +328,7 @@ class TestTuiPersist:
         with patch("pf.tui.app.save_last_panel") as mock_save:
             mock_save.return_value = {"success": True, "data": "git"}
             event = TuiApp.FocusUpdate("git")
-            app.on_bike_rack_app_focus_update(event)
+            app.on_tui_app_focus_update(event)
 
         mock_save.assert_called_once_with("git", project_dir=None)
 
@@ -338,7 +338,7 @@ class TestTuiPersist:
 
         with patch("pf.tui.app.save_last_panel") as mock_save:
             event = TuiApp.FocusUpdate(None)
-            app.on_bike_rack_app_focus_update(event)
+            app.on_tui_app_focus_update(event)
 
         (
             mock_save.assert_not_called(),
@@ -355,9 +355,9 @@ class TestTuiPersist:
 
         with patch("pf.tui.app.save_last_panel") as mock_save:
             mock_save.return_value = {"success": True}
-            app.on_bike_rack_app_focus_update(TuiApp.FocusUpdate("sprint"))
-            app.on_bike_rack_app_focus_update(TuiApp.FocusUpdate("git"))
-            app.on_bike_rack_app_focus_update(TuiApp.FocusUpdate("diffs"))
+            app.on_tui_app_focus_update(TuiApp.FocusUpdate("sprint"))
+            app.on_tui_app_focus_update(TuiApp.FocusUpdate("git"))
+            app.on_tui_app_focus_update(TuiApp.FocusUpdate("diffs"))
 
         # Sprint is the initial _focused_panel so switching to it is a no-op.
         # "git" and "diffs" each trigger a save → 2 calls total.

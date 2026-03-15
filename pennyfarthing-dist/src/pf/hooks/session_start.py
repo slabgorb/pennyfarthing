@@ -50,6 +50,51 @@ def _setup_session_dir(project_dir: Path, session_id: str, source_type: str) -> 
 
 
 # =============================================================================
+# Subagent Detection
+# =============================================================================
+
+
+def _detect_and_mark_subagent(project_dir: Path) -> None:
+    """Detect if this is a subagent pane and set PF_SUBAGENT via CLAUDE_ENV_FILE.
+
+    Uses .session/main-pane to track which tmux pane is the main interactive
+    session. Any subsequent session in a different pane is treated as a subagent
+    (teammate) and gets PF_SUBAGENT=1 injected, which the statusline hook uses
+    to suppress the CLI statusbar.
+    """
+    tmux_pane = os.environ.get("TMUX_PANE")
+    if not tmux_pane:
+        return  # Not in tmux — can't detect
+
+    main_pane_file = project_dir / ".session" / "main-pane"
+
+    if not main_pane_file.exists():
+        # First process to start — record as main pane
+        try:
+            main_pane_file.write_text(tmux_pane)
+        except OSError:
+            pass
+        return
+
+    try:
+        recorded_pane = main_pane_file.read_text().strip()
+    except OSError:
+        return
+
+    if recorded_pane == tmux_pane:
+        return  # This IS the main pane
+
+    # Different pane — this is a subagent/teammate
+    env_file = os.environ.get("CLAUDE_ENV_FILE")
+    if env_file:
+        try:
+            with open(env_file, "a") as f:
+                f.write('export PF_SUBAGENT="1"\n')
+        except OSError:
+            pass
+
+
+# =============================================================================
 # Checkpoint Validation
 # =============================================================================
 
@@ -345,6 +390,7 @@ def main() -> None:
         project_dir = Path(os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd()))
 
         _setup_session_dir(project_dir, session_id, source_type)
+        _detect_and_mark_subagent(project_dir)
         _validate_checkpoint(project_dir)
 
         # Set SESSION_ID in process env BEFORE starting Frame so the

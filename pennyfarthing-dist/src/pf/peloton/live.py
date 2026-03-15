@@ -16,11 +16,20 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from pf.peloton.pane_orchestrator import create_peloton_layout
 from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load_workflow_data
 
 
 _STATE_FILE = "peloton-state.json"
+_CLAUDE_DIR = Path.home() / ".claude"
+
+# Badge colors for each agent role — used in the TeamCreate prompt
+# so SM instructs each teammate to run /color with the right value.
+AGENT_BADGE_COLORS: dict[str, str] = {
+    "tea": "blue",
+    "dev": "green",
+    "reviewer": "yellow",
+    "architect": "purple",
+}
 
 
 def _state_path(project_root: Path) -> Path:
@@ -53,6 +62,42 @@ def save_state(project_root: Path, state: dict[str, Any]) -> dict[str, Any]:
         return {"success": True}
     except OSError as e:
         return {"success": False, "error": str(e)}
+
+
+def get_workflow_phases(workflow_name: str, project_root: Path | None = None) -> dict[str, Any]:
+    """Extract all phases from a workflow's YAML definition.
+
+    Returns:
+        {success: True, data: [{name, agent, gate_type}, ...]} or error
+    """
+    from pf.common.config import get_project_root
+
+    roots_to_try = []
+    if project_root is not None:
+        roots_to_try.append(project_root)
+    try:
+        roots_to_try.append(get_project_root())
+    except Exception:
+        pass
+
+    for root in roots_to_try:
+        workflows_dirs = get_all_workflows_dirs(root)
+        wf_file = find_workflow_file(workflows_dirs, workflow_name)
+        if wf_file is not None:
+            data = load_workflow_data(wf_file)
+            phases = data.get("workflow", {}).get("phases", [])
+            if phases:
+                result = []
+                for phase in phases:
+                    gate = phase.get("gate", {})
+                    result.append({
+                        "name": phase["name"],
+                        "agent": phase["agent"],
+                        "gate_type": gate.get("type") if gate else None,
+                    })
+                return {"success": True, "data": result}
+
+    return {"success": False, "error": f"Workflow '{workflow_name}' not found"}
 
 
 def get_workflow_agents(workflow_name: str, project_root: Path | None = None) -> dict[str, Any]:
@@ -103,6 +148,49 @@ def _extract_agents(data: dict[str, Any]) -> list[str] | None:
     return agents if agents else None
 
 
+def cleanup_stale_teams(current_team: str | None = None) -> dict[str, Any]:
+    """Remove stale peloton team and task directories from ~/.claude/.
+
+    Scans ~/.claude/teams/ for directories matching 'peloton-*' and removes
+    them (along with their task lists) unless they match current_team.
+
+    Returns:
+        {success: True, data: {cleaned: [team_names]}} or error
+    """
+    import shutil
+
+    teams_dir = _CLAUDE_DIR / "teams"
+    tasks_dir = _CLAUDE_DIR / "tasks"
+    cleaned: list[str] = []
+
+    if not teams_dir.exists():
+        return {"success": True, "data": {"cleaned": []}}
+
+    for team_dir in sorted(teams_dir.iterdir()):
+        if not team_dir.is_dir():
+            continue
+        name = team_dir.name
+        if not name.startswith("peloton-"):
+            continue
+        if name == current_team:
+            continue
+        # Remove team directory
+        try:
+            shutil.rmtree(team_dir)
+        except OSError:
+            continue
+        # Remove corresponding task directory
+        task_dir = tasks_dir / name
+        if task_dir.exists():
+            try:
+                shutil.rmtree(task_dir)
+            except OSError:
+                pass
+        cleaned.append(name)
+
+    return {"success": True, "data": {"cleaned": cleaned}}
+
+
 def start_session(
     project_root: Path,
     story_id: str,
@@ -123,6 +211,10 @@ def start_session(
     agents = agents_result["data"]
     team_name = f"peloton-{story_id}"
 
+    # Clean up stale peloton teams before creating a new one
+    cleanup_result = cleanup_stale_teams(current_team=team_name)
+    stale_cleaned = cleanup_result.get("data", {}).get("cleaned", [])
+
     state = {
         "active": True,
         "story_id": story_id,
@@ -136,9 +228,12 @@ def start_session(
     # Build the prompt that SM uses to create the team
     agent_descriptions = []
     for agent in agents:
+        color = AGENT_BADGE_COLORS.get(agent, "")
+        color_instruction = f" Run `/color {color}` first to set badge color." if color else ""
         agent_descriptions.append(
             f"- **{agent}**: Load agent with `/pf-{agent}`. "
             f"Works on story {story_id}. Reads session file for context."
+            f"{color_instruction}"
         )
 
     prompt = (
@@ -150,46 +245,14 @@ def start_session(
         f"Use teammateMode tmux so each agent gets a persistent pane."
     )
 
-    # Create peloton pane layout — resolve actual tmux session name
-    tmux_session = team_name
-    live_panes: list[dict[str, Any]] = []
-    registry: dict[str, Any] = {"session": tmux_session, "socket": "pf", "max_panes": 10, "panes": []}
-    try:
-        from pf.tmux.panes import get_session_name, list_live_panes
-        from pf.tmux.registry import load_registry
-
-        session_result = get_session_name()
-        if session_result["success"]:
-            tmux_session = session_result["data"]
-
-        live_result = list_live_panes(tmux_session)
-        if live_result["success"]:
-            live_panes = live_result["data"]
-
-        reg_result = load_registry(project_root, tmux_session)
-        if reg_result["success"]:
-            registry = reg_result["data"]
-    except Exception:
-        pass
-
-    layout_result = create_peloton_layout(
-        session=tmux_session,
-        registry=registry,
-        live_panes=live_panes,
-        agent_roles=agents,
-    )
-
-    result_data: dict[str, Any] = {
-        "team_name": team_name,
-        "agents": agents,
-        "prompt": prompt,
-    }
-    if layout_result["success"]:
-        result_data["layout"] = layout_result["data"]
-
     return {
         "success": True,
-        "data": result_data,
+        "data": {
+            "team_name": team_name,
+            "agents": agents,
+            "prompt": prompt,
+            "stale_cleaned": stale_cleaned,
+        },
     }
 
 
@@ -209,11 +272,47 @@ def get_status(project_root: Path) -> dict[str, Any]:
 
 
 def stop(project_root: Path) -> dict[str, Any]:
-    """Clear peloton state.
+    """Stop peloton: kill peloton-owned panes, clean registry, clear state.
 
     The actual TeamDelete is called by SM in the Claude Code session.
-    This just cleans up the state file.
+    This kills peloton-owned tmux panes and cleans up both the registry
+    and the state file.
     """
+    from pf.tmux.panes import kill_pane
+
+    killed: list[str] = []
+
+    # Kill peloton-owned panes and update registry
+    registry_file = project_root / ".pennyfarthing" / "tmux-panes.json"
+    if registry_file.exists():
+        try:
+            registry = json.loads(registry_file.read_text())
+        except (json.JSONDecodeError, OSError):
+            registry = None
+
+        if registry and "panes" in registry:
+            surviving_panes = []
+            for pane in registry["panes"]:
+                if pane.get("owner") == "peloton" and not pane.get("protected", False):
+                    try:
+                        kill_pane(pane["pane_id"])
+                    except Exception:
+                        pass
+                    killed.append(pane["pane_id"])
+                else:
+                    surviving_panes.append(pane)
+
+            registry["panes"] = surviving_panes
+            try:
+                registry_file.write_text(json.dumps(registry, indent=2) + "\n")
+            except OSError:
+                pass
+
+    # Clean up stale Claude Code team/task directories
+    cleanup_result = cleanup_stale_teams()
+    stale_cleaned = cleanup_result.get("data", {}).get("cleaned", [])
+
+    # Clear peloton state
     cleared = {
         "active": False,
         "story_id": None,
@@ -222,4 +321,4 @@ def stop(project_root: Path) -> dict[str, Any]:
         "agents": [],
     }
     save_state(project_root, cleared)
-    return {"success": True, "data": {"team_name": None}}
+    return {"success": True, "data": {"team_name": None, "killed": killed, "stale_teams_cleaned": stale_cleaned}}

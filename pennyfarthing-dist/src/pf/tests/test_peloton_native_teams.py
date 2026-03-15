@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -46,6 +47,14 @@ def project(tmp_path: Path) -> Path:
     )
 
     return tmp_path
+
+
+@pytest.fixture(autouse=True)
+def _no_real_tmux():
+    """Prevent stop() from calling real tmux commands."""
+    with patch("pf.tmux.panes.kill_pane", return_value={"success": True}), \
+         patch("pf.tmux.panes._run_tmux", return_value={"success": False, "error": "mocked"}):
+        yield
 
 
 class TestStartSession:

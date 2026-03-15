@@ -445,8 +445,8 @@ def validate_full_sprint(data: dict[str, Any]) -> ValidationResult:
     result.merge(sprint_result)
 
     # Validate epics (skip if sharded — epics are string refs to shard files)
+    all_story_ids: set[str] = set()
     if "epics" in data:
-        all_story_ids: set[str] = set()
         for idx, epic in enumerate(data["epics"]):
             # Sharded format: epics are string refs, not dicts
             if isinstance(epic, str):
