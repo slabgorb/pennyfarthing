@@ -51,13 +51,8 @@ def project(tmp_path: Path) -> Path:
 
 @pytest.fixture(autouse=True)
 def _no_real_tmux():
-    """Prevent start_session from opening real tmux panes."""
-    mock_layout = {"success": True, "data": {"cli_pane": "%0", "agent_panes": []}}
-    with patch("pf.peloton.live.create_peloton_layout", return_value=mock_layout), \
-         patch("pf.tmux.panes.get_session_name", return_value={"success": True, "data": "pf-test"}), \
-         patch("pf.tmux.panes.list_live_panes", return_value={"success": True, "data": []}), \
-         patch("pf.tmux.registry.load_registry", return_value={"success": True, "data": {"session": "pf-test", "socket": "pf", "max_panes": 10, "panes": []}}), \
-         patch("pf.tmux.panes.kill_pane", return_value={"success": True}), \
+    """Prevent stop() from calling real tmux commands."""
+    with patch("pf.tmux.panes.kill_pane", return_value={"success": True}), \
          patch("pf.tmux.panes._run_tmux", return_value={"success": False, "error": "mocked"}):
         yield
 

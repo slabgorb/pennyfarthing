@@ -16,7 +16,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from pf.peloton.pane_orchestrator import create_peloton_layout
 from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load_workflow_data
 
 
@@ -186,72 +185,13 @@ def start_session(
         f"Use teammateMode tmux so each agent gets a persistent pane."
     )
 
-    # Create peloton pane layout — resolve actual tmux session name
-    tmux_session = team_name
-    live_panes: list[dict[str, Any]] = []
-    registry: dict[str, Any] = {"session": tmux_session, "socket": "pf", "max_panes": 10, "panes": []}
-    try:
-        from pf.tmux.panes import get_session_name, list_live_panes
-        from pf.tmux.registry import load_registry
-
-        session_result = get_session_name()
-        if session_result["success"]:
-            tmux_session = session_result["data"]
-
-        live_result = list_live_panes(tmux_session)
-        if live_result["success"]:
-            live_panes = live_result["data"]
-
-        reg_result = load_registry(project_root, tmux_session)
-        if reg_result["success"]:
-            registry = reg_result["data"]
-    except Exception:
-        pass
-
-    layout_result = create_peloton_layout(
-        session=tmux_session,
-        registry=registry,
-        live_panes=live_panes,
-        agent_roles=agents,
-    )
-
-    # Build pane_mapping and enrich prompt with pane IDs if layout succeeded
-    pane_mapping: dict[str, str] = {}
-    if layout_result["success"]:
-        for ap in layout_result["data"].get("agent_panes", []):
-            pane_mapping[ap["role"]] = ap["pane_id"]
-
-        # Rebuild prompt with pane targeting info
-        agent_descriptions = []
-        for agent in agents:
-            pane_ref = pane_mapping.get(agent, "")
-            pane_note = f" Target tmux pane {pane_ref}." if pane_ref else ""
-            agent_descriptions.append(
-                f"- **{agent}**: Load agent with `/pf-{agent}`. "
-                f"Works on story {story_id}. Reads session file for context.{pane_note}"
-            )
-
-        prompt = (
-            f"Create a team called '{team_name}' with these teammates:\n"
-            + "\n".join(agent_descriptions)
-            + "\n\n"
-            f"Each teammate should activate their agent role and work on story {story_id}. "
-            f"The session file at .session/{story_id}-session.md has the full context. "
-            f"Use teammateMode tmux so each agent gets a persistent pane."
-        )
-
-    result_data: dict[str, Any] = {
-        "team_name": team_name,
-        "agents": agents,
-        "prompt": prompt,
-    }
-    if layout_result["success"]:
-        result_data["layout"] = layout_result["data"]
-        result_data["pane_mapping"] = pane_mapping
-
     return {
         "success": True,
-        "data": result_data,
+        "data": {
+            "team_name": team_name,
+            "agents": agents,
+            "prompt": prompt,
+        },
     }
 
 

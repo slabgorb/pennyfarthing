@@ -1,34 +1,22 @@
-"""Tests for peloton pane layout — CLI/TUI stacked left, agents stacked right.
+"""Tests for peloton pane layout — TUI below CLI, no agent pane pre-opening.
 
-Story 148-15: Peloton pane layout — CLI/TUI stacked top-bottom, peloton panes in right split
-Epic: 148 — TUI-tmux Fixer
+Story 148-15 (original): Created two-column layout with agent panes.
+Story 148-19 (update): Removed agent pane pre-opening. TeamCreate spawns its
+own panes via teammateMode=tmux. Layout only handles TUI placement below CLI.
 
-Desired layout:
-┌──────────────┬──────────────┐
-│              │              │
-│   CLI        │  Agent 1     │
-│              │  (TEA)       │
-│──────────────│──────────────│
-│              │  Agent 2     │
-│   TUI        │  (Dev)       │
-│              │              │
-└──────────────┴──────────────┘
-
-Acceptance Criteria:
-- [AC1] Peloton start creates a right-side vertical split for agent panes
-- [AC2] CLI session remains in top-left, TUI in bottom-left
-- [AC3] Agent panes open within the right column, stacked vertically
-- [AC4] Layout is applied when `pf peloton start` runs
-- [AC5] Existing pane management (tmux registry) is respected
-- [AC6] Works when TUI is already running; works when TUI is not running
-
-Tests should FAIL until the layout feature is implemented.
+Acceptance Criteria (updated by 148-19):
+- [AC1] create_peloton_layout exists and returns {success, data}
+- [AC2] CLI pane is preserved (not killed or moved)
+- [AC3] TUI pane is preserved when present
+- [AC4] start_session produces a TeamCreate prompt (layout is internal)
+- [AC5] Registry is passed through unchanged (no agent panes added)
+- [AC6] Works with and without TUI already present
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -77,33 +65,15 @@ def project(tmp_path: Path) -> Path:
 def _make_live_panes_cli_tui() -> list[dict]:
     """Simulates a tmux session with CLI on top, TUI on bottom."""
     return [
-        {
-            "pane_id": "%0",
-            "title": "Claude Code",
-            "command": "claude",
-            "width": 200,
-            "height": 30,
-        },
-        {
-            "pane_id": "%1",
-            "title": "TUI",
-            "command": "python",
-            "width": 200,
-            "height": 30,
-        },
+        {"pane_id": "%0", "title": "Claude Code", "command": "claude", "width": 200, "height": 30},
+        {"pane_id": "%1", "title": "TUI", "command": "python", "width": 200, "height": 30},
     ]
 
 
 def _make_live_panes_cli_only() -> list[dict]:
     """Simulates a tmux session with only the CLI pane (no TUI)."""
     return [
-        {
-            "pane_id": "%0",
-            "title": "Claude Code",
-            "command": "claude",
-            "width": 200,
-            "height": 60,
-        },
+        {"pane_id": "%0", "title": "Claude Code", "command": "claude", "width": 200, "height": 60},
     ]
 
 
@@ -127,66 +97,38 @@ def _make_registry(session: str, panes: list[dict]) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# AC1: Peloton creates a right-side vertical split for agent panes
+# AC1: create_peloton_layout exists and returns success
 # ---------------------------------------------------------------------------
 
 
-class TestRightColumnCreation:
-    """AC1: Agent panes go in a right column, not mixed with CLI/TUI."""
+class TestLayoutExists:
+    """AC1: The layout function exists and returns a result."""
 
     def test_create_peloton_layout_exists(self) -> None:
         """A create_peloton_layout function must exist in pane_orchestrator."""
         from pf.peloton.pane_orchestrator import create_peloton_layout  # noqa: F401
 
-    def test_creates_right_column_split(self) -> None:
-        """The layout function should split the CLI pane horizontally to create a right column."""
+    def test_returns_success_with_cli_and_tui(self) -> None:
+        """Layout succeeds when both CLI and TUI are present."""
         from pf.peloton.pane_orchestrator import create_peloton_layout
 
         live_panes = _make_live_panes_cli_tui()
         registry = _make_registry("pf-test-0", live_panes)
 
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.return_value = {"success": True, "data": "%10"}
+        result = create_peloton_layout(
+            session="pf-test-0",
+            registry=registry,
+            live_panes=live_panes,
+        )
 
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            assert result["success"]
-            # The first split should be horizontal (h) off the CLI pane to create right column
-            first_split = mock_split.call_args_list[0]
-            args, kwargs = first_split
-            # direction should be "h" for horizontal — creates a pane to the RIGHT
-            assert "h" in args or kwargs.get("direction") == "h", \
-                "First split must be horizontal to create right column"
-
-    def test_right_column_pane_id_returned(self) -> None:
-        """The result should contain the right column's root pane ID."""
-        from pf.peloton.pane_orchestrator import create_peloton_layout
-
-        live_panes = _make_live_panes_cli_tui()
-        registry = _make_registry("pf-test-0", live_panes)
-
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.return_value = {"success": True, "data": "%10"}
-
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            assert result["success"]
-            assert "right_column" in result["data"]
-            assert result["data"]["right_column"] is not None
+        assert result["success"]
+        assert "cli_pane" in result["data"]
+        assert "tui_pane" in result["data"]
+        assert "registry" in result["data"]
 
 
 # ---------------------------------------------------------------------------
-# AC2: CLI remains top-left, TUI stays bottom-left
+# AC2: CLI pane is preserved
 # ---------------------------------------------------------------------------
 
 
@@ -200,18 +142,13 @@ class TestCliTuiPositionPreserved:
         live_panes = _make_live_panes_cli_tui()
         registry = _make_registry("pf-test-0", live_panes)
 
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split, \
-             patch("pf.peloton.pane_orchestrator.kill_pane") as mock_kill:
-            mock_split.return_value = {"success": True, "data": "%10"}
-
+        with patch("pf.peloton.pane_orchestrator.kill_pane") as mock_kill:
             create_peloton_layout(
                 session="pf-test-0",
                 registry=registry,
                 live_panes=live_panes,
-                agent_roles=["tea", "dev"],
             )
 
-            # CLI pane (%0) must NOT be killed
             killed_ids = [c.args[0] if c.args else c.kwargs.get("pane_id") for c in mock_kill.call_args_list]
             assert "%0" not in killed_ids, "CLI pane must not be killed"
 
@@ -222,18 +159,13 @@ class TestCliTuiPositionPreserved:
         live_panes = _make_live_panes_cli_tui()
         registry = _make_registry("pf-test-0", live_panes)
 
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split, \
-             patch("pf.peloton.pane_orchestrator.kill_pane") as mock_kill:
-            mock_split.return_value = {"success": True, "data": "%10"}
-
+        with patch("pf.peloton.pane_orchestrator.kill_pane") as mock_kill:
             create_peloton_layout(
                 session="pf-test-0",
                 registry=registry,
                 live_panes=live_panes,
-                agent_roles=["tea", "dev"],
             )
 
-            # TUI pane (%1) must NOT be killed
             killed_ids = [c.args[0] if c.args else c.kwargs.get("pane_id") for c in mock_kill.call_args_list]
             assert "%1" not in killed_ids, "TUI pane must not be killed"
 
@@ -244,237 +176,89 @@ class TestCliTuiPositionPreserved:
         live_panes = _make_live_panes_cli_tui()
         registry = _make_registry("pf-test-0", live_panes)
 
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.return_value = {"success": True, "data": "%10"}
+        result = create_peloton_layout(
+            session="pf-test-0",
+            registry=registry,
+            live_panes=live_panes,
+        )
 
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            assert result["success"]
-            assert result["data"]["cli_pane"] == "%0"
-            assert result["data"]["tui_pane"] == "%1"
+        assert result["success"]
+        assert result["data"]["cli_pane"] == "%0"
+        assert result["data"]["tui_pane"] == "%1"
 
 
 # ---------------------------------------------------------------------------
-# AC3: Agent panes stack vertically within the right column
-# ---------------------------------------------------------------------------
-
-
-class TestAgentPaneStacking:
-    """AC3: Multiple agent panes stack vertically in the right column."""
-
-    def test_two_agents_produce_two_panes(self) -> None:
-        """Two agent roles should produce two pane IDs in the right column."""
-        from pf.peloton.pane_orchestrator import create_peloton_layout
-
-        live_panes = _make_live_panes_cli_tui()
-        registry = _make_registry("pf-test-0", live_panes)
-
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
-
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            assert result["success"]
-            assert len(result["data"]["agent_panes"]) == 2
-
-    def test_three_agents_produce_three_panes(self) -> None:
-        """Three agent roles should produce three stacked panes."""
-        from pf.peloton.pane_orchestrator import create_peloton_layout
-
-        live_panes = _make_live_panes_cli_tui()
-        registry = _make_registry("pf-test-0", live_panes)
-
-        split_ids = iter(["%10", "%11", "%12"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
-
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev", "reviewer"],
-            )
-
-            assert result["success"]
-            assert len(result["data"]["agent_panes"]) == 3
-
-    def test_agent_panes_split_vertically_within_right_column(self) -> None:
-        """After the first horizontal split (creating right column),
-        subsequent agent panes should split vertically (stacking top-to-bottom)."""
-        from pf.peloton.pane_orchestrator import create_peloton_layout
-
-        live_panes = _make_live_panes_cli_tui()
-        registry = _make_registry("pf-test-0", live_panes)
-
-        split_ids = iter(["%10", "%11", "%12"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
-
-            create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev", "reviewer"],
-            )
-
-            # First call: horizontal split to create right column
-            # Subsequent calls: vertical splits within the right column
-            calls = mock_split.call_args_list
-            assert len(calls) >= 2, "Need at least 2 splits: right column + agent stacking"
-
-            # Second and subsequent splits should be vertical (v) for stacking
-            for split_call in calls[1:]:
-                args, kwargs = split_call
-                direction = kwargs.get("direction") if "direction" in kwargs else args[2] if len(args) > 2 else None
-                assert direction == "v", \
-                    f"Agent panes must split vertically within right column, got direction={direction}"
-
-    def test_agent_panes_map_to_roles(self) -> None:
-        """Each agent pane should be associated with its role."""
-        from pf.peloton.pane_orchestrator import create_peloton_layout
-
-        live_panes = _make_live_panes_cli_tui()
-        registry = _make_registry("pf-test-0", live_panes)
-
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
-
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            agent_panes = result["data"]["agent_panes"]
-            roles = [p["role"] for p in agent_panes]
-            assert "tea" in roles
-            assert "dev" in roles
-
-
-# ---------------------------------------------------------------------------
-# AC4: Layout is applied when pf peloton start runs
+# AC4: start_session produces prompt (layout is internal)
 # ---------------------------------------------------------------------------
 
 
 class TestPelotonStartIntegration:
-    """AC4: start_session triggers the layout when tmux is available."""
+    """AC4: start_session produces a TeamCreate prompt."""
 
-    def test_start_session_calls_layout(self, project: Path) -> None:
-        """start_session should invoke create_peloton_layout."""
-        with patch("pf.peloton.live.create_peloton_layout") as mock_layout:
-            mock_layout.return_value = {
-                "success": True,
-                "data": {
-                    "cli_pane": "%0",
-                    "tui_pane": "%1",
-                    "right_column": "%10",
-                    "agent_panes": [
-                        {"pane_id": "%10", "role": "tea"},
-                        {"pane_id": "%11", "role": "dev"},
-                    ],
-                },
-            }
+    def test_start_session_returns_prompt(self, project: Path) -> None:
+        """start_session should return a prompt for TeamCreate."""
+        from pf.peloton.live import start_session
 
-            from pf.peloton.live import start_session
+        result = start_session(project, "42-1", "tdd")
 
-            result = start_session(project, "42-1", "tdd")
+        assert result["success"]
+        assert "prompt" in result["data"]
+        assert "team_name" in result["data"]
+        assert "agents" in result["data"]
 
-            assert result["success"]
-            mock_layout.assert_called_once()
+    def test_start_session_no_layout_in_result(self, project: Path) -> None:
+        """start_session result must NOT include layout details."""
+        from pf.peloton.live import start_session
 
-    def test_start_session_includes_layout_in_result(self, project: Path) -> None:
-        """start_session result should include layout information."""
-        with patch("pf.peloton.live.create_peloton_layout") as mock_layout:
-            mock_layout.return_value = {
-                "success": True,
-                "data": {
-                    "cli_pane": "%0",
-                    "tui_pane": "%1",
-                    "right_column": "%10",
-                    "agent_panes": [
-                        {"pane_id": "%10", "role": "tea"},
-                        {"pane_id": "%11", "role": "dev"},
-                    ],
-                },
-            }
+        result = start_session(project, "42-1", "tdd")
 
-            from pf.peloton.live import start_session
-
-            result = start_session(project, "42-1", "tdd")
-
-            assert result["success"]
-            assert "layout" in result["data"]
+        assert result["success"]
+        assert "layout" not in result["data"]
+        assert "pane_mapping" not in result["data"]
 
 
 # ---------------------------------------------------------------------------
-# AC5: Existing pane management (tmux registry) is respected
+# AC5: Registry passed through unchanged
 # ---------------------------------------------------------------------------
 
 
 class TestRegistryIntegration:
-    """AC5: Layout creation updates the tmux pane registry."""
+    """AC5: Registry is returned unchanged — no agent panes added."""
 
-    def test_agent_panes_registered(self) -> None:
-        """New agent panes should appear in the registry after layout creation."""
+    def test_registry_unchanged_with_tui_present(self) -> None:
+        """When TUI is present, registry should pass through with no new entries."""
+        from pf.peloton.pane_orchestrator import create_peloton_layout
+
+        live_panes = _make_live_panes_cli_tui()
+        registry = _make_registry("pf-test-0", live_panes)
+        original_pane_count = len(registry["panes"])
+
+        result = create_peloton_layout(
+            session="pf-test-0",
+            registry=registry,
+            live_panes=live_panes,
+        )
+
+        assert result["success"]
+        updated_registry = result["data"]["registry"]
+        assert len(updated_registry["panes"]) == original_pane_count
+
+    def test_no_peloton_owned_panes_added(self) -> None:
+        """No peloton-owned panes should be added to registry."""
         from pf.peloton.pane_orchestrator import create_peloton_layout
 
         live_panes = _make_live_panes_cli_tui()
         registry = _make_registry("pf-test-0", live_panes)
 
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
+        result = create_peloton_layout(
+            session="pf-test-0",
+            registry=registry,
+            live_panes=live_panes,
+        )
 
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            assert result["success"]
-            # Registry should be updated with new agent panes
-            updated_registry = result["data"].get("registry")
-            assert updated_registry is not None, "Result must include updated registry"
-            pane_ids = [p["pane_id"] for p in updated_registry["panes"]]
-            assert "%10" in pane_ids
-            assert "%11" in pane_ids
-
-    def test_agent_panes_have_owner_peloton(self) -> None:
-        """Agent panes in registry should have owner='peloton'."""
-        from pf.peloton.pane_orchestrator import create_peloton_layout
-
-        live_panes = _make_live_panes_cli_tui()
-        registry = _make_registry("pf-test-0", live_panes)
-
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
-
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            updated_registry = result["data"]["registry"]
-            agent_entries = [p for p in updated_registry["panes"] if p["pane_id"] in ("%10", "%11")]
-            for entry in agent_entries:
-                assert entry["owner"] == "peloton", f"Agent pane {entry['pane_id']} must be owned by peloton"
+        assert result["success"]
+        peloton_panes = [p for p in result["data"]["registry"]["panes"] if p.get("owner") == "peloton"]
+        assert len(peloton_panes) == 0
 
     def test_protected_panes_unchanged(self) -> None:
         """Protected panes (CLI, TUI) in registry must not be modified."""
@@ -483,95 +267,72 @@ class TestRegistryIntegration:
         live_panes = _make_live_panes_cli_tui()
         registry = _make_registry("pf-test-0", live_panes)
 
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
+        result = create_peloton_layout(
+            session="pf-test-0",
+            registry=registry,
+            live_panes=live_panes,
+        )
 
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            updated_registry = result["data"]["registry"]
-            cli_entry = next(p for p in updated_registry["panes"] if p["pane_id"] == "%0")
-            tui_entry = next(p for p in updated_registry["panes"] if p["pane_id"] == "%1")
-            assert cli_entry["protected"] is True
-            assert tui_entry["protected"] is True
-            assert cli_entry["role"] == "claude"
-            assert tui_entry["role"] == "tui"
+        updated_registry = result["data"]["registry"]
+        cli_entry = next(p for p in updated_registry["panes"] if p["pane_id"] == "%0")
+        tui_entry = next(p for p in updated_registry["panes"] if p["pane_id"] == "%1")
+        assert cli_entry["protected"] is True
+        assert tui_entry["protected"] is True
+        assert cli_entry["role"] == "claude"
+        assert tui_entry["role"] == "tui"
 
 
 # ---------------------------------------------------------------------------
-# AC6: Works when TUI is running AND when TUI is not running
+# AC6: Works with and without TUI
 # ---------------------------------------------------------------------------
 
 
 class TestLayoutWithoutTui:
-    """AC6: Layout works when TUI is NOT running."""
+    """AC6: Layout works when TUI is NOT running — creates TUI pane."""
 
-    def test_layout_works_without_tui(self) -> None:
-        """When only CLI pane exists, layout should still create the right column."""
+    @patch("pf.peloton.pane_orchestrator.set_pane_title")
+    @patch("pf.peloton.pane_orchestrator.split_pane")
+    def test_layout_works_without_tui(self, mock_split, mock_title) -> None:
+        """When only CLI pane exists, layout should create TUI below it."""
+        mock_split.return_value = {"success": True, "data": "%10"}
+        mock_title.return_value = {"success": True, "data": ""}
+
         from pf.peloton.pane_orchestrator import create_peloton_layout
 
         live_panes = _make_live_panes_cli_only()
         registry = _make_registry("pf-test-0", live_panes)
 
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
+        result = create_peloton_layout(
+            session="pf-test-0",
+            registry=registry,
+            live_panes=live_panes,
+        )
 
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
+        assert result["success"], f"Layout must work without TUI: {result.get('error')}"
+        assert result["data"]["tui_pane"] == "%10"
 
-            assert result["success"], f"Layout must work without TUI: {result.get('error')}"
+    @patch("pf.peloton.pane_orchestrator.set_pane_title")
+    @patch("pf.peloton.pane_orchestrator.split_pane")
+    def test_tui_created_by_vertical_split(self, mock_split, mock_title) -> None:
+        """TUI should be created by vertical split of CLI pane."""
+        mock_split.return_value = {"success": True, "data": "%10"}
+        mock_title.return_value = {"success": True, "data": ""}
 
-    def test_no_tui_still_creates_agent_panes(self) -> None:
-        """Agent panes should still be created even without TUI."""
         from pf.peloton.pane_orchestrator import create_peloton_layout
 
         live_panes = _make_live_panes_cli_only()
         registry = _make_registry("pf-test-0", live_panes)
 
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
+        create_peloton_layout(
+            session="pf-test-0",
+            registry=registry,
+            live_panes=live_panes,
+        )
 
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            assert result["success"]
-            assert len(result["data"]["agent_panes"]) == 2
-
-    def test_no_tui_reports_none_for_tui_pane(self) -> None:
-        """When TUI isn't running, tui_pane should be None."""
-        from pf.peloton.pane_orchestrator import create_peloton_layout
-
-        live_panes = _make_live_panes_cli_only()
-        registry = _make_registry("pf-test-0", live_panes)
-
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
-
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            assert result["success"]
-            assert result["data"]["tui_pane"] is None
+        assert mock_split.call_count == 1
+        call_args = mock_split.call_args_list[0]
+        assert call_args[0][1] == "%0", "TUI split must target CLI pane"
+        assert call_args[0][2] == "v", "TUI split must be vertical (below CLI)"
 
 
 class TestLayoutWithTui:
@@ -584,150 +345,83 @@ class TestLayoutWithTui:
         live_panes = _make_live_panes_cli_tui()
         registry = _make_registry("pf-test-0", live_panes)
 
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
+        result = create_peloton_layout(
+            session="pf-test-0",
+            registry=registry,
+            live_panes=live_panes,
+        )
 
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
+        assert result["success"]
+        assert result["data"]["tui_pane"] == "%1"
 
-            assert result["success"]
-            assert result["data"]["tui_pane"] == "%1"
-
-    def test_splits_off_cli_not_tui(self) -> None:
-        """The right column split should come from the CLI pane, not the TUI pane.
-
-        The CLI pane is at the top-left — splitting it horizontally creates the
-        right column. The TUI stays in bottom-left.
-        """
+    @patch("pf.peloton.pane_orchestrator.split_pane")
+    def test_no_splits_when_tui_present(self, mock_split) -> None:
+        """No splits should happen when TUI already exists."""
         from pf.peloton.pane_orchestrator import create_peloton_layout
 
         live_panes = _make_live_panes_cli_tui()
         registry = _make_registry("pf-test-0", live_panes)
 
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
+        create_peloton_layout(
+            session="pf-test-0",
+            registry=registry,
+            live_panes=live_panes,
+        )
 
-            create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            # The first split should target the CLI pane (%0)
-            first_call = mock_split.call_args_list[0]
-            args, kwargs = first_call
-            target = kwargs.get("target") if "target" in kwargs else args[1] if len(args) > 1 else None
-            assert target == "%0", f"First split must target CLI pane (%0), got {target}"
+        assert mock_split.call_count == 0, "No splits needed when TUI exists"
 
 
 # ---------------------------------------------------------------------------
-# Edge cases — paranoid testing
+# Edge cases
 # ---------------------------------------------------------------------------
 
 
 class TestLayoutEdgeCases:
     """Edge cases and error handling."""
 
-    def test_empty_agent_list_returns_error(self) -> None:
-        """No agents = no layout to create."""
+    def test_empty_agent_list_succeeds(self) -> None:
+        """Empty roles should succeed — layout only needs CLI+TUI."""
         from pf.peloton.pane_orchestrator import create_peloton_layout
 
         live_panes = _make_live_panes_cli_tui()
+        registry = _make_registry("pf-test-0", live_panes)
+
+        # No agent_roles parameter — function no longer takes it
+        result = create_peloton_layout(
+            session="pf-test-0",
+            registry=registry,
+            live_panes=live_panes,
+        )
+
+        assert result["success"]
+
+    @patch("pf.peloton.pane_orchestrator.set_pane_title")
+    @patch("pf.peloton.pane_orchestrator.split_pane")
+    def test_split_failure_returns_error(self, mock_split, mock_title) -> None:
+        """If TUI split fails, the layout should report failure cleanly."""
+        mock_split.return_value = {"success": False, "error": "no space for split"}
+        mock_title.return_value = {"success": True, "data": ""}
+
+        from pf.peloton.pane_orchestrator import create_peloton_layout
+
+        live_panes = _make_live_panes_cli_only()  # Force TUI creation
         registry = _make_registry("pf-test-0", live_panes)
 
         result = create_peloton_layout(
             session="pf-test-0",
             registry=registry,
             live_panes=live_panes,
-            agent_roles=[],
         )
 
         assert not result["success"]
-
-    def test_split_failure_returns_error(self) -> None:
-        """If tmux split fails, the layout should report failure cleanly."""
-        from pf.peloton.pane_orchestrator import create_peloton_layout
-
-        live_panes = _make_live_panes_cli_tui()
-        registry = _make_registry("pf-test-0", live_panes)
-
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.return_value = {"success": False, "error": "no space for split"}
-
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            assert not result["success"]
-            assert "error" in result
-
-    def test_single_agent_still_creates_right_column(self) -> None:
-        """Even one agent should get the right column treatment."""
-        from pf.peloton.pane_orchestrator import create_peloton_layout
-
-        live_panes = _make_live_panes_cli_tui()
-        registry = _make_registry("pf-test-0", live_panes)
-
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split:
-            mock_split.return_value = {"success": True, "data": "%10"}
-
-            result = create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea"],
-            )
-
-            assert result["success"]
-            assert len(result["data"]["agent_panes"]) == 1
-            assert result["data"]["right_column"] is not None
-
-    def test_pane_titles_set_for_agents(self) -> None:
-        """Each agent pane should have its title set for identification."""
-        from pf.peloton.pane_orchestrator import create_peloton_layout
-
-        live_panes = _make_live_panes_cli_tui()
-        registry = _make_registry("pf-test-0", live_panes)
-
-        split_ids = iter(["%10", "%11"])
-        with patch("pf.peloton.pane_orchestrator.split_pane") as mock_split, \
-             patch("pf.peloton.pane_orchestrator.set_pane_title") as mock_title:
-            mock_split.side_effect = lambda *a, **kw: {"success": True, "data": next(split_ids)}
-            mock_title.return_value = {"success": True, "data": ""}
-
-            create_peloton_layout(
-                session="pf-test-0",
-                registry=registry,
-                live_panes=live_panes,
-                agent_roles=["tea", "dev"],
-            )
-
-            # set_pane_title should be called for each agent pane
-            assert mock_title.call_count >= 2, "Must set title for each agent pane"
+        assert "error" in result
 
     def test_no_cli_pane_found_returns_error(self) -> None:
         """If there's no CLI pane in the session, layout should fail gracefully."""
         from pf.peloton.pane_orchestrator import create_peloton_layout
 
-        # A session with an unrecognized pane (no CLI, no TUI)
         live_panes = [
-            {
-                "pane_id": "%5",
-                "title": "random-shell",
-                "command": "zsh",
-                "width": 200,
-                "height": 60,
-            },
+            {"pane_id": "%5", "title": "random-shell", "command": "zsh", "width": 200, "height": 60},
         ]
         registry = _make_registry("pf-test-0", live_panes)
 
@@ -735,7 +429,6 @@ class TestLayoutEdgeCases:
             session="pf-test-0",
             registry=registry,
             live_panes=live_panes,
-            agent_roles=["tea", "dev"],
         )
 
         assert not result["success"]
