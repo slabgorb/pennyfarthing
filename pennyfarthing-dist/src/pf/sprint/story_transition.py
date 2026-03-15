@@ -48,7 +48,7 @@ def transition_story(
     """
     # Validate story_id format
     parts = story_id.split("-")
-    if len(parts) < 2 or not parts[0].isdigit():
+    if len(parts) < 2 or not parts[-1].isdigit():
         return {
             "success": False,
             "story_id": story_id,
