@@ -21,7 +21,9 @@ from pf.common.themes import (
 )
 from pf.prime.models import CrewMember, Persona
 
-# Standard agent roles for crew manifest
+# Per-agent quote cache: agent_name -> selected catchphrase
+_quote_cache: dict[tuple[str, str], str] = {}
+
 AGENT_ROLES = [
     "sm",
     "tea",
@@ -121,7 +123,7 @@ def load_persona(
         character=agent_data.get("character", "Unknown"),
         style=agent_data.get("style", ""),
         role=agent_data.get("role", ""),
-        quote=random.choice(catchphrases) if (catchphrases := agent_data.get("catchphrases")) else agent_data.get("quote"),
+        quote=_quote_cache.setdefault((agent_name, theme), random.choice(catchphrases)) if (catchphrases := agent_data.get("catchphrases")) else agent_data.get("quote"),
         trait=agent_data.get("trait"),
         quirk=agent_data.get("quirk"),
         motto=agent_data.get("motto"),

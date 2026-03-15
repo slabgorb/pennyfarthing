@@ -604,11 +604,15 @@ class TestEventHandlers:
         self, sample_repos, sample_repos_yaml_raw, mock_set_repo_field
     ):
         """Events with None widget ID should not crash."""
+        from unittest.mock import PropertyMock
+
         from textual.widgets import Switch
 
         panel = ReposPanel()
         switch = Switch(value=False)
-        switch.id = None
+        # Textual no longer allows setting id to None directly;
+        # use a property mock to simulate the edge case.
+        type(switch).id = PropertyMock(return_value=None)
         event = Switch.Changed(switch, value=True)
         panel.on_switch_changed(event)
         mock_set_repo_field.assert_not_called()
