@@ -263,32 +263,50 @@ class GitPanel(BasePanel):
             idx += file_count
         return None
 
+    def _expand_next_collapsed_repo(self, after_repo: str | None = None) -> None:
+        """Expand the next collapsed repo after the given one, wrapping around."""
+        if not self._last_payload:
+            return
+        repos = self._last_payload.get("repos", [])
+        if not isinstance(repos, list):
+            return
+        repo_names = [
+            r.get("name", "")
+            for r in repos
+            if isinstance(r, dict) and r.get("name")
+        ]
+        if not repo_names:
+            return
+        start = 0
+        if after_repo and after_repo in repo_names:
+            start = (repo_names.index(after_repo) + 1) % len(repo_names)
+        for i in range(len(repo_names)):
+            name = repo_names[(start + i) % len(repo_names)]
+            if self.is_repo_collapsed(name):
+                self.toggle_repo_collapsed(name)
+                self._build_file_paths(self._last_payload)
+                return
+
     def action_toggle_collapse(self) -> None:
-        """Keybinding action: toggle collapse for the repo under selection."""
+        """Keybinding action: toggle collapse for the repo under selection.
+
+        Carousel behavior: when collapsing leaves no visible files, the next
+        collapsed repo auto-expands. Repeated presses cycle through all repos.
+        """
         if self._viewing_diff or not self._last_payload:
             return
-        # If files are visible, toggle the repo owning the selected file
         target = self._repo_for_selected_file()
         if target:
             self.toggle_repo_collapsed(target)
             self._build_file_paths(self._last_payload)
+            # If collapsing left no visible files, carousel to next repo
+            if not self._file_paths:
+                self._expand_next_collapsed_repo(after_repo=target)
             self._rerender()
             return
-        # No visible files (all collapsed) — expand the first collapsed repo
-        repos = self._last_payload.get("repos", [])
-        if not isinstance(repos, list):
-            return
-        for repo in repos:
-            if not isinstance(repo, dict):
-                continue
-            name = repo.get("name", "")
-            if not name:
-                continue
-            if self.is_repo_collapsed(name):
-                self.toggle_repo_collapsed(name)
-                self._build_file_paths(self._last_payload)
-                self._rerender()
-                return
+        # No visible files (all collapsed) — expand next collapsed repo
+        self._expand_next_collapsed_repo()
+        self._rerender()
 
     def handle_message(self, message: dict[str, Any] | None) -> None:
         """Handle incoming git message — set default collapse state and build file index."""
