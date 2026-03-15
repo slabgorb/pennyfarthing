@@ -150,25 +150,30 @@ def start_session(
         f"Use teammateMode tmux so each agent gets a persistent pane."
     )
 
-    # Create peloton pane layout
+    # Create peloton pane layout — resolve actual tmux session name
+    tmux_session = team_name
     live_panes: list[dict[str, Any]] = []
-    registry: dict[str, Any] = {"session": team_name, "socket": "pf", "max_panes": 10, "panes": []}
+    registry: dict[str, Any] = {"session": tmux_session, "socket": "pf", "max_panes": 10, "panes": []}
     try:
-        from pf.tmux.panes import list_live_panes
+        from pf.tmux.panes import get_session_name, list_live_panes
         from pf.tmux.registry import load_registry
 
-        live_result = list_live_panes(team_name)
+        session_result = get_session_name()
+        if session_result["success"]:
+            tmux_session = session_result["data"]
+
+        live_result = list_live_panes(tmux_session)
         if live_result["success"]:
             live_panes = live_result["data"]
 
-        reg_result = load_registry(project_root, team_name)
+        reg_result = load_registry(project_root, tmux_session)
         if reg_result["success"]:
             registry = reg_result["data"]
     except Exception:
         pass
 
     layout_result = create_peloton_layout(
-        session=team_name,
+        session=tmux_session,
         registry=registry,
         live_panes=live_panes,
         agent_roles=agents,
