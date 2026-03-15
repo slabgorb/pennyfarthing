@@ -209,11 +209,43 @@ def get_status(project_root: Path) -> dict[str, Any]:
 
 
 def stop(project_root: Path) -> dict[str, Any]:
-    """Clear peloton state.
+    """Stop peloton: kill peloton-owned panes, clean registry, clear state.
 
     The actual TeamDelete is called by SM in the Claude Code session.
-    This just cleans up the state file.
+    This kills peloton-owned tmux panes and cleans up both the registry
+    and the state file.
     """
+    from pf.tmux.panes import kill_pane
+
+    killed: list[str] = []
+
+    # Kill peloton-owned panes and update registry
+    registry_file = project_root / ".pennyfarthing" / "tmux-panes.json"
+    if registry_file.exists():
+        try:
+            registry = json.loads(registry_file.read_text())
+        except (json.JSONDecodeError, OSError):
+            registry = None
+
+        if registry and "panes" in registry:
+            surviving_panes = []
+            for pane in registry["panes"]:
+                if pane.get("owner") == "peloton" and not pane.get("protected", False):
+                    try:
+                        kill_pane(pane["pane_id"])
+                    except Exception:
+                        pass
+                    killed.append(pane["pane_id"])
+                else:
+                    surviving_panes.append(pane)
+
+            registry["panes"] = surviving_panes
+            try:
+                registry_file.write_text(json.dumps(registry, indent=2) + "\n")
+            except OSError:
+                pass
+
+    # Clear peloton state
     cleared = {
         "active": False,
         "story_id": None,
@@ -222,4 +254,4 @@ def stop(project_root: Path) -> dict[str, Any]:
         "agents": [],
     }
     save_state(project_root, cleared)
-    return {"success": True, "data": {"team_name": None}}
+    return {"success": True, "data": {"team_name": None, "killed": killed}}
