@@ -1050,7 +1050,7 @@ def _run_reviewer_fanout(
         )
 
         cmd = ["claude", "-p", task, "--output-format", "json", "--model",
-               "claude-sonnet-4-6"]
+               "claude-opus-4-6"]
 
         try:
             result = subprocess.run(
@@ -1414,7 +1414,7 @@ def run_pipeline(
         print(f"  [{tag}-SCAN] Running pre-phase scan...")
         scan_result = subprocess.run(
             ["claude", "-p", scan_task, "--output-format", "json",
-             "--model", "claude-sonnet-4-6"],
+             "--model", "claude-opus-4-6"],
             cwd=str(wt_path), capture_output=True, text=True,
             timeout=300, env={**os.environ},
         )
@@ -2644,7 +2644,7 @@ def run_phase_replay(
 
                 scores = []
                 for j in range(judge_count):
-                    jmodel = judge_model or "claude-sonnet-4-6"
+                    jmodel = judge_model or "claude-opus-4-6"
                     print(f"  [JUDGE {j + 1}/{judge_count}] Scoring retry output ({jmodel})...")
                     score = score_with_judge(
                         scenario, pipeline_result, model=jmodel, project_dir=project_dir,
@@ -2729,7 +2729,7 @@ def _run_scout_standalone(
     print(f"  [{tag}-SCAN] Running pre-phase scan...")
     scan_result = subprocess.run(
         ["claude", "-p", scan_task, "--output-format", "json",
-         "--model", "claude-sonnet-4-6"],
+         "--model", "claude-opus-4-6"],
         cwd=str(wt_path), capture_output=True, text=True,
         timeout=300, env={**os.environ},
     )
