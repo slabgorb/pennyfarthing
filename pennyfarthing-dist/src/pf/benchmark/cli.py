@@ -466,7 +466,7 @@ def replay():
 @click.option("--judge-model", default="claude-opus-4-6", help="Claude model for scoring judge")
 @click.option("--judge-count", default=3, type=int, help="Number of independent judge passes (default: 3)")
 @click.option("--skip-score", is_flag=True, help="Skip judge scoring after run")
-@click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
+@click.option("--keep-worktree/--no-keep-worktree", default=True, help="Keep worktree after run for inspection (default: keep)")
 @click.option(
     "--max-rework-cycles",
     default=0,
@@ -1109,7 +1109,7 @@ def _print_heatmap(scenario, scores):
 @click.argument("scenario_path", type=click.Path(exists=True))
 @click.option("--run", "run_num", required=True, type=int, help="Run number to replay against")
 @click.option("--phase", "phase_name", required=True, help="Phase to re-run (e.g. reviewer, tea, dev)")
-@click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
+@click.option("--keep-worktree/--no-keep-worktree", default=True, help="Keep worktree after run for inspection (default: keep)")
 @click.option("--rejudge", is_flag=True, help="Re-judge using the new phase output")
 @click.option("--model", default=None, help="Claude model for the phase agent")
 @click.option("--judge-model", default="claude-opus-4-6", help="Claude model for scoring judge")

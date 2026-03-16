@@ -1651,6 +1651,23 @@ def run_pipeline(
                 role="_diff",
                 output_text=diff_result.stdout,
             )
+        # Save full patch for post-hoc code review
+        full_patch = subprocess.run(
+            ["git", "diff", scenario.base_commit + "...HEAD"],
+            cwd=str(wt_path),
+            capture_output=True, text=True,
+        )
+        uncommitted_patch = subprocess.run(
+            ["git", "diff"],
+            cwd=str(wt_path),
+            capture_output=True, text=True,
+        )
+        combined_patch = full_patch.stdout + (uncommitted_patch.stdout or "")
+        if combined_patch.strip():
+            result.phases["_full_patch"] = PhaseResult(
+                role="_patch",
+                output_text=combined_patch,
+            )
 
     return result
 
@@ -2155,6 +2172,11 @@ def save_result(
     diff_pr = pipeline_result.phases.get("_diff_stat")
     if diff_pr:
         (run_dir / "diff-stat.txt").write_text(diff_pr.output_text)
+
+    # Save full patch for post-hoc code review
+    patch_pr = pipeline_result.phases.get("_full_patch")
+    if patch_pr:
+        (run_dir / "full.patch").write_text(patch_pr.output_text)
 
     # Generate and save events summary from OTEL data
     from pf.benchmark.events import generate_events_summary
