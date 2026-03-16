@@ -94,6 +94,8 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 <subagent-completion-gate>
 ## Subagent Completion Gate — BLOCKING
 
+**Enforced by `gates/subagent-before-conclusions`.** This is not advisory — the gate will reject your phase transition if you write conclusions before subagents return, or if your VERIFIEDs contradict subagent findings without explicit `Challenged:` notes.
+
 Do not proceed to your assessment until ALL 8 subagents have returned results.
 Do not abbreviate this process because context feels high.
 Do not skip subagents because "the code looks clean."

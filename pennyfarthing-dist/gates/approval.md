@@ -23,6 +23,8 @@ Check the session file for a Reviewer Assessment section AND a complete Subagent
 
 4. **Verify subagent dispatch tags** (see nested gate below) — ALL 7 specialist tags present
 
+5. **Verify subagent-before-conclusions gate** — VERIFIEDs must not contradict subagent findings without explicit `Challenged:` notes. See `gates/subagent-before-conclusions.md`.
+
 If the review is APPROVED and all subgates pass, return:
 
 ```yaml
