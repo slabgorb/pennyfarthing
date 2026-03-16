@@ -206,14 +206,14 @@ class TestPelotonStartIntegration:
         assert "team_name" in result["data"]
         assert "agents" in result["data"]
 
-    def test_start_session_no_layout_in_result(self, project: Path) -> None:
-        """start_session result must NOT include layout details."""
+    def test_start_session_includes_layout_in_result(self, project: Path) -> None:
+        """start_session result includes layout (added by 148-24)."""
         from pf.peloton.live import start_session
 
         result = start_session(project, "42-1", "tdd")
 
         assert result["success"]
-        assert "layout" not in result["data"]
+        assert "layout" in result["data"]
         assert "pane_mapping" not in result["data"]
 
 

@@ -31,6 +31,8 @@ AGENT_BADGE_COLORS: dict[str, str] = {
     "architect": "purple",
 }
 
+VALID_LAYOUTS = {"horizontal", "vertical", "grid"}
+
 
 def _state_path(project_root: Path) -> Path:
     return project_root / ".pennyfarthing" / _STATE_FILE
@@ -62,6 +64,44 @@ def save_state(project_root: Path, state: dict[str, Any]) -> dict[str, Any]:
         return {"success": True}
     except OSError as e:
         return {"success": False, "error": str(e)}
+
+
+def get_configured_layout(project_root: Path) -> str | None:
+    """Read peloton.layout from config.local.yaml, or None if unset."""
+    config_path = project_root / ".pennyfarthing" / "config.local.yaml"
+    if not config_path.exists():
+        return None
+    try:
+        import yaml
+
+        data = yaml.safe_load(config_path.read_text()) or {}
+        return data.get("peloton", {}).get("layout")
+    except Exception:
+        return None
+
+
+def _resolve_layout(
+    explicit: str | None,
+    project_root: Path,
+    agent_count: int,
+) -> str:
+    """Resolve the effective layout from explicit flag, config, or default."""
+    if explicit is not None:
+        return explicit.lower()
+
+    configured = get_configured_layout(project_root)
+    if configured is not None:
+        return configured.lower()
+
+    # Smart default: grid for 4+, vertical for 2-3
+    return "grid" if agent_count >= 4 else "vertical"
+
+
+_LAYOUT_DESCRIPTIONS: dict[str, str] = {
+    "horizontal": "Arrange agent teammate panes side by side (horizontal split).",
+    "vertical": "Stack agent teammate panes vertically (one above the other).",
+    "grid": "Arrange agent teammate panes in a 2x2 grid pattern.",
+}
 
 
 def get_workflow_phases(workflow_name: str, project_root: Path | None = None) -> dict[str, Any]:
@@ -195,14 +235,20 @@ def start_session(
     project_root: Path,
     story_id: str,
     workflow_name: str,
+    layout: str | None = None,
 ) -> dict[str, Any]:
     """Initialize peloton state and produce the TeamCreate prompt for SM.
 
     Records the team name and agent list in state. Returns the prompt
     that SM should use to create the team via native agent teams.
 
+    Args:
+        layout: Pane layout — "horizontal", "vertical", or "grid".
+                Defaults based on agent count (grid for 4+, vertical for 2-3).
+                Can also be set in config.local.yaml under peloton.layout.
+
     Returns:
-        {success: True, data: {team_name, agents, prompt}} or error
+        {success: True, data: {team_name, agents, layout, prompt}} or error
     """
     agents_result = get_workflow_agents(workflow_name, project_root)
     if not agents_result["success"]:
@@ -210,6 +256,14 @@ def start_session(
 
     agents = agents_result["data"]
     team_name = f"peloton-{story_id}"
+
+    # Resolve and validate layout
+    effective_layout = _resolve_layout(layout, project_root, len(agents))
+    if effective_layout not in VALID_LAYOUTS:
+        return {
+            "success": False,
+            "error": f"Invalid layout '{effective_layout}'. Must be one of: {', '.join(sorted(VALID_LAYOUTS))}",
+        }
 
     # Clean up stale peloton teams before creating a new one
     cleanup_result = cleanup_stale_teams(current_team=team_name)
@@ -221,6 +275,7 @@ def start_session(
         "workflow": workflow_name,
         "team_name": team_name,
         "agents": agents,
+        "layout": effective_layout,
         "created_at": datetime.now(UTC).isoformat(),
     }
     save_state(project_root, state)
@@ -236,10 +291,14 @@ def start_session(
             f"{color_instruction}"
         )
 
+    layout_desc = _LAYOUT_DESCRIPTIONS.get(effective_layout, "")
+
     prompt = (
         f"Create a team called '{team_name}' with these teammates:\n"
         + "\n".join(agent_descriptions)
         + "\n\n"
+        f"Layout: {effective_layout}. {layout_desc}\n"
+        f"The TUI pane should be placed below the SM team lead CLI pane.\n\n"
         f"Each teammate should activate their agent role and work on story {story_id}. "
         f"The session file at .session/{story_id}-session.md has the full context. "
         f"Use teammateMode tmux so each agent gets a persistent pane."
@@ -250,6 +309,7 @@ def start_session(
         "data": {
             "team_name": team_name,
             "agents": agents,
+            "layout": effective_layout,
             "prompt": prompt,
             "stale_cleaned": stale_cleaned,
         },
