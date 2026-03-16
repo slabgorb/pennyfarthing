@@ -1190,6 +1190,23 @@ def run_pipeline(
     the phase outputs (``{phase}-otel.jsonl``).  The *otel_endpoint*
     parameter is accepted for backwards compatibility but ignored.
     """
+    # Gate: verify pf module resolves to THIS project's source, not a stale
+    # install from another project (e.g., pf-3 via global .pth file).
+    _this_file = Path(__file__).resolve()
+    _expected_root = project_dir / "pennyfarthing" / "pennyfarthing-dist" / "src"
+    if not str(_this_file).startswith(str(_expected_root)):
+        # Also check .pennyfarthing symlink target
+        _pf_link = project_dir / ".pennyfarthing"
+        _alt_root = (_pf_link.resolve().parent / "src") if _pf_link.is_symlink() else None
+        if _alt_root is None or not str(_this_file).startswith(str(_alt_root)):
+            print(
+                f"  [GATE] WARNING: pf module loaded from {_this_file.parent}\n"
+                f"         Expected: {_expected_root}/pf/benchmark/\n"
+                f"         Benchmark results may not reflect your latest code.\n"
+                f"         Fix: pip install -e {project_dir}/pennyfarthing/pennyfarthing-dist"
+            )
+            raise SystemExit(1)
+
     is_bmad = bmad_root is not None
     tag = theme or "control"
     wt_name = f"{scenario.id}-{tag}-run-{run_id}"
