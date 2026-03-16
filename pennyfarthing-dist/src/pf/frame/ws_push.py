@@ -455,6 +455,13 @@ def fetch_benchmark_history() -> dict[str, Any]:
     return {"type": "init", "runs": runs}
 
 
+def fetch_benchmark_events() -> dict[str, Any]:
+    """Fetch current benchmark events state (phase transitions, live run data)."""
+    from pf.frame.routes.state import get_benchmark_events_snapshot
+
+    return get_benchmark_events_snapshot()
+
+
 def fetch_subagent_transitions() -> dict[str, Any]:
     """Fetch recent subagent transition events."""
     from pf.frame.routes.state import _subagent_events
@@ -497,6 +504,7 @@ CHANNEL_FETCHERS: dict[str, Any] = {
     "todos": fetch_todos,
     "token-stats": fetch_token_stats,
     "benchmark-history": fetch_benchmark_history,
+    "benchmark-events": fetch_benchmark_events,
     "subagent-transitions": fetch_subagent_transitions,
 }
 
