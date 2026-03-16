@@ -565,21 +565,29 @@ def build_phase_claude_md(
         story_text = Path(scenario.context_story_path).read_text()
         parts.append(f"\n## Epic Context\n\n{epic_text}\n\n---")
         parts.append(f"\n## Story Context\n\n{story_text}\n\n---")
-        parts.append("""
-## Project Notes
-
-- This is a Rust workspace. The target crate is `crates/axiathon-server/`.
-- Tests go in `crates/axiathon-server/tests/`.
-- Production code goes in `crates/axiathon-server/src/`.
-- Run tests: `cargo test -p axiathon-server`
-- Run lint: `cargo clippy -p axiathon-server`
-- The crate `axiathon-core` has existing types (`AxiathonError`, `TenantId`, etc.)
-""")
     else:
         # Repo-context: include the repo's own CLAUDE.md if it exists
         if scenario.claude_md_path and Path(scenario.claude_md_path).exists():
             repo_claude_md = Path(scenario.claude_md_path).read_text()
             parts.append(f"\n## Project Context\n\n{repo_claude_md}\n\n---")
+
+    # Always include repo-level conventions (CLAUDE.md, SOUL.md, rules/)
+    # These define the project's coding standards that agents MUST know.
+    repo_path = Path(scenario.repo_path)
+    for context_file in ["CLAUDE.md", "SOUL.md"]:
+        fpath = repo_path / context_file
+        if fpath.exists():
+            parts.append(f"\n## {context_file}\n\n{fpath.read_text()}\n\n---")
+    # Include rules/ files (rust.md, etc.)
+    rules_dir = repo_path / ".claude" / "rules"
+    if rules_dir.is_dir():
+        for rule_file in sorted(rules_dir.glob("*.md")):
+            if rule_file.name.startswith("_"):
+                continue
+            parts.append(
+                f"\n## Project Rule: {rule_file.name}\n\n"
+                f"{rule_file.read_text()}\n\n---"
+            )
 
     return "\n".join(parts)
 
