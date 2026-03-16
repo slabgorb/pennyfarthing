@@ -1016,10 +1016,12 @@ def _run_reviewer_fanout(
     src_list = subprocess.run(
         ["find", ".", "-type", "f", "(",
          "-name", "*.rs", "-o", "-name", "Cargo.toml",
-         "-o", "-name", "package.json", "-o", "-name", "*.yaml",
+         "-o", "-name", "package.json",
          ")", "-not", "-path", "*/target/*",
          "-not", "-path", "*/.git/*",
-         "-not", "-path", "*/.pennyfarthing/*"],
+         "-not", "-path", "*/.pennyfarthing/*",
+         "-not", "-path", "*/spike/*",
+         "-not", "-path", "*/.session/*"],
         cwd=str(worktree_path), capture_output=True, text=True, timeout=10,
     )
     source_files = src_list.stdout.strip()
@@ -1056,7 +1058,7 @@ def _run_reviewer_fanout(
                 cwd=str(worktree_path),
                 capture_output=True,
                 text=True,
-                timeout=120,
+                timeout=300,
                 env={**os.environ},
             )
             # Extract text from JSON output
@@ -1067,7 +1069,7 @@ def _run_reviewer_fanout(
                 text = result.stdout
             return name, text
         except subprocess.TimeoutExpired:
-            return name, "TIMEOUT: subagent exceeded 120s"
+            return name, "TIMEOUT: subagent exceeded 300s"
         except Exception as e:
             return name, f"ERROR: {e}"
 
@@ -1078,7 +1080,7 @@ def _run_reviewer_fanout(
         test_result = subprocess.run(
             ["cargo", "test", "--workspace"],
             cwd=str(worktree_path),
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, timeout=300,
         )
         checks.append(f"## Tests\nExit code: {test_result.returncode}\n"
                        f"```\n{test_result.stdout[-2000:]}\n```")
@@ -1089,7 +1091,7 @@ def _run_reviewer_fanout(
         lint_result = subprocess.run(
             ["cargo", "clippy", "--workspace", "--", "-W", "clippy::all"],
             cwd=str(worktree_path),
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, timeout=300,
         )
         checks.append(f"## Clippy\nExit code: {lint_result.returncode}\n"
                        f"```\n{lint_result.stderr[-2000:]}\n```")
@@ -1394,10 +1396,12 @@ def run_pipeline(
         src_list = subprocess.run(
             ["find", ".", "-type", "f", "(",
              "-name", "*.rs", "-o", "-name", "Cargo.toml",
-             "-o", "-name", "package.json", "-o", "-name", "*.yaml",
+             "-o", "-name", "package.json",
              ")", "-not", "-path", "*/target/*",
              "-not", "-path", "*/.git/*",
-             "-not", "-path", "*/.pennyfarthing/*"],
+             "-not", "-path", "*/.pennyfarthing/*",
+             "-not", "-path", "*/spike/*",
+             "-not", "-path", "*/.session/*"],
             cwd=str(wt_path), capture_output=True, text=True, timeout=10,
         )
         scan_task = (
@@ -1412,7 +1416,7 @@ def run_pipeline(
             ["claude", "-p", scan_task, "--output-format", "json",
              "--model", "claude-sonnet-4-6"],
             cwd=str(wt_path), capture_output=True, text=True,
-            timeout=120, env={**os.environ},
+            timeout=300, env={**os.environ},
         )
         try:
             parsed = json.loads(scan_result.stdout)
@@ -2727,7 +2731,7 @@ def _run_scout_standalone(
         ["claude", "-p", scan_task, "--output-format", "json",
          "--model", "claude-sonnet-4-6"],
         cwd=str(wt_path), capture_output=True, text=True,
-        timeout=120, env={**os.environ},
+        timeout=300, env={**os.environ},
     )
     try:
         parsed = json.loads(scan_result.stdout)
