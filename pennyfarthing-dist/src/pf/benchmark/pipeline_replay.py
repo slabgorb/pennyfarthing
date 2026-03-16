@@ -1048,7 +1048,7 @@ def _run_reviewer_fanout(
         )
 
         cmd = ["claude", "-p", task, "--output-format", "json", "--model",
-               "claude-haiku-4-5-20251001"]
+               "claude-sonnet-4-6"]
 
         try:
             result = subprocess.run(
@@ -1410,7 +1410,7 @@ def run_pipeline(
         print(f"  [{tag}-SCAN] Running pre-phase scan...")
         scan_result = subprocess.run(
             ["claude", "-p", scan_task, "--output-format", "json",
-             "--model", "claude-haiku-4-5-20251001"],
+             "--model", "claude-sonnet-4-6"],
             cwd=str(wt_path), capture_output=True, text=True,
             timeout=120, env={**os.environ},
         )
@@ -2725,7 +2725,7 @@ def _run_scout_standalone(
     print(f"  [{tag}-SCAN] Running pre-phase scan...")
     scan_result = subprocess.run(
         ["claude", "-p", scan_task, "--output-format", "json",
-         "--model", "claude-haiku-4-5-20251001"],
+         "--model", "claude-sonnet-4-6"],
         cwd=str(wt_path), capture_output=True, text=True,
         timeout=120, env={**os.environ},
     )
