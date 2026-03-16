@@ -1012,6 +1012,18 @@ def _run_reviewer_fanout(
 
     agents_dir = project_dir / ".pennyfarthing" / "agents"
 
+    # Build source file listing for subagents to read full files
+    src_list = subprocess.run(
+        ["find", ".", "-type", "f", "(",
+         "-name", "*.rs", "-o", "-name", "Cargo.toml",
+         "-o", "-name", "package.json", "-o", "-name", "*.yaml",
+         ")", "-not", "-path", "*/target/*",
+         "-not", "-path", "*/.git/*",
+         "-not", "-path", "*/.pennyfarthing/*"],
+        cwd=str(worktree_path), capture_output=True, text=True, timeout=10,
+    )
+    source_files = src_list.stdout.strip()
+
     def _run_subagent(name: str) -> tuple[str, str]:
         """Run a single subagent and return (name, output)."""
         agent_file = agents_dir / f"{name}.md"
@@ -1026,9 +1038,13 @@ def _run_reviewer_fanout(
         )
 
         task = (
-            f"Analyze this diff and report findings in structured YAML.\n\n"
+            f"Analyze the code changes and report findings in structured YAML.\n\n"
             f"## Agent Instructions\n\n{agent_prompt}\n\n"
-            f"## Diff to Analyze\n\n```diff\n{diff}\n```\n"
+            f"## Diff (changed lines)\n\n```diff\n{diff}\n```\n\n"
+            f"## Source Files in Worktree\n\n{source_files}\n\n"
+            f"Read the full source files to understand context around "
+            f"the diff. The diff shows WHAT changed; the files show "
+            f"the complete implementation. Analyze both.\n"
         )
 
         cmd = ["claude", "-p", task, "--output-format", "json", "--model",
@@ -1359,7 +1375,12 @@ def run_pipeline(
             flags=re.MULTILINE | re.DOTALL,
         )
         src_list = subprocess.run(
-            ["find", ".", "-name", "*.rs", "-type", "f"],
+            ["find", ".", "-type", "f", "(",
+             "-name", "*.rs", "-o", "-name", "Cargo.toml",
+             "-o", "-name", "package.json", "-o", "-name", "*.yaml",
+             ")", "-not", "-path", "*/target/*",
+             "-not", "-path", "*/.git/*",
+             "-not", "-path", "*/.pennyfarthing/*"],
             cwd=str(wt_path), capture_output=True, text=True, timeout=10,
         )
         scan_task = (
@@ -1385,6 +1406,10 @@ def run_pipeline(
         return output
 
     try:
+        # Cross-phase findings accumulated between phases
+        tea_validator_findings = ""   # TEA test quality → injected into Dev
+        post_dev_findings = ""        # Post-Dev scouts → injected into Reviewer
+
         # Run initial phases linearly
         for role in scenario.phases:
             task_prompt = scenario.phase_prompts.get(role, f"Begin {role} phase.")
@@ -1409,9 +1434,36 @@ def run_pipeline(
                                 f"{findings}"
                             )
 
+            # Inject TEA validator findings into Dev prompt
+            if role == "dev" and not is_bmad and tea_validator_findings:
+                task_prompt += (
+                    "\n\n## WARNING: Test Quality Issues\n\n"
+                    "The following issues were found in TEA's tests. "
+                    "Before blindly making tests pass, review and "
+                    "strengthen these tests first:\n\n"
+                    + tea_validator_findings
+                )
+
+            # Inject post-Dev scout findings into Reviewer prompt
+            if role == "reviewer" and not is_bmad and post_dev_findings:
+                task_prompt += post_dev_findings
+
             # Reviewer: fan out subagents from harness, inject findings
             if role == "reviewer" and not is_bmad:
-                # Get diff for subagents
+                # Stage all phase changes so the diff reflects the full
+                # GREEN-state code, not just committed history.  Without
+                # this, `git diff base...HEAD` returns nothing because
+                # TEA/Dev changes are uncommitted working-tree edits.
+                subprocess.run(
+                    ["git", "add", "-A"],
+                    cwd=str(wt_path), capture_output=True, timeout=10,
+                )
+                subprocess.run(
+                    ["git", "commit", "-m", "benchmark: end of dev phase",
+                     "--allow-empty", "--no-gpg-sign"],
+                    cwd=str(wt_path), capture_output=True, timeout=10,
+                )
+                # Now diff base...HEAD includes all TEA + Dev changes
                 diff_result = subprocess.run(
                     ["git", "diff", scenario.base_commit + "...HEAD"],
                     cwd=str(wt_path),
@@ -1454,6 +1506,60 @@ def run_pipeline(
                 )
                 phase_result = _run_single_phase("reviewer", retry_prompt, phase_key="reviewer")
 
+            # --- Post-phase hooks (run AFTER phase completes) ---
+
+            # Post-TEA: validate test quality, store for Dev injection
+            if role == "tea" and not is_bmad:
+                print("  [TEA-VALIDATOR] Analyzing TEA's test quality...")
+                tea_validator_findings = _run_scout(
+                    "reviewer-test-analyzer",
+                    "Analyze the tests just written in this worktree. "
+                    "Look for: vacuous assertions (tautologies like "
+                    "x.is_none() || x.is_some()), zero-assertion tests "
+                    "(only check non-panic), tests that can never fail. "
+                    "Report each weak test with file, line, and why.",
+                )
+                print("  [TEA-VALIDATOR] Done")
+
+            # Post-Dev: run scouts on GREEN-state code for patterns Dev
+            # introduced (e.g., unwrap_or_default). Store for Reviewer.
+            if role == "dev" and not is_bmad:
+                import concurrent.futures as _cf
+                _post_dev_scouts = [
+                    ("reviewer-silent-failure-hunter",
+                     "Scan ALL source files for silent failures in the "
+                     "IMPLEMENTED code. Focus on: unwrap_or_default(), "
+                     "unwrap_or(), .ok() on Result in config/file loading. "
+                     "Check whether error discrimination (NotFound vs "
+                     "permission/parse errors) is done correctly.",
+                     "Post-Implementation Silent Failures"),
+                    ("reviewer-security",
+                     "Scan ALL source files for security vulnerabilities "
+                     "in the IMPLEMENTED code.",
+                     "Post-Implementation Security Issues"),
+                    ("reviewer-type-design",
+                     "Scan ALL source files for type design issues "
+                     "in the IMPLEMENTED code.",
+                     "Post-Implementation Type Design Issues"),
+                ]
+                print("  [POST-DEV] Running post-implementation scouts...")
+                with _cf.ThreadPoolExecutor(max_workers=len(_post_dev_scouts)) as pool:
+                    _pd_futures = {
+                        pool.submit(_run_scout, name, focus): (name, heading)
+                        for name, focus, heading in _post_dev_scouts
+                    }
+                    for future in _cf.as_completed(_pd_futures):
+                        _, heading = _pd_futures[future]
+                        findings = future.result()
+                        if findings:
+                            post_dev_findings += (
+                                f"\n\n## {heading}\n\n"
+                                f"These issues were found in the code AFTER Dev "
+                                f"implementation — they are NEW, not pre-existing:\n\n"
+                                f"{findings}"
+                            )
+                print("  [POST-DEV] Done")
+
         # Kick-back loop: if reviewer rejected and rework cycles are enabled
         if max_rework_cycles > 0 and "reviewer" in result.phases:
             rework_cycle = 0
@@ -1490,13 +1596,27 @@ def run_pipeline(
     finally:
         if collector:
             collector.stop()
-        # Generate diff of worktree changes
+        # Generate diff of all pipeline changes (committed + uncommitted)
         diff_result = subprocess.run(
-            ["git", "diff", "--stat"],
+            ["git", "diff", "--stat", scenario.base_commit + "...HEAD"],
             cwd=str(wt_path),
             capture_output=True,
             text=True,
         )
+        # Also include any uncommitted changes from reviewer phase
+        uncommitted = subprocess.run(
+            ["git", "diff", "--stat"],
+            cwd=str(wt_path),
+            capture_output=True, text=True,
+        )
+        if uncommitted.stdout.strip() and diff_result.stdout.strip():
+            diff_result = subprocess.CompletedProcess(
+                args=diff_result.args,
+                returncode=0,
+                stdout=diff_result.stdout + "\n(uncommitted after reviewer):\n" + uncommitted.stdout,
+            )
+        elif uncommitted.stdout.strip():
+            diff_result = uncommitted
         if diff_result.stdout.strip():
             result.phases["_diff_stat"] = PhaseResult(
                 role="_diff",

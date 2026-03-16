@@ -171,9 +171,15 @@ Do not proceed to verdict until ALL steps are checked. Do not skip steps because
   - `[TYPE]` — type-design (type invariants)
   - `[SEC]` — security (vulnerabilities)
   - `[SIMPLE]` — simplifier (unnecessary complexity)
-- [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-9 complete
+- [ ] **Challenge your VERIFIEDs against subagent findings:** For each item you marked VERIFIED, check whether ANY subagent flagged the same area. If a subagent contradicts your VERIFIED conclusion, you MUST re-read the code and provide line-level evidence for why you disagree. "I checked and it looks fine" is not sufficient — cite the specific line that proves correctness. If you cannot cite a line, downgrade the VERIFIED to a finding.
+- [ ] **User intent test:** For each VERIFIED involving user-facing behavior (config files, CLI flags, error messages), state what a reasonable user would expect. If the code would surprise or silently harm that user, downgrade to a finding. Example: a user writes `token = "sk-secret"` in a config file expecting authentication — if serde silently discards the unknown field, that's a finding even though the code is technically correct.
+- [ ] **"Prove it breaks" challenge:** For each VERIFIED security or config item, construct one concrete harmful scenario. If you can construct a scenario where a user is harmed, surprised, or silently given wrong behavior, it's a finding, not a VERIFIED.
+- [ ] **Build config check:** Are dependencies using workspace inheritance where available? Are versions consistent across workspace crates? Check `Cargo.toml` / `package.json`, not just source files.
+- [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-13 complete
 
-**Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked}` or `[TAG] {subagent finding confirmed} at {location}`
+**Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked} — evidence: {file}:{line} does {X}` or `[TAG] {subagent finding confirmed} at {location}`
+
+**VERIFIED requires evidence.** Every `[VERIFIED]` must cite the specific line(s) that prove correctness. `[VERIFIED] error handling looks correct` is not acceptable. `[VERIFIED] config.rs:24 matches NotFound specifically, propagates all other errors via ?` is acceptable.
 
 **When in doubt, REJECT.**
 </review-checklist>
