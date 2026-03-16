@@ -16,6 +16,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import subprocess
+
 from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load_workflow_data
 
 
@@ -280,18 +282,49 @@ def start_session(
     }
     save_state(project_root, state)
 
+    # Pre-prime each agent — get the full agent prompt via pf agent start
+    # so teammates don't have to load it themselves (SOUL #11: automatic > instructional)
+    agent_primers: dict[str, str] = {}
+    for agent in agents:
+        try:
+            prime_result = subprocess.run(
+                ["pf", "agent", "start", agent, "--minimal"],
+                cwd=str(project_root),
+                capture_output=True, text=True, timeout=15,
+            )
+            if prime_result.returncode == 0 and prime_result.stdout.strip():
+                agent_primers[agent] = prime_result.stdout.strip()
+        except Exception:
+            pass
+
     # Build the prompt that SM uses to create the team
     agent_descriptions = []
     for agent in agents:
         color = AGENT_BADGE_COLORS.get(agent, "")
         color_instruction = f" Run `/color {color}` first to set badge color." if color else ""
+        primer = agent_primers.get(agent, "")
+        primer_instruction = (
+            f"\n  Agent context is pre-loaded below — do NOT run `/pf-{agent}`, "
+            f"you already have your full agent definition."
+            if primer else
+            f" Load agent with `/pf-{agent}`."
+        )
         agent_descriptions.append(
-            f"- **{agent}**: Load agent with `/pf-{agent}`. "
+            f"- **{agent}**:{primer_instruction} "
             f"Works on story {story_id}. Reads session file for context."
             f"{color_instruction}"
         )
 
     layout_desc = _LAYOUT_DESCRIPTIONS.get(effective_layout, "")
+
+    # Build agent context blocks for pre-priming
+    primer_blocks = ""
+    for agent in agents:
+        primer = agent_primers.get(agent, "")
+        if primer:
+            primer_blocks += (
+                f"\n\n---\n## Pre-loaded context for {agent}\n\n{primer}\n"
+            )
 
     prompt = (
         f"Create a team called '{team_name}' with these teammates:\n"
@@ -302,6 +335,7 @@ def start_session(
         f"Each teammate should activate their agent role and work on story {story_id}. "
         f"The session file at .session/{story_id}-session.md has the full context. "
         f"Use teammateMode tmux so each agent gets a persistent pane."
+        + primer_blocks
     )
 
     return {

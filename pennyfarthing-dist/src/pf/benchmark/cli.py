@@ -463,7 +463,7 @@ def replay():
     help="Where to store results (default: internal/results/pipeline-replay/)",
 )
 @click.option("--model", default=None, help="Claude model for pipeline agents")
-@click.option("--judge-model", default="claude-sonnet-4-6", help="Claude model for scoring judge")
+@click.option("--judge-model", default="claude-opus-4-6", help="Claude model for scoring judge")
 @click.option("--judge-count", default=3, type=int, help="Number of independent judge passes (default: 3)")
 @click.option("--skip-score", is_flag=True, help="Skip judge scoring after run")
 @click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
@@ -1112,7 +1112,7 @@ def _print_heatmap(scenario, scores):
 @click.option("--keep-worktree", is_flag=True, help="Don't remove worktree after run")
 @click.option("--rejudge", is_flag=True, help="Re-judge using the new phase output")
 @click.option("--model", default=None, help="Claude model for the phase agent")
-@click.option("--judge-model", default="claude-sonnet-4-6", help="Claude model for scoring judge")
+@click.option("--judge-model", default="claude-opus-4-6", help="Claude model for scoring judge")
 @click.option("--judge-count", default=3, type=int, help="Number of judge passes (default: 3)")
 @click.option(
     "--theme", default=None,
