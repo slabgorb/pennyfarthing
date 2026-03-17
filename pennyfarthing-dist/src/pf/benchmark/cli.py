@@ -17,6 +17,8 @@ Extension discovery:
 from __future__ import annotations
 
 import math
+import statistics
+import time
 from pathlib import Path
 from typing import Any
 
@@ -557,6 +559,8 @@ def replay_run(
         if existing:
             start_id = max(existing) + 1
 
+    wall_start = time.monotonic()
+
     for i, run_id in enumerate(range(start_id, start_id + runs)):
         click.echo(f"--- Run {run_id} ({i + 1}/{runs}) ---")
 
@@ -625,10 +629,14 @@ def replay_run(
 
         click.echo()
 
+    wall_elapsed = time.monotonic() - wall_start
+
     # Summary
     if all_scores:
         _print_run_summary(scenario, all_scores)
 
+    wall_mins = wall_elapsed / 60
+    click.echo(f"  Wall time: {wall_mins:.1f}m ({wall_elapsed:.0f}s)")
     click.echo("=== Done ===")
 
 
@@ -1032,10 +1040,17 @@ def _print_run_summary(scenario, scores):
     click.echo("=== Summary ===")
     click.echo(f"  Runs: {len(scores)}")
 
-    mean_pct = sum(s.score_pct for s in scores) / len(scores)
+    pcts = [s.score_pct for s in scores]
+    mean_pct = statistics.mean(pcts)
+    median_pct = statistics.median(pcts)
     mean_caught = sum(s.total_caught for s in scores) / len(scores)
-    click.echo(f"  Mean score: {mean_pct:.1f}%")
+    click.echo(f"  Mean score:   {mean_pct:.1f}%")
+    click.echo(f"  Median score: {median_pct:.1f}%")
+    if len(pcts) > 1:
+        stdev_pct = statistics.stdev(pcts)
+        click.echo(f"  Std dev:      {stdev_pct:.1f}%")
     click.echo(f"  Mean findings caught: {mean_caught:.1f}/{scores[0].total_findings}")
+    click.echo(f"  Individual scores: {', '.join(f'{p:.1f}%' for p in pcts)}")
 
     # Per-finding detection rate
     click.echo("\n  Finding detection rates:")
@@ -1344,8 +1359,6 @@ def replay_backfill_versions(results_dir, tag, dry_run):
 
 def _print_version_summary(scores, score_versions):
     """Print a summary table grouped by framework version."""
-    import statistics
-
     # Group scores by version tag
     groups: dict[str, list] = {}
     for s in scores:
