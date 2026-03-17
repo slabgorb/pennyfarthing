@@ -1500,6 +1500,35 @@ def run_pipeline(
             # BMAD has no TEA equivalent — use a minimal prompt
             return f"# {role.upper()} Phase\n\nBegin {role} phase for: {scenario.title}\n"
 
+    def _print_phase_summary(label: str, phase_result: PhaseResult, fallback_model: str | None) -> None:
+        """Print phase completion summary with per-model token breakdown."""
+        tokens = phase_result.token_usage
+        cost_str = f" ${phase_result.cost_usd:.2f}" if phase_result.cost_usd else ""
+        sid_str = f" sid={phase_result.session_id[:8]}" if phase_result.session_id else ""
+        print(
+            f"  [{label.upper()}] Done in {phase_result.duration_s}s "
+            f"({tokens.get('input', 0)}+{tokens.get('output', 0)} tokens{cost_str}{sid_str})"
+        )
+        if phase_result.model_usage:
+            for m_name, m_data in sorted(
+                phase_result.model_usage.items(),
+                key=lambda kv: kv[1].get("costUSD", 0),
+                reverse=True,
+            ):
+                m_in = m_data.get("inputTokens", 0)
+                m_out = m_data.get("outputTokens", 0)
+                m_cache_r = m_data.get("cacheReadInputTokens", 0)
+                m_cache_w = m_data.get("cacheCreationInputTokens", 0)
+                m_cost = m_data.get("costUSD", 0)
+                print(
+                    f"    {m_name}: "
+                    f"in={m_in:,} out={m_out:,} "
+                    f"cache_r={m_cache_r:,} cache_w={m_cache_w:,} "
+                    f"${m_cost:.2f}"
+                )
+        else:
+            print(f"    model={fallback_model or '?'}")
+
     def _notify_frame_phase(phase: str, status: str) -> None:
         """Notify Frame of a phase transition (best-effort)."""
         if not forward_to:
@@ -1554,16 +1583,7 @@ def run_pipeline(
             print(f"  [SESSION] Established: {pipeline_session_id[:8]}")
         result.phases[key] = phase_result
 
-        tokens = phase_result.token_usage
-        actual_models = list(phase_result.model_usage.keys())
-        model_str = actual_models[0] if actual_models else model or "?"
-        cost_str = f" ${phase_result.cost_usd:.2f}" if phase_result.cost_usd else ""
-        otel_str = f" sid={phase_result.session_id[:8]}" if phase_result.session_id else ""
-        print(
-            f"  [{key.upper()}] Done in {phase_result.duration_s}s "
-            f"({tokens.get('input', 0)}+{tokens.get('output', 0)} tokens, "
-            f"model={model_str}{cost_str}{otel_str})"
-        )
+        _print_phase_summary(key, phase_result, model)
 
         _notify_frame_phase(key, "completed")
 
@@ -2794,16 +2814,7 @@ def run_phase_replay(
             project_dir=project_dir,
         )
 
-        tokens = phase_result.token_usage
-        actual_models = list(phase_result.model_usage.keys())
-        model_str = actual_models[0] if actual_models else model or "?"
-        cost_str = f" ${phase_result.cost_usd:.2f}" if phase_result.cost_usd else ""
-        sid_str = f" sid={phase_result.session_id[:8]}" if phase_result.session_id else ""
-        print(
-            f"  [{phase.upper()}] Done in {phase_result.duration_s}s "
-            f"({tokens.get('input', 0)}+{tokens.get('output', 0)} tokens, "
-            f"model={model_str}{cost_str}{sid_str})"
-        )
+        _print_phase_summary(phase, phase_result, model)
 
         # Rubber-stamp gate for reviewer retries
         if (
