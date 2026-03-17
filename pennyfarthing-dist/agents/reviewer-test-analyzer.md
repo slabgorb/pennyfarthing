@@ -2,13 +2,14 @@
 name: reviewer-test-analyzer
 description: Analyzes test coverage and quality in diff — finds vacuous assertions, missing edge cases, implementation coupling
 tools: Bash, Read, Glob, Grep
-model: haiku
+model: opus
 ---
 
 <arguments>
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `DIFF` | Yes | Git diff content to analyze |
+| `PROJECT_RULES` | No | Project-specific testing rules. When provided, check every test against these rules exhaustively. |
 | `ALSO_CONSIDER` | No | Additional focus areas (e.g., specific acceptance criteria to verify) |
 </arguments>
 
@@ -38,7 +39,17 @@ Do NOT comment on code style or application logic. Report ONLY test quality issu
 - If diff is empty or cannot be parsed, return `[]` and stop
 - Separate test files from implementation files
 
-### Step 2: Analyze Test Files in Diff
+### Step 2: Project Rule Check (if PROJECT_RULES provided)
+
+**This step is exhaustive.** For EACH testing rule in PROJECT_RULES, check EVERY test in the diff:
+
+Common project testing rules you may receive:
+- Every test must have at least one meaningful assertion (not `let _ =`, not `assert!(true)`)
+- Error paths must be tested — every `Result`-returning function needs a test for the `Err` case
+- Validation boundary tests — if a constructor validates, test both valid and invalid inputs
+- No `#[ignore]` without a tracking issue comment
+
+### Step 3: Analyze Test Files in Diff
 
 For every test function added or modified:
 

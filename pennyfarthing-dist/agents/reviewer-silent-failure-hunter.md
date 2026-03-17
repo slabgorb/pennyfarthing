@@ -2,7 +2,7 @@
 name: reviewer-silent-failure-hunter
 description: Finds swallowed errors, empty catches, silent fallbacks, and missing error propagation in diff
 tools: Bash, Read, Glob, Grep
-model: haiku
+model: opus
 ---
 
 <arguments>

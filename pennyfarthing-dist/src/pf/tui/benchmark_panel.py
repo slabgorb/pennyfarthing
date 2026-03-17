@@ -109,9 +109,9 @@ class BenchmarkPanel(BasePanel):
     icon: str = PANEL_ICONS.get("benchmark", ("\uf080", "B"))[0]
 
     BINDINGS = [
-        ("f1", "view_history", "History"),
-        ("f2", "view_otel", "OTEL"),
-        ("f3", "view_status", "Status"),
+        ("1", "view_history", "1:History"),
+        ("2", "view_otel", "2:OTEL"),
+        ("3", "view_status", "3:Status"),
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("down", "cursor_down", "Down"),
@@ -269,7 +269,7 @@ class BenchmarkPanel(BasePanel):
         """Dispatch to active sub-view renderer."""
         # View mode header
         header = Text()
-        modes = [("F1 History", "history"), ("F2 OTEL", "otel"), ("F3 Status", "status")]
+        modes = [("1:History", "history"), ("2:OTEL", "otel"), ("3:Status", "status")]
         for i, (label, mode) in enumerate(modes):
             if i > 0:
                 header.append("  ", style="dim")

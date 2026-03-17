@@ -6,7 +6,7 @@ Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workf
 ## Implementation Rules
 
 1. **Modify `pennyfarthing-dist/`** — single source of truth for all definitions
-2. **Use Haiku for subagents** — never Opus for mechanical tasks
+2. **Match model to task** — Haiku for mechanical tasks, Sonnet/Opus for analytical subagents
 3. **Scripts use `.pennyfarthing/` paths** — never `pennyfarthing-dist/` in runtime
 4. **Scripts must exist in ONE location only** — build-time validation prevents duplication
 5. **Never edit symlink targets** — trace to `pennyfarthing-dist/`

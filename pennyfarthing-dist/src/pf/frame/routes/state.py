@@ -430,8 +430,18 @@ async def clear_spans() -> JSONResponse:
 
 benchmark_router = APIRouter(prefix="/api/benchmark", tags=["benchmark"])
 
+MAX_BENCHMARK_EVENTS = 200
 _benchmark_events: list[dict[str, Any]] = []
 _benchmark_phase: dict[str, Any] = {}
+
+
+def get_benchmark_events_snapshot() -> dict[str, Any]:
+    """Return current benchmark events state for initial WebSocket push."""
+    return {
+        "type": "init",
+        "phase": dict(_benchmark_phase) if _benchmark_phase else None,
+        "events": list(_benchmark_events),
+    }
 
 
 @benchmark_router.post("/phase")
@@ -448,6 +458,9 @@ async def post_benchmark_phase(request: Request) -> JSONResponse:
         "timestamp": datetime.now(UTC).isoformat(),
     }
     _benchmark_phase.update(event)
+    _benchmark_events.append(event)
+    if len(_benchmark_events) > MAX_BENCHMARK_EVENTS:
+        _benchmark_events.pop(0)
 
     # Broadcast to benchmark-events channel
     try:

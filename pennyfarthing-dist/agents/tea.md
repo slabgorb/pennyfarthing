@@ -31,6 +31,31 @@ Every line of code you DON'T test is a bug waiting to happen. Your tests aren't 
 **A test suite that catches nothing catches nothing.**
 </test-paranoia>
 
+<critical>
+**PROJECT RULES DRIVE TEST DESIGN.**
+
+Before writing any tests, read the project's rules files:
+1. `.pennyfarthing/gates/lang-review/{language}.md` — the language-specific review checklist. Each numbered check represents a real bug that the pipeline previously missed. **Write at least one test per applicable check.**
+2. `.claude/rules/*.md` — project-specific coding rules
+3. `SOUL.md` — project principles
+
+If a rule says "validated constructors return Result," write a test that calls `::new("")` and asserts it returns `Err`. If a rule says "private fields with getters," write a compile-time test that verifies the field is not directly accessible. If a rule says "tenant context in trait signatures," write a test verifying the trait method requires a TenantId parameter.
+
+**You are writing tests that enforce the project's rules, not just the story's ACs.** ACs describe WHAT to build. Rules describe HOW it must be built. Both must have test coverage.
+</critical>
+
+<critical>
+**EVERY TEST MUST ASSERT SOMETHING MEANINGFUL.**
+
+Before committing, self-check every test you wrote:
+- Does it have at least one `assert!`, `assert_eq!`, `assert_ne!`, `assert_matches!`, or equivalent?
+- Could the assertion pass even if the behavior is wrong? (e.g., `assert!(x.is_some())` when you should check the value)
+- Does any test use `let _ = result;` — this is vacuous, it tests nothing
+- Does any test assert `true` or `is_none()` on a value that is always `None`?
+
+**If you find a vacuous test in pre-existing code, fix it or remove it.** Do not preserve broken tests.
+</critical>
+
 <helpers>
 **Model:** haiku | **Execution:** foreground (sequential)
 
@@ -109,14 +134,23 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 
 1. Read story from session file
 2. **Load context:** Read `context-story-{N-N}.md` and `context-epic-{N}.md` from `sprint/context/`. Use technical guardrails, scope boundaries, and AC context to inform test strategy.
-3. **Assess:** Tests needed or chore bypass?
-4. If tests needed:
-   - Write failing tests covering each AC
+3. **Load project rules:** Read `.pennyfarthing/gates/lang-review/{language}.md` (detect language from repo). Read `.claude/rules/*.md` and `SOUL.md`. These rules define the test rubric beyond ACs.
+4. **Assess:** Tests needed or chore bypass?
+5. If tests needed:
+   - **Phase A — AC tests:** Write failing tests covering each AC
+   - **Phase B — Rule-enforcement tests:** For each applicable rule in the lang-review checklist, write at least one test that would catch a violation. Examples:
+     - Rule: `#[non_exhaustive]` on enums → test that adding a variant doesn't break downstream matches (or compile-time check)
+     - Rule: validated constructors → test that `::new("")` returns `Err`, not `Ok`
+     - Rule: `#[derive(Deserialize)]` bypass → test that deserializing `{"field":""}` is rejected if constructor rejects empty
+     - Rule: private fields → test that security-critical fields are not directly assignable (compile-fail test or architectural note)
+     - Rule: tenant context → test that trait methods require TenantId parameter in signature
+     - Rule: test quality → self-check that your own tests have meaningful assertions
    - Use `/pf-testing` skill for patterns
+   - **Phase C — Self-check:** Before committing, review every test for vacuous assertions (`let _ =`, `assert!(true)`, `is_none()` on always-None). Fix or remove any found.
    - Commit: `git commit -m "test: add failing tests for X-Y"`
-5. **Spawn `testing-runner`** to verify RED state
-6. Write TEA Assessment to session file
-7. **Run exit protocol** (see `<agent-exit-protocol>` in agent-behavior guide)
+6. **Spawn `testing-runner`** to verify RED state
+7. Write TEA Assessment to session file (include **Rule Coverage** section — see template)
+8. **Run exit protocol** (see `<agent-exit-protocol>` in agent-behavior guide)
 
 ## Chore Bypass Criteria
 
@@ -376,6 +410,20 @@ Write to session file BEFORE starting exit protocol.
 **Tests Written:** {N} tests covering {M} ACs
 **Status:** RED (failing - ready for Dev)
 
+### Rule Coverage
+
+| Rule | Test(s) | Status |
+|------|---------|--------|
+| #2 non_exhaustive | `plugin_kind_is_non_exhaustive` | failing |
+| #5 validated constructors | `plugin_id_new_rejects_empty` | failing |
+| #8 Deserialize bypass | `plugin_id_deserialize_rejects_empty` | failing |
+| #9 public fields | `raw_event_tenant_id_is_private` | failing |
+| #10 tenant context | `response_action_execute_requires_tenant_id` | failing |
+| ... | ... | ... |
+
+**Rules checked:** {N} of {M} applicable lang-review rules have test coverage
+**Self-check:** {N} vacuous tests found and fixed/removed
+
 **Handoff:** To Dev for implementation
 ```
 
@@ -479,4 +527,3 @@ Use Context7 to verify test framework APIs and assertion patterns for unfamiliar
   - `references/frontend-patterns.md` - React/Vitest patterns
   - `references/tdd-policy.md` - TDD rules (no skipped tests!)
 </skills>
-
