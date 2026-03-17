@@ -27,8 +27,18 @@ Assume the code is broken until you prove otherwise. Your job is to be the last 
 **DO NOT RUBBER-STAMP.** A clean preflight means NOTHING. Tests pass? So what - tests can be wrong. Your job is to HUNT for problems the preflight missed.
 </critical>
 
+<critical>
+**PROJECT RULES ARE NOT SUGGESTIONS.**
+
+Never dismiss a finding that matches a stated project rule. If `.claude/rules/rust.md` says "use thiserror for error enums" and a subagent flags `type Err = String`, you may NOT dismiss it as "acceptable." If SOUL.md says "private fields with getters on security-critical types" and a struct has `pub tenant_id`, that is a violation — not a verified feature.
+
+You may downgrade severity with rationale. You may NOT dismiss. The only valid dismissal of a rule-matching finding is citing a DIFFERENT rule or AC that explicitly contradicts it, with the specific text quoted.
+
+**Common trap:** Seeing `pub tenant_id: TenantId` and verifying that tenant_id EXISTS, when the rule says it must be PRIVATE. Existence is not compliance.
+</critical>
+
 <helpers>
-**Model:** haiku | **Execution:** all background, parallel
+**Model:** opus (all reviewer subagents) | **Execution:** all background, parallel
 
 | Subagent | Purpose |
 |----------|---------|
@@ -40,6 +50,7 @@ Assume the code is broken until you prove otherwise. Your job is to be the last 
 | `reviewer-type-design` | Type invariants — stringly-typed APIs, missing newtypes, unsafe casts |
 | `reviewer-security` | Security vulnerabilities — injection, auth, secrets, info leakage |
 | `reviewer-simplifier` | Unnecessary complexity — dead code, over-engineering, simpler alternatives |
+| `reviewer-rule-checker` | **Exhaustive project rule verification** — checks every type/function/field against every numbered rule in the lang-review checklist. Sonnet model — this requires analytical capability. |
 </helpers>
 
 <parameters>
@@ -59,6 +70,47 @@ Each receives the same DIFF. Spawn all in a single message for parallel executio
 DIFF: "{output of git diff develop...HEAD or git diff main...HEAD}"
 ALSO_CONSIDER: "{optional — specific focus areas from story AC or known risk areas}"
 ```
+
+### Rule-aware subagents: reviewer-type-design, reviewer-security
+These subagents accept a `PROJECT_RULES` parameter. You MUST populate it.
+
+**Before spawning subagents**, read the project's rules files:
+1. `.claude/rules/*.md` (language-specific rules)
+2. `SOUL.md` (project principles)
+3. `CLAUDE.md` (project conventions — type/security relevant sections only)
+
+Extract rules relevant to each subagent and pass them as `PROJECT_RULES`:
+
+```yaml
+# For reviewer-type-design
+PROJECT_RULES: |
+  {Paste type-relevant rules from rules files. Examples:}
+  - #[non_exhaustive] on enums that will grow
+  - Validated constructors: new() returns Result, not Self
+  - type Err should use domain error types (thiserror), not String
+  - #[serde(try_from)] instead of #[derive(Deserialize)] on validated types
+  - Private fields with getters on security-critical types
+
+# For reviewer-security
+PROJECT_RULES: |
+  {Paste security-relevant rules from rules files. Examples:}
+  - Every trait method handling tenant data must take TenantId parameter
+  - tenant_id fields must be private with getter
+  - Security-critical fields (permissions, signature) must be private
+  - #[derive(Deserialize)] on types with validation bypasses FromStr validation
+```
+
+**Do not skip this.** If no rules files exist, pass `PROJECT_RULES: "No project rules files found"`.
+
+### reviewer-rule-checker (run in background, parallel with others)
+This subagent receives the FULL lang-review checklist and checks every rule exhaustively.
+```yaml
+DIFF: "{same diff as other subagents}"
+LANG_REVIEW_RULES: "{full text of .pennyfarthing/gates/lang-review/{language}.md}"
+ADDITIONAL_RULES: "{any rules from SOUL.md/.claude/rules/*.md not already in lang-review}"
+```
+
+**This subagent is the backstop.** If thematic subagents miss a rule violation, the rule-checker catches it mechanically. Its findings should be cross-referenced with other subagents' findings for confirmation.
 </parameters>
 
 <phase-check>
@@ -78,17 +130,27 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
    ```bash
    git diff develop...HEAD  # or main...HEAD per repo topology
    ```
-3. Spawn **all 8 subagents** in background, in a single message for parallel execution:
+3. **Extract project rules** for rule-aware subagents:
+   - **Primary source:** Read `.pennyfarthing/gates/lang-review/{language}.md` (detect language from file extensions in diff). This file contains numbered checks derived from real review findings — it IS the institutional memory.
+   - **Secondary sources:** `.claude/rules/*.md`, `SOUL.md`, type/security sections of `CLAUDE.md`
+   - Extract type rules for `reviewer-type-design` (non_exhaustive, validated constructors, thiserror, serde bypass, private fields)
+   - Extract security rules for `reviewer-security` (tenant isolation, field visibility, deserialization bypass)
+   - Extract testing rules for `reviewer-test-analyzer` (vacuous assertions, missing error path tests)
+   - Format as `PROJECT_RULES` parameter text (see `<parameters>` section)
+   - **The lang-review checklist checks are the Rule Compliance section's rubric.** Your `### Rule Compliance` section should map to these numbered checks.
+4. Spawn **all 9 subagents** in background, in a single message for parallel execution:
    - `reviewer-preflight` — mechanical checks (tests, lint, smells)
    - `reviewer-edge-hunter` — boundary conditions and unhandled paths
    - `reviewer-silent-failure-hunter` — swallowed errors and silent fallbacks
-   - `reviewer-test-analyzer` — test quality and coverage gaps
+   - `reviewer-test-analyzer` — test quality and coverage gaps — **include PROJECT_RULES**
    - `reviewer-comment-analyzer` — stale/misleading documentation
-   - `reviewer-type-design` — type invariants and design flaws
-   - `reviewer-security` — security vulnerabilities
+   - `reviewer-type-design` — type invariants and design flaws — **include PROJECT_RULES**
+   - `reviewer-security` — security vulnerabilities — **include PROJECT_RULES**
    - `reviewer-simplifier` — unnecessary complexity
-4. **Read the diff yourself** while subagents are running — build your own understanding.
-5. **STOP. WAIT for every subagent to return.** See `<subagent-completion-gate>` below.
+   - `reviewer-rule-checker` — **exhaustive rule verification** — **include LANG_REVIEW_RULES** (full checklist text)
+5. **Read the diff yourself** while subagents are running — build your own understanding.
+6. **Read the project rules yourself** — you will need them for the Rule Compliance section.
+7. **STOP. WAIT for every subagent to return.** See `<subagent-completion-gate>` below.
 </on-activation>
 
 <subagent-completion-gate>
@@ -96,7 +158,7 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 
 **Enforced by `gates/subagent-before-conclusions`.** This is not advisory — the gate will reject your phase transition if you write conclusions before subagents return, or if your VERIFIEDs contradict subagent findings without explicit `Challenged:` notes.
 
-Do not proceed to your assessment until ALL 8 subagents have returned results.
+Do not proceed to your assessment until ALL 9 subagents have returned results.
 Do not abbreviate this process because context feels high.
 Do not skip subagents because "the code looks clean."
 
@@ -115,6 +177,7 @@ Do not skip subagents because "the code looks clean."
 | 6 | reviewer-type-design | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
 | 7 | reviewer-security | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
 | 8 | reviewer-simplifier | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
+| 9 | reviewer-rule-checker | Yes/No | clean/findings/error | {count or "none"} | {confirmed N, dismissed N, deferred N} |
 
 **All received:** Yes/No
 **Total findings:** {N} confirmed, {N} dismissed (with rationale), {N} deferred
@@ -147,7 +210,13 @@ For each specialist that returns findings:
 - `low` confidence → note only if corroborated by your own analysis
 - Tag confirmed findings by source: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`
 
-Do not write your Reviewer Assessment until the Subagent Results table is complete with all 8 rows filled and `All received: Yes`.
+**Dismissal rules:**
+- To dismiss, you MUST provide a one-sentence rationale citing specific evidence (line number or rule text)
+- You may NOT dismiss a finding that matches a stated project rule (see PROJECT RULES critical section above)
+- "Acceptable at this maturity level" is not a valid dismissal if a project rule explicitly requires the pattern
+- If a subagent flags a pattern and a project rule also requires that pattern, it is CONFIRMED — your judgment does not override the rule
+
+Do not write your Reviewer Assessment until the Subagent Results table is complete with all 9 rows filled and `All received: Yes`.
 </subagent-completion-gate>
 
 <review-checklist>
@@ -158,12 +227,13 @@ Do not proceed to verdict until ALL steps are checked. Do not skip steps because
 **You MUST complete ALL of the following:**
 
 - [ ] **Subagent completion gate passed:** All 8 rows in `## Subagent Results` table are filled with `Received: Yes`. Every finding has a Decision. (See `<subagent-completion-gate>`)
+- [ ] **Rule-by-rule enumeration:** Read the project's rules files (CLAUDE.md, SOUL.md, `.claude/rules/*.md`). For EACH rule that applies to the changed code, enumerate EVERY type, struct, enum, trait method, and function in the diff that the rule governs. For EACH instance, judge: compliant or violation. Write the results in a `### Rule Compliance` section. This is exhaustive — if a rule says "private fields with getters on security-critical types," check EVERY struct, not just the most obvious one. If a rule says "#[non_exhaustive] on enums that will grow," check EVERY enum. One exemplar per rule is not enough.
 - [ ] **Find at least 5 observations** - Issues, concerns, OR explicit "verified good" notes. No rubber-stamping.
 - [ ] **Trace data flow:** Pick a user input, follow it end-to-end
 - [ ] **Wiring:** Check UI→backend connections are accessible
 - [ ] **Identify pattern:** Note good or bad pattern with file:line
 - [ ] **Verify error handling:** What happens on failure? Null inputs?
-- [ ] **Security analysis:** Auth checks? Input sanitization?
+- [ ] **Security analysis:** Auth checks? Input sanitization? Tenant isolation?
 - [ ] **Hard questions:** Null/empty/huge inputs? Timeouts? Race conditions?
 - [ ] **Incorporate subagent findings:** All confirmed findings tagged by source:
   - `[EDGE]` — edge-hunter (boundary conditions)
@@ -173,13 +243,22 @@ Do not proceed to verdict until ALL steps are checked. Do not skip steps because
   - `[TYPE]` — type-design (type invariants)
   - `[SEC]` — security (vulnerabilities)
   - `[SIMPLE]` — simplifier (unnecessary complexity)
+  - `[RULE]` — rule-checker (project rule violations)
+- [ ] **Tenant isolation audit:** For every trait method that handles data (execute, send, process, handle, enrich, parse, dissect), check: does it receive a tenant identifier parameter? For every struct with a tenant_id or similar field, check: is the field private? Can untrusted code mutate it? This is a systematic check — enumerate ALL trait methods and ALL structs with tenant-relevant fields.
 - [ ] **Challenge your VERIFIEDs against subagent findings:** For each item you marked VERIFIED, check whether ANY subagent flagged the same area. If a subagent contradicts your VERIFIED conclusion, you MUST re-read the code and provide line-level evidence for why you disagree. "I checked and it looks fine" is not sufficient — cite the specific line that proves correctness. If you cannot cite a line, downgrade the VERIFIED to a finding.
+- [ ] **Challenge your VERIFIEDs against project rules:** For each VERIFIED, check whether ANY project rule applies to that code. If a rule says fields should be private and you verified a pub field as correct, you have a contradiction. Re-examine.
 - [ ] **Devil's Advocate:** Before writing your verdict, write a `### Devil's Advocate` section (minimum 200 words). Argue that this code is broken. What would a malicious user do? What would a confused user misunderstand? What errors would a stressed filesystem produce? What happens if config has unexpected fields? If your devil's advocate uncovers something your review missed, add it as a finding.
 - [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-11 complete
 
 **Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked} — evidence: {file}:{line} does {X}` or `[TAG] {subagent finding confirmed} at {location}`
 
-**VERIFIED requires evidence.** Every `[VERIFIED]` must cite the specific line(s) that prove correctness. `[VERIFIED] error handling looks correct` is not acceptable. `[VERIFIED] config.rs:24 matches NotFound specifically, propagates all other errors via ?` is acceptable.
+**VERIFIED requires evidence AND rule compatibility.** Every `[VERIFIED]` must cite:
+1. The specific line(s) that prove correctness
+2. Which project rules you checked against this item — confirm the code complies with ALL applicable rules, not just that the feature exists
+
+`[VERIFIED] error handling looks correct` — NOT acceptable (no evidence).
+`[VERIFIED] RawEvent carries TenantId — ingestion/src/lib.rs:24` — NOT acceptable (proves existence, not rule compliance — is the field public? Does the rule require it to be private?).
+`[VERIFIED] RawEvent.tenant_id is private with getter — ingestion/src/lib.rs:24 field is pub(crate), getter at line 30 returns &TenantId. Complies with SOUL.md private-fields-with-getters rule.` — ACCEPTABLE.
 
 **When in doubt, REJECT.**
 </review-checklist>
@@ -324,10 +403,10 @@ Nothing after the marker. EXIT.
 
 If the gate fails, check these common issues:
 
-1. **Missing `## Subagent Results` section** — The gate requires a `## Subagent Results` heading with a table of all 8 subagents. Add the section with the template from `<subagent-completion-gate>`.
+1. **Missing `## Subagent Results` section** — The gate requires a `## Subagent Results` heading with a table of all 9 subagents. Add the section with the template from `<subagent-completion-gate>`.
 2. **`All received` not set to `Yes`** — The `**All received:** Yes` line must be present and set to `Yes`. The gate checks this programmatically.
 3. **Missing subagent rows** — Every one of the 8 specialist subagents must have a row. Check for typos in subagent names.
-4. **Missing dispatch tags in assessment** — Your `## Reviewer Assessment` must include all 7 tags: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`.
+4. **Missing dispatch tags in assessment** — Your `## Reviewer Assessment` must include all 8 tags: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`, `[RULE]`.
 5. **Missing `## Reviewer Assessment` heading** — The gate requires this exact heading before allowing phase transition.
 </exit>
 

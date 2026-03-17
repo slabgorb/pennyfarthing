@@ -589,6 +589,54 @@ def build_phase_claude_md(
                 f"{rule_file.read_text()}\n\n---"
             )
 
+    # Include lang-review checklist for the reviewer and TEA phases.
+    # In benchmark worktrees, .pennyfarthing/ doesn't exist, so agents
+    # can't find gates/lang-review/{language}.md. We detect the primary language
+    # from file extensions in the scenario and inject the checklist directly.
+    # TEA uses it to write rule-enforcement tests; reviewer uses it for
+    # exhaustive rule checking.
+    if role in ("reviewer", "tea"):
+        # Detect primary language from the scenario's ground truth files
+        lang_counts: dict[str, int] = {}
+        for finding in scenario.ground_truth:
+            for f in finding.files:
+                lang = _detect_language(f)
+                if lang != "unknown":
+                    lang_counts[lang] = lang_counts.get(lang, 0) + 1
+        if lang_counts:
+            primary_lang = max(lang_counts, key=lambda k: lang_counts[k])
+        else:
+            primary_lang = ""
+
+        if primary_lang:
+            # Look for the lang-review checklist in pennyfarthing-dist
+            pf_dist = Path(__file__).parent.parent.parent  # src/pf/benchmark → src/pf → src
+            pf_dist = pf_dist.parent  # → pennyfarthing-dist
+            lang_review = pf_dist / "gates" / "lang-review" / f"{primary_lang}.md"
+            if not lang_review.exists():
+                # Try from .pennyfarthing/ if we're in a live project
+                pf_root = repo_path / ".pennyfarthing" / "gates" / "lang-review" / f"{primary_lang}.md"
+                if pf_root.exists():
+                    lang_review = pf_root
+            if lang_review.exists():
+                if role == "tea":
+                    instruction = (
+                        "This is the project's language-specific review checklist. "
+                        "TEA MUST write at least one test per applicable rule to "
+                        "catch violations. These rules represent real bugs the "
+                        "pipeline previously missed."
+                    )
+                else:
+                    instruction = (
+                        "This is the project's language-specific review checklist. "
+                        "The reviewer MUST check every applicable rule against the code."
+                    )
+                parts.append(
+                    f"\n## Lang-Review Checklist ({primary_lang})\n\n"
+                    f"{instruction}\n\n"
+                    f"{lang_review.read_text()}\n\n---"
+                )
+
     return "\n".join(parts)
 
 
@@ -998,7 +1046,79 @@ _REVIEWER_SUBAGENTS = [
     "reviewer-type-design",
     "reviewer-security",
     "reviewer-simplifier",
+    "reviewer-rule-checker",
 ]
+
+# Subagents that accept PROJECT_RULES parameter
+_RULE_AWARE_SUBAGENTS = {
+    "reviewer-type-design",
+    "reviewer-security",
+    "reviewer-test-analyzer",
+}
+
+# The rule-checker gets the full lang-review checklist, not just excerpts
+_RULE_CHECKER_SUBAGENT = "reviewer-rule-checker"
+
+
+def _load_project_rules(
+    worktree_path: Path,
+    project_dir: Path,
+) -> tuple[str, str]:
+    """Load project rules for rule-aware subagents.
+
+    Returns (lang_review_text, project_rules_text).
+    lang_review_text: full content of gates/lang-review/{lang}.md
+    project_rules_text: concatenated rules from .claude/rules/*.md
+    """
+    # Detect primary language from source files in worktree.
+    # Only count files in src/ or crates/ directories to avoid
+    # docs/markdown/config files dominating the count.
+    _SOURCE_DIRS = ["src", "crates", "lib", "pkg", "packages", "cmd", "internal"]
+    _SOURCE_EXTENSIONS = {
+        ".rs": "rust", ".go": "go", ".py": "python",
+        ".ts": "typescript", ".tsx": "typescript",
+        ".js": "javascript", ".jsx": "javascript",
+        ".java": "java", ".kt": "kotlin", ".swift": "swift",
+        ".c": "c", ".cpp": "cpp", ".rb": "ruby",
+    }
+    lang_counts: dict[str, int] = {}
+    for src_dir_name in _SOURCE_DIRS:
+        for src_dir in worktree_path.glob(f"**/{src_dir_name}"):
+            if not src_dir.is_dir():
+                continue
+            for ext, lang in _SOURCE_EXTENSIONS.items():
+                count = len(list(src_dir.rglob(f"*{ext}")))
+                if count > 0:
+                    lang_counts[lang] = lang_counts.get(lang, 0) + count
+
+    primary_lang = max(lang_counts, key=lambda k: lang_counts[k]) if lang_counts else ""
+
+    # Load lang-review checklist
+    lang_review_text = ""
+    if primary_lang:
+        pf_dist = Path(__file__).parent.parent.parent.parent  # → pennyfarthing-dist
+        lang_review = pf_dist / "gates" / "lang-review" / f"{primary_lang}.md"
+        if not lang_review.exists():
+            lang_review = project_dir / ".pennyfarthing" / "gates" / "lang-review" / f"{primary_lang}.md"
+        if lang_review.exists():
+            lang_review_text = lang_review.read_text()
+
+    # Load .claude/rules/*.md from the target repo
+    rules_parts = []
+    rules_dir = worktree_path / ".claude" / "rules"
+    if rules_dir.is_dir():
+        for rule_file in sorted(rules_dir.glob("*.md")):
+            if rule_file.name.startswith("_"):
+                continue
+            rules_parts.append(f"### {rule_file.name}\n\n{rule_file.read_text()}")
+    # Also check SOUL.md for project principles
+    soul_path = worktree_path / "SOUL.md"
+    if soul_path.exists():
+        rules_parts.append(f"### SOUL.md\n\n{soul_path.read_text()}")
+
+    project_rules_text = "\n\n---\n\n".join(rules_parts) if rules_parts else ""
+
+    return lang_review_text, project_rules_text
 
 
 def _run_reviewer_fanout(
@@ -1010,15 +1130,24 @@ def _run_reviewer_fanout(
 ) -> str:
     """Fan out reviewer subagents as parallel claude -p calls.
 
-    Runs all 7 diff-based subagents concurrently using haiku, collects
-    their findings, and returns a consolidated findings block to inject
-    into the main reviewer prompt.
+    Runs all 9 diff-based subagents concurrently, collects their findings,
+    and returns a consolidated findings block to inject into the main
+    reviewer prompt.
+
+    Rule-aware subagents (type-design, security, test-analyzer) receive
+    PROJECT_RULES extracted from .claude/rules/*.md and SOUL.md.
+    The rule-checker subagent receives the full lang-review checklist.
 
     Also runs reviewer-preflight in the worktree for tests/lint.
     """
     import concurrent.futures
 
     agents_dir = project_dir / ".pennyfarthing" / "agents"
+
+    # Load project rules for rule-aware subagents
+    lang_review_text, project_rules_text = _load_project_rules(
+        worktree_path, project_dir,
+    )
 
     # Build source file listing for subagents to read full files
     src_list = subprocess.run(
@@ -1047,6 +1176,32 @@ def _run_reviewer_fanout(
             flags=re.MULTILINE | re.DOTALL,
         )
 
+        # Build task prompt with optional rule injection
+        rules_section = ""
+        if name in _RULE_AWARE_SUBAGENTS and project_rules_text:
+            rules_section = (
+                f"\n\n## PROJECT_RULES\n\n"
+                f"These are the project's coding rules. Check every applicable "
+                f"rule against every instance in the diff EXHAUSTIVELY.\n\n"
+                f"{project_rules_text}\n"
+            )
+        elif name == _RULE_CHECKER_SUBAGENT:
+            if lang_review_text:
+                rules_section = (
+                    f"\n\n## LANG_REVIEW_RULES\n\n"
+                    f"This is the project's language-specific review checklist. "
+                    f"Check EVERY numbered rule against EVERY applicable instance "
+                    f"in the diff.\n\n{lang_review_text}\n"
+                )
+                if project_rules_text:
+                    rules_section += (
+                        f"\n\n## ADDITIONAL_RULES\n\n{project_rules_text}\n"
+                    )
+            elif project_rules_text:
+                rules_section = (
+                    f"\n\n## LANG_REVIEW_RULES\n\n{project_rules_text}\n"
+                )
+
         task = (
             f"Analyze the code changes and report findings in structured YAML.\n\n"
             f"## Agent Instructions\n\n{agent_prompt}\n\n"
@@ -1055,10 +1210,16 @@ def _run_reviewer_fanout(
             f"Read the full source files to understand context around "
             f"the diff. The diff shows WHAT changed; the files show "
             f"the complete implementation. Analyze both.\n"
+            f"{rules_section}"
         )
 
+        # Rule-checker uses sonnet (analytical); others use opus
+        subagent_model = (
+            "claude-sonnet-4-6" if name == _RULE_CHECKER_SUBAGENT
+            else "claude-opus-4-6"
+        )
         cmd = ["claude", "-p", task, "--output-format", "json", "--model",
-               "claude-opus-4-6"]
+               subagent_model]
 
         try:
             result = subprocess.run(
@@ -1107,7 +1268,8 @@ def _run_reviewer_fanout(
         return "reviewer-preflight", "\n".join(checks)
 
     n = len(_REVIEWER_SUBAGENTS)
-    print(f"  [FANOUT] Spawning {n} subagents + preflight...")
+    rules_info = f", lang-review loaded" if lang_review_text else ", no lang-review"
+    print(f"  [FANOUT] Spawning {n} subagents + preflight{rules_info}...")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         futures = {

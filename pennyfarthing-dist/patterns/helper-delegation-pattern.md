@@ -107,7 +107,7 @@ Use Claude Code's Task tool with the `subagent_type` parameter:
 ```yaml
 Task tool:
   subagent_type: "sm-setup"
-  model: "haiku"                           # Optional, defaults to haiku
+  model: "haiku"                           # Match model to task complexity
   description: "Research backlog"
   prompt: |
     MODE: research

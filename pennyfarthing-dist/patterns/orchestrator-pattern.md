@@ -204,7 +204,7 @@ Orchestrator CLAUDE.md files follow a standard structure:
 ## Rules
 1. **Never edit `.pennyfarthing/` framework dirs** — those are copies/symlinks from pennyfarthing
 2. **Never edit sprint YAML directly** — use `pf sprint story` commands
-3. **Use Haiku for subagents** — never Opus for mechanical tasks
+3. **Match model to task** — Haiku for mechanical tasks, Sonnet/Opus for analytical subagents
 </critical>
 
 <git-operations>
