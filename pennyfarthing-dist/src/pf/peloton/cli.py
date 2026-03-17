@@ -38,7 +38,13 @@ def peloton():
 @peloton.command("start")
 @click.option("--workflow", default=None, help="Workflow override (default: from session)")
 @click.option("--story-id", default=None, help="Story ID override (default: from session)")
-def start(workflow: str | None, story_id: str | None):
+@click.option(
+    "--layout",
+    type=click.Choice(["horizontal", "vertical", "grid"], case_sensitive=False),
+    default=None,
+    help="Pane layout: horizontal (side-by-side), vertical (stacked), or grid (2x2). Default: grid for 4+ agents, vertical for 2-3.",
+)
+def start(workflow: str | None, story_id: str | None, layout: str | None):
     """Initialize peloton team for the current story.
 
     Reads the active story's workflow, determines which agents are needed,
@@ -59,7 +65,7 @@ def start(workflow: str | None, story_id: str | None):
         click.echo("Error: No story ID found. Provide --story-id or start a story first.", err=True)
         raise SystemExit(1)
 
-    result = live.start_session(root, sid, wf_name)
+    result = live.start_session(root, sid, wf_name, layout=layout)
     if not result["success"]:
         click.echo(f"Error: {result['error']}", err=True)
         raise SystemExit(1)

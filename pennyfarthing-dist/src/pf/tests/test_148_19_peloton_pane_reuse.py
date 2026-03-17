@@ -360,8 +360,8 @@ class TestStartSessionNoPaneMapping:
         result = start_session(tmp_path, "148-19", "tdd")
 
         assert result["success"]
-        assert "layout" not in result["data"], (
-            "layout details are internal — should not be in start_session result"
+        assert "layout" in result["data"], (
+            "layout should be in start_session result (added by 148-24)"
         )
 
 

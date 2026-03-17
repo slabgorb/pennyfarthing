@@ -2,13 +2,14 @@
 name: reviewer-type-design
 description: Evaluates type design and invariants in diff — finds stringly-typed APIs, missing newtypes, broken type contracts
 tools: Bash, Read, Glob, Grep
-model: haiku
+model: opus
 ---
 
 <arguments>
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `DIFF` | Yes | Git diff content to analyze |
+| `PROJECT_RULES` | No | Project-specific type rules extracted from CLAUDE.md, SOUL.md, .claude/rules/*.md. When provided, these rules MUST be checked exhaustively — every rule against every applicable instance in the diff. |
 | `ALSO_CONSIDER` | No | Additional focus areas (e.g., domain-specific type conventions) |
 </arguments>
 
@@ -39,7 +40,22 @@ Do NOT comment on naming style or general code quality. Report ONLY type design 
 - If diff is empty or cannot be parsed, return `[]` and stop
 - Identify changed files, focusing on type definitions, function signatures, and API boundaries
 
-### Step 2: Analyze Type Boundaries
+### Step 2: Project Rule Check (if PROJECT_RULES provided)
+
+**This step is exhaustive, not thematic.** For EACH rule in PROJECT_RULES:
+
+1. Identify every type, enum, struct, trait, function signature, and constructor in the diff that the rule governs
+2. Check each instance against the rule
+3. Report every violation as a finding — do not stop at the first exemplar
+
+Common project rules you may receive (check ALL that apply):
+- `#[non_exhaustive]` on enums that will grow → check EVERY enum
+- Validated constructors return `Result`, not `Self` → check EVERY `::new()` method
+- `type Err` should use domain error types, not `String` → check EVERY `FromStr` impl
+- Private fields with getters on security-critical types → check EVERY struct with security-relevant fields
+- `#[serde(try_from)]` instead of `#[derive(Deserialize)]` on validated types → check EVERY type with both Deserialize and validation logic
+
+### Step 3: Analyze Type Boundaries
 
 For every new or changed type, function signature, or API boundary:
 
@@ -48,13 +64,13 @@ For every new or changed type, function signature, or API boundary:
 3. Do type constraints match the actual invariants the code relies on?
 4. Are there unsafe casts or type assertions?
 
-### Step 3: Check Cross-File Consistency
+### Step 4: Check Cross-File Consistency
 
 Use `Read` to check how new types are used at call sites — is the type contract honored? Only check direct callers.
 
 If `ALSO_CONSIDER` was provided, check those specific patterns.
 
-### Step 4: Output Findings
+### Step 5: Output Findings
 
 <output>
 Return a `TYPE_DESIGN_RESULT` YAML block. Findings are a native YAML array — not JSON.
@@ -87,7 +103,36 @@ TYPE_DESIGN_RESULT:
       confidence: high
 ```
 
-**Categories:** `stringly-typed` | `primitive-obsession` | `missing-union` | `optional-abuse` | `broken-invariant` | `unsafe-cast` | `inconsistent-nullability` | `generic-overuse` | `missing-validation`
+### With Project Rules (rule accounting required)
+```yaml
+TYPE_DESIGN_RESULT:
+  agent: reviewer-type-design
+  status: findings
+  rules_checked:
+    - rule: "#[non_exhaustive] on enums that will grow"
+      instances_checked: 3
+      violations: 2
+      details:
+        - "PluginKind (identity.rs:68) — VIOLATION: missing #[non_exhaustive]"
+        - "PluginHealth (health.rs:7) — VIOLATION: missing #[non_exhaustive]"
+        - "PluginError (error.rs:12) — compliant: has #[non_exhaustive]"
+    - rule: "Validated constructors return Result"
+      instances_checked: 2
+      violations: 1
+      details:
+        - "PluginId::new() (identity.rs:21) — VIOLATION: returns Self, not Result"
+        - "PluginManifest::new() (manifest.rs:42) — compliant: builder pattern"
+  findings:
+    - file: "identity.rs"
+      line: 68
+      category: "project-rule-violation"
+      description: "PluginKind enum missing #[non_exhaustive] — required by project rules"
+      suggestion: "Add #[non_exhaustive] attribute"
+      confidence: high
+      rule: "#[non_exhaustive] on enums that will grow"
+```
+
+**Categories:** `stringly-typed` | `primitive-obsession` | `missing-union` | `optional-abuse` | `broken-invariant` | `unsafe-cast` | `inconsistent-nullability` | `generic-overuse` | `missing-validation` | `project-rule-violation`
 
 **Confidence:**
 | Level | Meaning | Reviewer Action |

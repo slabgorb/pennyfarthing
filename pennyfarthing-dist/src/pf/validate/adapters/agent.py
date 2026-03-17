@@ -300,12 +300,12 @@ def validate_main_agent(path: Path, agents_dir: Path) -> tuple[list[str], list[s
     # Check 3: Line-position check for <on-activation> (warning)
     if "on-activation" in tags:
         act_line = _find_line_of_tag(content, "on-activation")
-        if act_line is not None and act_line > 100:
-            warnings.append(f"<on-activation> at line {act_line} (target: ≤100)")
+        if act_line is not None and act_line > 150:
+            warnings.append(f"<on-activation> at line {act_line} (target: ≤150)")
 
     # Check 4: File length check (error)
-    # Raised from shell script's 300 to 500 to accommodate verify-workflow in tea.md
-    max_lines = 500
+    # With 1M context, consistency > token conservation. Generous limit.
+    max_lines = 750
     line_count = len(content.splitlines())
     if line_count > max_lines:
         errors.append(f"File has {line_count} lines (max: {max_lines})")
@@ -377,11 +377,13 @@ def validate_subagent(path: Path) -> tuple[list[str], list[str]]:
         if fm["name"] != expected_name:
             errors.append(f"Name mismatch: expected '{expected_name}', got '{fm['name']}'")
 
-    # Model must be haiku for subagents
+    # Model validation — any valid Claude model is allowed
     if "model" in fm:
         model_val = str(fm["model"]).lower()
-        if model_val != "haiku":
-            errors.append(f"Subagent model must be 'haiku', got '{fm['model']}'")
+        valid_models = {"haiku", "sonnet", "opus"}
+        if model_val not in valid_models:
+            errors.append(f"Subagent model must be one of {valid_models}, got '{fm['model']}'")
+
 
     # Required tags
     tags = _find_tags(content)
