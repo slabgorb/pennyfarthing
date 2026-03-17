@@ -300,6 +300,153 @@ class TestStopKillsPelotonPanes:
 
 
 # ===========================================================================
+# BUG 1c (148-25): Native TeamCreate panes have owner=None
+#
+# When Claude Code's TeamCreate (teammateMode: "tmux") creates panes,
+# reconcile() auto-discovers them with owner=None. stop() must still
+# kill these panes by matching their role against the active agents list.
+# ===========================================================================
+
+
+def _make_registry_with_native_team_panes(session: str) -> dict:
+    """Registry with protected panes AND auto-discovered native team panes.
+
+    These simulate panes created by TeamCreate that reconcile() classified
+    with the correct role but owner=None (not explicitly tagged as peloton).
+    """
+    return {
+        "session": session,
+        "socket": "pf",
+        "max_panes": 10,
+        "panes": [
+            {
+                "pane_id": "%0",
+                "role": "claude",
+                "title": "Claude Code",
+                "protected": True,
+                "owner": None,
+            },
+            {
+                "pane_id": "%1",
+                "role": "tui",
+                "title": "TUI",
+                "protected": True,
+                "owner": None,
+            },
+            {
+                "pane_id": "%20",
+                "role": "tea",
+                "title": "tea",
+                "protected": False,
+                "owner": None,
+            },
+            {
+                "pane_id": "%21",
+                "role": "dev",
+                "title": "dev",
+                "protected": False,
+                "owner": None,
+            },
+            {
+                "pane_id": "%22",
+                "role": "reviewer",
+                "title": "reviewer",
+                "protected": False,
+                "owner": None,
+            },
+        ],
+    }
+
+
+class TestStopKillsNativeTeamPanes:
+    """stop() must kill panes matching active agents even without owner='peloton'.
+
+    Story 148-25: TeamCreate panes get auto-discovered by reconcile() with
+    owner=None. stop() must match them by role against the peloton state's
+    agent list.
+    """
+
+    def test_stop_kills_native_team_panes_by_role(self, project: Path) -> None:
+        """stop() must kill panes whose role matches active agents, even with owner=None."""
+        from pf.peloton.live import stop
+
+        _write_active_state(project)
+        registry = _make_registry_with_native_team_panes("pf-test")
+        _write_registry(project, registry)
+
+        with patch("pf.tmux.panes.kill_pane") as mock_kill, \
+             patch("pf.tmux.panes._run_tmux") as mock_tmux:
+            mock_kill.return_value = {"success": True}
+            mock_tmux.return_value = {"success": False, "error": "mocked"}
+
+            result = stop(project)
+
+            assert result["success"]
+            killed_ids = {c.args[0] for c in mock_kill.call_args_list}
+            assert "%20" in killed_ids, "Must kill tea pane (owner=None, role=tea)"
+            assert "%21" in killed_ids, "Must kill dev pane (owner=None, role=dev)"
+            assert "%22" in killed_ids, "Must kill reviewer pane (owner=None, role=reviewer)"
+
+    def test_stop_preserves_protected_with_native_panes(self, project: Path) -> None:
+        """Protected panes survive even when native team panes are killed."""
+        from pf.peloton.live import stop
+
+        _write_active_state(project)
+        registry = _make_registry_with_native_team_panes("pf-test")
+        _write_registry(project, registry)
+
+        with patch("pf.tmux.panes.kill_pane", return_value={"success": True}), \
+             patch("pf.tmux.panes._run_tmux", return_value={"success": False, "error": "mocked"}):
+            stop(project)
+
+        reg = _read_registry(project)
+        protected_ids = {p["pane_id"] for p in reg["panes"] if p["protected"]}
+        assert "%0" in protected_ids, "Claude pane must survive"
+        assert "%1" in protected_ids, "TUI pane must survive"
+
+    def test_stop_removes_native_panes_from_registry(self, project: Path) -> None:
+        """After stop(), native team panes must be gone from registry."""
+        from pf.peloton.live import stop
+
+        _write_active_state(project)
+        registry = _make_registry_with_native_team_panes("pf-test")
+        _write_registry(project, registry)
+
+        with patch("pf.tmux.panes.kill_pane", return_value={"success": True}), \
+             patch("pf.tmux.panes._run_tmux", return_value={"success": False, "error": "mocked"}):
+            stop(project)
+
+        reg = _read_registry(project)
+        agent_panes = [p for p in reg["panes"] if p["role"] in {"tea", "dev", "reviewer"}]
+        assert len(agent_panes) == 0, \
+            f"Registry must not contain agent panes after stop, found: {agent_panes}"
+
+    def test_stop_does_not_kill_unrelated_worker_panes(self, project: Path) -> None:
+        """stop() must not kill worker panes that don't match active agents."""
+        from pf.peloton.live import stop
+
+        _write_active_state(project)
+        registry = _make_registry_with_native_team_panes("pf-test")
+        # Add an unrelated worker pane
+        registry["panes"].append({
+            "pane_id": "%30",
+            "role": "worker",
+            "title": "Worker 1",
+            "protected": False,
+            "owner": None,
+        })
+        _write_registry(project, registry)
+
+        with patch("pf.tmux.panes.kill_pane", return_value={"success": True}), \
+             patch("pf.tmux.panes._run_tmux", return_value={"success": False, "error": "mocked"}):
+            stop(project)
+
+        reg = _read_registry(project)
+        worker_panes = [p for p in reg["panes"] if p["pane_id"] == "%30"]
+        assert len(worker_panes) == 1, "Unrelated worker pane must survive"
+
+
+# ===========================================================================
 # BUG 1b: Repeated start/stop must not accumulate panes
 # ===========================================================================
 
@@ -465,6 +612,52 @@ class TestPaneOrchestratorTeardown:
         # But panes should still be removed from the list
         assert result["data"]["killed"] == ["%10", "%11"]
         assert len(orch.panes) == 0
+
+
+# ===========================================================================
+# Registry classify_pane recognizes agent roles (148-25)
+# ===========================================================================
+
+
+class TestClassifyPaneAgentRoles:
+    """_classify_pane must recognize agent role names in pane titles."""
+
+    def test_classify_tea(self) -> None:
+        from pf.tmux.registry import _classify_pane
+        role, protected = _classify_pane("tea")
+        assert role == "tea"
+        assert not protected
+
+    def test_classify_dev(self) -> None:
+        from pf.tmux.registry import _classify_pane
+        role, protected = _classify_pane("dev")
+        assert role == "dev"
+        assert not protected
+
+    def test_classify_reviewer(self) -> None:
+        from pf.tmux.registry import _classify_pane
+        role, protected = _classify_pane("reviewer")
+        assert role == "reviewer"
+        assert not protected
+
+    def test_classify_story_prefixed_role(self) -> None:
+        """Pane titles like '148-25-tea' should classify as tea."""
+        from pf.tmux.registry import _classify_pane
+        role, protected = _classify_pane("148-25-tea")
+        assert role == "tea"
+        assert not protected
+
+    def test_classify_unknown_still_worker(self) -> None:
+        from pf.tmux.registry import _classify_pane
+        role, protected = _classify_pane("my-custom-pane")
+        assert role == "worker"
+        assert not protected
+
+    def test_protected_panes_unchanged(self) -> None:
+        from pf.tmux.registry import _classify_pane
+        role, protected = _classify_pane("Claude Code")
+        assert role == "claude"
+        assert protected
 
 
 # ===========================================================================
