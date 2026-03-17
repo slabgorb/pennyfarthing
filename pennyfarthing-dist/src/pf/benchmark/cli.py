@@ -855,6 +855,19 @@ def replay_compare(scenario_path, results_dir, group_by):
                 continue
             score_data = yaml.safe_load(chosen.read_text())
 
+            # Skip tainted runs — check pipeline.yaml for taint flag
+            pipeline_meta_file = run_dir / "pipeline.yaml"
+            if pipeline_meta_file.exists():
+                pipeline_meta = yaml.safe_load(pipeline_meta_file.read_text())
+                if pipeline_meta.get("tainted"):
+                    tainted_phases = pipeline_meta.get("tainted_phases", [])
+                    click.echo(
+                        f"  [SKIP] {theme_dir.name}/{run_dir.name} — "
+                        f"tainted ({', '.join(tainted_phases)})",
+                        err=True,
+                    )
+                    continue
+
             # Extract version tag for grouping
             fw = score_data.get("framework_version") or {}
             version_tag = fw.get("tag") or fw.get("commit") or "unknown"

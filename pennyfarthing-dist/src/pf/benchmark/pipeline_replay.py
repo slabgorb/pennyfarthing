@@ -82,6 +82,7 @@ class PhaseResult:
     model_usage: dict[str, Any] = field(default_factory=dict)
     cost_usd: float = 0.0
     session_id: str | None = None
+    tainted: bool = False
 
 
 @dataclass
@@ -926,11 +927,12 @@ def run_phase(
     model_usage: dict[str, Any] = {}
     cost_usd: float = 0.0
     session_id: str | None = None
+    tainted = False
 
     if result.stdout.strip():
         try:
             data = json.loads(result.stdout)
-            output_text = data.get("result", "")
+            output_text = data.get("result", "") or ""
             usage = data.get("usage", {})
             token_usage = {
                 "input": usage.get("input_tokens", 0),
@@ -941,8 +943,25 @@ def run_phase(
             model_usage = data.get("modelUsage", {})
             cost_usd = data.get("total_cost_usd", 0.0)
             session_id = data.get("session_id")
+
+            # Guard: flag runs where tokens were spent but no text captured
+            output_tokens = token_usage.get("output", 0)
+            if not output_text.strip() and output_tokens > 0:
+                tainted = True
+                warnings.warn(
+                    f"[TAINTED] {role} phase produced {output_tokens} output "
+                    f"tokens but result text is empty. Run data is suspect.",
+                    stacklevel=2,
+                )
         except json.JSONDecodeError:
             output_text = result.stdout
+    elif result.returncode != 0:
+        tainted = True
+        warnings.warn(
+            f"[TAINTED] {role} phase exited with code {result.returncode} "
+            f"and no stdout. stderr: {result.stderr[:200] if result.stderr else '(none)'}",
+            stacklevel=2,
+        )
 
     return PhaseResult(
         role=role,
@@ -953,6 +972,7 @@ def run_phase(
         model_usage=model_usage,
         cost_usd=cost_usd,
         session_id=session_id,
+        tainted=tainted,
     )
 
 
@@ -2302,11 +2322,29 @@ def save_result(
                 "duration_s": pr.duration_s,
                 "exit_code": pr.exit_code,
                 "session_id": pr.session_id,
+                **({"tainted": True} if pr.tainted else {}),
             }
             for role, pr in pipeline_result.phases.items()
             if not role.startswith("_")
         },
     }
+
+    # Propagate taint to top-level for easy filtering
+    any_tainted = any(
+        pr.tainted for pr in pipeline_result.phases.values() if not pr.role.startswith("_")
+    )
+    if any_tainted:
+        meta["tainted"] = True
+        tainted_phases = [
+            pr.role for pr in pipeline_result.phases.values()
+            if pr.tainted and not pr.role.startswith("_")
+        ]
+        meta["tainted_phases"] = tainted_phases
+        print(
+            f"  [TAINTED] Run flagged — empty output from: {', '.join(tainted_phases)}. "
+            f"Scores from this run should be excluded.",
+            file=sys.stderr,
+        )
     (run_dir / "pipeline.yaml").write_text(
         yaml.dump(meta, default_flow_style=False, sort_keys=False)
     )
