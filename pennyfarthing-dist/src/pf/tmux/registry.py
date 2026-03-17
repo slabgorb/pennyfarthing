@@ -14,6 +14,7 @@ from pathlib import Path
 from pf.tmux.panes import is_pane_idle, list_live_panes
 
 PROTECTED_ROLES = {"claude", "tui", "saddle"}
+AGENT_ROLES = {"tea", "dev", "reviewer", "architect", "sm", "ba", "devops", "tech-writer", "ux-designer", "orchestrator"}
 DEFAULT_MAX_PANES = 5
 
 # Title patterns for auto-classification
@@ -133,6 +134,11 @@ def _classify_pane(title: str) -> tuple[str, bool]:
     for pattern, (role, protected) in _TITLE_CLASSIFIERS.items():
         if pattern.lower() in title.lower():
             return role, protected
+    # Recognize agent role names (e.g. panes created by TeamCreate)
+    title_lower = title.lower().strip()
+    for role in AGENT_ROLES:
+        if title_lower == role or title_lower.endswith(f"-{role}"):
+            return role, False
     return "worker", False
 
 
