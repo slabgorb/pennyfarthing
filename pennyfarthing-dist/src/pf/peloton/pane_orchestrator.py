@@ -6,10 +6,13 @@ Manages the creation and teardown of tmux panes for each agent role
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from pf.tmux.panes import kill_pane, set_pane_title, split_pane
 
@@ -264,7 +267,17 @@ class PaneOrchestrator:
         ]
 
     def _create_pane(self, role: str) -> ManagedPane | None:
-        """Create a pane for the given agent role."""
+        """Create a pane for the given agent role, reusing an existing one if alive."""
+        # Check if we already track a pane for this role
+        existing = self.get_pane(role)
+        if existing is not None:
+            return existing
+
+        # Check registry for an alive pane with this role
+        reused = self._reuse_registry_pane(role)
+        if reused is not None:
+            return reused
+
         title = f"{self.story_id}-{role}"
         pane_id = self._allocate_pane()
         pane = ManagedPane(
@@ -276,6 +289,39 @@ class PaneOrchestrator:
         )
         self.panes.append(pane)
         return pane
+
+    def _reuse_registry_pane(self, role: str) -> ManagedPane | None:
+        """Check the tmux registry for a live pane matching this role."""
+        if not self._use_tmux:
+            return None
+        config = self.project_root / ".pennyfarthing" / "config.local.yaml"
+        if not config.exists():
+            return None
+        try:
+            from pf.tmux.panes import list_live_panes
+            from pf.tmux.registry import load_registry
+
+            reg_result = load_registry(self.project_root, self.session_name)
+            if not reg_result["success"]:
+                return None
+            live_result = list_live_panes(self.session_name)
+            if not live_result["success"]:
+                return None
+            live_ids = {p["pane_id"] for p in live_result["data"]}
+            for entry in reg_result["data"].get("panes", []):
+                if entry["role"] == role and entry["pane_id"] in live_ids:
+                    pane = ManagedPane(
+                        pane_id=entry["pane_id"],
+                        role=role,
+                        title=entry.get("title", f"{self.story_id}-{role}"),
+                        protected=entry.get("protected", False),
+                        owner=entry.get("owner", "peloton"),
+                    )
+                    self.panes.append(pane)
+                    return pane
+        except Exception:
+            logger.debug("Failed to reuse registry pane for role %s", role, exc_info=True)
+        return None
 
     def _try_create_portrait(
         self, role: str, theme: str, agent_pane: ManagedPane
