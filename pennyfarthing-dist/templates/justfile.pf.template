@@ -15,31 +15,13 @@ pf *args:
         "{{root}}/.pennyfarthing/bin/pf" {{args}}
     fi
 
-# Start Frame server (API + WebSocket + OTEL ingestion)
-# Stops existing instance first if running. Writes .frame-port and frame-pid.
+# Start Frame server (idempotent — reuses existing instance)
 frame:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    project_dir="{{root}}"
-    pid_file="$project_dir/frame-pid"
-    port_file="$project_dir/.frame-port"
-
-    # Stop if already running
-    if [[ -f "$pid_file" ]]; then
-        old_pid=$(cat "$pid_file" 2>/dev/null)
-        if [[ "$old_pid" =~ ^[0-9]+$ ]] && kill -0 "$old_pid" 2>/dev/null; then
-            echo "[frame] Stopping existing instance (PID $old_pid)" >&2
-            kill "$old_pid" 2>/dev/null || true
-            sleep 0.5
-        fi
-        rm -f "$pid_file" "$port_file"
-    fi
-
     just pf launch frame
 
-# Start Frame server and open dashboard
-dashboard:
-    just pf launch frame
+# Stop Frame server
+frame-stop:
+    just pf launch stop
 
 # Launch TUI panel viewer (starts Frame if needed)
 tui:

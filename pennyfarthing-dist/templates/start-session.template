@@ -80,7 +80,7 @@ TERM_LINES=$(tput lines)
 ENV_ARGS=(-e "CLAUDECODE=" -e "KITTY_WINDOW_ID=${KITTY_WINDOW_ID:-}" -e "TERM_PROGRAM=${TERM_PROGRAM:-}")
 
 # Start Frame server before tmux so both claude and tui can connect
-(cd "$DIR" && pf frame start) &
+(cd "$DIR" && pf launch frame) &
 FRAME_BG=$!
 
 # Wait for port file
