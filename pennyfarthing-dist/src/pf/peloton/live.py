@@ -288,9 +288,9 @@ def start_session(
     for agent in agents:
         try:
             prime_result = subprocess.run(
-                ["pf", "agent", "start", agent, "--minimal"],
+                ["pf", "agent", "start", agent, "--no-register", "--quiet"],
                 cwd=str(project_root),
-                capture_output=True, text=True, timeout=15,
+                capture_output=True, text=True, timeout=30,
             )
             if prime_result.returncode == 0 and prime_result.stdout.strip():
                 agent_primers[agent] = prime_result.stdout.strip()
