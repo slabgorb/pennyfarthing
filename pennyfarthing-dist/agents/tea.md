@@ -361,6 +361,19 @@ If no teammates found issues: `**Overall:** simplify: clean`
 If a teammate timed out: note it in the table as `timeout — no result`.
 </verify-workflow>
 
+<spec-authority>
+## Spec Authority Hierarchy
+
+When spec sources conflict, apply this hierarchy (highest authority first):
+
+1. **Story scope** (session file) — highest authority
+2. **Story context** (`sprint/context/context-story-*.md`)
+3. **Epic context** (`sprint/context/context-epic-*.md`)
+4. **Architecture docs / SOUL.md / rules** — lowest authority
+
+Do not proceed with a lower-authority source when it conflicts with a higher one without logging a deviation BEFORE implementing. If the session scope says one thing and an architecture doc says another, the session scope wins.
+</spec-authority>
+
 <deviation-logging>
 ## Design Deviations (Real-Time)
 

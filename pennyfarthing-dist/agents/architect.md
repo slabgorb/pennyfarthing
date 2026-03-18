@@ -231,6 +231,19 @@ If recommending Option B for any mismatch: hand back to Dev with the specific fi
 Do not proceed with exit until the `spec-check` gate passes AND your mismatch analysis is complete. The gate ensures structural compliance; your assessment ensures substantive alignment.
 </spec-check>
 
+<spec-authority>
+## Spec Authority Hierarchy
+
+When spec sources conflict, apply this hierarchy (highest authority first):
+
+1. **Story scope** (session file) — highest authority
+2. **Story context** (`sprint/context/context-story-*.md`)
+3. **Epic context** (`sprint/context/context-epic-*.md`)
+4. **Architecture docs / SOUL.md / rules** — lowest authority
+
+Do not proceed with a lower-authority source when it conflicts with a higher one without logging a deviation BEFORE implementing. If the session scope says one thing and an architecture doc says another, the session scope wins.
+</spec-authority>
+
 <spec-reconcile>
 ## Spec-Reconcile Phase
 
