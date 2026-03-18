@@ -12,11 +12,14 @@ happens through native team mode tools, not custom pane management.
 from __future__ import annotations
 
 import json
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load_workflow_data
 
@@ -288,14 +291,14 @@ def start_session(
     for agent in agents:
         try:
             prime_result = subprocess.run(
-                ["pf", "agent", "start", agent, "--minimal"],
+                ["pf", "agent", "start", agent, "--no-register", "--quiet"],
                 cwd=str(project_root),
-                capture_output=True, text=True, timeout=15,
+                capture_output=True, text=True, timeout=30,
             )
             if prime_result.returncode == 0 and prime_result.stdout.strip():
                 agent_primers[agent] = prime_result.stdout.strip()
-        except Exception:
-            pass
+        except Exception as e:  # Pre-priming is best-effort; fallback to instructional text
+            logger.debug("pf agent start failed for %s: %s", agent, e)
 
     # Build the prompt that SM uses to create the team
     agent_descriptions = []
@@ -371,10 +374,19 @@ def stop(project_root: Path) -> dict[str, Any]:
     The actual TeamDelete is called by SM in the Claude Code session.
     This kills peloton-owned tmux panes and cleans up both the registry
     and the state file.
+
+    Kills panes that match ANY of:
+    - owner == "peloton" (explicitly tagged by PaneOrchestrator)
+    - role matches an agent in the peloton state (auto-discovered by reconcile)
+    Protected panes are never killed.
     """
     from pf.tmux.panes import kill_pane
 
     killed: list[str] = []
+
+    # Load active agents from state so we can match auto-discovered panes
+    state = load_state(project_root)
+    active_agents = set(state.get("agents", []))
 
     # Kill peloton-owned panes and update registry
     registry_file = project_root / ".pennyfarthing" / "tmux-panes.json"
@@ -387,7 +399,12 @@ def stop(project_root: Path) -> dict[str, Any]:
         if registry and "panes" in registry:
             surviving_panes = []
             for pane in registry["panes"]:
-                if pane.get("owner") == "peloton" and not pane.get("protected", False):
+                if pane.get("protected", False):
+                    surviving_panes.append(pane)
+                    continue
+                is_peloton_owned = pane.get("owner") == "peloton"
+                is_agent_role = pane.get("role") in active_agents
+                if is_peloton_owned or is_agent_role:
                     try:
                         kill_pane(pane["pane_id"])
                     except Exception:
