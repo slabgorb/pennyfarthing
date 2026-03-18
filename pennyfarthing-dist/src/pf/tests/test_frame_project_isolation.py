@@ -40,99 +40,47 @@ def tmp_project_b(tmp_path):
 
 
 class TestNoPortScanning:
-    """AC1: Port scanning must be completely removed from discovery."""
+    """AC1: Port discovery relies solely on .frame-port file — no scanning or guessing."""
 
-    def test_is_already_running_no_files_probes_default_only(self, tmp_project):
-        """When no PID or port files exist, probes only the default port.
+    def test_is_already_running_no_files_returns_not_running(self, tmp_project):
+        """When no PID or port files exist, reports not running immediately.
 
-        Before fix: scans range(2898, 2909) as 'last resort'.
-        After fix: probes single default port with project identity check.
+        With OS-assigned ports, there is no default port to probe.
         """
-        probed_ports = []
-
-        def tracking_probe(port, project_dir, timeout=1.0):
-            probed_ports.append(port)
-            return False  # Nothing responding (or wrong project)
-
-        with patch("pf.frame.launcher._probe_frame_project", side_effect=tracking_probe):
-            with patch("pf.frame.launcher._default_port", return_value=1898):
-                running, pid, port = is_already_running(tmp_project)
+        running, pid, port = is_already_running(tmp_project)
 
         assert running is False
         assert pid is None
         assert port is None
-        # Must probe exactly one port (the default), not a range
-        assert probed_ports == [1898]
 
-    def test_is_already_running_no_files_detects_own_orphan(self, tmp_project):
-        """When no files exist but default port responds with matching project, detect orphan."""
-        def matching_probe(port, project_dir, timeout=1.0):
-            return True  # Server responds and project matches
+    def test_is_already_running_pid_only_cleans_up(self, tmp_project):
+        """When only PID file exists (no port file), cleans up and reports not running.
 
-        with patch("pf.frame.launcher._probe_frame_project", side_effect=matching_probe):
-            with patch("pf.frame.launcher._default_port", return_value=1898):
-                running, pid, port = is_already_running(tmp_project)
+        PID-only is a stale state — no port to probe.
+        """
+        (tmp_project / "frame-pid").write_text("99999")
+
+        running, pid, port = is_already_running(tmp_project)
+
+        assert running is False
+        assert not (tmp_project / "frame-pid").exists()
+
+    def test_is_already_running_port_only_probes_that_port(self, tmp_project):
+        """When only port file exists, probes exactly that port."""
+        (tmp_project / ".frame-port").write_text("4567")
+
+        probed_ports = []
+
+        def tracking_probe(port, timeout=1.0):
+            probed_ports.append(port)
+            return True
+
+        with patch("pf.frame.launcher._probe_frame", side_effect=tracking_probe):
+            running, pid, port = is_already_running(tmp_project)
 
         assert running is True
-        assert pid is None
-        assert port == 1898
-
-    def test_is_already_running_no_files_rejects_foreign_orphan(self, tmp_project):
-        """When no files exist and default port responds for a DIFFERENT project, reject it."""
-        def non_matching_probe(port, project_dir, timeout=1.0):
-            return False  # Server responds but project doesn't match
-
-        with patch("pf.frame.launcher._probe_frame_project", side_effect=non_matching_probe):
-            with patch("pf.frame.launcher._default_port", return_value=1898):
-                running, pid, port = is_already_running(tmp_project)
-
-        assert running is False
-        assert pid is None
-        assert port is None
-
-    def test_is_already_running_pid_only_probes_default(self, tmp_project):
-        """When only PID file exists (no port file), cleans up then probes default.
-
-        PID-only is a stale state — cleaned up, then falls through to
-        default port probe with project identity check.
-        """
-        (tmp_project / "frame-pid").write_text("99999")
-
-        probed_ports = []
-
-        def tracking_probe(port, project_dir, timeout=1.0):
-            probed_ports.append(port)
-            return False
-
-        with patch("pf.frame.launcher.is_process_alive", return_value=True):
-            with patch("pf.frame.launcher._probe_frame_project", side_effect=tracking_probe):
-                with patch("pf.frame.launcher._default_port", return_value=1898):
-                    running, pid, port = is_already_running(tmp_project)
-
-        assert running is False
-        # Probes only the single default port (not a range)
-        assert probed_ports == [1898]
-        # PID file should be cleaned up
-        assert not (tmp_project / "frame-pid").exists()
-
-    def test_is_already_running_pid_dead_probes_default(self, tmp_project):
-        """When PID file exists but process is dead, cleans up then probes default."""
-        (tmp_project / "frame-pid").write_text("99999")
-
-        probed_ports = []
-
-        def tracking_probe(port, project_dir, timeout=1.0):
-            probed_ports.append(port)
-            return False
-
-        with patch("pf.frame.launcher.is_process_alive", return_value=False):
-            with patch("pf.frame.launcher._probe_frame_project", side_effect=tracking_probe):
-                with patch("pf.frame.launcher._default_port", return_value=1898):
-                    running, pid, port = is_already_running(tmp_project)
-
-        assert running is False
-        assert probed_ports == [1898]
-        assert not (tmp_project / "frame-pid").exists()
+        assert port == 4567
+        assert probed_ports == [4567]
 
 
 class TestWsClientNoDefaultPort:
@@ -188,9 +136,8 @@ class TestMissingPortFile:
         assert result is None
 
     def test_is_already_running_no_port_file_not_running(self, tmp_project):
-        """Without port file, is_already_running must report not running when default port is dead."""
-        with patch("pf.frame.launcher._probe_frame", return_value=False):
-            running, pid, port = is_already_running(tmp_project)
+        """Without port file, is_already_running must report not running."""
+        running, pid, port = is_already_running(tmp_project)
         assert running is False
         assert port is None
 
@@ -204,33 +151,23 @@ class TestStalePortFile:
     """AC3: Detect dead Frame server and clean up stale port file."""
 
     def test_port_file_exists_frame_dead_cleanup(self, tmp_project):
-        """When port file exists but Frame server isn't responding, clean up.
-
-        After cleanup, falls through to default-port project-scoped probe (also dead).
-        """
+        """When port file exists but Frame server isn't responding, clean up."""
         (tmp_project / ".frame-port").write_text("2898")
         (tmp_project / "frame-pid").write_text("99999")
 
         with patch("pf.frame.launcher.is_process_alive", return_value=False):
-            with patch("pf.frame.launcher._probe_frame", return_value=False):
-                with patch("pf.frame.launcher._probe_frame_project", return_value=False):
-                    running, pid, port = is_already_running(tmp_project)
+            running, pid, port = is_already_running(tmp_project)
 
         assert running is False
-        # Stale files should be cleaned up
         assert not (tmp_project / ".frame-port").exists()
         assert not (tmp_project / "frame-pid").exists()
 
     def test_port_file_only_frame_dead_cleanup(self, tmp_project):
-        """When port file exists (no PID file) but Frame server dead, clean up.
-
-        After cleanup, falls through to default-port project-scoped probe (also dead).
-        """
+        """When port file exists (no PID file) but Frame server dead, clean up."""
         (tmp_project / ".frame-port").write_text("2898")
 
         with patch("pf.frame.launcher._probe_frame", return_value=False):
-            with patch("pf.frame.launcher._probe_frame_project", return_value=False):
-                running, pid, port = is_already_running(tmp_project)
+            running, pid, port = is_already_running(tmp_project)
 
         assert running is False
         assert not (tmp_project / ".frame-port").exists()
@@ -255,11 +192,11 @@ class TestProjectIsolation:
         assert client_a.discover_port() == 2898
         assert client_b.discover_port() == 2899
 
-    def test_project_a_running_project_b_rejected(self, tmp_project, tmp_project_b):
-        """Project B with no files must NOT connect to Project A's Frame server.
+    def test_project_a_running_project_b_independent(self, tmp_project, tmp_project_b):
+        """Project B with no files must NOT see Project A as running.
 
-        The orphan probe now checks project_dir identity. Project A's server
-        reports a different project_dir, so Project B correctly rejects it.
+        With OS-assigned ports, each project relies solely on its own
+        .frame-port file. No cross-project orphan probing occurs.
         """
         # Project A has a running Frame server with files
         (tmp_project / ".frame-port").write_text("2898")
@@ -267,19 +204,14 @@ class TestProjectIsolation:
 
         # Project B has no Frame server files
 
-        def project_scoped_probe(port, project_dir, timeout=1.0):
-            # Server on default port belongs to tmp_project, not tmp_project_b
-            return project_dir.resolve() == tmp_project.resolve()
-
         with patch("pf.frame.launcher.is_process_alive", return_value=True):
             with patch("pf.frame.launcher._probe_frame", return_value=True):
-                with patch("pf.frame.launcher._probe_frame_project", side_effect=project_scoped_probe):
-                    running_a, _, port_a = is_already_running(tmp_project)
-                    running_b, _, port_b = is_already_running(tmp_project_b)
+                running_a, _, port_a = is_already_running(tmp_project)
+                running_b, _, port_b = is_already_running(tmp_project_b)
 
         assert running_a is True
         assert port_a == 2898
-        # Project B must NOT hijack Project A's Frame server
+        # Project B has no files — reports not running
         assert running_b is False
         assert port_b is None
 

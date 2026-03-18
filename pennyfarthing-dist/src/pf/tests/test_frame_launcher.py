@@ -33,6 +33,7 @@ from pf.frame.launcher import (
     build_otel_env,
     cleanup_files,
     exec_claude,
+    find_free_port,
     get_status,
     is_already_running,
     is_process_alive,
@@ -565,24 +566,20 @@ class TestAlreadyRunning:
         assert port == 2898
 
     def test_not_running_when_no_files(self, tmp_path: Path) -> None:
-        """is_already_running should return False when no files and default port dead."""
-        with patch("pf.frame.launcher._probe_frame", return_value=False):
-            running, pid, port = is_already_running(tmp_path)
+        """is_already_running should return False when no files exist."""
+        running, pid, port = is_already_running(tmp_path)
 
         assert running is False
         assert pid is None
         assert port is None
 
     def test_not_running_when_stale_pid(self, tmp_path: Path) -> None:
-        """is_already_running should return False when PID is dead and default port dead."""
+        """is_already_running should return False when PID is dead."""
         (tmp_path / ".frame-port").write_text("2898")
         (tmp_path / "frame-pid").write_text("99999")
 
-        # is_process_alive=False short-circuits the both-files check (no probe for 2898),
-        # then falls through to default port probe
         with patch("pf.frame.launcher.is_process_alive", return_value=False):
-            with patch("pf.frame.launcher._probe_frame", return_value=False):
-                running, pid, port = is_already_running(tmp_path)
+            running, pid, port = is_already_running(tmp_path)
 
         assert running is False
 

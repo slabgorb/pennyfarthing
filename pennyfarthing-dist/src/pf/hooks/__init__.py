@@ -32,8 +32,8 @@ import yaml
 # Per ADR-0004: "the hub where all communication converges"
 FRAME_PORT_FILE = ".frame-port"
 
-# Default port if file not found — now project-aware via launcher.port_for_project
-DEFAULT_FRAME_PORT = 2898  # legacy fallback only
+# Default port if file not found (Frame not running)
+DEFAULT_FRAME_PORT = 2898
 
 # HTTP timeout for Frame communication
 HTTP_TIMEOUT_SECONDS = 120
@@ -124,14 +124,6 @@ def get_frame_port(project_root: Path | None = None) -> int:
     port = read_port_file(FRAME_PORT_FILE, project_root)
     if port:
         return port
-
-    # Derive per-project port when no port file exists
-    if project_root:
-        try:
-            from pf.frame.launcher import port_for_project
-            return port_for_project(project_root)
-        except ImportError:
-            pass
 
     return DEFAULT_FRAME_PORT
 
