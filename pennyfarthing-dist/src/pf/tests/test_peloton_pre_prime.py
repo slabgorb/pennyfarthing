@@ -10,7 +10,6 @@ and session context. This output is injected into the TeamCreate prompt.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

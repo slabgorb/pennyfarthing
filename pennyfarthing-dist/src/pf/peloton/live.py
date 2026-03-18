@@ -12,11 +12,14 @@ happens through native team mode tools, not custom pane management.
 from __future__ import annotations
 
 import json
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load_workflow_data
 
@@ -294,8 +297,8 @@ def start_session(
             )
             if prime_result.returncode == 0 and prime_result.stdout.strip():
                 agent_primers[agent] = prime_result.stdout.strip()
-        except Exception:
-            pass
+        except Exception as e:  # Pre-priming is best-effort; fallback to instructional text
+            logger.debug("pf agent start failed for %s: %s", agent, e)
 
     # Build the prompt that SM uses to create the team
     agent_descriptions = []
