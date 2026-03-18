@@ -62,6 +62,9 @@ DEFAULTS: dict[str, Any] = {
     "tui": {
         "toasts": False,
     },
+    "peloton": {
+        "layout": "grid",
+    },
     "last_panel": "sprint",
 }
 
