@@ -16,6 +16,38 @@ from pathlib import Path
 
 import yaml
 
+# Mapping from setting keys to (subagent name, dispatch tag or None)
+_SUBAGENT_SETTING_MAP: dict[str, tuple[str, str | None]] = {
+    "preflight": ("reviewer-preflight", None),
+    "edge_hunter": ("reviewer-edge-hunter", "[EDGE]"),
+    "silent_failure_hunter": ("reviewer-silent-failure-hunter", "[SILENT]"),
+    "test_analyzer": ("reviewer-test-analyzer", "[TEST]"),
+    "comment_analyzer": ("reviewer-comment-analyzer", "[DOC]"),
+    "type_design": ("reviewer-type-design", "[TYPE]"),
+    "security": ("reviewer-security", "[SEC]"),
+    "simplifier": ("reviewer-simplifier", "[SIMPLE]"),
+    "rule_checker": ("reviewer-rule-checker", "[RULE]"),
+}
+
+
+def _get_enabled_subagents() -> tuple[set[str], set[str]]:
+    """Return (enabled_names, enabled_tags) filtered by workflow.reviewer_subagents settings."""
+    try:
+        from pf.settings.settings import get_setting
+
+        toggles = get_setting("workflow.reviewer_subagents") or {}
+    except Exception:
+        toggles = {}
+
+    enabled_names: set[str] = set()
+    enabled_tags: set[str] = set()
+    for key, (name, tag) in _SUBAGENT_SETTING_MAP.items():
+        if toggles.get(key, True):  # default enabled
+            enabled_names.add(name)
+            if tag:
+                enabled_tags.add(tag)
+    return enabled_names, enabled_tags
+
 
 def complete_phase(
     story_id: str,
@@ -90,13 +122,14 @@ def complete_phase(
 
         missing = _check_subagent_dispatch(content)
         if missing:
+            _, enabled_tags = _get_enabled_subagents()
             return {
                 "status": "error",
                 "session_file": str(session_path),
                 "error": (
                     f"Reviewer Assessment missing specialist subagent tags: {', '.join(sorted(missing))}. "
-                    "To fix: Incorporate findings from all 7 specialist subagents in the "
-                    "Reviewer Assessment using tags: [EDGE], [SILENT], [TEST], [DOC], [TYPE], [SEC], [SIMPLE]."
+                    f"To fix: Incorporate findings from all enabled specialist subagents in the "
+                    f"Reviewer Assessment using tags: {', '.join(sorted(enabled_tags))}."
                 ),
             }
 
@@ -329,7 +362,7 @@ def _load_workflow_phases(project_root: Path, workflow: str) -> list[dict]:
     return []
 
 
-SUBAGENT_DISPATCH_TAGS = {"[EDGE]", "[SILENT]", "[TEST]", "[DOC]", "[TYPE]", "[SEC]", "[SIMPLE]"}
+SUBAGENT_DISPATCH_TAGS = {"[EDGE]", "[SILENT]", "[TEST]", "[DOC]", "[TYPE]", "[SEC]", "[SIMPLE]", "[RULE]"}
 
 REQUIRED_SUBAGENTS = {
     "reviewer-preflight",
@@ -340,6 +373,7 @@ REQUIRED_SUBAGENTS = {
     "reviewer-type-design",
     "reviewer-security",
     "reviewer-simplifier",
+    "reviewer-rule-checker",
 }
 
 
@@ -347,14 +381,18 @@ def _check_subagent_completion(content: str) -> str | None:
     """Check session file for complete Subagent Results table.
 
     Returns an error message string if incomplete, or None if all good.
+    Filters required subagents to only those enabled in settings.
     """
+    enabled_names, _ = _get_enabled_subagents()
+
     # Look for ## Subagent Results section
     match = re.search(r"^## Subagent Results\b.*", content, re.MULTILINE)
     if not match:
+        count = len(enabled_names)
         return (
             "Missing '## Subagent Results' section in session file. "
-            "To fix: The reviewer must wait for ALL 8 subagents to return and fill in the "
-            "Subagent Results table before writing the Reviewer Assessment. "
+            f"To fix: The reviewer must wait for all {count} enabled subagents to return "
+            "and fill in the Subagent Results table before writing the Reviewer Assessment. "
             "Context pressure is not a reason to skip this step. "
             "Example row format:\n"
             "| # | Specialist | Received | Status | Findings | Decision |\n"
@@ -368,20 +406,21 @@ def _check_subagent_completion(content: str) -> str | None:
 
     # Check for "All received: Yes" (tolerates bold markdown: **All received:** **Yes**)
     if not re.search(r"\*{0,2}All received:\*{0,2}\s*\*{0,2}Yes\*{0,2}", section, re.IGNORECASE):
+        count = len(enabled_names)
         return (
             "Subagent Results table is incomplete — 'All received: Yes' not found. "
-            "To fix: Wait for ALL 8 subagents to return results. Fill in every row of "
-            "the table with Received: Yes (or explicit error notation). Do not proceed "
-            "until all subagents are accounted for."
+            f"To fix: Wait for all {count} enabled subagents to return results. Fill in "
+            "every row of the table with Received: Yes (or explicit error notation). "
+            "Do not proceed until all subagents are accounted for."
         )
 
-    # Check that each required subagent appears in the table
-    missing = {name for name in REQUIRED_SUBAGENTS if name not in section}
+    # Check that each enabled required subagent appears in the table
+    missing = {name for name in REQUIRED_SUBAGENTS & enabled_names if name not in section}
     if missing:
         return (
             f"Subagent Results table missing entries for: {', '.join(sorted(missing))}. "
-            "To fix: Every specialist subagent must have a row in the Subagent Results table "
-            "with its result status and decision documented."
+            "To fix: Every enabled specialist subagent must have a row in the Subagent Results "
+            "table with its result status and decision documented."
         )
 
     return None
@@ -391,17 +430,21 @@ def _check_subagent_dispatch(content: str) -> set[str]:
     """Check Reviewer Assessment for required specialist subagent tags.
 
     Returns set of missing tags, or empty set if all present.
+    Filters to only tags for enabled subagents.
     """
+    _, enabled_tags = _get_enabled_subagents()
+    required_tags = SUBAGENT_DISPATCH_TAGS & enabled_tags
+
     # Extract content after "## Reviewer Assessment"
     match = re.search(r"^## Reviewer Assessment\b.*", content, re.MULTILINE)
     if not match:
-        return SUBAGENT_DISPATCH_TAGS
+        return required_tags
     assessment = content[match.start():]
     # Truncate at next ## heading
     next_heading = re.search(r"^## (?!Reviewer Assessment)", assessment, re.MULTILINE)
     if next_heading:
         assessment = assessment[:next_heading.start()]
-    return {tag for tag in SUBAGENT_DISPATCH_TAGS if tag not in assessment}
+    return {tag for tag in required_tags if tag not in assessment}
 
 
 def _find_project_root() -> Path:

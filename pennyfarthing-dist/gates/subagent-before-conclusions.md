@@ -13,7 +13,7 @@ This gate applies to ANY agent that uses subagents, not just the Reviewer.
 Check the session file for these conditions:
 
 1. **Subagent Results table exists** with a `## Subagent Results` heading
-2. **All rows show `Received: Yes`** (or explicit error/timeout)
+2. **All rows show `Received: Yes`** (or explicit error/timeout, or `Skipped` for subagents disabled via `workflow.reviewer_subagents` settings)
 3. **`All received: Yes` line present** after the table
 4. **No VERIFIED contradicts a subagent finding:** For each `[VERIFIED]` in
    the assessment, check whether any subagent flagged the same file or area.

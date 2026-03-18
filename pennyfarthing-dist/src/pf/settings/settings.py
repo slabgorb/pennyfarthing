@@ -39,6 +39,17 @@ DEFAULTS: dict[str, Any] = {
         "statusbar": True,
         "startup_agent": "sm",
         "saddle_mode": False,
+        "reviewer_subagents": {
+            "preflight": True,
+            "edge_hunter": True,
+            "silent_failure_hunter": True,
+            "test_analyzer": True,
+            "comment_analyzer": True,
+            "type_design": True,
+            "security": True,
+            "simplifier": True,
+            "rule_checker": True,
+        },
     },
     "jira": {
         "project": "MSSCI",
@@ -94,9 +105,10 @@ def _set_by_path(data: dict, key: str, value: Any) -> None:
 
 
 def get_setting(key: str) -> Any:
-    """Get a setting value by dot-path."""
+    """Get a setting value by dot-path, falling back to DEFAULTS."""
     config = load_pennyfarthing_config()
-    return _get_by_path(config, key)
+    merged = _deep_merge(DEFAULTS, config)
+    return _get_by_path(merged, key)
 
 
 def set_setting(key: str, value: str) -> dict:
