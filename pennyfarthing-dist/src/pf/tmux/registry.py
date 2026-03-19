@@ -139,6 +139,10 @@ def _classify_pane(title: str) -> tuple[str, bool]:
     for role in AGENT_ROLES:
         if title_lower == role or title_lower.endswith(f"-{role}"):
             return role, False
+    # Recognize portrait panes (e.g. "dev-portrait", "tea-portrait")
+    for role in AGENT_ROLES:
+        if title_lower == f"{role}-portrait" or title_lower.endswith(f"-{role}-portrait"):
+            return f"{role}-portrait", False
     return "worker", False
 
 

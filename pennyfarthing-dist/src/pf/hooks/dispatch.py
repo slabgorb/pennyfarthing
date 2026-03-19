@@ -29,6 +29,7 @@ DISPATCH_REGISTRY: dict[str, list[tuple[str, str | None, str]]] = {
     ],
     "PostToolUse": [
         ("sprint-yaml", "Edit|Write", "pf.hooks.sprint_yaml_validation"),
+        ("peloton-portraits", "TeamCreate", "pf.hooks.peloton_portraits"),
     ],
     "Stop": [
         ("session-stop", None, "pf.hooks.session_stop"),
