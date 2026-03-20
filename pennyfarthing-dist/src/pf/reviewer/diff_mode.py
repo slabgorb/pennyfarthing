@@ -6,6 +6,8 @@ the corresponding git diff command.
 
 from __future__ import annotations
 
+import subprocess
+
 from pf.git.repos import get_default_branch
 
 SUBAGENT_DIFF_MODES: dict[str, str] = {
@@ -22,6 +24,65 @@ SUBAGENT_DIFF_MODES: dict[str, str] = {
     # No diff — runs tools, not diff analysis
     "reviewer-preflight": "none",
 }
+
+SUBAGENT_FILE_CONTEXT: dict[str, bool] = {
+    # Full file context — cross-file pattern analysis
+    "reviewer-security": True,
+    "reviewer-edge-hunter": True,
+    "reviewer-test-analyzer": True,
+    "reviewer-rule-checker": True,
+    # Diff-only — localized analysis
+    "reviewer-simplifier": False,
+    "reviewer-comment-analyzer": False,
+    "reviewer-type-design": False,
+    "reviewer-silent-failure-hunter": False,
+    "reviewer-preflight": False,
+}
+
+
+def needs_file_context(name: str) -> bool:
+    """Check whether a subagent needs full file context.
+
+    Args:
+        name: Subagent name (must be in SUBAGENT_FILE_CONTEXT).
+
+    Returns:
+        True if the subagent needs full file contents for changed files.
+
+    Raises:
+        KeyError: If name is not a known subagent.
+    """
+    return SUBAGENT_FILE_CONTEXT[name]
+
+
+def get_changed_files(
+    base_branch: str,
+    repo_path: str | None = None,
+) -> list[str]:
+    """Get list of files changed between base branch and HEAD.
+
+    Runs ``git diff --name-only {base_branch}...HEAD`` and returns
+    the resulting file paths, filtering out empty lines.
+
+    Args:
+        base_branch: The base branch to diff against.
+        repo_path: Working directory for the git command. If None,
+            uses the current working directory.
+
+    Returns:
+        List of changed file paths relative to repo root.
+
+    Raises:
+        subprocess.CalledProcessError: If the git command fails.
+    """
+    result = subprocess.run(
+        ["git", "diff", "--name-only", f"{base_branch}...HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=repo_path,
+    )
+    return [line for line in result.stdout.split("\n") if line]
 
 
 def get_diff_command(mode: str, base_branch: str) -> list[str] | None:
