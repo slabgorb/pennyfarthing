@@ -2,7 +2,7 @@
 name: reviewer-type-design
 description: Evaluates type design and invariants in diff — finds stringly-typed APIs, missing newtypes, broken type contracts
 tools: Bash, Read, Glob, Grep
-model: opus
+model: sonnet
 ---
 
 <arguments>

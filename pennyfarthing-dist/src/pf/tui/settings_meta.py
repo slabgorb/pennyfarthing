@@ -129,7 +129,7 @@ _SPECS: list[SettingSpec] = [
         label="PR Merge",
         widget_type="select",
         group="Workflow",
-        options=[("Auto", "auto"), ("Manual", "manual")],
+        options=[("Auto", "auto"), ("Human", "human")],
         description="PR merge strategy",
     ),
     SettingSpec(

@@ -2,7 +2,7 @@
 name: reviewer-rule-checker
 description: Exhaustive project rule checker — checks every type/function/field against every applicable project rule
 tools: Bash, Read, Glob, Grep
-model: opus
+model: sonnet
 ---
 
 <arguments>

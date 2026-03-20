@@ -2,7 +2,7 @@
 name: reviewer-security
 description: Security vulnerability scan on diff — injection, auth, secrets, info leakage
 tools: Bash, Read, Glob, Grep
-model: opus
+model: sonnet
 ---
 
 <arguments>

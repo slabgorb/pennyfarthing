@@ -38,7 +38,7 @@ You may downgrade severity with rationale. You may NOT dismiss. The only valid d
 </critical>
 
 <helpers>
-**Model:** opus (all reviewer subagents) | **Execution:** all background, parallel
+**Model:** sonnet (all reviewer subagents) | **Execution:** all background, parallel
 
 | Subagent | Purpose |
 |----------|---------|

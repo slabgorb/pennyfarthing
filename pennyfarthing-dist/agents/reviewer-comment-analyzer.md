@@ -2,7 +2,7 @@
 name: reviewer-comment-analyzer
 description: Checks comments and documentation in diff — finds stale, misleading, or missing documentation
 tools: Bash, Read, Glob, Grep
-model: opus
+model: sonnet
 ---
 
 <arguments>
