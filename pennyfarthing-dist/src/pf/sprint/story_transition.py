@@ -13,6 +13,7 @@ from typing import Any
 
 from pf.jira.client import get_client
 from pf.sprint.loader import find_epic, find_story
+from pf.sprint.status_normalize import normalize_status
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
 # Valid transitions: from_status -> set of allowed to_statuses
@@ -70,7 +71,8 @@ def transition_story(
             "steps": [],
         }
 
-    from_status = story["status"]
+    from_status = normalize_status(story["status"])
+    target_status = normalize_status(target_status)
     jira_key = story.get("jira")
 
     # Validate transition is legal
