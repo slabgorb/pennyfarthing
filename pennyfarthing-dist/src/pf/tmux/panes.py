@@ -343,11 +343,66 @@ def resize_main_pane(target: str, size_pct: int, dimension: str = "x") -> dict:
     )
 
 
+def move_pane(src_pane: str, dst_pane: str, direction: str = "v") -> dict:
+    """Move a pane next to another pane.
+
+    Uses tmux join-pane to detach src and attach it adjacent to dst.
+
+    Args:
+        src_pane: pane_id to move (e.g. "%5")
+        dst_pane: target pane to join next to
+        direction: 'v' for below, 'h' for right-of
+
+    Returns:
+        {success, data?, error?}
+    """
+    return _run_tmux(
+        "join-pane", f"-{direction}",
+        "-s", src_pane, "-t", dst_pane,
+    )
+
+
+def _place_tui_below_cli(target: str) -> None:
+    """Find the TUI pane and move it below the CLI pane (pane 0).
+
+    After select-layout main-vertical, pane 0 is the left column.
+    This splits pane 0 vertically and moves the TUI below it, giving:
+      Left column: CLI (top) + TUI (bottom)
+      Right column: agent panes stacked
+    """
+    # Get the CLI pane id (pane 0 in the window)
+    cli_result = _run_tmux(
+        "display-message", "-t", f"{target}:.0", "-p", "#{pane_id}",
+    )
+    if not cli_result["success"]:
+        return
+
+    cli_pane = cli_result["data"].strip()
+
+    # Find the TUI pane by title
+    panes_result = list_window_panes(target)
+    if not panes_result["success"]:
+        return
+
+    tui_pane = None
+    for pane in panes_result["data"]:
+        if "tui" in pane["title"].lower() and pane["pane_id"] != cli_pane:
+            tui_pane = pane["pane_id"]
+            break
+
+    if not tui_pane:
+        return
+
+    # Move TUI below CLI using join-pane
+    move_pane(tui_pane, cli_pane, direction="v")
+
+
 def apply_layout(target: str, layout_name: str, main_pane_pct: int = 50) -> dict:
     """Apply a pennyfarthing layout name to the current tmux window.
 
     Maps pennyfarthing names (vertical, grid, horizontal, stacked) to
-    tmux select-layout values, and resizes the main pane for main-vertical.
+    tmux select-layout values. For vertical layout, places CLI above TUI
+    on the left, agents stacked on the right.
 
     Args:
         target: session or window target
@@ -367,6 +422,10 @@ def apply_layout(target: str, layout_name: str, main_pane_pct: int = 50) -> dict
     result = select_layout(target, tmux_layout)
     if not result["success"]:
         return result
+
+    # For main-vertical: place TUI below CLI on the left, then resize
+    if tmux_layout == "main-vertical":
+        _place_tui_below_cli(target)
 
     # For main-vertical, resize the main (left) pane
     if tmux_layout == "main-vertical" and main_pane_pct != 50:
