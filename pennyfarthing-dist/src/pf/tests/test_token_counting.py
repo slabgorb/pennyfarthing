@@ -1,7 +1,7 @@
 """Tests for component-level token counting.
 
-Story: MSSCI-12800 - Component-level token tracking
-Epic: MSSCI-12793 - Tiered Context Injection System
+Story: PROJ-12800 - Component-level token tracking
+Epic: PROJ-12793 - Tiered Context Injection System
 
 This story adds granular token counting per injected component, allowing users
 to see exactly where context tokens are being spent.

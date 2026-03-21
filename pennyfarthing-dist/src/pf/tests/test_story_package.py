@@ -92,7 +92,7 @@ class TestStoryCreateModule:
         from pf.story.create import generate_story_yaml
 
         result = generate_story_yaml(
-            epic_id="MSSCI-11952",
+            epic_id="PROJ-11952",
             title="Add error handling",
             points=3,
             story_type="feature",
@@ -108,7 +108,7 @@ class TestStoryCreateModule:
         from pf.story.create import generate_story_yaml
 
         result = generate_story_yaml(
-            epic_id="MSSCI-11952",
+            epic_id="PROJ-11952",
             title="Bug fix",
             points=2,
             story_type="bug",
@@ -126,7 +126,7 @@ class TestStoryCreateModule:
 
         # Invalid points should fail or warn
         result = create_story(
-            epic_id="MSSCI-11952",
+            epic_id="PROJ-11952",
             title="Test",
             points=100,  # Invalid - too high
             dry_run=True,
@@ -141,7 +141,7 @@ class TestStoryCreateModule:
         from pf.story.create import create_story
 
         result = create_story(
-            epic_id="MSSCI-11952",
+            epic_id="PROJ-11952",
             title="Test Story",
             points=3,
             dry_run=True,

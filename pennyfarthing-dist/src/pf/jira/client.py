@@ -105,13 +105,13 @@ def extract_jira_key(input_value: str | None) -> str | None:
     if not input_value:
         return None
 
-    # Already in key format
-    key_pattern = re.compile(rf"^{JIRA_PROJECT}-\d+$")
+    # Already in key format (any PROJECT-NUMBER pattern)
+    key_pattern = re.compile(r"^[A-Z][A-Z0-9]+-\d+$")
     if key_pattern.match(input_value):
         return input_value
 
-    # Extract from URL
-    url_pattern = re.compile(rf"({JIRA_PROJECT}-\d+)")
+    # Extract from URL (any PROJECT-NUMBER pattern)
+    url_pattern = re.compile(r"([A-Z][A-Z0-9]+-\d+)")
     match = url_pattern.search(input_value)
     return match.group(1) if match else input_value
 

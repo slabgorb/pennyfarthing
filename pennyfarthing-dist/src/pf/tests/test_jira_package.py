@@ -118,14 +118,14 @@ class TestExtractJiraKey:
         """extract_jira_key should return key as-is if already a key."""
         from pf.jira.client import extract_jira_key
 
-        assert extract_jira_key("MSSCI-12345") == "MSSCI-12345"
+        assert extract_jira_key("PROJ-12345") == "PROJ-12345"
 
     def test_extract_jira_key_from_url(self) -> None:
         """extract_jira_key should extract key from URL."""
         from pf.jira.client import extract_jira_key
 
-        url = "https://1898andco.atlassian.net/browse/MSSCI-12345"
-        assert extract_jira_key(url) == "MSSCI-12345"
+        url = "https://your-org.atlassian.net/browse/PROJ-12345"
+        assert extract_jira_key(url) == "PROJ-12345"
 
     def test_extract_jira_key_returns_none_for_none(self) -> None:
         """extract_jira_key should return None for None input."""
@@ -141,8 +141,8 @@ class TestGetJiraField:
         """get_jira_field should extract simple field paths."""
         from pf.jira.client import get_jira_field
 
-        issue = {"key": "MSSCI-123", "id": "10001"}
-        assert get_jira_field(issue, "key") == "MSSCI-123"
+        issue = {"key": "PROJ-123", "id": "10001"}
+        assert get_jira_field(issue, "key") == "PROJ-123"
 
     def test_get_jira_field_nested_path(self) -> None:
         """get_jira_field should extract nested field paths."""
@@ -161,7 +161,7 @@ class TestGetJiraField:
         """get_jira_field should return default for missing paths."""
         from pf.jira.client import get_jira_field
 
-        issue = {"key": "MSSCI-123"}
+        issue = {"key": "PROJ-123"}
         assert get_jira_field(issue, "fields.missing", "default") == "default"
         assert get_jira_field(issue, "nonexistent") is None
 
@@ -221,14 +221,14 @@ class TestJiraBidirectionalModule:
         from pf.jira.bidirectional import SyncChange
 
         change = SyncChange(
-            key="MSSCI-12345",
+            key="PROJ-12345",
             field="status",
             action="update-jira",
             yaml_value="in_progress",
             jira_value="To Do",
             target_value="In Progress",
         )
-        assert change.key == "MSSCI-12345"
+        assert change.key == "PROJ-12345"
         assert change.action == "update-jira"
 
     def test_sync_plan_dataclass(self) -> None:
@@ -255,23 +255,23 @@ class TestJiraBidirectionalModule:
         """generate_sync_plan should identify stories only in YAML."""
         from pf.jira.bidirectional import generate_sync_plan
 
-        yaml_stories = [{"id": "63-1", "jira": "MSSCI-12345", "status": "in_progress"}]
+        yaml_stories = [{"id": "63-1", "jira": "PROJ-12345", "status": "in_progress"}]
         jira_stories: list[dict[str, Any]] = []
 
         plan = generate_sync_plan(yaml_stories, jira_stories, sync_status=True)
 
-        assert "MSSCI-12345" in plan.yaml_only
+        assert "PROJ-12345" in plan.yaml_only
 
     def test_generate_sync_plan_identifies_jira_only(self) -> None:
         """generate_sync_plan should identify stories only in Jira."""
         from pf.jira.bidirectional import generate_sync_plan
 
         yaml_stories: list[dict[str, Any]] = []
-        jira_stories = [{"key": "MSSCI-12345", "fields": {"status": {"name": "To Do"}}}]
+        jira_stories = [{"key": "PROJ-12345", "fields": {"status": {"name": "To Do"}}}]
 
         plan = generate_sync_plan(yaml_stories, jira_stories, sync_status=True)
 
-        assert "MSSCI-12345" in plan.jira_only
+        assert "PROJ-12345" in plan.jira_only
 
     def test_format_sync_plan(self) -> None:
         """format_sync_plan should return formatted string."""
@@ -281,14 +281,14 @@ class TestJiraBidirectionalModule:
         )
 
         plan = SyncPlan(
-            yaml_only=["MSSCI-111"],
-            jira_only=["MSSCI-222"],
-            both=["MSSCI-333"],
+            yaml_only=["PROJ-111"],
+            jira_only=["PROJ-222"],
+            both=["PROJ-333"],
         )
         result = format_sync_plan(plan)
 
-        assert "MSSCI-111" in result
-        assert "MSSCI-222" in result
+        assert "PROJ-111" in result
+        assert "PROJ-222" in result
         assert "Sync Plan" in result
 
 

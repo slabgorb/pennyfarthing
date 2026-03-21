@@ -1,7 +1,7 @@
 """Tests for 148-19: Remove agent pane pre-opening from peloton layout.
 
 Story 148-19: Stop pre-opening agent panes in peloton layout
-Epic: MSSCI-16421
+Epic: PROJ-16421
 
 TeamCreate always spawns its own panes via teammateMode=tmux, so pre-opened
 agent panes just sit idle with zsh. Remove agent pane creation from

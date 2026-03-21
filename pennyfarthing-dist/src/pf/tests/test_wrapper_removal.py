@@ -1,4 +1,4 @@
-"""Tests for wrapper chain removal (story 126-4, MSSCI-15492).
+"""Tests for wrapper chain removal (story 126-4, PROJ-15492).
 
 Verifies that the uv/pf.sh wrapper chain has been fully removed:
 1. run-pf.sh deleted

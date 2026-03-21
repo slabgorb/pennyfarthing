@@ -2,7 +2,7 @@
 
 Tests the --tier argument and tier-specific component loading for the prime command.
 
-Story: MSSCI-12797 - Python Prime Tier Support
+Story: PROJ-12797 - Python Prime Tier Support
 Acceptance Criteria:
 - AC1: --tier argument with choices FULL, REFRESH, HANDOFF, MINIMAL
 - AC2: Tier-specific component loading per specification
@@ -1001,10 +1001,10 @@ describe('Component', () => {
         # Session (~200 tokens)
         session_dir = tmp_path / ".session"
         session_dir.mkdir()
-        (session_dir / "test-session.md").write_text("""# MSSCI-12797: Python Prime Tier Support
+        (session_dir / "test-session.md").write_text("""# PROJ-12797: Python Prime Tier Support
 
 ## Story Context
-- **ID:** MSSCI-12797
+- **ID:** PROJ-12797
 - **Workflow:** tdd
 
 ## Workflow Phase

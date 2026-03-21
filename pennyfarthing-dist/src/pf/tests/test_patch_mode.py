@@ -105,11 +105,11 @@ class TestPatchStatePreservation:
     def mock_session_state(self) -> dict[str, Any]:
         """Sample session state to preserve."""
         return {
-            "story_id": "MSSCI-12345",
+            "story_id": "PROJ-12345",
             "workflow": "tdd",
             "phase": "green",
             "agent": "dev",
-            "feature_branch": "feat/MSSCI-12345-new-feature",
+            "feature_branch": "feat/PROJ-12345-new-feature",
         }
 
     def test_patch_state_stores_story_id(self, mock_session_state: dict) -> None:
@@ -117,7 +117,7 @@ class TestPatchStatePreservation:
         if not IMPORT_SUCCESS:
             pytest.skip("Module not implemented")
         state = PatchState(**mock_session_state)
-        assert state.story_id == "MSSCI-12345"
+        assert state.story_id == "PROJ-12345"
 
     def test_patch_state_stores_workflow(self, mock_session_state: dict) -> None:
         """AC2: PatchState should store workflow type."""
@@ -145,7 +145,7 @@ class TestPatchStatePreservation:
         if not IMPORT_SUCCESS:
             pytest.skip("Module not implemented")
         state = PatchState(**mock_session_state)
-        assert state.feature_branch == "feat/MSSCI-12345-new-feature"
+        assert state.feature_branch == "feat/PROJ-12345-new-feature"
 
     def test_patch_state_serializes_to_yaml(self, mock_session_state: dict) -> None:
         """AC2: PatchState should be serializable to YAML."""
@@ -154,7 +154,7 @@ class TestPatchStatePreservation:
         state = PatchState(**mock_session_state)
         yaml_str = state.to_yaml()
         parsed = yaml.safe_load(yaml_str)
-        assert parsed["story_id"] == "MSSCI-12345"
+        assert parsed["story_id"] == "PROJ-12345"
         assert parsed["workflow"] == "tdd"
 
     def test_patch_state_deserializes_from_yaml(self, mock_session_state: dict) -> None:
@@ -163,7 +163,7 @@ class TestPatchStatePreservation:
             pytest.skip("Module not implemented")
         yaml_str = yaml.dump(mock_session_state)
         state = PatchState.from_yaml(yaml_str)
-        assert state.story_id == "MSSCI-12345"
+        assert state.story_id == "PROJ-12345"
 
 
 class TestPatchBranchCreation:
@@ -178,7 +178,7 @@ class TestPatchBranchCreation:
             mock_run.return_value = MagicMock(returncode=0)
             branch_name = create_patch_branch(
                 description="fix broken script",
-                feature_branch="feat/MSSCI-12345-feature",
+                feature_branch="feat/PROJ-12345-feature",
                 repo_path=tmp_path,
             )
             # Should NOT checkout develop first
@@ -195,7 +195,7 @@ class TestPatchBranchCreation:
             mock_run.return_value = MagicMock(returncode=0)
             branch_name = create_patch_branch(
                 description="fix broken script",
-                feature_branch="feat/MSSCI-12345-feature",
+                feature_branch="feat/PROJ-12345-feature",
             )
             assert branch_name.startswith("patch/")
             assert "fix-broken-script" in branch_name or "fix_broken_script" in branch_name
@@ -208,7 +208,7 @@ class TestPatchBranchCreation:
             mock_run.return_value = MagicMock(returncode=0)
             branch_name = create_patch_branch(
                 description="fix: broken/script (urgent!)",
-                feature_branch="feat/MSSCI-12345-feature",
+                feature_branch="feat/PROJ-12345-feature",
             )
             # Should not contain special characters
             assert ":" not in branch_name
@@ -243,11 +243,11 @@ class TestDevOnlyWorkflow:
             mock_run.return_value = MagicMock(returncode=0)
             result = enter_patch_mode(
                 description="fix broken script",
-                story_id="MSSCI-12345",
+                story_id="PROJ-12345",
                 workflow="tdd",
                 phase="green",
                 agent="dev",
-                feature_branch="feat/MSSCI-12345-feature",
+                feature_branch="feat/PROJ-12345-feature",
             )
             # Should indicate dev agent
             assert result.get("agent") == "dev" or result.agent == "dev"
@@ -262,11 +262,11 @@ class TestCommitFormat:
             pytest.skip("Module not implemented")
         msg = generate_patch_commit_message(
             description="fix broken script path",
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
         )
         assert msg.startswith("fix(patch):")
         assert "fix broken script path" in msg
-        assert "[from:MSSCI-12345]" in msg
+        assert "[from:PROJ-12345]" in msg
 
     def test_commit_message_with_local_story_id(self) -> None:
         """AC5: Commit message should work with local story IDs (no JIRA)."""
@@ -284,7 +284,7 @@ class TestCommitFormat:
             pytest.skip("Module not implemented")
         msg = generate_patch_commit_message(
             description="fix script",
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
         )
         assert "Co-Authored-By:" in msg
 
@@ -300,7 +300,7 @@ class TestMergeBack:
             mock_run.return_value = MagicMock(returncode=0)
             merge_patch_branch(
                 patch_branch="patch/fix-script-1234567890",
-                feature_branch="feat/MSSCI-12345-feature",
+                feature_branch="feat/PROJ-12345-feature",
                 repo_path=tmp_path,
             )
             # Should merge patch into feature branch
@@ -316,7 +316,7 @@ class TestMergeBack:
             mock_run.return_value = MagicMock(returncode=0)
             merge_patch_branch(
                 patch_branch="patch/fix-script-1234567890",
-                feature_branch="feat/MSSCI-12345-feature",
+                feature_branch="feat/PROJ-12345-feature",
                 repo_path=tmp_path,
             )
             # Should delete patch branch
@@ -332,11 +332,11 @@ class TestStateRestoration:
     def saved_state(self) -> dict[str, Any]:
         """Sample saved state."""
         return {
-            "story_id": "MSSCI-12345",
+            "story_id": "PROJ-12345",
             "workflow": "tdd",
             "phase": "green",
             "agent": "dev",
-            "feature_branch": "feat/MSSCI-12345-feature",
+            "feature_branch": "feat/PROJ-12345-feature",
         }
 
     def test_restore_returns_original_state(self, saved_state: dict) -> None:
@@ -350,7 +350,7 @@ class TestStateRestoration:
             with patch("pf.patch_mode.subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(returncode=0)
                 result = restore_workflow_state()
-                assert result["story_id"] == "MSSCI-12345"
+                assert result["story_id"] == "PROJ-12345"
                 assert result["workflow"] == "tdd"
                 assert result["phase"] == "green"
 
@@ -367,7 +367,7 @@ class TestStateRestoration:
                 restore_workflow_state(repo_path=tmp_path)
                 # Should checkout feature branch
                 calls = [str(c) for c in mock_run.call_args_list]
-                checkout_call = [c for c in calls if "checkout" in c and "feat/MSSCI-12345" in c]
+                checkout_call = [c for c in calls if "checkout" in c and "feat/PROJ-12345" in c]
                 assert len(checkout_call) > 0
 
 
@@ -378,9 +378,9 @@ class TestSessionPatches:
         """AC8: log_patch_to_session should add patch to session file."""
         if not IMPORT_SUCCESS:
             pytest.skip("Module not implemented")
-        session_file = tmp_path / ".session" / "MSSCI-12345-session.md"
+        session_file = tmp_path / ".session" / "PROJ-12345-session.md"
         session_file.parent.mkdir(parents=True, exist_ok=True)
-        session_file.write_text("""# Session: MSSCI-12345
+        session_file.write_text("""# Session: PROJ-12345
 
 ## Patches
 
@@ -401,9 +401,9 @@ class TestSessionPatches:
         """AC8: Patch log should include timestamp."""
         if not IMPORT_SUCCESS:
             pytest.skip("Module not implemented")
-        session_file = tmp_path / ".session" / "MSSCI-12345-session.md"
+        session_file = tmp_path / ".session" / "PROJ-12345-session.md"
         session_file.parent.mkdir(parents=True, exist_ok=True)
-        session_file.write_text("""# Session: MSSCI-12345
+        session_file.write_text("""# Session: PROJ-12345
 
 ## Patches
 
@@ -433,7 +433,7 @@ class TestTirepumpIntegration:
         with patch("pf.patch_mode.get_patch_stack") as mock_stack:
             mock_state = MagicMock()
             mock_state.agent = "dev"
-            mock_state.story_id = "MSSCI-12345"
+            mock_state.story_id = "PROJ-12345"
             mock_state.workflow = "tdd"
             mock_state.phase = "green"
             mock_state.feature_branch = "feat/test"
@@ -455,7 +455,7 @@ class TestTirepumpIntegration:
         with patch("pf.patch_mode.get_patch_stack") as mock_stack:
             mock_state = MagicMock()
             mock_state.agent = "dev"
-            mock_state.story_id = "MSSCI-12345"
+            mock_state.story_id = "PROJ-12345"
             mock_state.workflow = "tdd"
             mock_state.phase = "green"
             mock_state.feature_branch = "feat/test"
@@ -478,11 +478,11 @@ class TestNestedPatches:
             pytest.skip("Module not implemented")
         stack = PatchStack(stack_file=tmp_path / ".session" / "patch-stack.yaml")
         state1 = PatchState(
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
             workflow="tdd",
             phase="green",
             agent="dev",
-            feature_branch="feat/MSSCI-12345-feature",
+            feature_branch="feat/PROJ-12345-feature",
         )
         stack.push(state1)
         assert stack.depth() == 1
@@ -493,15 +493,15 @@ class TestNestedPatches:
             pytest.skip("Module not implemented")
         stack = PatchStack(stack_file=tmp_path / ".session" / "patch-stack.yaml")
         state1 = PatchState(
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
             workflow="tdd",
             phase="green",
             agent="dev",
-            feature_branch="feat/MSSCI-12345-feature",
+            feature_branch="feat/PROJ-12345-feature",
         )
         stack.push(state1)
         popped = stack.pop()
-        assert popped.story_id == "MSSCI-12345"
+        assert popped.story_id == "PROJ-12345"
         assert stack.depth() == 0
 
     def test_patch_stack_is_lifo(self, tmp_path: Path) -> None:
@@ -510,14 +510,14 @@ class TestNestedPatches:
             pytest.skip("Module not implemented")
         stack = PatchStack(stack_file=tmp_path / ".session" / "patch-stack.yaml")
         state1 = PatchState(
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
             workflow="tdd",
             phase="green",
             agent="dev",
             feature_branch="feat/feature-1",
         )
         state2 = PatchState(
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
             workflow="tdd",
             phase="green",
             agent="dev",
@@ -544,18 +544,18 @@ class TestNestedPatches:
             # Enter first patch
             enter_patch_mode(
                 description="fix first bug",
-                story_id="MSSCI-12345",
+                story_id="PROJ-12345",
                 workflow="tdd",
                 phase="green",
                 agent="dev",
-                feature_branch="feat/MSSCI-12345-feature",
+                feature_branch="feat/PROJ-12345-feature",
                 stack_file=tmp_path / ".session" / "patch-stack.yaml",
             )
 
             # Enter nested patch
             enter_patch_mode(
                 description="fix second bug during first fix",
-                story_id="MSSCI-12345",
+                story_id="PROJ-12345",
                 workflow="tdd",
                 phase="green",
                 agent="dev",
@@ -575,7 +575,7 @@ class TestNestedPatches:
 
         stack = PatchStack(stack_file=stack_file)
         state = PatchState(
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
             workflow="tdd",
             phase="green",
             agent="dev",
@@ -601,7 +601,7 @@ class TestNestedPatches:
         # After pushing, should be in patch mode
         stack = PatchStack(stack_file=stack_file)
         state = PatchState(
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
             workflow="tdd",
             phase="green",
             agent="dev",
@@ -637,11 +637,11 @@ class TestEnterPatchModeIntegration:
             stack_file = tmp_path / ".session" / "patch-stack.yaml"
             result = enter_patch_mode(
                 description="fix bug",
-                story_id="MSSCI-12345",
+                story_id="PROJ-12345",
                 workflow="tdd",
                 phase="green",
                 agent="dev",
-                feature_branch="feat/MSSCI-12345-feature",
+                feature_branch="feat/PROJ-12345-feature",
                 repo_path=tmp_path,
                 stack_file=stack_file,
             )
@@ -662,11 +662,11 @@ class TestEnterPatchModeIntegration:
             with pytest.raises(Exception) as exc_info:
                 enter_patch_mode(
                     description="fix bug",
-                    story_id="MSSCI-12345",
+                    story_id="PROJ-12345",
                     workflow="tdd",
                     phase="green",
                     agent="dev",
-                    feature_branch="feat/MSSCI-12345-feature",
+                    feature_branch="feat/PROJ-12345-feature",
                     repo_path=tmp_path,
                 )
 
@@ -686,11 +686,11 @@ class TestExitPatchModeIntegration:
         stack_file.parent.mkdir(parents=True, exist_ok=True)
         stack = PatchStack(stack_file=stack_file)
         state = PatchState(
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
             workflow="tdd",
             phase="green",
             agent="dev",
-            feature_branch="feat/MSSCI-12345-feature",
+            feature_branch="feat/PROJ-12345-feature",
         )
         stack.push(state)
 
@@ -708,7 +708,7 @@ class TestExitPatchModeIntegration:
             assert any("merge" in c for c in calls)
 
             # Should have returned original state
-            assert result["story_id"] == "MSSCI-12345"
+            assert result["story_id"] == "PROJ-12345"
 
             # Stack should be empty (reload from file to check)
             reloaded_stack = PatchStack(stack_file=stack_file)
@@ -724,11 +724,11 @@ class TestExitPatchModeIntegration:
         stack_file.parent.mkdir(parents=True, exist_ok=True)
         stack = PatchStack(stack_file=stack_file)
         state = PatchState(
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
             workflow="tdd",
             phase="green",
             agent="dev",
-            feature_branch="feat/MSSCI-12345-feature",
+            feature_branch="feat/PROJ-12345-feature",
         )
         stack.push(state)
 
@@ -756,7 +756,7 @@ class TestExitPatchModeIntegration:
             reloaded_stack = PatchStack(stack_file=stack_file)
             assert reloaded_stack.depth() == 1, "State should be preserved on merge failure"
             preserved = reloaded_stack.peek()
-            assert preserved.story_id == "MSSCI-12345"
+            assert preserved.story_id == "PROJ-12345"
 
     def test_restore_preserves_state_on_checkout_failure(self, tmp_path: Path) -> None:
         """restore_workflow_state should preserve state if git checkout fails."""
@@ -768,11 +768,11 @@ class TestExitPatchModeIntegration:
         stack_file.parent.mkdir(parents=True, exist_ok=True)
         stack = PatchStack(stack_file=stack_file)
         state = PatchState(
-            story_id="MSSCI-12345",
+            story_id="PROJ-12345",
             workflow="tdd",
             phase="green",
             agent="dev",
-            feature_branch="feat/MSSCI-12345-feature",
+            feature_branch="feat/PROJ-12345-feature",
         )
         stack.push(state)
 
@@ -791,7 +791,7 @@ class TestExitPatchModeIntegration:
             reloaded_stack = PatchStack(stack_file=stack_file)
             assert reloaded_stack.depth() == 1, "State should be preserved on checkout failure"
             preserved = reloaded_stack.peek()
-            assert preserved.story_id == "MSSCI-12345"
+            assert preserved.story_id == "PROJ-12345"
 
 
 class TestDescriptionValidation:

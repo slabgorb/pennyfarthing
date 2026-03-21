@@ -1,6 +1,6 @@
 """Tests for context template generator.
 
-Story: MSSCI-15684 (129-4) — Generate Context Document Templates from Schema
+Story: PROJ-15684 (129-4) — Generate Context Document Templates from Schema
 """
 
 from __future__ import annotations

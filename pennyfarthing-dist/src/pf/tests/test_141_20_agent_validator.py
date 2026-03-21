@@ -1,6 +1,6 @@
 """Tests for consolidated agent validation — shell script behavior ported to Python.
 
-Story: 141-20 (MSSCI-16154)
+Story: 141-20 (PROJ-16154)
 Legacy behavior captured from validate-agent-schema.sh and validate-subagent-frontmatter.sh.
 
 Each test documents the shell script check it replaces and verifies the Python

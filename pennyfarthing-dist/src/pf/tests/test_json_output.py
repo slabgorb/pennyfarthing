@@ -1,6 +1,6 @@
 """Tests for pf CLI --json output commands (Story 141-16).
 
-Story: MSSCI-16150 - Add --json Output to pf CLI for GUI Consumption
+Story: PROJ-16150 - Add --json Output to pf CLI for GUI Consumption
 Epic: 141 (Tech Debt Audit)
 
 These tests verify structured JSON output from five pf CLI commands,
@@ -48,7 +48,7 @@ SAMPLE_STORY = {
     "status": "in_progress",
     "priority": "p1",
     "workflow": "tdd",
-    "jira": "MSSCI-16150",
+    "jira": "PROJ-16150",
     "description": "Add --json flags to five pf CLI commands",
 }
 
@@ -765,7 +765,7 @@ class TestTypescriptReplacementValidation:
             "status": "in_progress",
             "priority": "p1",
             "workflow": "tdd",
-            "jira": "MSSCI-16100",
+            "jira": "PROJ-16100",
             "description": "A test story",
             "phase": "red",
             "phase_owner": "tea",

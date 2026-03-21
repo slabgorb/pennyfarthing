@@ -40,7 +40,7 @@ def _minimal_sprint(epic_id: str = "150", story_id: str = "150-5") -> dict:
         "epics": [
             {
                 "id": f"epic-{epic_id}",
-                "jira": f"MSSCI-{epic_id}00",
+                "jira": f"PROJ-{epic_id}00",
                 "title": "Test Epic",
                 "status": "active",
                 "stories": [

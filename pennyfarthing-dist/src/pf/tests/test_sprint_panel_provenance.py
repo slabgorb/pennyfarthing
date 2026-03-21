@@ -39,14 +39,14 @@ SAMPLE_PAYLOAD_WITH_REGISTRY: dict[str, Any] = {
         {
             "id": "120",
             "title": "Installation, agents and workflows",
-            "jiraKey": "MSSCI-15400",
+            "jiraKey": "PROJ-15400",
             "stories": [
                 {
                     "id": "120-6",
                     "title": "Sprint panel active sprint preference",
                     "points": 5,
                     "status": "in_progress",
-                    "jiraKey": "MSSCI-15411",
+                    "jiraKey": "PROJ-15411",
                 },
             ],
         },
@@ -80,14 +80,14 @@ SAMPLE_PAYLOAD_NO_REGISTRY: dict[str, Any] = {
         {
             "id": "120",
             "title": "Installation, agents and workflows",
-            "jiraKey": "MSSCI-15400",
+            "jiraKey": "PROJ-15400",
             "stories": [
                 {
                     "id": "120-6",
                     "title": "Sprint panel active sprint preference",
                     "points": 5,
                     "status": "in_progress",
-                    "jiraKey": "MSSCI-15411",
+                    "jiraKey": "PROJ-15411",
                 },
             ],
         },

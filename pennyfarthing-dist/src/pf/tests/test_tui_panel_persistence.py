@@ -2,7 +2,7 @@
 
 Story 103-8: Panel persistence (extend ERB mechanism)
 Epic: 103 — Frame TUI TUI
-Jira: MSSCI-14963
+Jira: PROJ-14963
 
 Acceptance Criteria:
 - [AC1] get_last_panel() reads last_panel from config.local.yaml

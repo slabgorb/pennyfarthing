@@ -1,6 +1,6 @@
 """Tests for sprint/validate_cmd.py module.
 
-Story: MSSCI-14255 - Sprint validate command with --fix flag
+Story: PROJ-14255 - Sprint validate command with --fix flag
 
 TDD RED phase: All tests should FAIL until implementation.
 
@@ -47,10 +47,10 @@ epics:
     priority: P1
     status: in_progress
     repos: pennyfarthing
-    jira: MSSCI-12000
+    jira: PROJ-12000
     stories:
       - id: 63-1
-        jira: MSSCI-12001
+        jira: PROJ-12001
         title: First Story
         points: 3
         priority: P0

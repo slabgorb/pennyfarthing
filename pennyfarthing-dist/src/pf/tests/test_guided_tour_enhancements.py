@@ -1,7 +1,7 @@
 """Tests for guided-tour enhancements: interactive deep-dives and switch gates.
 
-Story: 132-7 / MSSCI-15642 — Enhance guided tour with interactive deep-dives and switch gates
-Epic: 132 / MSSCI-15616 (Developer Discovery & Onboarding)
+Story: 132-7 / PROJ-15642 — Enhance guided tour with interactive deep-dives and switch gates
+Epic: 132 / PROJ-15616 (Developer Discovery & Onboarding)
 
 Acceptance Criteria:
 - [AC1] All agent commands in step files use /pf- prefix

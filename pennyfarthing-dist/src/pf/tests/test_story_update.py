@@ -1,6 +1,6 @@
 """Tests for sprint/story_update.py module.
 
-Story: MSSCI-14257 - Sprint story update command
+Story: PROJ-14257 - Sprint story update command
 
 TDD RED phase: All tests should FAIL until implementation.
 
@@ -47,7 +47,7 @@ epics:
     title: "Epic: Sprint Data Management"
     priority: P1
     status: in_progress
-    jira: MSSCI-14253
+    jira: PROJ-14253
     stories:
       - id: 76-1
         title: Core yaml_io module
@@ -87,7 +87,7 @@ epics:
     title: "Epic: Sprint Data Management"
     priority: P1
     status: in_progress
-    jira: MSSCI-14253
+    jira: PROJ-14253
     stories:
       - id: 76-1
         title: Core yaml_io module
@@ -100,7 +100,7 @@ epics:
     title: "Epic: Another Feature"
     priority: P1
     status: in_progress
-    jira: MSSCI-14300
+    jira: PROJ-14300
     stories:
       - id: 77-1
         title: First task
@@ -127,7 +127,7 @@ epics:
     title: "Epic: Sprint Data Management"
     priority: P1
     status: in_progress
-    jira: MSSCI-14253
+    jira: PROJ-14253
     stories:
       - id: 76-1
         title: Core yaml_io module

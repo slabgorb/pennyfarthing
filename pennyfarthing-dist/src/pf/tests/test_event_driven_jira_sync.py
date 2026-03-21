@@ -1,6 +1,6 @@
 """Tests for event-driven Jira sync on story transitions.
 
-Story: MSSCI-15429 - Event-driven Jira sync on story transitions
+Story: PROJ-15429 - Event-driven Jira sync on story transitions
 
 TDD RED phase: All tests should FAIL until implementation.
 
@@ -40,21 +40,21 @@ epics:
     title: "Sprint State Engine Consolidation"
     priority: p1
     status: in_progress
-    jira: MSSCI-15421
+    jira: PROJ-15421
     stories:
       - id: 125-7
         title: Story lifecycle state machine
         points: 3
         priority: p2
         status: backlog
-        jira: MSSCI-15428
+        jira: PROJ-15428
         workflow: tdd
       - id: 125-8
         title: Event-driven Jira sync
         points: 3
         priority: p2
         status: in_progress
-        jira: MSSCI-15429
+        jira: PROJ-15429
         started: "2026-02-15"
         assigned_to: kavery
         workflow: tdd
@@ -63,14 +63,14 @@ epics:
         points: 2
         priority: p3
         status: in_review
-        jira: MSSCI-15430
+        jira: PROJ-15430
         workflow: trivial
       - id: 125-10
         title: Already done story
         points: 2
         priority: p3
         status: done
-        jira: MSSCI-15431
+        jira: PROJ-15431
         completed: "2026-02-20"
         workflow: trivial
 """
@@ -93,7 +93,7 @@ def session_for_finish(project: Path) -> Path:
     session_path = project / ".session" / "125-9-session.md"
     session_path.write_text(
         "# Story 125-9: Focus commands\n\n"
-        "- **Jira Key:** MSSCI-15430\n"
+        "- **Jira Key:** PROJ-15430\n"
         "- **Workflow:** trivial\n"
         "- **Phase:** approved\n"
         "- **Repos:** pennyfarthing\n"
@@ -129,7 +129,7 @@ class TestClaimUsesStateMachine:
 
         mock_client = MagicMock()
         mock_client.get_issue_sync.return_value = {
-            "key": "MSSCI-15428",
+            "key": "PROJ-15428",
             "fields": {
                 "summary": "Test",
                 "status": {"name": "To Do"},
@@ -140,7 +140,7 @@ class TestClaimUsesStateMachine:
         mock_client.transition_sync.return_value = {"success": True}
         mock_get_client.return_value = mock_client
 
-        claim_story("MSSCI-15428")
+        claim_story("PROJ-15428")
 
         # Should NOT call transition_sync directly — the state machine handles it
         mock_client.transition_sync.assert_not_called()
@@ -244,7 +244,7 @@ class TestAllTransitionsFireJiraSync:
         result = transition_story(project, "125-7", "in_progress")
 
         assert result["success"] is True
-        mock_client.transition_sync.assert_called_once_with("MSSCI-15428", "In Progress")
+        mock_client.transition_sync.assert_called_once_with("PROJ-15428", "In Progress")
 
     @patch("pf.sprint.story_transition.get_client")
     def test_in_progress_to_in_review_syncs_jira(
@@ -258,7 +258,7 @@ class TestAllTransitionsFireJiraSync:
         result = transition_story(project, "125-8", "in_review")
 
         assert result["success"] is True
-        mock_client.transition_sync.assert_called_once_with("MSSCI-15429", "In Review")
+        mock_client.transition_sync.assert_called_once_with("PROJ-15429", "In Review")
 
     @patch("pf.sprint.story_transition.get_client")
     def test_in_review_to_done_syncs_jira(self, mock_get_client: MagicMock, project: Path) -> None:
@@ -270,7 +270,7 @@ class TestAllTransitionsFireJiraSync:
         result = transition_story(project, "125-9", "done")
 
         assert result["success"] is True
-        mock_client.transition_sync.assert_called_once_with("MSSCI-15430", "Done")
+        mock_client.transition_sync.assert_called_once_with("PROJ-15430", "Done")
 
     @patch("pf.sprint.story_transition.get_client")
     def test_any_to_canceled_syncs_jira(self, mock_get_client: MagicMock, project: Path) -> None:
@@ -282,7 +282,7 @@ class TestAllTransitionsFireJiraSync:
         result = transition_story(project, "125-7", "canceled")
 
         assert result["success"] is True
-        mock_client.transition_sync.assert_called_once_with("MSSCI-15428", "Canceled")
+        mock_client.transition_sync.assert_called_once_with("PROJ-15428", "Canceled")
 
 
 # =============================================================================
@@ -312,12 +312,12 @@ class TestReconcileAuditOnly:
             "epics": [
                 {
                     "id": "125",
-                    "jira": "MSSCI-15421",
+                    "jira": "PROJ-15421",
                     "title": "Test Epic",
                     "stories": [
                         {
                             "id": "125-1",
-                            "jira": "MSSCI-15428",
+                            "jira": "PROJ-15428",
                             "status": "in_progress",
                             "title": "Test Story",
                         },
@@ -328,7 +328,7 @@ class TestReconcileAuditOnly:
 
         mock_client = MagicMock()
         mock_client.get_issue_sync.return_value = {
-            "key": "MSSCI-15428",
+            "key": "PROJ-15428",
             "fields": {"status": {"name": "In Progress"}},
         }
         mock_client.search_issues_sync.return_value = []
@@ -359,12 +359,12 @@ class TestReconcileAuditOnly:
             "epics": [
                 {
                     "id": "125",
-                    "jira": "MSSCI-15421",
+                    "jira": "PROJ-15421",
                     "title": "Test Epic",
                     "stories": [
                         {
                             "id": "125-1",
-                            "jira": "MSSCI-15428",
+                            "jira": "PROJ-15428",
                             "status": "backlog",
                             "title": "Test Story",
                         },
@@ -375,13 +375,13 @@ class TestReconcileAuditOnly:
 
         mock_client = MagicMock()
         mock_client.get_issue_sync.return_value = {
-            "key": "MSSCI-15428",
+            "key": "PROJ-15428",
             "fields": {"status": {"name": "To Do"}},
         }
         # Simulate a story that's in YAML but not in Jira sprint
         mock_client.search_issues_sync.side_effect = [
             [],  # sprint issues (no orphans)
-            [{"key": "MSSCI-15428", "fields": {"summary": "Test"}}],  # not in sprint
+            [{"key": "PROJ-15428", "fields": {"summary": "Test"}}],  # not in sprint
         ]
         mock_get_client.return_value = mock_client
 
@@ -405,12 +405,12 @@ class TestReconcileAuditOnly:
             "epics": [
                 {
                     "id": "125",
-                    "jira": "MSSCI-15421",
+                    "jira": "PROJ-15421",
                     "title": "Test Epic",
                     "stories": [
                         {
                             "id": "125-1",
-                            "jira": "MSSCI-15428",
+                            "jira": "PROJ-15428",
                             "status": "in_progress",
                             "title": "Drifted Story",
                         },
@@ -422,7 +422,7 @@ class TestReconcileAuditOnly:
         mock_client = MagicMock()
         # Jira says "To Do" but YAML says "in_progress" — status drift
         mock_client.get_issue_sync.return_value = {
-            "key": "MSSCI-15428",
+            "key": "PROJ-15428",
             "fields": {"status": {"name": "To Do"}},
         }
         mock_client.search_issues_sync.return_value = []
@@ -477,7 +477,7 @@ class TestClearFailureReporting:
         """Jira failure should include a remediation suggestion.
 
         The user needs to know HOW to fix the drift — e.g., run
-        `pf jira move MSSCI-XXXXX "In Progress"` manually.
+        `pf jira move PROJ-XXXXX "In Progress"` manually.
         """
         mock_client = MagicMock()
         mock_client.transition_sync.return_value = {
@@ -492,7 +492,7 @@ class TestClearFailureReporting:
         assert "remediation" in result, (
             "Result should include a remediation field with fix instructions"
         )
-        assert "MSSCI-15428" in result["remediation"], (
+        assert "PROJ-15428" in result["remediation"], (
             "Remediation should reference the specific Jira key"
         )
 

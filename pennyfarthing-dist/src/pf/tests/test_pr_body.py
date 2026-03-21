@@ -23,7 +23,7 @@ from pf.findings.pr_body import generate_pr_body
 MINIMAL_SESSION = textwrap.dedent("""\
     ---
     story_id: "99-1"
-    jira_key: "MSSCI-99999"
+    jira_key: "PROJ-99999"
     title: "Add widget caching"
     points: 3
     status: in_progress
@@ -34,7 +34,7 @@ MINIMAL_SESSION = textwrap.dedent("""\
 
     # 99-1: Add widget caching
 
-    **Jira:** MSSCI-99999
+    **Jira:** PROJ-99999
     **Workflow:** tdd
 
     ## Acceptance Criteria
@@ -62,7 +62,7 @@ MINIMAL_SESSION = textwrap.dedent("""\
 SESSION_WITH_FINDINGS = textwrap.dedent("""\
     ---
     story_id: "100-2"
-    jira_key: "MSSCI-10002"
+    jira_key: "PROJ-10002"
     title: "Implement event broadcast"
     points: 5
     status: in_progress
@@ -73,7 +73,7 @@ SESSION_WITH_FINDINGS = textwrap.dedent("""\
 
     # 100-2: Implement event broadcast
 
-    **Jira:** MSSCI-10002
+    **Jira:** PROJ-10002
     **Workflow:** tdd
 
     ## Acceptance Criteria
@@ -126,7 +126,7 @@ SESSION_WITH_FINDINGS = textwrap.dedent("""\
 SESSION_WITHOUT_IMPACT_SUMMARY = textwrap.dedent("""\
     ---
     story_id: "80-3"
-    jira_key: "MSSCI-8003"
+    jira_key: "PROJ-8003"
     title: "Refactor config loader"
     points: 2
     status: in_progress
@@ -137,7 +137,7 @@ SESSION_WITHOUT_IMPACT_SUMMARY = textwrap.dedent("""\
 
     # 80-3: Refactor config loader
 
-    **Jira:** MSSCI-8003
+    **Jira:** PROJ-8003
     **Workflow:** trivial
 
     ## Acceptance Criteria
@@ -158,7 +158,7 @@ SESSION_WITHOUT_IMPACT_SUMMARY = textwrap.dedent("""\
 SESSION_EMPTY_FINDINGS = textwrap.dedent("""\
     ---
     story_id: "101-1"
-    jira_key: "MSSCI-10101"
+    jira_key: "PROJ-10101"
     title: "Add status endpoint"
     points: 1
     status: in_progress
@@ -169,7 +169,7 @@ SESSION_EMPTY_FINDINGS = textwrap.dedent("""\
 
     # 101-1: Add status endpoint
 
-    **Jira:** MSSCI-10101
+    **Jira:** PROJ-10101
     **Workflow:** trivial
 
     ## Acceptance Criteria

@@ -1,6 +1,6 @@
 """Tests for pf workflow check command.
 
-Story: MSSCI-12657 - Implement pf workflow check command
+Story: PROJ-12657 - Implement pf workflow check command
 Epic: epic-67 (Pennyfarthing Python CLI)
 
 Acceptance Criteria:
@@ -69,20 +69,20 @@ class TestWorkflowCheckCLI:
         with patch(MOCK_PATH) as mock_state:
             mock_state.return_value = {
                 "state": "IN_PROGRESS_STATE",
-                "story_id": "MSSCI-12657",
+                "story_id": "PROJ-12657",
                 "workflow": "tdd",
                 "phase": "red",
             }
             result = runner.invoke(cli, ["workflow", "check"])
             assert result.exit_code == 0
-            assert "MSSCI-12657" in result.output
+            assert "PROJ-12657" in result.output
 
     def test_workflow_check_shows_workflow_type(self, runner: CliRunner) -> None:
         """AC1: workflow check should show workflow type when in progress."""
         with patch(MOCK_PATH) as mock_state:
             mock_state.return_value = {
                 "state": "IN_PROGRESS_STATE",
-                "story_id": "MSSCI-12657",
+                "story_id": "PROJ-12657",
                 "workflow": "tdd",
                 "phase": "red",
             }
@@ -95,7 +95,7 @@ class TestWorkflowCheckCLI:
         with patch(MOCK_PATH) as mock_state:
             mock_state.return_value = {
                 "state": "IN_PROGRESS_STATE",
-                "story_id": "MSSCI-12657",
+                "story_id": "PROJ-12657",
                 "workflow": "tdd",
                 "phase": "red",
             }
@@ -136,14 +136,14 @@ class TestWorkflowCheckJSONOutput:
         with patch(MOCK_PATH) as mock_state:
             mock_state.return_value = {
                 "state": "IN_PROGRESS_STATE",
-                "story_id": "MSSCI-12657",
+                "story_id": "PROJ-12657",
                 "workflow": "tdd",
                 "phase": "implement",
             }
             result = runner.invoke(cli, ["workflow", "check", "--json"])
             parsed = json.loads(result.output)
             assert parsed["state"] == "IN_PROGRESS_STATE"
-            assert parsed["story_id"] == "MSSCI-12657"
+            assert parsed["story_id"] == "PROJ-12657"
             assert parsed["workflow"] == "tdd"
             assert parsed["phase"] == "implement"
 
@@ -186,7 +186,7 @@ class TestWorkflowCheckExitCodes:
         with patch(MOCK_PATH) as mock_state:
             mock_state.return_value = {
                 "state": "IN_PROGRESS_STATE",
-                "story_id": "MSSCI-12657",
+                "story_id": "PROJ-12657",
                 "workflow": "tdd",
                 "phase": "red",
             }
@@ -198,7 +198,7 @@ class TestWorkflowCheckExitCodes:
         with patch(MOCK_PATH) as mock_state:
             mock_state.return_value = {
                 "state": "FINISH_STATE",
-                "story_id": "MSSCI-12657",
+                "story_id": "PROJ-12657",
                 "workflow": "tdd",
                 "phase": "approved",
             }
@@ -272,12 +272,12 @@ class TestGetWorkflowState:
         session_dir = tmp_path / ".session"
         session_dir.mkdir()
 
-        session_file = session_dir / "MSSCI-12657-session.md"
+        session_file = session_dir / "PROJ-12657-session.md"
         session_file.write_text(
-            """# Story Session: MSSCI-12657
+            """# Story Session: PROJ-12657
 
 ## Story Details
-- **Jira:** MSSCI-12657
+- **Jira:** PROJ-12657
 - **Workflow:** tdd
 - **Phase:** red
 """
@@ -288,7 +288,7 @@ class TestGetWorkflowState:
             os.chdir(tmp_path)
             result = get_workflow_state()
             assert result["state"] == "IN_PROGRESS_STATE"
-            assert result.get("story_id") == "MSSCI-12657"
+            assert result.get("story_id") == "PROJ-12657"
             assert result.get("workflow") == "tdd"
             assert result.get("phase") == "red"
         finally:
