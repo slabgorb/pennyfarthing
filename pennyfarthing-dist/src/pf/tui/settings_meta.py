@@ -245,6 +245,26 @@ _SPECS: list[SettingSpec] = [
         group="Workflow",
         description="Exhaustive project rule verification",
     ),
+    # Peloton / team layout
+    SettingSpec(
+        key="peloton.layout",
+        label="Team Layout",
+        widget_type="select",
+        group="Workflow",
+        options=[
+            ("Vertical (CLI left, agents right)", "vertical"),
+            ("Grid (2x2 tiled)", "grid"),
+            ("Horizontal (side by side)", "horizontal"),
+        ],
+        description="tmux pane layout when team agents are spawned",
+    ),
+    SettingSpec(
+        key="peloton.main_pane_width",
+        label="Main Pane Width %",
+        widget_type="input",
+        group="Workflow",
+        description="Width percentage for the main CLI pane in vertical layout (10-90)",
+    ),
     SettingSpec(
         key="jira.project",
         label="Jira Project",

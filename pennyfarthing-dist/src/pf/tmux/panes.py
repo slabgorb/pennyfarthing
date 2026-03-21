@@ -290,3 +290,88 @@ def set_pane_env(pane_id: str, role: str) -> dict:
     return _run_tmux(
         "set-environment", "-t", pane_id, "PF_PANE_ROLE", role,
     )
+
+
+# --- Layout management ---
+
+# Maps pennyfarthing layout names to tmux select-layout values
+LAYOUT_MAP: dict[str, str] = {
+    "vertical": "main-vertical",
+    "grid": "tiled",
+    "horizontal": "even-horizontal",
+    "stacked": "even-vertical",
+}
+
+
+def get_current_session() -> dict:
+    """Get the tmux session name for the current pane.
+
+    Returns:
+        {success: True, data: "session-name"} or {success: False, error: ...}
+    """
+    return _run_tmux("display-message", "-p", "#{session_name}")
+
+
+def select_layout(target: str, layout: str) -> dict:
+    """Apply a tmux layout to the current window.
+
+    Args:
+        target: session or window target (e.g. "my-session" or "@1")
+        layout: tmux layout name (tiled, even-horizontal, even-vertical,
+                main-horizontal, main-vertical)
+
+    Returns:
+        {success, data?, error?}
+    """
+    return _run_tmux("select-layout", "-t", target, layout)
+
+
+def resize_main_pane(target: str, size_pct: int, dimension: str = "x") -> dict:
+    """Resize pane 0 (the main pane) in the target window.
+
+    Args:
+        target: session or window target
+        size_pct: percentage of the window for the main pane
+        dimension: 'x' for width, 'y' for height
+
+    Returns:
+        {success, data?, error?}
+    """
+    return _run_tmux(
+        "resize-pane", "-t", f"{target}:.0",
+        f"-{dimension}", f"{size_pct}%",
+    )
+
+
+def apply_layout(target: str, layout_name: str, main_pane_pct: int = 50) -> dict:
+    """Apply a pennyfarthing layout name to the current tmux window.
+
+    Maps pennyfarthing names (vertical, grid, horizontal, stacked) to
+    tmux select-layout values, and resizes the main pane for main-vertical.
+
+    Args:
+        target: session or window target
+        layout_name: one of 'vertical', 'grid', 'horizontal', 'stacked'
+        main_pane_pct: width percentage for main pane (vertical layout only)
+
+    Returns:
+        {success, data?, error?}
+    """
+    tmux_layout = LAYOUT_MAP.get(layout_name)
+    if not tmux_layout:
+        return {
+            "success": False,
+            "error": f"Unknown layout '{layout_name}'. Valid: {', '.join(LAYOUT_MAP)}",
+        }
+
+    result = select_layout(target, tmux_layout)
+    if not result["success"]:
+        return result
+
+    # For main-vertical, resize the main (left) pane
+    if tmux_layout == "main-vertical" and main_pane_pct != 50:
+        resize_result = resize_main_pane(target, main_pane_pct, "x")
+        if not resize_result["success"]:
+            return resize_result
+
+    return {"success": True, "data": f"Applied layout: {layout_name} ({tmux_layout})"}

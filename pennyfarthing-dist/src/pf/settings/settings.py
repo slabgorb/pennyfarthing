@@ -56,6 +56,11 @@ DEFAULTS: dict[str, Any] = {
         "url": "https://1898andco.atlassian.net",
     },
 
+    "peloton": {
+        "layout": "vertical",
+        "main_pane_width": 50,
+    },
+
     "portrait_size": "auto",
     "portrait_position": "left",
     "portrait_dock": "top",
