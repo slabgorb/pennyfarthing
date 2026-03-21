@@ -401,7 +401,10 @@ def init_project(
         }
 
     # --- Install pf shim at .pennyfarthing/bin/pf ---
-    discovery_result = resolve_pf_binary()
+    # Consumer projects need the globally installed pf (pipx/pip/uv),
+    # not the monorepo source or PF_BINARY env var. Dogfooding mode
+    # uses the full probe chain to find the local launcher.
+    discovery_result = resolve_pf_binary(for_shim=not is_dogfooding)
     if discovery_result["success"]:
         shim_result = write_shim(str(target_dir), discovery_result)
     else:
