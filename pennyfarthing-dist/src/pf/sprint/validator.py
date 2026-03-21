@@ -73,6 +73,7 @@ VALID_STORY_STATUSES = {
     "done",
     "canceled",
     "planning",
+    "split",
 }
 JIRA_KEY_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]+-\d+(\s*/\s*[A-Z][A-Z0-9_]+-\d+)*$")
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")

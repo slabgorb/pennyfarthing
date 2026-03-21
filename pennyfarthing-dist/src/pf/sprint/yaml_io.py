@@ -63,6 +63,7 @@ STORY_KEY_ORDER: list[str] = [
     "repos",
     "workflow",
     "depends_on",
+    "split_into",
     "acceptance_criteria",
     "completed",
     "pr",

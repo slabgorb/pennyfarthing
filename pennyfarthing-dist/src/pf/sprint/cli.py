@@ -486,6 +486,11 @@ from pf.sprint.story_update import story_update_command  # noqa: E402
 
 story.add_command(story_update_command, "update")
 
+# Register story-split as story.split
+from pf.sprint.story_split import story_split_command  # noqa: E402
+
+story.add_command(story_split_command, "split")
+
 # Register story-remove as story.remove
 from pf.sprint.story_remove import story_remove_command  # noqa: E402
 
