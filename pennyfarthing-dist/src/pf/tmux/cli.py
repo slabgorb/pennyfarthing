@@ -635,6 +635,35 @@ def close_pane(pane_ref: str):
     click.echo(f"Closed {entry['pane_id']}")
 
 
+@tmux.command("layout")
+@click.argument("name", type=click.Choice(["vertical", "grid", "horizontal", "stacked"]))
+@click.option("--width", "-w", type=int, default=50, help="Main pane width %% (vertical layout only)")
+def layout(name: str, width: int):
+    """Apply a layout to the current tmux window.
+
+    \b
+    Layouts:
+      vertical   — CLI on left, agents stacked right (main-vertical)
+      grid       — 2x2 tiled grid
+      horizontal — side by side (even-horizontal)
+      stacked    — all panes top-to-bottom (even-vertical)
+
+    \b
+    Examples:
+      pf tmux layout vertical          # CLI left, agents right
+      pf tmux layout vertical -w 60    # CLI gets 60% width
+      pf tmux layout grid              # 2x2 grid
+    """
+    _root, session = _get_context()
+
+    result = panes.apply_layout(session, name, main_pane_pct=width)
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        raise SystemExit(1)
+
+    click.echo(result["data"])
+
+
 @tmux.command("register")
 def register():
     """Force full registry rebuild from live tmux state."""

@@ -1,7 +1,7 @@
 """Tests for guided-tour stepped workflow.
 
-Story: 132-6 / MSSCI-15640 — Create Guided Tour Stepped Workflow
-Epic: 132 / MSSCI-15616 (Developer Discovery & Onboarding)
+Story: 132-6 / PROJ-15640 — Create Guided Tour Stepped Workflow
+Epic: 132 / PROJ-15616 (Developer Discovery & Onboarding)
 
 Acceptance Criteria:
 - [AC1] Guided tour is a BikeLane stepped workflow defined in workflows/guided-tour/

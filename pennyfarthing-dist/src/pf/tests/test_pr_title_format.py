@@ -44,31 +44,31 @@ class TestFormatPrTitle:
     def test_default_format_with_scope(self, project: Path) -> None:
         _write_repos_yaml(project)
         result = format_pr_title(
-            jira_key="MSSCI-16204",
+            jira_key="PROJ-16204",
             title="add gate extensions",
             scope="gates",
             project_root=project,
         )
-        assert result == "MSSCI-16204 - feat(gates): add gate extensions"
+        assert result == "PROJ-16204 - feat(gates): add gate extensions"
 
     def test_default_format_no_scope(self, project: Path) -> None:
         _write_repos_yaml(project)
         result = format_pr_title(
-            jira_key="MSSCI-100",
+            jira_key="PROJ-100",
             title="fix bug",
             project_root=project,
         )
-        assert result == "MSSCI-100 - feat: fix bug"
+        assert result == "PROJ-100 - feat: fix bug"
 
     def test_custom_type(self, project: Path) -> None:
         _write_repos_yaml(project)
         result = format_pr_title(
-            jira_key="MSSCI-100",
+            jira_key="PROJ-100",
             title="fix bug",
             pr_type="fix",
             project_root=project,
         )
-        assert result == "MSSCI-100 - fix: fix bug"
+        assert result == "PROJ-100 - fix: fix bug"
 
     def test_custom_format(self, project: Path) -> None:
         _write_repos_yaml(project, {"pr_title_format": "[{jira_key}] {title}"})

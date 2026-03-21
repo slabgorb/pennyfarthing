@@ -1,13 +1,13 @@
 """Tests for context validator module.
 
-Story: MSSCI-15683 (129-3) — Build Context Validator Python Module and CLI
+Story: PROJ-15683 (129-3) — Build Context Validator Python Module and CLI
 
 TDD RED phase: All tests should FAIL until implementation.
 
 Acceptance Criteria:
 1. Python module validates context YAML against schema
 2. CLI command `pf context validate <file>` available
-3. Validates all context fields against MSSCI-15682 schema
+3. Validates all context fields against PROJ-15682 schema
 4. Reports validation errors with helpful messages
 5. Integrated into pre-commit hooks (pf validate context)
 6. Full test coverage with pytest
@@ -335,7 +335,7 @@ class TestSchemaLoading:
 
 
 # =============================================================================
-# AC3: Validates all context fields against MSSCI-15682 schema
+# AC3: Validates all context fields against PROJ-15682 schema
 # =============================================================================
 
 

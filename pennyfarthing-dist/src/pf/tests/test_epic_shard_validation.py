@@ -1,6 +1,6 @@
 """Tests for epic shard write-time validation and reference integrity.
 
-Story: MSSCI-14734 / 91-24 - Sprint shard write-time validation
+Story: PROJ-14734 / 91-24 - Sprint shard write-time validation
 ADR: ADR-0022 - Sprint Shard Validation and Reference Integrity
 
 Tests cover all six acceptance criteria:
@@ -58,7 +58,7 @@ def valid_epic_shard_with_jira() -> dict[str, Any]:
         "id": "94",
         "title": "Epic: Validation Pipeline",
         "status": "in_progress",
-        "jira": "MSSCI-14659",
+        "jira": "PROJ-14659",
         "stories": [
             {
                 "id": "94-1",
@@ -167,7 +167,7 @@ class TestValidateEpicShardRequiredFields:
         assert any("duplicate" in e.message.lower() for e in result.errors)
 
     def test_valid_jira_key_passes(self, valid_epic_shard_with_jira: dict[str, Any]) -> None:
-        """Valid MSSCI-NNNNN Jira key should pass."""
+        """Valid PROJ-NNNNN Jira key should pass."""
         result = validate_epic_shard(valid_epic_shard_with_jira)
 
         assert result.valid is True
@@ -234,9 +234,9 @@ class TestEpicPrefixRejection:
         assert result.valid is True
 
     def test_jira_key_as_id_accepted(self) -> None:
-        """Jira key as ID should pass (e.g., 'MSSCI-14510')."""
+        """Jira key as ID should pass (e.g., 'PROJ-14510')."""
         shard = {
-            "id": "MSSCI-14510",
+            "id": "PROJ-14510",
             "title": "Test",
             "status": "backlog",
             "stories": [],
@@ -270,11 +270,11 @@ class TestGetEpicRefNormalization:
 
     def test_jira_key_preferred_over_id(self) -> None:
         """When both jira and id are present, Jira key wins."""
-        epic = {"id": "94", "jira": "MSSCI-14659"}
+        epic = {"id": "94", "jira": "PROJ-14659"}
 
         ref = _get_epic_ref(epic)
 
-        assert ref == "MSSCI-14659"
+        assert ref == "PROJ-14659"
 
     def test_strips_epic_prefix_from_id(self) -> None:
         """ID 'epic-94' should return '94' (prevents epic-epic-94.yaml)."""
@@ -294,11 +294,11 @@ class TestGetEpicRefNormalization:
 
     def test_jira_key_as_id_returned_directly(self) -> None:
         """ID that IS a Jira key should be returned directly."""
-        epic = {"id": "MSSCI-14510"}
+        epic = {"id": "PROJ-14510"}
 
         ref = _get_epic_ref(epic)
 
-        assert ref == "MSSCI-14510"
+        assert ref == "PROJ-14510"
 
     def test_invalid_jira_key_falls_through(self) -> None:
         """Invalid Jira key in jira field should fall through to ID."""
@@ -328,13 +328,13 @@ class TestGetEpicRefNormalization:
         assert "epic-epic-" not in filename
 
     def test_jira_key_filename_correct(self) -> None:
-        """Jira key ref should produce epic-MSSCI-14659.yaml."""
-        epic = {"id": "94", "jira": "MSSCI-14659"}
+        """Jira key ref should produce epic-PROJ-14659.yaml."""
+        epic = {"id": "94", "jira": "PROJ-14659"}
         ref = _get_epic_ref(epic)
 
         filename = f"epic-{ref}.yaml"
 
-        assert filename == "epic-MSSCI-14659.yaml"
+        assert filename == "epic-PROJ-14659.yaml"
 
 
 # =============================================================================
@@ -452,7 +452,7 @@ class TestLoaderWarnings:
         from pf.sprint.loader import _merge_epic_shards
 
         data = {
-            "epics": ["MSSCI-99999"],  # Doesn't exist
+            "epics": ["PROJ-99999"],  # Doesn't exist
         }
 
         with warnings.catch_warnings(record=True) as caught:
@@ -460,13 +460,13 @@ class TestLoaderWarnings:
             _merge_epic_shards(data, tmp_path)
 
         assert len(caught) == 1
-        assert "MSSCI-99999" in str(caught[0].message)
+        assert "PROJ-99999" in str(caught[0].message)
 
     def test_missing_shard_excluded_from_result(self, tmp_path: Path) -> None:
         """Missing shard refs should not appear in the merged epics list."""
         from pf.sprint.loader import _merge_epic_shards
 
-        data = {"epics": ["MSSCI-99999"]}
+        data = {"epics": ["PROJ-99999"]}
 
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
@@ -479,10 +479,10 @@ class TestLoaderWarnings:
         from pf.sprint.loader import _merge_epic_shards
 
         # Create one valid shard
-        shard = tmp_path / "epic-MSSCI-14298.yaml"
-        shard.write_text("id: MSSCI-14298\ntitle: Valid Epic\nstatus: active\nstories: []\n")
+        shard = tmp_path / "epic-PROJ-14298.yaml"
+        shard.write_text("id: PROJ-14298\ntitle: Valid Epic\nstatus: active\nstories: []\n")
 
-        data = {"epics": ["MSSCI-14298", "MISSING-REF"]}
+        data = {"epics": ["PROJ-14298", "MISSING-REF"]}
 
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
@@ -490,7 +490,7 @@ class TestLoaderWarnings:
 
         # One epic loaded, one warning
         assert len(result["epics"]) == 1
-        assert result["epics"][0]["id"] == "MSSCI-14298"
+        assert result["epics"][0]["id"] == "PROJ-14298"
         assert len(caught) == 1
         assert "MISSING-REF" in str(caught[0].message)
 
@@ -609,7 +609,7 @@ class TestValidationIntegration:
 
         # Get ref
         ref = _get_epic_ref(valid_epic_shard_with_jira)
-        assert ref == "MSSCI-14659"
+        assert ref == "PROJ-14659"
 
         # Write shard file
         shard_path = tmp_path / f"epic-{ref}.yaml"
@@ -617,7 +617,7 @@ class TestValidationIntegration:
         shard_path.write_text(yaml_content)
 
         # Verify file name is correct
-        assert shard_path.name == "epic-MSSCI-14659.yaml"
+        assert shard_path.name == "epic-PROJ-14659.yaml"
         assert "epic-epic-" not in shard_path.name
 
     def test_bad_shard_blocked_at_all_gates(self) -> None:

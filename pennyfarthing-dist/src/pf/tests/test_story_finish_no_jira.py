@@ -83,21 +83,21 @@ epics:
     title: "Standard Epic"
     priority: p1
     status: in_progress
-    jira: MSSCI-16500
+    jira: PROJ-16500
     stories:
       - id: 148-1
         title: Standard Jira story
         points: 3
         priority: p2
         status: in_progress
-        jira: MSSCI-16501
+        jira: PROJ-16501
         workflow: tdd
       - id: 148-2
         title: Jira story in review
         points: 2
         priority: p2
         status: in_review
-        jira: MSSCI-16502
+        jira: PROJ-16502
         workflow: tdd
 """
 
@@ -124,7 +124,7 @@ workflow: "tdd"
 JIRA_SESSION = """\
 ---
 story_id: "148-1"
-jira_key: "MSSCI-16501"
+jira_key: "PROJ-16501"
 epic: "148"
 workflow: "tdd"
 ---
@@ -134,9 +134,9 @@ workflow: "tdd"
 ## Story Details
 
 - **ID:** 148-1
-- **Jira:** [MSSCI-16501](https://jira.example.com/browse/MSSCI-16501)
+- **Jira:** [PROJ-16501](https://jira.example.com/browse/PROJ-16501)
 - **Workflow:** tdd
-- **Branch:** feature/MSSCI-16501-standard-story
+- **Branch:** feature/PROJ-16501-standard-story
 - **PR:** #42 - Standard story PR
 """
 
@@ -486,12 +486,12 @@ class TestJiraProjectsStillWork:
         result = transition_story(jira_project, "148-1", "in_review")
 
         assert result["success"] is True
-        assert result["jira_key"] == "MSSCI-16501"
+        assert result["jira_key"] == "PROJ-16501"
         assert result["from_status"] == "in_progress"
         assert result["to_status"] == "in_review"
 
         mock_client.transition_sync.assert_called_once_with(
-            "MSSCI-16501", "In Review"
+            "PROJ-16501", "In Review"
         )
 
     @patch("pf.sprint.story_transition.get_client")
@@ -549,4 +549,4 @@ class TestJiraProjectsStillWork:
 
         assert result["success"] is True
         assert result["story_id"] == "148-1"
-        assert result["jira_key"] == "MSSCI-16501"
+        assert result["jira_key"] == "PROJ-16501"

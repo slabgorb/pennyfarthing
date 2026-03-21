@@ -1,6 +1,6 @@
 """Tests for sprint/story_add.py module.
 
-Story: MSSCI-14256 - Sprint story add command
+Story: PROJ-14256 - Sprint story add command
 
 TDD RED phase: All tests should FAIL until implementation.
 
@@ -50,7 +50,7 @@ epics:
     title: "Epic: Sprint Data Management"
     priority: P1
     status: in_progress
-    jira: MSSCI-14253
+    jira: PROJ-14253
     stories:
       - id: 76-1
         title: Core yaml_io module
@@ -82,7 +82,7 @@ epics:
     title: "Epic: Sprint Data Management"
     priority: P1
     status: in_progress
-    jira: MSSCI-14253
+    jira: PROJ-14253
     stories:
       - id: 76-1
         title: Core yaml_io module
@@ -95,7 +95,7 @@ epics:
     title: "Epic: Another Feature"
     priority: P1
     status: in_progress
-    jira: MSSCI-14300
+    jira: PROJ-14300
     stories:
       - id: 77-1
         title: First task
@@ -121,7 +121,7 @@ epics:
     title: "Epic: Brand New"
     priority: P1
     status: in_progress
-    jira: MSSCI-15000
+    jira: PROJ-15000
     stories: []
 """
 
@@ -141,7 +141,7 @@ epics:
     title: "Epic: Gapped IDs"
     priority: P1
     status: in_progress
-    jira: MSSCI-11000
+    jira: PROJ-11000
     stories:
       - id: 50-1
         title: First story
@@ -437,13 +437,13 @@ class TestFieldPopulation:
             epic_id="76",
             title="New feature",
             points=3,
-            jira="MSSCI-14999",
+            jira="PROJ-14999",
         )
 
         data = read_sprint(sprint_file)
         new_story = data["epics"][0]["stories"][-1]
 
-        assert new_story["jira"] == "MSSCI-14999"
+        assert new_story["jira"] == "PROJ-14999"
 
     def test_optional_jira_absent_when_not_provided(self, sprint_file: Path) -> None:
         """Jira key should NOT appear when not provided."""
@@ -664,7 +664,7 @@ epics:
     title: "Epic: Test"
     priority: P1
     status: in_progress
-    jira: MSSCI-99999
+    jira: PROJ-99999
     stories:
       - id: 99-1
         title: Existing
@@ -731,7 +731,7 @@ class TestCLIIntegration:
                 "Jira story",
                 "3",
                 "--jira",
-                "MSSCI-14999",
+                "PROJ-14999",
             ],
         )
 
@@ -739,7 +739,7 @@ class TestCLIIntegration:
 
         data = read_sprint(sprint_file)
         new_story = data["epics"][0]["stories"][-1]
-        assert new_story["jira"] == "MSSCI-14999"
+        assert new_story["jira"] == "PROJ-14999"
 
     def test_cli_with_type_option(self, runner: CliRunner, sprint_file: Path) -> None:
         """--type option should set the story type."""

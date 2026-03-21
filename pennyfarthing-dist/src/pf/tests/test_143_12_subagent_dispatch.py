@@ -6,9 +6,26 @@ of all 7 specialist subagent tags in the Reviewer Assessment.
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
+import pytest
+
 from pf.handoff.complete_phase import SUBAGENT_DISPATCH_TAGS, _check_subagent_dispatch
 
-ALL_TAGS = "[EDGE] [SILENT] [TEST] [DOC] [TYPE] [SEC] [SIMPLE]"
+ALL_TAGS = "[EDGE] [SILENT] [TEST] [DOC] [TYPE] [SEC] [SIMPLE] [RULE]"
+
+# Ensure all subagents are enabled for these tests (settings may differ per project)
+_ALL_ENABLED = {
+    "preflight": True, "edge_hunter": True, "silent_failure_hunter": True,
+    "test_analyzer": True, "comment_analyzer": True, "type_design": True,
+    "security": True, "simplifier": True, "rule_checker": True,
+}
+
+
+@pytest.fixture(autouse=True)
+def _all_subagents_enabled():
+    with patch("pf.settings.settings.get_setting", return_value=_ALL_ENABLED):
+        yield
 
 FULL_ASSESSMENT = f"""## Reviewer Assessment
 

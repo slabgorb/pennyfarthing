@@ -28,7 +28,7 @@ fi
 
 gh release create "$TAG" \
     --title "v{new_version}" \
-    --notes "See [CHANGELOG.md](https://github.com/1898andCo/pennyfarthing/blob/main/CHANGELOG.md) for details." \
+    --notes "See [CHANGELOG.md](CHANGELOG.md) for details." \
     $PRERELEASE_FLAG \
     || echo "WARNING: GitHub release creation failed (may already exist)"
 ```

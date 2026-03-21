@@ -39,13 +39,15 @@ Command-specific output. Most commands print status messages. Use `--dry-run` on
 
 ### GitHub to Jira User Mapping
 
-| GitHub | Jira Email |
-|--------|------------|
-| slabgorb | keith.avery@1898andco.io |
-| arcaven | michael.pursifull@1898andco.io |
-| RoseSecurity | michael.rosenfeld@1898andco.io |
-| Zious11 | jared.richards@1898andco.io |
-| drbothen | joshua.magady@1898andco.io |
+Configure in `.pennyfarthing/config.local.yaml`:
+
+```yaml
+jira:
+  user_map:
+    github-user: jira-email@your-org.com
+```
+
+The mapping is used by `pf jira assign` and `pf jira claim` to resolve GitHub usernames to Jira emails.
 
 ### Prerequisites
 

@@ -16,6 +16,7 @@ Examples:
 """
 
 import argparse
+import re
 import sys
 from typing import Any
 
@@ -66,7 +67,7 @@ def get_story_from_sprint(story_key: str) -> dict[str, Any] | None:
         return story
 
     # If it looks like a local ID (e.g., "63-7"), try finding via epic
-    if "-" in story_key and not story_key.startswith("MSSCI"):
+    if "-" in story_key and not re.match(r"^[A-Z][A-Z0-9]+-\d+$", story_key):
         sprint_data = load_current_sprint()
         if sprint_data:
             parts = story_key.split("-")

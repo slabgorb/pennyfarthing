@@ -79,7 +79,7 @@ def mock_jira_client() -> Generator:
 
     mock_client = MagicMock()
     mock_client.get_issue_sync.return_value = {
-        "key": "MSSCI-12345",
+        "key": "PROJ-12345",
         "fields": {
             "summary": "Test Issue",
             "status": {"name": "To Do"},
@@ -87,7 +87,7 @@ def mock_jira_client() -> Generator:
         },
     }
     mock_client.get_issue_async.return_value = mock_client.get_issue_sync.return_value
-    mock_client.create_issue_sync.return_value = {"key": "MSSCI-12346", "id": "10001"}
+    mock_client.create_issue_sync.return_value = {"key": "PROJ-12346", "id": "10001"}
 
     with patch("pf.jira.client.JiraClient", return_value=mock_client):
         yield mock_client
@@ -108,21 +108,21 @@ def sample_sprint_data() -> dict:
             {
                 "id": "epic-63",
                 "title": "Test Epic",
-                "jira": "MSSCI-12000",
+                "jira": "PROJ-12000",
                 "stories": [
                     {
                         "id": "63-1",
                         "title": "First Story",
                         "status": "backlog",
                         "points": 3,
-                        "jira": "MSSCI-12001",
+                        "jira": "PROJ-12001",
                     },
                     {
                         "id": "63-2",
                         "title": "Second Story",
                         "status": "in_progress",
                         "points": 5,
-                        "jira": "MSSCI-12002",
+                        "jira": "PROJ-12002",
                     },
                 ],
             },
@@ -134,7 +134,7 @@ def sample_sprint_data() -> dict:
 def sample_jira_issue() -> dict:
     """Return sample Jira issue data for testing."""
     return {
-        "key": "MSSCI-12345",
+        "key": "PROJ-12345",
         "id": "10001",
         "fields": {
             "summary": "Test Story",

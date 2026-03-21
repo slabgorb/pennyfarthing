@@ -134,15 +134,15 @@ def _make_session(phase: str = "review", round_trip_count: int = 0) -> str:
     return textwrap.dedent(f"""\
         ---
         story_id: "143-10"
-        jira_key: "MSSCI-16368"
-        epic: "MSSCI-16358"
+        jira_key: "PROJ-16368"
+        epic: "PROJ-16358"
         workflow: "tdd"
         ---
         # Story 143-10: Reviewer-Dev fix round-trip support
 
         ## Story Details
         - **ID:** 143-10
-        - **Jira Key:** MSSCI-16368
+        - **Jira Key:** PROJ-16368
 
         ## Workflow Tracking
         **Workflow:** tdd

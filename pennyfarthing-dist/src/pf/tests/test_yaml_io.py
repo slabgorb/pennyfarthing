@@ -1,6 +1,6 @@
 """Tests for sprint/yaml_io.py module.
 
-Story: MSSCI-14254 - Core yaml_io module with deterministic serialization
+Story: PROJ-14254 - Core yaml_io module with deterministic serialization
 
 TDD RED phase: All tests should FAIL until implementation.
 
@@ -61,11 +61,11 @@ epics:
     priority: P1
     status: in_progress
     repos: pennyfarthing
-    jira: MSSCI-12000
+    jira: PROJ-12000
     points: 8
     stories:
       - id: 63-1
-        jira: MSSCI-12001
+        jira: PROJ-12001
         title: First Story
         description: |
           A story with a multiline description.
@@ -78,7 +78,7 @@ epics:
           - First criterion
           - Second criterion
       - id: 63-2
-        jira: MSSCI-12002
+        jira: PROJ-12002
         title: Second Story
         points: 5
         priority: P1
@@ -694,20 +694,20 @@ sprint:
   end_date: 2026-02-15
   status: active
 epics:
-  - MSSCI-14298
+  - PROJ-14298
   - "40"
 stories: []
 """
 
 SHARD_JIRA_YAML = """\
-id: MSSCI-14298
+id: PROJ-14298
 type: epic
 title: "Epic: Stepped Workflow"
 priority: P1
 status: in_progress
-jira: MSSCI-14298
+jira: PROJ-14298
 stories:
-  - id: MSSCI-14299
+  - id: PROJ-14299
     title: Wire up stepped workflow
     points: 5
     priority: P0
@@ -733,7 +733,7 @@ stories:
 def sharded_sprint_dir(tmp_path: Path) -> Path:
     """Create a sharded sprint directory structure."""
     (tmp_path / "current-sprint.yaml").write_text(SHARDED_INDEX_YAML)
-    (tmp_path / "epic-MSSCI-14298.yaml").write_text(SHARD_JIRA_YAML)
+    (tmp_path / "epic-PROJ-14298.yaml").write_text(SHARD_JIRA_YAML)
     (tmp_path / "epic-40.yaml").write_text(SHARD_INTERNAL_YAML)
     return tmp_path
 
@@ -746,7 +746,7 @@ class TestShardedReadWrite:
         data = read_sprint(sharded_sprint_dir / "current-sprint.yaml")
 
         assert len(data["epics"]) == 2
-        assert data["epics"][0]["id"] == "MSSCI-14298"
+        assert data["epics"][0]["id"] == "PROJ-14298"
         assert data["epics"][1]["id"] == 40
         assert len(data["epics"][0]["stories"]) == 1
         assert len(data["epics"][1]["stories"]) == 1
@@ -767,7 +767,7 @@ class TestShardedReadWrite:
         with open(index_path) as f:
             raw_index = yaml.safe_load(f)
         assert isinstance(raw_index["epics"][0], str)
-        assert raw_index["epics"][0] == "MSSCI-14298"
+        assert raw_index["epics"][0] == "PROJ-14298"
 
         # Shard file should have the updated story
         shard = read_sprint(sharded_sprint_dir / "epic-40.yaml")
@@ -798,7 +798,7 @@ class TestShardedReadWrite:
         with open(index_path) as f:
             raw_data = yaml.safe_load(f)
 
-        # raw_data["epics"] is ['MSSCI-14298', '40'] (string refs)
+        # raw_data["epics"] is ['PROJ-14298', '40'] (string refs)
         new_epic = {
             "id": "99",
             "type": "epic",
@@ -813,8 +813,8 @@ class TestShardedReadWrite:
         write_sprint(index_path, raw_data)
 
         # Existing shard files must still exist
-        assert (sharded_sprint_dir / "epic-MSSCI-14298.yaml").exists(), (
-            "Existing shard epic-MSSCI-14298.yaml was deleted"
+        assert (sharded_sprint_dir / "epic-PROJ-14298.yaml").exists(), (
+            "Existing shard epic-PROJ-14298.yaml was deleted"
         )
         assert (sharded_sprint_dir / "epic-40.yaml").exists(), (
             "Existing shard epic-40.yaml was deleted"

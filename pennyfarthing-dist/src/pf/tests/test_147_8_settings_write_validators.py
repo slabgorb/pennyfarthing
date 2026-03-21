@@ -253,7 +253,7 @@ class TestSettingsStringValidation:
     def test_jira_project_accepts_string(self) -> None:
         from pf.settings.validators import validate_setting
 
-        result = validate_setting("jira.project", "MSSCI")
+        result = validate_setting("jira.project", "PROJ")
         assert result.valid
 
     def test_jira_url_accepts_string(self) -> None:

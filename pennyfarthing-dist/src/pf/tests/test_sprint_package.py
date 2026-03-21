@@ -237,21 +237,21 @@ sprint:
   status: active
   number: 2606
 epics:
-  - MSSCI-14298
+  - PROJ-14298
   - epic-40
 stories: []
 """
         (sprint_dir / "current-sprint.yaml").write_text(index)
 
         # Shard file 1: Jira-style ID
-        (sprint_dir / "epic-MSSCI-14298.yaml").write_text("""\
-id: MSSCI-14298
+        (sprint_dir / "epic-PROJ-14298.yaml").write_text("""\
+id: PROJ-14298
 type: epic
 title: 'Epic: Stepped Workflow'
 priority: P1
 status: in_progress
 stories:
-  - id: MSSCI-14299
+  - id: PROJ-14299
     title: Wire up stepped workflow
     points: 5
     priority: P0
@@ -289,7 +289,7 @@ stories:
         assert data is not None
         assert len(data["epics"]) == 2
         assert isinstance(data["epics"][0], dict)
-        assert data["epics"][0]["id"] == "MSSCI-14298"
+        assert data["epics"][0]["id"] == "PROJ-14298"
         assert data["epics"][1]["id"] == "epic-40"
 
     def test_load_sprint_merges_stories(self, tmp_path: Path) -> None:
@@ -345,7 +345,7 @@ epics:
 
         assert len(stories) == 3
         ids = {s["id"] for s in stories}
-        assert "MSSCI-14299" in ids
+        assert "PROJ-14299" in ids
         assert "40-1" in ids
         assert "40-2" in ids
 
@@ -356,7 +356,7 @@ epics:
         root = self._create_sharded_sprint(tmp_path)
         data = load_sprint(project_root=root)
 
-        epic = find_epic(data, "MSSCI-14298")
+        epic = find_epic(data, "PROJ-14298")
         assert epic is not None
         assert epic["title"] == "Epic: Stepped Workflow"
 
@@ -374,7 +374,7 @@ epics:
         """get_backlog_count should not crash on string epics."""
         from pf.prime.workflow import get_backlog_count
 
-        fake_data = {"epics": ["MSSCI-14298", "MSSCI-14317"]}
+        fake_data = {"epics": ["PROJ-14298", "PROJ-14317"]}
         with patch("pf.sprint.loader.load_sprint", return_value=fake_data):
             count = get_backlog_count(Path("/fake"))
 

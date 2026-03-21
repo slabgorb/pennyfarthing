@@ -1,7 +1,7 @@
 """
 Tests for the healthscore module.
 
-Covers all acceptance criteria for MSSCI-14470:
+Covers all acceptance criteria for PROJ-14470:
   AC1: Module structure (cli.py, models.py, analyze.py, formatters.py)
   AC2: Weighted scoring algorithm with 8 configurable dimensions
   AC3: Each dimension 0-100, composite is weighted average 0-100

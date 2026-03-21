@@ -162,7 +162,7 @@ gh pr create \
 ${DESCRIPTION}
 
 ## Jira
-[${JIRA_KEY}](https://1898andco.atlassian.net/browse/${JIRA_KEY})
+[${JIRA_KEY}]($(pf settings get jira.url)/browse/${JIRA_KEY})
 
 ## Test plan
 - [x] Changes verified locally
@@ -182,7 +182,7 @@ git checkout develop
 git pull origin develop
 
 echo "✅ Done: $JIRA_KEY merged"
-echo "   Jira: https://1898andco.atlassian.net/browse/$JIRA_KEY"
+echo "   Jira: $(pf settings get jira.url)/browse/$JIRA_KEY"
 echo "   PR: $PR_URL"
 ```
 

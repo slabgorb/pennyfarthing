@@ -474,11 +474,11 @@ class TestWorkflowStateDetection:
         pf_dir.mkdir()
         session_dir = tmp_path / ".session"
         session_dir.mkdir()
-        session_file = session_dir / "MSSCI-12345-session.md"
-        session_file.write_text("""# MSSCI-12345: Test Story
+        session_file = session_dir / "PROJ-12345-session.md"
+        session_file.write_text("""# PROJ-12345: Test Story
 
 ## Story Context
-- **ID:** MSSCI-12345
+- **ID:** PROJ-12345
 - **Workflow:** tdd
 
 ## Workflow Phase
@@ -490,7 +490,7 @@ class TestWorkflowStateDetection:
 
         # Verify
         assert result.state == WorkflowState.FINISH_STATE
-        assert result.story_id == "MSSCI-12345"
+        assert result.story_id == "PROJ-12345"
         assert result.phase_owner == "sm"
 
     def test_detect_in_progress_state(self, tmp_path: Path) -> None:
@@ -623,11 +623,11 @@ class TestParseSessionHeader:
         """Test parsing a standard session header."""
         from pf.prime.workflow import parse_session_header
 
-        session_file = tmp_path / "MSSCI-12345-session.md"
-        session_file.write_text("""# MSSCI-12345: Test Story
+        session_file = tmp_path / "PROJ-12345-session.md"
+        session_file.write_text("""# PROJ-12345: Test Story
 
 ## Story Context
-- **ID:** MSSCI-12345
+- **ID:** PROJ-12345
 - **Workflow:** tdd
 
 ## Workflow Phase
@@ -636,7 +636,7 @@ class TestParseSessionHeader:
 
         result = parse_session_header(session_file)
 
-        assert result["story_id"] == "MSSCI-12345"
+        assert result["story_id"] == "PROJ-12345"
         assert result["workflow"] == "tdd"
         assert result["phase"] == "green"
 

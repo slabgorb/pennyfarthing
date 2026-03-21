@@ -38,7 +38,7 @@ def sprint_tree(tmp_path: Path) -> Path:
             "end_date": "2026-02-15",
             "status": "active",
         },
-        "epics": ["MSSCI-99999"],
+        "epics": ["PROJ-99999"],
         "stories": [],
     }
     sprint_path = sprint_dir / "current-sprint.yaml"
@@ -50,11 +50,11 @@ def sprint_tree(tmp_path: Path) -> Path:
         "type": "epic",
         "title": "Test Epic",
         "status": "backlog",
-        "jira": "MSSCI-99999",
+        "jira": "PROJ-99999",
         "stories": [
             {
                 "id": "50-1",
-                "jira": "MSSCI-99901",
+                "jira": "PROJ-99901",
                 "title": "First story",
                 "points": 2,
                 "status": "done",
@@ -62,7 +62,7 @@ def sprint_tree(tmp_path: Path) -> Path:
             },
             {
                 "id": "50-2",
-                "jira": "MSSCI-99902",
+                "jira": "PROJ-99902",
                 "title": "Second story",
                 "points": 3,
                 "status": "done",
@@ -70,7 +70,7 @@ def sprint_tree(tmp_path: Path) -> Path:
             },
             {
                 "id": "50-3",
-                "jira": "MSSCI-99903",
+                "jira": "PROJ-99903",
                 "title": "Third story",
                 "points": 1,
                 "status": "done",
@@ -78,7 +78,7 @@ def sprint_tree(tmp_path: Path) -> Path:
             },
         ],
     }
-    _write_yaml_file(sprint_dir / "epic-MSSCI-99999.yaml", epic_data)
+    _write_yaml_file(sprint_dir / "epic-PROJ-99999.yaml", epic_data)
 
     # Pre-create the completed file (ensure_archive_file needs load_sprint
     # which needs project root detection — easier to pre-create)
@@ -104,7 +104,7 @@ def test_archive_epic_writes_completed_stories(sprint_tree: Path) -> None:
     archive_path = sprint_tree / "sprint" / "archive" / "sprint-2699-completed.yaml"
     archive_data = _load_archive_file(archive_path)
 
-    assert "MSSCI-99999" in archive_data["completed_epics"]
+    assert "PROJ-99999" in archive_data["completed_epics"]
 
     story_ids = [s["id"] for s in archive_data["completed_stories"]]
     assert "50-1" in story_ids
@@ -113,7 +113,7 @@ def test_archive_epic_writes_completed_stories(sprint_tree: Path) -> None:
 
     # Verify story fields
     story_1 = next(s for s in archive_data["completed_stories"] if s["id"] == "50-1")
-    assert story_1["epic"] == "MSSCI-99999"
+    assert story_1["epic"] == "PROJ-99999"
     assert story_1["title"] == "First story"
     assert story_1["points"] == 2
     assert story_1["completed"] == "2026-02-10"
@@ -127,7 +127,7 @@ def test_archive_epic_no_duplicate_stories(sprint_tree: Path) -> None:
     archive_data["completed_stories"].append(
         {
             "id": "50-1",
-            "epic": "MSSCI-99999",
+            "epic": "PROJ-99999",
             "title": "First story",
             "points": 2,
             "completed": "2026-02-10",

@@ -24,7 +24,7 @@ from pf.findings.pr_body import generate_pr_body
 SESSION_WITH_DEVIATIONS = textwrap.dedent("""\
     ---
     story_id: "150-2"
-    jira_key: "MSSCI-16494"
+    jira_key: "PROJ-16494"
     title: "PR body template generation"
     points: 2
     status: in_progress
@@ -35,7 +35,7 @@ SESSION_WITH_DEVIATIONS = textwrap.dedent("""\
 
     # 150-2: PR body template generation
 
-    **Jira:** MSSCI-16494
+    **Jira:** PROJ-16494
     **Workflow:** tdd
 
     ## Acceptance Criteria
@@ -101,7 +101,7 @@ SESSION_WITH_DEVIATIONS = textwrap.dedent("""\
 SESSION_NO_DEVIATIONS_SECTION = textwrap.dedent("""\
     ---
     story_id: "80-3"
-    jira_key: "MSSCI-8003"
+    jira_key: "PROJ-8003"
     title: "Refactor config loader"
     points: 2
     status: in_progress
@@ -112,7 +112,7 @@ SESSION_NO_DEVIATIONS_SECTION = textwrap.dedent("""\
 
     # 80-3: Refactor config loader
 
-    **Jira:** MSSCI-8003
+    **Jira:** PROJ-8003
     **Workflow:** trivial
 
     ## Dev Assessment
@@ -127,7 +127,7 @@ SESSION_NO_DEVIATIONS_SECTION = textwrap.dedent("""\
 SESSION_EMPTY_DEVIATIONS = textwrap.dedent("""\
     ---
     story_id: "101-1"
-    jira_key: "MSSCI-10101"
+    jira_key: "PROJ-10101"
     title: "Add status endpoint"
     points: 1
     status: in_progress
@@ -160,7 +160,7 @@ SESSION_EMPTY_DEVIATIONS = textwrap.dedent("""\
 SESSION_DEVIATIONS_WITH_BREAKING = textwrap.dedent("""\
     ---
     story_id: "105-3"
-    jira_key: "MSSCI-10503"
+    jira_key: "PROJ-10503"
     title: "Add filter expressions"
     points: 5
     status: in_progress

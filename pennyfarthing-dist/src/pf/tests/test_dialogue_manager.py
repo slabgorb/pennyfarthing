@@ -569,10 +569,10 @@ class TestArchiveDialogue:
         archive_dir = tmp_path / "archive"
         append_exchange_to_file(dialogue_path, VALID_EXCHANGE, VALID_HEADER)
 
-        result = archive_dialogue(dialogue_path, archive_dir, jira_key="MSSCI-15200")
+        result = archive_dialogue(dialogue_path, archive_dir, jira_key="PROJ-15200")
 
         assert result.success is True
-        assert (archive_dir / "MSSCI-15200-dialogue.md").exists()
+        assert (archive_dir / "PROJ-15200-dialogue.md").exists()
 
     def test_uses_story_id_when_no_jira_key(self, tmp_path: Path):
         dialogue_path = tmp_path / "86-3-dialogue.md"
@@ -590,9 +590,9 @@ class TestArchiveDialogue:
         append_exchange_to_file(dialogue_path, VALID_EXCHANGE, VALID_HEADER)
         original = dialogue_path.read_text()
 
-        archive_dialogue(dialogue_path, archive_dir, jira_key="MSSCI-15200")
+        archive_dialogue(dialogue_path, archive_dir, jira_key="PROJ-15200")
 
-        archived = (archive_dir / "MSSCI-15200-dialogue.md").read_text()
+        archived = (archive_dir / "PROJ-15200-dialogue.md").read_text()
         assert archived == original
 
     def test_creates_archive_directory(self, tmp_path: Path):
@@ -600,7 +600,7 @@ class TestArchiveDialogue:
         archive_dir = tmp_path / "new-archive"
         append_exchange_to_file(dialogue_path, VALID_EXCHANGE, VALID_HEADER)
 
-        result = archive_dialogue(dialogue_path, archive_dir, jira_key="MSSCI-15200")
+        result = archive_dialogue(dialogue_path, archive_dir, jira_key="PROJ-15200")
 
         assert result.success is True
         assert archive_dir.exists()
@@ -609,7 +609,7 @@ class TestArchiveDialogue:
         dialogue_path = tmp_path / "nonexistent-dialogue.md"
         archive_dir = tmp_path / "archive"
 
-        result = archive_dialogue(dialogue_path, archive_dir, jira_key="MSSCI-15200")
+        result = archive_dialogue(dialogue_path, archive_dir, jira_key="PROJ-15200")
 
         assert result.success is False
         assert result.error is not None
@@ -764,7 +764,7 @@ class TestResultFormat:
         dialogue_path = tmp_path / "86-3-dialogue.md"
         archive_dir = tmp_path / "archive"
         append_exchange_to_file(dialogue_path, VALID_EXCHANGE, VALID_HEADER)
-        result = archive_dialogue(dialogue_path, archive_dir, jira_key="MSSCI-15200")
+        result = archive_dialogue(dialogue_path, archive_dir, jira_key="PROJ-15200")
 
         assert isinstance(result, DialogueResult)
         assert isinstance(result.success, bool)

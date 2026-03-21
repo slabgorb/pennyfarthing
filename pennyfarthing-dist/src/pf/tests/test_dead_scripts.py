@@ -1,4 +1,4 @@
-"""Tests for dead script removal (story 141-15, MSSCI-16149).
+"""Tests for dead script removal (story 141-15, PROJ-16149).
 
 Verifies that deprecated shell/Python scripts that duplicate pf CLI
 commands have been deleted and all references cleaned up.

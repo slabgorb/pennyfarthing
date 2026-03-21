@@ -1,6 +1,6 @@
 """Tests for sprint/story_transition.py — story lifecycle state machine.
 
-Story: MSSCI-15428 - Implement story lifecycle state machine with transition validation
+Story: PROJ-15428 - Implement story lifecycle state machine with transition validation
 
 TDD RED phase: All tests should FAIL until implementation.
 
@@ -38,21 +38,21 @@ epics:
     title: "Sprint State Engine Consolidation"
     priority: p1
     status: in_progress
-    jira: MSSCI-15421
+    jira: PROJ-15421
     stories:
       - id: 125-7
         title: Implement story lifecycle state machine
         points: 3
         priority: p2
         status: backlog
-        jira: MSSCI-15428
+        jira: PROJ-15428
         workflow: tdd
       - id: 125-8
         title: Event-driven Jira sync
         points: 3
         priority: p2
         status: in_progress
-        jira: MSSCI-15429
+        jira: PROJ-15429
         started: "2026-02-15"
         assigned_to: kavery
         workflow: tdd
@@ -61,14 +61,14 @@ epics:
         points: 2
         priority: p3
         status: in_review
-        jira: MSSCI-15430
+        jira: PROJ-15430
         workflow: trivial
       - id: 125-10
         title: Already done story
         points: 2
         priority: p3
         status: done
-        jira: MSSCI-15431
+        jira: PROJ-15431
         completed: "2026-02-20"
         workflow: trivial
 """
@@ -88,7 +88,7 @@ epics:
     title: "Test Epic"
     priority: p1
     status: in_progress
-    jira: MSSCI-15421
+    jira: PROJ-15421
     stories:
       - id: 125-20
         title: Story without Jira key
@@ -197,7 +197,7 @@ class TestTransitionStoryHappyPath:
         assert "started" in story  # Auto-set started date
 
         # Jira transitioned
-        mock_client.transition_sync.assert_called_once_with("MSSCI-15428", "In Progress")
+        mock_client.transition_sync.assert_called_once_with("PROJ-15428", "In Progress")
 
     @patch("pf.sprint.story_transition.get_client")
     def test_in_progress_to_review(self, mock_get_client: MagicMock, project: Path) -> None:
@@ -216,7 +216,7 @@ class TestTransitionStoryHappyPath:
         story = data["epics"][0]["stories"][1]
         assert story["status"] == "in_review"
 
-        mock_client.transition_sync.assert_called_once_with("MSSCI-15429", "In Review")
+        mock_client.transition_sync.assert_called_once_with("PROJ-15429", "In Review")
 
     @patch("pf.sprint.story_transition.get_client")
     def test_review_to_done(self, mock_get_client: MagicMock, project: Path) -> None:
@@ -236,7 +236,7 @@ class TestTransitionStoryHappyPath:
         assert story["status"] == "done"
         assert "completed" in story
 
-        mock_client.transition_sync.assert_called_once_with("MSSCI-15430", "Done")
+        mock_client.transition_sync.assert_called_once_with("PROJ-15430", "Done")
 
     @patch("pf.sprint.story_transition.get_client")
     def test_any_to_canceled(self, mock_get_client: MagicMock, project: Path) -> None:
@@ -263,7 +263,7 @@ class TestTransitionStoryHappyPath:
 
         result = transition_story(project, "125-7", "in_progress")
 
-        assert result["jira_key"] == "MSSCI-15428"
+        assert result["jira_key"] == "PROJ-15428"
 
     @patch("pf.sprint.story_transition.get_client")
     def test_steps_include_yaml_update(self, mock_get_client: MagicMock, project: Path) -> None:

@@ -1,6 +1,6 @@
 """Tests for brownfield discovery module.
 
-Story MSSCI-12419: Brownfield discovery command.
+Story PROJ-12419: Brownfield discovery command.
 
 Tests verify:
 1. Project type detection (monorepo, single package, etc.)

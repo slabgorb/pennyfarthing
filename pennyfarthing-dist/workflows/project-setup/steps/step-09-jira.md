@@ -41,18 +41,15 @@ Ask the user for their project key, then save it:
 pf settings set jira.project <KEY>
 ```
 
-### Optional: Custom Jira URL
+### Jira URL
 
 ```
-Your Jira URL defaults to https://1898andco.atlassian.net
+What is your Jira Cloud URL?
+Example: https://your-org.atlassian.net
 
-Is this correct, or do you use a different Jira instance?
-
-[1] Use default (1898andco.atlassian.net)
-[2] Enter custom URL
+[1] Enter URL
+[2] Skip (configure later)
 ```
-
-If custom:
 
 ```bash
 pf settings set jira.url https://your-org.atlassian.net

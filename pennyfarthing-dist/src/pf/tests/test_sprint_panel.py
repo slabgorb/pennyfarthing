@@ -1,7 +1,7 @@
 """Tests for SprintPanel — Sprint status panel for Frame TUI TUI.
 
 Story 103-6: SprintPanel implementation
-Epic: 103 — Frame TUI TUI (MSSCI-14951)
+Epic: 103 — Frame TUI TUI (PROJ-14951)
 
 Acceptance Criteria:
 - [AC1] SprintPanel subscribes to /ws/sprint channel
@@ -45,35 +45,35 @@ SAMPLE_INIT_PAYLOAD: dict[str, Any] = {
         "title": "SprintPanel implementation",
         "points": 2,
         "status": "in_progress",
-        "jiraKey": "MSSCI-14961",
+        "jiraKey": "PROJ-14961",
     },
     "nextStory": None,
     "epics": [
         {
             "id": "103",
             "title": "Frame TUI TUI",
-            "jiraKey": "MSSCI-14510",
+            "jiraKey": "PROJ-14510",
             "stories": [
                 {
                     "id": "103-1",
                     "title": "Textual app scaffold",
                     "points": 2,
                     "status": "done",
-                    "jiraKey": "MSSCI-14952",
+                    "jiraKey": "PROJ-14952",
                 },
                 {
                     "id": "103-5",
                     "title": "BasePanel abstraction",
                     "points": 2,
                     "status": "done",
-                    "jiraKey": "MSSCI-14960",
+                    "jiraKey": "PROJ-14960",
                 },
                 {
                     "id": "103-6",
                     "title": "SprintPanel implementation",
                     "points": 2,
                     "status": "in_progress",
-                    "jiraKey": "MSSCI-14961",
+                    "jiraKey": "PROJ-14961",
                 },
             ],
         },
@@ -101,7 +101,7 @@ SAMPLE_UPDATE_PAYLOAD: dict[str, Any] = {
         "title": "SprintPanel implementation",
         "points": 2,
         "status": "done",
-        "jiraKey": "MSSCI-14961",
+        "jiraKey": "PROJ-14961",
     },
     "sprint": {
         "number": 2606,
@@ -126,35 +126,35 @@ SAMPLE_MULTI_EPIC_PAYLOAD: dict[str, Any] = {
         {
             "id": "101",
             "title": "Frame TUI Mode",
-            "jiraKey": "MSSCI-14000",
+            "jiraKey": "PROJ-14000",
             "stories": [
                 {
                     "id": "101-1",
                     "title": "Launcher CLI",
                     "points": 3,
                     "status": "done",
-                    "jiraKey": "MSSCI-14001",
+                    "jiraKey": "PROJ-14001",
                 },
             ],
         },
         {
             "id": "103",
             "title": "Frame TUI TUI",
-            "jiraKey": "MSSCI-14510",
+            "jiraKey": "PROJ-14510",
             "stories": [
                 {
                     "id": "103-1",
                     "title": "Scaffold",
                     "points": 2,
                     "status": "done",
-                    "jiraKey": "MSSCI-14952",
+                    "jiraKey": "PROJ-14952",
                 },
                 {
                     "id": "103-6",
                     "title": "SprintPanel",
                     "points": 2,
                     "status": "in_progress",
-                    "jiraKey": "MSSCI-14961",
+                    "jiraKey": "PROJ-14961",
                 },
             ],
         },
@@ -314,8 +314,8 @@ class TestEpicLabel:
         assert "103" in label.plain
 
     def test_includes_jira_key_when_provided(self) -> None:
-        label = _build_epic_label("103", "Frame TUI TUI", 4, 6, jira_key="MSSCI-14510")
-        assert "MSSCI-14510" in label.plain
+        label = _build_epic_label("103", "Frame TUI TUI", 4, 6, jira_key="PROJ-14510")
+        assert "PROJ-14510" in label.plain
 
     def test_long_id_gets_ellipsed(self) -> None:
         label = _build_epic_label(
@@ -349,10 +349,10 @@ class TestStoryLabel:
             "title": "Scaffold",
             "points": 2,
             "status": "done",
-            "jiraKey": "MSSCI-14952",
+            "jiraKey": "PROJ-14952",
         }
         label = _build_story_label(story, "")
-        assert "MSSCI-14952" in label.plain
+        assert "PROJ-14952" in label.plain
 
     def test_includes_points(self) -> None:
         story = {
@@ -360,7 +360,7 @@ class TestStoryLabel:
             "title": "Scaffold",
             "points": 2,
             "status": "done",
-            "jiraKey": "MSSCI-14952",
+            "jiraKey": "PROJ-14952",
         }
         label = _build_story_label(story, "")
         assert "2" in label.plain
@@ -371,7 +371,7 @@ class TestStoryLabel:
             "title": "Scaffold",
             "points": 2,
             "status": "done",
-            "jiraKey": "MSSCI-14952",
+            "jiraKey": "PROJ-14952",
         }
         label = _build_story_label(story, "")
         assert "Scaffold" in label.plain
@@ -399,7 +399,7 @@ class TestStoryLabel:
             "title": "Done one",
             "points": 2,
             "status": "done",
-            "jiraKey": "MSSCI-14952",
+            "jiraKey": "PROJ-14952",
         }
         label = _build_story_label(story, "")
         # Overall dim styling applied to done stories
@@ -411,7 +411,7 @@ class TestFormatAssignee:
     """Email to display name formatting."""
 
     def test_standard_email(self) -> None:
-        assert _format_assignee("keith.avery@1898andco.io") == "KA"
+        assert _format_assignee("jane.doe@example.com") == "JD"
 
     def test_underscore_email(self) -> None:
         assert _format_assignee("john_doe@example.com") == "JD"
@@ -436,11 +436,11 @@ class TestStoryLabelOwner:
             "title": "Drill",
             "points": 5,
             "status": "in-progress",
-            "jiraKey": "MSSCI-15186",
-            "assignee": "keith.avery@1898andco.io",
+            "jiraKey": "PROJ-15186",
+            "assignee": "jane.doe@example.com",
         }
         label = _build_story_label(story, "")
-        assert "KA" in label.plain
+        assert "JD" in label.plain
 
     def test_done_hides_owner(self) -> None:
         story = {
@@ -448,8 +448,8 @@ class TestStoryLabelOwner:
             "title": "Done",
             "points": 3,
             "status": "done",
-            "jiraKey": "MSSCI-15185",
-            "assignee": "keith.avery@1898andco.io",
+            "jiraKey": "PROJ-15185",
+            "assignee": "user@example.com",
         }
         label = _build_story_label(story, "")
         assert "K. Avery" not in label.plain
@@ -460,8 +460,8 @@ class TestStoryLabelOwner:
             "title": "Backlog",
             "points": 3,
             "status": "backlog",
-            "jiraKey": "MSSCI-15187",
-            "assignee": "keith.avery@1898andco.io",
+            "jiraKey": "PROJ-15187",
+            "assignee": "user@example.com",
         }
         label = _build_story_label(story, "")
         assert "K. Avery" not in label.plain
@@ -472,7 +472,7 @@ class TestStoryLabelOwner:
             "title": "Drill",
             "points": 5,
             "status": "in-progress",
-            "jiraKey": "MSSCI-15186",
+            "jiraKey": "PROJ-15186",
         }
         label = _build_story_label(story, "")
         assert "[" not in label.plain or "[]" not in label.plain
@@ -483,7 +483,7 @@ class TestStoryLabelOwner:
             "title": "Canceled one",
             "points": 2,
             "status": "canceled",
-            "jiraKey": "MSSCI-15999",
+            "jiraKey": "PROJ-15999",
         }
         label = _build_story_label(story, "")
         has_dim = any("dim" in str(span.style) for span in label._spans)

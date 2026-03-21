@@ -94,6 +94,26 @@ All pane operations go through `pf tmux`. Never use raw `tmux send-keys` or `tmu
 | `pf tmux tui` | Find the TUI pane for this CLI session |
 | `pf tmux window` | Show all panes in this window |
 | `pf tmux cli` | Show the pane running this CLI session |
+| `pf tmux layout <name>` | Apply layout: `vertical`, `grid`, `horizontal`, `stacked` |
+
+### Layout management
+
+When team agents are spawned via `teammateMode: tmux`, the default horizontal splits produce narrow panes with ~1 line of output. Use `pf tmux layout` to rearrange:
+
+```bash
+pf tmux layout vertical       # CLI left, agents stacked right (recommended)
+pf tmux layout vertical -w 60 # Same but CLI gets 60% width
+pf tmux layout grid           # 2x2 tiled grid
+pf tmux layout stacked        # All panes top-to-bottom
+```
+
+**Auto-layout:** Set `peloton.layout` in `config.local.yaml` (or via TUI settings panel) to automatically apply the layout when team agents are spawned:
+
+```yaml
+peloton:
+  layout: vertical        # auto-applied after Agent/TeamCreate
+  main_pane_width: 50     # main pane width % for vertical layout
+```
 
 ### Pane references
 

@@ -102,7 +102,7 @@ SESSION_AT_SETUP = textwrap.dedent("""\
 
     ## Story Details
     - **ID:** e2e-full-1
-    - **Jira Key:** MSSCI-99999
+    - **Jira Key:** PROJ-99999
     - **Points:** 5
     - **Workflow:** tdd
     - **Stack Parent:** none
@@ -1051,15 +1051,15 @@ class TestSessionParsingAfterFullCycle:
 SESSION_FRONTMATTER_FORMAT = textwrap.dedent("""\
     ---
     story_id: "e2e-fm-1"
-    jira_key: "MSSCI-99997"
-    epic: "MSSCI-99996"
+    jira_key: "PROJ-99997"
+    epic: "PROJ-99996"
     workflow: "tdd"
     ---
     # Story e2e-fm-1: Frontmatter Format Validation
 
     ## Story Details
     - **ID:** e2e-fm-1
-    - **Jira Key:** MSSCI-99997
+    - **Jira Key:** PROJ-99997
     - **Points:** 5
     - **Workflow:** tdd
     - **Stack Parent:** none

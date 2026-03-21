@@ -1,6 +1,6 @@
 """Tests for git/ utility modules.
 
-Story: MSSCI-12402 - Port git utility scripts to Python
+Story: PROJ-12402 - Port git utility scripts to Python
 
 TDD RED phase: All tests should FAIL until implementation.
 

@@ -37,7 +37,7 @@ def _make_signals(story_id: str = "145-5") -> SignalBundle:
     return SignalBundle(
         story_id=story_id,
         title="PPTX assembler — build slide deck",
-        jira_key="MSSCI-16401",
+        jira_key="PROJ-16401",
         points=3,
         acceptance_criteria=["Produce valid PPTX", "Write supporting files"],
         pr_diff="diff --git a/assembler.py ...",

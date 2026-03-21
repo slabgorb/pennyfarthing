@@ -1,6 +1,6 @@
 """Tests for sprint/validator.py module.
 
-Story: MSSCI-12394 - Sprint and Story YAML validators
+Story: PROJ-12394 - Sprint and Story YAML validators
 
 TDD RED phase: All tests should FAIL until implementation.
 
@@ -266,7 +266,7 @@ class TestStoryValidation:
             "title": "Test",
             "status": "backlog",
             "points": 3,
-            "jira": "INVALID-KEY",  # Should match MSSCI-NNNNN
+            "jira": "INVALID-KEY",  # Should match PROJ-NNNNN
         }
 
         result = validate_story(story, "epic-63")
@@ -281,7 +281,7 @@ class TestStoryValidation:
             "title": "Test",
             "status": "backlog",
             "points": 3,
-            "jira": "MSSCI-12345",
+            "jira": "PROJ-12345",
         }
 
         result = validate_story(story, "epic-63")
@@ -718,7 +718,7 @@ class TestValidateSprintFile:
             "\n"
             "      Line after blank.\n"
             "    stories:\n"
-            "      - id: MSSCI-10001\n"
+            "      - id: PROJ-10001\n"
             "        title: A story\n"
             "        status: backlog\n"
             "        points: 3\n"

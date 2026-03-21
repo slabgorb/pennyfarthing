@@ -73,6 +73,7 @@ VALID_STORY_STATUSES = {
     "done",
     "canceled",
     "planning",
+    "split",
 }
 JIRA_KEY_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]+-\d+(\s*/\s*[A-Z][A-Z0-9_]+-\d+)*$")
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -253,7 +254,7 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
         if not JIRA_KEY_PATTERN.match(jira_key):
             result.add_error(
                 f"Invalid Jira key format '{jira_key}'. "
-                "To fix: Use PROJECT-NUMBER format, e.g. `jira: MSSCI-12345`",
+                "To fix: Use PROJECT-NUMBER format, e.g. `jira: PROJ-12345`",
                 f"{base_path}.jira",
             )
 
@@ -388,7 +389,7 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
         jira_key = str(epic["jira"])
         if not JIRA_KEY_PATTERN.match(jira_key):
             result.add_error(
-                f"Invalid Jira key format '{jira_key}'. Expected PROJECT-NUMBER format (e.g., DPGD-17, MSSCI-12345)",
+                f"Invalid Jira key format '{jira_key}'. Expected PROJECT-NUMBER format (e.g., PROJ-17, TEAM-12345)",
                 "epic.jira",
             )
 

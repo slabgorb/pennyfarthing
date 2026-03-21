@@ -1,7 +1,7 @@
 """Tests for codemarkers module.
 
 Story 80-1: Python codemarkers module — grep + git blame.
-MSSCI-14454
+PROJ-14454
 
 TDD RED phase — all tests written before implementation.
 Tests cover: models, analyze engine, CLI, formatters.

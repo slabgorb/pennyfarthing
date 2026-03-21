@@ -1,4 +1,4 @@
-"""Tests for MSSCI-14698: Version sentinel detection in prime.
+"""Tests for PROJ-14698: Version sentinel detection in prime.
 
 Story 98-1: pf agent start (prime) compares .pennyfarthing/.installed-version
 sentinel against package version. On mismatch, triggers auto-update.

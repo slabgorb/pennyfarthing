@@ -25,14 +25,14 @@ def _create_session_file(tmp_path: Path, story_id: str = "42-1") -> Path:
         textwrap.dedent(f"""\
         ---
         story_id: "{story_id}"
-        jira_key: "MSSCI-99999"
+        jira_key: "PROJ-99999"
         workflow: "tdd"
         ---
         # Story {story_id}: Test story
 
         ## Story Details
         - **ID:** {story_id}
-        - **Jira Key:** MSSCI-99999
+        - **Jira Key:** PROJ-99999
         - **Branch:** feat/{story_id}-test
         - **PR:** #999 - test PR
         """),
@@ -54,13 +54,13 @@ def _create_sprint_yaml(tmp_path: Path, story_id: str = "42-1") -> Path:
         epics:
           - id: "{epic_id}"
             title: "Test Epic"
-            jira: "MSSCI-99990"
+            jira: "PROJ-99990"
             stories:
               - id: "{story_id}"
                 title: "Test story"
                 points: 2
                 status: "in_review"
-                jira: "MSSCI-99999"
+                jira: "PROJ-99999"
         """),
         encoding="utf-8",
     )
@@ -492,7 +492,7 @@ class TestDemoHookStepOrdering:
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         def verify_archive_exists(*args, **kwargs):
-            archive_path = tmp_path / "sprint" / "archive" / "MSSCI-99999-session.md"
+            archive_path = tmp_path / "sprint" / "archive" / "PROJ-99999-session.md"
             assert archive_path.exists(), (
                 "Session should be archived before demo generation runs"
             )
