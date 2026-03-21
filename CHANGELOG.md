@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [13.0.0-rc.0] - 2026-03-18
+## [13.0.0] - 2026-03-21
+
+### Added
+
+- **Spec-drift gates** — Pre-check for review phase entry enforces spec-authority hierarchy and quality regression guards (150-3/4/5, #1470, #1474, #1475, #1476)
+- **Design Deviations in PR body** — Findings section auto-generated with deviation traceability (#1473)
+- **Reviewer sub-agent toggles** — Configurable enable/disable for individual reviewer sub-agents (#1466)
+- **`pf sprint story update --jira`** — Sync story updates to Jira inline (#1462)
+- **Frame repos API** — Repos endpoints added to WheelHub (#1460)
+- **Peloton pre-priming** — Teammates get full agent context before pipeline runs (148-28, #1454)
+- **Write-time settings validators** — RED phase tests for settings validation (147-8, #1461)
 
 ### Changed
 
@@ -15,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Frame port assignment** — Replaced hash-based port selection with OS-assigned ports (MSSCI-16594, #1456)
 - **Release workflow cleanup** — Removed Node/NPM/package.json references; framework is Python-only
 - **E2E test suite** — Removed phantom `frame-node24` scenario that had no implementation
+
+### Fixed
+
+- **Consumer shim discovery** — `pf init` for consumer projects now resolves the globally installed pf (pipx/pip/uv), ignoring `PF_BINARY` env var and monorepo walk-up that could bake dev-environment paths into consumer shims (#1493)
+- **Session launch command** — Use `pf launch frame` instead of `pf frame start` in start-session hook (#1458)
 
 ## [13.0.0-beta.2] - 2026-03-17
 
@@ -3260,9 +3275,13 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.3...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0...HEAD
+[13.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-beta.2...v13.0.0
+[13.0.0-beta.2]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-beta.1...v13.0.0-beta.2
+[13.0.0-beta.1]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.3...v13.0.0-beta.1
 [13.0.0-alpha.3]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.2...v13.0.0-alpha.3
-[13.0.0-alpha.2]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.0...v13.0.0-alpha.2
+[13.0.0-alpha.2]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.1...v13.0.0-alpha.2
+[13.0.0-alpha.1]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.0...v13.0.0-alpha.1
 [13.0.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.7.0...v13.0.0-alpha.0
 [12.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.2...v12.7.0
 [12.6.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.1...v12.6.2
