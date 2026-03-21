@@ -105,7 +105,7 @@ cd {project_root}
 ./tests/e2e/run.sh --local
 ```
 
-All 6 scenarios must pass before proceeding with the release. If any fail, fix the
+All scenarios must pass before proceeding with the release. If any fail, fix the
 issue before continuing — these tests protect consumer projects from broken releases.
 
 ### 1.6 Preview
@@ -126,10 +126,8 @@ issue before continuing — these tests protect consumer projects from broken re
 
 **Files to modify:**
 - VERSION
-- package.json
-- packages/*/package.json (all workspace packages)
-- CHANGELOG.md
 - pennyfarthing-dist/src/pf/__init__.py
+- CHANGELOG.md
 {if stable: - README.md, - CLAUDE.md}
 
 **Steps that will be skipped for prerelease:**

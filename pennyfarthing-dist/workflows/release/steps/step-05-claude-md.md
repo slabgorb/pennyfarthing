@@ -34,21 +34,17 @@ sed -i '' 's/\*\*Version:\*\* [0-9]\+\.[0-9]\+\.[0-9]\+/\*\*Version:\*\* {new_ve
 ### 5.2 Verify Build Commands
 
 ```bash
-echo "=== package.json scripts ==="
-node -e "const p = require('./package.json'); Object.entries(p.scripts).forEach(([k,v]) => console.log(k + ': ' + v))"
+echo "=== pf CLI commands ==="
+pf --help 2>/dev/null || echo "pf CLI not available"
 ```
 
-Compare with what CLAUDE.md documents. Are there new scripts? Removed scripts?
+Compare with what CLAUDE.md documents. Are there new commands? Removed commands?
 
 ### 5.3 Verify Project Structure
 
 ```bash
 echo "=== Top-Level Structure ==="
 ls -d */ 2>/dev/null
-
-echo ""
-echo "=== Packages ==="
-ls packages/
 
 echo ""
 echo "=== pennyfarthing-dist Contents ==="
@@ -66,7 +62,7 @@ Things that commonly need updating after a release:
 - New agents added to `pennyfarthing-dist/agents/`
 - New workflows added to `pennyfarthing-dist/workflows/`
 - New skills added to `pennyfarthing-dist/skills/`
-- Node version requirements changed
+- Python version requirements changed
 - New dependencies added
 - Architecture changes documented in ADRs
 

@@ -14,7 +14,7 @@ Agent-specific subsections:
   - ### Dev (implementation)
   - ### Architect (reconcile)
 
-Story: 144-1
+Story: 144-1, 150-6
 """
 
 from __future__ import annotations
@@ -39,6 +39,59 @@ AGENT_SUBSECTIONS = {
     "dev": "### Dev (implementation)",
     "architect": "### Architect (reconcile)",
 }
+
+# Spec authority hierarchy: highest authority first (Story 150-6)
+SPEC_AUTHORITY_HIERARCHY = ("session", "story-context", "epic-context", "architecture")
+
+# Patterns that indicate a valid spec source (file path, section ref, or AC ref)
+_VALID_SPEC_SOURCE_RE = re.compile(
+    r"("
+    r"\S+\.\w+"          # file with extension (e.g., context-story-5-1.md)
+    r"|AC-?\d+"          # AC reference (e.g., AC-3, AC3)
+    r"|[Ss]ection\s+\d+" # Section reference (e.g., Section 4)
+    r"|SOUL\.md"         # SOUL.md reference
+    r"|##?\s+"           # Markdown heading reference
+    r")"
+)
+
+# Patterns that map spec source text to authority levels
+_AUTHORITY_PATTERNS = {
+    "session": re.compile(r"session|session\.md", re.IGNORECASE),
+    "story-context": re.compile(r"context-story|story.context", re.IGNORECASE),
+    "epic-context": re.compile(r"context-epic|epic.context", re.IGNORECASE),
+    "architecture": re.compile(
+        r"architecture|arch[\./]|SOUL\.md|docs/|design[\./]|adr[\./]",
+        re.IGNORECASE,
+    ),
+}
+
+# Patterns for detecting raw RFC/standard copies in implementation notes
+_RAW_STANDARD_INDICATORS = re.compile(
+    r"("
+    r"MUST conform to RFC"
+    r"|MUST comply with RFC"
+    r"|SHOULD follow RFC"
+    r"|SHALL implement RFC"
+    r")",
+    re.IGNORECASE,
+)
+_RAW_FIELD_LIST_RE = re.compile(
+    r"^\s*-\s+\w+\s+\([^)]+\):\s+",  # "- field (type): description" pattern
+    re.MULTILINE,
+)
+_ADAPTATION_INDICATORS = re.compile(
+    r"("
+    r"[Pp]roject adaptation"
+    r"|[Oo]ur adaptation"
+    r"|[Ss]implified"
+    r"|[Ii]nspired by"
+    r"|[Bb]ased on"
+    r"|[Ww]e use only"
+    r"|[Oo]mitted"
+    r"|[Ii]nstead of"
+    r"|[Nn]ot applicable"
+    r")"
+)
 
 _NO_DEVIATIONS_RE = re.compile(r"no deviations from spec", re.IGNORECASE)
 _ENTRY_RE = re.compile(r"^-\s+\*\*(?P<desc>.+?)\*\*")
@@ -259,6 +312,25 @@ def _validate_entry(entry: dict) -> list[dict]:
         })
         return errors
 
+    # Validate Spec source is not empty or vague (Story 150-6, AC3)
+    spec_source = _get_field_value(fields, "Spec source")
+    if spec_source is not None:
+        if not spec_source.strip():
+            errors.append({
+                "entry": description,
+                "missing_fields": [],
+                "message": f"Entry '{description}' has empty Spec source — must cite a specific document or section",
+            })
+        elif not _VALID_SPEC_SOURCE_RE.search(spec_source):
+            errors.append({
+                "entry": description,
+                "missing_fields": [],
+                "message": (
+                    f"Entry '{description}' has vague Spec source '{spec_source}' — "
+                    "must reference a file path, AC, or section"
+                ),
+            })
+
     # Validate Severity value
     severity_value = _get_field_value(fields, "Severity")
     if severity_value and severity_value not in VALID_SEVERITIES:
@@ -292,3 +364,184 @@ def _get_field_value(fields: dict, target: str) -> str | None:
         if name.lower() == target.lower():
             return value
     return None
+
+
+def _classify_authority(spec_source: str) -> str | None:
+    """Classify a spec source into an authority level.
+
+    Returns the authority level name or None if unclassifiable.
+    """
+    for level, pattern in _AUTHORITY_PATTERNS.items():
+        if pattern.search(spec_source):
+            return level
+    return None
+
+
+def validate_spec_authority(
+    session_path: str | Path,
+    agent: str,
+) -> dict:
+    """Validate that deviations respect the spec-authority hierarchy.
+
+    Checks each deviation entry's spec source against the hierarchy.
+    Deviations citing lower-authority sources (e.g., architecture docs)
+    when higher-authority sources exist are flagged.
+
+    Args:
+        session_path: Path to the session markdown file.
+        agent: Agent identifier ('tea', 'dev', or 'architect').
+
+    Returns:
+        dict with keys:
+            status: "pass" | "fail"
+            warnings: list[str]
+            errors: list[dict]
+    """
+    path = Path(session_path)
+    if not path.exists():
+        return {
+            "status": "fail",
+            "warnings": [],
+            "errors": [{"message": f"File not found: {path}"}],
+        }
+
+    content = path.read_text()
+
+    section_lines = _extract_section(content)
+    if section_lines is None:
+        return {"status": "pass", "warnings": [], "errors": []}
+
+    subsection_lines = _extract_subsection(section_lines, agent)
+    if subsection_lines is None:
+        return {"status": "pass", "warnings": [], "errors": []}
+
+    entries = _parse_entries(subsection_lines)
+    warnings: list[str] = []
+
+    for entry in entries:
+        if entry["is_no_deviations"]:
+            continue
+
+        spec_source = _get_field_value(entry["fields"], "Spec source")
+        if not spec_source:
+            continue
+
+        authority = _classify_authority(spec_source)
+        if authority is None:
+            continue
+
+        # If citing a lower-authority source, flag it
+        authority_idx = (
+            SPEC_AUTHORITY_HIERARCHY.index(authority)
+            if authority in SPEC_AUTHORITY_HIERARCHY
+            else -1
+        )
+        # Lower authority = higher index. Architecture (idx 3) is lowest.
+        # Flag if citing architecture (idx 3) or epic-context (idx 2) — anything
+        # below story-context level.
+        if authority_idx >= 3:  # architecture level
+            desc = entry["description"]
+            warnings.append(
+                f"Entry '{desc}' cites '{authority}' source ({spec_source}) — "
+                f"this is the lowest authority level. Verify session/story scope "
+                f"does not conflict."
+            )
+
+    status = "fail" if warnings else "pass"
+    return {"status": status, "warnings": warnings, "errors": []}
+
+
+def validate_session_scope(session_path: str | Path) -> dict:
+    """Validate that implementation notes don't contain raw external standard copies.
+
+    Checks the ## Story Context / ### Implementation Notes section for
+    patterns that suggest verbatim RFC/standard field lists without
+    project-specific adaptation notes.
+
+    Args:
+        session_path: Path to the session markdown file.
+
+    Returns:
+        dict with keys:
+            success: bool
+            data: dict with checks array
+            error: str | None
+    """
+    path = Path(session_path)
+    if not path.exists():
+        return {
+            "success": False,
+            "data": {"checks": [
+                {"name": "file-exists", "status": "fail",
+                 "detail": f"File not found: {path}"},
+            ]},
+            "error": f"File not found: {path}",
+        }
+
+    content = path.read_text()
+
+    # Extract ### Implementation Notes section
+    impl_notes = _extract_impl_notes(content)
+    if impl_notes is None:
+        # No implementation notes section — nothing to validate
+        return {
+            "success": True,
+            "data": {"checks": [
+                {"name": "session-scope", "status": "pass",
+                 "detail": "No implementation notes section — nothing to validate"},
+            ]},
+            "error": None,
+        }
+
+    checks: list[dict] = []
+
+    # Check for raw RFC/standard copy indicators
+    has_raw_standard = bool(_RAW_STANDARD_INDICATORS.search(impl_notes))
+    has_field_list = len(_RAW_FIELD_LIST_RE.findall(impl_notes)) >= 3
+    has_adaptation = bool(_ADAPTATION_INDICATORS.search(impl_notes))
+
+    if has_raw_standard and has_field_list and not has_adaptation:
+        checks.append({
+            "name": "session-scope",
+            "status": "fail",
+            "detail": (
+                "Implementation notes contain raw RFC/standard field list without "
+                "adaptation notes. Add project-specific adaptation explaining how "
+                "the standard is adapted for this project."
+            ),
+        })
+        return {
+            "success": False,
+            "data": {"checks": checks},
+            "error": "Raw standard copy without adaptation notes",
+        }
+
+    checks.append({
+        "name": "session-scope",
+        "status": "pass",
+        "detail": "Implementation notes properly adapted for project context",
+    })
+    return {"success": True, "data": {"checks": checks}, "error": None}
+
+
+def _extract_impl_notes(content: str) -> str | None:
+    """Extract text under ### Implementation Notes, stopping at next ### or ##."""
+    lines = content.split("\n")
+    in_section = False
+    note_lines: list[str] = []
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("### Implementation Notes"):
+            in_section = True
+            continue
+        if in_section and (stripped.startswith("### ") or stripped.startswith("## ")):
+            break
+        if in_section:
+            note_lines.append(line)
+
+    if not in_section:
+        return None
+
+    text = "\n".join(note_lines).strip()
+    return text if text else None

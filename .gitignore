@@ -8,6 +8,12 @@
 .vscode/
 *.code-workspace
 
+# Claude Code (managed at orchestrator level, not framework)
+.claude/
+
+# Root package.json is an orchestrator artifact
+/package.json
+
 # Node.js / npm
 node_modules/
 *.tgz

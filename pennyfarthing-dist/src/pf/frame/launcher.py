@@ -6,9 +6,9 @@ Core lifecycle functions for Frame server and TUI management.
 from __future__ import annotations
 
 import atexit
-import hashlib
 import os
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -17,22 +17,18 @@ import urllib.request
 from pathlib import Path
 from typing import NoReturn
 
-# --- Per-project port derivation ---
-_PORT_BASE = 2898
-_PORT_RANGE = 100  # 2898-2997
 
+def find_free_port() -> int:
+    """Ask the OS for a free port by binding to port 0.
 
-def port_for_project(project_dir: Path) -> int:
-    """Derive a stable, unique Frame port from the project directory.
-
-    Hash the resolved path so each project gets its own port in the range
-    2898-2997.  FRAME_PORT env-var overrides for manual control.
+    FRAME_PORT env-var overrides for manual control.
     """
     env = os.environ.get("FRAME_PORT")
     if env:
         return int(env)
-    digest = hashlib.md5(str(project_dir.resolve()).encode()).hexdigest()
-    return _PORT_BASE + (int(digest, 16) % _PORT_RANGE)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
 
 
 def is_process_alive(pid: int) -> bool:
@@ -113,7 +109,7 @@ def start_frame(project_dir: Path) -> subprocess.Popen | dict:
     """
     log_path = _frame_log_path(project_dir)
 
-    port = port_for_project(project_dir)
+    port = find_free_port()
 
     env = os.environ.copy()
     env["FRAME_PROJECT_DIR"] = str(project_dir)
@@ -236,23 +232,15 @@ def _probe_frame_project(port: int, project_dir: Path, timeout: float = 1.0) -> 
         return False
 
 
-def _default_port(project_dir: Path | None = None) -> int:
-    """Resolve default Frame port from FRAME_PORT env or project hash."""
-    if project_dir is not None:
-        return port_for_project(project_dir)
-    env = os.environ.get("FRAME_PORT")
-    if env:
-        return int(env)
-    return _PORT_BASE
-
-
 def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]:
     """Check if Frame is already running.
 
     Returns (is_running, pid_or_none, port_or_none).
     Uses HTTP liveness probes in addition to PID/port file checks.
     Cleans up stale/orphaned files when detection fails.
-    Falls back to probing the default port to detect orphaned servers.
+
+    With OS-assigned ports, there is no way to guess the port of an
+    orphaned server — only the .frame-port file is authoritative.
     """
     pid = read_pid_file(project_dir)
     port = read_port_file(project_dir)
@@ -261,24 +249,19 @@ def is_already_running(project_dir: Path) -> tuple[bool, int | None, int | None]
     if pid is not None and port is not None:
         if is_process_alive(pid) and _probe_frame(port):
             return (True, pid, port)
-        # Stale files — clean up and fall through to default port probe
         cleanup_files(project_dir)
+        return (False, None, None)
 
     # Port file only (no PID) — probe before assuming orphaned
-    elif port is not None and pid is None:
+    if port is not None and pid is None:
         if _probe_frame(port):
             return (True, None, port)
         cleanup_files(project_dir)
+        return (False, None, None)
 
     # PID file only (no port) — stale state, clean up
-    elif pid is not None and port is None:
+    if pid is not None and port is None:
         cleanup_files(project_dir)
-
-    # Fall through: no valid files — probe default port to detect orphaned servers.
-    # Only claim it if the server belongs to THIS project (project_dir match).
-    default = _default_port(project_dir)
-    if _probe_frame_project(default, project_dir):
-        return (True, None, default)
 
     return (False, None, None)
 

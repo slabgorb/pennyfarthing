@@ -14,6 +14,7 @@ from typing import Any
 
 import click
 
+from pf.jira.client import get_client, map_status_to_jira
 from pf.sprint.loader import find_epic, find_story
 from pf.sprint.validator import VALID_STORY_STATUSES, validate_full_sprint
 from pf.sprint.yaml_io import read_sprint, write_sprint
@@ -36,6 +37,7 @@ def update_story(
     add_ac: list[str] | None = None,
     clear_ac: bool = False,
     dry_run: bool = False,
+    update_jira: bool = False,
 ) -> dict[str, Any]:
     """Update fields on a story in the sprint YAML.
 
@@ -55,6 +57,7 @@ def update_story(
         add_ac: Acceptance criteria to append
         clear_ac: If True, clear existing ACs before adding
         dry_run: If True, report changes without writing
+        update_jira: If True, sync changed fields to Jira after YAML update
 
     Returns:
         Dict with success status and optional error
@@ -165,10 +168,66 @@ def update_story(
 
     write_sprint(sprint_path, data)
 
-    return {
+    # Jira sync: after YAML succeeds, push changed fields to Jira
+    jira_steps: list[dict[str, Any]] = []
+    jira_key = story.get("jira")
+
+    if update_jira and jira_key:
+        client = get_client()
+
+        # Status transition
+        if status is not None:
+            jira_target = map_status_to_jira(status)
+            try:
+                jira_result = client.transition_sync(jira_key, jira_target)
+                jira_steps.append({
+                    "action": "transition",
+                    "success": jira_result.get("success", False),
+                    "error": jira_result.get("error"),
+                })
+            except Exception as exc:
+                jira_steps.append({"action": "transition", "success": False, "error": str(exc)})
+
+        # Field updates (points, description)
+        jira_fields: dict[str, Any] = {}
+        if points is not None:
+            jira_fields["customfield_10031"] = points
+        if description is not None:
+            jira_fields["summary"] = description
+        if jira_fields:
+            try:
+                client.update_issue_sync(jira_key, jira_fields)
+                jira_steps.append({"action": "update_fields", "success": True})
+            except Exception as exc:
+                jira_steps.append({"action": "update_fields", "success": False, "error": str(exc)})
+
+        # Assignee
+        if assigned_to is not None:
+            try:
+                assign_result = client.assign_issue_sync(jira_key, assigned_to)
+                jira_steps.append({
+                    "action": "assign",
+                    "success": assign_result.get("success", False),
+                    "error": assign_result.get("error"),
+                })
+            except Exception as exc:
+                jira_steps.append({"action": "assign", "success": False, "error": str(exc)})
+
+    elif update_jira and not jira_key:
+        jira_steps.append({"action": "skipped", "reason": "no jira key on story"})
+
+    result_dict: dict[str, Any] = {
         "success": True,
         "story_id": story_id,
     }
+
+    if jira_steps:
+        result_dict["jira"] = jira_steps
+        failed = [s for s in jira_steps if s.get("success") is False]
+        if failed:
+            result_dict["jira_errors"] = True
+
+    return result_dict
 
 
 @click.command("update")
@@ -204,6 +263,7 @@ def update_story(
     "--clear-ac", is_flag=True, help="Clear all acceptance criteria (use with --add-ac to replace)"
 )
 @click.option("--dry-run", is_flag=True)
+@click.option("--jira", "update_jira", is_flag=True, help="Sync changed fields to Jira after YAML update")
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 def story_update_command(
     story_id: str,
@@ -220,6 +280,7 @@ def story_update_command(
     add_ac: tuple[str, ...],
     clear_ac: bool,
     dry_run: bool,
+    update_jira: bool,
     sprint_file: str | None,
 ) -> None:
     """Update a story's fields by ID."""
@@ -248,6 +309,7 @@ def story_update_command(
         add_ac=list(add_ac) if add_ac else None,
         clear_ac=clear_ac,
         dry_run=dry_run,
+        update_jira=update_jira,
     )
 
     if result["success"]:
@@ -255,5 +317,16 @@ def story_update_command(
             click.echo(f"[DRY-RUN] Would update story {result['story_id']}")
         else:
             click.echo(f"Updated story {result['story_id']}")
+            if result.get("jira_errors"):
+                click.echo("[WARN] YAML updated but some Jira syncs failed:")
+                for step in result.get("jira", []):
+                    if step.get("success") is False:
+                        click.echo(f"  - {step['action']}: {step.get('error', 'unknown')}")
+            elif result.get("jira"):
+                skipped = [s for s in result["jira"] if s.get("action") == "skipped"]
+                if skipped:
+                    click.echo(f"[WARN] Jira sync skipped: {skipped[0].get('reason')}")
+                else:
+                    click.echo("Jira synced")
     else:
         raise click.ClickException(result["error"])

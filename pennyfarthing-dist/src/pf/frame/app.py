@@ -166,6 +166,7 @@ def create_app() -> FastAPI:
     from .routes.analysis import all_analysis_routers
     from .routes.data_proxy import all_data_proxy_routers
     from .routes.inline import all_inline_routers
+    from .routes.repos import all_repos_routers
     from .routes.state import all_state_routers, set_receiver
 
     # Share the OTLP receiver with token-stats route
@@ -178,6 +179,8 @@ def create_app() -> FastAPI:
     for router in all_analysis_routers:
         app.include_router(router)
     for router in all_inline_routers:
+        app.include_router(router)
+    for router in all_repos_routers:
         app.include_router(router)
 
     # --- WebSocket channels ---

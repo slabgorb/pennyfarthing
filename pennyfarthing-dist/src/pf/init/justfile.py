@@ -15,6 +15,7 @@ from pathlib import Path
 FRAMEWORK_RECIPES: frozenset[str] = frozenset(
     {
         "frame",
+        "frame-stop",
         "dashboard",
         "tui",
         "gui",

@@ -23,6 +23,7 @@ SUBAGENTS = [
     "reviewer-type-design",
     "reviewer-security",
     "reviewer-simplifier",
+    "reviewer-rule-checker",
 ]
 
 
@@ -70,6 +71,7 @@ def _build_reviewer_assessment() -> str:
         "- [TYPE] Type design sound\n"
         "- [SEC] No security concerns\n"
         "- [SIMPLE] No unnecessary complexity\n"
+        "- [RULE] No rule violations\n"
     )
 
 

@@ -7,23 +7,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.0.0] - 2026-03-21
+
+### Added
+
+- **Spec-drift gates** — Pre-check for review phase entry enforces spec-authority hierarchy and quality regression guards (150-3/4/5, #1470, #1474, #1475, #1476)
+- **Design Deviations in PR body** — Findings section auto-generated with deviation traceability (#1473)
+- **Reviewer sub-agent toggles** — Configurable enable/disable for individual reviewer sub-agents (#1466)
+- **`pf sprint story update --jira`** — Sync story updates to Jira inline (#1462)
+- **Frame repos API** — Repos endpoints added to WheelHub (#1460)
+- **Peloton pre-priming** — Teammates get full agent context before pipeline runs (148-28, #1454)
+- **Write-time settings validators** — RED phase tests for settings validation (147-8, #1461)
+
+### Changed
+
+- **Reviewer pipeline upgraded to Opus** — Reviewer subagents use Opus with relaxed constraints (#1448)
+- **Frame port assignment** — Replaced hash-based port selection with OS-assigned ports (MSSCI-16594, #1456)
+- **Release workflow cleanup** — Removed Node/NPM/package.json references; framework is Python-only
+- **E2E test suite** — Removed phantom `frame-node24` scenario that had no implementation
+
+### Fixed
+
+- **Consumer shim discovery** — `pf init` for consumer projects now resolves the globally installed pf (pipx/pip/uv), ignoring `PF_BINARY` env var and monorepo walk-up that could bake dev-environment paths into consumer shims (#1493)
+- **Session launch command** — Use `pf launch frame` instead of `pf frame start` in start-session hook (#1458)
+
+## [13.0.0-beta.2] - 2026-03-17
+
+### Added
+
+- **Peloton portrait panes** — Split panes beside CLI to show agent portraits during pipeline runs (148-21, #1444)
+- **Peloton agent color prompts** — Color instructions injected into teammate prompts for visual differentiation (148-22, #1445)
+- **Peloton stale team cleanup** — Auto-cleanup of stale team directories on start and stop (#1443)
+- **Git pane collapsible sections** — TUI git pane supports collapsible per-repo sections with carousel toggle (148-4, #1439)
+- **Settings page rework** — Explicit SETTINGS_META entries for `jira.project` and `jira.url` (148-7, #1440)
+- **Reviewer gate clarity** — Clearer reviewer handoff gate instructions and error messages (148-23, #1441)
+- **Peloton two-column layout expansion** — `create_peloton_layout` for two-column pane arrangements (148-15)
+- **repos.yaml writer** — `set_repo_field` API for programmatic repos.yaml updates (147-6, #1428)
+
+### Fixed
+
+- **Sprint story finish** — Accept alphanumeric epic IDs in story finish flow (#1437)
+- **Reviewer subagent completion** — Accept bold markdown in reviewer subagent completion check (#1438)
+- **Pre-commit hook** — Exclude `sprint/demos/` from YAML validation (#1442)
+- **Sprint all_story_ids** — Move init outside epics block to avoid `UnboundLocalError`
+- **Reviewer assessment error** — Derive agent name dynamically instead of hardcoded (148-23)
+- **Tmux session name resolution** — Resolve actual tmux session name in `start_session`
+
+## [13.0.0-beta.1] - 2026-03-16
+
+### Added
+
+- **Peloton full TDD workflow phases** — Wired all TDD workflow phases from YAML definition (#1429)
+- **Peloton two-column layout** — CLI/TUI + agent stacking pane layout (148-15, #1430)
+
+### Fixed
+
+- **Peloton pane reuse** — Reuse pre-opened panes and stack TUI below CLI (#1434, #1436)
+- **Portrait pane caching** — TUI portrait pane shows image and caches quote per agent (MSSCI-16424, #1433)
+- **Subagent pane statusbar** — Disabled CLI statusbar for subagent panes (MSSCI-16475, #1432)
+- **Peloton tmux session leak** — Kill peloton-owned panes on stop to prevent session leaks (MSSCI-16474, #1431)
+- **Peloton skill cleanup** — Added run tags and removed self-reference in peloton skill (#1435)
+- **Context schema path** — Resolve via `get_dist_root` instead of `parents[3]`
+- **Init tmux templates** — Copy tmux templates when dist_root is outside target_dir
+- **Test isolation** — Block all real tmux calls globally via conftest autouse fixture
+
 ## [13.0.0-alpha.3] - 2026-03-15
 
 ### Added
 
-- **Peloton team mode** — Native agent teams replace `claude -p` for pipeline replay benchmarks (148-11, 148-12, #1418, #1419, #1421)
-- **Peloton mode orchestration** — Concurrent tmux panes for TEA/Dev/Reviewer with live mode CLI commands (148-8, 148-9, #1408, #1409)
+- **Peloton team mode** — Native agent teams replace `claude -p` and custom subagent orchestration for pipeline replay benchmarks (148-11, 148-12, #1418, #1419, #1421)
+- **Peloton mode orchestration** — Concurrent tmux panes for TEA/Dev/Reviewer with live mode CLI commands (148-8, 148-9)
 - **Peloton pane management** — Unified pane management via tmux registry (148-10, #1415)
+- **Peloton skill** — CLI skill wrapper for peloton mode discovery and documentation (148-8)
+- **pf-handoff skill** — Dedicated skill wrapper for gate resolution and session handoff commands
 - **ReposPanel TUI** — Per-repo collapsible sections in TUI dashboard (MSSCI-16416, #1407)
 - **PPTX assembler** — Slide deck generation for demo artifacts (145-5, #1411)
 - **/pf-demo skill wrapper** — Demo generation skill (146-2, #1412)
 - **Demo finish hook** — Auto-generate demo artifacts on story_finish (146-3, #1413)
 - **Tmux pane discoverability** — Icons, borders, env vars for pane identification (148-1, #1410)
+- **Token stats OTLP metrics** — Real-time token consumption wired to debug pane via WebSocket (148-6, #1401)
 
 ### Changed
 
 - **Frame rename** — WheelHub/BikeRack renamed to Frame/TUI across entire framework (#1403, #1420, #1424)
 - **GUI packages removed** — React packages dropped; Python-only architecture (bd292b7)
+- **Tmux auto-start** — `tmux-dev` renamed to `start-session`, auto-starts Frame server (#1426)
 - **Agent behavior guide** — Added critical repos.yaml branching rule
 
 ### Fixed
@@ -40,22 +108,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Native subagent infrastructure** — SM spawns subagents via Agent tool; phase-chaining orchestration routes work through TEA→Dev→Reviewer automatically (143-6, 143-7, 143-8, 143-12, MSSCI-16364, #1341)
+- **Native subagent definitions** — Agent definitions for all 10 roles (Dev, TEA, Reviewer + 7 others) as Claude Code native subagents (#1339, #1340)
+- **Subagent-dispatch gate** — Completion gate enforcing all subagents complete before phase exits; per-role tool restriction validation (143-12)
+- **Handoff document schema** — Contract schema for inter-agent handoffs in native subagent mode
 - **Spec-check and spec-reconcile phases** — Architect validates Dev implementation against story context before review, then produces definitive deviation manifest after review (144-6, 144-7, 144-9, #1386, #1376, #1377)
+- **Architect spec-check mismatch taxonomy** — Structured deviation categories for consistent implementation deviation classification (MSSCI-16432, #1393)
 - **AC-completion gate** — Validates acceptance criteria accountability at Dev exit (144-3, #1377)
-- **Deviation logging** — TEA and Dev log real-time spec deviations with 6-field format; Reviewer audits and stamps entries (144-2, #1383)
+- **Deviation format spec and gate** — 6-field deviation format with gate validation (144-1, #1362)
+- **Deviation logging** — TEA and Dev log real-time spec deviations; Reviewer audits and stamps entries (144-2, #1383)
+- **Spec deviation tracking** — Session output includes spec deviation records (#1331)
 - **Saddle mode** — Background observer agent workspace: `pf saddle summon` launches agent in tmux pane (143-17, 143-18, 147-10, #1374, #1379, #1394)
-- **Demo pipeline** — `pf demo generate` CLI, DemoOrchestrator pipeline entry point, demo.yaml branding config, PPTX assembler for slide decks (145-7, 146-1, 146-3, MSSCI-16401, MSSCI-16409, #1375, #1380, #1385, #1390, #1397)
+- **Demo pipeline** — `pf demo generate` CLI, DemoOrchestrator pipeline entry point, demo.yaml branding and classification config, PPTX assembler (145-7, 146-1, 146-3, MSSCI-16401, MSSCI-16409, #1375, #1380, #1385, #1390, #1397)
+- **Demo script generator** — Automated reproducible scripts from demo artifacts (145-4)
+- **Demo content generator** — ELI5 translation for demo content (145-3)
+- **Signal collector** — Captures telemetry signals (agent decisions, findings) during story execution for demo generation (145-1, #1364)
+- **Story type classifier** — AI classification of story types for demo context generation (145-2, #1365)
 - **Mermaid diagram generation** — Module for architecture diagrams in demo artifacts (145-6, #1384)
+- **PreToolUse hook for branch protection** — Branch protection rules enforced before tool execution, respects trunk-based strategy (143-13, #1369)
+- **Simplify toggle in repos.yaml** — Projects can disable simplify phase via repos.yaml configuration (144-4, #1368)
+- **Assumptions section in story context** — Story context schema supports explicit Assumptions for dependency tracking (144-5)
 - **RepoFieldSpec registry** — Typed metadata for repos.yaml fields, enabling TUI rendering of repo settings (147-4)
 - **Jira and settings TUI enhancements** — Jira config in DEFAULTS and settings panel (147-1), saddle_mode SettingSpec (147-2)
-- **Native subagent support** — `.claude/agents/` symlink and init support for Claude Code native subagents (#1382)
+- **Native subagent support in pf init** — `.claude/agents/` symlink and init support for Claude Code native subagents (#1382)
 - **Reviewer-Dev fix round-trip** — Reviewer can reject back to Dev with fix instructions (143-10, #1381)
+- **Reviewer subagent completion gate** — Enforces all reviewer subagents complete before final handoff
 - **OTEL spans WebSocket channel** — Traces and logs wired to WheelHub spans channel (MSSCI-16426, #1392)
 - **Tmux pane discoverability** — Icons, borders, and env vars for tmux integration (MSSCI-16440, #1391)
+- **pf tmux pane management subsystem** — Full pane lifecycle management for tmux integration
+- **Subagent transition telemetry** — Event stream tracking agent transitions between subphases (143-16, #1371)
+- **Benchmark events-first storage** — Events stored as primary data model, traces derived from events (142-8)
+- **Benchmark LLM-narrated trace** — AI-generated narrative explanations of benchmark pipeline runs (142-9)
+- **Benchmark event parsing and trace commands** — `pf benchmark trace` and `pf benchmark explain` (142-6)
+- **Benchmark buffer_stream_events** — Stream buffering for OTEL event capture (142-4)
+- **Benchmark pre-phase scouts** — TEA and Dev pre-phase scanning, including silent failure scan on full codebase
+- **Benchmark harness-level reviewer subagent fan-out** — Parallel reviewer subagent execution at harness level
+- **Benchmark single-phase replay** — Replay individual phases for targeted debugging
+- **Benchmark unified context resolution** — Single `load_scenario()` path for all benchmark operations (#1330)
+- **Benchmark subagent-dispatch gate** — Gate enforcement within benchmark pipeline (#1333)
+- **Benchmark session continuity and entry gates** — Benchmark pipelines maintain session state across phases (MSSCI-16375, #1338)
+- **Stacked PR support** — `depends_on` field in sprint schema and Graphite stacked PR health check (ADR-0036)
+- **BMAD design deviation sync** — Sync design deviations from session to BMAD story files
 
 ### Changed
 
 - **Tandem workflow files removed** — Tandem YAML files consolidated; tandem config now inline in workflow definitions (144-8, #1378)
+- **CI simplified** — Removed Node/pnpm jobs, switched to ubuntu-latest (#1305, #1321, #1322)
+- **52 low-value persona themes pruned** — harry-potter, sandman, lovecraft-mythos and 49 others removed; remaining themes got benchmark-driven tiers and effectiveness corrections
+- **TEA assessment template** — Added simplify report section
+- **max_tokens default** — Updated to 1M for Opus 4.6 context window
 
 ### Fixed
 
@@ -63,11 +164,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tmux session resolution** — Resolve attached session instead of first alphabetically
 - **Settings cleanup** — Removed colorPreset and display.fonts dead config (147-3)
 - **Jira label** — Updated from `pennyfarthing` to `product-pennyfarthing` (#1395)
+- **Init SameFileError** — Resolve SameFileError when tmux-dev is symlink, add version validator
+- **WheelHub port derivation** — Per-project port from path hash; scoped orphan detection to current project
+- **Prime TDD cycle validation** — Full e2e validation (143-9, #1361)
+- **Benchmark compute_run_dir** — Replace duplicated path logic with single function
+- **Benchmark _framework_version** — Made reliable across environments
+
+## [13.0.0-alpha.1] - 2026-03-11
+
+### Added
+
+- **BREAKING: React GUI and Electron app removed** — All JavaScript/TypeScript application code removed; framework is now Python-only (ADR-0034)
+- **Reviewer specialist subagents** — 6 specialist subagents (silent-failure, test, comment, type-design, security, simplifier) plus existing preflight and edge-hunter = 8 parallel Haiku subagents (MSSCI-16335, #1324)
+- **Benchmark pipeline upgrade** — Pipeline replay exercises full Pennyfarthing machinery including workflow phases and gate enforcement (MSSCI-16336, #1326)
+- **BMAD pipeline replay adapter** — Wire BMAD adapter into pipeline replay harness (142-3)
+- **Benchmark analyze command** — `pf benchmark analyze` with theme dimensions display
+
+### Changed
+
+- **Python WheelHub server** — Node.js WheelHub completely replaced with Python FastAPI (48-1, 48-3, 48-4)
+- **WebSocket channel manager** — FastAPI implementation with initial data push and periodic broadcast (48-3)
+- **TirePump removed** — Context management simplified post-migration
+- **WheelHub bundle** — Rebuilt with in_review status mapping
 
 ## [13.0.0-alpha.0] - 2026-03-10
 
 ### Added
 
+- **pf.benchmark Python package** — Complete Python reimplementation of benchmark system (44-1)
+- **Krippendorff and Cronbach Alpha** — Inter-rater agreement calculations for multi-judge scoring (44-2)
+- **Finalize-run multi-judge validation** — Post-run validation across multiple judges (44-3)
+- **Gold standard judge calibration** — Calibrate judges against gold standard references with variance comparison (45-2, 45-4)
+- **Red herring detection** — Benchmark judges detect and flag red herrings in scenarios (43-1, 43-2)
+- **Difficulty profile schema** — Validate difficulty profiles in benchmark scenarios (46-1)
+- **CV reduction measurement** — Coefficient of variation measurement for benchmark scoring consistency (42-3)
+- **Rubric anchors** — Behavioral scales for consistent rubric application (42-1)
 - **Reviewer edge-case hunter subagent** — Specialized subagent for adversarial edge-case detection (MSSCI-16333, #1323)
 - **BMAD simulator template adapter** — Benchmark scenarios can use BMAD templates for story translation (#1320)
 - **Startup agent auto-invoke** — Agents auto-invoke on SessionStart hook (MSSCI-16331, #1319)
@@ -75,16 +206,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **OTEL telemetry streaming to disk** — Benchmark telemetry streams to disk instead of requiring BikeRack (MSSCI-16322, #1317)
 - **FastAPI WheelHub API routes** — Core API routes ported to Python FastAPI WheelHub (MSSCI-16314, #1313)
 - **Multi-judge benchmark support** — Pipeline replay supports multiple judges for scoring consistency (#1311)
+- **CLI delegation for workflow engine** — Python CLI delegates workflow operations replacing TypeScript engine (141-18)
+- **Agent-evaluation relocation** — Moved to Python with settings migration (141-21)
+- **Perplexity research guidance** — Agents and coordination guide include web-grounded research patterns (136-20, 136-21)
+- **File-overlap independence check** — Batch fan-out validates independent file sets (139-1)
+- **WebSocket initial data push** — WheelHub pushes initial state on WebSocket connection
 
 ### Changed
 
 - **BREAKING: WheelHub migrated from Node.js to Python/uvicorn** — Server-side TypeScript removed entirely; WheelHub now runs on FastAPI/uvicorn (ADR-0034, #1316)
 - **Legacy TypeScript CLI removed** — Dead CLI, BMAD, and Jira TypeScript modules deleted in favor of Python pf CLI
+- **Subagent-dispatch subgate** — Added to approval gate for native subagent enforcement
 
 ### Fixed
 
 - **Node test failures** — Deleted orphaned dist files and fixed test assertions
 - **Benchmark empty judge response warning** — Restored detailed warning for empty judge responses
+- **Release dry-run** — Reject empty version string in dry-run validation (136-29)
 
 ## [12.7.0] - 2026-03-08
 
@@ -3137,9 +3275,13 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.3...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0...HEAD
+[13.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-beta.2...v13.0.0
+[13.0.0-beta.2]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-beta.1...v13.0.0-beta.2
+[13.0.0-beta.1]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.3...v13.0.0-beta.1
 [13.0.0-alpha.3]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.2...v13.0.0-alpha.3
-[13.0.0-alpha.2]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.0...v13.0.0-alpha.2
+[13.0.0-alpha.2]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.1...v13.0.0-alpha.2
+[13.0.0-alpha.1]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.0...v13.0.0-alpha.1
 [13.0.0-alpha.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.7.0...v13.0.0-alpha.0
 [12.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.2...v12.7.0
 [12.6.2]: https://github.com/1898andCo/pennyfarthing/compare/v12.6.1...v12.6.2

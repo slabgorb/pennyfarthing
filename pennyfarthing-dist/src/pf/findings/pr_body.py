@@ -48,7 +48,14 @@ def generate_pr_body(session_path: Path | str) -> dict:
         _build_details_section(sections),
     ]
 
-    return {"success": True, "data": {"pr_body_markdown": "\n\n".join(parts)}}
+    deviations = _build_deviations_section(sections)
+    if deviations:
+        parts.append(deviations)
+
+    md = "\n\n".join(parts)
+    md = _strip_html_comments(md)
+
+    return {"success": True, "data": {"pr_body_markdown": md}}
 
 
 def _parse_frontmatter(content: str) -> dict:
@@ -199,6 +206,98 @@ def _has_real_findings(findings_text: str) -> bool:
         if stripped.startswith("- **") and "no upstream" not in stripped.lower():
             return True
     return False
+
+
+def _strip_html_comments(text: str) -> str:
+    """Remove HTML comments from text."""
+    return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL).strip()
+
+
+def _build_deviations_section(sections: dict) -> str | None:
+    """Build Design Deviations section from session data.
+
+    Returns None if no real deviations exist.
+    """
+    raw = sections.get("Design Deviations", "")
+    if not raw:
+        return None
+
+    # Parse deviation entries by agent subsection
+    deviations = _parse_deviations(raw)
+    if not deviations:
+        return None
+
+    # Count summary
+    total = len(deviations)
+    major_count = sum(1 for d in deviations if d.get("severity") == "major")
+    breaking_count = sum(
+        1 for d in deviations if "breaking" in d.get("forward_impact", "").lower()
+    )
+
+    lines = ["## Design Deviations", ""]
+
+    # Summary line
+    summary_parts = [f"{total} deviation{'s' if total != 1 else ''}"]
+    if major_count:
+        summary_parts.append(f"{major_count} major")
+    if breaking_count:
+        summary_parts.append(f"{breaking_count} breaking")
+    lines.append(f"**{', '.join(summary_parts)}**")
+    lines.append("")
+
+    for d in deviations:
+        prefix = ""
+        if "breaking" in d.get("forward_impact", "").lower():
+            prefix = "**BREAKING** — "
+        lines.append(f"- {prefix}**{d['description']}**")
+        if d.get("severity"):
+            lines.append(f"  - Severity: {d['severity']}")
+        if d.get("rationale"):
+            lines.append(f"  - Rationale: {d['rationale']}")
+        if d.get("forward_impact"):
+            lines.append(f"  - Forward impact: {d['forward_impact']}")
+
+    return "\n".join(lines)
+
+
+def _parse_deviations(text: str) -> list[dict]:
+    """Parse deviation entries from the Design Deviations section."""
+    deviations: list[dict] = []
+    current: dict | None = None
+
+    for line in text.split("\n"):
+        stripped = line.strip()
+
+        # Skip HTML comments, blank lines, agent headers
+        if stripped.startswith("<!--") or not stripped:
+            continue
+        if stripped.startswith("### "):
+            continue
+
+        # Skip "No deviations from spec" markers
+        if "no deviations from spec" in stripped.lower():
+            continue
+
+        # New deviation entry: - **description**
+        m = re.match(r"^- \*\*(.+?)\*\*\s*$", stripped)
+        if m:
+            if current:
+                deviations.append(current)
+            current = {"description": m.group(1)}
+            continue
+
+        # Deviation fields
+        if current and stripped.startswith("- "):
+            field_match = re.match(r"^- (.+?):\s*(.+)$", stripped)
+            if field_match:
+                key = field_match.group(1).strip().lower().replace(" ", "_")
+                value = field_match.group(2).strip()
+                current[key] = value
+
+    if current:
+        deviations.append(current)
+
+    return deviations
 
 
 def _build_minimal_body() -> str:

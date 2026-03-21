@@ -31,18 +31,12 @@ git checkout -b "$RELEASE_BRANCH"
 
 ```bash
 # Root files (always staged)
-git add VERSION package.json CHANGELOG.md
-[[ -f package-lock.json ]] && git add package-lock.json
+git add VERSION CHANGELOG.md pennyfarthing-dist/src/pf/__init__.py
 
 # Stable-only files (skip for prerelease)
 if [[ "$IS_PRERELEASE" != "true" ]]; then
     git add README.md CLAUDE.md
 fi
-
-# All workspace packages (auto-discovered)
-for PKG_JSON in packages/*/package.json; do
-    [[ -f "$PKG_JSON" ]] && git add "$PKG_JSON"
-done
 ```
 
 ### 7.3 Verify Staging
@@ -56,7 +50,7 @@ git diff --cached --name-only
 echo ""
 echo "=== Verification ==="
 # Check root files are staged (prerelease skips README.md and CLAUDE.md)
-ROOT_FILES="VERSION package.json CHANGELOG.md"
+ROOT_FILES="VERSION CHANGELOG.md pennyfarthing-dist/src/pf/__init__.py"
 if [[ "$IS_PRERELEASE" != "true" ]]; then
     ROOT_FILES="$ROOT_FILES README.md CLAUDE.md"
 fi
@@ -65,14 +59,6 @@ for f in $ROOT_FILES; do
         echo "  ✓ $f"
     else
         echo "  ✗ $f (MISSING from staging!)"
-    fi
-done
-# Check all workspace packages are staged
-for PKG_JSON in packages/*/package.json; do
-    if git diff --cached --name-only | grep -q "^$PKG_JSON$"; then
-        echo "  ✓ $PKG_JSON"
-    else
-        echo "  ✗ $PKG_JSON (MISSING from staging!)"
     fi
 done
 ```
@@ -98,11 +84,7 @@ git branch -d "$RELEASE_BRANCH"
 ```bash
 echo "=== Post-Commit Check ==="
 echo "VERSION file: $(cat VERSION)"
-echo "package.json: $(grep '"version"' package.json)"
-for PKG_JSON in packages/*/package.json; do
-    PKG=$(basename $(dirname "$PKG_JSON"))
-    echo "$PKG: $(grep '"version"' "$PKG_JSON")"
-done
+echo "pf/__init__.py: $(grep '__version__' pennyfarthing-dist/src/pf/__init__.py)"
 ```
 
 All should read `{new_version}`. If any don't match, **abort before pushing.**

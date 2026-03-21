@@ -138,7 +138,24 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
    - Extract testing rules for `reviewer-test-analyzer` (vacuous assertions, missing error path tests)
    - Format as `PROJECT_RULES` parameter text (see `<parameters>` section)
    - **The lang-review checklist checks are the Rule Compliance section's rubric.** Your `### Rule Compliance` section should map to these numbered checks.
-4. Spawn **all 9 subagents** in background, in a single message for parallel execution:
+4. **Check subagent toggles** before spawning. Run:
+   ```bash
+   pf settings get workflow.reviewer_subagents
+   ```
+   Each subagent can be individually enabled/disabled via `workflow.reviewer_subagents.<name>` (all default to `true`). The setting keys map to subagents as follows:
+   | Setting Key | Subagent |
+   |-------------|----------|
+   | `preflight` | `reviewer-preflight` |
+   | `edge_hunter` | `reviewer-edge-hunter` |
+   | `silent_failure_hunter` | `reviewer-silent-failure-hunter` |
+   | `test_analyzer` | `reviewer-test-analyzer` |
+   | `comment_analyzer` | `reviewer-comment-analyzer` |
+   | `type_design` | `reviewer-type-design` |
+   | `security` | `reviewer-security` |
+   | `simplifier` | `reviewer-simplifier` |
+   | `rule_checker` | `reviewer-rule-checker` |
+
+   Spawn only **enabled** subagents in background, in a single message for parallel execution:
    - `reviewer-preflight` — mechanical checks (tests, lint, smells)
    - `reviewer-edge-hunter` — boundary conditions and unhandled paths
    - `reviewer-silent-failure-hunter` — swallowed errors and silent fallbacks
@@ -148,6 +165,9 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
    - `reviewer-security` — security vulnerabilities — **include PROJECT_RULES**
    - `reviewer-simplifier` — unnecessary complexity
    - `reviewer-rule-checker` — **exhaustive rule verification** — **include LANG_REVIEW_RULES** (full checklist text)
+
+   For any **disabled** subagent, skip spawning it and pre-fill its row in the Subagent Results table as:
+   `| N | {name} | Skipped | disabled | N/A | Disabled via settings |`
 5. **Read the diff yourself** while subagents are running — build your own understanding.
 6. **Read the project rules yourself** — you will need them for the Rule Compliance section.
 7. **STOP. WAIT for every subagent to return.** See `<subagent-completion-gate>` below.
@@ -158,7 +178,8 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 
 **Enforced by `gates/subagent-before-conclusions`.** This is not advisory — the gate will reject your phase transition if you write conclusions before subagents return, or if your VERIFIEDs contradict subagent findings without explicit `Challenged:` notes.
 
-Do not proceed to your assessment until ALL 9 subagents have returned results.
+Do not proceed to your assessment until ALL enabled subagents have returned results.
+Subagents disabled via `workflow.reviewer_subagents` settings are pre-filled as "Skipped / disabled" — they do not block the gate.
 Do not abbreviate this process because context feels high.
 Do not skip subagents because "the code looks clean."
 
@@ -208,7 +229,7 @@ For each specialist that returns findings:
 - `high` confidence → confirm and include in assessment
 - `medium` confidence → verify against diff context before including
 - `low` confidence → note only if corroborated by your own analysis
-- Tag confirmed findings by source: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`
+- Tag confirmed findings by source: `[EDGE]`, `[SILENT]`, `[TEST]`, `[DOC]`, `[TYPE]`, `[SEC]`, `[SIMPLE]`, `[RULE]`
 
 **Dismissal rules:**
 - To dismiss, you MUST provide a one-sentence rationale citing specific evidence (line number or rule text)

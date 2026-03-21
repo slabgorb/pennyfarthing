@@ -15,15 +15,22 @@ import shutil
 from pathlib import Path
 
 
-def resolve_pf_binary() -> dict:
+def resolve_pf_binary(*, for_shim: bool = False) -> dict:
     """Resolve the absolute path to the pf CLI binary.
 
     Probe chain (first match wins):
-      1. PF_BINARY env var (explicit override)
+      1. PF_BINARY env var (explicit override) — skipped when for_shim=True
       2. ~/.local/bin/pf (pip/pipx user install)
       3. ~/.local/share/uv/tools/pennyfarthing*/bin/pf (uv tool install)
-      4. Monorepo pf_launcher.py (CWD walk-up)
+      4. Monorepo pf_launcher.py (CWD walk-up) — skipped when for_shim=True
       5. shutil.which("pf") fallback
+
+    Args:
+        for_shim: When True, resolve the globally installed pf binary
+            suitable for writing into a consumer project's shim. Skips
+            PF_BINARY env var and monorepo walk-up to avoid baking in
+            dev-environment paths that won't work in the consumer's
+            Python environment.
 
     Returns:
         Result dict: {success, data?, error?}
@@ -33,23 +40,26 @@ def resolve_pf_binary() -> dict:
     probed: list[str] = []
 
     # 1. PF_BINARY env var (explicit override)
-    pf_binary_env = os.environ.get("PF_BINARY")
-    if pf_binary_env:
-        p = Path(pf_binary_env)
-        if not p.exists():
+    # Skipped for shim generation — the consumer project needs a stable
+    # global path, not whatever the dev environment exported.
+    if not for_shim:
+        pf_binary_env = os.environ.get("PF_BINARY")
+        if pf_binary_env:
+            p = Path(pf_binary_env)
+            if not p.exists():
+                return {
+                    "success": False,
+                    "error": f"PF_BINARY points to nonexistent path: {pf_binary_env}",
+                }
+            if not p.is_file():
+                return {
+                    "success": False,
+                    "error": f"PF_BINARY points to a non-file: {pf_binary_env}",
+                }
             return {
-                "success": False,
-                "error": f"PF_BINARY points to nonexistent path: {pf_binary_env}",
+                "success": True,
+                "data": {"path": str(p), "install_method": "env_override"},
             }
-        if not p.is_file():
-            return {
-                "success": False,
-                "error": f"PF_BINARY points to a non-file: {pf_binary_env}",
-            }
-        return {
-            "success": True,
-            "data": {"path": str(p), "install_method": "env_override"},
-        }
 
     # 2. ~/.local/bin/pf (pip/pipx user install)
     home = Path(os.environ.get("HOME", os.path.expanduser("~")))
@@ -88,34 +98,38 @@ def resolve_pf_binary() -> dict:
                 }
 
     # 4. Monorepo pf_launcher.py (CWD walk-up)
-    try:
-        cwd = Path(os.getcwd()).resolve()
-    except OSError:
-        cwd = None
+    # Skipped for shim generation — consumer projects must not point at
+    # the dev repo's launcher, which runs under the consumer's python3
+    # and lacks pf's dependencies (fastapi, etc.).
+    if not for_shim:
+        try:
+            cwd = Path(os.getcwd()).resolve()
+        except OSError:
+            cwd = None
 
-    if cwd:
-        current = cwd
-        while True:
-            # Framework repo layout
-            launcher = current / "pennyfarthing-dist" / "src" / "pf_launcher.py"
-            probed.append(str(launcher))
-            if launcher.is_file():
-                return {
-                    "success": True,
-                    "data": {"path": str(launcher), "install_method": "monorepo"},
-                }
-            # Orchestrator layout
-            launcher2 = current / "pennyfarthing" / "pennyfarthing-dist" / "src" / "pf_launcher.py"
-            probed.append(str(launcher2))
-            if launcher2.is_file():
-                return {
-                    "success": True,
-                    "data": {"path": str(launcher2), "install_method": "monorepo"},
-                }
-            parent = current.parent
-            if parent == current:
-                break
-            current = parent
+        if cwd:
+            current = cwd
+            while True:
+                # Framework repo layout
+                launcher = current / "pennyfarthing-dist" / "src" / "pf_launcher.py"
+                probed.append(str(launcher))
+                if launcher.is_file():
+                    return {
+                        "success": True,
+                        "data": {"path": str(launcher), "install_method": "monorepo"},
+                    }
+                # Orchestrator layout
+                launcher2 = current / "pennyfarthing" / "pennyfarthing-dist" / "src" / "pf_launcher.py"
+                probed.append(str(launcher2))
+                if launcher2.is_file():
+                    return {
+                        "success": True,
+                        "data": {"path": str(launcher2), "install_method": "monorepo"},
+                    }
+                parent = current.parent
+                if parent == current:
+                    break
+                current = parent
 
     # 5. shutil.which fallback
     which_pf = shutil.which("pf")
