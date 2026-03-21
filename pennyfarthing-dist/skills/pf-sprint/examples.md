@@ -49,7 +49,7 @@ pf sprint work 91-3 --dry-run
 
 # Check story availability (JSON output)
 pf sprint check 91-3
-pf sprint check MSSCI-15033
+pf sprint check PROJ-400
 pf sprint check next
 ```
 
@@ -58,7 +58,7 @@ pf sprint check next
 ```bash
 # Show story details
 pf sprint story show 91-3
-pf sprint story show MSSCI-15033 --json
+pf sprint story show PROJ-400 --json
 
 # Add story to epic
 pf sprint story add 91 "Add error handling" 3
@@ -72,13 +72,13 @@ pf sprint story add --initiative technical-debt "Fix flaky test" 2 --type bug
 pf sprint story update 91-3 --status in_progress
 pf sprint story update 91-3 --status done
 pf sprint story update 91-3 --points 5 --priority P0
-pf sprint story update 91-3 --assigned-to keith.avery@1898andco.io
+pf sprint story update 91-3 --assigned-to user@example.com
 pf sprint story update 91-3 --workflow tdd-team
 pf sprint story update 91-3 --status done --dry-run
 
 # Get single field
 pf sprint story field 91-3 workflow    # tdd
-pf sprint story field 91-3 jira        # MSSCI-15033
+pf sprint story field 91-3 jira        # PROJ-400
 pf sprint story field 91-3 status      # in_progress
 
 # Sizing guidelines
@@ -95,8 +95,8 @@ pf sprint story finish 91-3
 pf sprint story finish 91-3 --dry-run
 
 # Claim/unclaim in Jira
-pf sprint story claim MSSCI-15033
-pf sprint story claim MSSCI-15033 --unclaim
+pf sprint story claim PROJ-400
+pf sprint story claim PROJ-400 --unclaim
 ```
 
 ## Epic Operations
@@ -104,17 +104,17 @@ pf sprint story claim MSSCI-15033 --unclaim
 ```bash
 # Show epic details
 pf sprint epic show 91
-pf sprint epic show MSSCI-14298
+pf sprint epic show PROJ-500
 pf sprint epic show 91 --json
 
 # Add new epic
 pf sprint epic add epic-95 "New Feature Epic"
-pf sprint epic add epic-95 "New Feature" --priority p0 --jira MSSCI-15100
+pf sprint epic add epic-95 "New Feature" --priority p0 --jira PROJ-501
 pf sprint epic add epic-95 "New Feature" -d "Description of the epic"
 
 # Update epic
 pf sprint epic update 91 --status in_progress
-pf sprint epic update MSSCI-14298 --priority P0
+pf sprint epic update PROJ-500 --priority P0
 pf sprint epic update 91 --status done --dry-run
 
 # Promote from future to current sprint
@@ -143,7 +143,7 @@ pf sprint epic remove epic-41
 pf sprint epic remove epic-41 --dry-run
 
 # Get epic field
-pf sprint epic field 91 jira               # MSSCI-14298
+pf sprint epic field 91 jira               # PROJ-500
 pf sprint epic field 91 title              # Epic title
 ```
 

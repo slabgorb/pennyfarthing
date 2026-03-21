@@ -52,8 +52,8 @@ DEFAULTS: dict[str, Any] = {
         },
     },
     "jira": {
-        "project": "MSSCI",
-        "url": "https://1898andco.atlassian.net",
+        "project": "",
+        "url": "",
     },
 
     "peloton": {

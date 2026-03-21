@@ -156,8 +156,8 @@ CUSTOMIZATION:
   □ Configure agent sidecars in .pennyfarthing/sidecars/
 
 RESOURCES:
-  □ Docs: https://github.com/1898andCo/pennyfarthing
-  □ Issues: https://github.com/1898andCo/pennyfarthing/issues
+  □ Docs: https://github.com/slabgorb/pennyfarthing
+  □ Issues: https://github.com/slabgorb/pennyfarthing/issues
   □ Skill help: /help {skill_name}
 ```
 

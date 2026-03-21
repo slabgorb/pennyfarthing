@@ -25,8 +25,8 @@ def _resolve_jira_config():
         jira_cfg = config.get("jira", {})
     except Exception:
         jira_cfg = {}
-    project = jira_cfg.get("project") or os.environ.get("JIRA_PROJECT") or "MSSCI"
-    url = jira_cfg.get("url") or os.environ.get("JIRA_URL") or "https://1898andco.atlassian.net"
+    project = jira_cfg.get("project") or os.environ.get("JIRA_PROJECT") or ""
+    url = jira_cfg.get("url") or os.environ.get("JIRA_URL") or ""
     return project, url
 
 
@@ -168,7 +168,7 @@ def get_story_points(issue_key: str, issue_json: dict[str, Any] | None = None) -
     if not issue_json:
         return None
 
-    # customfield_10031 is Story Points for 1898andco Jira
+    # customfield_10031 is Story Points (common Jira Cloud default)
     points = get_jira_field(issue_json, "fields.customfield_10031")
     return int(points) if points is not None else None
 
@@ -223,18 +223,30 @@ def check_dependencies(quiet: bool = False) -> dict[str, list[str]]:
     return {"available": available, "missing": missing}
 
 
-# GitHub username to Jira email mapping
-GITHUB_TO_JIRA_MAP = {
-    "slabgorb": "keith.avery@1898andco.io",
-    "arcaven": "michael.pursifull@1898andco.io",
-    "RoseSecurity": "michael.rosenfeld@1898andco.io",
-    "Zious11": "jared.richards@1898andco.io",
-    "drbothen": "joshua.magady@1898andco.io",
-}
+# GitHub username to Jira email mapping.
+# Configure per-project in .pennyfarthing/config.local.yaml under jira.user_map:
+#   jira:
+#     user_map:
+#       github_user: jira-email@example.com
+GITHUB_TO_JIRA_MAP: dict[str, str] = {}
+
+
+def _load_user_map() -> dict[str, str]:
+    """Load GitHub→Jira user map from project config."""
+    try:
+        from pf.common.config import load_pennyfarthing_config
+
+        config = load_pennyfarthing_config()
+        return config.get("jira", {}).get("user_map", {})
+    except Exception:
+        return {}
 
 
 def map_github_to_jira(github_user: str | None) -> str | None:
     """Map GitHub username to Jira email.
+
+    Checks jira.user_map in config.local.yaml, then falls back to
+    the git user email.
 
     Args:
         github_user: GitHub username
@@ -245,7 +257,12 @@ def map_github_to_jira(github_user: str | None) -> str | None:
     if github_user is None:
         return None
 
-    return GITHUB_TO_JIRA_MAP.get(github_user, f"{github_user}@1898andco.io")
+    user_map = _load_user_map()
+    if github_user in user_map:
+        return user_map[github_user]
+
+    # Fallback: try git config email
+    return get_current_user_email()
 
 
 def get_current_user_email() -> str:
@@ -275,7 +292,7 @@ def get_current_user_email() -> str:
     except Exception:
         pass
 
-    return "keith.avery@1898andco.io"
+    return "user@example.com"
 
 
 # =============================================================================
@@ -740,7 +757,7 @@ class JiraClient:
         if current_points is not None and current_points == points:
             return {"success": True, "already_synced": True}
 
-        # customfield_10031 is Story Points for 1898andco Jira
+        # customfield_10031 is Story Points (common Jira Cloud default)
         return await self.update_fields_async(issue_key, {"customfield_10031": points})
 
 
