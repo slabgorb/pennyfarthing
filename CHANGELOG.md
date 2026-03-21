@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.1.0] - 2026-03-21
+
+### Added
+
+- **`pf sprint story split`** — Decompose stories into sub-stories with dependency tracking, point redistribution, and parent status transition (150-15, #1498)
+- **`pf tmux layout`** — Rearrange tmux panes after team agent spawn: `vertical` (CLI+TUI left, agents right), `grid` (2x2), `stacked` (#1496)
+- **Auto-layout hook** — PostToolUse hook reads `peloton.layout` config and auto-applies tmux layout after Agent/TeamCreate (#1496)
+- **TUI below CLI in vertical layout** — `apply_layout` detects TUI pane and places it below CLI on the left column (#1497)
+- **Reviewer toggle E2E tests** — 41 tests proving the full settings→gate enforcement pipeline for reviewer subagent toggles (150-11, #1494)
+
+### Changed
+
+- **Open-source readiness** — Removed all hardcoded MSSCI/1898andCo company references from framework defaults, examples, and test fixtures. Jira project/URL now configurable via `pf init`, user map via `config.local.yaml` (#1499, #1500, #1501)
+- **`extract_jira_key`** — Uses generic Jira key regex instead of configured project prefix (#1501)
+
+### Fixed
+
+- **`pyproject.toml` version** — Now included in release version bump (missed in 13.0.0 release)
+
 ## [13.0.0] - 2026-03-21
 
 ### Added
@@ -3275,7 +3294,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v13.1.0...HEAD
+[13.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0...v13.1.0
 [13.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-beta.2...v13.0.0
 [13.0.0-beta.2]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-beta.1...v13.0.0-beta.2
 [13.0.0-beta.1]: https://github.com/1898andCo/pennyfarthing/compare/v13.0.0-alpha.3...v13.0.0-beta.1
