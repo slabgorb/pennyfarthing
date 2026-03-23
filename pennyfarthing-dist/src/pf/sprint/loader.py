@@ -301,6 +301,17 @@ def get_archived_stories(
                 continue
 
         stories.extend(data["completed_stories"])
+
+        # Also load stories from archived epic shards referenced by completed_epics
+        for epic_ref in data.get("completed_epics", []):
+            shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+            if shard_path.exists():
+                shard_data = load_yaml_config(shard_path)
+                if shard_data and "stories" in shard_data:
+                    for s in shard_data["stories"]:
+                        if s.get("status") in ("done", "completed"):
+                            stories.append(s)
+
     return stories
 
 
