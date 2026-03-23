@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.1.2] - 2026-03-23
+
+### Added
+
+- **Reviewer diff mode discrimination** — `reviewer/diff_mode.py` maps each subagent to full-base or incremental diff mode with base branch resolution (150-7)
+- **Subagent file context mode** — `needs_file_context()` and `get_changed_files()` for subagents that need full file contents, not just diffs (150-9)
+- **Session append-only validation** — `session/append_only.py` enforces append-only rule for Delivery Findings section (150-10)
+- **Sprint status normalization** — `sprint/status_normalize.py` standardizes in_review/in-review spelling across the pipeline (150-12)
+- **Reviewer assessment template generator** — `reviewer/template.py` produces gate-compliant assessment scaffolds with all required dispatch tags (150-13)
+- **TEA spec traceability audit** — `tea/spec_traceability.py` cross-references test coverage against acceptance criteria (150-14)
+- **Spec authority guide and validator** — `spec/authority.py` enforces the spec authority hierarchy (session > story context > epic context > architecture docs) (150-16)
+- **Subagent model defaults** — Specialist reviewer subagents default to Sonnet model for analytical capability (150-17)
+- **Quality regression ratchet** — `quality/ratchet.py` prevents test count regression across commits (150-19)
+- **Finding documentation module** — `reviewer/findings.py` structures reviewer findings with severity, location, and fix guidance (150-20)
+- **Rework cycle freshness gate** — Validates that rework cycles produce fresh reviewer assessments (150-8)
+
+### Fixed
+
+- **Sprint status missing archived stories** — `get_archived_stories()` now reads epic shard files from `completed_epics` references
+
 ## [13.1.1] - 2026-03-23
 
 ### Added
