@@ -133,6 +133,14 @@ def complete_phase(
                 ),
             }
 
+        freshness = _check_rework_freshness(content)
+        if not freshness["pass"]:
+            return {
+                "status": "error",
+                "session_file": str(session_path),
+                "error": freshness["message"],
+            }
+
     now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     to_agent = _get_phase_agent(project_root, workflow, to_phase)
@@ -445,6 +453,88 @@ def _check_subagent_dispatch(content: str) -> set[str]:
     if next_heading:
         assessment = assessment[:next_heading.start()]
     return {tag for tag in required_tags if tag not in assessment}
+
+
+def _parse_rework_cycle(session_content: str) -> int:
+    """Parse rework cycle number from session content.
+
+    Looks for ``**Rework Cycle:** N`` and returns N.
+    Returns 0 if the field is absent or the value is not a valid integer.
+    """
+    match = re.search(r"\*\*Rework Cycle:\*\*\s*(\S+)", session_content)
+    if not match:
+        return 0
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return 0
+
+
+def _check_rework_freshness(session_content: str) -> dict:
+    """Check that subagent results reference the current rework cycle.
+
+    Returns a dict with keys:
+        pass: bool — True if results are fresh (or no rework in progress)
+        message: str — human-readable explanation
+        current_cycle: int — the parsed rework cycle number
+    """
+    cycle = _parse_rework_cycle(session_content)
+
+    if cycle == 0:
+        return {
+            "pass": True,
+            "message": "No rework cycle — initial review.",
+            "current_cycle": 0,
+        }
+
+    # Look for "Cycle: N" in the Subagent Results section
+    results_match = re.search(r"^## Subagent Results\b.*", session_content, re.MULTILINE)
+    if not results_match:
+        return {
+            "pass": False,
+            "message": (
+                f"Rework cycle {cycle} is active but no Subagent Results section found. "
+                "Re-run all enabled subagents for the current cycle."
+            ),
+            "current_cycle": cycle,
+        }
+
+    section = session_content[results_match.start():]
+    next_heading = re.search(r"^## (?!Subagent Results)", section, re.MULTILINE)
+    if next_heading:
+        section = section[:next_heading.start()]
+
+    # Check for "Cycle: N" matching the current cycle
+    cycle_tag = re.search(r"\*{0,2}Cycle:\s*(\d+)\*{0,2}", section)
+    if not cycle_tag:
+        return {
+            "pass": False,
+            "message": (
+                f"Rework cycle {cycle} is active but Subagent Results has no cycle tag. "
+                "To fix: Add '**Cycle: {cycle}**' to the Subagent Results section after "
+                "re-running all enabled subagents."
+            ),
+            "current_cycle": cycle,
+        }
+
+    results_cycle = int(cycle_tag.group(1))
+    if results_cycle != cycle:
+        return {
+            "pass": False,
+            "message": (
+                f"Stale subagent results: results are from cycle {results_cycle} "
+                f"but current rework cycle is {cycle}. "
+                "To fix: Re-run ALL enabled subagents against the full diff for the "
+                "current rework cycle before approving."
+            ),
+            "current_cycle": cycle,
+        }
+
+    return {
+        "pass": True,
+        "message": f"Subagent results are fresh for rework cycle {cycle}.",
+        "current_cycle": cycle,
+    }
 
 
 def _find_project_root() -> Path:
