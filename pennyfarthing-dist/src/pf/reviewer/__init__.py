@@ -1,1 +1,1 @@
-# Reviewer subagent utilities.
+"""Reviewer package — adversarial code review tools."""
