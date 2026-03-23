@@ -12,9 +12,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from pf.tmux.panes import set_pane_title, split_pane
+
 logger = logging.getLogger(__name__)
 
-from pf.tmux.panes import kill_pane, set_pane_title, split_pane
 
 
 def create_peloton_layout(
