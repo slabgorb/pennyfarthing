@@ -22,9 +22,9 @@ pf peloton start
 
 Initialize peloton team for the current story. Reads the workflow and outputs a TeamCreate prompt for SM.
 
-<run>
+```bash
 pf peloton start [--story-id ID] [--workflow NAME]
-</run>
+```
 
 <args>
 | Arg | Required | Description |
@@ -39,9 +39,9 @@ pf peloton start [--story-id ID] [--workflow NAME]
 
 Show current peloton team state.
 
-<run>
+```bash
 pf peloton status [--json]
-</run>
+```
 
 ---
 
@@ -49,9 +49,9 @@ pf peloton status [--json]
 
 Clear peloton state and clean up.
 
-<run>
+```bash
 pf peloton stop
-</run>
+```
 
 ## Concept
 
