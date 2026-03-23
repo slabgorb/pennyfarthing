@@ -14,6 +14,8 @@ from typing import Any
 
 import click
 
+from pf.sprint.status_normalize import normalize_status
+
 from pf.jira.client import get_client, map_status_to_jira
 from pf.sprint.loader import find_epic, find_story
 from pf.sprint.validator import VALID_STORY_STATUSES, validate_full_sprint
@@ -285,7 +287,7 @@ def story_update_command(
 ) -> None:
     """Update a story's fields by ID."""
     if status:
-        status = status.replace("-", "_")
+        status = normalize_status(status)
     if sprint_file is None:
         from pf.common.config import get_project_root
 

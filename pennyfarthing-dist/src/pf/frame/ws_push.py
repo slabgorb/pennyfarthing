@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from pf.sprint.status_normalize import normalize_status
+
 POLL_INTERVAL_S = 5.0
 
 
@@ -200,12 +202,12 @@ def fetch_sprint() -> dict[str, Any]:
     in_progress_pts = sum(
         s.get("points", 0) or 0
         for s in all_stories
-        if s.get("status") in ("in_progress", "in-progress")
+        if normalize_status(s.get("status", "")) == "in_progress"
     )
     in_review_pts = sum(
         s.get("points", 0) or 0
         for s in all_stories
-        if s.get("status") in ("in_review", "in-review")
+        if normalize_status(s.get("status", "")) == "in_review"
     )
     total_pts = sum(s.get("points", 0) or 0 for s in all_stories)
     remaining_pts = total_pts - done_pts - in_progress_pts - in_review_pts
