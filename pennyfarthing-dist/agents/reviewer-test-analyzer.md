@@ -2,7 +2,7 @@
 name: reviewer-test-analyzer
 description: Analyzes test coverage and quality in diff — finds vacuous assertions, missing edge cases, implementation coupling
 tools: Bash, Read, Glob, Grep
-model: opus
+model: sonnet
 ---
 
 <arguments>

@@ -8,7 +8,7 @@ tools:
   - Write
   - Edit
   - Bash
-model: haiku
+model: sonnet
 ---
 # Tandem Backseat Observer
 

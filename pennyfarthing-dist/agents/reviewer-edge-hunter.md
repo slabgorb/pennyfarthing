@@ -2,7 +2,7 @@
 name: reviewer-edge-hunter
 description: Exhaustive path enumeration on diff — method-driven, not attitude-driven
 tools: Bash, Read, Glob, Grep
-model: opus
+model: sonnet
 ---
 
 <arguments>

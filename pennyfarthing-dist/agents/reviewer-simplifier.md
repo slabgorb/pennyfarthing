@@ -2,7 +2,7 @@
 name: reviewer-simplifier
 description: Finds unnecessary complexity in diff — over-engineering, dead code, simpler alternatives
 tools: Bash, Read, Glob, Grep
-model: opus
+model: sonnet
 ---
 
 <arguments>
