@@ -14,4 +14,4 @@ Modules:
     swebench: SWE-bench patch parsing and scenario utilities
 """
 
-__version__ = "13.1.0"
+__version__ = "13.1.1"

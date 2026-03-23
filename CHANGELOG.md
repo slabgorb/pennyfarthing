@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.1.1] - 2026-03-23
+
+### Added
+
+- **Impact Summary enhancement** — `compile_impact_summary()` now includes `### Downstream Effects` (findings grouped by module) and `### Deviation Justifications` (rationale, severity, forward impact from Design Deviations section) (150-1, #1503)
+- **PR body Design Deviations section** — `generate_pr_body()` includes deviation count summary, severity, rationale, and breaking deviation highlighting (150-2, #1473)
+- **Spec-drift pre-check gate** — `gates/spec_drift_precheck.py` detects specification drift at review phase entry using keyword extraction and similarity scoring (150-3, #1474)
+- **Deviation traceability module** — `gates/deviation_traceability.py` builds traceability matrix linking deviations to spec sources and forward-impact story IDs (150-4, #1475)
+- **Configurable drift tolerance** — `gates/drift_tolerance.py` loads severity weights and thresholds from `config.local.yaml` for pass/warn/fail drift scoring (150-5, #1476)
+
+### Fixed
+
+- **Peloton skill recursion** — Removed 3 duplicate `<run>` blocks from peloton skill that caused the skill system to loop (148-29, #1504)
+- **TEA tmux pane cleanup** — Worker panes spawned during peloton sessions now auto-tagged with `owner="peloton"` so `pf peloton stop` cleans them up (148-25, #1505)
+- **Sprint status missing archived stories** — `get_archived_stories()` now reads epic shard files from `completed_epics` references, not just inline `completed_stories`
+
 ## [13.1.0] - 2026-03-21
 
 ### Added
