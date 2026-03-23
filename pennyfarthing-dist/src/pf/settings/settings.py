@@ -117,12 +117,18 @@ def get_setting(key: str) -> Any:
 
 
 def set_setting(key: str, value: str) -> dict:
-    """Set a setting value by dot-path. Returns the updated config."""
+    """Set a setting value by dot-path. Returns the updated config or error dict."""
+    from pf.settings.validators import validate_setting
+
+    coerced = _coerce_value(value)
+    validation = validate_setting(key, coerced)
+    if not validation.valid:
+        return {"success": False, "error": validation.errors[0].message}
+
     root = get_project_root()
     config_path = root / ".pennyfarthing" / "config.local.yaml"
 
     config = load_pennyfarthing_config(root)
-    coerced = _coerce_value(value)
     _set_by_path(config, key, coerced)
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -138,7 +144,15 @@ def set_setting_typed(key: str, value: Any) -> dict:
     Like set_setting() but takes a native Python value (bool, str, int)
     directly — no _coerce_value() pass. Use this when the value already
     has the correct type (e.g. from a Switch or Select widget).
+
+    Returns the updated config dict on success, or {success: False, error: ...} on validation failure.
     """
+    from pf.settings.validators import validate_setting
+
+    validation = validate_setting(key, value)
+    if not validation.valid:
+        return {"success": False, "error": validation.errors[0].message}
+
     root = get_project_root()
     config_path = root / ".pennyfarthing" / "config.local.yaml"
 
