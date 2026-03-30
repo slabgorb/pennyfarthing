@@ -1,6 +1,6 @@
 """Context CLI — commands for context validation, inspection, and template generation.
 
-Stories: MSSCI-15683 (129-3), MSSCI-15684 (129-4)
+Stories: PROJ-15683 (129-3), PROJ-15684 (129-4)
 """
 
 from __future__ import annotations

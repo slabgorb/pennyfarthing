@@ -1,7 +1,7 @@
 """
 Tests for SprintContext dataclass and resolve_sprint_context() function.
 
-Story: MSSCI-15422 - Define SprintContext dataclass and resolve_sprint_context()
+Story: PROJ-15422 - Define SprintContext dataclass and resolve_sprint_context()
 Epic: 125 - Sprint State Engine Consolidation
 
 Run with: python -m pytest tests/python/test_sprint_context.py -v

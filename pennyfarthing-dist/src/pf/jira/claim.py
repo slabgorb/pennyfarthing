@@ -34,7 +34,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         Parsed arguments namespace
     """
     parser = argparse.ArgumentParser(description="Check availability and claim a Jira story")
-    parser.add_argument("issue_key", help="Jira issue key (e.g., MSSCI-12345)")
+    parser.add_argument("issue_key", help="Jira issue key (e.g., PROJ-12345)")
     parser.add_argument(
         "--claim",
         action="store_true",
@@ -266,7 +266,7 @@ def unclaim_issue(issue_key: str) -> dict[str, Any]:
 
 def _resolve_jira_key(identifier: str) -> str:
     """Resolve a story ID (e.g. 141-3) to a Jira key, or return as-is if already a key."""
-    if identifier.startswith("MSSCI-") or "-" not in identifier or not identifier[0].isdigit():
+    if identifier.startswith("PROJ-") or "-" not in identifier or not identifier[0].isdigit():
         return identifier
     # Looks like a story ID (e.g. 141-3) — look up the Jira key from sprint YAML
     try:

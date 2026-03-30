@@ -274,7 +274,7 @@ All tabs remain keyboard accessible:
 
 ### CSS Location
 
-All tab overflow styling is in `src/public/styles/dockview-theme.css` under the "Tab Overflow Handling" section (added in MSSCI-14187).
+All tab overflow styling is in `src/public/styles/dockview-theme.css` under the "Tab Overflow Handling" section (added in PROJ-14187).
 
 ## Risks & Mitigations
 

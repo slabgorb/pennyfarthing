@@ -64,14 +64,14 @@ SAMPLE_SPRINT_DATA = {
         {
             "id": "epic-99",
             "title": "Test Epic",
-            "jira": "MSSCI-99999",
+            "jira": "PROJ-99999",
             "status": "in_progress",
             "stories": [
                 {
                     "id": "99-1",
                     "title": "Sample story for testing",
                     "points": 3,
-                    "jira": "MSSCI-99991",
+                    "jira": "PROJ-99991",
                     "status": "in_progress",
                     "branch": "feat/99-1-sample",
                     "acceptance_criteria": [
@@ -165,7 +165,7 @@ class TestCollectSignalsReturnsSignalBundle:
 
         assert bundle.story_id == "99-1"
         assert bundle.title == "Sample story for testing"
-        assert bundle.jira_key == "MSSCI-99991"
+        assert bundle.jira_key == "PROJ-99991"
         assert bundle.points == 3
         assert isinstance(bundle.acceptance_criteria, list)
         assert isinstance(bundle.pr_diff, str)

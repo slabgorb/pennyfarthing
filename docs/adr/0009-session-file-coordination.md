@@ -29,7 +29,7 @@ All agents coordinate via a structured session file at `.session/{story-id}-sess
 ## Story X-Y: [Title]
 **Repos:** pennyfarthing/api/ui
 **Branch:** feat/X-Y-slug
-**Jira:** MSSCI-12345
+**Jira:** PROJ-12345
 **Phase:** setup | red | green | review | finish
 **Status:** in_progress | blocked | complete
 **Workflow:** tdd | trivial | agent-docs

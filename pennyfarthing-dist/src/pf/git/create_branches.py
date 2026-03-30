@@ -1,7 +1,7 @@
 """
 Create feature branches across repos - async parallel execution.
 
-Story: MSSCI-12402 - Port git utility scripts to Python
+Story: PROJ-12402 - Port git utility scripts to Python
 
 Replaces: pennyfarthing-dist/scripts/git/create-feature-branches.sh
 

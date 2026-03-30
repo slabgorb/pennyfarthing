@@ -10,6 +10,6 @@ index-servers =
     cloudsmith
 
 [cloudsmith]
-repository = https://upload.cloudsmith.io/1898-and-co/pennyfarthing-scripts/
+repository = https://upload.pypi.org/legacy/
 username = __token__
 password = <YOUR_CLOUDSMITH_API_KEY>

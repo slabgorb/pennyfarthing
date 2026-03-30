@@ -1,5 +1,5 @@
 """
-Tests for CLI entry point (Story MSSCI-12656).
+Tests for CLI entry point (Story PROJ-12656).
 
 These tests verify the Click-based CLI infrastructure for Pennyfarthing.
 Run with: python -m pytest tests/python/test_cli.py -v

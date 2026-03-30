@@ -227,7 +227,7 @@ def format_pr_title(
     """Format a PR title using the project's configured template.
 
     Args:
-        jira_key: Jira issue key (e.g., "MSSCI-16204") or story ID fallback.
+        jira_key: Jira issue key (e.g., "PROJ-16204") or story ID fallback.
         title: Short summary of the change.
         pr_type: Conventional commit type (feat, fix, chore, etc.).
         scope: Optional scope (e.g., "gates", "ui").

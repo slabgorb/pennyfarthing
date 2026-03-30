@@ -1,4 +1,4 @@
-"""Tests for pf init auto-setup workflow (Story 126-3, MSSCI-15491).
+"""Tests for pf init auto-setup workflow (Story 126-3, PROJ-15491).
 
 Verifies that pf init runs an interactive setup workflow after
 directory creation: repo discovery, theme selection, git hooks,

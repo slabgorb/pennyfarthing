@@ -170,7 +170,7 @@ pf sprint status [filter]
 <args>
 | Arg | Required | Description |
 |-----|----------|-------------|
-| `story-id` | Yes | Story ID (e.g., `35-2` or `MSSCI-12345`) |
+| `story-id` | Yes | Story ID (e.g., `35-2` or `PROJ-12345`) |
 | `--verbose` | No | Show detailed output |
 </args>
 ```
@@ -195,7 +195,7 @@ pf sprint status [filter]
 **Example:**
 ```xml
 <example>
-pf sprint check MSSCI-12038
+pf sprint check PROJ-12038
 # Returns: {"type": "story", "available": true, "title": "...", ...}
 </example>
 ```
@@ -328,11 +328,11 @@ pf sprint story finish <story-id>
 <args>
 | Arg | Required | Description |
 |-----|----------|-------------|
-| `story-id` | Yes | Story to finish (e.g., `MSSCI-12052`) |
+| `story-id` | Yes | Story to finish (e.g., `PROJ-12052`) |
 </args>
 
 <example>
-pf sprint story finish MSSCI-12052
+pf sprint story finish PROJ-12052
 # Archives story, updates Jira, cleans session files
 </example>
 

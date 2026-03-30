@@ -20,7 +20,7 @@ from pf.package.discovery import (
     is_package_installed,
 )
 
-GITHUB_REPO = "1898andCo/pennyfarthing"
+GITHUB_REPO = "slabgorb/pennyfarthing"
 GITHUB_BRANCH = "develop"
 
 

@@ -178,8 +178,8 @@ Subcommands:
         Check that batch units have no shared files
 
 Examples:
-    preflight finish 31-10 --branch feat/31-10-feature --jira MSSCI-12345
-    preflight finish 63-9 -b feat/63-9-fanout -j MSSCI-12413 -f yaml
+    preflight finish 31-10 --branch feat/31-10-feature --jira PROJ-12345
+    preflight finish 63-9 -b feat/63-9-fanout -j PROJ-12413 -f yaml
     preflight independence --units '{"units": [{"id": "1", "files": ["a.ts"]}, {"id": "2", "files": ["b.ts"]}]}'
     echo '{"units": [...]}' | preflight independence
 """,

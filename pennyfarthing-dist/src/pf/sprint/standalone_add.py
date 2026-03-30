@@ -32,7 +32,7 @@ def add_standalone_story(
 
     Args:
         sprint_path: Path to sprint YAML index file
-        jira_key: Jira issue key (e.g., MSSCI-15501)
+        jira_key: Jira issue key (e.g., PROJ-15501)
         title: Story title
         points: Story points
         status: Story status (default: done)
@@ -120,8 +120,8 @@ def standalone_add_command(
 
     \b
     Usage:
-      pf sprint standalone add MSSCI-15501 "Auto-pull LFS portraits" 2
-      pf sprint standalone add MSSCI-15501 "Fix bug" 1 --pr 1070 --repos pennyfarthing
+      pf sprint standalone add PROJ-15501 "Auto-pull LFS portraits" 2
+      pf sprint standalone add PROJ-15501 "Fix bug" 1 --pr 1070 --repos pennyfarthing
       pf sprint standalone add TEST-001 "Backlog item" 3 --status backlog
     """
     if dry_run:

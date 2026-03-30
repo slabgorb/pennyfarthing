@@ -29,7 +29,7 @@ def remove_story(
 
     Args:
         sprint_path: Path to sprint YAML file
-        story_id: Story ID (e.g., "76-4", "td-1", "MSSCI-15038")
+        story_id: Story ID (e.g., "76-4", "td-1", "PROJ-15038")
         dry_run: If True, report what would be removed without writing
 
     Returns:
@@ -105,12 +105,12 @@ def story_remove_command(
 
     \b
     Arguments:
-      STORY_ID  - Story ID (e.g., 76-4, td-1, MSSCI-15038)
+      STORY_ID  - Story ID (e.g., 76-4, td-1, PROJ-15038)
 
     \b
     Examples:
       pf sprint story remove td-1 --dry-run
-      pf sprint story remove MSSCI-15038
+      pf sprint story remove PROJ-15038
       pf sprint story remove 129-3
     """
     if sprint_file is None:

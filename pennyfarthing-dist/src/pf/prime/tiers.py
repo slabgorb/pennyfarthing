@@ -6,7 +6,7 @@ Implements four context tiers based on session state:
 - HANDOFF (~700 tokens): Resumed session, different agent
 - MINIMAL (~200 tokens): Deep conversation (turn 3+), same agent
 
-Story: MSSCI-12797 - Python Prime Tier Support
+Story: PROJ-12797 - Python Prime Tier Support
 """
 
 from __future__ import annotations

@@ -12,7 +12,7 @@ Options:
 
 Examples:
     python -m pf.jira story 63-7 --transition
-    python -m pf.jira story MSSCI-12401 --points --dry-run
+    python -m pf.jira story PROJ-12401 --points --dry-run
 """
 
 import argparse
@@ -43,7 +43,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Sync a single story between Pennyfarthing and Jira"
     )
-    parser.add_argument("story_key", help="Story ID (e.g., 63-7) or Jira key (MSSCI-12401)")
+    parser.add_argument("story_key", help="Story ID (e.g., 63-7) or Jira key (PROJ-12401)")
     parser.add_argument("--transition", action="store_true", help="Sync status")
     parser.add_argument("--points", action="store_true", help="Sync story points")
     parser.add_argument("--comment", type=str, help="Add comment to issue")

@@ -43,7 +43,7 @@ echo 'export JIRA_API_TOKEN="your-token"' >> ~/.zshrc
 Add to your project's `.claude/project/hooks/setup-env.sh`:
 
 ```bash
-export JIRA_PROJECT_KEY="MSSCI"           # Your project key
+export JIRA_PROJECT_KEY="PROJ"           # Your project key
 export PROJECT_LABEL="pennyfarthing"       # Label for issues
 export JIRA_URL="https://your-org.atlassian.net"
 ```
@@ -54,23 +54,23 @@ export JIRA_URL="https://your-org.atlassian.net"
 
 ```bash
 # View issue details
-jira issue view MSSCI-10988
+jira issue view PROJ-10988
 
 # Get JSON for scripting
-jira issue view MSSCI-10988 --raw
+jira issue view PROJ-10988 --raw
 ```
 
 ### Assigning Issues
 
 ```bash
 # Assign to yourself
-jira issue assign MSSCI-10988 "$(jira me)" --project MSSCI
+jira issue assign PROJ-10988 "$(jira me)" --project PROJ
 
 # Assign to someone else (use email or display name)
-jira issue assign MSSCI-10988 "jane.smith@company.io" --project MSSCI
+jira issue assign PROJ-10988 "jane.smith@company.io" --project PROJ
 
 # Unassign
-jira issue assign MSSCI-10988 -u "" --project MSSCI
+jira issue assign PROJ-10988 -u "" --project PROJ
 ```
 
 **Important:** Always include `--project` or `-p` flag.
@@ -79,10 +79,10 @@ jira issue assign MSSCI-10988 -u "" --project MSSCI
 
 ```bash
 # Move to In Progress
-jira issue move MSSCI-10988 "In Progress" --project MSSCI
+jira issue move PROJ-10988 "In Progress" --project PROJ
 
 # Move to Done
-jira issue move MSSCI-10988 "Done" --project MSSCI
+jira issue move PROJ-10988 "Done" --project PROJ
 ```
 
 ### Creating Issues
@@ -90,13 +90,13 @@ jira issue move MSSCI-10988 "Done" --project MSSCI
 ```bash
 # Create a story
 jira issue create \
-    --project MSSCI \
+    --project PROJ \
     --type Story \
     --summary "Implement user authentication" \
     --body "As a user, I want to log in securely" \
     --priority High \
     --label pennyfarthing \
-    --parent MSSCI-10980 \
+    --parent PROJ-10980 \
     --no-input
 ```
 
@@ -105,7 +105,7 @@ jira issue create \
 ```bash
 # Link story to epic (Parent-Child relationship)
 # Order: Epic first (parent), Story second (child)
-jira issue link MSSCI-11494 MSSCI-11390 "Parent-Child"
+jira issue link PROJ-11494 PROJ-11390 "Parent-Child"
 ```
 
 **Important:** Order matters - parent issue first, child second.
@@ -113,20 +113,20 @@ jira issue link MSSCI-11494 MSSCI-11390 "Parent-Child"
 ### Adding Comments
 
 ```bash
-jira issue comment add MSSCI-10988 "Development started"
+jira issue comment add PROJ-10988 "Development started"
 ```
 
 ### Searching
 
 ```bash
 # List epics
-jira issue list --jql "project=MSSCI AND type=Epic"
+jira issue list --jql "project=PROJ AND type=Epic"
 
 # List in-progress stories
-jira issue list --jql "project=MSSCI AND status='In Progress'"
+jira issue list --jql "project=PROJ AND status='In Progress'"
 
 # Search by label
-jira issue list --jql "project=MSSCI AND labels=pennyfarthing"
+jira issue list --jql "project=PROJ AND labels=pennyfarthing"
 ```
 
 ## Story-to-Issue Linking
@@ -140,7 +140,7 @@ stories:
   - id: "35-7"
     title: "Feedback Rule Delete 404"
     description: "Fix 404 error when deleting feedback rules"
-    jira: "https://jira.example.com/browse/MSSCI-10991"
+    jira: "https://jira.example.com/browse/PROJ-10991"
     status: "in-progress"
     points: 5
     priority: "High"
@@ -158,16 +158,16 @@ From `jira-lib.sh`:
 search_existing_epic "Epic Title"
 
 # Search for story under epic
-search_existing_story "MSSCI-10980" "Story Title"
+search_existing_story "PROJ-10980" "Story Title"
 
 # Create epic with label
 create_epic "Epic Title" "Description"
 
 # Create story under epic with points
-create_story "MSSCI-10980" "Story Title" "Description" 5
+create_story "PROJ-10980" "Story Title" "Description" 5
 
 # Update issue summary/description
-update_issue "MSSCI-10988" "New Title" "New Description"
+update_issue "PROJ-10988" "New Title" "New Description"
 ```
 
 ## Status Transition Automation
@@ -302,10 +302,10 @@ SM → [Check Status] → [NEW_WORK]
 
 ```bash
 # Wrong
-jira issue assign MSSCI-10988 "user@email.com"
+jira issue assign PROJ-10988 "user@email.com"
 
 # Correct
-jira issue assign MSSCI-10988 "user@email.com" --project MSSCI
+jira issue assign PROJ-10988 "user@email.com" --project PROJ
 ```
 
 ### "User Not Found"
@@ -314,10 +314,10 @@ jira issue assign MSSCI-10988 "user@email.com" --project MSSCI
 
 ```bash
 # Try email
-jira issue assign -pMSSCI MSSCI-10988 "keith.avery@company.io"
+jira issue assign -pPROJ PROJ-10988 "keith.avery@company.io"
 
 # Or display name
-jira issue assign -pMSSCI MSSCI-10988 "Keith Avery"
+jira issue assign -pPROJ PROJ-10988 "Keith Avery"
 ```
 
 ### Parent-Child Link Wrong Direction
@@ -326,10 +326,10 @@ jira issue assign -pMSSCI MSSCI-10988 "Keith Avery"
 
 ```bash
 # Correct: Epic first, Story second
-jira issue link MSSCI-11494 MSSCI-11390 "Parent-Child"
+jira issue link PROJ-11494 PROJ-11390 "Parent-Child"
 
 # Wrong: Creates inverse relationship
-jira issue link MSSCI-11390 MSSCI-11494 "Parent-Child"
+jira issue link PROJ-11390 PROJ-11494 "Parent-Child"
 ```
 
 ### Story Points Not Syncing
@@ -338,7 +338,7 @@ Story points use a custom field. Check your Jira instance's field ID:
 
 ```bash
 # Get issue fields
-jira issue view MSSCI-10988 --raw | jq '.fields'
+jira issue view PROJ-10988 --raw | jq '.fields'
 
 # Common field ID: customfield_10031
 ```
@@ -362,19 +362,19 @@ Common queries:
 
 ```bash
 # Your assigned stories
-jira issue list --jql "project=MSSCI AND assignee=currentUser()"
+jira issue list --jql "project=PROJ AND assignee=currentUser()"
 
 # Stories in current sprint
-jira issue list --jql "project=MSSCI AND sprint in openSprints()"
+jira issue list --jql "project=PROJ AND sprint in openSprints()"
 
 # Unassigned stories
-jira issue list --jql "project=MSSCI AND assignee is EMPTY"
+jira issue list --jql "project=PROJ AND assignee is EMPTY"
 
 # Stories by label
-jira issue list --jql "project=MSSCI AND labels=pennyfarthing"
+jira issue list --jql "project=PROJ AND labels=pennyfarthing"
 
 # Recently updated
-jira issue list --jql "project=MSSCI AND updated >= -7d"
+jira issue list --jql "project=PROJ AND updated >= -7d"
 ```
 
 ## File Locations

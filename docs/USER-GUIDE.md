@@ -836,7 +836,7 @@ just frame status
 ### Getting Help
 
 - In Claude Code: `/pf-help`
-- GitHub Issues: https://github.com/1898andCo/pennyfarthing/issues
+- GitHub Issues: https://github.com/slabgorb/pennyfarthing/issues
 
 ---
 

@@ -29,7 +29,7 @@ def reindex_epic(
 
     Args:
         sprint_path: Path to sprint YAML index file
-        shard_ref: Shard reference (e.g., "129", "MSSCI-15680")
+        shard_ref: Shard reference (e.g., "129", "PROJ-15680")
         dry_run: If True, preview without writing
 
     Returns:
@@ -118,12 +118,12 @@ def epic_reindex_command(
 
     \b
     Arguments:
-      SHARD_REF  - Shard reference (e.g., 129, MSSCI-15680)
+      SHARD_REF  - Shard reference (e.g., 129, PROJ-15680)
 
     \b
     Examples:
       pf sprint epic reindex 129 --dry-run
-      pf epic reindex MSSCI-15680
+      pf epic reindex PROJ-15680
     """
     if sprint_file is None:
         from pf.common.config import get_project_root

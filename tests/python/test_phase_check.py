@@ -43,7 +43,7 @@ SESSION_TEMPLATE = """\
 **Status:** in_progress
 **Phase:** {phase}
 **Workflow:** tdd
-**Jira:** MSSCI-99999
+**Jira:** PROJ-99999
 **Branch:** fix/test-branch
 **Repos:** pennyfarthing
 **Points:** 5

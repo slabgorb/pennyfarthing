@@ -3,7 +3,7 @@
 Validates that agent definitions include proper tandem consultation sections
 per ADR-0012 and the tandem-consultation protocol.
 
-Story: MSSCI-14499 (86-4)
+Story: PROJ-14499 (86-4)
 """
 
 from __future__ import annotations

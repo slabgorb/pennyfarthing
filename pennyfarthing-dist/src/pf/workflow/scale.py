@@ -8,8 +8,8 @@ BMAD Scale Levels:
 - Level 3: platform, integration, complex, system (12-40 stories, PRD + architecture)
 - Level 4: enterprise, multi-tenant, multiple products (40+ stories, full BMAD)
 
-Story: MSSCI-12416 - Define Scale Levels
-Epic: MSSCI-12415 - Scale Adaptation and Brownfield Support
+Story: PROJ-12416 - Define Scale Levels
+Epic: PROJ-12415 - Scale Adaptation and Brownfield Support
 """
 
 import re

@@ -53,19 +53,19 @@ def _make_archive_monolith(archive_dir: Path) -> Path:
             "status": "active",
         },
         "completed_epics": [
-            "MSSCI-14465",  # epic-83
-            "MSSCI-14784",  # epic-87
+            "PROJ-14465",  # epic-83
+            "PROJ-14784",  # epic-87
         ],
         "completed_stories": [
             # Epic 83 stories (should go to shard)
-            {"id": "83-1", "epic": "MSSCI-14465", "title": "Python complexity module", "points": 2, "completed": "2026-02-08"},
-            {"id": "83-2", "epic": "MSSCI-14465", "title": "Python dependencies module", "points": 2, "completed": "2026-02-08"},
-            {"id": "83-3", "epic": "MSSCI-14465", "title": "APIs + hooks + dialogs", "points": 2, "completed": "2026-02-09"},
+            {"id": "83-1", "epic": "PROJ-14465", "title": "Python complexity module", "points": 2, "completed": "2026-02-08"},
+            {"id": "83-2", "epic": "PROJ-14465", "title": "Python dependencies module", "points": 2, "completed": "2026-02-08"},
+            {"id": "83-3", "epic": "PROJ-14465", "title": "APIs + hooks + dialogs", "points": 2, "completed": "2026-02-09"},
             # Epic 87 stories (should go to shard)
-            {"id": "87-1", "epic": "MSSCI-14784", "title": "Extend repos.yaml schema", "points": 2, "completed": "2026-02-11"},
-            {"id": "87-2", "epic": "MSSCI-14784", "title": "Wire topology into prime", "points": 2, "completed": "2026-02-11"},
+            {"id": "87-1", "epic": "PROJ-14784", "title": "Extend repos.yaml schema", "points": 2, "completed": "2026-02-11"},
+            {"id": "87-2", "epic": "PROJ-14784", "title": "Wire topology into prime", "points": 2, "completed": "2026-02-11"},
             # Orphan story (no matching epic ref — stays in index)
-            {"id": "MSSCI-14394", "title": "Subagent spans never clear", "points": 2, "completed": "2026-02-06"},
+            {"id": "PROJ-14394", "title": "Subagent spans never clear", "points": 2, "completed": "2026-02-06"},
             # Another orphan (technical debt, no epic ref)
             {"id": "td-3", "title": "Frame panel state persistence", "points": 2, "completed": "2026-02-12"},
         ],
@@ -121,7 +121,7 @@ class TestMigrationProducesIndexFormat:
 
         data = _load_archive_file(archive_file)
         orphan_ids = {s["id"] for s in data["completed_stories"]}
-        assert "MSSCI-14394" in orphan_ids, "Orphan MSSCI-14394 should remain in index"
+        assert "PROJ-14394" in orphan_ids, "Orphan PROJ-14394 should remain in index"
         assert "td-3" in orphan_ids, "Orphan td-3 should remain in index"
 
 
@@ -140,8 +140,8 @@ class TestMigrationCreatesShardsPerEpic:
 
         migrate_completed_archive(archive_file)
 
-        assert (archive_dir / "epic-MSSCI-14465.yaml").exists(), "Missing shard for MSSCI-14465"
-        assert (archive_dir / "epic-MSSCI-14784.yaml").exists(), "Missing shard for MSSCI-14784"
+        assert (archive_dir / "epic-PROJ-14465.yaml").exists(), "Missing shard for PROJ-14465"
+        assert (archive_dir / "epic-PROJ-14784.yaml").exists(), "Missing shard for PROJ-14784"
 
     def test_shard_contains_correct_stories(self, tmp_path: Path) -> None:
         """Each shard should contain exactly the stories for that epic."""
@@ -151,11 +151,11 @@ class TestMigrationCreatesShardsPerEpic:
 
         migrate_completed_archive(archive_file)
 
-        shard_83 = _read_yaml_file(archive_dir / "epic-MSSCI-14465.yaml")
+        shard_83 = _read_yaml_file(archive_dir / "epic-PROJ-14465.yaml")
         story_ids = {s["id"] for s in shard_83["stories"]}
         assert story_ids == {"83-1", "83-2", "83-3"}, f"Wrong stories in epic-83 shard: {story_ids}"
 
-        shard_87 = _read_yaml_file(archive_dir / "epic-MSSCI-14784.yaml")
+        shard_87 = _read_yaml_file(archive_dir / "epic-PROJ-14784.yaml")
         story_ids = {s["id"] for s in shard_87["stories"]}
         assert story_ids == {"87-1", "87-2"}, f"Wrong stories in epic-87 shard: {story_ids}"
 
@@ -167,8 +167,8 @@ class TestMigrationCreatesShardsPerEpic:
 
         migrate_completed_archive(archive_file)
 
-        shard = _read_yaml_file(archive_dir / "epic-MSSCI-14465.yaml")
-        assert shard.get("jira") == "MSSCI-14465" or shard.get("id") is not None
+        shard = _read_yaml_file(archive_dir / "epic-PROJ-14465.yaml")
+        assert shard.get("jira") == "PROJ-14465" or shard.get("id") is not None
         assert shard.get("status") == "done"
 
     def test_existing_shard_is_not_overwritten(self, tmp_path: Path) -> None:
@@ -179,19 +179,19 @@ class TestMigrationCreatesShardsPerEpic:
 
         # Pre-existing shard with one story already
         existing_shard = {
-            "jira": "MSSCI-14465",
+            "jira": "PROJ-14465",
             "status": "done",
             "stories": [
                 {"id": "83-0", "title": "Pre-existing story", "points": 1},
             ],
         }
-        _write_yaml(archive_dir / "epic-MSSCI-14465.yaml", existing_shard)
+        _write_yaml(archive_dir / "epic-PROJ-14465.yaml", existing_shard)
 
         archive_file = _make_archive_monolith(archive_dir)
 
         migrate_completed_archive(archive_file)
 
-        shard = _read_yaml_file(archive_dir / "epic-MSSCI-14465.yaml")
+        shard = _read_yaml_file(archive_dir / "epic-PROJ-14465.yaml")
         story_ids = {s["id"] for s in shard["stories"]}
         assert "83-0" in story_ids, "Pre-existing story lost during migration"
         assert "83-1" in story_ids, "Migrated story missing"
@@ -255,7 +255,7 @@ class TestMigrationPreservesAllStories:
 
         migrate_completed_archive(archive_file)
 
-        shard = _read_yaml_file(archive_dir / "epic-MSSCI-14465.yaml")
+        shard = _read_yaml_file(archive_dir / "epic-PROJ-14465.yaml")
         story_83_1 = next(s for s in shard["stories"] if s["id"] == "83-1")
         assert story_83_1["title"] == "Python complexity module"
         assert story_83_1["points"] == 2
@@ -281,7 +281,7 @@ class TestLoadArchiveMergesShards:
         # All 7 stories should be present
         assert "83-1" in story_ids
         assert "87-1" in story_ids
-        assert "MSSCI-14394" in story_ids
+        assert "PROJ-14394" in story_ids
         assert "td-3" in story_ids
 
     def test_load_includes_sprint_metadata(self, tmp_path: Path) -> None:

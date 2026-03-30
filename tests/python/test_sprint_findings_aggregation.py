@@ -32,7 +32,7 @@ from pf.findings.aggregate import (  # noqa: E402
 SESSION_WITH_FINDINGS = textwrap.dedent("""\
     ---
     story_id: "99-1"
-    jira_key: "MSSCI-99001"
+    jira_key: "PROJ-99001"
     title: "Test story alpha"
     ---
 
@@ -52,7 +52,7 @@ SESSION_WITH_FINDINGS = textwrap.dedent("""\
 SESSION_WITH_SAME_PATH = textwrap.dedent("""\
     ---
     story_id: "99-2"
-    jira_key: "MSSCI-99002"
+    jira_key: "PROJ-99002"
     title: "Test story beta"
     ---
 
@@ -72,7 +72,7 @@ SESSION_WITH_SAME_PATH = textwrap.dedent("""\
 SESSION_NO_FINDINGS = textwrap.dedent("""\
     ---
     story_id: "99-3"
-    jira_key: "MSSCI-99003"
+    jira_key: "PROJ-99003"
     title: "Test story gamma"
     ---
 
@@ -92,7 +92,7 @@ SESSION_NO_FINDINGS = textwrap.dedent("""\
 SESSION_NO_DELIVERY_SECTION = textwrap.dedent("""\
     ---
     story_id: "99-4"
-    jira_key: "MSSCI-99004"
+    jira_key: "PROJ-99004"
     title: "Old story without findings section"
     ---
 
@@ -114,25 +114,25 @@ SPRINT_COMPLETED_YAML = textwrap.dedent("""\
       status: active
 
     completed_epics:
-      - MSSCI-99000
+      - PROJ-99000
     completed_stories:
       - id: 99-1
-        epic: MSSCI-99000
+        epic: PROJ-99000
         title: Test story alpha
         points: 3
         completed: '2026-01-10'
       - id: 99-2
-        epic: MSSCI-99000
+        epic: PROJ-99000
         title: Test story beta
         points: 2
         completed: '2026-01-11'
       - id: 99-3
-        epic: MSSCI-99000
+        epic: PROJ-99000
         title: Test story gamma
         points: 1
         completed: '2026-01-12'
       - id: 99-4
-        epic: MSSCI-99000
+        epic: PROJ-99000
         title: Old story without findings section
         points: 1
         completed: '2026-01-13'
@@ -156,10 +156,10 @@ class TestCollectSessionFiles:
         (archive / "sprint-9999-completed.yaml").write_text(SPRINT_COMPLETED_YAML)
 
         # Write session files (only 3 of 4 have files — tests graceful handling)
-        (archive / "MSSCI-99001-session.md").write_text(SESSION_WITH_FINDINGS)
-        (archive / "MSSCI-99002-session.md").write_text(SESSION_WITH_SAME_PATH)
-        (archive / "MSSCI-99003-session.md").write_text(SESSION_NO_FINDINGS)
-        # MSSCI-99004 deliberately missing — should not crash
+        (archive / "PROJ-99001-session.md").write_text(SESSION_WITH_FINDINGS)
+        (archive / "PROJ-99002-session.md").write_text(SESSION_WITH_SAME_PATH)
+        (archive / "PROJ-99003-session.md").write_text(SESSION_NO_FINDINGS)
+        # PROJ-99004 deliberately missing — should not crash
 
         result = collect_session_files(archive, 9999)
         assert result["success"] is True
@@ -177,9 +177,9 @@ class TestCollectSessionFiles:
 
         # Check specific keys found
         jira_keys = {s["jira_key"] for s in sessions}
-        assert "MSSCI-99001" in jira_keys
-        assert "MSSCI-99002" in jira_keys
-        assert "MSSCI-99003" in jira_keys
+        assert "PROJ-99001" in jira_keys
+        assert "PROJ-99002" in jira_keys
+        assert "PROJ-99003" in jira_keys
 
     def test_missing_sprint_completed_file(self, tmp_path):
         """Returns error when sprint-completed YAML doesn't exist."""
@@ -213,12 +213,12 @@ class TestCollectSessionFiles:
         archive.mkdir()
 
         (archive / "sprint-9999-completed.yaml").write_text(SPRINT_COMPLETED_YAML)
-        (archive / "MSSCI-99001-session.md").write_text(SESSION_WITH_FINDINGS)
+        (archive / "PROJ-99001-session.md").write_text(SESSION_WITH_FINDINGS)
 
         result = collect_session_files(archive, 9999)
         assert result["success"] is True
 
-        session_99_1 = [s for s in result["data"]["sessions"] if s["jira_key"] == "MSSCI-99001"]
+        session_99_1 = [s for s in result["data"]["sessions"] if s["jira_key"] == "PROJ-99001"]
         assert len(session_99_1) == 1
         assert session_99_1[0]["story_id"] == "99-1"
 
@@ -247,8 +247,8 @@ class TestAggregateFindings:
     def test_parses_findings_from_multiple_sessions(self, tmp_path):
         """Extracts R1-format findings from all provided sessions."""
         sessions = self._make_sessions(tmp_path, {
-            "MSSCI-99001": SESSION_WITH_FINDINGS,
-            "MSSCI-99002": SESSION_WITH_SAME_PATH,
+            "PROJ-99001": SESSION_WITH_FINDINGS,
+            "PROJ-99002": SESSION_WITH_SAME_PATH,
         })
 
         result = aggregate_findings(sessions)
@@ -261,7 +261,7 @@ class TestAggregateFindings:
     def test_findings_include_story_id(self, tmp_path):
         """Each finding dict includes the story_id it came from."""
         sessions = self._make_sessions(tmp_path, {
-            "MSSCI-99001": SESSION_WITH_FINDINGS,
+            "PROJ-99001": SESSION_WITH_FINDINGS,
         })
 
         result = aggregate_findings(sessions)
@@ -274,7 +274,7 @@ class TestAggregateFindings:
     def test_skips_no_findings_entries(self, tmp_path):
         """Entries with 'No upstream findings' are excluded from aggregation."""
         sessions = self._make_sessions(tmp_path, {
-            "MSSCI-99003": SESSION_NO_FINDINGS,
+            "PROJ-99003": SESSION_NO_FINDINGS,
         })
 
         result = aggregate_findings(sessions)
@@ -285,7 +285,7 @@ class TestAggregateFindings:
     def test_handles_session_without_delivery_section(self, tmp_path):
         """Sessions without ## Delivery Findings are handled gracefully."""
         sessions = self._make_sessions(tmp_path, {
-            "MSSCI-99004": SESSION_NO_DELIVERY_SECTION,
+            "PROJ-99004": SESSION_NO_DELIVERY_SECTION,
         })
 
         result = aggregate_findings(sessions)
@@ -295,8 +295,8 @@ class TestAggregateFindings:
     def test_blocking_count_tracked(self, tmp_path):
         """Blocking findings are counted separately."""
         sessions = self._make_sessions(tmp_path, {
-            "MSSCI-99001": SESSION_WITH_FINDINGS,
-            "MSSCI-99002": SESSION_WITH_SAME_PATH,
+            "PROJ-99001": SESSION_WITH_FINDINGS,
+            "PROJ-99002": SESSION_WITH_SAME_PATH,
         })
 
         result = aggregate_findings(sessions)
@@ -334,8 +334,8 @@ class TestCrossStoryGrouping:
     def test_grouped_by_type(self, tmp_path):
         """by_type groups findings under Gap, Conflict, Improvement, Question."""
         sessions = self._make_sessions(tmp_path, {
-            "MSSCI-99001": SESSION_WITH_FINDINGS,
-            "MSSCI-99002": SESSION_WITH_SAME_PATH,
+            "PROJ-99001": SESSION_WITH_FINDINGS,
+            "PROJ-99002": SESSION_WITH_SAME_PATH,
         })
 
         result = aggregate_findings(sessions)
@@ -352,8 +352,8 @@ class TestCrossStoryGrouping:
     def test_grouped_by_path(self, tmp_path):
         """by_path groups findings that affect the same file."""
         sessions = self._make_sessions(tmp_path, {
-            "MSSCI-99001": SESSION_WITH_FINDINGS,
-            "MSSCI-99002": SESSION_WITH_SAME_PATH,
+            "PROJ-99001": SESSION_WITH_FINDINGS,
+            "PROJ-99002": SESSION_WITH_SAME_PATH,
         })
 
         result = aggregate_findings(sessions)
@@ -367,8 +367,8 @@ class TestCrossStoryGrouping:
     def test_grouped_by_agent(self, tmp_path):
         """by_agent groups findings by which agent reported them."""
         sessions = self._make_sessions(tmp_path, {
-            "MSSCI-99001": SESSION_WITH_FINDINGS,
-            "MSSCI-99002": SESSION_WITH_SAME_PATH,
+            "PROJ-99001": SESSION_WITH_FINDINGS,
+            "PROJ-99002": SESSION_WITH_SAME_PATH,
         })
 
         result = aggregate_findings(sessions)
@@ -567,10 +567,10 @@ class TestZeroFindings:
 
     def test_aggregate_zero_findings(self, tmp_path):
         """Sprint where all sessions have 'No upstream findings'."""
-        path = tmp_path / "MSSCI-99003-session.md"
+        path = tmp_path / "PROJ-99003-session.md"
         path.write_text(SESSION_NO_FINDINGS)
 
-        sessions = [{"jira_key": "MSSCI-99003", "story_id": "99-3", "path": path}]
+        sessions = [{"jira_key": "PROJ-99003", "story_id": "99-3", "path": path}]
         result = aggregate_findings(sessions)
         assert result["success"] is True
         assert result["data"]["total"] == 0
@@ -622,9 +622,9 @@ class TestEndToEnd:
         """Collect → aggregate → detect patterns → format markdown."""
         archive = tmp_path
         (archive / "sprint-9999-completed.yaml").write_text(SPRINT_COMPLETED_YAML)
-        (archive / "MSSCI-99001-session.md").write_text(SESSION_WITH_FINDINGS)
-        (archive / "MSSCI-99002-session.md").write_text(SESSION_WITH_SAME_PATH)
-        (archive / "MSSCI-99003-session.md").write_text(SESSION_NO_FINDINGS)
+        (archive / "PROJ-99001-session.md").write_text(SESSION_WITH_FINDINGS)
+        (archive / "PROJ-99002-session.md").write_text(SESSION_WITH_SAME_PATH)
+        (archive / "PROJ-99003-session.md").write_text(SESSION_NO_FINDINGS)
 
         # Step 1: Collect
         collect_result = collect_session_files(archive, 9999)
@@ -658,13 +658,13 @@ class TestEndToEnd:
               number: 6666
             completed_stories:
               - id: 99-3
-                epic: MSSCI-99000
+                epic: PROJ-99000
                 title: Test
                 points: 1
                 completed: '2026-01-12'
         """)
         (archive / "sprint-6666-completed.yaml").write_text(minimal_yaml)
-        (archive / "MSSCI-99003-session.md").write_text(SESSION_NO_FINDINGS)
+        (archive / "PROJ-99003-session.md").write_text(SESSION_NO_FINDINGS)
 
         collect_result = collect_session_files(archive, 6666)
         assert collect_result["success"] is True

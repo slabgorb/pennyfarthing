@@ -237,17 +237,17 @@ def fetch_sprint() -> dict[str, Any]:
     done_pts = sum(
         s.get("points", 0) or 0
         for s in all_stories
-        if s.get("status", "done") in ("done", "completed", "cancelled")
+        if (s.get("status") or "done") in ("done", "completed", "cancelled")
     )
     in_progress_pts = sum(
         s.get("points", 0) or 0
         for s in all_stories
-        if normalize_status(s.get("status", "")) == "in_progress"
+        if normalize_status(s.get("status") or "") == "in_progress"
     )
     in_review_pts = sum(
         s.get("points", 0) or 0
         for s in all_stories
-        if normalize_status(s.get("status", "")) == "in_review"
+        if normalize_status(s.get("status") or "") == "in_review"
     )
     total_pts = sum(s.get("points", 0) or 0 for s in all_stories)
     remaining_pts = total_pts - done_pts - in_progress_pts - in_review_pts

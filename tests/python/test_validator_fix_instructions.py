@@ -492,7 +492,7 @@ class TestSprintValidatorFixInstructions:
         assert _has_fix_instruction(combined), (
             f"Invalid Jira key error lacks fix instructions.\n"
             f"Errors: {[e.message for e in result.errors]}\n"
-            f"Expected guidance with example: 'To fix: Use PROJECT-NUMBER format, e.g. MSSCI-12345'"
+            f"Expected guidance with example: 'To fix: Use PROJECT-NUMBER format, e.g. PROJ-12345'"
         )
 
     def test_missing_epic_field_includes_fix(self):

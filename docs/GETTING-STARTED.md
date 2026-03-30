@@ -43,9 +43,9 @@ Someone on your team already ran `/pf-setup`. You just need the CLI.
 
 ```bash
 # Pick one:
-pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
-# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
-# or: curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
+pipx install "git+https://github.com/slabgorb/pennyfarthing.git"
+# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/slabgorb/pennyfarthing.git"
+# or: curl -fsSL https://raw.githubusercontent.com/slabgorb/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
 ```
 
 > See [Alternative installs](#alternative-installs) for more options.
@@ -83,8 +83,8 @@ You're bringing Pennyfarthing into a repo for the first time.
 gh auth login
 
 # Install the CLI (pick one)
-pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
-# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+pipx install "git+https://github.com/slabgorb/pennyfarthing.git"
+# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/slabgorb/pennyfarthing.git"
 ```
 
 > See [Alternative installs](#alternative-installs) for more options.
@@ -175,7 +175,7 @@ You're contributing to Pennyfarthing itself using the orchestrator repo.
 ### 1. Clone the orchestrator
 
 ```bash
-git clone git@github.com:1898andCo/orc-penny.git && cd orc-penny
+git clone git@github.com:slabgorb/orc-penny.git && cd orc-penny
 ```
 
 This repo contains `pennyfarthing/` as an inlined subrepo with its own git history.
@@ -188,7 +188,7 @@ just setup
 
 This clones `pennyfarthing/` if missing, installs all dependencies (pnpm + Python), builds packages, and installs the `pf` CLI in editable mode from the local source.
 
-**Prerequisites:** Python 3.11+, Node 18+, [pnpm](https://pnpm.io/) 9+, [just](https://github.com/casey/just), Claude Code CLI, Git SSH access to `1898andCo`.
+**Prerequisites:** Python 3.11+, Node 18+, [pnpm](https://pnpm.io/) 9+, [just](https://github.com/casey/just), Claude Code CLI, Git SSH access to `slabgorb`.
 
 ### 3. Launch
 
@@ -207,7 +207,7 @@ just claude       # starts Claude Code with OTEL telemetry pre-configured
 | **Install method** | `pipx install` / `uv tool install` | `just setup` (editable install) |
 | **Framework changes** | Receive via `pipx upgrade` / `uv tool upgrade` | Commit directly to `pennyfarthing/` |
 
-> See the [orchestrator README](https://github.com/1898andCo/orc-penny) for the full two-repo workflow.
+> See the [orchestrator README](https://github.com/slabgorb/orc-penny) for the full two-repo workflow.
 
 ---
 
@@ -217,16 +217,16 @@ Multiple ways to install the `pf` CLI:
 
 ```bash
 # Auto-detect — tries uv, pipx, pip in order
-curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/slabgorb/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
 
 # With pipx (recommended — isolated environment)
-pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
+pipx install "git+https://github.com/slabgorb/pennyfarthing.git"
 
 # With uv (fastest)
-uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+uv tool install "pennyfarthing-scripts @ git+https://github.com/slabgorb/pennyfarthing.git"
 
 # With pip (last resort — installs into current environment)
-pip install "git+https://github.com/1898andCo/pennyfarthing.git"
+pip install "git+https://github.com/slabgorb/pennyfarthing.git"
 ```
 
 > **Note:** The Python package name is `pennyfarthing-scripts`. The installed CLI command is `pf`.
@@ -439,7 +439,7 @@ pipx upgrade pennyfarthing-scripts
 uv tool upgrade pennyfarthing-scripts
 
 # pip
-pip install --upgrade "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+pip install --upgrade "pennyfarthing-scripts @ git+https://github.com/slabgorb/pennyfarthing.git"
 ```
 
 After upgrading the CLI, re-initialize your project to pick up new commands and skills:

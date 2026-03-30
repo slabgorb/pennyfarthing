@@ -36,10 +36,10 @@ def project_tree(tmp_path):
           name: TO Sprint 2606
           status: active
         epics:
-          - MSSCI-14465
+          - PROJ-14465
         stories:
-          - id: MSSCI-14394
-            jira: MSSCI-14394
+          - id: PROJ-14394
+            jira: PROJ-14394
             title: standalone bug
             points: 2
             status: done
@@ -51,7 +51,7 @@ def project_tree(tmp_path):
     shard = textwrap.dedent("""\
         id: epic-83
         title: "Complexity + Dependencies Tools"
-        jira: MSSCI-14465
+        jira: PROJ-14465
         status: backlog
         points: 6
         stories:
@@ -61,7 +61,7 @@ def project_tree(tmp_path):
             priority: P0
             status: done
             repos: pennyfarthing
-            jira: MSSCI-14466
+            jira: PROJ-14466
             completed: "2026-02-08"
           - id: "83-2"
             title: "Python dependencies module"
@@ -70,9 +70,9 @@ def project_tree(tmp_path):
             status: planning
             assigned_to: dev-agent
             repos: pennyfarthing
-            jira: MSSCI-14467
+            jira: PROJ-14467
     """)
-    (sprint_dir / "epic-MSSCI-14465.yaml").write_text(shard)
+    (sprint_dir / "epic-PROJ-14465.yaml").write_text(shard)
 
     # Session file
     session_dir = tmp_path / ".session"
@@ -80,7 +80,7 @@ def project_tree(tmp_path):
     session = textwrap.dedent("""\
         # Story 83-2: Python dependencies module
 
-        **Jira:** MSSCI-14467
+        **Jira:** PROJ-14467
         **Branch:** feature/83-2-python-dependencies-module
         **PR:** #748 - Python dependencies module
         **Workflow:** tdd
@@ -98,7 +98,7 @@ class TestParseSession:
     def test_parse_fields(self, project_tree):
         session = project_tree / ".session" / "83-2-session.md"
         fields = _parse_session(session)
-        assert fields["jira"] == "MSSCI-14467"
+        assert fields["jira"] == "PROJ-14467"
         assert fields["branch"] == "feature/83-2-python-dependencies-module"
         assert "748" in fields["pr"]
 
@@ -111,10 +111,10 @@ class TestExtractFields:
     """Test individual field extractors."""
 
     def test_jira_key_plain(self):
-        assert _extract_jira_key({"jira": "MSSCI-14467"}) == "MSSCI-14467"
+        assert _extract_jira_key({"jira": "PROJ-14467"}) == "PROJ-14467"
 
     def test_jira_key_markdown_link(self):
-        assert _extract_jira_key({"jira": "[MSSCI-14467](https://jira.example.com)"}) == "MSSCI-14467"
+        assert _extract_jira_key({"jira": "[PROJ-14467](https://jira.example.com)"}) == "PROJ-14467"
 
     def test_jira_key_na(self):
         assert _extract_jira_key({"jira": "N/A (infra fix)"}) is None
@@ -146,7 +146,7 @@ class TestFinishStoryDryRun:
         result = finish_story(project_tree, "83-2", dry_run=True)
         assert result["success"] is True
         assert result["dry_run"] is True
-        assert result["jira_key"] == "MSSCI-14467"
+        assert result["jira_key"] == "PROJ-14467"
         assert len(result["steps"]) == 7
 
     @patch("pf.sprint.story_finish._run")
@@ -155,9 +155,9 @@ class TestFinishStoryDryRun:
         # Session file should still exist
         assert (project_tree / ".session" / "83-2-session.md").exists()
         # No archive created
-        assert not (project_tree / "sprint" / "archive" / "MSSCI-14467-session.md").exists()
+        assert not (project_tree / "sprint" / "archive" / "PROJ-14467-session.md").exists()
         # YAML unchanged
-        shard = (project_tree / "sprint" / "epic-MSSCI-14465.yaml").read_text()
+        shard = (project_tree / "sprint" / "epic-PROJ-14465.yaml").read_text()
         assert "status: planning" in shard
 
 
@@ -200,7 +200,7 @@ class TestFinishStoryYamlUpdate:
     def test_archives_session_file(self, mock_run, project_tree):
         mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
         finish_story(project_tree, "83-2")
-        assert (project_tree / "sprint" / "archive" / "MSSCI-14467-session.md").exists()
+        assert (project_tree / "sprint" / "archive" / "PROJ-14467-session.md").exists()
 
     @patch("pf.sprint.story_finish._run")
     def test_removes_session_file(self, mock_run, project_tree):

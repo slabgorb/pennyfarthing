@@ -78,7 +78,7 @@ SESSION_TEMPLATE = """\
 **Status:** in_progress
 **Phase:** {phase}
 **Workflow:** {workflow}
-**Jira:** MSSCI-99999
+**Jira:** PROJ-99999
 **Branch:** fix/test-branch
 **Repos:** pennyfarthing
 **Points:** 5
@@ -120,7 +120,7 @@ SESSION_WITH_TANDEM = """\
 **Phase:** green
 **Workflow:** tdd-tandem
 **Tandem:** architect (file-watch)
-**Jira:** MSSCI-99999
+**Jira:** PROJ-99999
 **Branch:** fix/test-branch
 **Repos:** pennyfarthing
 **Points:** 5

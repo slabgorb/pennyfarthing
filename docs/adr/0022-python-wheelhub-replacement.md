@@ -233,7 +233,7 @@ Compile to a standalone binary with no runtime dependency.
 
 ## Implementation Outcome (2026-03-09)
 
-All four phases completed in a single sprint as Epic 48 (MSSCI-16312):
+All four phases completed in a single sprint as Epic 48 (PROJ-16312):
 
 | Story | Points | Scope | Result |
 |-------|--------|-------|--------|

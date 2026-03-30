@@ -1,7 +1,7 @@
 """
 Bidirectional sync between sprint YAML and Jira.
 
-Story: MSSCI-12400 (Port from jira-bidirectional-sync.mjs)
+Story: PROJ-12400 (Port from jira-bidirectional-sync.mjs)
 
 Usage: python -m pf.jira bidirectional [options]
 
@@ -208,7 +208,7 @@ def generate_sync_plan(
         yaml_status = yaml_story.get("status")
         jira_status_raw = jira_story.get("fields", {}).get("status", {}).get("name")
         yaml_points = yaml_story.get("points")
-        # customfield_10031 is Story Points for 1898andco Jira
+        # customfield_10031 is Story Points (Jira custom field)
         jira_points = jira_story.get("fields", {}).get("customfield_10031")
 
         # Normalize statuses for comparison
@@ -382,7 +382,7 @@ def _update_story_in_sprint(
 
     Args:
         sprint_data: Sprint YAML data
-        jira_key: Jira issue key (e.g., MSSCI-12400)
+        jira_key: Jira issue key (e.g., PROJ-12400)
         field: Field to update (status, points)
         value: New value
 

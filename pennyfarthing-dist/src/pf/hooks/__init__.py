@@ -10,7 +10,7 @@ Provides common functionality for all hooks:
 
 All hooks should import from this module for consistency.
 
-Story: MSSCI-12409 - Hook consistency and relay mode compatibility
+Story: PROJ-12409 - Hook consistency and relay mode compatibility
 """
 
 import json

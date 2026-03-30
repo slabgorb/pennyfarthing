@@ -1,6 +1,6 @@
 """Story lifecycle state machine with transition validation.
 
-Story: MSSCI-15428 - Implement story lifecycle state machine
+Story: PROJ-15428 - Implement story lifecycle state machine
 
 Provides:
 - TRANSITIONS: valid state transitions map

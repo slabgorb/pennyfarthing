@@ -3,7 +3,7 @@
 Validates that agent definitions include proper team-mode sections
 for Claude Code native Agent Teams integration.
 
-Story: MSSCI-15109 (86-14)
+Story: PROJ-15109 (86-14)
 """
 
 from __future__ import annotations

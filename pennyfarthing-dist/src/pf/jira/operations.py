@@ -5,9 +5,9 @@ Replaces jira-lib.sh functions with REST API calls.
 No interactive prompts, no subprocess stdin issues.
 
 Usage:
-    pf jira move MSSCI-12345 "In Progress"
-    pf jira assign MSSCI-12345 keith.avery@1898andco.io
-    pf jira link MSSCI-12345 MSSCI-12346 "Blocks"
+    pf jira move PROJ-12345 "In Progress"
+    pf jira assign PROJ-12345 user@example.com
+    pf jira link PROJ-12345 PROJ-12346 "Blocks"
 """
 
 from typing import Any
@@ -30,7 +30,7 @@ def move_issue(
     Checks current status first to avoid redundant transitions.
 
     Args:
-        issue_key: Jira issue key (e.g., "MSSCI-12345")
+        issue_key: Jira issue key (e.g., "PROJ-12345")
         target_status: Target status name (e.g., "In Progress", "Done")
         dry_run: If True, preview without applying
 

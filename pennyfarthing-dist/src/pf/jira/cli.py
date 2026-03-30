@@ -152,7 +152,7 @@ def search(query, project, max_results, status, issue_type, json_out):
     \b
     Examples:
       pf jira search "Frame TUI reconnect"
-      pf jira search "sprint fix" --project MSSCI
+      pf jira search "sprint fix" --project PROJ
       pf jira search "status = 'In Progress' AND assignee = currentUser()"
       pf jira search "install" --status "To Do" --type Story
     """
@@ -373,7 +373,7 @@ def create_standalone(title, points, description, dry_run):
         click.echo(f"Warning: could not transition to Done: {result.get('error')}")
 
     click.echo(f"\n{jira_key}: {title}")
-    click.echo(f"https://1898andco.atlassian.net/browse/{jira_key}")
+    click.echo(f"https://your-jira.atlassian.net/browse/{jira_key}")
 
 
 @jira.command()

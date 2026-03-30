@@ -1,7 +1,7 @@
 """
 Sprint context resolution.
 
-Story: MSSCI-15422 - resolve_sprint_context() function
+Story: PROJ-15422 - resolve_sprint_context() function
 
 Consolidates all sprint path resolution logic into a single function
 that returns a SprintContext dataclass.

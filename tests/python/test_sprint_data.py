@@ -1,5 +1,5 @@
 """
-Tests for pf sprint data --json command (Story 125-5 / MSSCI-15426).
+Tests for pf sprint data --json command (Story 125-5 / PROJ-15426).
 
 Verifies the canonical JSON output for subprocess consumers includes
 merged epics, all story fields, orphan detection, registry metadata,

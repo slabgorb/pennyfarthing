@@ -327,7 +327,7 @@ def story_show(story_id: str, output_json: bool):
 
     \b
     Arguments:
-      STORY_ID  - Story ID (e.g., MSSCI-12664 or 67-1)
+      STORY_ID  - Story ID (e.g., PROJ-12664 or 67-1)
     """
     # Lazy import
     from pf.sprint.loader import get_story_by_id
@@ -440,7 +440,7 @@ def story_finish(story_id: str, dry_run: bool):
     click.echo(f"=== Story {story_id} Complete ===")
     jira_key = result.get("jira_key")
     if jira_key:
-        click.echo(f"Jira: https://1898andco.atlassian.net/browse/{jira_key}")
+        click.echo(f"Jira: https://your-jira.atlassian.net/browse/{jira_key}")
     for step in result.get("steps", []):
         warning = step.get("warning", "")
         error = step.get("error", "")
@@ -516,11 +516,11 @@ def epic_show(epic_id: str, output_json: bool):
 
     \b
     Arguments:
-      EPIC_ID  - Epic ID (e.g., epic-42 or MSSCI-14298)
+      EPIC_ID  - Epic ID (e.g., epic-42 or PROJ-14298)
 
     \b
     Examples:
-      pf sprint epic show MSSCI-14298
+      pf sprint epic show PROJ-14298
       pf sprint epic show epic-42
       pf sprint epic show epic-42 --json
     """
@@ -586,7 +586,7 @@ def epic_show(epic_id: str, output_json: bool):
 def _epic_shard_path(sprint_dir, ref: str):
     """Resolve an epic shard file path from a ref string.
 
-    Handles both 'epic-42' and 'MSSCI-12792' style refs.
+    Handles both 'epic-42' and 'PROJ-12792' style refs.
     The file naming convention is epic-{ref}.yaml, but refs that
     already start with 'epic-' should not be double-prefixed.
     """
@@ -648,7 +648,7 @@ def epic_cancel(epic_id: str, jira: bool, dry_run: bool):
 
     \b
     Arguments:
-      EPIC_ID  - Epic ID (e.g., epic-42 or MSSCI-14298)
+      EPIC_ID  - Epic ID (e.g., epic-42 or PROJ-14298)
 
     \b
     Examples:
@@ -1850,7 +1850,7 @@ def story_field(story_id: str, field_name: str):
 
     \b
     Arguments:
-      STORY_ID    - Story ID (e.g., 79-1 or MSSCI-12345)
+      STORY_ID    - Story ID (e.g., 79-1 or PROJ-12345)
       FIELD_NAME  - Field to extract (e.g., workflow, status, points)
 
     Returns the field value or "null" if not found.

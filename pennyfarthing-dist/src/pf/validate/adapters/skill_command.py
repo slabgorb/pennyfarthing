@@ -3,7 +3,7 @@
 Validates skill-registry.yaml against skill-registry.schema.json and
 command file structure in pennyfarthing-dist/commands/.
 
-Story: MSSCI-14711 (91-13)
+Story: PROJ-14711 (91-13)
 """
 
 from __future__ import annotations

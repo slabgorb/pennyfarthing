@@ -1,6 +1,6 @@
 # Audit: Files Pennyfarthing Produces Outside `.pennyfarthing/`
 
-**Story:** MSSCI-14365
+**Story:** PROJ-14365
 **Epic:** epic-85 (Clean Install Consolidation)
 **Date:** 2026-02-06
 **Source:** `packages/core/src/cli/commands/init.ts`, `update.ts`, `doctor.ts`, `utils/settings.ts`, `utils/symlinks.ts`, `utils/constants.ts`
@@ -64,7 +64,7 @@ Pennyfarthing `init` and `update` create files in **5 distinct locations** outsi
 | **Gitignored** | No (committed, but `.claude/persona-config.local.yaml` is gitignored) |
 | **Claude Code reads it** | No |
 | **Migration plan** | **Deprecate** — partially done. `.pennyfarthing/config.local.yaml` is already the runtime config. Doctor already flags this as legacy. Remove template generation for this path; update code to read from `.pennyfarthing/config.local.yaml` exclusively. |
-| **Notes** | Doctor's `checkLegacyFiles()` already detects dual configs. Story MSSCI-14367 covers this specifically. |
+| **Notes** | Doctor's `checkLegacyFiles()` already detects dual configs. Story PROJ-14367 covers this specifically. |
 
 ---
 
@@ -127,7 +127,7 @@ Pennyfarthing `init` and `update` create files in **5 distinct locations** outsi
 | **Content** | Environment setup (PROJECT_ROOT export, PATH modifications) |
 | **Claude Code reads it** | **Yes** — referenced in `settings.local.json` SessionStart hooks |
 | **Migration plan** | **Move** to `.pennyfarthing/project/hooks/setup-env.sh` and update the hook path in `settings.local.json`. Doctor fix functions reference `"$CLAUDE_PROJECT_DIR"/.claude/project/hooks/setup-env.sh`. |
-| **Notes** | Story MSSCI-14368 covers this. The hook command path in settings.local.json needs updating. |
+| **Notes** | Story PROJ-14368 covers this. The hook command path in settings.local.json needs updating. |
 
 ### 4.4 `.claude/project/pennyfarthing-settings.yaml`
 
@@ -311,10 +311,10 @@ These are cleaned up by init/update but worth documenting:
 
 | Story | Files Affected | Notes |
 |-------|---------------|-------|
-| MSSCI-14366 (settings.local.json) | 1.2 | Symlink approach |
-| MSSCI-14367 (persona-config.yaml) | 1.4 | Deprecation |
-| MSSCI-14368 (project hooks) | 4.3, 4.4, 4.5, 4.6, 4.7 | Move `.claude/project/` subtree |
-| MSSCI-14369 (sidecars) | Legacy paths | Already mostly done |
-| MSSCI-14370 (init command) | All "Move" items | Update init to use new paths |
-| MSSCI-14371 (update command) | All "Move" items | Migration logic |
-| MSSCI-14372 (doctor) | All items | Validate new layout |
+| PROJ-14366 (settings.local.json) | 1.2 | Symlink approach |
+| PROJ-14367 (persona-config.yaml) | 1.4 | Deprecation |
+| PROJ-14368 (project hooks) | 4.3, 4.4, 4.5, 4.6, 4.7 | Move `.claude/project/` subtree |
+| PROJ-14369 (sidecars) | Legacy paths | Already mostly done |
+| PROJ-14370 (init command) | All "Move" items | Update init to use new paths |
+| PROJ-14371 (update command) | All "Move" items | Migration logic |
+| PROJ-14372 (doctor) | All items | Validate new layout |

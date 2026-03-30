@@ -66,7 +66,7 @@ def parse_session_header(session_path: Path) -> dict[str, Any]:
 
     result: dict[str, Any] = {}
 
-    # Extract story ID from filename (e.g., MSSCI-12419-session.md -> MSSCI-12419)
+    # Extract story ID from filename (e.g., PROJ-12419-session.md -> PROJ-12419)
     filename = session_path.stem
     if filename.endswith("-session"):
         result["story_id"] = filename[:-8]  # Remove "-session"

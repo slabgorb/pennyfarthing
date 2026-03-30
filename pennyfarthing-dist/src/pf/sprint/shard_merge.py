@@ -23,7 +23,7 @@ def merge_epic_shards(
 ) -> Any:
     """Merge sharded epic files into sprint data.
 
-    When the epics list contains string references (e.g. "MSSCI-14298"
+    When the epics list contains string references (e.g. "PROJ-14298"
     or "epic-40"), loads each epic-{ref}.yaml shard and replaces the
     string with the full epic data.
 

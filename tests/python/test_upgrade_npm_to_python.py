@@ -1,4 +1,4 @@
-"""Tests for pf upgrade — npm-based to Python-based migration (Story 126-7, MSSCI-15495).
+"""Tests for pf upgrade — npm-based to Python-based migration (Story 126-7, PROJ-15495).
 
 Verifies that pf upgrade detects npm-based Pennyfarthing installations
 and migrates to the Python-based structure, preserving user customizations.

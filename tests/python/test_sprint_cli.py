@@ -1,5 +1,5 @@
 """
-Tests for Sprint CLI Click migration (Story MSSCI-12662).
+Tests for Sprint CLI Click migration (Story PROJ-12662).
 
 These tests verify that sprint commands use Click decorators and are
 registered with the main pf CLI group.

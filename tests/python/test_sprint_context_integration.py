@@ -64,7 +64,7 @@ def sharded_project(tmp_path):
     # Index file with string refs
     index_data = {
         "sprint": {"name": "Sprint 2608", "status": "active"},
-        "epics": ["MSSCI-10001", "MSSCI-10002"],
+        "epics": ["PROJ-10001", "PROJ-10002"],
     }
     (sprint_dir / "current-sprint.yaml").write_text(yaml.dump(index_data))
 
@@ -72,24 +72,24 @@ def sharded_project(tmp_path):
     epic1 = {
         "id": "50",
         "title": "Epic Alpha",
-        "jira": "MSSCI-10001",
+        "jira": "PROJ-10001",
         "repos": "pennyfarthing",
         "stories": [
             {"id": "50-1", "title": "Alpha Story", "status": "backlog", "points": 3}
         ],
     }
-    (sprint_dir / "epic-MSSCI-10001.yaml").write_text(yaml.dump(epic1))
+    (sprint_dir / "epic-PROJ-10001.yaml").write_text(yaml.dump(epic1))
 
     epic2 = {
         "id": "51",
         "title": "Epic Beta",
-        "jira": "MSSCI-10002",
+        "jira": "PROJ-10002",
         "repos": "orchestrator",
         "stories": [
             {"id": "51-1", "title": "Beta Story", "status": "done", "points": 1}
         ],
     }
-    (sprint_dir / "epic-MSSCI-10002.yaml").write_text(yaml.dump(epic2))
+    (sprint_dir / "epic-PROJ-10002.yaml").write_text(yaml.dump(epic2))
 
     return tmp_path
 
