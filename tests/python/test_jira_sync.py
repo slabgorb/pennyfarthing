@@ -81,12 +81,12 @@ class TestJiraKeyExtraction:
 
     def test_extract_jira_key_from_key(self, jira_module):
         """Should return key as-is if already in key format."""
-        assert jira_module.extract_jira_key("MSSCI-12398") == "MSSCI-12398"
+        assert jira_module.extract_jira_key("PROJ-12398") == "PROJ-12398"
 
     def test_extract_jira_key_from_url(self, jira_module):
         """Should extract key from Jira URL."""
-        url = "https://1898andco.atlassian.net/browse/MSSCI-12398"
-        assert jira_module.extract_jira_key(url) == "MSSCI-12398"
+        url = "https://your-jira.atlassian.net/browse/PROJ-12398"
+        assert jira_module.extract_jira_key(url) == "PROJ-12398"
 
     def test_extract_jira_key_none(self, jira_module):
         """Should return None for None input."""
@@ -113,7 +113,7 @@ class TestStoryPoints:
         mock_result.stdout = '{"fields": {"customfield_10031": 3}}'
         monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
 
-        points = jira_module.get_story_points("MSSCI-12398")
+        points = jira_module.get_story_points("PROJ-12398")
         assert points == 3
 
     def test_get_story_points_none(self, jira_module, monkeypatch):
@@ -123,7 +123,7 @@ class TestStoryPoints:
         mock_result.stdout = '{"fields": {}}'
         monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
 
-        points = jira_module.get_story_points("MSSCI-12398")
+        points = jira_module.get_story_points("PROJ-12398")
         assert points is None
 
 
@@ -175,7 +175,7 @@ class TestSyncStoryAsync:
         """Dry run should not make actual changes."""
         story = {
             "id": "63-5",
-            "jira": "MSSCI-12399",
+            "jira": "PROJ-12399",
             "title": "Test",
             "status": "in_progress",
             "points": 3,
@@ -221,9 +221,9 @@ class TestSyncEpicAsync:
                 "id": "epic-63",
                 "title": "Test Epic",
                 "stories": [
-                    {"id": "63-1", "jira": "MSSCI-1", "status": "done"},
-                    {"id": "63-2", "jira": "MSSCI-2", "status": "done"},
-                    {"id": "63-3", "jira": "MSSCI-3", "status": "done"},
+                    {"id": "63-1", "jira": "PROJ-1", "status": "done"},
+                    {"id": "63-2", "jira": "PROJ-2", "status": "done"},
+                    {"id": "63-3", "jira": "PROJ-3", "status": "done"},
                 ],
             }
 
@@ -319,7 +319,7 @@ class TestAsyncHttpx:
 
         with patch("httpx.AsyncClient", return_value=mock_http_client):
             client = jira_client_class(token="test-token")
-            result = await client.get_issue_async("MSSCI-12399")
+            result = await client.get_issue_async("PROJ-12399")
             assert result is not None
             assert "fields" in result
 
@@ -366,7 +366,7 @@ class TestBatchThenReport:
             epic = {
                 "id": "epic-63",
                 "title": "Test Epic",
-                "stories": [{"id": "63-1", "jira": "MSSCI-1", "status": "done"}],
+                "stories": [{"id": "63-1", "jira": "PROJ-1", "status": "done"}],
             }
 
             result = await jira_sync_real.sync_epic(epic, dry_run=True)
@@ -456,7 +456,7 @@ class TestTransitionLogic:
              patch.object(JiraClient, "transition_async", mock_transition):
             story = {
                 "id": "63-5",
-                "jira": "MSSCI-12399",
+                "jira": "PROJ-12399",
                 "title": "Test",
                 "status": "in_progress",  # Maps to "In Progress"
                 "points": 3,
@@ -480,7 +480,7 @@ class TestTransitionLogic:
              patch.object(JiraClient, "transition_async", mock_transition):
             story = {
                 "id": "63-5",
-                "jira": "MSSCI-12399",
+                "jira": "PROJ-12399",
                 "title": "Test",
                 "status": "in_progress",  # Maps to "In Progress", differs from "To Do"
             }

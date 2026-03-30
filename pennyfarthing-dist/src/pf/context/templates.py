@@ -1,6 +1,6 @@
 """Context template generator — generates blank templates from the context schema.
 
-Story: MSSCI-15684 (129-4) — Generate Context Document Templates from Schema
+Story: PROJ-15684 (129-4) — Generate Context Document Templates from Schema
 """
 
 from __future__ import annotations

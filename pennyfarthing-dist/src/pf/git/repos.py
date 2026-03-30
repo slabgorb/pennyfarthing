@@ -227,7 +227,7 @@ def format_pr_title(
     """Format a PR title using the project's configured template.
 
     Args:
-        jira_key: Jira issue key (e.g., "MSSCI-16204") or story ID fallback.
+        jira_key: Jira issue key (e.g., "PROJ-16204") or story ID fallback.
         title: Short summary of the change.
         pr_type: Conventional commit type (feat, fix, chore, etc.).
         scope: Optional scope (e.g., "gates", "ui").
@@ -299,6 +299,13 @@ def set_repo_field(
         Result dict {success, data?, error?}. Never throws.
     """
     try:
+        # Validate before writing
+        from pf.settings.validators import validate_repo_field
+
+        validation = validate_repo_field(field, value)
+        if not validation.valid:
+            return {"success": False, "error": validation.errors[0].message}
+
         if project_root is None:
             project_root = get_project_root()
 

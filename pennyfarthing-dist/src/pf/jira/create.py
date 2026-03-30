@@ -62,7 +62,7 @@ def create_story_in_jira(
     """Create a single Jira story from sprint YAML.
 
     Args:
-        epic_jira_key: Parent epic Jira key (e.g., "MSSCI-12077")
+        epic_jira_key: Parent epic Jira key (e.g., "PROJ-12077")
         story_id: Story ID from sprint YAML (e.g., "63-7")
         sprint_path: Path to sprint YAML (defaults to auto-detect)
         dry_run: If True, preview without creating
@@ -212,7 +212,7 @@ def create_epic_in_jira(
     else:
         if dry_run:
             print(f"[DRY RUN] Would create epic: {title}")
-            epic_jira_key = "MSSCI-XXXXX"
+            epic_jira_key = "PROJ-XXXXX"
         else:
             client = get_client()
 

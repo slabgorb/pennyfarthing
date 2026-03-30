@@ -32,7 +32,7 @@ def update_epic(
 
     Args:
         sprint_path: Path to sprint YAML file
-        epic_id: Epic ID (e.g., "103" or "MSSCI-14951")
+        epic_id: Epic ID (e.g., "103" or "PROJ-14951")
         status: New status value
         priority: New priority value
         title: New title
@@ -158,14 +158,14 @@ def epic_update_command(
 
     \b
     Arguments:
-      EPIC_ID  - Epic ID (e.g., 103, epic-103, or MSSCI-14951)
+      EPIC_ID  - Epic ID (e.g., 103, epic-103, or PROJ-14951)
 
     \b
     Examples:
       pf sprint epic update 103 --status in_progress
-      pf sprint epic update MSSCI-14951 --status in_progress
+      pf sprint epic update PROJ-14951 --status in_progress
       pf sprint epic update 103 --priority P0 --dry-run
-      pf sprint epic update 129 --jira MSSCI-15680
+      pf sprint epic update 129 --jira PROJ-15680
       pf sprint epic update 103 --title "New title" --description "Updated desc"
     """
     if sprint_file is None:

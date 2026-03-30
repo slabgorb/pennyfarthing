@@ -246,7 +246,7 @@ def format_steps_completed(steps: list[int]) -> str:
 def find_story_session(session_dir: Path, story_id: str) -> Path | None:
     """Find a story session file by story ID.
 
-    Handles various naming patterns: 56-1-session.md, MSSCI-12190-session.md
+    Handles various naming patterns: 56-1-session.md, PROJ-12190-session.md
     Also searches file content for matching Jira/ID fields.
     """
     # Try direct filename match

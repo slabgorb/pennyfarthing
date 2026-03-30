@@ -267,7 +267,7 @@ AskUserQuestion:
 # Before Jira claim or branch deletion (after outputting marker)
 AskUserQuestion:
   questions:
-    - question: "Confirm claiming MSSCI-11374 and creating branch?"
+    - question: "Confirm claiming PROJ-11374 and creating branch?"
       header: "Confirm"
       multiSelect: false
       options:

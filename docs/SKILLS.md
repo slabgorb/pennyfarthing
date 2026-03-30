@@ -225,7 +225,7 @@ Create epic or story context documents from sprint data and planning docs
 
 **Examples:**
 - Creating epic context document: `/pf-context create epic 130`
-- Creating epic context by Jira key: `/pf-context create epic MSSCI-15685`
+- Creating epic context by Jira key: `/pf-context create epic PROJ-15685`
 
 **Anti-patterns:**
 - Don't hardcode section names — read context-schema.yaml

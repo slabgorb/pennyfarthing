@@ -28,14 +28,16 @@ _STATUS_ALIASES: dict[str, str] = {
 }
 
 
-def normalize_status(status: str) -> str:
+def normalize_status(status: str | None) -> str:
     """Normalize a status string to its canonical underscore form.
 
     Handles case-insensitive matching and variant separators
-    (hyphen, space, underscore).
+    (hyphen, space, underscore).  Accepts ``None`` (returns ``""``).
 
     Returns the original string (lowercased) if no alias is found.
     """
+    if not status:
+        return ""
     lowered = status.strip().lower()
     # Try direct lookup first
     if lowered in _STATUS_ALIASES:

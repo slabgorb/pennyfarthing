@@ -1,7 +1,7 @@
 """
 Core domain models for Pennyfarthing.
 
-Story: MSSCI-15422 - SprintContext dataclass
+Story: PROJ-15422 - SprintContext dataclass
 """
 
 from dataclasses import dataclass

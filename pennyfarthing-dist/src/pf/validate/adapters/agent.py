@@ -3,7 +3,7 @@
 Validates agent definition files in pennyfarthing-dist/agents/.
 Checks required sections, model values, and subagent references.
 
-Story: MSSCI-14710 (91-12)
+Story: PROJ-14710 (91-12)
 """
 
 from __future__ import annotations

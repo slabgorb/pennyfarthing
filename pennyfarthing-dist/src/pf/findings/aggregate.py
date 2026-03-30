@@ -37,7 +37,7 @@ def _parse_session_fields(content: str) -> dict[str, str]:
     """Extract **Key:** Value fields from session markdown body.
 
     Handles sessions without YAML frontmatter by reading bold-field
-    patterns like ``**ID:** 141-8`` and ``**Jira Key:** MSSCI-16135``.
+    patterns like ``**ID:** 141-8`` and ``**Jira Key:** PROJ-16135``.
     """
     fields: dict[str, str] = {}
     for line in content.splitlines()[:30]:
@@ -208,7 +208,7 @@ def collect_session_files(archive_dir: Path, sprint_number: int) -> dict:
             seen_keys.add(jira_key)
             continue
 
-        # Strategy 3: Filename match (e.g. MSSCI-16135-session.md)
+        # Strategy 3: Filename match (e.g. PROJ-16135-session.md)
         stem = session_file.stem.removesuffix("-session")
         if stem in jira_keys and stem not in seen_keys:
             info = done_stories[stem]

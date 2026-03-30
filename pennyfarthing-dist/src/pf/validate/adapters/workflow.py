@@ -4,7 +4,7 @@ Validates workflow definition files in pennyfarthing-dist/workflows/.
 Checks common fields, variant-specific structure (phased/stepped/procedural),
 and cross-references agent names against agent definitions.
 
-Story: MSSCI-14709 (91-11)
+Story: PROJ-14709 (91-11)
 """
 
 from __future__ import annotations

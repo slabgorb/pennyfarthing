@@ -60,7 +60,7 @@ def session(file: str | None, dry_run: bool, convert_all: bool):
 
     \b
     Examples:
-      pf migration session --dry-run .session/archive/MSSCI-12142-session.md
+      pf migration session --dry-run .session/archive/PROJ-12142-session.md
       pf migration session --all --dry-run
       pf migration session --all
     """

@@ -5,7 +5,7 @@ Parses hook declarations from YAML frontmatter in agent .md files and
 skill SKILL.md files. Enables co-locating hook definitions with the
 components that need them, reducing settings.local.json to infrastructure-only.
 
-Story: MSSCI-15494 (126-6)
+Story: PROJ-15494 (126-6)
 """
 
 from __future__ import annotations

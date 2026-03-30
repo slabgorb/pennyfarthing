@@ -1,6 +1,6 @@
 """Sprint validate command.
 
-Story: MSSCI-14255 - Sprint validate command with --fix flag
+Story: PROJ-14255 - Sprint validate command with --fix flag
 
 This module provides:
 - validate_sprint_yaml(path, fix=False) -> ValidateResult

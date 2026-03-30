@@ -1,7 +1,7 @@
 """
 Git status for all repos - async parallel execution.
 
-Story: MSSCI-12402 - Port git utility scripts to Python
+Story: PROJ-12402 - Port git utility scripts to Python
 
 Replaces: pennyfarthing-dist/scripts/git/git-status-all.sh
 

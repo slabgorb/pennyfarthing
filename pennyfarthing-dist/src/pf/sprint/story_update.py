@@ -1,6 +1,6 @@
 """Sprint story update command.
 
-Story: MSSCI-14257 - Sprint story update command
+Story: PROJ-14257 - Sprint story update command
 
 This module provides:
 - update_story(sprint_path, story_id, ...) -> dict

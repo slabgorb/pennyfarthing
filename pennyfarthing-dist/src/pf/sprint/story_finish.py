@@ -60,7 +60,7 @@ def _add_story_to_completed(project_root: Path, story_id: str, story: dict) -> N
 def _parse_session(session_path: Path) -> dict[str, str]:
     """Extract metadata fields from a session markdown file.
 
-    Parses lines like ``**Jira:** MSSCI-14467`` and
+    Parses lines like ``**Jira:** PROJ-14467`` and
     ``**PR:** #748 - title`` into a dict.
     """
     fields: dict[str, str] = {}
@@ -78,9 +78,9 @@ def _parse_session(session_path: Path) -> dict[str, str]:
 def _extract_jira_key(fields: dict[str, str]) -> str | None:
     """Get Jira key from session fields, handling markdown link format."""
     raw = fields.get("jira", "")
-    # Strip markdown link: [MSSCI-14467](https://...)
+    # Strip markdown link: [PROJ-14467](https://...)
     raw = re.sub(r"\[([^\]]+)\].*", r"\1", raw).strip()
-    if re.match(r"^MSSCI-\d+$", raw):
+    if re.match(r"^PROJ-\d+$", raw):
         return raw
     return None
 

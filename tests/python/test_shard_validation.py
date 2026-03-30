@@ -100,14 +100,14 @@ class TestValidateEpicShard:
         epic["jira"] = "BAD-123"
         result = validate_epic_shard(epic)
         assert not result.valid
-        assert any("jira" in e.message.lower() or "MSSCI" in e.message for e in result.errors)
+        assert any("jira" in e.message.lower() or "PROJ" in e.message for e in result.errors)
 
     def test_valid_jira_key_passes(self):
-        """Epic shard with valid MSSCI-NNNNN jira key should pass."""
+        """Epic shard with valid PROJ-NNNNN jira key should pass."""
         from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
-        epic["jira"] = "MSSCI-14510"
+        epic["jira"] = "PROJ-14510"
         result = validate_epic_shard(epic)
         assert result.valid
 
@@ -181,17 +181,17 @@ class TestGetEpicRefNormalization:
         """Jira key takes precedence when present and valid."""
         from pf.sprint.yaml_io import _get_epic_ref
 
-        epic = {"id": "epic-94", "jira": "MSSCI-14659"}
+        epic = {"id": "epic-94", "jira": "PROJ-14659"}
         ref = _get_epic_ref(epic)
-        assert ref == "MSSCI-14659"
+        assert ref == "PROJ-14659"
 
     def test_jira_id_in_id_field_passes_through(self):
-        """ID field containing MSSCI key should pass through unchanged."""
+        """ID field containing PROJ key should pass through unchanged."""
         from pf.sprint.yaml_io import _get_epic_ref
 
-        epic = {"id": "MSSCI-14659"}
+        epic = {"id": "PROJ-14659"}
         ref = _get_epic_ref(epic)
-        assert ref == "MSSCI-14659"
+        assert ref == "PROJ-14659"
 
     def test_invalid_jira_key_falls_back_to_id(self):
         """Invalid jira key should fall back to normalized ID."""
@@ -242,10 +242,10 @@ class TestWritePathIntegration:
             "sprint:\n  number: 2606\n  status: active\n"
             "  jira_sprint_id: 280\n  goal: test\n"
             "  start_date: 2026-02-03\n  end_date: 2026-02-16\n"
-            "epics:\n  - MSSCI-14510\n"
+            "epics:\n  - PROJ-14510\n"
         )
         # Create a shard for the existing epic ref so format is recognized
-        shard = tmp_path / "epic-MSSCI-14510.yaml"
+        shard = tmp_path / "epic-PROJ-14510.yaml"
         shard.write_text("id: epic-91\ntitle: Existing\nstatus: backlog\nstories: []\n")
 
         with patch(
@@ -270,9 +270,9 @@ class TestWritePathIntegration:
             "sprint:\n  number: 2606\n  status: active\n"
             "  jira_sprint_id: 280\n  goal: test\n"
             "  start_date: 2026-02-03\n  end_date: 2026-02-16\n"
-            "epics:\n  - MSSCI-14510\n"
+            "epics:\n  - PROJ-14510\n"
         )
-        shard = tmp_path / "epic-MSSCI-14510.yaml"
+        shard = tmp_path / "epic-PROJ-14510.yaml"
         shard.write_text("id: epic-91\ntitle: Existing\nstatus: backlog\nstories: []\n")
 
         bad_result = ValidationResult(valid=False)
@@ -356,7 +356,7 @@ class TestWritePathIntegration:
             mock_validate.return_value = MagicMock(valid=True, errors=[])
             mock_client = MagicMock()
             mock_client.search_issues_sync.return_value = []
-            mock_client.create_issue_sync.return_value = {"key": "MSSCI-99999"}
+            mock_client.create_issue_sync.return_value = {"key": "PROJ-99999"}
 
             with patch("pf.jira.create.get_client", return_value=mock_client):
                 result = create_epic_in_jira("63", sprint_path=sprint_file)
@@ -411,7 +411,7 @@ class TestLoaderWarnings:
         """Unresolvable shard ref should emit a warning, not silently skip."""
         from pf.sprint.loader import _merge_epic_shards
 
-        data = {"epics": ["MSSCI-99999", "nonexistent-ref"]}
+        data = {"epics": ["PROJ-99999", "nonexistent-ref"]}
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -443,17 +443,17 @@ class TestLoaderWarnings:
         from pf.sprint.loader import _merge_epic_shards
 
         # Create a valid shard file
-        shard = tmp_path / "epic-MSSCI-14510.yaml"
+        shard = tmp_path / "epic-PROJ-14510.yaml"
         shard.write_text("id: epic-91\ntitle: Test\nstatus: backlog\nstories: []\n")
 
-        data = {"epics": ["MSSCI-14510"]}
+        data = {"epics": ["PROJ-14510"]}
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             _merge_epic_shards(data, tmp_path)
 
             shard_warnings = [
-                x for x in w if "MSSCI-14510" in str(x.message)
+                x for x in w if "PROJ-14510" in str(x.message)
             ]
             assert len(shard_warnings) == 0, (
                 f"Should not warn for existing shard, got: {[str(x.message) for x in shard_warnings]}"
@@ -464,10 +464,10 @@ class TestLoaderWarnings:
         from pf.sprint.loader import _merge_epic_shards
 
         # Create one valid shard
-        shard = tmp_path / "epic-MSSCI-14510.yaml"
+        shard = tmp_path / "epic-PROJ-14510.yaml"
         shard.write_text("id: epic-91\ntitle: Test\nstatus: backlog\nstories: []\n")
 
-        data = {"epics": ["MSSCI-14510", "MISSING-REF"]}
+        data = {"epics": ["PROJ-14510", "MISSING-REF"]}
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -478,8 +478,8 @@ class TestLoaderWarnings:
             assert any("MISSING-REF" in msg for msg in warning_messages), (
                 f"Should warn about MISSING-REF, got: {warning_messages}"
             )
-            # Should NOT warn about MSSCI-14510
-            assert not any("MSSCI-14510" in msg for msg in warning_messages), (
+            # Should NOT warn about PROJ-14510
+            assert not any("PROJ-14510" in msg for msg in warning_messages), (
                 f"Should not warn about existing shard, got: {warning_messages}"
             )
 
@@ -513,7 +513,7 @@ class TestJiraIdempotencyCheck:
         # Mock Jira client to return existing epic with same title
         mock_client = MagicMock()
         mock_client.search_issues_sync.return_value = [
-            {"key": "MSSCI-14659", "fields": {"summary": "Duplicate Title Epic"}}
+            {"key": "PROJ-14659", "fields": {"summary": "Duplicate Title Epic"}}
         ]
 
         with patch("pf.jira.create.get_client", return_value=mock_client):
@@ -525,7 +525,7 @@ class TestJiraIdempotencyCheck:
                 # to decide, but the check must happen
                 if result.get("success"):
                     # If it succeeds, it should reference the existing key
-                    assert result.get("epic_key") == "MSSCI-14659" or result.get(
+                    assert result.get("epic_key") == "PROJ-14659" or result.get(
                         "duplicate_detected"
                     ), "Should detect duplicate title"
 
@@ -548,14 +548,14 @@ class TestJiraIdempotencyCheck:
         # Mock Jira client to return empty search (no duplicates)
         mock_client = MagicMock()
         mock_client.search_issues_sync.return_value = []
-        mock_client.create_issue_sync.return_value = {"key": "MSSCI-99999"}
+        mock_client.create_issue_sync.return_value = {"key": "PROJ-99999"}
 
         with patch("pf.jira.create.get_client", return_value=mock_client):
             with patch("pf.jira.create._get_sprint_path", return_value=sprint_file):
                 result = create_epic_in_jira("epic-99", sprint_path=sprint_file)
                 # Should proceed with creation
                 if result.get("success"):
-                    assert result.get("epic_key") == "MSSCI-99999"
+                    assert result.get("epic_key") == "PROJ-99999"
 
 
 # =============================================================================

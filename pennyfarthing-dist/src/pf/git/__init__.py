@@ -1,7 +1,7 @@
 """
 Git utilities for Pennyfarthing.
 
-Story: MSSCI-12402 - Port git utility scripts to Python
+Story: PROJ-12402 - Port git utility scripts to Python
 
 This package provides async git operations for multi-repo management:
 - repos: Repository configuration from repos.yaml

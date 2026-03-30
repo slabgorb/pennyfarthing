@@ -83,7 +83,7 @@ vscode *args:
             ;;
         uninstall)
             echo "Uninstalling Pennyfarthing extension..."
-            code --uninstall-extension 1898andco.pennyfarthing-vscode || true
+            code --uninstall-extension pennyfarthing.pennyfarthing-vscode || true
             echo "✓ Uninstalled"
             ;;
         ""|default)

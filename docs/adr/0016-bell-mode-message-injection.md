@@ -214,6 +214,6 @@ Frame GUI pushes to hook via WebSocket.
 
 - Implementation: `packages/cyclist/src/bell-mode.ts`
 - Hook script: `pennyfarthing-dist/scripts/hooks/bell-mode-hook.sh`
-- Tests: `packages/cyclist/tests/MSSCI-12275-bell-mode.test.ts`
-- Story: MSSCI-12275 (Bell Mode implementation)
+- Tests: `packages/cyclist/tests/PROJ-12275-bell-mode.test.ts`
+- Story: PROJ-12275 (Bell Mode implementation)
 - ADR-0003: Frame GUI Claude Code Alignment (documents queue vs steering decision)

@@ -107,7 +107,7 @@ skills:
       - context: Creating epic context document
         invocation: /pf-context create epic 130
       - context: Creating epic context by Jira key
-        invocation: /pf-context create epic MSSCI-15685
+        invocation: /pf-context create epic PROJ-15685
     anti_patterns:
       - Don't hardcode section names — read context-schema.yaml
       - Don't create story context without existing parent epic context

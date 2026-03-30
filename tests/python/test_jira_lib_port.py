@@ -100,7 +100,7 @@ class TestGetStoryField:
                     "stories": [
                         {
                             "id": "63-7",
-                            "jira": "MSSCI-12401",
+                            "jira": "PROJ-12401",
                             "title": "Port remaining Jira scripts",
                             "status": "in_progress",
                             "points": 3,
@@ -134,7 +134,7 @@ class TestGetStoryField:
     def test_get_story_field_jira(self, sprint_module, sample_sprint_data):
         """Should get jira field from story."""
         jira = sprint_module.get_story_field(sample_sprint_data, "63-7", "jira")
-        assert jira == "MSSCI-12401"
+        assert jira == "PROJ-12401"
 
     def test_get_story_field_missing(self, sprint_module, sample_sprint_data):
         """Should return None for missing field."""
@@ -240,16 +240,16 @@ class TestMapGithubToJira:
 
     def test_map_github_to_jira_known_user(self, jira_module):
         """Should map known GitHub users to Jira emails."""
-        assert jira_module.map_github_to_jira("slabgorb") == "keith.avery@1898andco.io"
+        assert jira_module.map_github_to_jira("slabgorb") == "user@example.com"
 
     def test_map_github_to_jira_arcaven(self, jira_module):
         """Should map arcaven to correct email."""
-        assert jira_module.map_github_to_jira("arcaven") == "michael.pursifull@1898andco.io"
+        assert jira_module.map_github_to_jira("arcaven") == "collaborator@example.com"
 
     def test_map_github_to_jira_unknown_user(self, jira_module):
         """Should generate email for unknown users."""
         result = jira_module.map_github_to_jira("unknown-user")
-        assert result == "unknown-user@1898andco.io"
+        assert result == "unknown-user@example.com"
 
     def test_map_github_to_jira_none(self, jira_module):
         """Should handle None input."""
@@ -333,7 +333,7 @@ class TestJiraSyncStoryFunctions:
         monkeypatch.setattr(
             sync_story_module, "get_story_from_sprint", lambda key: {
                 "id": "63-7",
-                "jira": "MSSCI-12401",
+                "jira": "PROJ-12401",
                 "status": "in_progress",
                 "points": 3,
             }

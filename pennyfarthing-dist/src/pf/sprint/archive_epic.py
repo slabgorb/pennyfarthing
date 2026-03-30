@@ -335,7 +335,7 @@ def archive_epic(
     Context files are also moved to archive.
 
     Args:
-        epic_id: Epic ID to archive (e.g., "epic-64" or "MSSCI-12465")
+        epic_id: Epic ID to archive (e.g., "epic-64" or "PROJ-12465")
         project_root: Project root path (defaults to auto-detect)
         dry_run: If True, show what would be done without making changes
         update_jira: If True, also transition epic to Done in Jira
@@ -499,7 +499,7 @@ def _update_jira_epic(jira_key: str) -> bool:
     """Transition a Jira epic to Done.
 
     Args:
-        jira_key: Jira issue key (e.g., "MSSCI-12465")
+        jira_key: Jira issue key (e.g., "PROJ-12465")
 
     Returns:
         True if successful, False otherwise

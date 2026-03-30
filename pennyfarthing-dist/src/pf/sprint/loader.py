@@ -319,7 +319,7 @@ def get_story_by_id(story_id: str) -> dict[str, Any] | None:
     """Find a story by its ID.
 
     Args:
-        story_id: The story ID (e.g., "63-4" or "MSSCI-12398")
+        story_id: The story ID (e.g., "63-4" or "PROJ-12398")
 
     Returns:
         Story dict if found, None otherwise

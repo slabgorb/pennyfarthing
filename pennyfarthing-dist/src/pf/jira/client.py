@@ -307,11 +307,11 @@ class JiraClient:
 
     Usage (sync):
         client = JiraClient()
-        issue = client.get_issue_sync("MSSCI-12345")
+        issue = client.get_issue_sync("PROJ-12345")
 
     Usage (async):
         client = JiraClient()
-        issue = await client.get_issue_async("MSSCI-12345")
+        issue = await client.get_issue_async("PROJ-12345")
     """
 
     def __init__(
@@ -328,7 +328,7 @@ class JiraClient:
             token: API token (defaults to JIRA_API_TOKEN env)
         """
         self.base_url = base_url or JIRA_URL
-        self.user = user or os.environ.get("JIRA_USER", "keith.avery@1898andco.io")
+        self.user = user or os.environ.get("JIRA_USER", "user@example.com")
         # Use explicit token if provided (even empty), otherwise fall back to env var
         self.token = token if token is not None else os.environ.get("JIRA_API_TOKEN", "")
 
@@ -373,7 +373,7 @@ class JiraClient:
 
         Args:
             method: HTTP method (GET, POST, PUT)
-            endpoint: API endpoint (e.g., /rest/api/3/issue/MSSCI-123)
+            endpoint: API endpoint (e.g., /rest/api/3/issue/PROJ-123)
             data: Request body data
 
         Returns:
@@ -416,7 +416,7 @@ class JiraClient:
         """Fetch issue from Jira synchronously.
 
         Args:
-            issue_key: Jira issue key (e.g., MSSCI-12345)
+            issue_key: Jira issue key (e.g., PROJ-12345)
 
         Returns:
             Issue JSON dict or None if not found

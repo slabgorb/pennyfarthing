@@ -1,6 +1,6 @@
 #!/bin/bash
 # test_complete_step.sh - Unit tests for complete-step.py
-# Story: MSSCI-14299 - Wire up stepped workflow session state advancement
+# Story: PROJ-14299 - Wire up stepped workflow session state advancement
 #
 # Tests that complete-step.py correctly advances session state:
 # AC1: Session file Current Step increments when a step completes
@@ -17,7 +17,7 @@ COMPLETE_STEP="$PROJECT_DIR/pennyfarthing-dist/scripts/workflow/complete-step.py
 TMPDIR=$(mktemp -d)
 trap "rm -rf $TMPDIR" EXIT
 
-echo "=== Complete Step Tests (MSSCI-14299) ==="
+echo "=== Complete Step Tests (PROJ-14299) ==="
 
 PASS=0
 FAIL=0

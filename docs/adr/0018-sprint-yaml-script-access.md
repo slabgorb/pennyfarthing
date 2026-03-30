@@ -56,7 +56,7 @@ pf sprint epic archive        # Archive completed epics
 | Operation | Command | Example |
 |-----------|---------|---------|
 | Read story field | `pf sprint story field` | `pf sprint story field 28-1 status` → `in_progress` |
-| Read epic field | `pf sprint epic field` | `pf sprint epic field 35 jira` → `MSSCI-12042` |
+| Read epic field | `pf sprint epic field` | `pf sprint epic field 35 jira` → `PROJ-12042` |
 | Check story exists | `pf sprint check` | `pf sprint check 28-1` → JSON with availability |
 | List available work | `pf sprint backlog` | Markdown table of ready stories by epic |
 | Archive completed | `pf sprint archive` | Moves to `sprint/archive/`, updates totals |
@@ -68,12 +68,12 @@ Scripts enforce these invariants:
 
 | Rule | Enforcement |
 |------|-------------|
-| Story ID format | `{epic}-{seq}` or `MSSCI-{number}` |
+| Story ID format | `{epic}-{seq}` or `PROJ-{number}` |
 | Status transitions | `backlog → ready → in_progress → done` |
 | Points must be numeric | Reject non-integer values |
 | Completion date on done | Auto-set if missing |
 | Epic totals recalculated | On any story status change |
-| Jira key format | `MSSCI-{5 digits}` when present |
+| Jira key format | `PROJ-{5 digits}` when present |
 
 ### Python Module Architecture
 

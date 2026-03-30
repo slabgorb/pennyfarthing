@@ -52,7 +52,7 @@ SAMPLE_INIT_MESSAGE: dict[str, Any] = {
             "behind": 0,
             "developBehind": 1,
             "dirtyFiles": [
-                {"status": "M", "path": "sprint/epic-MSSCI-14951.yaml"},
+                {"status": "M", "path": "sprint/epic-PROJ-14951.yaml"},
                 {"status": "??", "path": "sprint/archive/session.md"},
             ],
         },

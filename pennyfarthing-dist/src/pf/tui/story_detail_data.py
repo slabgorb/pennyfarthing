@@ -199,7 +199,7 @@ def _check_context_files(story_id: str, project_root: str | None) -> dict[str, A
             result["has_epic_context"] = True
             result["epic_context_path"] = epic_path
         else:
-            # Try MSSCI-keyed context file by reading epic Jira key from shard
+            # Try PROJ-keyed context file by reading epic Jira key from shard
             import glob as _glob
 
             sprint_dir = os.path.join(project_root, "sprint")
@@ -247,7 +247,7 @@ def fetch_story_detail(
     Args:
         story_id: Story identifier (e.g. "110-2").
         project_root: Path to project root (for file reads). Auto-detected if None.
-        jira_key: Jira key (e.g. "MSSCI-15397") for archive lookup.
+        jira_key: Jira key (e.g. "PROJ-15397") for archive lookup.
 
     Returns:
         Dict with keys: id, title, points, status, jiraKey,

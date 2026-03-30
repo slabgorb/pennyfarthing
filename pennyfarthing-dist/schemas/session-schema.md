@@ -9,7 +9,7 @@ Session files track active work sessions for stories. They are the highest-frequ
 ```
 
 **Examples:**
-- `.session/MSSCI-12142-session.md`
+- `.session/PROJ-12142-session.md`
 - `.session/36-2-session.md`
 
 ## Complete Schema
@@ -17,8 +17,8 @@ Session files track active work sessions for stories. They are the highest-frequ
 ```xml
 <session story="STORY_ID" workflow="WORKFLOW_TYPE">
   <meta>
-    <jira>MSSCI-XXXXX</jira>
-    <epic>MSSCI-XXXXX</epic>
+    <jira>PROJ-XXXXX</jira>
+    <epic>PROJ-XXXXX</epic>
     <points>3</points>
     <started>2026-01-22</started>
   </meta>
@@ -74,7 +74,7 @@ Session files track active work sessions for stories. They are the highest-frequ
 **Child Elements:**
 | Element | Required | Description |
 |---------|----------|-------------|
-| `<jira>` | Yes | Jira issue key (e.g., `MSSCI-12142`) |
+| `<jira>` | Yes | Jira issue key (e.g., `PROJ-12142`) |
 | `<epic>` | No | Parent epic's Jira key |
 | `<points>` | No | Story points (1, 2, 3, 5, 8) |
 | `<started>` | Yes | Session start date (YYYY-MM-DD) |
@@ -170,10 +170,10 @@ Session files track active work sessions for stories. They are the highest-frequ
 ### New Session (SM Setup)
 
 ```xml
-<session story="MSSCI-12345" workflow="tdd">
+<session story="PROJ-12345" workflow="tdd">
   <meta>
-    <jira>MSSCI-12345</jira>
-    <epic>MSSCI-12300</epic>
+    <jira>PROJ-12345</jira>
+    <epic>PROJ-12300</epic>
     <points>3</points>
     <started>2026-02-03</started>
   </meta>
@@ -188,7 +188,7 @@ Session files track active work sessions for stories. They are the highest-frequ
 
   <context>
     Implementing user registration feature.
-    See: `.session/context-story-MSSCI-12345.md`
+    See: `.session/context-story-PROJ-12345.md`
   </context>
 
   <work-log>
@@ -203,7 +203,7 @@ Session files track active work sessions for stories. They are the highest-frequ
 ### After TEA Handoff
 
 ```xml
-<session story="MSSCI-12345" workflow="tdd">
+<session story="PROJ-12345" workflow="tdd">
   <!-- meta unchanged -->
 
   <status phase="red" next-agent="dev" handoff-ready="true"/>
@@ -232,7 +232,7 @@ Session files track active work sessions for stories. They are the highest-frequ
 ### After Review (Approved)
 
 ```xml
-<session story="MSSCI-12345" workflow="tdd">
+<session story="PROJ-12345" workflow="tdd">
   <!-- meta unchanged -->
 
   <status phase="review" next-agent="sm" handoff-ready="true"/>

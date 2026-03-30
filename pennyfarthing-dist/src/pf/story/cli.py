@@ -69,7 +69,7 @@ Examples:
     story size
     story size 3
     story template feature
-    story create MSSCI-12000 "Add feature" 3 --type feature
+    story create PROJ-12000 "Add feature" 3 --type feature
 """,
     )
 

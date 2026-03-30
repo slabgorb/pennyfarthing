@@ -1,6 +1,6 @@
 """Sprint story add command.
 
-Story: MSSCI-14256 - Sprint story add command
+Story: PROJ-14256 - Sprint story add command
 
 This module provides:
 - generate_story_id(sprint_data, epic) -> str
