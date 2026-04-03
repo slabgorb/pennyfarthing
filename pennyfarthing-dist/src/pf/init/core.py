@@ -58,6 +58,7 @@ _GITIGNORE_ENTRIES: list[str] = [
 # Directories to create under the target project.
 _PENNYFARTHING_DIRS: list[str] = [
     ".pennyfarthing",
+    ".pennyfarthing/agents-local",
     ".pennyfarthing/commands",
     ".pennyfarthing/skills",
     ".pennyfarthing/scripts",
