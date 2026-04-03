@@ -78,7 +78,7 @@ class TestAgentsLocalPriority:
         result = load_agent_definition("dev", project_with_local_override)
         assert result is not None
         assert "custom override" in result
-        assert "built-in" not in result.lower() or "custom override" in result
+        assert "built-in" not in result.lower()
 
     def test_local_override_content_is_complete(self, project_with_local_override: Path) -> None:
         """Local override returns the FULL content of agents-local/ file,
