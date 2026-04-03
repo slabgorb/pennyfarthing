@@ -39,6 +39,7 @@ DEFAULTS: dict[str, Any] = {
         "statusbar": True,
         "startup_agent": "sm",
         "saddle_mode": False,
+        "strictness": "standard",
         "reviewer_subagents": {
             "preflight": True,
             "edge_hunter": True,

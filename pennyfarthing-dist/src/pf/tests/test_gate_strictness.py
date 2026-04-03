@@ -130,7 +130,8 @@ class TestStrictnessConfig:
 
         with patch("pf.settings.settings.get_project_root", return_value=project_root):
             result = set_setting("workflow.strictness", "strict")
-        assert result.get("success") is True or result is None  # set_setting may return None on success
+        # set_setting returns config dict on success, {success: False} on error
+        assert result.get("success") is not False
 
     def test_set_strictness_minimal(self, project_root: Path) -> None:
         """Setting workflow.strictness to 'minimal' should succeed."""
@@ -138,7 +139,7 @@ class TestStrictnessConfig:
 
         with patch("pf.settings.settings.get_project_root", return_value=project_root):
             result = set_setting("workflow.strictness", "minimal")
-        assert result.get("success") is True or result is None
+        assert result.get("success") is not False
 
     def test_reject_invalid_strictness(self, project_root: Path) -> None:
         """Setting workflow.strictness to an invalid value should fail validation."""
@@ -316,8 +317,9 @@ class TestConfigInterface:
         config_file = project_root / ".pennyfarthing" / "config.local.yaml"
 
         with patch("pf.settings.settings.get_project_root", return_value=project_root):
-            set_setting("workflow.strictness", "strict")
-            value = get_setting("workflow.strictness")
+            with patch("pf.common.config.get_project_root", return_value=project_root):
+                set_setting("workflow.strictness", "strict")
+                value = get_setting("workflow.strictness")
 
         assert value == "strict"
 
