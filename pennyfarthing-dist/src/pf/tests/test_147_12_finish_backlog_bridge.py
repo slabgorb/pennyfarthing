@@ -45,28 +45,28 @@ epics:
     title: "Test Epic"
     priority: p1
     status: in_progress
-    jira: MSSCI-99999
+    jira: PROJ-99999
     stories:
       - id: 200-1
         title: Story stuck in backlog
         points: 2
         priority: p0
         status: backlog
-        jira: MSSCI-99901
+        jira: PROJ-99901
         workflow: tdd
       - id: 200-2
         title: Story in progress (existing behavior)
         points: 2
         priority: p1
         status: in_progress
-        jira: MSSCI-99902
+        jira: PROJ-99902
         workflow: tdd
       - id: 200-3
         title: Story in review (existing behavior)
         points: 1
         priority: p1
         status: in_review
-        jira: MSSCI-99903
+        jira: PROJ-99903
         workflow: trivial
       - id: 200-4
         title: Story in backlog without Jira key
@@ -79,7 +79,7 @@ epics:
 BACKLOG_SESSION = """\
 ---
 story_id: "200-1"
-jira_key: "MSSCI-99901"
+jira_key: "PROJ-99901"
 epic: "200"
 workflow: "tdd"
 ---
@@ -89,7 +89,7 @@ workflow: "tdd"
 ## Story Details
 
 - **ID:** 200-1
-- **Jira:** MSSCI-99901
+- **Jira:** PROJ-99901
 - **Workflow:** tdd
 - **Branch:** feat/200-1-stuck-in-backlog
 """
@@ -115,7 +115,7 @@ workflow: "trivial"
 IN_PROGRESS_SESSION = """\
 ---
 story_id: "200-2"
-jira_key: "MSSCI-99902"
+jira_key: "PROJ-99902"
 epic: "200"
 workflow: "tdd"
 ---
@@ -125,7 +125,7 @@ workflow: "tdd"
 ## Story Details
 
 - **ID:** 200-2
-- **Jira:** [MSSCI-99902](https://jira.example.com/browse/MSSCI-99902)
+- **Jira:** [PROJ-99902](https://jira.example.com/browse/PROJ-99902)
 - **Workflow:** tdd
 - **Branch:** feat/200-2-in-progress
 """
@@ -295,7 +295,7 @@ class TestJiraDriftSuppressedWhenUnconfigured:
         }
         mock_get_client.return_value = mock_client
 
-        # Story 200-2 has Jira key MSSCI-99902 and is in_progress
+        # Story 200-2 has Jira key PROJ-99902 and is in_progress
         result = transition_story(project, "200-2", "in_review")
 
         # YAML should still update
