@@ -537,6 +537,10 @@ def init_project(
         is_dogfooding=is_dogfooding,
     )
 
+    # --- Generate command/skill files for custom agents ---
+    custom_agents_result = generate_custom_agent_commands(target_dir)
+    custom_agents_data = custom_agents_result.get("data", {}) if custom_agents_result["success"] else {}
+
     if is_dogfooding:
         return {
             "success": True,
@@ -552,6 +556,7 @@ def init_project(
                 "justfile": justfile_data,
                 "setup": setup_result.get("data", {}),
                 "portraits": portrait_result,
+                "custom_agents": custom_agents_data,
             },
         }
 
@@ -572,6 +577,7 @@ def init_project(
             "setup": setup_result.get("data", {}),
             "portraits": portrait_result,
             "portraits_linked": portraits_linked,
+            "custom_agents": custom_agents_data,
         },
     }
 
@@ -623,6 +629,106 @@ def _copy_tree(src: Path, dst: Path) -> None:
             shutil.copy2(item, dest_item)
 
 
+
+
+def generate_custom_agent_commands(project_dir: Path) -> dict:
+    """Generate command and skill files for custom agents in agents-local/.
+
+    Scans .pennyfarthing/agents-local/ for .md agent definitions and creates
+    corresponding .claude/commands/pf-{name}.md activation files. If a skill
+    template exists at .pennyfarthing/templates/skills/pf-{name}.md, also
+    creates .claude/skills/pf-{name}/ with the template content.
+
+    Existing command files and skill directories are preserved (no clobber).
+
+    Args:
+        project_dir: Project root path
+
+    Returns:
+        Result dict: {success, data: {generated_commands, preserved_commands, generated_skills}}
+    """
+    agents_local = project_dir / ".pennyfarthing" / "agents-local"
+    cmd_dir = project_dir / ".claude" / "commands"
+    skills_dir = project_dir / ".claude" / "skills"
+    templates_dir = project_dir / ".pennyfarthing" / "templates" / "skills"
+
+    generated_commands: list[dict] = []
+    preserved_commands: list[dict] = []
+    generated_skills: list[dict] = []
+
+    if not agents_local.is_dir():
+        return {
+            "success": True,
+            "data": {
+                "generated_commands": generated_commands,
+                "preserved_commands": preserved_commands,
+                "generated_skills": generated_skills,
+            },
+        }
+
+    # Ensure output directories exist
+    cmd_dir.mkdir(parents=True, exist_ok=True)
+    skills_dir.mkdir(parents=True, exist_ok=True)
+
+    for agent_file in sorted(agents_local.iterdir()):
+        if not agent_file.is_file() or agent_file.suffix != ".md":
+            continue
+
+        agent_name = agent_file.stem
+        cmd_file = cmd_dir / f"pf-{agent_name}.md"
+
+        # --- Command file ---
+        if cmd_file.exists():
+            preserved_commands.append({
+                "agent_name": agent_name,
+                "command_file": str(cmd_file),
+            })
+        else:
+            display_name = agent_name.replace("-", " ").replace("_", " ").title()
+            content = (
+                f"---\n"
+                f"description: {display_name} - Custom agent\n"
+                f"---\n"
+                f"\n"
+                f"<agent-activation>\n"
+                f"**FIRST:** Use Bash tool to run:\n"
+                f"```bash\n"
+                f'pf agent start "{agent_name}"\n'
+                f"```\n"
+                f"This loads your persona and agent context. Adopt the character shown in the output.\n"
+                f"</agent-activation>\n"
+                f"\n"
+                f"<instructions>\n"
+                f"You are now the {display_name} agent. Follow your agent instructions from the activation output.\n"
+                f"</instructions>\n"
+            )
+            cmd_file.write_text(content)
+            generated_commands.append({
+                "agent_name": agent_name,
+                "command_file": str(cmd_file),
+            })
+
+        # --- Skill directory ---
+        skill_template = templates_dir / f"pf-{agent_name}.md"
+        if skill_template.is_file():
+            skill_dir = skills_dir / f"pf-{agent_name}"
+            if not skill_dir.is_dir():
+                skill_dir.mkdir(parents=True, exist_ok=True)
+                # Copy template into skill directory
+                shutil.copy2(skill_template, skill_dir / skill_template.name)
+                generated_skills.append({
+                    "agent_name": agent_name,
+                    "skill_dir": str(skill_dir),
+                })
+
+    return {
+        "success": True,
+        "data": {
+            "generated_commands": generated_commands,
+            "preserved_commands": preserved_commands,
+            "generated_skills": generated_skills,
+        },
+    }
 
 
 def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
