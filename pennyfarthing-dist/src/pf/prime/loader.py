@@ -29,12 +29,18 @@ def load_agent_definition(agent_name: str, project_root: Path | None = None) -> 
         Agent definition content, or None if not found
     """
     root = project_root or get_project_root()
-    agent_file = root / ".pennyfarthing" / "agents" / f"{agent_name}.md"
 
+    # Priority 1: agents-local/ (consumer overrides and custom agents)
+    local_file = root / ".pennyfarthing" / "agents-local" / f"{agent_name}.md"
+    if local_file.exists():
+        return local_file.read_text()
+
+    # Priority 2: agents/ (built-in, typically symlinked from pennyfarthing-dist)
+    agent_file = root / ".pennyfarthing" / "agents" / f"{agent_name}.md"
     if agent_file.exists():
         return agent_file.read_text()
 
-    # Fallback: pennyfarthing-dist via get_dist_root (npm context)
+    # Priority 3: pennyfarthing-dist via get_dist_root (npm/pip context)
     dist_root = get_dist_root(project_root=root)
     if dist_root:
         agent_file = dist_root / "agents" / f"{agent_name}.md"
