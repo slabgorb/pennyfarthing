@@ -249,6 +249,11 @@ def finish_story(
     except Exception:
         current_status = "in_progress"
 
+    # Bridge through intermediate states to reach in_review (or done).
+    # Stories may be stuck in backlog if work.py:start_work() never ran.
+    if current_status == "backlog":
+        transition_story(project_root, story_id, "in_progress")
+        current_status = "in_progress"
     if current_status == "in_progress":
         transition_story(project_root, story_id, "in_review")
 

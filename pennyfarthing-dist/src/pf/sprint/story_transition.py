@@ -125,24 +125,34 @@ def transition_story(
         jira_target = _JIRA_STATUS.get(target_status, target_status)
         try:
             client = get_client()
-            jira_result = client.transition_sync(jira_key, jira_target)
-            if jira_result.get("success"):
+            # Skip Jira when not configured (no token) — treat like no jira_key
+            if not client.token:
                 steps.append(
                     {
                         "step": 2,
                         "action": "jira_transition",
-                        "success": True,
+                        "skipped": True,
                     }
                 )
             else:
-                steps.append(
-                    {
-                        "step": 2,
-                        "action": "jira_transition",
-                        "success": False,
-                        "error": jira_result.get("error", "Jira transition failed"),
-                    }
-                )
+                jira_result = client.transition_sync(jira_key, jira_target)
+                if jira_result.get("success"):
+                    steps.append(
+                        {
+                            "step": 2,
+                            "action": "jira_transition",
+                            "success": True,
+                        }
+                    )
+                else:
+                    steps.append(
+                        {
+                            "step": 2,
+                            "action": "jira_transition",
+                            "success": False,
+                            "error": jira_result.get("error", "Jira transition failed"),
+                        }
+                    )
         except Exception as exc:
             steps.append(
                 {
