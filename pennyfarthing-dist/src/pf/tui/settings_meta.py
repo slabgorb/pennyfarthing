@@ -154,6 +154,18 @@ _SPECS: list[SettingSpec] = [
         description="Use saddle commands for agent handoffs",
     ),
     SettingSpec(
+        key="workflow.strictness",
+        label="Gate Strictness",
+        widget_type="select",
+        group="Workflow",
+        options=[
+            ("Strict", "strict"),
+            ("Standard", "standard"),
+            ("Minimal", "minimal"),
+        ],
+        description="Gate enforcement level: strict (all block), standard (critical block), minimal (only critical block)",
+    ),
+    SettingSpec(
         key="workflow.startup_agent",
         label="Startup Agent",
         widget_type="select",

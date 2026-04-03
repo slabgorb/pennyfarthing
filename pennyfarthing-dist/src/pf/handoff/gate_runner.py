@@ -18,6 +18,24 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+_VALID_STRICTNESS_LEVELS: set[str] = {"critical", "standard", "advisory"}
+_VALID_PROFILES: set[str] = {"strict", "standard", "minimal"}
+
+# Enforcement matrix: (gate_strictness_level, profile) → enforcement
+# Per AC2: critical always blocks, standard blocks in strict/standard warns in minimal,
+# advisory warns in strict/standard info in minimal
+_ENFORCEMENT_MATRIX: dict[tuple[str, str], str] = {
+    ("critical", "strict"): "block",
+    ("critical", "standard"): "block",
+    ("critical", "minimal"): "block",
+    ("standard", "strict"): "block",
+    ("standard", "standard"): "block",
+    ("standard", "minimal"): "warn",
+    ("advisory", "strict"): "warn",
+    ("advisory", "standard"): "warn",
+    ("advisory", "minimal"): "info",
+}
+
 _DEFAULT_FAIL: dict = {
     "status": "fail",
     "message": "Gate evaluation failed or did not return GATE_RESULT",
@@ -75,10 +93,15 @@ def parse_gate_file(
     model_match = re.search(r'model="([^"]+)"', gate_tag)
     model = model_match.group(1) if model_match else "haiku"
 
+    strictness_match = re.search(r'strictness_level="([^"]+)"', gate_tag)
+    raw_strictness = strictness_match.group(1) if strictness_match else "standard"
+    strictness_level = raw_strictness if raw_strictness in _VALID_STRICTNESS_LEVELS else "standard"
+
     return {
         "status": "ok",
         "name": name,
         "model": model,
+        "strictness_level": strictness_level,
         "content": content,
         "error": None,
     }
@@ -192,4 +215,40 @@ def merge_gate_results(primary: dict, extension: dict) -> dict:
     if recovery:
         result["recovery"] = recovery
 
+    return result
+
+
+def apply_strictness_profile(
+    gate_result: dict,
+    gate_strictness_level: str,
+    profile: str,
+) -> dict:
+    """Apply a strictness profile to a gate result.
+
+    Determines enforcement level (block/warn/info/pass) based on the gate's
+    declared strictness_level and the active workflow strictness profile.
+
+    Args:
+        gate_result: GATE_RESULT dict with status, message, checks
+        gate_strictness_level: Gate's declared level (critical/standard/advisory)
+        profile: Active strictness profile (strict/standard/minimal)
+
+    Returns:
+        dict with all original gate_result fields plus 'enforcement' key:
+        - "pass" — gate passed, no enforcement needed
+        - "block" — gate failed, phase transition blocked
+        - "warn" — gate failed, warning logged, transition allowed
+        - "info" — gate failed, info logged, transition allowed
+    """
+    result = dict(gate_result)
+
+    if gate_result.get("status") == "pass":
+        result["enforcement"] = "pass"
+        return result
+
+    # Normalize unknown levels/profiles to standard
+    level = gate_strictness_level if gate_strictness_level in _VALID_STRICTNESS_LEVELS else "standard"
+    prof = profile if profile in _VALID_PROFILES else "standard"
+
+    result["enforcement"] = _ENFORCEMENT_MATRIX.get((level, prof), "block")
     return result
