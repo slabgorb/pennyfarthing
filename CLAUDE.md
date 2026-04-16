@@ -14,6 +14,18 @@ Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workf
 </critical>
 
 <critical>
+## Required Companion Plugin
+
+Pennyfarthing requires the `superpowers@claude-plugins-official` Claude Code plugin. Install it once per Claude Code environment:
+
+```
+/plugin install superpowers@claude-plugins-official
+```
+
+Superpowers provides the generic software-craft skills (brainstorming, writing-plans, verification-before-completion, test-driven-development, systematic-debugging, etc.) that pennyfarthing forwarder commands and gates reference. Running `pf doctor` will report `superpowers_plugin` as FAIL if it is missing.
+</critical>
+
+<critical>
 ## Dogfooding Context
 
 This repo is inlined at `pennyfarthing/` inside `pennyfarthing-orchestrator`. The `.pennyfarthing/` directory lives at the **orchestrator root**, not here.
