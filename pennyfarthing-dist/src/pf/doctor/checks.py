@@ -192,6 +192,41 @@ def check_theme(root: Path) -> CheckResult:
 # ---------------------------------------------------------------------------
 
 
+def check_superpowers_plugin(root: Path) -> CheckResult:
+    """Check that the superpowers Claude Code plugin is installed.
+
+    Pennyfarthing declares superpowers@claude-plugins-official as a required
+    companion plugin. The plugin is installed via Claude Code's /plugin system
+    and cached under ~/.claude/plugins/cache/claude-plugins-official/superpowers/.
+    """
+    import os
+
+    home = Path(os.environ.get("HOME", ""))
+    if not home.parts:
+        return CheckResult(
+            name="superpowers_plugin",
+            status="fail",
+            detail="HOME environment variable not set; cannot locate plugin cache.",
+        )
+
+    plugin_root = home / ".claude" / "plugins" / "cache" / "claude-plugins-official" / "superpowers"
+    if plugin_root.is_dir():
+        return CheckResult(
+            name="superpowers_plugin",
+            status="pass",
+            detail=f"superpowers plugin found at {plugin_root}",
+        )
+
+    return CheckResult(
+        name="superpowers_plugin",
+        status="fail",
+        detail=(
+            "superpowers plugin not installed. "
+            "Run: /plugin install superpowers@claude-plugins-official"
+        ),
+    )
+
+
 def _fix_mkdir(path: Path) -> bool:
     path.mkdir(parents=True, exist_ok=True)
     return path.is_dir()
@@ -219,4 +254,5 @@ CHECKS: list[tuple[str, str]] = [
     ("node_packages", "Node packages installed"),
     ("git_hooks", "Git hooks dispatcher installed"),
     ("theme", "Active theme is valid"),
+    ("superpowers_plugin", "superpowers companion plugin installed"),
 ]
