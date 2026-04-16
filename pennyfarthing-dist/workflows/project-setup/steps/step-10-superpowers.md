@@ -41,7 +41,7 @@ pf doctor
 Expected output includes:
 
 ```
-[OK] superpowers_plugin: superpowers plugin found at /Users/<you>/.claude/plugins/cache/claude-plugins-official/superpowers/<version>
+  [OK] superpowers_plugin: superpowers plugin found at /Users/<you>/.claude/plugins/cache/claude-plugins-official/superpowers
 ```
 
 If you see `[FAIL] superpowers_plugin: ...`, ask the user to rerun the install command.
