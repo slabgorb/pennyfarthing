@@ -36,10 +36,8 @@ def test_check_superpowers_plugin_fail_when_missing(tmp_path, monkeypatch):
     assert "superpowers" in result.detail.lower()
 
 
-def test_check_superpowers_plugin_has_stable_name():
+def test_check_superpowers_plugin_has_stable_name(tmp_path, monkeypatch):
     """Check name is stable for CLI output and JSON consumers."""
-    import inspect
-    from pf.doctor import checks
-
-    # Function must be named check_superpowers_plugin; result.name is "superpowers_plugin"
-    assert inspect.isfunction(checks.check_superpowers_plugin)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    result = check_superpowers_plugin(tmp_path)
+    assert result.name == "superpowers_plugin"

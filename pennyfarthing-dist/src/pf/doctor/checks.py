@@ -8,6 +8,7 @@ Each check function takes a project root Path and returns a CheckResult.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -187,11 +188,6 @@ def check_theme(root: Path) -> CheckResult:
     return CheckResult(name="theme", status="pass", detail=f"Theme: {theme}")
 
 
-# ---------------------------------------------------------------------------
-# Fix helpers
-# ---------------------------------------------------------------------------
-
-
 def check_superpowers_plugin(root: Path) -> CheckResult:
     """Check that the superpowers Claude Code plugin is installed.
 
@@ -199,8 +195,6 @@ def check_superpowers_plugin(root: Path) -> CheckResult:
     companion plugin. The plugin is installed via Claude Code's /plugin system
     and cached under ~/.claude/plugins/cache/claude-plugins-official/superpowers/.
     """
-    import os
-
     home = Path(os.environ.get("HOME", ""))
     if not home.parts:
         return CheckResult(
@@ -225,6 +219,11 @@ def check_superpowers_plugin(root: Path) -> CheckResult:
             "Run: /plugin install superpowers@claude-plugins-official"
         ),
     )
+
+
+# ---------------------------------------------------------------------------
+# Fix helpers
+# ---------------------------------------------------------------------------
 
 
 def _fix_mkdir(path: Path) -> bool:
