@@ -291,6 +291,14 @@ _SPECS: list[SettingSpec] = [
         group="Jira",
         description="Jira instance base URL",
     ),
+    SettingSpec(
+        key="peloton.layout",
+        label="Peloton Layout",
+        widget_type="select",
+        group="Peloton",
+        options=[("Grid", "grid"), ("Vertical", "vertical"), ("Horizontal", "horizontal")],
+        description="Pane layout for team workflows",
+    ),
 ]
 
 for _spec in _SPECS:
