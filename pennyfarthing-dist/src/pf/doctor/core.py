@@ -19,6 +19,7 @@ from pf.doctor.checks import (
     check_python_install,
     check_settings_hooks,
     check_skills,
+    check_superpowers_plugin,
     check_theme,
 )
 from pf.doctor.models import DoctorReport
@@ -36,6 +37,7 @@ _CHECK_FNS = {
     "node_packages": check_node_packages,
     "git_hooks": check_git_hooks,
     "theme": check_theme,
+    "superpowers_plugin": check_superpowers_plugin,
 }
 
 
