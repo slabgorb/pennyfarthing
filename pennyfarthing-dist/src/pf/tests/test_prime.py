@@ -9,6 +9,9 @@ from unittest.mock import patch
 
 import pytest
 
+from click.testing import CliRunner
+
+from pf.cli import cli as pf_cli
 from pf.prime.cli import main, prime
 from pf.prime.workflow import get_phase_skills
 from pf.prime.loader import (
@@ -1258,3 +1261,89 @@ class TestGetPhaseSkills:
             """,
         )
         assert get_phase_skills("sdd", "red", fake_project) is None
+
+
+class TestPrimeSkillsRequiredSection:
+    """Prime output must surface `skills.required` from the current phase."""
+
+    def test_prime_output_includes_skills_section_when_phase_has_required(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Arrange: fake project with SDD workflow in RED phase
+        project = tmp_path / "proj"
+        (project / ".session").mkdir(parents=True)
+        (project / "pennyfarthing-dist" / "workflows").mkdir(parents=True)
+        (project / "pennyfarthing-dist" / "agents").mkdir(parents=True)
+        (project / "pennyfarthing-dist" / "agents" / "tea.md").write_text(
+            "# TEA\nMinimal test agent.\n"
+        )
+
+        (project / "pennyfarthing-dist" / "workflows" / "sdd.yaml").write_text(
+            textwrap.dedent(
+                """
+                workflow:
+                  name: sdd
+                  phases:
+                    - name: red
+                      agent: tea
+                      skills:
+                        required:
+                          - superpowers:test-driven-development
+                """
+            ).lstrip()
+        )
+
+        session_md = (
+            "# Session\n\n"
+            "## Workflow Phase\n"
+            "- **Workflow:** sdd\n"
+            "- **Current Phase:** red\n"
+        )
+        (project / ".session" / "TEST-1-session.md").write_text(session_md)
+
+        monkeypatch.delenv("PROJECT_ROOT", raising=False)
+        monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+        monkeypatch.chdir(project)
+
+        # Act
+        runner = CliRunner()
+        result = runner.invoke(pf_cli, ["agent", "start", "tea", "--quiet"])
+
+        # Assert
+        assert result.exit_code == 0, result.output
+        assert "Skills Required" in result.output
+        assert "superpowers:test-driven-development" in result.output
+
+    def test_prime_output_omits_skills_section_when_phase_has_no_required(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        project = tmp_path / "proj"
+        (project / ".session").mkdir(parents=True)
+        (project / "pennyfarthing-dist" / "workflows").mkdir(parents=True)
+        (project / "pennyfarthing-dist" / "agents").mkdir(parents=True)
+        (project / "pennyfarthing-dist" / "agents" / "tea.md").write_text(
+            "# TEA\nMinimal test agent.\n"
+        )
+
+        (project / "pennyfarthing-dist" / "workflows" / "tdd.yaml").write_text(
+            textwrap.dedent(
+                """
+                workflow:
+                  name: tdd
+                  phases:
+                    - name: red
+                      agent: tea
+                """
+            ).lstrip()
+        )
+        (project / ".session" / "TEST-1-session.md").write_text(
+            "## Workflow Phase\n- **Workflow:** tdd\n- **Current Phase:** red\n"
+        )
+
+        monkeypatch.chdir(project)
+
+        runner = CliRunner()
+        result = runner.invoke(pf_cli, ["agent", "start", "tea", "--quiet"])
+
+        assert result.exit_code == 0, result.output
+        assert "Skills Required" not in result.output
