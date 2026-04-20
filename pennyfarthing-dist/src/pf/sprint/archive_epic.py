@@ -230,10 +230,30 @@ def _write_archive_file(archive_path: Path, data: dict[str, Any]) -> None:
     Args:
         archive_path: Path to the archive YAML file
         data: Archive data dict
+
+    Raises:
+        ValueError: When any `completed_stories` entry is missing a non-empty
+            `epic` reference. The message names every offending story id so
+            the caller can decide whether to backfill (``backfill_epic_refs``)
+            or fix the inputs before retrying.
     """
     import io
 
     from ruamel.yaml.comments import CommentedMap, CommentedSeq
+
+    offenders = [
+        str(story.get("id") or "<unknown>")
+        for story in data.get("completed_stories") or []
+        if not (story.get("epic") or "").strip()
+    ]
+    if offenders:
+        raise ValueError(
+            "Refusing to write archive: completed_stories entries have "
+            "missing or empty `epic` references: "
+            + ", ".join(offenders)
+            + ". Set a non-empty `epic` field, or run `backfill_epic_refs()` "
+            "to repair historical entries."
+        )
 
     yml = _make_yaml()
 
@@ -264,6 +284,71 @@ def _write_archive_file(archive_path: Path, data: dict[str, Any]) -> None:
     result = "\n".join(cleaned).rstrip("\n") + "\n"
 
     archive_path.write_text(result)
+
+
+def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
+    """Repair archive entries whose `epic` field is missing or empty.
+
+    Walks every ``sprint/archive/sprint-*-completed.yaml`` under ``project_root``
+    and, for each completed-story entry that lacks a usable ``epic`` reference,
+    looks the story up by id in the live sprint YAML. Resolved entries are
+    patched in place; entries whose parent epic cannot be determined are
+    reported as irrecoverable and left untouched.
+
+    An archive file is only rewritten when every entry in it has a non-empty
+    ``epic`` after repair — the `_write_archive_file` guard enforces that
+    invariant.
+
+    Args:
+        project_root: Project root path (defaults to auto-detect).
+
+    Returns:
+        {"success": True, "backfilled": [{"id", "epic"}, ...],
+         "irrecoverable": [{"id"}, ...]}
+    """
+    root = project_root or get_project_root()
+    archive_dir = root / "sprint" / "archive"
+
+    backfilled: list[dict[str, str]] = []
+    irrecoverable: list[dict[str, str]] = []
+
+    id_to_epic: dict[str, str] = {}
+    sprint_data = load_sprint(root) or {}
+    for epic in sprint_data.get("epics") or []:
+        if not isinstance(epic, dict):
+            continue
+        epic_ref = str(epic.get("jira") or epic.get("id") or "").strip()
+        if not epic_ref:
+            continue
+        for story in epic.get("stories") or []:
+            sid = story.get("id")
+            if sid:
+                id_to_epic[str(sid)] = epic_ref
+
+    if not archive_dir.exists():
+        return {"success": True, "backfilled": backfilled, "irrecoverable": irrecoverable}
+
+    for archive_path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
+        data = _load_archive_file(archive_path)
+        stories = data.get("completed_stories") or []
+        file_changed = False
+
+        for story in stories:
+            if (story.get("epic") or "").strip():
+                continue
+            sid = str(story.get("id") or "").strip()
+            resolved = id_to_epic.get(sid) if sid else None
+            if resolved:
+                story["epic"] = resolved
+                backfilled.append({"id": sid, "epic": resolved})
+                file_changed = True
+            else:
+                irrecoverable.append({"id": sid})
+
+        if file_changed and all((s.get("epic") or "").strip() for s in stories):
+            _write_archive_file(archive_path, data)
+
+    return {"success": True, "backfilled": backfilled, "irrecoverable": irrecoverable}
 
 
 def is_epic_complete(epic: dict[str, Any]) -> tuple[bool, list[str]]:
