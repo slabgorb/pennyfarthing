@@ -29,6 +29,7 @@ For each skill name in the composite gate's required list:
 <pass>
 All required skills have attestation entries for the current phase.
 
+```yaml
 GATE_RESULT:
   status: pass
   gate: skill-attested
@@ -37,11 +38,13 @@ GATE_RESULT:
     - name: skill-attested
       status: pass
       detail: "Attested: {comma-separated skill names}"
+```
 </pass>
 
 <fail>
 One or more required skills has no attestation entry for the current phase.
 
+```yaml
 GATE_RESULT:
   status: fail
   gate: skill-attested
@@ -55,6 +58,7 @@ GATE_RESULT:
     - "After invocation, append an entry to <skills-invoked> in the session file:"
     - "  <skill name=\"<name>\" phase=\"<current-phase>\" at=\"<ISO8601 timestamp>\"/>"
     - "Re-run the exit protocol"
+```
 </fail>
 
 </gate>
