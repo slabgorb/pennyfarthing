@@ -310,6 +310,42 @@ def archive(story_id: str, pr_number: str | None, apply: bool, dry_run: bool):
         raise click.ClickException(f"Failed: {result.get('error')}")
 
 
+@sprint.command("backfill-epics")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def backfill_epics(output_json: bool):
+    """Repair archive entries whose `epic` field is missing or empty.
+
+    Walks sprint/archive/sprint-*-completed.yaml, looks each epic-less
+    story up by id in the live sprint YAML, and patches the parent epic
+    in place. Entries whose parent epic cannot be determined are reported
+    as irrecoverable and left untouched.
+
+    Exits non-zero if any irrecoverable entries remain after the walk.
+    """
+    from pf.sprint.archive_epic import backfill_epic_refs
+
+    result = backfill_epic_refs()
+    backfilled = result.get("backfilled") or []
+    irrecoverable = result.get("irrecoverable") or []
+
+    if output_json:
+        import json
+
+        click.echo(json.dumps(result, default=str))
+    else:
+        click.echo(f"Backfilled: {len(backfilled)}")
+        for entry in backfilled:
+            click.echo(f"  ✓ {entry['id']} → epic {entry['epic']}")
+        click.echo(f"Irrecoverable: {len(irrecoverable)}")
+        for entry in irrecoverable:
+            click.echo(f"  ✗ {entry['id']} (no parent epic found in sprint YAML)")
+
+    if irrecoverable:
+        raise click.ClickException(
+            f"{len(irrecoverable)} archive entries could not be backfilled"
+        )
+
+
 # --- Story subgroup ---
 
 
