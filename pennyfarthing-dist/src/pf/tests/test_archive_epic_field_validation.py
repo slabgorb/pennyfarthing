@@ -260,3 +260,65 @@ def test_backfill_epic_refs_is_idempotent_on_clean_archive(
     assert result.get("success") is True
     assert (result.get("backfilled") or []) == []
     assert (result.get("irrecoverable") or []) == []
+
+
+# --- CLI smoke ---------------------------------------------------------------
+
+
+def test_cli_backfill_epics_reports_resolution(
+    archive_tree: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`pf sprint backfill-epics` wraps the helper, prints a human summary,
+    and exits zero when every missing epic is resolved."""
+    from click.testing import CliRunner
+
+    from pf.sprint.cli import sprint as sprint_cli
+
+    _write_archive(
+        archive_tree,
+        [
+            {"id": "151-2", "title": "no epic yet", "points": 3},
+        ],
+    )
+
+    monkeypatch.delenv("PROJECT_ROOT", raising=False)
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    monkeypatch.chdir(archive_tree)
+    monkeypatch.setenv("PROJECT_ROOT", str(archive_tree))
+
+    runner = CliRunner()
+    result = runner.invoke(sprint_cli, ["backfill-epics"])
+
+    assert result.exit_code == 0, result.output
+    assert "Backfilled: 1" in result.output
+    assert "151-2" in result.output
+    assert "MSSCI-17079" in result.output
+    assert "Irrecoverable: 0" in result.output
+
+
+def test_cli_backfill_epics_exits_nonzero_on_irrecoverable(
+    archive_tree: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Exit non-zero when any archive entry cannot be backfilled."""
+    from click.testing import CliRunner
+
+    from pf.sprint.cli import sprint as sprint_cli
+
+    _write_archive(
+        archive_tree,
+        [
+            {"id": "ghost-99", "title": "not in sprint", "points": 1},
+        ],
+    )
+
+    monkeypatch.delenv("PROJECT_ROOT", raising=False)
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    monkeypatch.chdir(archive_tree)
+    monkeypatch.setenv("PROJECT_ROOT", str(archive_tree))
+
+    runner = CliRunner()
+    result = runner.invoke(sprint_cli, ["backfill-epics"])
+
+    assert result.exit_code != 0
+    assert "ghost-99" in result.output
+    assert "Irrecoverable: 1" in result.output
