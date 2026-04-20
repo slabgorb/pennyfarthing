@@ -165,6 +165,37 @@ Session files track active work sessions for stories. They are the highest-frequ
 
 ---
 
+### `<skills-invoked>`
+
+**Purpose:** Attestation log for superpowers skills invoked during a phase. Used by the SDD workflow and any future workflow that requires skill-attestation gates. Optional element; present only when a phase requires skill attestation.
+
+**Child Elements:**
+
+#### `<skill>`
+
+**Attributes:**
+| Attribute | Required | Description |
+|-----------|----------|-------------|
+| `name` | Yes | Skill identifier without plugin prefix (e.g., `test-driven-development`) |
+| `phase` | Yes | Phase during which the skill was invoked (e.g., `red`, `green`) |
+| `at` | Yes | ISO 8601 timestamp of invocation (e.g., `2026-04-19T14:22:03Z`) |
+
+**Content:** Empty element (self-closing).
+
+**Example:**
+
+```xml
+<skills-invoked>
+  <skill name="test-driven-development" phase="red" at="2026-04-19T14:22:03Z"/>
+  <skill name="verification-before-completion" phase="green" at="2026-04-19T15:01:47Z"/>
+  <skill name="requesting-code-review" phase="green" at="2026-04-19T15:02:14Z"/>
+</skills-invoked>
+```
+
+**Agent protocol:** When a workflow phase has `skills.required` in its YAML definition, the activating agent invokes each listed skill via the Skill tool, then appends a `<skill>` entry to `<skills-invoked>` in the session file. Composite exit gates (e.g., `sdd-red-exit`, `sdd-green-exit`) read this element to verify required skills have been attested.
+
+---
+
 ## Usage Examples
 
 ### New Session (SM Setup)
