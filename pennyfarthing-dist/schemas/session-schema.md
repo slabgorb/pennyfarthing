@@ -49,6 +49,9 @@ Session files track active work sessions for stories. They are the highest-frequ
     <assessment agent="reviewer" verdict="approved">
       Review findings...
     </assessment>
+    <skills-invoked>
+      <skill name="test-driven-development" phase="red" at="2026-01-22T10:00:00Z"/>
+    </skills-invoked>
   </work-log>
 </session>
 ```
@@ -176,7 +179,7 @@ Session files track active work sessions for stories. They are the highest-frequ
 **Attributes:**
 | Attribute | Required | Description |
 |-----------|----------|-------------|
-| `name` | Yes | Skill identifier without plugin prefix (e.g., `test-driven-development`) |
+| `name` | Yes | Skill identifier without the `superpowers:` plugin prefix (e.g., `test-driven-development` — strip the prefix even when the skill was invoked as `superpowers:test-driven-development`) |
 | `phase` | Yes | Phase during which the skill was invoked (e.g., `red`, `green`) |
 | `at` | Yes | ISO 8601 timestamp of invocation (e.g., `2026-04-19T14:22:03Z`) |
 
