@@ -12,13 +12,18 @@ test-driven-development skill.
 Read the session file at `.session/{STORY_ID}-session.md`. Look for a
 <skills-invoked> element.
 
+If the <skills-invoked> element is absent from the session file entirely,
+treat every required skill as missing and fail — do NOT treat absence of
+the element as inability to check.
+
 The RED phase of the SDD workflow requires attestation for:
   - test-driven-development
 
-For each required skill, find at least one <skill/> element with
-  name="{skill}" phase="red"
+For each required skill, find at least one <skill/> element whose
+`name` attribute matches AND whose `phase` attribute equals "red".
+Attestations recorded for other phases do NOT satisfy this gate.
 
-If any are missing, fail with recovery guidance.
+If any required skill has no matching entry, fail with recovery guidance.
 </check>
 
 <pass>

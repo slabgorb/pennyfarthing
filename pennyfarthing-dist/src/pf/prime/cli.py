@@ -602,12 +602,22 @@ def prime(
                     f"attestation of the following skills:\n"
                 )
                 for skill in required_skills:
-                    print(f"- `{skill}`")
+                    # Skill identifiers carry a plugin prefix (e.g.,
+                    # `superpowers:test-driven-development`). Invocation uses
+                    # the full id; attestation drops the prefix per
+                    # schemas/session-schema.md. Display both to prevent
+                    # transcription errors.
+                    attest_name = skill.split(":", 1)[1] if ":" in skill else skill
+                    print(
+                        f"- `{skill}` — invoke via the Skill tool, "
+                        f'attest with `name="{attest_name}"`'
+                    )
                 print(
                     "\nAfter invoking each skill via the Skill tool, append an "
                     "entry to the `<skills-invoked>` element in the session "
-                    "file. Example:\n\n"
-                    '    <skill name="<name>" phase="' + ws.phase + '" '
+                    "file. Use the unprefixed skill name in the `name` "
+                    "attribute. Example:\n\n"
+                    '    <skill name="<unprefixed-name>" phase="' + ws.phase + '" '
                     'at="<ISO8601 timestamp>"/>\n\n'
                     "The phase exit gate will verify every listed skill has an "
                     "attestation entry for this phase."

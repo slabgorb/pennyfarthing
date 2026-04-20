@@ -11,15 +11,21 @@ Extends dev-exit with a skill-attested check for three superpowers skills.
 Read the session file at `.session/{STORY_ID}-session.md`. Look for a
 <skills-invoked> element.
 
+If the <skills-invoked> element is absent from the session file entirely,
+treat every required skill as missing and fail — do NOT treat absence of
+the element as inability to check.
+
 The GREEN phase of the SDD workflow requires attestation for:
   - test-driven-development
   - verification-before-completion
   - requesting-code-review
 
-For each required skill, find at least one <skill/> element with
-  name="{skill}" phase="green"
+For each required skill, find at least one <skill/> element whose
+`name` attribute matches AND whose `phase` attribute equals "green".
+Attestations recorded for other phases (e.g., the RED phase) do NOT
+satisfy this gate — each phase must be attested during that phase.
 
-If any are missing, fail with recovery guidance.
+If any required skill has no matching entry, fail with recovery guidance.
 </check>
 
 <pass>

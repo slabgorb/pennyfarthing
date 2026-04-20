@@ -1340,6 +1340,8 @@ class TestPrimeSkillsRequiredSection:
             "## Workflow Phase\n- **Workflow:** tdd\n- **Current Phase:** red\n"
         )
 
+        monkeypatch.delenv("PROJECT_ROOT", raising=False)
+        monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
         monkeypatch.chdir(project)
 
         runner = CliRunner()
