@@ -418,6 +418,52 @@ def get_phase_team_config(
         return None
 
 
+def get_phase_skills(
+    workflow_name: str, phase_name: str, project_root: Path | None = None
+) -> list[str] | None:
+    """Extract required skills for a specific workflow phase.
+
+    Reads the workflow YAML and returns the list of superpowers skills that
+    the agent is expected to invoke during this phase. Returns None when the
+    phase has no ``skills.required`` configuration or the list is empty.
+
+    Args:
+        workflow_name: Workflow name (sdd, tdd, etc.)
+        phase_name: Phase name (setup, red, green, review, finish)
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        List of skill identifiers (e.g. ``["superpowers:test-driven-development"]``)
+        or None when there are no required skills for this phase.
+    """
+    root = project_root or get_project_root()
+    dist_root = get_dist_root(project_root=root)
+    if dist_root:
+        workflow_path = dist_root / "workflows" / f"{workflow_name}.yaml"
+    else:
+        workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
+
+    if not workflow_path.exists():
+        return None
+
+    try:
+        data = yaml.safe_load(workflow_path.read_text())
+        phases = data.get("workflow", {}).get("phases", [])
+
+        for phase in phases:
+            if isinstance(phase, dict) and phase.get("name") == phase_name:
+                skills = phase.get("skills")
+                if isinstance(skills, dict):
+                    required = skills.get("required")
+                    if isinstance(required, list) and required:
+                        return [str(s) for s in required]
+                return None
+
+        return None
+    except Exception:
+        return None
+
+
 def get_step_tandem_config(
     workflow_name: str, step_number: int, project_root: Path | None = None
 ) -> dict[str, Any] | None:
