@@ -38,10 +38,20 @@ def get_archive_path(project_root: Path | None = None) -> Path:
 
     sprint_info = sprint_data["sprint"]
 
-    sprint_name = sprint_info.get("jira_sprint_name", "")
-    sprint_id = (
-        sprint_name.split()[-1] if sprint_name else str(sprint_info.get("number", "unknown"))
-    )
+    # Prefer `name` (or `jira_sprint_name` for Jira-linked sprints), else fall back
+    # to `number`. Fail loud if neither is set — silently writing to
+    # `sprint-unknown-completed.yaml` masks misconfigured sprints (epic 151).
+    name = sprint_info.get("name") or sprint_info.get("jira_sprint_name")
+    if name:
+        sprint_id = str(name).split()[-1]
+    else:
+        number = sprint_info.get("number")
+        if number is None or number == "":
+            raise ValueError(
+                "Cannot resolve archive filename: sprint metadata has neither 'name' "
+                "nor 'number' set. Check sprint/current-sprint.yaml."
+            )
+        sprint_id = str(number)
 
     archive_path = root / "sprint" / "archive" / f"sprint-{sprint_id}-completed.yaml"
     return archive_path
