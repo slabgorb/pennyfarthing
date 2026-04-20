@@ -71,6 +71,9 @@ pf validate                                          # Framework validation
 
 BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (progressive gates). Workflow definitions live in `pennyfarthing-dist/workflows/*.yaml` — read the YAML for phase order, agents, tandem/team pairings, and gates. Use `pf workflow list` and `pf workflow show <name>` to inspect.
 
+**Experimental workflows:**
+- `sdd` (Superpower Driven Development): Parallels `tdd.yaml` with per-phase `skills.required` lists that agents invoke and attest to in the session file. Composite gates (`sdd-red-exit`, `sdd-green-exit`) verify both artifacts and skill attestation. Opt-in via `workflow: sdd` on a story.
+
 | Agent | Role | Agent | Role |
 |-------|------|-------|------|
 | SM | Story setup, completion | PM | Planning |
