@@ -269,13 +269,18 @@ def finish_story(
             steps.append({"step": 3, "action": "jira_done", "skipped": True})
         steps.append({"step": 4, "action": "yaml_update", "status": "done", "completed": today})
     else:
+        # Loud fail: a yaml-update failure during the final transition leaves
+        # the sprint in inconsistent state. Stop now — do NOT run irreversible
+        # cleanup (epic archive, branch delete, session removal).
+        transition_error = t_result.get("error", "Transition failed")
         if jira_key:
             steps.append(
                 {
                     "step": 3,
                     "action": "jira_done",
                     "key": jira_key,
-                    "warning": t_result.get("error", "Transition failed"),
+                    "success": False,
+                    "error": transition_error,
                 }
             )
         else:
@@ -284,16 +289,25 @@ def finish_story(
                     "step": 3,
                     "action": "jira_done",
                     "skipped": True,
-                    "warning": "No Jira key available",
+                    "success": False,
+                    "error": "No Jira key available",
                 }
             )
         steps.append(
             {
                 "step": 4,
                 "action": "yaml_update",
-                "warning": t_result.get("error", "Transition failed"),
+                "success": False,
+                "error": transition_error,
             }
         )
+        return {
+            "success": False,
+            "story_id": story_id,
+            "jira_key": jira_key,
+            "error": f"yaml-update step failed during finish: {transition_error}",
+            "steps": steps,
+        }
 
     # --- Step 4b: Add story to completed file ---
     try:
