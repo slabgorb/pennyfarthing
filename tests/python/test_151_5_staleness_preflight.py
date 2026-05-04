@@ -40,8 +40,9 @@ from unittest.mock import patch
 
 import pytest
 
-# The module under test does not exist yet (RED state). Import is deferred to
-# fixtures so that collection still works while the rest of the suite runs.
+# Imports are deferred to test bodies so each fixture-built tmp_path is on
+# sys.path / cwd before the module touches it. Keeps tests independent of any
+# global module-level state that would persist across the suite.
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +160,31 @@ def impl_repo(tmp_path: Path) -> Path:
     return repo
 
 
+@pytest.fixture
+def impl_repo_feature_checkout(tmp_path: Path) -> Path:
+    """A git repo where HEAD ≠ base branch.
+
+    Sets up the production scenario: an agent has just created a feature branch
+    off ``develop`` and is about to run the staleness preflight before red phase.
+    HEAD points at ``feature/151-5``; ``develop`` exists alongside.
+
+    The previous fixture (``impl_repo``) leaves HEAD == develop, which masks
+    bugs that depend on the distinction (the [CRITICAL] reviewer finding that
+    drove this red-rework).
+    """
+    repo = tmp_path / "pennyfarthing"
+    repo.mkdir()
+    _git(repo, "init", "-b", "develop")
+    _commit(
+        repo,
+        {"README.md": "init\n"},
+        "initial commit",
+        "2026-04-01T00:00:00",
+    )
+    _git(repo, "checkout", "-b", "feature/151-5")
+    return repo
+
+
 # ---------------------------------------------------------------------------
 # AC1: Clean case
 # ---------------------------------------------------------------------------
@@ -247,8 +273,18 @@ class TestDriftDetection:
         commits = result.get("commits") or []
         assert len(commits) == 1, f"expected exactly 1 drift commit, got {len(commits)}"
         commit = commits[0]
-        assert commit.get("hash", "").startswith(drift_hash[:7]) or commit.get("hash") == drift_hash, (
-            f"drift commit hash must match the actual commit, got {commit.get('hash')}"
+        assert commit.get("hash") == drift_hash, (
+            f"drift commit hash must equal the actual commit hash exactly, "
+            f"got {commit.get('hash')!r} expected {drift_hash!r}"
+        )
+        short_hash = commit.get("short_hash")
+        assert isinstance(short_hash, str) and len(short_hash) >= 7, (
+            f"drift commit must include a non-empty short_hash field "
+            f"(at least 7 chars for git's default abbreviation), got {short_hash!r}"
+        )
+        assert drift_hash.startswith(short_hash), (
+            f"short_hash must be a prefix of the full hash, "
+            f"got short={short_hash!r} full={drift_hash!r}"
         )
         assert commit.get("subject") == "feat(sprint): pre-empt 151-5 work", (
             f"drift commit subject must be the actual commit subject, got {commit.get('subject')!r}"
@@ -365,8 +401,10 @@ class TestAcknowledgmentBehavior:
             project_root=sprint_root,
             repo_path_overrides={"pennyfarthing": impl_repo},
         )
-        assert exit_code != 0, (
-            f"drift without --ack must produce non-zero exit, got {exit_code}"
+        assert exit_code == 1, (
+            f"drift without --ack must produce exit code 1 specifically — "
+            f"distinct from 0 (clean/skipped/acked) and 2 (hard error). "
+            f"got {exit_code}"
         )
 
     def test_drift_with_ack_yields_zero_cli_exit(
@@ -695,8 +733,11 @@ stories:
             project_root=root,
             repo_path_overrides={"pennyfarthing": impl_repo},
         )
-        assert result.get("status") != "clean", (
-            "skipped must not be reported as 'clean' — that would mask the lack of check"
+        assert result.get("status") == "skipped", (
+            "no-inferable-surface case must have its own distinct 'skipped' status — "
+            "not 'clean' (would mask the lack of check) and not 'drift' (would block "
+            "work that has no actual overlap). "
+            f"got {result.get('status')!r}"
         )
 
 
@@ -814,9 +855,624 @@ class TestRuleInputValidation:
                 repo_path_overrides={"pennyfarthing": impl_repo},
             )
 
+        adversarial_payload = "151-5; rm -rf /"
+        # If the impl rejects the adversarial story_id at the boundary (e.g.,
+        # `_find_story` returns None and we early-exit), `captured` will be
+        # empty — that's the BEST defense, since the bad input never reaches
+        # subprocess at all. We only assert the substring/shell properties
+        # IF subprocess was invoked.
         for call in captured:
+            args = call["args"]
             kwargs = call["kwargs"]
             assert kwargs.get("shell", False) is False, (
                 "subprocess.run must never be called with shell=True — "
                 "story_id is operator input and may contain shell metacharacters"
             )
+            # shell=False is necessary but not sufficient. The argv form must
+            # also keep the operator-controlled payload out of every individual
+            # argv element — a defensive check against accidental interpolation
+            # into a `--format=...` or similar element.
+            argv = args[0] if args else kwargs.get("args", [])
+            argv_list = list(argv) if isinstance(argv, (list, tuple)) else []
+            for element in argv_list:
+                if not isinstance(element, str):
+                    continue
+                assert adversarial_payload not in element, (
+                    f"adversarial story_id payload {adversarial_payload!r} appeared "
+                    f"as a substring of argv element {element!r} — "
+                    "story_id must never be interpolated into any individual argv string"
+                )
+
+
+# ---------------------------------------------------------------------------
+# Round-2 RED: tests added after Reviewer rejection of round-1 GREEN.
+#
+# The first round of tests passed because every fixture left HEAD coincidentally
+# equal to the base branch and asserted weakly enough that a half-broken impl
+# could satisfy them. This block hardens the suite against the recurring
+# "silent-clean" anti-pattern the story exists to prevent.
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# AC2 + [CRITICAL]: drift on base_branch detected when HEAD is a feature branch
+# ---------------------------------------------------------------------------
+
+
+class TestDriftDetectionAcrossBranches:
+    """The implementation must inspect ``origin/<base-branch>`` (or the local
+    base ref), not the current HEAD. In production sm-setup runs after the
+    feature branch is created — HEAD is the feature branch, not develop."""
+
+    def test_drift_detected_when_head_is_feature_branch(
+        self, sprint_root: Path, impl_repo_feature_checkout: Path
+    ) -> None:
+        """[CRITICAL] HEAD ≠ base_branch + drift on base → must still detect drift.
+
+        Without this fixture variant the previous test suite was a tautology:
+        every fixture used ``git init -b develop`` and never changed branches,
+        so HEAD == develop trivially and an implementation that logs HEAD instead
+        of the base branch would pass anyway.
+        """
+        repo = impl_repo_feature_checkout
+
+        # Land a drift commit on develop (NOT on the current HEAD).
+        _git(repo, "checkout", "develop")
+        _commit(
+            repo,
+            {"pennyfarthing-dist/src/pf/sprint/work.py": "# overtaken upstream\n"},
+            "feat(sprint): pre-empt 151-5 work on develop",
+            "2026-05-05T10:00:00",
+        )
+        # Mirror the local develop tip to refs/remotes/origin/develop so the
+        # implementation can use either ``develop`` or ``origin/develop`` as the
+        # ref form — both are acceptable per the reviewer's CRITICAL finding.
+        develop_sha = _git(repo, "rev-parse", "develop").strip()
+        _git(repo, "update-ref", "refs/remotes/origin/develop", develop_sha)
+
+        # Switch back to the feature branch — HEAD ≠ develop now.
+        _git(repo, "checkout", "feature/151-5")
+
+        # Fixture invariant — guard against future fixture drift accidentally
+        # restoring the broken-test condition.
+        head_sha = _git(repo, "rev-parse", "HEAD").strip()
+        develop_sha_now = _git(repo, "rev-parse", "develop").strip()
+        assert head_sha != develop_sha_now, (
+            "fixture invariant violated: HEAD == develop, so this test would "
+            "be a tautology. The fixture must keep HEAD on feature/151-5."
+        )
+
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-5",
+            project_root=sprint_root,
+            repo_path_overrides={"pennyfarthing": repo},
+        )
+
+        assert result.get("status") == "drift", (
+            f"drift on develop must be detected even when HEAD is a feature "
+            f"branch — the implementation must include the base branch in the "
+            f"git log command, not rely on HEAD. "
+            f"got status={result.get('status')!r}, commits={result.get('commits')!r}"
+        )
+        commits = result.get("commits") or []
+        assert len(commits) == 1, (
+            f"expected exactly 1 drift commit (the one landed on develop), got {len(commits)}"
+        )
+        assert commits[0].get("subject") == "feat(sprint): pre-empt 151-5 work on develop", (
+            f"the detected drift commit must be the one on develop, not anything "
+            f"on HEAD. got subject={commits[0].get('subject')!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# AC2 + [HIGH]: commits whose subject contains the parser delimiter must be detected
+# ---------------------------------------------------------------------------
+
+
+class TestDelimiterCollision:
+    def test_commit_subject_with_literal_delimiter_is_still_detected(
+        self, sprint_root: Path, impl_repo: Path
+    ) -> None:
+        """[HIGH] If a commit subject literally contains the parser's commit
+        delimiter, ``_parse_git_log`` must not silently drop the chunk. Either
+        the impl uses NUL-delimited git log, or it surfaces a warning. Either
+        way drift must still register.
+
+        This is exactly the silent-drop pattern the story exists to prevent."""
+        delimiter_in_subject = "trick: <<<COMMIT-DELIMITER-7f8a3b>>> in subject"
+        _commit(
+            impl_repo,
+            {"pennyfarthing-dist/src/pf/sprint/work.py": "# overtaken\n"},
+            delimiter_in_subject,
+            "2026-05-05T10:00:00",
+        )
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-5",
+            project_root=sprint_root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        assert result.get("status") == "drift", (
+            "a commit whose subject contains the parser's delimiter must NOT be "
+            "silently dropped — drift must still be detected. "
+            f"got status={result.get('status')!r}, commits={result.get('commits')!r}"
+        )
+        commits = result.get("commits") or []
+        assert len(commits) >= 1, (
+            f"expected at least 1 drift commit despite delimiter collision, got {len(commits)}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# [HIGH]: empty surface_path must not match every absolute commit path
+# ---------------------------------------------------------------------------
+
+
+class TestPathMatchingHelper:
+    def test_empty_surface_path_does_not_match_every_file(self) -> None:
+        """[HIGH] ``_path_matches(commit_file, "")`` must return False, not match
+        any non-empty path. The bug shape: ``"".rstrip("/") + "/"`` evaluates
+        to ``"/"``, and ``commit_file.startswith("/")`` is True for any absolute
+        path — so an empty entry in the surface list would cause every commit
+        to register as drift."""
+        from pf.sprint.staleness import _path_matches
+
+        # If the bug were present, all of these would return True.
+        assert _path_matches("/etc/passwd", "") is False, (
+            "empty surface_path must not match absolute commit paths — "
+            "would cause every commit to register as drift"
+        )
+        assert _path_matches("foo/bar.py", "") is False, (
+            "empty surface_path must not match relative commit paths"
+        )
+        assert _path_matches("/", "") is False, (
+            "empty surface_path must not match the root path"
+        )
+
+
+# ---------------------------------------------------------------------------
+# [HIGH]: unknown repo must not silently fall back to base_branch=develop
+# ---------------------------------------------------------------------------
+
+
+class TestUnknownRepoSilentFallback:
+    def test_unknown_repo_does_not_silently_use_develop(
+        self, tmp_path: Path, impl_repo_feature_checkout: Path
+    ) -> None:
+        """[HIGH] When ``story.repos`` names a repo not in the known mapping
+        (and no operator override pins a base branch), the implementation must
+        not silently default to ``develop``. Either return ``success=False`` with
+        an error, or populate ``warning`` so the operator sees the ambiguity.
+
+        We use ``impl_repo_feature_checkout`` so that even if the impl falls
+        through silently to ``develop``, the result is still detectable as
+        non-clean (the fixture has no commits on develop after start_date — so
+        a silent fallback would yield a misleading 'clean' status).
+        """
+        root = tmp_path / "orch"
+        _write_yaml(
+            root / "sprint" / "current-sprint.yaml",
+            """\
+sprint:
+  name: TO Sprint 2618
+  start_date: '2026-05-04'
+  status: active
+  number: 2618
+epics:
+  - '151'
+stories: []
+""",
+        )
+        _write_yaml(
+            root / "sprint" / "epic-151.yaml",
+            """\
+id: '151'
+type: epic
+status: backlog
+repos: pennyfarthing
+stories:
+  - id: 151-Z
+    title: a story in an unknown repo
+    points: 3
+    status: backlog
+    repos: nonexistent-repo
+    workflow: tdd
+    implementation_surface:
+      - foo.py
+""",
+        )
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-Z",
+            project_root=root,
+            repo_path_overrides={"nonexistent-repo": impl_repo_feature_checkout},
+        )
+        # Acceptable outcomes: success=False with error, or warning surfaced.
+        # FORBIDDEN: silent status=clean with no warning.
+        surfaced_non_silently = (
+            result.get("success") is False
+            or bool(result.get("warning"))
+        )
+        assert surfaced_non_silently, (
+            "unknown repo must not silently fall back to base_branch=develop — "
+            "result must surface either success=False with a clear error or a "
+            "populated warning explaining the ambiguity. "
+            f"got {result}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# [MEDIUM]: result shape — `since` and `base_branch` are unconditional per docstring
+# ---------------------------------------------------------------------------
+
+
+class TestResultShapeUniformity:
+    def test_error_results_include_since_key(
+        self, tmp_path: Path, impl_repo: Path
+    ) -> None:
+        """[MEDIUM] The function's docstring lists ``since`` as a result key.
+        The current ``_result()`` helper conditionally omits it on the
+        sprint-load-failure path — callers indexing ``result["since"]`` will
+        KeyError. Either make the key unconditional, or document it as optional.
+        Test asserts the unconditional contract (matches docstring as written)."""
+        broken_root = tmp_path / "broken"
+        # Sprint file missing entirely → triggers the earliest error path.
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-5",
+            project_root=broken_root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        assert result.get("success") is False, (
+            f"missing sprint file → success=False, got {result}"
+        )
+        assert "since" in result, (
+            f"per docstring contract every result includes 'since' — "
+            f"error paths must populate it (default ''), got keys={sorted(result.keys())}"
+        )
+        assert "base_branch" in result, (
+            f"per docstring contract every result includes 'base_branch' — "
+            f"error paths must populate it (default ''), got keys={sorted(result.keys())}"
+        )
+
+    def test_error_results_include_paths_checked_and_commits_keys(
+        self, tmp_path: Path, impl_repo: Path
+    ) -> None:
+        """The remaining contract keys (``paths_checked``, ``commits``) are
+        already always present per ``_result()``. Lock that in to prevent
+        regression when future error paths are added."""
+        broken_root = tmp_path / "broken"
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-5",
+            project_root=broken_root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        assert result.get("paths_checked") == [], (
+            f"error result must populate paths_checked as []; got {result.get('paths_checked')!r}"
+        )
+        assert result.get("commits") == [], (
+            f"error result must populate commits as []; got {result.get('commits')!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# [MEDIUM]: YAML-shape edge cases that must not silently fall through
+# ---------------------------------------------------------------------------
+
+
+class TestYamlEdgeCases:
+    def test_string_scalar_surface_does_not_silently_fall_through(
+        self, tmp_path: Path, impl_repo: Path
+    ) -> None:
+        """[MEDIUM] ``implementation_surface: "foo.py"`` (a YAML scalar instead
+        of a list) is a plausible authoring mistake. The impl must not silently
+        ignore it and fall through to the title-heuristic — either accept the
+        scalar as a one-element list, or surface an error/warning.
+
+        The story title here contains no path-like tokens, so the heuristic
+        would silently yield ``status=skipped`` if the impl falls through.
+        """
+        root = tmp_path / "orch"
+        _write_yaml(
+            root / "sprint" / "current-sprint.yaml",
+            """\
+sprint:
+  name: TO Sprint 2618
+  start_date: '2026-05-04'
+  status: active
+  number: 2618
+epics:
+  - '151'
+stories: []
+""",
+        )
+        _write_yaml(
+            root / "sprint" / "epic-151.yaml",
+            """\
+id: '151'
+type: epic
+status: backlog
+repos: pennyfarthing
+stories:
+  - id: 151-S
+    title: a story with no path-like text in the title
+    points: 3
+    status: backlog
+    repos: pennyfarthing
+    workflow: tdd
+    implementation_surface: pennyfarthing-dist/src/pf/sprint/work.py
+""",
+        )
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-S",
+            project_root=root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        paths = result.get("paths_checked") or []
+        explicit_used = "pennyfarthing-dist/src/pf/sprint/work.py" in paths
+
+        # Acceptable outcomes:
+        #   (a) the scalar is accepted as a one-element list (paths_checked
+        #       contains the path), OR
+        #   (b) success=False with an error whose text mentions the type
+        #       expectation (e.g., "must be a list", "expected list").
+        # FORBIDDEN: success=True with status='skipped' and a warning that
+        #            falsely claims no `implementation_surface` was provided —
+        #            that's silently dropping the operator's explicit field
+        #            with a misleading diagnostic.
+        error = (result.get("error") or "").lower()
+        type_diagnostic = any(
+            kw in error for kw in ("must be a list", "expected list", "expected a list")
+        )
+        explicit_failure = result.get("success") is False and type_diagnostic
+
+        assert explicit_used or explicit_failure, (
+            "string-scalar implementation_surface must NOT silently fall back to "
+            "the title-heuristic with a misleading 'no implementation_surface "
+            "field' warning — the field WAS provided, just in the wrong shape. "
+            "Either accept the scalar as a one-element list, or fail with "
+            "success=False and an error mentioning the expected type. "
+            f"got status={result.get('status')!r}, success={result.get('success')!r}, "
+            f"paths_checked={paths}, warning={result.get('warning')!r}, "
+            f"error={result.get('error')!r}"
+        )
+
+    def test_empty_repos_list_does_not_yield_literal_brackets(
+        self, tmp_path: Path, impl_repo: Path
+    ) -> None:
+        """[MEDIUM] ``repos: []`` must not produce the literal string ``"[]"``
+        as a repo name. The bug-shape: ``str([]).split(",")[0].strip()`` is
+        ``"[]"``, which is truthy so the ``or "pennyfarthing"`` default never
+        fires, and the eventual git failure surfaces a confusing path."""
+        root = tmp_path / "orch"
+        _write_yaml(
+            root / "sprint" / "current-sprint.yaml",
+            """\
+sprint:
+  name: TO Sprint 2618
+  start_date: '2026-05-04'
+  status: active
+  number: 2618
+epics:
+  - '151'
+stories: []
+""",
+        )
+        _write_yaml(
+            root / "sprint" / "epic-151.yaml",
+            """\
+id: '151'
+type: epic
+status: backlog
+repos: pennyfarthing
+stories:
+  - id: 151-E
+    title: empty repos list edge case
+    points: 1
+    status: backlog
+    repos: []
+    workflow: tdd
+    implementation_surface:
+      - foo.py
+""",
+        )
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-E",
+            project_root=root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        # The smoking gun — '[]' must never appear in any user-visible field.
+        error = result.get("error") or ""
+        warning = result.get("warning") or ""
+        assert "[]" not in error, (
+            f"`repos: []` must never produce a literal '[]' in the error path — "
+            f"got error={error!r}"
+        )
+        assert "[]" not in warning, (
+            f"`repos: []` must never produce a literal '[]' in the warning path — "
+            f"got warning={warning!r}"
+        )
+        # Successful resolution → base_branch must be a known default. Failed
+        # resolution → error message must be coherent (no '[]' as we asserted).
+        if result.get("success"):
+            assert result.get("base_branch") in ("develop", "main"), (
+                f"empty repos list, when accepted, must resolve to a known "
+                f"default base branch, got base_branch={result.get('base_branch')!r}"
+            )
+
+
+# ---------------------------------------------------------------------------
+# [MEDIUM]: CLI contract — int return codes, no SystemExit leak
+# ---------------------------------------------------------------------------
+
+
+class TestCliErrorContract:
+    def test_cli_with_no_args_returns_int_not_systemexit(
+        self, sprint_root: Path
+    ) -> None:
+        """[MEDIUM] ``staleness_cli([])`` must return an int exit code (2 — hard
+        error), not propagate ``SystemExit`` from argparse. The signature
+        promises ``-> int``; programmatic callers must be able to rely on it."""
+        from pf.sprint.staleness import staleness_cli
+
+        try:
+            rc = staleness_cli([], project_root=sprint_root)
+        except SystemExit as exc:
+            pytest.fail(
+                f"staleness_cli([]) raised SystemExit({exc.code!r}) instead of "
+                "returning int — programmatic callers cannot rely on the contract"
+            )
+        assert rc == 2, (
+            f"missing positional argument is a hard error → exit code 2, got {rc}"
+        )
+
+    def test_cli_hard_error_yields_exit_code_two(
+        self, tmp_path: Path, impl_repo: Path
+    ) -> None:
+        """AC3 — hard errors (missing start_date, story not found, git failure)
+        must map to CLI exit code 2 specifically, distinct from drift (1) and
+        clean (0). This was missing from the previous suite."""
+        broken_root = tmp_path / "broken"
+        _write_yaml(
+            broken_root / "sprint" / "current-sprint.yaml",
+            """\
+sprint:
+  name: TO Sprint X
+  status: active
+""",
+        )
+        _write_yaml(
+            broken_root / "sprint" / "epic-151.yaml",
+            """\
+id: '151'
+type: epic
+status: backlog
+stories: []
+""",
+        )
+        from pf.sprint.staleness import staleness_cli
+
+        rc = staleness_cli(
+            ["151-5"],
+            project_root=broken_root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        assert rc == 2, (
+            f"missing start_date is a hard error → exit code must be 2 "
+            f"(distinct from 0 clean and 1 drift), got {rc}"
+        )
+
+    def test_cli_clean_yields_exit_code_zero(
+        self, sprint_root: Path, impl_repo: Path
+    ) -> None:
+        """The third leg of the exit-code triad: clean must be 0 specifically."""
+        from pf.sprint.staleness import staleness_cli
+
+        rc = staleness_cli(
+            ["151-5"],
+            project_root=sprint_root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        assert rc == 0, (
+            f"clean preflight must produce exit code 0 specifically, got {rc}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# [MEDIUM]: module docstring must not embed story/incident references
+# ---------------------------------------------------------------------------
+
+
+class TestModuleDocstring:
+    def test_module_docstring_does_not_reference_specific_story_or_incident(self) -> None:
+        """[MEDIUM] CLAUDE.md forbids referencing the current task, fix, or
+        callers in code comments — they rot as the codebase evolves and belong
+        in the PR description, not in the source. The module docstring must
+        describe what the module *does*, not its caller history or origin
+        incident."""
+        import pf.sprint.staleness as staleness_module
+
+        docstring = staleness_module.__doc__ or ""
+        forbidden_substrings = [
+            "Story 151-5",
+            "(Story 151-5)",
+            "151-3 incident",
+            "PR #33",
+        ]
+        found = [s for s in forbidden_substrings if s in docstring]
+        assert not found, (
+            "module docstring must not reference specific stories, incidents, "
+            "or PRs — these references rot as the code evolves and belong in "
+            "the PR description, not the source. "
+            f"Found forbidden substrings: {found}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# AC5 + [LOW]: heuristic must cover common config-file extensions
+# ---------------------------------------------------------------------------
+
+
+class TestPathHeuristicCoverage:
+    def test_heuristic_picks_up_json_filenames(
+        self, tmp_path: Path, impl_repo: Path
+    ) -> None:
+        """[LOW] Stories about ``package.json``, ``tsconfig.json``, etc. would
+        currently yield zero heuristic matches and silently skip — the heuristic
+        regex omits ``.json``. Add at minimum ``.json`` so JS/TS-ecosystem
+        stories don't fall through."""
+        root = tmp_path / "orch"
+        _write_yaml(
+            root / "sprint" / "current-sprint.yaml",
+            """\
+sprint:
+  name: TO Sprint 2618
+  start_date: '2026-05-04'
+  status: active
+  number: 2618
+epics:
+  - '151'
+stories: []
+""",
+        )
+        _write_yaml(
+            root / "sprint" / "epic-151.yaml",
+            """\
+id: '151'
+type: epic
+status: backlog
+repos: pennyfarthing
+stories:
+  - id: 151-J
+    title: pin dependency in package.json
+    points: 1
+    status: backlog
+    repos: pennyfarthing
+    workflow: trivial
+    type: chore
+""",
+        )
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-J",
+            project_root=root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        paths = result.get("paths_checked") or []
+        assert any("package.json" in p for p in paths), (
+            "heuristic must pick up `.json` filenames in story titles — "
+            "JS/TS stories about package.json would otherwise silently skip. "
+            f"got paths_checked={paths}, status={result.get('status')!r}"
+        )
