@@ -1,26 +1,22 @@
-"""
-Base-branch staleness preflight (Story 151-5).
+"""Base-branch staleness preflight.
 
 Detects stories whose implementation surface has been touched on the
-implementation repo's base branch since ``sprint.start_date``. Used by
-``pf sprint work`` and the sm-setup subagent to catch stories whose scope
-has been overtaken upstream before red phase begins, preventing the kind
-of duplicate work that produced the 151-3 incident (PR #33 merging the
-same scope on develop while a parallel SM/TEA/Dev pipeline reworked it on
-a re-rebased branch).
+implementation repo's base branch since ``sprint.start_date``. Compares
+the story's declared (or inferred) file paths against ``git log`` of the
+base branch and surfaces any overlapping commits.
 
-The public surface is two callables:
+Public surface:
 
 - ``check_story_staleness(story_id, ...)`` — returns a result dict with
-  ``status`` ∈ ``{clean, drift, skipped}`` plus structured commit metadata
-  on drift.
-- ``staleness_cli(argv, ...)`` — argparse CLI returning an exit code; non-zero
-  on drift unless ``--ack`` is passed.
+  ``status`` ∈ ``{clean, drift, skipped, error}`` plus structured commit
+  metadata on drift.
+- ``staleness_cli(argv, ...)`` — argparse CLI returning an exit code:
+  ``0`` for clean/skipped/acked, ``1`` for unacknowledged drift,
+  ``2`` for hard error.
 
 Both follow the SOUL.md "Return Results, Don't Throw" principle: errors
 surface as ``success: False`` with a populated ``error`` field, never as
-silent fallbacks. This is deliberate — silent fallbacks are exactly the
-class of bug this story exists to prevent.
+silent fallbacks. Silent fallbacks defeat the whole purpose of the check.
 """
 
 from __future__ import annotations
@@ -39,7 +35,7 @@ from pf.sprint.loader import load_sprint
 # Used by the AC5 fallback heuristic when no ``implementation_surface`` field
 # is set on the story.
 _PATH_HEURISTIC_RE = re.compile(
-    r"\b[\w/.-]+\.(?:py|ts|tsx|js|jsx|md|yaml|yml|sh|toml|cfg)\b"
+    r"\b[\w/.-]+\.(?:py|ts|tsx|js|jsx|json|md|yaml|yml|sh|toml|cfg)\b"
 )
 
 # Default base branch per repo. Mirrors repos.yaml; kept inline so this module
@@ -49,9 +45,14 @@ _BASE_BRANCH_BY_REPO = {
     "orchestrator": "main",
 }
 
-# Magic delimiter used to split ``git log --format=...`` output into per-commit
-# chunks. The format is ``<delim>HASH|ISO_DATE|SUBJECT\nfile1\nfile2\n...``.
-_COMMIT_DELIM = "<<<COMMIT-DELIMITER-7f8a3b>>>"
+# ``git log -z`` separates commits with NUL bytes, which cannot appear in commit
+# subjects (git rejects them at write time). Within each NUL-separated chunk
+# the format string output is followed by ``\n`` then the file list (newline-
+# separated under ``--name-only``). Header fields are pipe-separated; the
+# subject is the last field, so ``str.split("|", 2)`` is collision-safe even if
+# the subject contains the pipe.
+_COMMIT_RECORD_SEP = "\0"
+_COMMIT_HEADER_FORMAT = "%H|%aI|%s"
 
 
 def check_story_staleness(
@@ -119,10 +120,40 @@ def check_story_staleness(
             ack=ack,
         )
 
-    paths = _resolve_paths(story)
-    repo_name, repo_path = _resolve_repo_path(story, repo_path_overrides, project_root)
-    base_branch = _BASE_BRANCH_BY_REPO.get(repo_name, "develop")
+    # An explicit ``implementation_surface`` field with the wrong YAML shape
+    # (string scalar, dict, etc.) is a plausible authoring mistake. Rather
+    # than silently routing to the title-heuristic with a misleading message,
+    # surface a type error so the operator knows to fix the YAML.
+    explicit_surface = story.get("implementation_surface")
+    if explicit_surface is not None and not isinstance(explicit_surface, list):
+        return _result(
+            success=False,
+            status="error",
+            story_id=story_id,
+            since=start_date_str,
+            error=(
+                f"story {story_id!r} has malformed `implementation_surface`: "
+                f"must be a list of path strings, got {type(explicit_surface).__name__}"
+            ),
+            ack=ack,
+        )
 
+    repo_name, repo_path = _resolve_repo_path(story, repo_path_overrides, project_root)
+    if repo_name not in _BASE_BRANCH_BY_REPO:
+        return _result(
+            success=False,
+            status="error",
+            story_id=story_id,
+            since=start_date_str,
+            error=(
+                f"unknown repo {repo_name!r}: no base branch configured in "
+                f"_BASE_BRANCH_BY_REPO. Known: {sorted(_BASE_BRANCH_BY_REPO)}"
+            ),
+            ack=ack,
+        )
+    base_branch = _BASE_BRANCH_BY_REPO[repo_name]
+
+    paths = _resolve_paths(story)
     if not paths:
         return _result(
             success=True,
@@ -206,7 +237,13 @@ def staleness_cli(
         action="store_true",
         help="Acknowledge any detected drift and proceed (logged in result).",
     )
-    parsed = parser.parse_args(argv)
+    # argparse calls ``sys.exit`` on missing/invalid args. Programmatic callers
+    # need an int return per this function's contract, so we trap the SystemExit
+    # and translate to exit code 2 (hard error).
+    try:
+        parsed = parser.parse_args(argv)
+    except SystemExit as exc:
+        return int(exc.code) if isinstance(exc.code, int) else 2
 
     result = check_story_staleness(
         parsed.story_id,
@@ -236,8 +273,8 @@ def _result(
     story_id: str,
     paths_checked: list[str] | None = None,
     commits: list[dict[str, Any]] | None = None,
-    since: str | None = None,
-    base_branch: str | None = None,
+    since: str = "",
+    base_branch: str = "",
     warning: str | None = None,
     error: str | None = None,
     ack: bool = False,
@@ -246,13 +283,11 @@ def _result(
         "success": success,
         "status": status,
         "story_id": story_id,
+        "since": since,
+        "base_branch": base_branch,
         "paths_checked": paths_checked or [],
         "commits": commits or [],
     }
-    if since is not None:
-        out["since"] = since
-    if base_branch is not None:
-        out["base_branch"] = base_branch
     if warning is not None:
         out["warning"] = warning
     if error is not None:
@@ -321,6 +356,12 @@ def _file_overlaps(commit_files: list[str], surface_paths: list[str]) -> list[st
 
 
 def _path_matches(commit_file: str, surface_path: str) -> bool:
+    # Empty surface_path must never match any commit. Without this guard,
+    # ``"".rstrip("/") + "/"`` evaluates to ``"/"``, which startswith() accepts
+    # for every absolute path — turning an upstream YAML mistake into a flood
+    # of false drift reports.
+    if not surface_path:
+        return False
     if "*" in surface_path or "?" in surface_path:
         return fnmatch.fnmatch(commit_file, surface_path)
     if commit_file == surface_path:
@@ -328,23 +369,62 @@ def _path_matches(commit_file: str, surface_path: str) -> bool:
     return commit_file.startswith(surface_path.rstrip("/") + "/")
 
 
+def _resolve_revision(repo: Path, base_branch: str) -> tuple[str, str]:
+    """Pick the git revision to log against. Prefers ``origin/<base>`` (the
+    fetched upstream tip) and falls back to the local ``<base>`` branch when
+    the remote-tracking ref doesn't exist (typical in ad-hoc test fixtures).
+
+    Returns ``(revision, error_message)``. On failure to resolve either ref,
+    ``revision`` is empty and ``error_message`` describes which refs were tried.
+    """
+    candidates = [f"origin/{base_branch}", base_branch]
+    tried: list[str] = []
+    for ref in candidates:
+        tried.append(ref)
+        try:
+            proc = subprocess.run(
+                ["git", "-C", str(repo), "rev-parse", "--verify", "--quiet", ref],
+                check=False,
+                capture_output=True,
+                text=True,
+                shell=False,
+            )
+        except (FileNotFoundError, OSError) as exc:
+            return "", f"git invocation failed while resolving {ref!r}: {exc}"
+        if proc.returncode == 0:
+            return ref, ""
+    return "", f"could not resolve base ref in {repo}: tried {tried}"
+
+
 def _run_git_log(
     repo: Path, base_branch: str, since: str, paths: list[str]
 ) -> tuple[bool, str, str]:
     """Returns ``(success, stdout, error_message)``.
 
+    Logs commits on the base branch (preferring ``origin/<base>``, falling
+    back to the local branch) since ``since`` that touch any of ``paths``.
+
     Uses argv form (``shell=False``) so operator-controlled inputs cannot
-    inject shell metacharacters (lang-review §11).
+    inject shell metacharacters. Uses ``-z`` so commit subjects containing
+    arbitrary text (including any literal we might have chosen as a delimiter)
+    cannot collide with the record separator — ``\\0`` is forbidden in commit
+    subjects by git itself.
     """
+    revision, ref_err = _resolve_revision(repo, base_branch)
+    if not revision:
+        return False, "", ref_err
+
     cmd = [
         "git",
         "-C",
         str(repo),
         "log",
+        revision,
         f"--since={since}",
         "--reverse",
         "--name-only",
-        f"--format={_COMMIT_DELIM}%H|%aI|%s",
+        "-z",
+        f"--format={_COMMIT_HEADER_FORMAT}",
         "--",
         *paths,
     ]
@@ -370,27 +450,42 @@ def _run_git_log(
 
 
 def _parse_git_log(output: str) -> list[dict[str, Any]]:
+    """Parse ``git log -z --name-only --format=%H|%aI|%s`` output.
+
+    Under ``-z`` the output is a stream of NUL-terminated tokens. A header
+    token contains the rendered ``--format`` string. If the commit touched
+    any files, the next token starts with ``\\n`` (separating the format
+    output from the file list) and contains the first filename; subsequent
+    files are their own tokens. The next commit's header starts a new run.
+
+    NUL cannot appear in commit subjects or filenames in git, so this
+    record separator is collision-free even for subjects that embed
+    arbitrary delimiters or pipes.
+    """
     commits: list[dict[str, Any]] = []
-    for chunk in output.split(_COMMIT_DELIM):
-        chunk = chunk.strip()
-        if not chunk:
+    current: dict[str, Any] | None = None
+    for token in output.split(_COMMIT_RECORD_SEP):
+        if not token:
             continue
-        lines = chunk.split("\n")
-        header = lines[0]
-        parts = header.split("|", 2)
+        if token.startswith("\n"):
+            # File-list token. The leading ``\n`` separates it from the
+            # preceding format-output; strip it to get the path.
+            path = token[1:].strip()
+            if path and current is not None:
+                current["files"].append(path)
+            continue
+        parts = token.split("|", 2)
         if len(parts) != 3:
             continue
         full_hash, date, subject = parts
-        files = [ln for ln in lines[1:] if ln.strip()]
-        commits.append(
-            {
-                "hash": full_hash,
-                "short_hash": full_hash[:9],
-                "date": date,
-                "subject": subject,
-                "files": files,
-            }
-        )
+        current = {
+            "hash": full_hash,
+            "short_hash": full_hash[:9],
+            "date": date,
+            "subject": subject,
+            "files": [],
+        }
+        commits.append(current)
     return commits
 
 
