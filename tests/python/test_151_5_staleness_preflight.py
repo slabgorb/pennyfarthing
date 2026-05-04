@@ -1,28 +1,13 @@
-"""
-Tests for Story 151-5: SM-setup base-branch staleness preflight.
+"""Tests for the base-branch staleness preflight.
 
 The preflight detects stories whose implementation surface has been touched on
-``origin/<base-branch>`` since ``sprint.start_date``. Without it, the same
-story can be implemented twice (the 151-3 incident: PR #33 merged the same
-scope on develop while our SM/TEA/Dev pipeline worked on a re-rebased branch
-from before the merge).
+``origin/<base-branch>`` since ``sprint.start_date``. Both clean and drift
+results are exercised end-to-end against real ``tmp_path`` git repos so the
+tests verify actual ``git log`` parsing, not a mock contract.
 
-Coverage:
-    AC1 — clean case (no overlapping commits → status: clean)
-    AC2 — drift case (structured commit list with hashes, dates, subjects,
-          overlapping paths)
-    AC3 — drift causes non-zero exit unless explicitly acknowledged
-    AC4 — start_date sourced from sprint.start_date (NOT git history); clear
-          error if missing
-    AC5 — implementation surface from explicit YAML field; heuristic fallback
-          from title/context; skipped-with-warning if no surface inferable
-
-    Rule §1 (silent exception swallowing) — git invocation failures surface as
-    ``success: False``, not silently swallowed under bare-except
-    Rule §3 (type annotations) — public function signatures annotated
-    Rule §6 (test quality) — every assert checks a specific value, not truthy
-    Rule §11 (input validation) — git command does not interpolate untrusted
-    story_id into a shell string
+Covers AC1–AC5 plus rule-coverage from ``.pennyfarthing/gates/lang-review/python.md``
+(silent exception swallowing, type annotations, test-quality, input validation
+at boundaries).
 
 Run with::
 
@@ -33,7 +18,9 @@ Run with::
 from __future__ import annotations
 
 import inspect
+import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -55,21 +42,28 @@ def _write_yaml(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+_GIT_ENV_OVERRIDES = {
+    "GIT_AUTHOR_NAME": "Test",
+    "GIT_AUTHOR_EMAIL": "test@example.com",
+    "GIT_COMMITTER_NAME": "Test",
+    "GIT_COMMITTER_EMAIL": "test@example.com",
+}
+
+
 def _git(cwd: Path, *args: str) -> str:
     """Run a git command in cwd. Returns stdout. Raises on non-zero."""
+    # Merge with parent env so PATH (and the actual git binary location, which
+    # on Homebrew machines is /opt/homebrew/bin) is preserved. Replacing PATH
+    # with a fixed list breaks on Apple-silicon Homebrew where git is not in
+    # /usr/bin or /usr/local/bin.
+    env = {**os.environ, **_GIT_ENV_OVERRIDES}
     result = subprocess.run(
         ["git", *args],
         cwd=cwd,
         check=True,
         capture_output=True,
         text=True,
-        env={
-            "GIT_AUTHOR_NAME": "Test",
-            "GIT_AUTHOR_EMAIL": "test@example.com",
-            "GIT_COMMITTER_NAME": "Test",
-            "GIT_COMMITTER_EMAIL": "test@example.com",
-            "PATH": "/usr/bin:/bin:/usr/local/bin",
-        },
+        env=env,
     )
     return result.stdout
 
@@ -81,21 +75,19 @@ def _commit(repo: Path, files: dict[str, str], msg: str, when: str) -> str:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(body, encoding="utf-8")
     _git(repo, "add", *files.keys())
+    env = {
+        **os.environ,
+        **_GIT_ENV_OVERRIDES,
+        "GIT_AUTHOR_DATE": when,
+        "GIT_COMMITTER_DATE": when,
+    }
     subprocess.run(
         ["git", "commit", "-m", msg, "--date", when],
         cwd=repo,
         check=True,
         capture_output=True,
         text=True,
-        env={
-            "GIT_AUTHOR_NAME": "Test",
-            "GIT_AUTHOR_EMAIL": "test@example.com",
-            "GIT_COMMITTER_NAME": "Test",
-            "GIT_COMMITTER_EMAIL": "test@example.com",
-            "GIT_AUTHOR_DATE": when,
-            "GIT_COMMITTER_DATE": when,
-            "PATH": "/usr/bin:/bin:/usr/local/bin",
-        },
+        env=env,
     )
     return _git(repo, "rev-parse", "HEAD").strip()
 
@@ -162,15 +154,14 @@ def impl_repo(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def impl_repo_feature_checkout(tmp_path: Path) -> Path:
-    """A git repo where HEAD ≠ base branch.
+    """A git repo where HEAD points at a feature branch, not the base branch.
 
-    Sets up the production scenario: an agent has just created a feature branch
-    off ``develop`` and is about to run the staleness preflight before red phase.
-    HEAD points at ``feature/151-5``; ``develop`` exists alongside.
-
-    The previous fixture (``impl_repo``) leaves HEAD == develop, which masks
-    bugs that depend on the distinction (the [CRITICAL] reviewer finding that
-    drove this red-rework).
+    Mirrors the production scenario: an agent created ``feature/151-5`` off
+    ``develop`` before running the staleness preflight. HEAD is the feature
+    branch; ``develop`` exists alongside. Tests that rely on the
+    ``impl_repo`` fixture coincidentally have HEAD == develop, so an
+    implementation that logs HEAD instead of the base branch would still
+    pass — this fixture closes that hole.
     """
     repo = tmp_path / "pennyfarthing"
     repo.mkdir()
@@ -466,6 +457,43 @@ class TestAcknowledgmentBehavior:
         )
         assert result.get("acknowledged") is True, (
             f"ack must be recorded as acknowledged=True, got {result.get('acknowledged')!r}"
+        )
+
+    def test_ack_on_clean_result_does_not_set_acknowledged_key(
+        self, sprint_root: Path, impl_repo: Path
+    ) -> None:
+        """[MEDIUM, round-2 finding] ``acknowledged=True`` is meaningful only
+        for the drift status — it documents that drift was detected and
+        deliberately overridden. Setting it on a clean result misleads any
+        downstream audit consumer into believing an override happened on every
+        ack'd run, even when there was nothing to acknowledge.
+
+        The contract this test pins: acknowledged is set only when status ==
+        'drift'. For clean / skipped / error, the key must be absent (or False)."""
+        # Commit a non-overlapping change so the result is clean.
+        _commit(
+            impl_repo,
+            {"docs/unrelated.md": "x\n"},
+            "docs change",
+            "2026-05-05T10:00:00",
+        )
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-5",
+            project_root=sprint_root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+            ack=True,
+        )
+        assert result.get("status") == "clean", (
+            f"sanity: this case must be clean (no surface overlap); got {result}"
+        )
+        # Either absent, or explicitly False. Truthy on a clean result is the bug.
+        ack_value = result.get("acknowledged")
+        assert not ack_value, (
+            "acknowledged=True on a clean result misleads audit consumers — "
+            "the flag must only be set when drift was detected and overridden. "
+            f"got acknowledged={ack_value!r}"
         )
 
 
@@ -770,25 +798,10 @@ class TestRuleSilentExceptions:
             "very kind of bug this story exists to prevent"
         )
 
-    def test_module_source_has_no_bare_except_swallowing_results(self) -> None:
-        """Rule §1 (static check) — the staleness module must not contain a bare
-        ``except Exception: pass`` or equivalent silent swallow that would hide
-        git/file errors from the caller."""
-        import pf.sprint.staleness as staleness_module
-
-        source = inspect.getsource(staleness_module)
-        # Common silent-swallow patterns — each match is a hard fail.
-        forbidden = [
-            "except:",
-            "except Exception: pass",
-            "except Exception:\n        pass",
-            "except Exception:\n            pass",
-        ]
-        for pattern in forbidden:
-            assert pattern not in source, (
-                f"staleness.py must not contain {pattern!r} — "
-                "silent swallowing is exactly what this story exists to prevent"
-            )
+# Rule §1 silent-exception coverage is provided by the behavioural test above
+# (``test_git_invocation_failure_surfaces_as_failure_not_silent_clean``). A
+# previous source-inspection test using ``inspect.getsource`` was removed — it
+# verified text presence rather than execution path and broke on every reformat.
 
 
 # ---------------------------------------------------------------------------
@@ -822,16 +835,25 @@ class TestRuleTypeAnnotations:
 
 
 class TestRuleInputValidation:
-    def test_story_id_is_not_interpolated_into_shell_command(
+    """Rule §11 — operator-controlled YAML inputs must reach git as argv
+    elements (``shell=False``), never interpolated into a shell string. The
+    previous version of this test passed an adversarial story_id that
+    ``_find_story`` rejected before any subprocess call, so the assertion loop
+    over ``captured`` never ran — the test was vacuous. Round-3 splits the
+    coverage: one test pins the boundary-rejection path explicitly, the other
+    routes shell-metacharacters through a YAML field that DOES reach argv and
+    asserts the substring property fires."""
+
+    def test_unknown_story_id_is_rejected_at_boundary_no_subprocess_call(
         self, sprint_root: Path, impl_repo: Path
     ) -> None:
-        """Rule §11 — story_id is operator-controlled but git arguments must be
-        passed as a list (subprocess argv), never interpolated into a shell string.
-
-        We patch subprocess.run and assert ``shell=True`` is never used and the
-        story_id never appears as a substring of any single argv element that also
-        contains shell metacharacters.
-        """
+        """Rule §11 — when the story_id is not in the sprint YAML, the
+        implementation must reject it BEFORE any subprocess invocation. The
+        adversarial payload here contains shell metacharacters; the test asserts
+        (a) the result surfaces a story-not-found error, and (b) ``subprocess.run``
+        was never called from the staleness module, so the bad input cannot have
+        reached argv at all. This is the strongest defense: rejection at the
+        input boundary."""
         _commit(
             impl_repo,
             {"pennyfarthing-dist/src/pf/sprint/work.py": "# anything\n"},
@@ -839,7 +861,86 @@ class TestRuleInputValidation:
             "2026-05-05T00:00:00",
         )
         captured: list[dict[str, Any]] = []
+        real_run = subprocess.run
 
+        def spy(*args: Any, **kwargs: Any) -> Any:
+            captured.append({"args": args, "kwargs": kwargs})
+            return real_run(*args, **kwargs)
+
+        from pf.sprint import staleness as staleness_module
+
+        with patch.object(staleness_module.subprocess, "run", side_effect=spy):
+            result = staleness_module.check_story_staleness(
+                "151-5; rm -rf /",  # not present in sprint YAML
+                project_root=sprint_root,
+                repo_path_overrides={"pennyfarthing": impl_repo},
+            )
+
+        assert result.get("success") is False, (
+            "an unknown story_id must surface as success=False, not silently "
+            f"clean; got {result}"
+        )
+        error = result.get("error") or ""
+        assert "not found" in error or "story" in error.lower(), (
+            "the error must name the rejection reason (story not found in YAML); "
+            f"got error={error!r}"
+        )
+        assert captured == [], (
+            "the staleness module must reject the unknown story at the boundary "
+            "before any subprocess call — got "
+            f"{len(captured)} subprocess invocations: {[c['args'] for c in captured]!r}"
+        )
+
+    def test_shell_metacharacters_in_implementation_surface_pass_through_safely(
+        self, sprint_root: Path, impl_repo: Path
+    ) -> None:
+        """Rule §11 — when shell metacharacters appear in a YAML field that DOES
+        reach git argv (here: ``implementation_surface``), the implementation
+        must pass them as a single argv element with ``shell=False``. The test
+        confirms (a) ``shell=True`` is never used, (b) the adversarial payload
+        appears verbatim as one argv element (the pathspec), and (c) it does
+        NOT appear concatenated into any other argv element. This is the
+        substring-shape guard: even with ``shell=False``, accidental
+        interpolation into a ``--format=...`` element would still reintroduce
+        injection surface."""
+        # Story 151-X has implementation_surface entries containing shell-meta.
+        # The story IS resolvable, so subprocess WILL be invoked — unlike the
+        # previous version where the boundary check short-circuited the test.
+        adversarial_path = "foo.py; rm -rf /"
+        root = sprint_root.parent / "shellmeta-orch"
+        _write_yaml(
+            root / "sprint" / "current-sprint.yaml",
+            """\
+sprint:
+  name: TO Sprint 2618
+  start_date: '2026-05-04'
+  status: active
+  number: 2618
+epics:
+  - '151'
+stories: []
+""",
+        )
+        _write_yaml(
+            root / "sprint" / "epic-151.yaml",
+            f"""\
+id: '151'
+type: epic
+status: backlog
+repos: pennyfarthing
+stories:
+  - id: 151-X
+    title: shell-meta surface
+    points: 1
+    status: backlog
+    repos: pennyfarthing
+    workflow: tdd
+    implementation_surface:
+      - {adversarial_path!r}
+""",
+        )
+
+        captured: list[dict[str, Any]] = []
         real_run = subprocess.run
 
         def spy(*args: Any, **kwargs: Any) -> Any:
@@ -850,47 +951,60 @@ class TestRuleInputValidation:
 
         with patch.object(staleness_module.subprocess, "run", side_effect=spy):
             staleness_module.check_story_staleness(
-                "151-5; rm -rf /",  # malicious story_id
-                project_root=sprint_root,
+                "151-X",
+                project_root=root,
                 repo_path_overrides={"pennyfarthing": impl_repo},
             )
 
-        adversarial_payload = "151-5; rm -rf /"
-        # If the impl rejects the adversarial story_id at the boundary (e.g.,
-        # `_find_story` returns None and we early-exit), `captured` will be
-        # empty — that's the BEST defense, since the bad input never reaches
-        # subprocess at all. We only assert the substring/shell properties
-        # IF subprocess was invoked.
+        # If subprocess was never called we cannot make any claim about argv —
+        # fail loudly so a future refactor that loses the git invocation is
+        # caught here rather than silently passing this test.
+        assert captured, (
+            "subprocess.run must be invoked when the story is resolvable; "
+            "if no subprocess call happened the substring-shape guards below "
+            "verify nothing"
+        )
+
         for call in captured:
             args = call["args"]
             kwargs = call["kwargs"]
             assert kwargs.get("shell", False) is False, (
-                "subprocess.run must never be called with shell=True — "
-                "story_id is operator input and may contain shell metacharacters"
+                "subprocess.run must never use shell=True — operator-controlled "
+                "YAML may contain shell metacharacters"
             )
-            # shell=False is necessary but not sufficient. The argv form must
-            # also keep the operator-controlled payload out of every individual
-            # argv element — a defensive check against accidental interpolation
-            # into a `--format=...` or similar element.
             argv = args[0] if args else kwargs.get("args", [])
             argv_list = list(argv) if isinstance(argv, (list, tuple)) else []
+            # The adversarial payload must appear as exactly one argv element
+            # (the pathspec after ``--``), and must NOT be concatenated into
+            # any other element such as ``--format=foo.py; rm -rf /``.
+            occurrences_as_whole_element = sum(
+                1 for el in argv_list if el == adversarial_path
+            )
             for element in argv_list:
-                if not isinstance(element, str):
+                if not isinstance(element, str) or element == adversarial_path:
                     continue
-                assert adversarial_payload not in element, (
-                    f"adversarial story_id payload {adversarial_payload!r} appeared "
-                    f"as a substring of argv element {element!r} — "
-                    "story_id must never be interpolated into any individual argv string"
+                assert adversarial_path not in element, (
+                    f"adversarial path {adversarial_path!r} was concatenated "
+                    f"into argv element {element!r} — that is exactly the "
+                    "interpolation pattern §11 forbids"
+                )
+            # If this argv reached `git log` (the only call that takes pathspec),
+            # the path must be present as its own element; ``git rev-parse``
+            # calls won't carry it. Only enforce on the rev-parse-or-log axis.
+            is_log_call = any(el == "log" for el in argv_list)
+            if is_log_call:
+                assert occurrences_as_whole_element >= 1, (
+                    f"git log invocation must include the surface path "
+                    f"{adversarial_path!r} as its own argv element; "
+                    f"argv={argv_list!r}"
                 )
 
 
 # ---------------------------------------------------------------------------
-# Round-2 RED: tests added after Reviewer rejection of round-1 GREEN.
-#
-# The first round of tests passed because every fixture left HEAD coincidentally
-# equal to the base branch and asserted weakly enough that a half-broken impl
-# could satisfy them. This block hardens the suite against the recurring
-# "silent-clean" anti-pattern the story exists to prevent.
+# Cross-branch drift detection: the implementation must inspect the named
+# base branch (or its origin/* mirror), not whatever HEAD happens to be at.
+# A fixture variant where HEAD ≠ base branch is required to keep the suite
+# from passing tautologically when HEAD coincidentally equals develop.
 # ---------------------------------------------------------------------------
 
 
@@ -964,6 +1078,18 @@ class TestDriftDetectionAcrossBranches:
             f"the detected drift commit must be the one on develop, not anything "
             f"on HEAD. got subject={commits[0].get('subject')!r}"
         )
+        # Pin every field of the drift record so a bug that corrupts the hash
+        # slicing (e.g., off-by-one in short_hash[:9]) or stringifies stdout
+        # differently is caught here.
+        assert commits[0].get("hash") == develop_sha, (
+            f"drift commit hash must equal the develop tip ({develop_sha!r}); "
+            f"got hash={commits[0].get('hash')!r}"
+        )
+        assert commits[0].get("short_hash") == develop_sha[:9], (
+            f"drift short_hash must be the first 9 chars of the full hash; "
+            f"got short_hash={commits[0].get('short_hash')!r}, "
+            f"expected {develop_sha[:9]!r}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1001,8 +1127,15 @@ class TestDelimiterCollision:
             f"got status={result.get('status')!r}, commits={result.get('commits')!r}"
         )
         commits = result.get("commits") or []
-        assert len(commits) >= 1, (
-            f"expected at least 1 drift commit despite delimiter collision, got {len(commits)}"
+        assert len(commits) == 1, (
+            f"expected exactly 1 drift commit despite delimiter collision; a "
+            f"buggy parser that double-counted (>1) must also fail this; "
+            f"got {len(commits)}"
+        )
+        assert commits[0].get("subject") == delimiter_in_subject, (
+            f"the detected commit's subject must match the drift commit's "
+            f"subject verbatim, including the delimiter substring; "
+            f"got subject={commits[0].get('subject')!r}"
         )
 
 
@@ -1030,6 +1163,24 @@ class TestPathMatchingHelper:
         )
         assert _path_matches("/", "") is False, (
             "empty surface_path must not match the root path"
+        )
+
+    def test_root_slash_surface_path_does_not_match_every_file(self) -> None:
+        """[MEDIUM, round-2 finding] ``_path_matches(commit_file, "/")`` must
+        return False, not match every absolute path. The bug shape mirrors the
+        empty-string case: ``"/".rstrip("/") + "/"`` evaluates to ``"/"``, and
+        ``commit_file.startswith("/")`` is True for any absolute path. An
+        operator typo of ``implementation_surface: ["/"]`` would otherwise
+        flood the result with false drift on every commit."""
+        from pf.sprint.staleness import _path_matches
+
+        assert _path_matches("/etc/passwd", "/") is False, (
+            "surface_path '/' must not match absolute commit paths — the "
+            "rstrip('/') + '/' shape would otherwise turn '/' into a "
+            "match-everything pattern"
+        )
+        assert _path_matches("foo/bar.py", "/") is False, (
+            "surface_path '/' must not match relative commit paths either"
         )
 
 
@@ -1091,17 +1242,22 @@ stories:
             project_root=root,
             repo_path_overrides={"nonexistent-repo": impl_repo_feature_checkout},
         )
-        # Acceptable outcomes: success=False with error, or warning surfaced.
-        # FORBIDDEN: silent status=clean with no warning.
-        surfaced_non_silently = (
-            result.get("success") is False
-            or bool(result.get("warning"))
-        )
-        assert surfaced_non_silently, (
-            "unknown repo must not silently fall back to base_branch=develop — "
-            "result must surface either success=False with a clear error or a "
-            "populated warning explaining the ambiguity. "
+        # The implementation must surface success=False AND name the unknown
+        # repo in the diagnostic. A disjunction on (success=False or any
+        # warning) was too loose: any unrelated error would have satisfied it.
+        assert result.get("success") is False, (
+            "unknown repo must surface as success=False, not silently clean; "
             f"got {result}"
+        )
+        error = result.get("error") or ""
+        assert "nonexistent-repo" in error, (
+            "the error must name the unknown repo so the operator knows what "
+            f"to fix; got error={error!r}"
+        )
+        assert result.get("status") != "clean", (
+            "an unknown repo must never produce status=clean — that masks the "
+            "very kind of silent fallthrough this story exists to prevent; "
+            f"got status={result.get('status')!r}"
         )
 
 
@@ -1475,4 +1631,360 @@ stories:
             "heuristic must pick up `.json` filenames in story titles — "
             "JS/TS stories about package.json would otherwise silently skip. "
             f"got paths_checked={paths}, status={result.get('status')!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# [HIGH]: multi-file commits — files_overlap must list every overlapping file
+# ---------------------------------------------------------------------------
+
+
+class TestMultiFileCommit:
+    """``git log -z --name-only`` emits one commit record as
+    ``<header>\\0\\nfile1\\0file2\\0...``. The first file is glued to the
+    header by ``\\n``; subsequent files are bare NUL-separated tokens. A
+    parser that only collects tokens prefixed with ``\\n`` silently drops
+    every file after the first — the operator sees one overlap when the
+    commit really touched many. The previous suite never had a multi-file
+    commit fixture, so the bug survived. This class fixes that."""
+
+    def test_files_overlap_lists_all_modified_surface_files_in_one_commit(
+        self, sprint_root: Path, impl_repo: Path
+    ) -> None:
+        """[HIGH, round-2 finding] When a single develop commit modifies two
+        files that are both in the story's surface, ``files_overlap`` must
+        list both — not just the first."""
+        # Both paths are in `sprint_root`'s 151-5 implementation_surface
+        # (work.py and staleness.py). One commit, two files.
+        _commit(
+            impl_repo,
+            {
+                "pennyfarthing-dist/src/pf/sprint/work.py": "# overtaken work\n",
+                "pennyfarthing-dist/src/pf/sprint/staleness.py": "# overtaken staleness\n",
+            },
+            "feat(sprint): pre-empt 151-5 surface in one commit",
+            "2026-05-05T10:00:00",
+        )
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-5",
+            project_root=sprint_root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        assert result.get("status") == "drift", (
+            f"multi-file overlap must register as drift; got {result}"
+        )
+        commits = result.get("commits") or []
+        assert len(commits) == 1, (
+            f"expected exactly 1 drift commit (the multi-file one); got {len(commits)}"
+        )
+        files_overlap = commits[0].get("files_overlap") or []
+        assert sorted(files_overlap) == sorted(
+            [
+                "pennyfarthing-dist/src/pf/sprint/work.py",
+                "pennyfarthing-dist/src/pf/sprint/staleness.py",
+            ]
+        ), (
+            "files_overlap must list every surface file modified in the "
+            "commit, not just the first the parser happened to emit. The "
+            "shape of the bug: ``git log -z --name-only`` separates files "
+            "with NUL, so subsequent file tokens do not start with '\\n' "
+            "and a parser keying on '\\n' silently drops them. "
+            f"got files_overlap={files_overlap!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# [HIGH]: ReDoS — the heuristic regex must not stall on long titles
+# ---------------------------------------------------------------------------
+
+
+class TestPathHeuristicReDoS:
+    """``_PATH_HEURISTIC_RE`` is applied to operator-controlled title and
+    description text. Its current pattern (``\\b[\\w/.-]+\\.(?:py|...)\\b``)
+    has overlapping char classes (``\\w``, ``/``, ``.``); on near-miss input
+    the engine retries each prefix position and runtime grows quadratically.
+    A long title in YAML (or a copy-pasted log dump in description) stalls
+    the preflight interactively. python.md §11 calls this out for ReDoS
+    consideration."""
+
+    def test_long_title_does_not_stall_preflight(
+        self, tmp_path: Path, impl_repo: Path
+    ) -> None:
+        """[HIGH, round-2 finding] A 100k-char title with no extension match
+        must complete heuristic resolution in well under a second on a
+        normal machine. The unfixed regex takes ~30s on 100k chars; fixed
+        (input bounded or pattern simplified) it should be < 0.2s. We allow
+        2 seconds to absorb cold starts and slow CI."""
+        # A pathological string: many dot-separated tokens that look like
+        # path-with-extension but never match the closing alternation. This
+        # is the exact backtracking trigger the security analysis measured.
+        pathological = ("a/b.c" * 20000)  # 100,000 chars, no .py/.ts/etc.
+        root = tmp_path / "orch"
+        _write_yaml(
+            root / "sprint" / "current-sprint.yaml",
+            """\
+sprint:
+  name: TO Sprint X
+  start_date: '2026-05-04'
+  status: active
+  number: 2618
+epics:
+  - '151'
+stories: []
+""",
+        )
+        _write_yaml(
+            root / "sprint" / "epic-151.yaml",
+            f"""\
+id: '151'
+type: epic
+status: backlog
+repos: pennyfarthing
+stories:
+  - id: 151-R
+    title: {pathological!r}
+    points: 1
+    status: backlog
+    repos: pennyfarthing
+    workflow: tdd
+""",
+        )
+        from pf.sprint.staleness import check_story_staleness
+
+        start = time.monotonic()
+        result = check_story_staleness(
+            "151-R",
+            project_root=root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        elapsed = time.monotonic() - start
+
+        assert elapsed < 2.0, (
+            f"heuristic resolution on a 100k-char title took {elapsed:.2f}s — "
+            "ReDoS in _PATH_HEURISTIC_RE. Either bound the input length "
+            "before findall(), or rewrite the pattern to remove overlapping "
+            "quantifiers. Fixed pattern should run in <0.2s; 30s is the "
+            "unfixed measurement."
+        )
+        # The result itself should be well-formed (skipped or clean) — what
+        # we don't allow is the function hanging or raising.
+        assert result.get("success") in (True, False), (
+            "result must be a structured dict regardless of input shape; "
+            f"got {result}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# [MEDIUM]: --since must be validated as a date shape, not free-text
+# ---------------------------------------------------------------------------
+
+
+class TestSinceDateValidation:
+    """``sprint.start_date`` flows directly into ``--since=<value>`` for
+    ``git log``. Git silently treats an unrecognised free-text date as
+    "match nothing", returning exit 0 with empty stdout. The caller then
+    reports ``status=clean`` — exactly the silent-clean shape the story
+    exists to prevent. python.md §11 requires input validation at
+    boundaries."""
+
+    def test_malformed_start_date_yields_hard_error_not_silent_clean(
+        self, tmp_path: Path, impl_repo: Path
+    ) -> None:
+        """[MEDIUM, round-2 finding] When ``sprint.start_date`` is not a
+        well-formed date, the preflight must surface ``success=False`` with
+        a diagnostic, not a clean result. A YAML mistake here would
+        otherwise produce a green light on every run forever."""
+        root = tmp_path / "orch"
+        _write_yaml(
+            root / "sprint" / "current-sprint.yaml",
+            """\
+sprint:
+  name: TO Sprint X
+  start_date: not-a-date
+  status: active
+  number: 2618
+epics:
+  - '151'
+stories: []
+""",
+        )
+        _write_yaml(
+            root / "sprint" / "epic-151.yaml",
+            """\
+id: '151'
+type: epic
+status: backlog
+repos: pennyfarthing
+stories:
+  - id: 151-D
+    title: malformed start_date case
+    points: 1
+    status: backlog
+    repos: pennyfarthing
+    workflow: tdd
+    implementation_surface:
+      - foo.py
+""",
+        )
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-D",
+            project_root=root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+
+        assert result.get("success") is False, (
+            "a malformed start_date must produce success=False, not a silent "
+            f"clean — silent clean is the very anti-pattern this story "
+            f"exists to prevent; got {result}"
+        )
+        assert result.get("status") != "clean", (
+            "a malformed start_date must never produce status=clean; "
+            f"got status={result.get('status')!r}"
+        )
+        error = result.get("error") or ""
+        assert "not-a-date" in error or "start_date" in error, (
+            "the error must name the malformed value (or the field) so the "
+            f"operator can fix the YAML; got error={error!r}"
+        )
+
+    def test_cli_malformed_start_date_yields_exit_code_two(
+        self, tmp_path: Path, impl_repo: Path
+    ) -> None:
+        """The CLI surface must mirror the result-dict contract: malformed
+        start_date → hard-error exit code 2, not 0."""
+        root = tmp_path / "orch"
+        _write_yaml(
+            root / "sprint" / "current-sprint.yaml",
+            """\
+sprint:
+  name: TO Sprint X
+  start_date: not-a-date
+  status: active
+  number: 2618
+epics:
+  - '151'
+stories: []
+""",
+        )
+        _write_yaml(
+            root / "sprint" / "epic-151.yaml",
+            """\
+id: '151'
+type: epic
+status: backlog
+repos: pennyfarthing
+stories:
+  - id: 151-D
+    title: cli malformed date
+    points: 1
+    status: backlog
+    repos: pennyfarthing
+    workflow: tdd
+    implementation_surface:
+      - foo.py
+""",
+        )
+        from pf.sprint.staleness import staleness_cli
+
+        rc = staleness_cli(
+            ["151-D"],
+            project_root=root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        assert rc == 2, (
+            f"malformed start_date is a hard error → exit code must be 2 "
+            f"(distinct from 0 clean and 1 drift); got {rc}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# [MEDIUM]: explicit implementation_surface with non-string entries must error
+# ---------------------------------------------------------------------------
+
+
+class TestExplicitSurfaceFiltering:
+    """When ``implementation_surface`` is provided as a list but contains
+    non-string or empty entries (``[None, "valid.py", 42]``), the current
+    impl silently filters them out and proceeds with the survivors. The
+    operator's intent (check three paths) becomes a partial check (one
+    path) with no warning — the same silent-degradation shape the round-1
+    string-scalar fix addressed for the outer type."""
+
+    def test_list_with_non_string_entries_yields_error_not_partial_check(
+        self, tmp_path: Path, impl_repo: Path
+    ) -> None:
+        """[MEDIUM, round-2 finding] A list with mixed-type entries is a
+        plausible YAML authoring mistake. The implementation must reject
+        the malformed list explicitly rather than silently dropping the
+        bad items and running the check on a subset."""
+        root = tmp_path / "orch"
+        _write_yaml(
+            root / "sprint" / "current-sprint.yaml",
+            """\
+sprint:
+  name: TO Sprint X
+  start_date: '2026-05-04'
+  status: active
+  number: 2618
+epics:
+  - '151'
+stories: []
+""",
+        )
+        # YAML for [null, "valid.py", 42] — an int and a null mixed with a string.
+        _write_yaml(
+            root / "sprint" / "epic-151.yaml",
+            """\
+id: '151'
+type: epic
+status: backlog
+repos: pennyfarthing
+stories:
+  - id: 151-M
+    title: mixed-type implementation_surface
+    points: 1
+    status: backlog
+    repos: pennyfarthing
+    workflow: tdd
+    implementation_surface:
+      - null
+      - valid.py
+      - 42
+""",
+        )
+        from pf.sprint.staleness import check_story_staleness
+
+        result = check_story_staleness(
+            "151-M",
+            project_root=root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+
+        # Forbidden: silent partial check that drops the bad entries.
+        # Required: success=False with a diagnostic.
+        assert result.get("success") is False, (
+            "a list containing non-string entries must produce success=False, "
+            f"not a silent partial check; got {result}"
+        )
+        assert result.get("status") == "error", (
+            f"malformed-element list must produce status='error'; "
+            f"got status={result.get('status')!r}"
+        )
+        error = result.get("error") or ""
+        # The diagnostic should name the field or the offending types so the
+        # operator can fix the YAML.
+        assert "implementation_surface" in error or "string" in error.lower() or "list" in error.lower(), (
+            "the error must point the operator at the malformed field or its "
+            f"element-type expectation; got error={error!r}"
+        )
+        # Belt-and-suspenders: a partial check would have populated
+        # paths_checked with ["valid.py"]. The reject path must not.
+        paths_checked = result.get("paths_checked") or []
+        assert "valid.py" not in paths_checked, (
+            "the malformed list must not be silently filtered to its valid "
+            f"survivors; got paths_checked={paths_checked!r}"
         )
