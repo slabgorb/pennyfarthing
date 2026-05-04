@@ -38,6 +38,14 @@ _PATH_HEURISTIC_RE = re.compile(
     r"\b[\w/.-]+\.(?:py|ts|tsx|js|jsx|json|md|yaml|yml|sh|toml|cfg)\b"
 )
 
+# A header token has the rendered ``%H|%aI|%s`` format, so the first
+# pipe-separated field is a 40-char lowercase-hex SHA. File-path tokens never
+# look like that, which lets ``_parse_git_log`` distinguish header tokens from
+# file tokens without depending on a leading ``\n`` (the leading newline only
+# attaches to the first file in each commit; subsequent files are bare NUL-
+# separated tokens).
+_HASH_RE = re.compile(r"[0-9a-f]{40}")
+
 # Default base branch per repo. Mirrors repos.yaml; kept inline so this module
 # stays self-contained for the test seam (``repo_path_overrides``).
 _BASE_BRANCH_BY_REPO = {
@@ -108,6 +116,24 @@ def check_story_staleness(
             ack=ack,
         )
     start_date_str = str(start_date)
+    # ``--since=<value>`` flows directly into ``git log``. Git silently treats
+    # an unrecognised free-text date as "match nothing" and returns exit 0 with
+    # empty stdout, which the caller then reports as ``status=clean``. That is
+    # exactly the silent-clean shape this preflight exists to prevent, so we
+    # validate the YYYY-MM-DD shape at the boundary.
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", start_date_str):
+        return _result(
+            success=False,
+            status="error",
+            story_id=story_id,
+            since=start_date_str,
+            error=(
+                f"sprint.start_date is not a YYYY-MM-DD date: {start_date_str!r} — "
+                "free-text dates are silently ignored by `git log --since`, "
+                "which would produce a misleading clean result"
+            ),
+            ack=ack,
+        )
 
     story = _find_story(sprint_data, story_id)
     if story is None:
@@ -137,6 +163,26 @@ def check_story_staleness(
             ),
             ack=ack,
         )
+    # A list with non-string or empty entries is a YAML authoring mistake.
+    # Silently filtering the bad items would convert the operator's stated
+    # intent (check N paths) into a partial check on the survivors, the same
+    # silent-degradation shape the round-1 string-scalar fix addressed for
+    # the outer type.
+    if isinstance(explicit_surface, list):
+        for idx, entry in enumerate(explicit_surface):
+            if not isinstance(entry, str) or not entry:
+                return _result(
+                    success=False,
+                    status="error",
+                    story_id=story_id,
+                    since=start_date_str,
+                    error=(
+                        f"story {story_id!r} has malformed `implementation_surface`: "
+                        f"every entry must be a non-empty path string, "
+                        f"got {type(entry).__name__} at index {idx}"
+                    ),
+                    ack=ack,
+                )
 
     repo_name, repo_path = _resolve_repo_path(story, repo_path_overrides, project_root)
     if repo_name not in _BASE_BRANCH_BY_REPO:
@@ -292,7 +338,11 @@ def _result(
         out["warning"] = warning
     if error is not None:
         out["error"] = error
-    if ack:
+    # ``acknowledged`` documents that drift was detected and deliberately
+    # overridden. Setting it on a clean / skipped / error result misleads any
+    # downstream audit consumer into believing an override happened on every
+    # ack'd run, even when there was nothing to acknowledge.
+    if ack and status == "drift":
         out["acknowledged"] = True
     return out
 
@@ -319,7 +369,14 @@ def _resolve_paths(story: dict[str, Any]) -> list[str]:
     seen: set[str] = set()
     inferred: list[str] = []
     for text in (story.get("title") or "", story.get("description") or ""):
-        for match in _PATH_HEURISTIC_RE.findall(str(text)):
+        # Bound the regex input. ``_PATH_HEURISTIC_RE`` has overlapping char
+        # classes (``\w``, ``/``, ``.``) and on long near-miss input the
+        # engine retries each prefix position with quadratic runtime
+        # (ReDoS). 2000 chars is well above any realistic story title or
+        # description; truncation here keeps wall time bounded while still
+        # picking up paths from typical operator-authored YAML.
+        bounded = str(text)[:2000]
+        for match in _PATH_HEURISTIC_RE.findall(bounded):
             if match not in seen:
                 seen.add(match)
                 inferred.append(match)
@@ -356,11 +413,11 @@ def _file_overlaps(commit_files: list[str], surface_paths: list[str]) -> list[st
 
 
 def _path_matches(commit_file: str, surface_path: str) -> bool:
-    # Empty surface_path must never match any commit. Without this guard,
-    # ``"".rstrip("/") + "/"`` evaluates to ``"/"``, which startswith() accepts
-    # for every absolute path — turning an upstream YAML mistake into a flood
-    # of false drift reports.
-    if not surface_path:
+    # Empty or all-slash surface_path must never match any commit. Without
+    # this guard, ``"".rstrip("/") + "/"`` and ``"/".rstrip("/") + "/"`` both
+    # evaluate to ``"/"``, which startswith() accepts for every absolute path —
+    # turning an upstream YAML mistake into a flood of false drift reports.
+    if not surface_path.strip("/"):
         return False
     if "*" in surface_path or "?" in surface_path:
         return fnmatch.fnmatch(commit_file, surface_path)
@@ -453,10 +510,15 @@ def _parse_git_log(output: str) -> list[dict[str, Any]]:
     """Parse ``git log -z --name-only --format=%H|%aI|%s`` output.
 
     Under ``-z`` the output is a stream of NUL-terminated tokens. A header
-    token contains the rendered ``--format`` string. If the commit touched
-    any files, the next token starts with ``\\n`` (separating the format
-    output from the file list) and contains the first filename; subsequent
-    files are their own tokens. The next commit's header starts a new run.
+    token contains the rendered ``--format`` string (three pipe-separated
+    fields, the first of which is a 40-char SHA). If the commit touched any
+    files, the first file is glued to the header by ``\\n``; subsequent
+    files arrive as their own bare NUL-separated tokens with no leading
+    ``\\n``. The next commit's header starts a new run.
+
+    Header detection keys on shape (3 pipe-fields AND first looks like a
+    SHA), not on the leading-newline of file tokens, so multi-file commits
+    keep every file rather than dropping all but the first.
 
     NUL cannot appear in commit subjects or filenames in git, so this
     record separator is collision-free even for subjects that embed
@@ -467,25 +529,30 @@ def _parse_git_log(output: str) -> list[dict[str, Any]]:
     for token in output.split(_COMMIT_RECORD_SEP):
         if not token:
             continue
-        if token.startswith("\n"):
-            # File-list token. The leading ``\n`` separates it from the
-            # preceding format-output; strip it to get the path.
-            path = token[1:].strip()
-            if path and current is not None:
-                current["files"].append(path)
-            continue
+        # A header has 3 pipe-separated fields and the first is a full SHA.
+        # Use ``maxsplit=2`` so a subject containing pipes does not collide.
         parts = token.split("|", 2)
-        if len(parts) != 3:
+        if len(parts) == 3 and _HASH_RE.fullmatch(parts[0]):
+            full_hash, date, subject_with_first_file = parts
+            # The ``--name-only`` first file is glued to the format output
+            # by a literal ``\n``. Split it off to recover both the subject
+            # and the first file (if any).
+            subject, _, first_file = subject_with_first_file.partition("\n")
+            current = {
+                "hash": full_hash,
+                "short_hash": full_hash[:9],
+                "date": date,
+                "subject": subject,
+                "files": [first_file.strip()] if first_file.strip() else [],
+            }
+            commits.append(current)
             continue
-        full_hash, date, subject = parts
-        current = {
-            "hash": full_hash,
-            "short_hash": full_hash[:9],
-            "date": date,
-            "subject": subject,
-            "files": [],
-        }
-        commits.append(current)
+        # Otherwise this is a bare file-path token belonging to the most
+        # recent commit. Strip any leading newline defensively (some git
+        # versions add one, others do not).
+        path = token.lstrip("\n").strip()
+        if path and current is not None:
+            current["files"].append(path)
     return commits
 
 
