@@ -295,9 +295,12 @@ class TestJiraBidirectionalModule:
 class TestJiraEpicModule:
     """Tests for jira/epic.py module."""
 
-    def test_build_epic_payload(self) -> None:
+    def test_build_epic_payload(self, monkeypatch) -> None:
         """build_epic_payload should create valid Jira API payload."""
+        from pf.jira import epic as epic_module
         from pf.jira.epic import build_epic_payload
+
+        monkeypatch.setattr(epic_module, "JIRA_PROJECT", "PROJ")
 
         epic_data = {"title": "Test Epic", "description": "Epic description"}
         payload = build_epic_payload(epic_data)
@@ -306,10 +309,14 @@ class TestJiraEpicModule:
         assert payload["fields"]["summary"] == "Test Epic"
         assert payload["fields"]["issuetype"]["name"] == "Epic"
         assert "description" in payload["fields"]
+        assert payload["fields"]["project"]["key"] == "PROJ"
 
-    def test_create_epic_dry_run(self) -> None:
+    def test_create_epic_dry_run(self, monkeypatch) -> None:
         """create_epic with dry_run should not call API."""
+        from pf.jira import epic as epic_module
         from pf.jira.epic import create_epic
+
+        monkeypatch.setattr(epic_module, "JIRA_PROJECT", "PROJ")
 
         result = create_epic("Test Epic", "Description", dry_run=True)
 

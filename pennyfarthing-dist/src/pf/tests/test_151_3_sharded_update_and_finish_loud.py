@@ -1,6 +1,6 @@
 """Tests for story 151-3: shard-aware story update + loud finish on yaml errors.
 
-Story: 151-3 (MSSCI-17082) — story update locates stories across epic-*.yaml
+Story: 151-3 (PROJ-17082) — story update locates stories across epic-*.yaml
 shards; story finish fails loudly on yaml-update error.
 
 TDD RED phase: tests describe correct behavior.
@@ -54,7 +54,7 @@ sprint:
   status: active
   number: 1
 epics:
-  - MSSCI-17079
+  - PROJ-17079
   - "152"
 stories:
   - id: TOP-1
@@ -74,24 +74,24 @@ standalone_stories:
     workflow: trivial
 """
 
-# Epic shard with a Jira key — file name == epic-MSSCI-17079.yaml
+# Epic shard with a Jira key — file name == epic-PROJ-17079.yaml
 SHARD_JIRA_YAML = """\
 id: "151"
 type: epic
 title: "Sprint YAML write correctness"
 priority: p0
 status: in_progress
-jira: MSSCI-17079
+jira: PROJ-17079
 stories:
   - id: 151-3
-    jira: MSSCI-17082
+    jira: PROJ-17082
     title: story update locates stories across epic-*.yaml
     points: 3
     priority: p0
     status: in_progress
     workflow: tdd
   - id: 151-4
-    jira: MSSCI-17083
+    jira: PROJ-17083
     title: secondary story used for multi-update assertions
     points: 2
     priority: p1
@@ -118,8 +118,8 @@ stories:
 SHARD_SESSION = """\
 ---
 story_id: "151-3"
-jira_key: "MSSCI-17082"
-epic: "MSSCI-17079"
+jira_key: "PROJ-17082"
+epic: "PROJ-17079"
 workflow: "tdd"
 ---
 
@@ -127,7 +127,7 @@ workflow: "tdd"
 
 ## Story Details
 - **ID:** 151-3
-- **Jira:** [MSSCI-17082](https://jira.example.com/browse/MSSCI-17082)
+- **Jira:** [PROJ-17082](https://jira.example.com/browse/PROJ-17082)
 - **Workflow:** tdd
 - **Branch:** feat/151-3-sharded-update-finish-loud
 """
@@ -139,7 +139,7 @@ def sharded_sprint_dir(tmp_path: Path) -> Path:
     sprint_dir = tmp_path / "sprint"
     sprint_dir.mkdir()
     (sprint_dir / "current-sprint.yaml").write_text(SHARDED_INDEX_YAML)
-    (sprint_dir / "epic-MSSCI-17079.yaml").write_text(SHARD_JIRA_YAML)
+    (sprint_dir / "epic-PROJ-17079.yaml").write_text(SHARD_JIRA_YAML)
     (sprint_dir / "epic-152.yaml").write_text(SHARD_NOJIRA_YAML)
     (sprint_dir / "archive").mkdir()
     return sprint_dir
@@ -151,7 +151,7 @@ def sharded_project(tmp_path: Path) -> Path:
     sprint_dir = tmp_path / "sprint"
     sprint_dir.mkdir()
     (sprint_dir / "current-sprint.yaml").write_text(SHARDED_INDEX_YAML)
-    (sprint_dir / "epic-MSSCI-17079.yaml").write_text(SHARD_JIRA_YAML)
+    (sprint_dir / "epic-PROJ-17079.yaml").write_text(SHARD_JIRA_YAML)
     (sprint_dir / "epic-152.yaml").write_text(SHARD_NOJIRA_YAML)
     (sprint_dir / "archive").mkdir()
     session_dir = tmp_path / ".session"
@@ -205,7 +205,7 @@ class TestUpdateStoryOnShardedYaml:
 
         # Read the shard file directly (not the index) — the change must be there.
         story = _read_shard_story(
-            sharded_sprint_dir, "epic-MSSCI-17079.yaml", "151-3"
+            sharded_sprint_dir, "epic-PROJ-17079.yaml", "151-3"
         )
         assert story["assigned_to"] == "alice"
 
@@ -221,7 +221,7 @@ class TestUpdateStoryOnShardedYaml:
         assert result["success"] is True
 
         story = _read_shard_story(
-            sharded_sprint_dir, "epic-MSSCI-17079.yaml", "151-3"
+            sharded_sprint_dir, "epic-PROJ-17079.yaml", "151-3"
         )
         assert story["status"] == "in_review"
 
@@ -237,7 +237,7 @@ class TestUpdateStoryOnShardedYaml:
         assert result["success"] is True
 
         story = _read_shard_story(
-            sharded_sprint_dir, "epic-MSSCI-17079.yaml", "151-3"
+            sharded_sprint_dir, "epic-PROJ-17079.yaml", "151-3"
         )
         assert story["points"] == 8
         assert isinstance(story["points"], int)
@@ -277,7 +277,7 @@ class TestUpdateStoryOnShardedYaml:
         assert r2["success"] is True
 
         story = _read_shard_story(
-            sharded_sprint_dir, "epic-MSSCI-17079.yaml", "151-3"
+            sharded_sprint_dir, "epic-PROJ-17079.yaml", "151-3"
         )
         assert story["status"] == "in_review"
         assert story["points"] == 5
@@ -291,7 +291,7 @@ class TestUpdateStoryOnShardedYaml:
         update_story(sprint_path=index, story_id="151-3", status="in_review")
 
         sibling = _read_shard_story(
-            sharded_sprint_dir, "epic-MSSCI-17079.yaml", "151-4"
+            sharded_sprint_dir, "epic-PROJ-17079.yaml", "151-4"
         )
         # 151-4 was untouched — must still be backlog
         assert sibling["status"] == "backlog"
@@ -322,7 +322,7 @@ class TestStoryUpdateCommandOnShardedYaml:
         assert result.exit_code == 0, result.output
 
         story = _read_shard_story(
-            sharded_sprint_dir, "epic-MSSCI-17079.yaml", "151-3"
+            sharded_sprint_dir, "epic-PROJ-17079.yaml", "151-3"
         )
         assert story["assigned_to"] == "alice"
 
@@ -342,7 +342,7 @@ class TestStoryUpdateCommandOnShardedYaml:
         assert result.exit_code == 0, result.output
 
         story = _read_shard_story(
-            sharded_sprint_dir, "epic-MSSCI-17079.yaml", "151-3"
+            sharded_sprint_dir, "epic-PROJ-17079.yaml", "151-3"
         )
         assert story["status"] == "in_review"
 
@@ -362,7 +362,7 @@ class TestStoryUpdateCommandOnShardedYaml:
         assert result.exit_code == 0, result.output
 
         story = _read_shard_story(
-            sharded_sprint_dir, "epic-MSSCI-17079.yaml", "151-3"
+            sharded_sprint_dir, "epic-PROJ-17079.yaml", "151-3"
         )
         assert story["points"] == 8
 
@@ -385,14 +385,14 @@ class TestBidirectionalUpdateHelper:
         once ``read_sprint`` has merged the shard data.
         """
         data = read_sprint(sharded_sprint_dir / "current-sprint.yaml")
-        found = _update_story_in_sprint(data, "MSSCI-17082", "status", "in_review")
+        found = _update_story_in_sprint(data, "PROJ-17082", "status", "in_review")
         assert found is True
 
         # In-memory mutation must hit the right story
         epic = next(
-            e for e in data["epics"] if str(e.get("jira", "")) == "MSSCI-17079"
+            e for e in data["epics"] if str(e.get("jira", "")) == "PROJ-17079"
         )
-        story = next(s for s in epic["stories"] if s.get("jira") == "MSSCI-17082")
+        story = next(s for s in epic["stories"] if s.get("jira") == "PROJ-17082")
         assert story["status"] == "in_review"
 
     def test_finds_story_in_standalone_stories(

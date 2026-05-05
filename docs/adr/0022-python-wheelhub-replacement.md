@@ -28,7 +28,7 @@ WheelHub is the central real-time server for Pennyfarthing — an Express/WebSoc
 ```
 Claude Code CLI
     │
-    ├── OTEL spans ──→ WheelHub (Node.js, port 1898)
+    ├── OTEL spans ──→ WheelHub (Node.js, port 2898)
     │                      │
     │                      ├── subprocess → pf theme show (Python)
     │                      ├── subprocess → pf sprint status (Python)
@@ -97,7 +97,7 @@ Claude Code CLI
 ```
 Claude Code CLI
     │
-    ├── OTEL spans ──→ Python WheelHub (FastAPI, port 1898)
+    ├── OTEL spans ──→ Python WheelHub (FastAPI, port 2898)
     │                      │
     │                      ├── direct import → pf.prime.persona (no subprocess!)
     │                      ├── direct import → pf.sprint.status (no subprocess!)
@@ -168,7 +168,7 @@ Deprecating the GUI (Cyclist/React) is **orthogonal** to this decision but compl
 
 ### Parallel Running (Safety Net)
 
-During migration, both servers can run simultaneously on different ports. The launcher can start the Python server on 1898 and fall back to Node.js on 2898 if the Python server fails. This allows incremental migration without breaking existing functionality.
+During migration, both servers can run simultaneously on different ports. The launcher can start the Python server on 2898 and fall back to the legacy Node.js server on 2899 if the Python server fails. This allows incremental migration without breaking existing functionality.
 
 ## Consequences
 

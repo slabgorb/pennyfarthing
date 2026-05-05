@@ -155,15 +155,15 @@ class TestPortFileLifecycle:
 
     def test_write_port_file(self, tmp_path: Path):
         """AC4: write_port_file creates .frame-port with correct content."""
-        write_port_file(tmp_path, 1898)
+        write_port_file(tmp_path, 3898)
         port_file = tmp_path / ".frame-port"
         assert port_file.exists()
-        assert port_file.read_text().strip() == "1898"
+        assert port_file.read_text().strip() == "3898"
 
     def test_cleanup_port_file(self, tmp_path: Path):
         """AC4: cleanup_port_file removes .frame-port."""
         port_file = tmp_path / ".frame-port"
-        port_file.write_text("1898")
+        port_file.write_text("3898")
         cleanup_port_file(tmp_path)
         assert not port_file.exists()
 
@@ -174,7 +174,7 @@ class TestPortFileLifecycle:
 
     def test_write_port_file_overwrites(self, tmp_path: Path):
         """AC4: Writing port file overwrites existing one."""
-        write_port_file(tmp_path, 1898)
+        write_port_file(tmp_path, 3898)
         write_port_file(tmp_path, 2898)
         port_file = tmp_path / ".frame-port"
         assert port_file.read_text().strip() == "2898"
@@ -431,9 +431,9 @@ class TestLauncherSwitch:
 
     def test_server_command_includes_host_and_port(self):
         """AC3: Server command binds to 127.0.0.1 with configurable port."""
-        cmd = get_server_command(port=1898)
+        cmd = get_server_command(port=3898)
         cmd_str = " ".join(cmd)
-        assert "1898" in cmd_str
+        assert "3898" in cmd_str
 
 
 # ---------------------------------------------------------------------------

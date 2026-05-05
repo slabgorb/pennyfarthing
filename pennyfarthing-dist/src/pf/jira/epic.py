@@ -17,7 +17,7 @@ import json
 import sys
 from typing import Any
 
-from pf.jira.client import JIRA_PROJECT, JiraClient
+from pf.jira.client import JIRA_PROJECT, JiraClient, require_jira_project
 from pf.sprint.loader import find_epic
 from pf.sprint.loader import load_sprint as load_current_sprint
 
@@ -62,9 +62,11 @@ def build_epic_payload(epic_data: dict[str, Any]) -> dict[str, Any]:
         ],
     }
 
+    project_key = require_jira_project(JIRA_PROJECT)
+
     return {
         "fields": {
-            "project": {"key": JIRA_PROJECT},
+            "project": {"key": project_key},
             "summary": title,
             "description": description_adf,
             "issuetype": {"name": "Epic"},

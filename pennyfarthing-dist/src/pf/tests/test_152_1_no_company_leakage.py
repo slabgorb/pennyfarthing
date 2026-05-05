@@ -33,6 +33,7 @@ FORBIDDEN_COMPANY_BRAND = "1898" + "&co"
 # Directories that are not redistributables or are derivative caches.
 SKIP_DIRS = {
     ".git",
+    ".session",  # Gitignored runtime artifact; not redistributed.
     "__pycache__",
     ".venv",
     ".pytest_cache",
