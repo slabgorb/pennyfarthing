@@ -1,18 +1,23 @@
 """Story 152-1: Hygiene tests — no company-specific identifiers leak into the open-source framework.
 
 These tests scan every redistributable file in the framework repo and assert the absence
-of well-known leak markers:
+of three well-known leak markers:
 
-- The corporate Jira project key (constructed dynamically below to avoid self-match).
-- A four-digit numeric brand reference (constructed dynamically below; the framework
-  uses port 2898, so the older number must not appear anywhere as a port literal,
-  example URL, or narrative).
+- The corporate Jira project key (case-insensitive substring match — both
+  ``MSSCI`` uppercase and ``mssci`` lowercase variants are forbidden).
+- The company brand year as a standalone numeric token (word-bounded match;
+  the framework's actual Frame port is 2898, so the older number 1898 must
+  not appear anywhere as a port literal, example URL, or narrative reference).
+- The literal company brand string ``1898&co`` (case-insensitive substring
+  match — catches ``1898&Co``, ``1898&CO``, etc.).
 
-The forbidden strings are constructed from concatenated halves so this file itself
-does not match the scan. Adding a test marker for additional company identifiers
-(e.g., the firm name) is left as a delivery finding for the user to populate.
+The forbidden strings are still constructed from concatenated halves below as
+defensive belt-and-braces (the file is also explicitly listed in
+``SKIP_FILES``), so this test file does not match its own scan. Adding a test
+marker for additional company identifiers is left as a delivery finding for
+the user to populate.
 
-Author: Igor (TEA), Story 152-1.
+Author: Igor (TEA), Story 152-1 (RED + re-RED rounds).
 """
 
 from __future__ import annotations
@@ -132,10 +137,12 @@ def _format_offenders(offenders: list[tuple[Path, int, str]], needle: str) -> st
 def test_no_corporate_jira_key_in_framework_redistributables():
     """No file shipped with the framework may contain the corporate Jira project key.
 
-    Substring (not word-bounded) match — the project key is uppercase ASCII and
-    unique enough that any occurrence is intentional and must be removed.
+    Substring match, case-insensitive — the project key is unique enough that any
+    occurrence is intentional and must be removed regardless of case. Lowercase
+    variants like ``mssci-00000`` in assertion strings are real leak surfaces and
+    must not survive the gate.
     """
-    offenders = _find_offenders(FORBIDDEN_JIRA_KEY, word_bounded=False)
+    offenders = _find_offenders(FORBIDDEN_JIRA_KEY, word_bounded=False, ignore_case=True)
     assert not offenders, _format_offenders(offenders, FORBIDDEN_JIRA_KEY)
 
 
@@ -165,18 +172,27 @@ def test_no_company_brand_string_in_framework_redistributables():
 
 
 def test_skip_dirs_actually_exist_in_walk():
-    """Sanity check: the walk visits at least one file under pennyfarthing-dist/.
+    """Sanity check: the walk visits files inside ``pennyfarthing-dist/``.
 
-    Guards against an environmental fluke where REPO_ROOT resolves wrong and the
-    other tests pass vacuously by walking an empty tree.
+    Guards against an environmental fluke where REPO_ROOT resolves to a directory
+    that happens to contain >100 files but does NOT include the redistributable
+    tree — in which case the other tests would pass vacuously while the actual
+    redistributables are unscanned. Counting files specifically under
+    ``pennyfarthing-dist/`` makes that failure mode impossible.
     """
-    visited = list(_iter_text_files(REPO_ROOT))
-    assert len(visited) > 100, (
-        f"Walk only found {len(visited)} files under {REPO_ROOT} — "
-        f"hygiene tests would be vacuously passing."
-    )
-    # And confirm we are walking the framework repo, not the orchestrator
+    # First, confirm the walk reaches the redistributable subtree at all.
     assert (REPO_ROOT / "pennyfarthing-dist").is_dir(), (
         f"REPO_ROOT={REPO_ROOT} does not contain pennyfarthing-dist/ — "
         f"hygiene scan rooted incorrectly."
+    )
+
+    # Second, confirm files INSIDE pennyfarthing-dist/ are actually iterated.
+    dist_files = [
+        path for path, _content in _iter_text_files(REPO_ROOT)
+        if "pennyfarthing-dist" in path.parts
+    ]
+    assert len(dist_files) > 10, (
+        f"Walk only visited {len(dist_files)} files under pennyfarthing-dist/ — "
+        f"hygiene scan is not actually covering the redistributable tree even "
+        f"though REPO_ROOT={REPO_ROOT} resolves to a directory containing it."
     )
