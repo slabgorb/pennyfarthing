@@ -46,6 +46,10 @@ def build_epic_payload(epic_data: dict[str, Any]) -> dict[str, Any]:
 
     Returns:
         Jira API request payload
+
+    Raises:
+        JiraConfigError: If no Jira project key is configured (fail-loud
+            contract from Story 152-1; never falls back to a hardcoded key).
     """
     title = epic_data.get("title", "")
     description = epic_data.get("description", "")

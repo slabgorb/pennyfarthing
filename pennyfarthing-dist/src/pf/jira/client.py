@@ -32,8 +32,8 @@ def _resolve_jira_config() -> tuple[str | None, str | None]:
         from pf.common.config import load_pennyfarthing_config
 
         config = load_pennyfarthing_config()
-        jira_cfg = config.get("jira", {})
-    except Exception:
+        jira_cfg = config.get("jira") or {}
+    except Exception:  # config is optional; Jira ops work without it
         jira_cfg = {}
     project = jira_cfg.get("project") or os.environ.get("JIRA_PROJECT") or None
     url = jira_cfg.get("url") or os.environ.get("JIRA_URL") or None
@@ -48,13 +48,13 @@ def require_jira_project(value: str | None = None) -> str:
     """
     if value is None:
         value, _url = _resolve_jira_config()
-    if not value:
+    if not (value and value.strip()):
         raise JiraConfigError(
             "Jira project key not configured. "
             "Set jira.project in .pennyfarthing/config.local.yaml or "
             "export JIRA_PROJECT before running Jira operations."
         )
-    return value
+    return value.strip()
 
 
 _resolved_project, _resolved_url = _resolve_jira_config()

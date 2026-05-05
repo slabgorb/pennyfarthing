@@ -323,6 +323,7 @@ class TestJiraEpicModule:
         assert result["success"] is True
         assert result["dry_run"] is True
         assert "payload" in result
+        assert result["payload"]["fields"]["project"]["key"] == "PROJ"
 
 
 class TestJiraStoryModule:
