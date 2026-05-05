@@ -17,7 +17,7 @@ import json
 import sys
 from typing import Any
 
-from pf.jira.client import JIRA_PROJECT, JiraClient, require_jira_project
+from pf.jira.client import JIRA_PROJECT, JiraClient, JiraConfigError, require_jira_project
 from pf.sprint.loader import find_epic
 from pf.sprint.loader import load_sprint as load_current_sprint
 
@@ -91,7 +91,10 @@ def create_epic(
         Result dict with success, key, error fields
     """
     epic_data = {"title": title, "description": description}
-    payload = build_epic_payload(epic_data)
+    try:
+        payload = build_epic_payload(epic_data)
+    except JiraConfigError as e:
+        return {"success": False, "error": str(e)}
 
     if dry_run:
         return {
