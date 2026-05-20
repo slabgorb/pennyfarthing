@@ -152,6 +152,12 @@ pf jira claim {JIRA_KEY}
 
 ## Step 4: Write Session File
 
+**Write the session file to the canonical path: `.session/{STORY_ID}-session.md`** (relative to the project root).
+
+If the `.session/` directory does not exist yet, create it first.
+
+Use the `Write` tool with file path `.session/{STORY_ID}-session.md` and the following content:
+
 ```markdown
 ---
 story_id: "{STORY_ID}"
