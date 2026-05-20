@@ -32,6 +32,22 @@ def _resolve_jira_config():
 
 JIRA_PROJECT, JIRA_URL = _resolve_jira_config()
 
+
+def is_jira_enabled() -> bool:
+    """Return True only when both `jira.project` and `jira.url` resolve to
+    non-empty strings via config or env.
+
+    Re-reads config on every call — callers may rely on this for tests that
+    monkeypatch `pf.common.config.load_pennyfarthing_config`. Fails closed on
+    any resolution error so a corrupt config never falsely enables jira-cli
+    invocations.
+    """
+    try:
+        project, url = _resolve_jira_config()
+    except Exception:
+        return False
+    return bool(project) and bool(url)
+
 # Status mappings: Pennyfarthing -> Jira
 STATUS_TO_JIRA = {
     "backlog": "To Do",

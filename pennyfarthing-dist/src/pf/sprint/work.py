@@ -32,19 +32,23 @@ def check_story(story_id: str) -> dict[str, Any]:
     status = story.get("status", "backlog")
     assigned = story.get("assigned_to")
 
-    # Check if assigned to someone else
+    # Check if assigned to someone else.
+    # Only probe jira-cli for the current user when jira integration is
+    # actually configured — otherwise `assigned_to` is purely local metadata
+    # and there is no jira concept of "current user" to compare against.
     if assigned:
-        from pf.jira.client import get_current_user_email
+        from pf.jira.client import get_current_user_email, is_jira_enabled
 
-        current_user = get_current_user_email()
-        if assigned != current_user:
-            return {
-                "available": False,
-                "type": "story",
-                "story": story,
-                "reason": f"Assigned to {assigned}",
-                "assigned_to": assigned,
-            }
+        if is_jira_enabled():
+            current_user = get_current_user_email()
+            if assigned != current_user:
+                return {
+                    "available": False,
+                    "type": "story",
+                    "story": story,
+                    "reason": f"Assigned to {assigned}",
+                    "assigned_to": assigned,
+                }
 
     # Check if already in progress
     if status == "in_progress":
@@ -104,18 +108,26 @@ def get_next_story() -> dict[str, Any]:
     Returns:
         Dict with next story details or error
     """
-    from pf.jira.client import get_current_user_email
+    from pf.jira.client import get_current_user_email, is_jira_enabled
     from pf.sprint.loader import get_all_stories
 
-    current_user = get_current_user_email()
+    # Only consult jira-cli for the current user when jira is configured.
+    # In local-only mode every assignment string is just a label, so we
+    # cannot filter against it — include all backlog stories.
+    current_user = get_current_user_email() if is_jira_enabled() else None
     all_stories = get_all_stories()
     available_statuses = {"backlog", "ready", "planning"}
-    backlog = [
-        s
-        for s in all_stories
-        if s.get("status") in available_statuses
-        and (not s.get("assigned_to") or s.get("assigned_to") == current_user)
-    ]
+    if current_user is None:
+        backlog = [
+            s for s in all_stories if s.get("status") in available_statuses
+        ]
+    else:
+        backlog = [
+            s
+            for s in all_stories
+            if s.get("status") in available_statuses
+            and (not s.get("assigned_to") or s.get("assigned_to") == current_user)
+        ]
 
     if not backlog:
         return {
