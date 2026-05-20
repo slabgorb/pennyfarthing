@@ -16,21 +16,52 @@ from typing import Any
 # Configuration
 
 
-def _resolve_jira_config():
-    """Resolve Jira project and URL from config file, env, or defaults."""
+class JiraConfigError(RuntimeError):
+    """Raised when a Jira operation needs config that is not present."""
+
+
+def _resolve_jira_config() -> tuple[str | None, str | None]:
+    """Resolve Jira project and URL from config file or env.
+
+    Returns a tuple of (project, url) where each value is either the configured
+    string or ``None`` when unset. The framework must work in projects with no
+    Jira at all, so this function does not raise; callers that need a project
+    key call :func:`require_jira_project` to fail loudly at point of use.
+    """
     try:
         from pf.common.config import load_pennyfarthing_config
 
         config = load_pennyfarthing_config()
-        jira_cfg = config.get("jira", {})
-    except Exception:
+        jira_cfg = config.get("jira") or {}
+    except Exception:  # config is optional; Jira ops work without it
         jira_cfg = {}
-    project = jira_cfg.get("project") or os.environ.get("JIRA_PROJECT") or ""
-    url = jira_cfg.get("url") or os.environ.get("JIRA_URL") or ""
+    project = jira_cfg.get("project") or os.environ.get("JIRA_PROJECT") or None
+    url = jira_cfg.get("url") or os.environ.get("JIRA_URL") or None
     return project, url
 
 
-JIRA_PROJECT, JIRA_URL = _resolve_jira_config()
+def require_jira_project(value: str | None = None) -> str:
+    """Return the configured Jira project key or raise :class:`JiraConfigError`.
+
+    Pass an explicit ``value`` (e.g. the imported ``JIRA_PROJECT`` constant) to
+    avoid re-resolving config. Empty strings are treated as unset.
+    """
+    if value is None:
+        value, _url = _resolve_jira_config()
+    if not (value and value.strip()):
+        raise JiraConfigError(
+            "Jira project key not configured. "
+            "Set jira.project in .pennyfarthing/config.local.yaml or "
+            "export JIRA_PROJECT before running Jira operations."
+        )
+    return value.strip()
+
+
+_resolved_project, _resolved_url = _resolve_jira_config()
+# Module-level constants kept as strings for backward compat with existing
+# importers. Callers that need fail-loud behavior must use require_jira_project.
+JIRA_PROJECT: str = _resolved_project or ""
+JIRA_URL: str = _resolved_url or ""
 
 
 def is_jira_enabled() -> bool:

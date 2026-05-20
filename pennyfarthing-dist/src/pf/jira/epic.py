@@ -17,7 +17,7 @@ import json
 import sys
 from typing import Any
 
-from pf.jira.client import JIRA_PROJECT, JiraClient
+from pf.jira.client import JIRA_PROJECT, JiraClient, JiraConfigError, require_jira_project
 from pf.sprint.loader import find_epic
 from pf.sprint.loader import load_sprint as load_current_sprint
 
@@ -46,6 +46,10 @@ def build_epic_payload(epic_data: dict[str, Any]) -> dict[str, Any]:
 
     Returns:
         Jira API request payload
+
+    Raises:
+        JiraConfigError: If no Jira project key is configured (fail-loud
+            contract from Story 152-1; never falls back to a hardcoded key).
     """
     title = epic_data.get("title", "")
     description = epic_data.get("description", "")
@@ -62,9 +66,11 @@ def build_epic_payload(epic_data: dict[str, Any]) -> dict[str, Any]:
         ],
     }
 
+    project_key = require_jira_project(JIRA_PROJECT)
+
     return {
         "fields": {
-            "project": {"key": JIRA_PROJECT},
+            "project": {"key": project_key},
             "summary": title,
             "description": description_adf,
             "issuetype": {"name": "Epic"},
@@ -89,7 +95,10 @@ def create_epic(
         Result dict with success, key, error fields
     """
     epic_data = {"title": title, "description": description}
-    payload = build_epic_payload(epic_data)
+    try:
+        payload = build_epic_payload(epic_data)
+    except JiraConfigError as e:
+        return {"success": False, "error": str(e)}
 
     if dry_run:
         return {

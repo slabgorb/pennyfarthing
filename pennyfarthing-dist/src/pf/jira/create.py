@@ -16,7 +16,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from pf.jira.client import JIRA_PROJECT, get_client
+from pf.jira.client import (
+    JIRA_PROJECT,
+    JiraConfigError,
+    get_client,
+    require_jira_project,
+)
 from pf.sprint.loader import find_epic, find_story, load_sprint
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
@@ -102,12 +107,17 @@ def create_story_in_jira(
         print(f"  Parent: {epic_jira_key}, Priority: {priority}, Points: {points}")
         return {"success": True, "dry_run": True, "story_id": story_id}
 
+    try:
+        project_key = require_jira_project(JIRA_PROJECT)
+    except JiraConfigError as e:
+        return {"success": False, "error": str(e)}
+
     client = get_client()
 
     # Build payload
     payload = {
         "fields": {
-            "project": {"key": JIRA_PROJECT},
+            "project": {"key": project_key},
             "summary": title,
             "description": _build_adf_description(description),
             "issuetype": {"name": "Story"},
@@ -214,12 +224,17 @@ def create_epic_in_jira(
             print(f"[DRY RUN] Would create epic: {title}")
             epic_jira_key = "PROJ-XXXXX"
         else:
+            try:
+                project_key = require_jira_project(JIRA_PROJECT)
+            except JiraConfigError as e:
+                return {"success": False, "error": str(e)}
+
             client = get_client()
 
             # Idempotency check: search for existing epic with same title (ADR-0022)
             try:
                 existing = client.search_issues_sync(
-                    f'project = {JIRA_PROJECT} AND issuetype = Epic AND summary ~ "{title}"'
+                    f'project = {project_key} AND issuetype = Epic AND summary ~ "{title}"'
                 )
                 if existing and not force:
                     existing_key = existing[0]["key"]
@@ -254,7 +269,7 @@ def create_epic_in_jira(
 
             payload = {
                 "fields": {
-                    "project": {"key": JIRA_PROJECT},
+                    "project": {"key": project_key},
                     "summary": title,
                     "description": _build_adf_description(description),
                     "issuetype": {"name": "Epic"},
