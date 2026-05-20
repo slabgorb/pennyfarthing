@@ -137,6 +137,40 @@ class TestCanonicalSessionPath:
         with pytest.raises((ValueError, AssertionError)):
             canonical_session_path(project_root, "../escape")
 
+    def test_rejects_null_byte_in_story_id(self, project_root: Path) -> None:
+        """Regression (round-1 review #2): reject NUL byte (CWE-158).
+
+        The pre-rework `..`/`/`/`\\` blocklist let `abc\\x00xyz` through —
+        a classic path-truncation bypass on some POSIX layers.
+        """
+        from pf.session.paths import canonical_session_path
+
+        with pytest.raises((ValueError, AssertionError)):
+            canonical_session_path(project_root, "abc\x00xyz")
+
+    def test_rejects_windows_drive_letter_in_story_id(
+        self, project_root: Path
+    ) -> None:
+        """Regression (round-1 review #2): reject `C:foo` and similar.
+
+        On Windows, `Path("/root") / "C:foo"` resolves to `C:foo` (the
+        drive-relative path), escaping `/root` entirely.
+        """
+        from pf.session.paths import canonical_session_path
+
+        with pytest.raises((ValueError, AssertionError)):
+            canonical_session_path(project_root, "C:foo")
+
+    def test_rejects_unicode_homoglyph_story_id(
+        self, project_root: Path
+    ) -> None:
+        """Regression (round-1 review #2): allowlist excludes non-ASCII."""
+        from pf.session.paths import canonical_session_path
+
+        # Cyrillic 'a' that visually mimics ASCII 'a'.
+        with pytest.raises((ValueError, AssertionError)):
+            canonical_session_path(project_root, "аbc")
+
 
 class TestSmSetupAgentDocSpecifiesCanonicalPath:
     """The sm-setup.md agent definition must explicitly instruct writing to .session/."""
@@ -176,10 +210,18 @@ class TestSmSetupAgentDocSpecifiesCanonicalPath:
 
         # Forbidden: any direction to write a session file under sprint/
         # (sprint/archive/ is fine — that's the archive home, not the live path)
+        #
+        # Round-1 review #5: broadened to catch paraphrases. Any directive
+        # verb (write/save/create/place/put/store/emit/output/persist)
+        # paired with "session" + "sprint/" on one line is forbidden, as is
+        # any direct path mention `sprint/<X>-session.md` outside archive/.
         forbidden_patterns = [
             r"sprint/\{STORY_ID\}-session\.md",
             r"sprint/\$\{STORY_ID\}-session\.md",
-            r"Write[^\n]*session file[^\n]*sprint/",
+            # Directive verbs + session + sprint/ on same line
+            r"(write|save|create|place|put|store|emit|output|persist)[^\n]*session[^\n]*sprint/",
+            # Direct path mention not under archive/
+            r"sprint/(?!archive/)[^/\s]+-session\.md",
         ]
         for pattern in forbidden_patterns:
             assert not re.search(pattern, content, re.IGNORECASE), (
@@ -262,6 +304,27 @@ class TestFindLegacySessions:
 
         assert result == [], (
             f"only *-session.md files in sprint/ are legacy; got {result}"
+        )
+
+    def test_skips_symlinks_in_sprint_dir(self, project_root: Path) -> None:
+        """Regression (round-1 review #3): symlinks in sprint/ are skipped (CWE-59).
+
+        An attacker-controlled symlink would let migration copy or unlink
+        content outside the project tree.
+        """
+        from pf.session.paths import find_legacy_sessions
+
+        # Real file outside sprint/.
+        target = _write(project_root / "outside-session.md", "outside data")
+        # Symlink inside sprint/ pointing to it.
+        link = project_root / "sprint" / "100-1-session.md"
+        link.parent.mkdir(parents=True, exist_ok=True)
+        link.symlink_to(target)
+
+        result = find_legacy_sessions(project_root)
+
+        assert link not in result, (
+            f"symlinks in sprint/ must not be returned as legacy; got {result}"
         )
 
 
@@ -444,3 +507,75 @@ class TestMigrateLegacySessions:
 
         migrated = (project_root / ".session" / "100-1-session.md").read_text(encoding="utf-8")
         assert migrated == unicode_content, "unicode content must survive migration"
+
+    def test_non_utf8_file_does_not_abort_migration(
+        self, project_root: Path
+    ) -> None:
+        """Regression (round-1 review #1, Major): one non-UTF-8 file must
+        not abort the loop. Pre-rework, ``UnicodeDecodeError`` (a
+        ``ValueError`` subclass) escaped the ``except OSError`` handler
+        and aborted the entire migration mid-loop.
+        """
+        from pf.session.paths import migrate_legacy_sessions
+
+        # Bad file: non-UTF-8 bytes (Granny's reproducer).
+        bad = project_root / "sprint" / "100-1-session.md"
+        bad.parent.mkdir(parents=True, exist_ok=True)
+        bad.write_bytes(b"\xff\xfe\xfd not valid utf-8 here")
+
+        # Good file: ordinary UTF-8 — should still migrate.
+        good = _write(project_root / "sprint" / "100-2-session.md", "ok")
+
+        result = migrate_legacy_sessions(project_root)
+
+        # The good file completed despite the bad one being processed.
+        good_canonical = project_root / ".session" / "100-2-session.md"
+        assert good_canonical.exists(), (
+            f"good file must migrate even when a sibling has bad encoding; "
+            f"got {result}"
+        )
+        assert not good.exists(), "good legacy file should be unlinked after move"
+
+        # The bad file should EITHER migrate (byte copy) OR be reported as
+        # an error — but the loop must not crash. Acceptable contract: any
+        # non-aborting handling.
+        bad_canonical = project_root / ".session" / "100-1-session.md"
+        bad_handled = (
+            bad_canonical.exists()
+            or any("100-1" in str(e) for e in result.get("errors", []))
+        )
+        assert bad_handled, (
+            f"bad-encoding legacy file must be migrated OR reported under "
+            f"errors (neither happened); got {result}"
+        )
+
+    def test_dry_run_identical_content_not_reported_as_migrated(
+        self, project_root: Path
+    ) -> None:
+        """Regression (round-1 review #4, Minor): dry-run must not claim
+        a cleanup happened. Identical-content duplicates are a *cleanup*,
+        not a migration — and in dry_run they did neither.
+        """
+        from pf.session.paths import migrate_legacy_sessions
+
+        legacy = _write(project_root / "sprint" / "100-1-session.md", SAMPLE_SESSION_CONTENT)
+        canonical = _write(
+            project_root / ".session" / "100-1-session.md", SAMPLE_SESSION_CONTENT
+        )
+
+        result = migrate_legacy_sessions(project_root, dry_run=True)
+
+        # No mutation: both files preserved.
+        assert legacy.exists(), "dry-run must leave legacy in place"
+        assert canonical.exists(), "dry-run must leave canonical in place"
+        # Not reported as `migrated` (nothing was moved or would be moved
+        # — the canonical already had identical content).
+        assert legacy not in result.get("migrated", []), (
+            f"dry-run identical-content must NOT be reported under 'migrated'; "
+            f"got {result}"
+        )
+        # Reported under `cleaned` (the planned cleanup that did not run).
+        assert legacy in result.get("cleaned", []), (
+            f"dry-run identical-content should appear under 'cleaned' (planned "
+            f"cleanup); got {result}"
+        )
