@@ -32,7 +32,10 @@ def check_story(story_id: str) -> dict[str, Any]:
     status = story.get("status", "backlog")
     assigned = story.get("assigned_to")
 
-    # Check if assigned to someone else
+    # Check if assigned to someone else.
+    # `get_current_user_email` resolves via JIRA_USER env then `git config
+    # user.email` — neither path invokes jira-cli, so this comparison works
+    # in both jira-enabled and local-only modes.
     if assigned:
         from pf.jira.client import get_current_user_email
 
@@ -99,7 +102,8 @@ def get_next_story() -> dict[str, Any]:
     """Get the highest priority available story.
 
     Considers stories with backlog, ready, or planning status.
-    Excludes stories assigned to other users.
+    Excludes stories assigned to other users (resolved via local git config —
+    no jira-cli invocation).
 
     Returns:
         Dict with next story details or error

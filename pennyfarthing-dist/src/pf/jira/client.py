@@ -32,6 +32,35 @@ def _resolve_jira_config():
 
 JIRA_PROJECT, JIRA_URL = _resolve_jira_config()
 
+
+def is_jira_enabled() -> bool:
+    """Return True only when both `jira.project` and `jira.url` resolve to
+    non-empty `str` values via config or env.
+
+    Re-reads config on every call so tests can monkeypatch
+    `pf.common.config.load_pennyfarthing_config`.
+
+    Non-string truthy values (e.g. `project: true` or `project: 1` in YAML)
+    and whitespace-only strings (`project: '   '`) do NOT enable jira —
+    AC1 of story 152-2 requires explicit non-empty string config.
+
+    Fail-closed with defense in depth: `_resolve_jira_config` swallows
+    config-load errors internally and returns `("", "")`. As a second
+    layer, this predicate also wraps the resolver call so any future
+    refactor that removes the inner handler still yields False rather
+    than propagating an exception to gate call sites.
+    """
+    try:
+        project, url = _resolve_jira_config()
+    except Exception:
+        return False
+    return (
+        isinstance(project, str)
+        and bool(project.strip())
+        and isinstance(url, str)
+        and bool(url.strip())
+    )
+
 # Status mappings: Pennyfarthing -> Jira
 STATUS_TO_JIRA = {
     "backlog": "To Do",

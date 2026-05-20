@@ -14,10 +14,9 @@ from typing import Any
 
 import click
 
-from pf.sprint.status_normalize import normalize_status
-
-from pf.jira.client import get_client, map_status_to_jira
+from pf.jira.client import get_client, is_jira_enabled, map_status_to_jira
 from pf.sprint.loader import find_epic, find_story
+from pf.sprint.status_normalize import normalize_status
 from pf.sprint.validator import VALID_STORY_STATUSES, validate_full_sprint
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
@@ -144,8 +143,16 @@ def update_story(
         # Auto-set started if not already present
         if "started" not in story:
             story["started"] = date.today().isoformat()
-        # Auto-set assignee from current Jira user if not already assigned
-        if "assigned_to" not in story and assigned_to is None:
+        # Auto-set assignee from current Jira user if not already assigned.
+        # Skip when (a) jira integration is not configured at all, or (b) the
+        # story itself has no jira key — in either case running `jira me`
+        # would either fail or pull data into a story that has no Jira side.
+        if (
+            "assigned_to" not in story
+            and assigned_to is None
+            and is_jira_enabled()
+            and story.get("jira")
+        ):
             try:
                 result = subprocess.run(["jira", "me"], capture_output=True, text=True)
                 if result.returncode == 0 and result.stdout.strip():
