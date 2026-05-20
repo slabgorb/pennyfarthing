@@ -117,17 +117,16 @@ def get_next_story() -> dict[str, Any]:
     current_user = get_current_user_email() if is_jira_enabled() else None
     all_stories = get_all_stories()
     available_statuses = {"backlog", "ready", "planning"}
-    if current_user is None:
-        backlog = [
-            s for s in all_stories if s.get("status") in available_statuses
-        ]
-    else:
-        backlog = [
-            s
-            for s in all_stories
-            if s.get("status") in available_statuses
-            and (not s.get("assigned_to") or s.get("assigned_to") == current_user)
-        ]
+    backlog = [
+        s
+        for s in all_stories
+        if s.get("status") in available_statuses
+        and (
+            current_user is None
+            or not s.get("assigned_to")
+            or s.get("assigned_to") == current_user
+        )
+    ]
 
     if not backlog:
         return {
