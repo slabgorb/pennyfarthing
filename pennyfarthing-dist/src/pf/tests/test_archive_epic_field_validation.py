@@ -54,7 +54,7 @@ def archive_tree(tmp_path: Path) -> Path:
         "epics": [
             {
                 "id": "epic-151",
-                "jira": "MSSCI-17079",
+                "jira": "PROJ-17079",
                 "status": "in_progress",
                 "stories": [
                     {"id": "151-2", "title": "Fail loud on epic", "points": 3},
@@ -123,11 +123,11 @@ def test_write_archive_file_succeeds_when_every_story_has_epic(
     archive_path = archive_tree / "sprint" / "archive" / "sprint-2610-completed.yaml"
     data: dict[str, Any] = {
         "sprint": {"name": "TO Sprint 2610", "number": 2610},
-        "completed_epics": ["MSSCI-17079"],
+        "completed_epics": ["PROJ-17079"],
         "completed_stories": [
             {
                 "id": "151-2",
-                "epic": "MSSCI-17079",
+                "epic": "PROJ-17079",
                 "title": "Fail loud on epic",
                 "points": 3,
                 "completed": "2026-04-20",
@@ -140,7 +140,7 @@ def test_write_archive_file_succeeds_when_every_story_has_epic(
     assert archive_path.exists()
     content = archive_path.read_text()
     assert "151-2" in content
-    assert "MSSCI-17079" in content
+    assert "PROJ-17079" in content
 
 
 def test_write_archive_file_error_names_all_offending_stories(
@@ -154,7 +154,7 @@ def test_write_archive_file_error_names_all_offending_stories(
         "completed_stories": [
             {"id": "alpha-1", "title": "no epic", "points": 1},
             {"id": "beta-2", "epic": "", "title": "empty epic", "points": 1},
-            {"id": "gamma-3", "epic": "MSSCI-17079", "title": "ok", "points": 1},
+            {"id": "gamma-3", "epic": "PROJ-17079", "title": "ok", "points": 1},
         ],
     }
 
@@ -212,12 +212,12 @@ def test_backfill_epic_refs_resolves_missing_epic_from_sprint(
 
     assert len(backfilled) == 1, f"expected 1 backfilled, got {backfilled}"
     assert backfilled[0]["id"] == "151-2"
-    assert backfilled[0]["epic"] == "MSSCI-17079"
+    assert backfilled[0]["epic"] == "PROJ-17079"
     assert irrecoverable == []
 
     # Archive file should now contain the resolved epic
     content = archive_path.read_text()
-    assert "MSSCI-17079" in content
+    assert "PROJ-17079" in content
 
 
 def test_backfill_epic_refs_reports_irrecoverable(archive_tree: Path) -> None:
@@ -251,7 +251,7 @@ def test_backfill_epic_refs_is_idempotent_on_clean_archive(
     _write_archive(
         archive_tree,
         [
-            {"id": "151-2", "epic": "MSSCI-17079", "title": "ok", "points": 3},
+            {"id": "151-2", "epic": "PROJ-17079", "title": "ok", "points": 3},
         ],
     )
 
@@ -292,7 +292,7 @@ def test_cli_backfill_epics_reports_resolution(
     assert result.exit_code == 0, result.output
     assert "Backfilled: 1" in result.output
     assert "151-2" in result.output
-    assert "MSSCI-17079" in result.output
+    assert "PROJ-17079" in result.output
     assert "Irrecoverable: 0" in result.output
 
 
