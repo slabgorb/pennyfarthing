@@ -115,14 +115,22 @@ def validate(ctx, names: tuple[str, ...], fix: bool, strict: bool):
     ctx.obj["fix"] = fix
     ctx.obj["strict"] = strict
 
-    # Click's nargs=-1 consumes subcommand names into `names`.
-    # Detect when a single subcommand was captured and re-invoke it.
-    # Multiple names are treated as positional validator names below.
-    if len(names) == 1 and names[0] in validate.commands:
+    # Click's nargs=-1 consumes subcommand names into `names`. Dispatch
+    # to a subcommand when:
+    #   - names = (subcmd,)            — single-name shortcut (legacy)
+    #   - names = (subcmd, arg, ...)   — subcommand that takes positional args
+    #                                    (e.g. `validate context-story 6-1`)
+    # When the first name is a no-arg subcommand AND extra names follow,
+    # treat the whole list as multiple validator names (e.g. `validate agent theme`).
+    if names and names[0] in validate.commands:
         sub_cmd = validate.commands[names[0]]
-        sub_ctx = click.Context(sub_cmd, parent=ctx, info_name=names[0])
-        with sub_ctx:
-            return sub_cmd.parse_args(sub_ctx, []) or sub_cmd.invoke(sub_ctx)
+        sub_takes_args = any(isinstance(p, click.Argument) for p in sub_cmd.params)
+        if len(names) == 1 or sub_takes_args:
+            sub_ctx = click.Context(sub_cmd, parent=ctx, info_name=names[0])
+            with sub_ctx:
+                return sub_cmd.parse_args(sub_ctx, list(names[1:])) or sub_cmd.invoke(
+                    sub_ctx
+                )
 
     if ctx.invoked_subcommand is None:
         # If names provided as positional args, run only those
@@ -251,9 +259,19 @@ def validate_context_epic(epic_id: str):
 
 
 def _validate_single_context(context_type: str, context_id: str) -> None:
-    """Validate a single epic or story context file."""
-    from pf.context.validator import validate_context_file
+    """Validate a single epic or story context file.
 
+    Story context files in this project are markdown documents — the
+    on-activation gate only needs to confirm that one exists and is
+    non-empty. The full YAML schema validator (``pf validate context``)
+    handles structured context documents separately.
+
+    Exit codes match the contract documented in the TEA agent's
+    on-activation step:
+      - 0: context file exists and is non-empty (proceed)
+      - 1: file exists but is empty / unreadable (stop)
+      - 2: file is missing (stop)
+    """
     root = get_project_root()
     path = root / "sprint" / "context" / f"context-{context_type}-{context_id}.md"
 
@@ -261,19 +279,17 @@ def _validate_single_context(context_type: str, context_id: str) -> None:
         error(f"Context file not found: {path.relative_to(root)}")
         raise SystemExit(2)
 
-    result = validate_context_file(path)
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        error(f"Could not read context file {path.relative_to(root)}: {exc}")
+        raise SystemExit(1) from exc
 
-    if result.errors:
-        for err in result.errors:
-            error(f"[ERROR] {err.component}: {err.message}")
+    if not content.strip():
+        error(f"Context file is empty: {path.relative_to(root)}")
         raise SystemExit(1)
 
-    for w in result.warnings:
-        warn(f"[WARN] {w.component}: {w.message}")
-
-    success(
-        f"context-{context_type}-{context_id}: valid ({result.components_checked} components checked)"
-    )
+    success(f"context-{context_type}-{context_id}: present ({len(content)} bytes)")
     raise SystemExit(0)
 
 
