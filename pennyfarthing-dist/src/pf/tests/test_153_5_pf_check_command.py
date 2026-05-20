@@ -22,8 +22,8 @@ errors) no longer land in `result.output`. We therefore use
 `result.exit_code` for in-process assertions and reserve content
 assertions for real subprocess invocations.
 
-TDD RED phase: every test in this file should FAIL until `pf check` is
-registered as a subcommand of the root CLI.
+Phase status: GREEN — `pf check` is registered via _LAZY_COMMANDS and
+delegates to scripts/workflow/check.py. All tests here pin its behavior.
 """
 
 from __future__ import annotations
