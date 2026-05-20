@@ -10,11 +10,19 @@ Usage:
 
 from __future__ import annotations
 
+import re
+
 import click
 
 from pf.common.config import get_project_root
 from pf.common.output import error, header, info, success, warn
 from pf.validate import ValidateReport
+
+# Story IDs and epic IDs are flat tokens of alphanumerics, dashes, and
+# underscores (e.g. "153-5", "PROJ-14238"). Any other character — including
+# `/`, `\`, `.`, or NUL — would let a malicious caller escape the
+# sprint/context/ directory via path interpolation in `_validate_single_context`.
+_CONTEXT_ID_RE = re.compile(r"\A[A-Za-z0-9_-]+\Z")
 
 VALIDATORS = {
     "sprint": "pf.validate.adapters.sprint",
@@ -128,9 +136,12 @@ def validate(ctx, names: tuple[str, ...], fix: bool, strict: bool):
         if len(names) == 1 or sub_takes_args:
             sub_ctx = click.Context(sub_cmd, parent=ctx, info_name=names[0])
             with sub_ctx:
-                return sub_cmd.parse_args(sub_ctx, list(names[1:])) or sub_cmd.invoke(
-                    sub_ctx
-                )
+                # Sequential parse + invoke. The previous `parse_args(...) or
+                # invoke(...)` worked only because parse_args returns [] when
+                # all args consume cleanly; a future subcommand with leftover
+                # args would silently skip invoke and exit 0 with no validation.
+                sub_cmd.parse_args(sub_ctx, list(names[1:]))
+                return sub_cmd.invoke(sub_ctx)
 
     if ctx.invoked_subcommand is None:
         # If names provided as positional args, run only those
@@ -270,8 +281,15 @@ def _validate_single_context(context_type: str, context_id: str) -> None:
     on-activation step:
       - 0: context file exists and is non-empty (proceed)
       - 1: file exists but is empty / unreadable (stop)
-      - 2: file is missing (stop)
+      - 2: file is missing OR context_id is syntactically invalid (stop)
     """
+    if not _CONTEXT_ID_RE.match(context_id):
+        error(
+            f"Invalid context ID: {context_id!r} — "
+            "must contain only letters, digits, dashes, and underscores."
+        )
+        raise SystemExit(2)
+
     root = get_project_root()
     path = root / "sprint" / "context" / f"context-{context_type}-{context_id}.md"
 
@@ -281,7 +299,7 @@ def _validate_single_context(context_type: str, context_id: str) -> None:
 
     try:
         content = path.read_text(encoding="utf-8")
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         error(f"Could not read context file {path.relative_to(root)}: {exc}")
         raise SystemExit(1) from exc
 
