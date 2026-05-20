@@ -152,6 +152,10 @@ pf jira claim {JIRA_KEY}
 
 ## Step 4: Write Session File
 
+**Write the session file to the canonical absolute path: `{REPO_ROOT}/.session/{STORY_ID}-session.md`** — where `{REPO_ROOT}` is the project root (the directory containing `.pennyfarthing/`). The `Write` tool requires an absolute path; resolve `{REPO_ROOT}` from your activation context, then pass the joined path verbatim.
+
+Use the `Write` tool with that absolute path and the following content (the `Write` tool will create the `.session/` directory if it does not exist):
+
 ```markdown
 ---
 story_id: "{STORY_ID}"
