@@ -27,14 +27,29 @@ import click
 
 
 @click.group()
-def jira():
+@click.pass_context
+def jira(ctx):
     """Jira issue management for Pennyfarthing.
 
     \b
     All operations use REST API where possible.
     No interactive prompts, no subprocess stdin issues.
+
+    All subcommands fail-closed when Jira integration is not configured
+    (i.e. `is_jira_enabled()` returns False). A Pennyfarthing project that
+    does not set both `jira.project` and `jira.url` is treated as Jira-less,
+    and `pf jira ...` will refuse to contact Jira from any subcommand.
     """
-    pass
+    # Re-read config every invocation (tests monkeypatch the loader).
+    from pf.jira.client import is_jira_enabled
+
+    if not is_jira_enabled() and ctx.invoked_subcommand is not None:
+        click.echo(
+            "pf jira: jira integration is not configured (jira.project and "
+            "jira.url must be set). Refusing to contact Jira.",
+            err=True,
+        )
+        ctx.exit(2)
 
 
 @jira.command()
