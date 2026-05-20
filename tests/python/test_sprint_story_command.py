@@ -90,7 +90,7 @@ class TestSprintStoryTextOutput:
         result = runner.invoke(sprint, ["story", "show", "PROJ-00000"])
         assert result.exit_code == 0, f"story show failed: {result.output}"
         output = result.output.lower()
-        assert "mssci-00000" in output or "00-1" in output, (
+        assert "proj-00000" in output or "00-1" in output, (
             f"Story ID not in output: {result.output}"
         )
 
