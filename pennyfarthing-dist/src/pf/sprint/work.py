@@ -33,22 +33,21 @@ def check_story(story_id: str) -> dict[str, Any]:
     assigned = story.get("assigned_to")
 
     # Check if assigned to someone else.
-    # Only probe jira-cli for the current user when jira integration is
-    # actually configured — otherwise `assigned_to` is purely local metadata
-    # and there is no jira concept of "current user" to compare against.
+    # `get_current_user_email` resolves via JIRA_USER env then `git config
+    # user.email` — neither path invokes jira-cli, so this comparison works
+    # in both jira-enabled and local-only modes.
     if assigned:
-        from pf.jira.client import get_current_user_email, is_jira_enabled
+        from pf.jira.client import get_current_user_email
 
-        if is_jira_enabled():
-            current_user = get_current_user_email()
-            if assigned != current_user:
-                return {
-                    "available": False,
-                    "type": "story",
-                    "story": story,
-                    "reason": f"Assigned to {assigned}",
-                    "assigned_to": assigned,
-                }
+        current_user = get_current_user_email()
+        if assigned != current_user:
+            return {
+                "available": False,
+                "type": "story",
+                "story": story,
+                "reason": f"Assigned to {assigned}",
+                "assigned_to": assigned,
+            }
 
     # Check if already in progress
     if status == "in_progress":
@@ -103,29 +102,23 @@ def get_next_story() -> dict[str, Any]:
     """Get the highest priority available story.
 
     Considers stories with backlog, ready, or planning status.
-    Excludes stories assigned to other users.
+    Excludes stories assigned to other users (resolved via local git config —
+    no jira-cli invocation).
 
     Returns:
         Dict with next story details or error
     """
-    from pf.jira.client import get_current_user_email, is_jira_enabled
+    from pf.jira.client import get_current_user_email
     from pf.sprint.loader import get_all_stories
 
-    # Only consult jira-cli for the current user when jira is configured.
-    # In local-only mode every assignment string is just a label, so we
-    # cannot filter against it — include all backlog stories.
-    current_user = get_current_user_email() if is_jira_enabled() else None
+    current_user = get_current_user_email()
     all_stories = get_all_stories()
     available_statuses = {"backlog", "ready", "planning"}
     backlog = [
         s
         for s in all_stories
         if s.get("status") in available_statuses
-        and (
-            current_user is None
-            or not s.get("assigned_to")
-            or s.get("assigned_to") == current_user
-        )
+        and (not s.get("assigned_to") or s.get("assigned_to") == current_user)
     ]
 
     if not backlog:
