@@ -47,7 +47,6 @@ from click.testing import CliRunner
 
 from pf.validate.cli import validate as validate_group
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================
