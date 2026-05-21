@@ -1,0 +1,11 @@
+{
+  "name": "pf",
+  "description": "Pennyfarthing agent orchestration framework: TDD-disciplined sprint workflow with phase-separated agent personas (SM, TEA, Dev, Reviewer, Architect, PM, BA).",
+  "version": "1.0.0-alpha.1",
+  "author": {
+    "name": "Keith Avery",
+    "email": "slabgorb@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/slabgorb/pennyfarthing"
+}

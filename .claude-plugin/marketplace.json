@@ -1,0 +1,21 @@
+{
+  "$schema": "https://claude.ai/schemas/marketplace.json",
+  "name": "pennyfarthing",
+  "description": "Single-plugin marketplace for the Pennyfarthing agent orchestration framework.",
+  "owner": {
+    "name": "Keith Avery",
+    "email": "slabgorb@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "pf",
+      "source": "./",
+      "description": "Pennyfarthing agent orchestration plugin",
+      "version": "1.0.0-alpha.1",
+      "author": {
+        "name": "Keith Avery",
+        "email": "slabgorb@gmail.com"
+      }
+    }
+  ]
+}
