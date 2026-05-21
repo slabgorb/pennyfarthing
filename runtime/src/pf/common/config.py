@@ -69,56 +69,36 @@ find_project_root = get_project_root
 
 
 def get_dist_root(project_root: Path | None = None) -> Path | None:
-    """Resolve the pennyfarthing-dist directory.
+    """Resolve the plugin root, which holds the framework content directories.
 
-    Checks multiple locations to support monorepo development,
-    inlined repos, and pip-installed consumer projects:
-      1. {project_root}/pennyfarthing-dist/ (monorepo or symlink)
-      2. Relative to this file (when running from within pennyfarthing-dist/pf/)
-      3. {project_root}/pennyfarthing/pennyfarthing-dist/ (inlined framework)
-      4. Bundled pip package (pf._dist with content dirs)
+    In the plugin model, content (agents/, commands/, skills/, gates/,
+    guides/, workflows/, personas/, templates/, output-styles/, schemas/,
+    scripts/, data/) lives at the plugin root — the directory that also
+    contains ``.claude-plugin/`` and ``runtime/``.
 
-    Args:
-        project_root: Project root path (defaults to auto-detect)
+    Resolution order:
+      1. ``CLAUDE_PLUGIN_ROOT`` (set by Claude Code in plugin context), when
+         it actually contains content (``agents/``).
+      2. Relative to this file: ``runtime/src/pf/common/config.py`` → up 5
+         levels to the plugin root. Covers the §5.2 user shim and any
+         non-hook invocation where ``CLAUDE_PLUGIN_ROOT`` is unset.
 
-    Returns:
-        Path to pennyfarthing-dist directory, or None if not found
+    The ``project_root`` argument is retained for signature compatibility but
+    is no longer used: framework content is bundled with the plugin, not the
+    consumer's project.
+
+    Returns the plugin root ``Path``, or ``None`` if content cannot be found.
     """
-    try:
-        root = (project_root or get_project_root()).resolve()
-    except FileNotFoundError:
-        return None
-
-    # 1. Direct: monorepo layout or symlink at project root
-    direct = root / "pennyfarthing-dist"
-    if direct.is_dir():
-        return direct
-
-    # 2. Relative to this file (when inside pennyfarthing-dist/src/pf/)
-    # Only use this fallback when no explicit project_root was given,
-    # since an explicit root scopes the search to that directory.
-    if project_root is None:
-        this_file = Path(__file__).resolve()
-        # __file__ is pennyfarthing-dist/src/pf/common/config.py → up 4 levels
-        candidate = this_file.parent.parent.parent.parent
-        if candidate.name == "pennyfarthing-dist" and candidate.is_dir():
+    env_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if env_root:
+        candidate = Path(env_root).resolve()
+        if (candidate / "agents").is_dir():
             return candidate
 
-    # 3. Inlined framework repo: {project_root}/pennyfarthing/pennyfarthing-dist/
-    inlined = root / "pennyfarthing" / "pennyfarthing-dist"
-    if inlined.is_dir():
-        return inlined
-
-    # 4. Bundled pip package: content lives in pf._dist/
-    # This is the final fallback for pipx-installed consumers with no
-    # pennyfarthing-dist/ directory or node_modules.
-    try:
-        from pf._dist import get_root, is_populated
-
-        if is_populated():
-            return get_root()
-    except (ImportError, ModuleNotFoundError):
-        pass
+    # config.py → common → pf → src → runtime → <plugin root>
+    plugin_root = Path(__file__).resolve().parents[4]
+    if (plugin_root / "agents").is_dir() and (plugin_root / "commands").is_dir():
+        return plugin_root
 
     return None
 
