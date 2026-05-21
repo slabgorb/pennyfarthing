@@ -5,8 +5,8 @@
 version: "1.0.0"
 
 skills:
-  pf-agentic-patterns:
-    name: pf-agentic-patterns
+  agentic-patterns:
+    name: agentic-patterns
     description: Core reasoning patterns for building effective LLM agents
     category: ai-llm
     tags: [reasoning, patterns, agents, llm]
@@ -19,12 +19,12 @@ skills:
         invocation: /agentic-patterns troubleshooting
     anti_patterns:
       - Don't apply patterns mechanically without understanding context
-    related_skills: [pf-context-engineering]
+    related_skills: [context-engineering]
     keywords: [react, reflection, planning, tool-use, chain-of-thought]
     allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
-  pf-bc:
-    name: pf-bc
+  bc:
+    name: bc
     description: Panel focus management for TUI — set, clear, save, and load panel layouts
     category: tools
     tags: [panels, layout, tui]
@@ -42,8 +42,8 @@ skills:
     related_skills: []
     keywords: [panel, focus, layout, panel-focus, dashboard]
 
-  pf-changelog:
-    name: pf-changelog
+  changelog:
+    name: changelog
     description: Maintain changelogs following Keep a Changelog format with conventional commits
     category: documentation
     tags: [changelog, releases, versioning]
@@ -59,8 +59,8 @@ skills:
     related_skills: []
     keywords: [keepachangelog, conventional-commits, semver, release-notes]
 
-  pf-code-review:
-    name: pf-code-review
+  code-review:
+    name: code-review
     description: Code review checklists and patterns for quality assurance
     category: development
     tags: [review, quality, checklist]
@@ -74,11 +74,11 @@ skills:
     anti_patterns:
       - Don't skip security considerations in review
       - Don't approve without running tests
-    related_skills: [pf-testing]
+    related_skills: [testing]
     keywords: [pr, pull-request, quality, linting, security, self-review, checklist]
 
-  pf-context-engineering:
-    name: pf-context-engineering
+  context-engineering:
+    name: context-engineering
     description: Strategies for managing context windows in long-running agent sessions
     category: ai-llm
     tags: [context, optimization, agents]
@@ -92,12 +92,12 @@ skills:
     anti_patterns:
       - Don't load unnecessary context upfront
       - Don't repeat large code blocks in prompts
-    related_skills: [pf-agentic-patterns]
+    related_skills: [agentic-patterns]
     keywords: [context-window, tokens, summarization, lazy-loading]
     allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
-  pf-context:
-    name: pf-context
+  context:
+    name: context
     description: Create epic or story context documents from sprint data and planning docs
     category: project-management
     tags: [context, creation, epic, story, sprint]
@@ -105,32 +105,32 @@ skills:
     prerequisites: []
     examples:
       - context: Creating epic context document
-        invocation: /pf-context create epic 130
+        invocation: /pf:context create epic 130
       - context: Creating epic context by Jira key
-        invocation: /pf-context create epic PROJ-15685
+        invocation: /pf:context create epic PROJ-15685
     anti_patterns:
       - Don't hardcode section names — read context-schema.yaml
       - Don't create story context without existing parent epic context
-    related_skills: [pf-sprint, pf-context-engineering]
+    related_skills: [sprint, context-engineering]
     keywords: [context, epic, story, template, schema, planning, creation]
 
-  pf-finalize-run:
-    name: pf-finalize-run
+  finalize-run:
+    name: finalize-run
     description: Validate and save benchmark run results - single exit point for all runs
     category: benchmarking
     tags: [benchmark, validation, results]
     version: "1.0.0"
-    prerequisites: [pf-judge]
+    prerequisites: [judge]
     examples:
       - context: Completing a benchmark run
         invocation: /finalize-run
     anti_patterns:
       - Never save results without passing through this skill
-    related_skills: [pf-judge, pf-persona-benchmark]
+    related_skills: [judge, persona-benchmark]
     keywords: [benchmark, save, validate, guardrail]
 
-  pf-jira:
-    name: pf-jira
+  jira:
+    name: jira
     description: Jira CLI commands for sprint management
     category: project-management
     tags: [jira, issues, sprint]
@@ -144,11 +144,11 @@ skills:
         invocation: /jira assign ISSUE-123
     anti_patterns:
       - Don't bypass Jira for sprint tracking
-    related_skills: [pf-sprint]
+    related_skills: [sprint]
     keywords: [atlassian, issues, tickets, backlog, sync, reconcile, assign, transition]
 
-  pf-judge:
-    name: pf-judge
+  judge:
+    name: judge
     description: Evaluate agent responses using standardized rubrics
     category: benchmarking
     tags: [evaluation, rubrics, scoring]
@@ -161,11 +161,11 @@ skills:
         invocation: /judge compare
     anti_patterns:
       - Don't modify rubrics during a benchmark run
-    related_skills: [pf-finalize-run, pf-persona-benchmark]
+    related_skills: [finalize-run, persona-benchmark]
     keywords: [evaluation, scoring, metrics, grading]
 
-  pf-just:
-    name: pf-just
+  just:
+    name: just
     description: Run just recipes for project tasks like dev servers, tests, and databases
     category: tools
     tags: [tasks, runner, automation]
@@ -178,11 +178,11 @@ skills:
         invocation: /just db-reset
     anti_patterns:
       - Don't create complex recipes - keep them simple and composable
-    related_skills: [pf-testing]
+    related_skills: [testing]
     keywords: [justfile, make, tasks, automation, command-runner, dev-server, recipes]
 
-  pf-mermaid:
-    name: pf-mermaid
+  mermaid:
+    name: mermaid
     description: Generate diagrams using Mermaid syntax for documentation
     category: tools
     tags: [diagrams, visualization, documentation]
@@ -195,11 +195,11 @@ skills:
         invocation: /mermaid sequence
     anti_patterns:
       - Don't create overly complex diagrams - split into multiple if needed
-    related_skills: [pf-changelog]
+    related_skills: [changelog]
     keywords: [flowchart, sequence, er-diagram, gantt, class-diagram]
 
-  pf-otel:
-    name: pf-otel
+  otel:
+    name: otel
     description: Claude Code OTEL telemetry format documentation for span interception and enrichment
     category: tools
     tags: [telemetry, monitoring, otel]
@@ -215,7 +215,7 @@ skills:
     related_skills: []
     keywords: [opentelemetry, spans, traces, enrichment, correlation]
 
-  pf-settings:
+  settings:
     name: settings
     description: View and manage .pennyfarthing/config.local.yaml settings
     category: tools
@@ -224,19 +224,19 @@ skills:
     command_group: settings
     examples:
       - context: View all settings
-        invocation: /pf-settings show
+        invocation: /pf:settings show
       - context: Get a specific setting
-        invocation: /pf-settings get workflow.relay_mode
-    related_skills: [pf-theme, pf-bc]
+        invocation: /pf:settings get workflow.relay_mode
+    related_skills: [theme, bc]
     keywords: [theme, relay, bell, permission, display, config]
 
-  pf-persona-benchmark:
-    name: pf-persona-benchmark
+  persona-benchmark:
+    name: persona-benchmark
     description: Run benchmarks to compare persona effectiveness
     category: benchmarking
     tags: [benchmark, personas, comparison]
     version: "1.0.0"
-    prerequisites: [pf-judge]
+    prerequisites: [judge]
     examples:
       - context: Testing persona on code review
         invocation: /persona-benchmark cr-001 discworld
@@ -244,11 +244,11 @@ skills:
         invocation: /persona-benchmark tw-001 literary-classics
     anti_patterns:
       - Don't compare results across different rubric versions
-    related_skills: [pf-judge, pf-finalize-run, pf-theme]
+    related_skills: [judge, finalize-run, theme]
     keywords: [benchmark, comparison, personas, testing]
 
-  pf-sprint:
-    name: pf-sprint
+  sprint:
+    name: sprint
     description: Sprint status, backlog, story, and epic management for Pennyfarthing
     category: project-management
     tags: [sprint, status, backlog, stories, epics]
@@ -257,23 +257,23 @@ skills:
     prerequisites: []
     examples:
       - context: Checking sprint status
-        invocation: /pf-sprint
+        invocation: /pf:sprint
       - context: Finding available stories
-        invocation: /pf-sprint backlog
+        invocation: /pf:sprint backlog
       - context: Adding a story
-        invocation: /pf-sprint story add epic-76 "My story" 3
+        invocation: /pf:sprint story add epic-76 "My story" 3
       - context: Sizing guidelines
-        invocation: /pf-sprint story size
+        invocation: /pf:sprint story size
       - context: Adding an epic
-        invocation: /pf-sprint epic add epic-85 "New epic"
+        invocation: /pf:sprint epic add epic-85 "New epic"
     anti_patterns:
       - Don't manually edit sprint YAML - use scripts
-    related_skills: [pf-jira]
+    related_skills: [jira]
     keywords: [sprint, backlog, velocity, kanban, stories, epics, sizing, templates]
     allowed_tools: [Read, Glob, Grep, Bash, Task]
 
-  pf-systematic-debugging:
-    name: pf-systematic-debugging
+  systematic-debugging:
+    name: systematic-debugging
     description: Systematic debugging approach for isolating and fixing issues
     category: development
     tags: [debugging, troubleshooting, root-cause]
@@ -287,10 +287,10 @@ skills:
     anti_patterns:
       - Don't jump to solutions without reproducing the issue first
       - Don't fix symptoms instead of root causes
-    related_skills: [pf-testing, pf-agentic-patterns]
+    related_skills: [testing, agentic-patterns]
     keywords: [debugging, bisect, reproduce, isolate, root-cause, regression]
 
-  pf-tmux:
+  tmux:
     name: tmux
     description: Pane management for tmux sessions — read TUI content, run commands, discover panes, capture output
     category: tools
@@ -320,10 +320,10 @@ skills:
       - Never use raw tmux capture-pane — use pf tmux read
       - Never target claude or tui panes for send/close — they are protected
       - Never guess pane IDs — use pf tmux tui or pf tmux window to discover them
-    related_skills: [pf-just]
+    related_skills: [just]
     keywords: [tmux, panes, terminal, worker, split, send-keys, protected, idle, tui, read, capture, screenshot, look, see, view, display, content, output, pane-id, discover, find, window]
 
-  pf-handoff:
+  handoff:
     name: handoff
     description: Phase gate resolution, session transitions, and agent handoff markers — the exit protocol every agent runs
     category: workflow
@@ -344,11 +344,11 @@ skills:
       - Never skip resolve-gate — it validates the assessment exists
       - Never call marker without complete-phase first — session won't update
       - Always run in order: resolve-gate → complete-phase → marker
-    related_skills: [pf-workflow]
+    related_skills: [workflow]
     keywords: [handoff, gate, phase, transition, exit, agent, marker, relay, resolve, complete, session, assessment, next-agent, phase-check, exit-protocol, hand-off, hand off]
 
-  pf-testing:
-    name: pf-testing
+  testing:
+    name: testing
     description: Test commands and TDD workflow patterns
     category: development
     tags: [tdd, testing, quality]
@@ -362,11 +362,11 @@ skills:
     anti_patterns:
       - Don't run tests directly - use testing-runner subagent
       - Don't skip RED phase in TDD workflow
-    related_skills: [pf-code-review]
+    related_skills: [code-review]
     keywords: [jest, vitest, pytest, unit-test, integration, tdd, red-green, watch, test-runner]
 
-  pf-theme:
-    name: pf-theme
+  theme:
+    name: theme
     description: Manage persona themes - list, show, set, create, and interactive maker wizard
     category: theming
     tags: [personas, themes, customization, creation]
@@ -375,22 +375,22 @@ skills:
     prerequisites: []
     examples:
       - context: Listing available themes
-        invocation: /pf-theme list
+        invocation: /pf:theme list
       - context: Showing current theme
-        invocation: /pf-theme show
+        invocation: /pf:theme show
       - context: Setting active theme
-        invocation: /pf-theme set discworld
+        invocation: /pf:theme set discworld
       - context: Creating a new theme
-        invocation: /pf-theme create my-theme --base discworld
+        invocation: /pf:theme create my-theme --base discworld
       - context: Interactive AI-driven theme wizard
-        invocation: /pf-theme maker
+        invocation: /pf:theme maker
     anti_patterns:
       - Don't edit config.local.yaml directly - use skill
     related_skills: []
     keywords: [personas, characters, discworld, literary-classics, custom, generation, wizard, custom-theme, theme-creation]
 
 
-  pf-ux-tandem:
+  ux-tandem:
     name: ux-tandem
     description: Live UX review tandem — spawn a UX designer to watch a tmux pane and suggest improvements in real time
     category: development
@@ -399,16 +399,16 @@ skills:
     prerequisites: []
     examples:
       - context: Watch a TUI for usability issues
-        invocation: /pf-ux-tandem
+        invocation: /pf:ux-tandem
       - context: Watch a running app in another pane
-        invocation: /pf-ux-tandem
+        invocation: /pf:ux-tandem
     anti_patterns:
       - Don't use for non-visual targets (use standard tandem-backseat for code review)
-    related_skills: [pf-code-review]
+    related_skills: [code-review]
     keywords: [ux, design, review, tandem, tmux, visual, usability, team]
 
-  pf-workflow:
-    name: pf-workflow
+  workflow:
+    name: workflow
     description: Manage workflows - list, show, set, start, resume, and check status
     category: project-management
     tags: [workflow, phases, tdd]
@@ -417,18 +417,18 @@ skills:
     prerequisites: []
     examples:
       - context: Listing available workflows
-        invocation: /pf-workflow
+        invocation: /pf:workflow
       - context: Showing current workflow
-        invocation: /pf-workflow show
+        invocation: /pf:workflow show
       - context: Starting stepped workflow
-        invocation: /pf-workflow start architecture
+        invocation: /pf:workflow start architecture
     anti_patterns:
       - Don't switch workflows mid-story unless requirements fundamentally changed
-    related_skills: [pf-sprint]
+    related_skills: [sprint]
     keywords: [tdd, trivial, agent-docs, bdd, architecture, bikelane, stepped, phased]
 
-  pf-yq:
-    name: pf-yq
+  yq:
+    name: yq
     description: Read, modify, and query YAML files from the command line using yq
     category: tools
     tags: [yaml, processing, cli]
@@ -441,11 +441,11 @@ skills:
         invocation: /yq modify
     anti_patterns:
       - Don't use complex expressions without testing first
-    related_skills: [pf-just]
+    related_skills: [just]
     keywords: [yaml, jq, parsing, query, mikefarah]
 
-  pf-demo:
-    name: pf-demo
+  demo:
+    name: demo
     description: Generate demo artifacts (scripts, summaries, diagrams) for completed stories
     category: documentation
     tags: [demo, artifacts, presentation]
@@ -454,12 +454,12 @@ skills:
     prerequisites: []
     examples:
       - context: Generating demo artifacts for a story
-        invocation: /pf-demo generate 42-1
+        invocation: /pf:demo generate 42-1
       - context: Previewing what would be generated
-        invocation: /pf-demo generate 42-1 --dry-run
+        invocation: /pf:demo generate 42-1 --dry-run
       - context: Regenerating with feedback
-        invocation: /pf-demo generate 42-1 --corrections "Focus on API changes"
+        invocation: /pf:demo generate 42-1 --corrections "Focus on API changes"
     anti_patterns:
       - Don't generate demos for stories that haven't been completed
-    related_skills: [pf-sprint]
+    related_skills: [sprint]
     keywords: [demo, artifacts, script, summary, presentation, story]
