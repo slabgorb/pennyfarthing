@@ -14,13 +14,15 @@ from pathlib import Path
 
 import click
 
-from pf.common.config import get_project_root
+from pf.common.config import get_dist_root, get_project_root
 
 
 def _resolve_check_script() -> Path | None:
     """Locate scripts/workflow/check.py across orchestrator and framework layouts."""
     root = get_project_root()
+    _dist = get_dist_root()
     candidates = [
+        *([_dist / "scripts" / "workflow" / "check.py"] if _dist is not None else []),
         root / "pennyfarthing" / "pennyfarthing-dist" / "scripts" / "workflow" / "check.py",
         root / "pennyfarthing-dist" / "scripts" / "workflow" / "check.py",
         root / ".pennyfarthing" / "scripts" / "workflow" / "check.py",

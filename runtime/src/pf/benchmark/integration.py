@@ -15,6 +15,8 @@ from typing import Any
 
 import yaml
 
+from pf.common.config import get_dist_root
+
 
 @dataclass
 class OceanScores:
@@ -116,8 +118,10 @@ _ERROR_TYPES = ["reasoning", "planning", "execution"]
 def _project_root() -> str:
     d = os.path.dirname(__file__)
     for _ in range(10):
-        if os.path.exists(os.path.join(d, "pennyfarthing-dist")) or os.path.exists(
-            os.path.join(d, ".pennyfarthing")
+        if (
+            os.path.exists(os.path.join(d, "pennyfarthing-dist"))
+            or os.path.exists(os.path.join(d, ".pennyfarthing"))
+            or os.path.exists(os.path.join(d, ".claude-plugin"))
         ):
             return d
         parent = os.path.dirname(d)
@@ -136,6 +140,9 @@ def _benchmarks_dir() -> str:
 
 
 def _themes_dir() -> str:
+    dist = get_dist_root()
+    if dist is not None:
+        return str(dist / "personas" / "themes")
     return os.path.join(_project_root(), "pennyfarthing-dist", "personas", "themes")
 
 

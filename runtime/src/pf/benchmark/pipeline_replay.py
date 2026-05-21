@@ -32,6 +32,8 @@ from typing import Any
 
 import yaml
 
+from pf.common.config import get_dist_root
+
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
@@ -125,7 +127,10 @@ def _framework_version(project_dir: Path, phases: list[str] | None = None) -> di
     from pf import __version__
     semver = __version__
 
-    # Hash each agent definition used in pipeline phases
+    # Hash each agent definition used in pipeline phases.
+    # NOTE: pf_repo here is the BENCHMARKED TARGET repo's inlined framework
+    # (project_dir / "pennyfarthing"), not the running plugin — intentionally
+    # left as pennyfarthing-dist to version-tag the target's framework snapshot.
     agents_dir = pf_repo / "pennyfarthing-dist" / "agents"
     agent_hashes = {}
     roles = phases if phases else ["tea", "dev", "reviewer"]
@@ -609,10 +614,12 @@ def build_phase_claude_md(
             primary_lang = ""
 
         if primary_lang:
-            # Look for the lang-review checklist in pennyfarthing-dist
-            pf_dist = Path(__file__).parent.parent.parent  # src/pf/benchmark → src/pf → src
-            pf_dist = pf_dist.parent  # → pennyfarthing-dist
-            lang_review = pf_dist / "gates" / "lang-review" / f"{primary_lang}.md"
+            # Look for the lang-review checklist via plugin root first
+            _dist = get_dist_root()
+            if _dist is not None:
+                lang_review = _dist / "gates" / "lang-review" / f"{primary_lang}.md"
+            else:
+                lang_review = Path("/nonexistent")
             if not lang_review.exists():
                 # Try from .pennyfarthing/ if we're in a live project
                 pf_root = repo_path / ".pennyfarthing" / "gates" / "lang-review" / f"{primary_lang}.md"
@@ -1096,8 +1103,11 @@ def _load_project_rules(
     # Load lang-review checklist
     lang_review_text = ""
     if primary_lang:
-        pf_dist = Path(__file__).parent.parent.parent.parent  # → pennyfarthing-dist
-        lang_review = pf_dist / "gates" / "lang-review" / f"{primary_lang}.md"
+        _dist = get_dist_root()
+        if _dist is not None:
+            lang_review = _dist / "gates" / "lang-review" / f"{primary_lang}.md"
+        else:
+            lang_review = Path("/nonexistent")
         if not lang_review.exists():
             lang_review = project_dir / ".pennyfarthing" / "gates" / "lang-review" / f"{primary_lang}.md"
         if lang_review.exists():

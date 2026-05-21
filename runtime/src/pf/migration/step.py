@@ -10,6 +10,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from pf.common.config import get_dist_root
+
 # Tag requirements
 REQUIRED_TAGS = ["step-meta", "purpose", "instructions", "output"]
 RECOMMENDED_TAGS = ["prerequisites", "actions", "collaboration-menu", "next-step"]
@@ -129,7 +131,9 @@ def find_step_files(root: Path) -> list[Path]:
         List of step-*.md file paths
     """
     # Try multiple locations
+    _dist = get_dist_root()
     workflow_dirs = [
+        *([_dist / "workflows"] if _dist is not None else []),
         root / ".pennyfarthing" / "workflows",
         root / "pennyfarthing" / "pennyfarthing-dist" / "workflows",
         root / "pennyfarthing-dist" / "workflows",

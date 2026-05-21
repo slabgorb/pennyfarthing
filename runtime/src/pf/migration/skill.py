@@ -10,6 +10,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from pf.common.config import get_dist_root
+
 # Tag requirements
 REQUIRED_TAGS = ["run", "output"]
 RECOMMENDED_TAGS = ["args", "example", "when"]
@@ -110,7 +112,9 @@ def find_skill_files(root: Path) -> list[Path]:
         List of SKILL.md file paths
     """
     # Try multiple locations
+    _dist = get_dist_root()
     skill_dirs = [
+        *([_dist / "skills"] if _dist is not None else []),
         root / ".pennyfarthing" / "skills",
         root / "pennyfarthing" / "pennyfarthing-dist" / "skills",
         root / "pennyfarthing-dist" / "skills",
@@ -137,7 +141,9 @@ def audit_skills(
     """
     if skill_name:
         # Find specific skill
+        _dist = get_dist_root()
         skill_dirs = [
+            *([_dist / "skills" / skill_name / "SKILL.md"] if _dist is not None else []),
             root / ".pennyfarthing" / "skills" / skill_name / "SKILL.md",
             root / "pennyfarthing" / "pennyfarthing-dist" / "skills" / skill_name / "SKILL.md",
             root / "pennyfarthing-dist" / "skills" / skill_name / "SKILL.md",

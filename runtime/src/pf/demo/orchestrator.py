@@ -13,6 +13,7 @@ from typing import Any
 
 import yaml
 
+from pf.common.config import get_dist_root
 from pf.demo.assembler import assemble
 from pf.demo.classifier import classify_story
 from pf.demo.collector import collect_signals
@@ -57,9 +58,15 @@ def generate(
     # Locate demo.yaml for config-based classification overrides
     config_path = None
     if project_root:
-        candidate = Path(project_root) / "pennyfarthing-dist" / "demo.yaml"
-        if candidate.exists():
-            config_path = candidate
+        _dist = get_dist_root()
+        if _dist is not None:
+            _candidate = _dist / "demo.yaml"
+            if _candidate.exists():
+                config_path = _candidate
+        if config_path is None:
+            candidate = Path(project_root) / "pennyfarthing-dist" / "demo.yaml"
+            if candidate.exists():
+                config_path = candidate
 
     classify_result = classify_story(signals, config_path=config_path)
     if not classify_result["success"]:

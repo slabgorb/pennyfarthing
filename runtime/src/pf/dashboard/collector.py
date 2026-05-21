@@ -18,6 +18,7 @@ from typing import Any
 import yaml
 
 from pf import paths
+from pf.common.config import get_dist_root
 
 
 def collect_all(project_root: Path) -> dict[str, Any]:
@@ -59,7 +60,9 @@ def collect_theme(project_root: Path) -> dict[str, Any]:
 
 def _get_theme_tier(project_root: Path, theme_name: str) -> str | None:
     """Look up theme tier from theme YAML files."""
+    _dist = get_dist_root()
     locations = [
+        *([_dist / "personas" / "themes" / f"{theme_name}.yaml"] if _dist is not None else []),
         project_root / ".pennyfarthing" / "personas" / "themes" / f"{theme_name}.yaml",
         project_root / "pennyfarthing-dist" / "personas" / "themes" / f"{theme_name}.yaml",
         project_root
