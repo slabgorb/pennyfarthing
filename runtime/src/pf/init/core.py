@@ -1125,32 +1125,17 @@ def _is_lfs_pointer(file_path: Path) -> bool:
 def _find_portraits_source(dist_root: Path) -> Path | None:
     """Find a source of real portrait images (not LFS pointers).
 
-    Checks dist_root first, then falls back to the pip-installed _dist
-    package which contains real images from the wheel build.
+    Checks the plugin root's ``personas/portraits/`` (passed as ``dist_root``).
 
     Returns:
         Path to a portraits directory with real images, or None.
     """
-    # Check dist_root portraits
     dist_portraits = dist_root / "personas" / "portraits"
     if dist_portraits.is_dir():
         # Spot-check one PNG to see if it's real or an LFS pointer
         sample = next(dist_portraits.rglob("*.png"), None)
         if sample and not _is_lfs_pointer(sample):
             return dist_portraits
-
-    # Fall back to pip-installed _dist (always has real images from wheel)
-    try:
-        from pf._dist import get_root, is_populated
-
-        if is_populated():
-            pip_portraits = get_root() / "personas" / "portraits"
-            if pip_portraits.is_dir():
-                sample = next(pip_portraits.rglob("*.png"), None)
-                if sample and not _is_lfs_pointer(sample):
-                    return pip_portraits
-    except (ImportError, ModuleNotFoundError):
-        pass
 
     return None
 
