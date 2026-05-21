@@ -1,1 +1,1 @@
-pennyfarthing-dist/templates/tmux.conf.vert.template
+templates/tmux.conf.vert.template
