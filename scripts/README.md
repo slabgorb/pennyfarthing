@@ -1,41 +1,56 @@
-# Meta Scripts
+# Pennyfarthing Scripts
 
-**These scripts are NOT distributed to users.** They are for Pennyfarthing framework development only.
+Shell scripts bundled with the `pf` plugin. They live at the plugin root
+(`${CLAUDE_PLUGIN_ROOT}/scripts/`) and are resolved by the runtime via
+`pf.common.config.get_dist_root()` → `<root>/scripts/...`. Invoke scripts with
+their full category path to avoid ambiguity.
 
-## Contents
+## Directory Structure
+
+```
+scripts/
+├── core/         # Essential scripts (agent-session.sh)
+├── workflow/     # Workflow mechanics (finish-story.sh, check.sh)
+├── sprint/       # Sprint YAML operations (largely superseded by `pf sprint`)
+├── story/        # Story operations (create-story.sh)
+├── jira/         # Jira integration (jira-claim-story.sh)
+├── git/          # Git operations (deprecated shims → `pf git`)
+├── theme/        # Theme operations (list-themes.sh)
+├── health/       # Health checks
+├── maintenance/  # Maintenance utilities
+├── portraits/    # Portrait generation (requires GPU setup)
+├── test/         # Test infrastructure (test-setup.sh)
+├── tests/        # Script tests
+├── lib/          # Shared bash libraries (common.sh, logging.sh)
+├── misc/         # Uncategorized utilities
+├── hooks/        # Claude Code / git hook scripts (registered by Plan 4's hooks.json)
+└── utils/        # Symlinks to canonical copies elsewhere in the tree
+```
+
+## Dev-only meta scripts
+
+A handful of scripts at the top level are for Pennyfarthing framework
+development and CI only (not part of a user's workflow):
 
 | Script | Purpose |
 |--------|---------|
-| `deploy.sh` | Release Pennyfarthing (version bump, tag, push, GitHub release) |
-| `cyclist-debug.mjs` | Debug Cyclist connection |
-| `handoff-cli.{sh,js}` | Test handoff flow |
-| `verify-visual-mapping.js` | Verify theme visual mappings |
-| `migrate-assets-to-slug.sh` | One-time migration script |
+| `handoff-cli.sh` | Test the agent handoff flow |
+| `migrate-assets-to-slug.sh` | One-time asset migration |
 | `resize-portraits.sh` | Resize portrait images |
-| `resolve-portrait.mjs` | Portrait resolution logic |
-| `validate-refs.js` | Validate internal references |
+| `generate-skill-docs.sh` | Regenerate skill documentation |
 
-> Benchmark scripts have been moved to `packages/benchmark/`.
+## Library usage
 
-## Usage
-
-Run from pennyfarthing repo root:
+Shared libraries in `lib/` are sourced by other scripts:
 
 ```bash
-# Release a new version
-./scripts/deploy.sh --dry-run patch
-./scripts/deploy.sh patch
+SCRIPT_DIR="$(dirname "$0")"
+source "$SCRIPT_DIR/../lib/common.sh"
+source "$SCRIPT_DIR/../lib/logging.sh"
 ```
 
-## Where Should My Script Go?
+## Adding a new script
 
-**Put it here if:**
-- It's for framework development/CI only
-- Users should NOT have access to it
-- It uses GPU/heavy dependencies (keep in meta, not distributed)
-
-**Put it in `pennyfarthing-dist/scripts/` if:**
-- Users need it for their workflows
-- It's part of the sprint/story/jira tooling
-
-See `CLAUDE.md` for the full decision tree.
+1. Pick the appropriate category subdirectory.
+2. Add the script there and `chmod +x` it.
+3. Update any skill/command markdown that references it.

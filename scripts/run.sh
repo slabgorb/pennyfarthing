@@ -1,1 +1,0 @@
-../pennyfarthing-dist/scripts/run.sh
