@@ -24,6 +24,8 @@ from typing import Any
 
 import yaml
 
+from pf import paths
+
 # =============================================================================
 # Port File Constants
 # =============================================================================
@@ -166,7 +168,7 @@ def load_settings(project_root: Path | None = None) -> PennySettings:
     if not root:
         return settings
 
-    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(root)
     if not config_path.exists():
         return settings
 

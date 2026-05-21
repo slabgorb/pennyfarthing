@@ -17,6 +17,8 @@ from typing import Any
 
 import yaml
 
+from pf import paths
+
 
 def collect_all(project_root: Path) -> dict[str, Any]:
     """Collect all dashboard fields from subsystems."""
@@ -34,7 +36,7 @@ def collect_all(project_root: Path) -> dict[str, Any]:
 
 def collect_theme(project_root: Path) -> dict[str, Any]:
     """Collect theme name and tier."""
-    config_path = project_root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(project_root)
     if not config_path.exists():
         return {"display": "not configured", "data": {"name": None, "tier": None}}
 

@@ -15,6 +15,8 @@ from pathlib import Path
 
 import click
 
+from pf import paths
+
 
 @click.group()
 def theme():
@@ -290,7 +292,7 @@ def set_theme(name: str, dry_run: bool):
 
     # Read existing config, preserve other fields
     root = get_project_root()
-    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(root)
 
     config: dict = {}
     if config_path.exists():

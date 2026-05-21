@@ -19,14 +19,20 @@ from pathlib import Path
 import pytest
 import yaml
 
+from pf import paths
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture
-def project_tree(tmp_path: Path) -> Path:
+def project_tree(tmp_path: Path, monkeypatch) -> Path:
     """Create a minimal project tree with .pennyfarthing/ directory."""
+    plugin_data = tmp_path / "plugin_data"
+    plugin_data.mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
     pf_dir = tmp_path / ".pennyfarthing"
     pf_dir.mkdir()
     return tmp_path
@@ -34,7 +40,12 @@ def project_tree(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def config_local(project_tree: Path) -> Path:
-    """Return path to config.local.yaml (does not create it)."""
+    """Return path to config.local.yaml (does not create it).
+
+    NOTE: This still returns the legacy .pennyfarthing/ path for migration
+    tests (migrate_config writes there). TestConfigReadersUseConfigLocal
+    tests that need the plugin-data path write via paths.config_path() directly.
+    """
     return project_tree / ".pennyfarthing" / "config.local.yaml"
 
 
@@ -169,10 +180,12 @@ class TestConfigReadersUseConfigLocal:
     """All config readers should read from config.local.yaml only."""
 
     def test_character_voice_reads_from_config_local(
-        self, project_tree: Path, config_local: Path
+        self, project_tree: Path
     ) -> None:
         """is_character_voice_enabled() should read from config.local.yaml preferences section."""
-        config_local.write_text(
+        cfg = paths.config_path(project_tree)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text(
             textwrap.dedent("""\
             theme: discworld
             preferences:
@@ -197,10 +210,12 @@ class TestConfigReadersUseConfigLocal:
         assert result is True
 
     def test_theme_reads_only_from_config_local(
-        self, project_tree: Path, config_local: Path
+        self, project_tree: Path
     ) -> None:
         """get_current_theme() should only check config.local.yaml, not persona-config.yaml."""
-        config_local.write_text("theme: star-trek-tos\n")
+        cfg = paths.config_path(project_tree)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text("theme: star-trek-tos\n")
 
         # Also create a persona-config.yaml with a DIFFERENT theme
         persona = project_tree / ".pennyfarthing" / "persona-config.yaml"

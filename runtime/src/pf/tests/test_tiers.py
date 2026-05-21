@@ -18,6 +18,8 @@ from unittest.mock import patch
 import pytest
 import yaml
 
+from pf import paths
+
 # =============================================================================
 # AC1: --tier CLI Argument Tests
 # =============================================================================
@@ -180,9 +182,14 @@ class TestTierComponentLoading:
         assert "# Dev Agent" not in captured.out
         assert "# Agent Behavior Guide" not in captured.out
 
-    def test_handoff_tier_loads_agent_essentials(self, tmp_path: Path, capsys) -> None:
+    def test_handoff_tier_loads_agent_essentials(self, tmp_path: Path, capsys, monkeypatch) -> None:
         """Test HANDOFF tier loads agent definition + compressed persona (~700 tokens)."""
         from pf.prime.cli import prime
+
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         # Setup
         self._setup_full_project(tmp_path)
@@ -273,7 +280,9 @@ class TestTierComponentLoading:
         (sidecar_dir / "patterns.md").write_text("# Patterns\n\nDev patterns.")
 
         # Theme config
-        (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test-theme"}))
+        cfg = paths.config_path(tmp_path)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text(yaml.dump({"theme": "test-theme"}))
 
         # Theme file
         themes_dir = pf_dir / "personas" / "themes"
@@ -549,9 +558,14 @@ class TestDefaultBehavior:
 class TestTierLoadingPaths:
     """Tests for all tier loading paths (AC5)."""
 
-    def test_full_tier_with_all_options(self, tmp_path: Path) -> None:
+    def test_full_tier_with_all_options(self, tmp_path: Path, monkeypatch) -> None:
         """Test FULL tier with all context sources available."""
         from pf.prime.tiers import ContextTier, load_tier_components
+
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         # Setup complete project
         self._setup_complete_project(tmp_path)
@@ -613,9 +627,14 @@ class TestTierLoadingPaths:
         assert "behavior_guide" not in components or components.get("behavior_guide") is None
         assert "sidecars" not in components or components.get("sidecars") is None
 
-    def test_handoff_tier_components(self, tmp_path: Path) -> None:
+    def test_handoff_tier_components(self, tmp_path: Path, monkeypatch) -> None:
         """Test HANDOFF tier returns correct component set."""
         from pf.prime.tiers import ContextTier, load_tier_components
+
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         self._setup_complete_project(tmp_path)
 
@@ -698,7 +717,9 @@ class TestTierLoadingPaths:
         (sidecar_dir / "patterns.md").write_text("# Patterns")
 
         # Theme
-        (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test"}))
+        cfg = paths.config_path(tmp_path)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text(yaml.dump({"theme": "test"}))
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
         (themes_dir / "test.yaml").write_text(

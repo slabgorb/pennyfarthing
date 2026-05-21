@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from pf import paths
 from pf.prime.persona import (
     get_crew_manifest,
     load_persona,
@@ -25,8 +26,13 @@ from pf.prime.persona import (
 
 
 @pytest.fixture()
-def theme_project(tmp_path: Path) -> Path:
+def theme_project(tmp_path: Path, monkeypatch) -> Path:
     """Create a project with a theme and config.local.yaml."""
+    plugin_data = tmp_path / "plugin_data"
+    plugin_data.mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
     pf_dir = tmp_path / ".pennyfarthing"
     pf_dir.mkdir()
 
@@ -63,14 +69,21 @@ def theme_project(tmp_path: Path) -> Path:
             "gm": "The Game Master",
         },
     }
-    (pf_dir / "config.local.yaml").write_text(yaml.dump(config))
+    cfg = paths.config_path(tmp_path)
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    cfg.write_text(yaml.dump(config))
 
     return tmp_path
 
 
 @pytest.fixture()
-def theme_project_no_overrides(tmp_path: Path) -> Path:
+def theme_project_no_overrides(tmp_path: Path, monkeypatch) -> Path:
     """Project with theme but NO theme_characters in config."""
+    plugin_data = tmp_path / "plugin_data"
+    plugin_data.mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
     pf_dir = tmp_path / ".pennyfarthing"
     pf_dir.mkdir()
 
@@ -89,7 +102,9 @@ def theme_project_no_overrides(tmp_path: Path) -> Path:
     (themes_dir / "plain-theme.yaml").write_text(yaml.dump(theme_data))
 
     config = {"theme": "plain-theme"}
-    (pf_dir / "config.local.yaml").write_text(yaml.dump(config))
+    cfg = paths.config_path(tmp_path)
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    cfg.write_text(yaml.dump(config))
 
     return tmp_path
 
@@ -194,9 +209,14 @@ class TestCrewManifestWithCustomRoles:
 class TestBackwardCompatibility:
     """Existing behavior must not break."""
 
-    def test_no_config_file_still_works(self, tmp_path: Path) -> None:
+    def test_no_config_file_still_works(self, tmp_path: Path, monkeypatch) -> None:
         """Project with no config.local.yaml at all should still load personas
         from theme YAML."""
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()
 
@@ -214,14 +234,21 @@ class TestBackwardCompatibility:
         }
         (themes_dir / "bare-theme.yaml").write_text(yaml.dump(theme_data))
         # Set theme via config without theme_characters
-        (pf_dir / "config.local.yaml").write_text("theme: bare-theme\n")
+        cfg = paths.config_path(tmp_path)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text("theme: bare-theme\n")
 
         persona, theme = load_persona("dev", tmp_path)
         assert persona is not None
         assert persona.character == "Bare Dev"
 
-    def test_empty_theme_characters_map(self, tmp_path: Path) -> None:
+    def test_empty_theme_characters_map(self, tmp_path: Path, monkeypatch) -> None:
         """Empty theme_characters: {} should not break anything."""
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()
 
@@ -240,17 +267,24 @@ class TestBackwardCompatibility:
         (themes_dir / "empty-override.yaml").write_text(yaml.dump(theme_data))
 
         config = {"theme": "empty-override", "theme_characters": {}}
-        (pf_dir / "config.local.yaml").write_text(yaml.dump(config))
+        cfg = paths.config_path(tmp_path)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text(yaml.dump(config))
 
         persona, theme = load_persona("dev", tmp_path)
         assert persona is not None
         assert persona.character == "Normal Dev"
 
-    def test_no_theme_set_returns_none(self, tmp_path: Path) -> None:
+    def test_no_theme_set_returns_none(self, tmp_path: Path, monkeypatch) -> None:
         """No theme configured at all returns (None, None)."""
-        pf_dir = tmp_path / ".pennyfarthing"
-        pf_dir.mkdir()
-        (pf_dir / "config.local.yaml").write_text("{}\n")
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
+        cfg = paths.config_path(tmp_path)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text("{}\n")
 
         persona, theme = load_persona("dev", tmp_path)
         assert persona is None

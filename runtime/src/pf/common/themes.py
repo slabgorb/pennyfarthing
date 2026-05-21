@@ -22,6 +22,7 @@ from typing import Any
 
 import yaml
 
+from pf import paths
 from pf.common.config import get_dist_root, get_project_root, load_yaml_config
 
 
@@ -161,7 +162,7 @@ def get_current_theme(project_root: Path | None = None) -> str | None:
 
     root = project_root or get_project_root()
 
-    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(root)
     config = load_yaml_config(config_path)
     if config and "theme" in config:
         return config["theme"]

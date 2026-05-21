@@ -16,6 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from pf import paths
 from pf.hooks import load_settings
 
 try:
@@ -250,7 +251,7 @@ def _get_character_display(project_root: str, agent_name: str) -> tuple[str, str
     if not HAS_YAML or not agent_name:
         return "", None
 
-    config_file = Path(project_root) / ".pennyfarthing" / "config.local.yaml"
+    config_file = paths.config_path(Path(project_root))
     if not config_file.is_file():
         return "", None
 

@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from pf import paths
 from pf.tmux.panes import set_pane_title, split_pane
 
 logger = logging.getLogger(__name__)
@@ -304,7 +305,7 @@ class PaneOrchestrator:
         """Check the tmux registry for a live pane matching this role."""
         if not self._use_tmux:
             return None
-        config = self.project_root / ".pennyfarthing" / "config.local.yaml"
+        config = paths.config_path(self.project_root)
         if not config.exists():
             return None
         try:
@@ -405,7 +406,7 @@ class PaneOrchestrator:
         Only creates real tmux panes when running against a real project root
         (has .pennyfarthing/config.local.yaml). Test tmp_paths get mock IDs.
         """
-        if self._use_tmux and (self.project_root / ".pennyfarthing" / "config.local.yaml").exists():
+        if self._use_tmux and paths.config_path(self.project_root).exists():
             try:
                 from pf.tmux.panes import split_pane
                 from pf.tmux.registry import find_split_target, load_registry

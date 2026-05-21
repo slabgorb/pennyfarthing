@@ -17,8 +17,13 @@ import pytest
 
 
 @pytest.fixture
-def project(tmp_path: Path) -> Path:
+def project(tmp_path: Path, monkeypatch) -> Path:
     """Create a minimal project structure for peloton tests."""
+    plugin_data = tmp_path / "plugin_data"
+    plugin_data.mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
     pf_dir = tmp_path / ".pennyfarthing"
     pf_dir.mkdir()
 
@@ -85,8 +90,13 @@ class TestPrePrimeArgs:
             mock_run.return_value = MagicMock(returncode=0, stdout="# Agent Definition\ntest output")
             start_session(project, "42-1", "tdd")
 
-            # Verify each call uses --no-register --quiet (not --minimal)
-            for call in mock_run.call_args_list:
+            # Verify each pf-agent call uses --no-register --quiet (not --minimal)
+            # Filter out git subprocess calls (e.g. git rev-parse from pf.paths)
+            pf_agent_calls = [
+                call for call in mock_run.call_args_list
+                if call[0] and call[0][0] and call[0][0][0] != "git"
+            ]
+            for call in pf_agent_calls:
                 cmd = call[0][0]
                 assert "--minimal" not in cmd, "Must not use --minimal flag"
                 assert "--no-register" in cmd, "Must use --no-register flag"
@@ -99,10 +109,14 @@ class TestPrePrimeArgs:
             mock_run.return_value = MagicMock(returncode=0, stdout="context")
             start_session(project, "42-1", "tdd")
 
+            # Filter out git subprocess calls (e.g. git rev-parse from pf.paths)
             called_agents = []
             for call in mock_run.call_args_list:
                 cmd = call[0][0]
-                called_agents.append(cmd[3])  # ["pf", "agent", "start", <agent>, ...]
+                if cmd and cmd[0] == "git":
+                    continue
+                if len(cmd) >= 4 and cmd[1] == "agent" and cmd[2] == "start":
+                    called_agents.append(cmd[3])
 
             assert "tea" in called_agents
             assert "dev" in called_agents

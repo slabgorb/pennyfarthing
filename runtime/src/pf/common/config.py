@@ -10,6 +10,8 @@ from typing import Any
 
 import yaml
 
+from pf import paths
+
 
 def get_project_root(start_dir: Path | None = None) -> Path:
     """Find the Pennyfarthing project root.
@@ -147,7 +149,7 @@ def load_pennyfarthing_config(project_root: Path | None = None) -> dict[str, Any
         Config dict, or empty dict if not found
     """
     root = project_root or get_project_root()
-    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(root)
     return load_yaml_config(config_path) or {}
 
 
@@ -162,7 +164,7 @@ def save_pennyfarthing_config_key(key: str, value: Any, project_root: Path | Non
         project_root: Project root path (defaults to auto-detect)
     """
     root = project_root or get_project_root()
-    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(root)
 
     config = load_yaml_config(config_path) or {}
     config[key] = value

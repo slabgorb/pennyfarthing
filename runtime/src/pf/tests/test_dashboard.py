@@ -22,6 +22,8 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 
+from pf import paths
+
 from pf.dashboard.cli import dashboard
 from pf.dashboard.collector import (
     collect_all,
@@ -63,15 +65,22 @@ def runner() -> CliRunner:
 
 
 @pytest.fixture
-def healthy_project(tmp_path: Path) -> Path:
+def healthy_project(tmp_path: Path, monkeypatch) -> Path:
     """Create a project directory with all subsystems present."""
+    plugin_data = tmp_path / "plugin_data"
+    plugin_data.mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
     root = tmp_path / "project"
     root.mkdir()
 
     # .pennyfarthing/ with config
     pf_dir = root / ".pennyfarthing"
     pf_dir.mkdir()
-    (pf_dir / "config.local.yaml").write_text("theme: fifth-element\n")
+    cfg = paths.config_path(root)
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    cfg.write_text("theme: fifth-element\n")
 
     # repos.yaml
     (pf_dir / "repos.yaml").write_text(

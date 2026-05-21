@@ -25,6 +25,8 @@ from unittest.mock import patch
 import pytest
 import yaml
 
+from pf import paths
+
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -32,8 +34,13 @@ import yaml
 
 
 @pytest.fixture
-def project(tmp_path: Path) -> Path:
+def project(tmp_path: Path, monkeypatch) -> Path:
     """Minimal project structure for peloton layout tests."""
+    plugin_data = tmp_path / "plugin_data"
+    plugin_data.mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
     pf_dir = tmp_path / ".pennyfarthing"
     pf_dir.mkdir()
 
@@ -84,10 +91,9 @@ def project(tmp_path: Path) -> Path:
 @pytest.fixture
 def project_with_config(project: Path) -> Path:
     """Project with a peloton.layout config setting."""
-    config_path = project / ".pennyfarthing" / "config.local.yaml"
-    config_path.write_text(
-        yaml.dump({"peloton": {"layout": "horizontal"}})
-    )
+    cfg = paths.config_path(project)
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    cfg.write_text(yaml.dump({"peloton": {"layout": "horizontal"}}))
     return project
 
 

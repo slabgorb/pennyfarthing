@@ -21,6 +21,8 @@ from unittest.mock import patch
 
 import yaml
 
+from pf import paths
+
 # =============================================================================
 # AC1: Each component has an approximate token count
 # =============================================================================
@@ -45,9 +47,14 @@ class TestComponentTokenCounting:
         assert "token_counts" in result
         assert isinstance(result["token_counts"], dict)
 
-    def test_token_counts_include_all_full_tier_components(self, tmp_path: Path) -> None:
+    def test_token_counts_include_all_full_tier_components(self, tmp_path: Path, monkeypatch) -> None:
         """Test FULL tier returns token counts for all components."""
         from pf.prime.tiers import ContextTier, load_tier_components
+
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         self._setup_complete_project(tmp_path)
 
@@ -153,9 +160,14 @@ class TestComponentTokenCounting:
         assert token_counts.get("behavior_guide", 0) == 0
         assert token_counts.get("sidecars", 0) == 0
 
-    def test_handoff_tier_only_counts_included_components(self, tmp_path: Path) -> None:
+    def test_handoff_tier_only_counts_included_components(self, tmp_path: Path, monkeypatch) -> None:
         """Test HANDOFF tier only includes counts for its components."""
         from pf.prime.tiers import ContextTier, load_tier_components
+
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         self._setup_complete_project(tmp_path)
 
@@ -242,7 +254,9 @@ class TestComponentTokenCounting:
         (sidecar_dir / "gotchas.md").write_text("# Dev Gotchas\n\nCommon pitfalls to avoid.")
 
         # Theme
-        (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test-theme"}))
+        cfg = paths.config_path(tmp_path)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text(yaml.dump({"theme": "test-theme"}))
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
         (themes_dir / "test-theme.yaml").write_text(
@@ -360,9 +374,14 @@ class TestTokenBreakdownOutput:
         assert token_counts.get("agent_definition", 0) == 0
         assert token_counts.get("behavior_guide", 0) == 0
 
-    def test_json_output_token_counts_per_component(self, tmp_path: Path, capsys) -> None:
+    def test_json_output_token_counts_per_component(self, tmp_path: Path, capsys, monkeypatch) -> None:
         """Test JSON output has individual component counts."""
         from pf.prime.cli import prime
+
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         self._setup_project(tmp_path)
 
@@ -400,7 +419,9 @@ class TestTokenBreakdownOutput:
         guides_dir.mkdir()
         (guides_dir / "agent-behavior.md").write_text("# Behavior Guide")
 
-        (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test"}))
+        cfg = paths.config_path(tmp_path)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text(yaml.dump({"theme": "test"}))
         themes_dir = pf_dir / "personas" / "themes"
         themes_dir.mkdir(parents=True)
         (themes_dir / "test.yaml").write_text(

@@ -8,8 +8,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+import yaml
 
 from click.testing import CliRunner
+
+from pf import paths
 
 from pf.cli import cli as pf_cli
 from pf.prime.cli import main, prime
@@ -99,15 +102,19 @@ class TestLoadBehaviorGuide:
 class TestLoadOutputStyle:
     """Tests for load_output_style function."""
 
-    def test_load_configured_style(self, tmp_path: Path) -> None:
+    def test_load_configured_style(self, tmp_path: Path, monkeypatch) -> None:
         """Test loading output style when configured."""
-        import yaml
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         # Setup config
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir(parents=True)
-        config_file = pf_dir / "config.local.yaml"
-        config_file.write_text(yaml.dump({"output_style": "terse"}))
+        cfg = paths.config_path(tmp_path)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text(yaml.dump({"output_style": "terse"}))
 
         # Setup style file
         styles_dir = pf_dir / "output-styles"
@@ -721,9 +728,12 @@ class TestCheckRedirect:
 class TestPersonaLoading:
     """Tests for persona loading (Prime v2)."""
 
-    def test_load_persona_from_theme(self, tmp_path: Path) -> None:
+    def test_load_persona_from_theme(self, tmp_path: Path, monkeypatch) -> None:
         """Test loading persona from theme YAML."""
-        import yaml
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         from pf.prime.persona import load_persona
 
@@ -732,7 +742,9 @@ class TestPersonaLoading:
         pf_dir.mkdir()
 
         # Create config
-        (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test-theme"}))
+        cfg = paths.config_path(tmp_path)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text(yaml.dump({"theme": "test-theme"}))
 
         # Create theme
         themes_dir = pf_dir / "personas" / "themes"
@@ -779,9 +791,12 @@ class TestPersonaLoading:
         assert persona is None
         assert theme is None
 
-    def test_get_crew_manifest(self, tmp_path: Path) -> None:
+    def test_get_crew_manifest(self, tmp_path: Path, monkeypatch) -> None:
         """Test getting crew manifest for handoff reference."""
-        import yaml
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         from pf.prime.persona import get_crew_manifest
 
@@ -790,7 +805,9 @@ class TestPersonaLoading:
         pf_dir.mkdir()
 
         # Create config
-        (pf_dir / "config.local.yaml").write_text(yaml.dump({"theme": "test-theme"}))
+        cfg = paths.config_path(tmp_path)
+        cfg.parent.mkdir(parents=True, exist_ok=True)
+        cfg.write_text(yaml.dump({"theme": "test-theme"}))
 
         # Create theme with multiple agents
         themes_dir = pf_dir / "personas" / "themes"

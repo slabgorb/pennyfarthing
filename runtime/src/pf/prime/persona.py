@@ -12,6 +12,7 @@ from typing import Any
 
 import yaml
 
+from pf import paths
 from pf.common.config import get_project_root, load_pennyfarthing_config, load_yaml_config
 from pf.common.themes import (
     get_current_theme as _get_current_theme,
@@ -288,7 +289,7 @@ def is_character_voice_enabled(project_root: Path | None = None) -> bool:
     """
     root = project_root or get_project_root()
 
-    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(root)
     config = load_yaml_config(config_path)
     if config:
         prefs = config.get("preferences", {})

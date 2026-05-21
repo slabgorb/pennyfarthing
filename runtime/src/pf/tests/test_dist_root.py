@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
+from pf import paths
 from pf.common.config import get_dist_root
 
 # ---------------------------------------------------------------------------
@@ -83,7 +84,7 @@ def monorepo_layout(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def npm_layout(tmp_path: Path) -> Path:
+def npm_layout(tmp_path: Path, monkeypatch) -> Path:
     """Create a directory tree simulating npm-installed consumer project.
 
     Structure:
@@ -109,10 +110,17 @@ def npm_layout(tmp_path: Path) -> Path:
                     skill-registry.yaml
                   command-registry.yaml
     """
+    plugin_data = tmp_path / "plugin_data"
+    plugin_data.mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
     # Consumer project marker
     pf_config = tmp_path / ".pennyfarthing"
     pf_config.mkdir()
-    (pf_config / "config.local.yaml").write_text("theme: mash\n")
+    cfg = paths.config_path(tmp_path)
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    cfg.write_text("theme: mash\n")
 
     # npm-installed dist
     dist = tmp_path / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"

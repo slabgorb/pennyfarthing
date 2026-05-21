@@ -21,6 +21,7 @@ import subprocess
 
 logger = logging.getLogger(__name__)
 
+from pf import paths
 from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load_workflow_data
 
 
@@ -73,7 +74,7 @@ def save_state(project_root: Path, state: dict[str, Any]) -> dict[str, Any]:
 
 def get_configured_layout(project_root: Path) -> str | None:
     """Read peloton.layout from config.local.yaml, or None if unset."""
-    config_path = project_root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(project_root)
     if not config_path.exists():
         return None
     try:
