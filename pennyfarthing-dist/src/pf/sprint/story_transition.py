@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from pf.jira.client import get_client
-from pf.sprint.loader import find_epic, find_story
+from pf.sprint.loader import find_story_in_data
 from pf.sprint.status_normalize import normalize_status
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
@@ -60,8 +60,7 @@ def transition_story(
     # Load sprint data and find story
     sprint_path = project_root / "sprint" / "current-sprint.yaml"
     data = read_sprint(sprint_path)
-    epic = find_epic(data, parts[0])
-    story = find_story(epic, story_id) if epic else None
+    _epic, story, _location = find_story_in_data(data, story_id)
 
     if not story:
         return {

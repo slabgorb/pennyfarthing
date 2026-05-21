@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from pf.sprint.archive_epic import _load_archive_file, _write_archive_file, ensure_archive_file
-from pf.sprint.loader import find_epic, find_story
+from pf.sprint.loader import find_story_in_data
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import read_sprint
 
@@ -137,12 +137,9 @@ def finish_story(
     if not jira_key:
         try:
             data = read_sprint(sprint_path)
-            parts = story_id.split("-")
-            if len(parts) >= 2:
-                epic = find_epic(data, parts[0])
-                story = find_story(epic, story_id) if epic else None
-                if story:
-                    jira_key = story.get("jira")
+            _epic, story, _location = find_story_in_data(data, story_id)
+            if story:
+                jira_key = story.get("jira")
         except Exception:
             pass
 
@@ -240,9 +237,7 @@ def finish_story(
     # If still in_progress (legacy/edge case), do the two-step.
     try:
         data = read_sprint(sprint_path)
-        parts = story_id.split("-")
-        epic = find_epic(data, parts[0]) if len(parts) >= 2 else None
-        current_story = find_story(epic, story_id) if epic else None
+        _epic, current_story, _location = find_story_in_data(data, story_id)
         current_status = (
             current_story.get("status", "in_progress") if current_story else "in_progress"
         )
@@ -312,12 +307,9 @@ def finish_story(
     # --- Step 4b: Add story to completed file ---
     try:
         data = read_sprint(sprint_path)
-        parts = story_id.split("-")
-        if len(parts) >= 2:
-            epic = find_epic(data, parts[0])
-            story = find_story(epic, story_id) if epic else None
-            if story:
-                _add_story_to_completed(project_root, story_id, story)
+        _epic, story, _location = find_story_in_data(data, story_id)
+        if story:
+            _add_story_to_completed(project_root, story_id, story)
     except Exception:
         pass
 
