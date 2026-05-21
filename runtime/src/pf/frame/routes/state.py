@@ -16,6 +16,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from pf import paths
 from pf.frame.otlp import OTLPReceiver
 
 # ---------------------------------------------------------------------------
@@ -38,7 +39,7 @@ _settings: dict[str, Any] = {}
 
 def _load_settings(project_dir: str) -> dict[str, Any]:
     """Load settings from config.local.yaml."""
-    config_path = Path(project_dir, ".pennyfarthing", "config.local.yaml")
+    config_path = paths.config_path(Path(project_dir))
     result = dict(_settings)
     if config_path.is_file():
         try:
@@ -71,7 +72,7 @@ async def patch_settings(request: Request) -> JSONResponse:
 @settings_router.get("/layout")
 async def get_layout() -> JSONResponse:
     project_dir = _get_project_dir()
-    config_path = Path(project_dir, ".pennyfarthing", "config.local.yaml")
+    config_path = paths.config_path(Path(project_dir))
     if config_path.is_file():
         try:
             import yaml
@@ -87,7 +88,7 @@ async def get_layout() -> JSONResponse:
 async def patch_layout(request: Request) -> JSONResponse:
     body = await request.json()
     project_dir = _get_project_dir()
-    config_path = Path(project_dir, ".pennyfarthing", "config.local.yaml")
+    config_path = paths.config_path(Path(project_dir))
     try:
         import yaml
 
@@ -104,7 +105,7 @@ async def patch_layout(request: Request) -> JSONResponse:
 @settings_router.get("/tui-layout")
 async def get_tui_layout() -> JSONResponse:
     project_dir = _get_project_dir()
-    config_path = Path(project_dir, ".pennyfarthing", "config.local.yaml")
+    config_path = paths.config_path(Path(project_dir))
     if config_path.is_file():
         try:
             import yaml
@@ -122,7 +123,7 @@ async def get_tui_layout() -> JSONResponse:
 async def patch_tui_layout(request: Request) -> JSONResponse:
     body = await request.json()
     project_dir = _get_project_dir()
-    config_path = Path(project_dir, ".pennyfarthing", "config.local.yaml")
+    config_path = paths.config_path(Path(project_dir))
     try:
         import yaml
 
