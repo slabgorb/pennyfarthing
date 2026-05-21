@@ -214,7 +214,8 @@ def _add_assessment(session_file: Path, agent: str, phase: str) -> None:
             "| reviewer-comment-analyzer | Yes | PASS |\n"
             "| reviewer-type-design | Yes | PASS |\n"
             "| reviewer-security | Yes | PASS |\n"
-            "| reviewer-simplifier | Yes | PASS |\n\n"
+            "| reviewer-simplifier | Yes | PASS |\n"
+            "| reviewer-rule-checker | Yes | PASS |\n\n"
             "All received: Yes\n\n"
             "## Reviewer Assessment\n\n"
             f"**Phase:** {phase}\n"
@@ -222,7 +223,7 @@ def _add_assessment(session_file: Path, agent: str, phase: str) -> None:
             f"**Handoff:** To next agent\n\n"
             "[EDGE] No edge cases. [SILENT] No silent failures. "
             "[TEST] Tests pass. [DOC] Docs ok. "
-            "[TYPE] Types ok. [SEC] No issues. [SIMPLE] Clean.\n"
+            "[TYPE] Types ok. [SEC] No issues. [SIMPLE] Clean. [RULE] Clean.\n"
         )
     else:
         assessment = (

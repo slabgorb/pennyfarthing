@@ -20,11 +20,13 @@ from pathlib import Path
 
 import pytest
 
+from pf.common.config import get_dist_root
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-PENNYFARTHING_DIST = Path(__file__).resolve().parents[3]  # pennyfarthing-dist/
+PENNYFARTHING_DIST = get_dist_root()
 REVIEWER_MD = PENNYFARTHING_DIST / "agents" / "reviewer.md"
 APPROVAL_GATE_MD = PENNYFARTHING_DIST / "gates" / "approval.md"
 
@@ -37,9 +39,10 @@ REQUIRED_SUBAGENTS = [
     "reviewer-type-design",
     "reviewer-security",
     "reviewer-simplifier",
+    "reviewer-rule-checker",
 ]
 
-DISPATCH_TAGS = ["[EDGE]", "[SILENT]", "[TEST]", "[DOC]", "[TYPE]", "[SEC]", "[SIMPLE]"]
+DISPATCH_TAGS = ["[EDGE]", "[SILENT]", "[TEST]", "[DOC]", "[TYPE]", "[SEC]", "[SIMPLE]", "[RULE]"]
 
 
 # ---------------------------------------------------------------------------
@@ -86,6 +89,7 @@ def _build_reviewer_assessment() -> str:
         "- [TYPE] Types sound\n"
         "- [SEC] No security concerns\n"
         "- [SIMPLE] No unnecessary complexity\n"
+        "- [RULE] Rules checked\n"
     )
 
 
@@ -251,7 +255,8 @@ class TestAC2ActionableErrorMessages:
 
         content = "## Reviewer Assessment\n\n**Verdict:** APPROVED\nNo tags here.\n"
         missing = _check_subagent_dispatch(content)
-        assert len(missing) == 7, f"Expected 7 missing tags, got {len(missing)}"
+        # 8 dispatch tags: [EDGE], [SILENT], [TEST], [DOC], [TYPE], [SEC], [SIMPLE], [RULE]
+        assert len(missing) == 8, f"Expected 8 missing tags, got {len(missing)}"
 
     def test_missing_assessment_error_shows_example_heading(self) -> None:
         """When assessment section is missing, error should show the exact
@@ -505,6 +510,7 @@ class TestAC4ExamplesMatchImplementation:
             "- [TYPE] Types sound\n"
             "- [SEC] No security concerns\n"
             "- [SIMPLE] No unnecessary complexity\n"
+            "- [RULE] Rules satisfied\n"
         )
         missing = _check_subagent_dispatch(content)
         assert len(missing) == 0, (

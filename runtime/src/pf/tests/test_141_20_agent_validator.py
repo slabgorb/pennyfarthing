@@ -195,18 +195,18 @@ class TestOnActivationLinePosition:
         ]
         assert position_warnings == []
 
-    def test_on_activation_after_line_100_warns(self, tmp_path):
-        """<on-activation> after line 100 should produce a warning."""
-        # Push on-activation past line 100
-        content = _minimal_main_agent(line_pad=100)
+    def test_on_activation_after_line_150_warns(self, tmp_path):
+        """<on-activation> after line 150 should produce a warning."""
+        # Push on-activation past line 150 (implementation threshold)
+        content = _minimal_main_agent(line_pad=155)
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         _, warnings = validate_main_agent(agents_dir / "dev.md", agents_dir)
         position_warnings = [
             w
             for w in warnings
-            if "on-activation" in w.lower() and ("line" in w.lower() or "100" in w)
+            if "on-activation" in w.lower() and ("line" in w.lower() or "150" in w)
         ]
-        assert len(position_warnings) > 0, "Expected warning for <on-activation> after line 100"
+        assert len(position_warnings) > 0, "Expected warning for <on-activation> after line 150"
 
 
 # ===========================================================================
@@ -227,17 +227,17 @@ class TestFileLengthCheck:
         length_errors = [e for e in errors if "lines" in e.lower() and "max" in e.lower()]
         assert length_errors == []
 
-    def test_file_over_500_lines_errors(self, tmp_path):
-        """File over 500 lines should produce an error."""
-        # Pad the file to exceed 500 lines
-        padding = "\n".join(f"<!-- line {i} -->" for i in range(490))
+    def test_file_over_750_lines_errors(self, tmp_path):
+        """File over 750 lines should produce an error."""
+        # Pad the file to exceed 750 lines (implementation threshold)
+        padding = "\n".join(f"<!-- line {i} -->" for i in range(745))
         content = _minimal_main_agent(extra=f"<info>\n{padding}\n</info>\n")
         agents_dir = _write_agent(tmp_path, "dev.md", content)
         errors, _ = validate_main_agent(agents_dir / "dev.md", agents_dir)
         length_errors = [
-            e for e in errors if "line" in e.lower() and ("500" in e or "max" in e.lower())
+            e for e in errors if "line" in e.lower() and ("750" in e or "max" in e.lower())
         ]
-        assert len(length_errors) > 0, "Expected error for file over 500 lines"
+        assert len(length_errors) > 0, "Expected error for file over 750 lines"
 
 
 # ===========================================================================

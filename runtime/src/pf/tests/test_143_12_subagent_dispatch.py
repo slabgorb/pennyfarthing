@@ -45,6 +45,7 @@ MISSING_TWO = """## Reviewer Assessment
 - [DOC] ok
 - [TYPE] ok
 - [SEC] ok
+- [RULE] ok
 
 **Handoff:** To SM
 """
@@ -86,6 +87,7 @@ class TestCheckSubagentDispatch:
 5. [TYPE] types correct
 6. [SEC] secure
 7. [SIMPLE] minimal
+8. [RULE] rules checked
 
 **Handoff:** done
 """

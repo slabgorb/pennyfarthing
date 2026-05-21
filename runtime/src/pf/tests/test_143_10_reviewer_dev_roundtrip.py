@@ -27,6 +27,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from pf.common.config import get_dist_root
 from pf.handoff.complete_phase import complete_phase
 from pf.handoff.resolve_gate import resolve_gate
 from pf.prime.workflow import detect_workflow_state, parse_session_header
@@ -210,6 +211,7 @@ def _make_session(phase: str = "review", round_trip_count: int = 0) -> str:
         - [TEST] No concerns
         - [DOC] No concerns
         - [TYPE] No concerns
+        - [RULE] No concerns
     """)
 
 
@@ -564,6 +566,7 @@ class TestDevFixesToReview:
             | reviewer-type-design | Yes | PASS |
             | reviewer-security | Yes | PASS |
             | reviewer-simplifier | Yes | PASS |
+            | reviewer-rule-checker | Yes | PASS |
 
             All received: Yes
 
@@ -579,6 +582,7 @@ class TestDevFixesToReview:
             [TYPE] Types correct.
             [SEC] No security issues.
             [SIMPLE] Code is simple enough.
+            [RULE] Rules checked.
         """)
         session.write_text(content)
 
@@ -608,7 +612,7 @@ class TestTDDWorkflowRecoveryConfig:
     def test_tdd_yaml_review_gate_has_recovery(self, tmp_path):
         """The real tdd.yaml should have a recovery block on the review phase gate."""
         # Read the actual tdd.yaml from pennyfarthing-dist
-        tdd_path = Path(__file__).parent.parent.parent.parent / "workflows" / "tdd.yaml"
+        tdd_path = get_dist_root() / "workflows" / "tdd.yaml"
         if not tdd_path.exists():
             pytest.skip("tdd.yaml not found at expected path")
 
@@ -624,7 +628,7 @@ class TestTDDWorkflowRecoveryConfig:
 
     def test_tdd_yaml_recovery_targets_green(self, tmp_path):
         """Recovery should target the green phase (Dev)."""
-        tdd_path = Path(__file__).parent.parent.parent.parent / "workflows" / "tdd.yaml"
+        tdd_path = get_dist_root() / "workflows" / "tdd.yaml"
         if not tdd_path.exists():
             pytest.skip("tdd.yaml not found at expected path")
 
@@ -643,7 +647,7 @@ class TestTDDWorkflowRecoveryConfig:
 
     def test_tdd_yaml_recovery_has_max_attempts(self, tmp_path):
         """Recovery should have a max_attempts limit to prevent infinite loops."""
-        tdd_path = Path(__file__).parent.parent.parent.parent / "workflows" / "tdd.yaml"
+        tdd_path = get_dist_root() / "workflows" / "tdd.yaml"
         if not tdd_path.exists():
             pytest.skip("tdd.yaml not found at expected path")
 
