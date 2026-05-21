@@ -74,12 +74,11 @@ def make_app(client=None, project_dir=None):
 class TestGetLastPanel:
     """AC1: get_last_panel reads persisted panel from config."""
 
-    def test_returns_saved_panel_name(self, tmp_path: Path) -> None:
+    def test_returns_saved_panel_name(self, pf_config_root) -> None:
         """Should return panel name when last_panel key exists in config."""
-        project_dir = _make_config_dir(tmp_path)
-        _write_config(project_dir, "theme: fifth-element\nlast_panel: git\n")
+        pf_config_root.write_config("theme: fifth-element\nlast_panel: git\n")
 
-        result = get_last_panel(project_dir=project_dir)
+        result = get_last_panel(project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True, f"Expected success, got: {result}"
         assert result["last_panel"] == "git", (
@@ -128,13 +127,11 @@ class TestGetLastPanel:
             "Invalid panel names should be treated as no saved state"
         )
 
-    def test_returns_all_valid_panels(self, tmp_path: Path) -> None:
+    def test_returns_all_valid_panels(self, pf_config_root) -> None:
         """Should return any valid panel name correctly."""
-        project_dir = _make_config_dir(tmp_path)
-
         for panel in VALID_PANELS:
-            _write_config(project_dir, f"last_panel: {panel}\n")
-            result = get_last_panel(project_dir=project_dir)
+            pf_config_root.write_config(f"last_panel: {panel}\n")
+            result = get_last_panel(project_dir=pf_config_root.project_dir)
             assert result["success"] is True
             assert result["last_panel"] == panel, (
                 f"Expected last_panel='{panel}', got '{result.get('last_panel')}'"
@@ -149,45 +146,41 @@ class TestGetLastPanel:
 class TestSaveLastPanel:
     """AC2: save_last_panel persists panel to config."""
 
-    def test_writes_panel_to_config(self, tmp_path: Path) -> None:
+    def test_writes_panel_to_config(self, pf_config_root) -> None:
         """Should write last_panel key to config.local.yaml."""
-        project_dir = _make_config_dir(tmp_path)
-        _write_config(project_dir, "theme: fifth-element\n")
+        pf_config_root.write_config("theme: fifth-element\n")
 
-        result = save_last_panel("sprint", project_dir=project_dir)
+        result = save_last_panel("sprint", project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True, f"Expected success, got: {result}"
-        config = _read_config(project_dir)
+        config = pf_config_root.read_config()
         assert config.get("last_panel") == "sprint", (
             f"Expected last_panel='sprint' in config, got: {config}"
         )
 
-    def test_preserves_other_config_keys(self, tmp_path: Path) -> None:
+    def test_preserves_other_config_keys(self, pf_config_root) -> None:
         """Should not clobber existing config keys when saving."""
-        project_dir = _make_config_dir(tmp_path)
-        _write_config(
-            project_dir,
-            "theme: fifth-element\nfocus: diffs\nbell_mode: true\n",
+        pf_config_root.write_config(
+            "theme: fifth-element\nfocus: diffs\nbell_mode: true\n"
         )
 
-        result = save_last_panel("git", project_dir=project_dir)
+        result = save_last_panel("git", project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True
-        config = _read_config(project_dir)
+        config = pf_config_root.read_config()
         assert config.get("theme") == "fifth-element", "theme should be preserved"
         assert config.get("focus") == "diffs", "focus should be preserved"
         assert config.get("bell_mode") is True, "bell_mode should be preserved"
         assert config.get("last_panel") == "git"
 
-    def test_creates_config_if_missing(self, tmp_path: Path) -> None:
+    def test_creates_config_if_missing(self, pf_config_root) -> None:
         """Should create config file if it doesn't exist."""
-        project_dir = _make_config_dir(tmp_path)
-        # .pennyfarthing dir exists but no config.local.yaml
+        # No config file written yet
 
-        result = save_last_panel("workflow", project_dir=project_dir)
+        result = save_last_panel("workflow", project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True
-        config = _read_config(project_dir)
+        config = pf_config_root.read_config()
         assert config.get("last_panel") == "workflow"
 
     def test_rejects_invalid_panel(self, tmp_path: Path) -> None:
@@ -201,15 +194,14 @@ class TestSaveLastPanel:
         config = _read_config(project_dir)
         assert "last_panel" not in config, "Invalid panel should not be written to config"
 
-    def test_overwrites_existing_last_panel(self, tmp_path: Path) -> None:
+    def test_overwrites_existing_last_panel(self, pf_config_root) -> None:
         """Should overwrite existing last_panel value."""
-        project_dir = _make_config_dir(tmp_path)
-        _write_config(project_dir, "last_panel: sprint\n")
+        pf_config_root.write_config("last_panel: sprint\n")
 
-        result = save_last_panel("git", project_dir=project_dir)
+        result = save_last_panel("git", project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True
-        config = _read_config(project_dir)
+        config = pf_config_root.read_config()
         assert config.get("last_panel") == "git", (
             f"Expected last_panel='git' after overwrite, got: {config}"
         )
@@ -389,17 +381,16 @@ class TestTuiPersist:
 class TestSharedConfigKey:
     """AC5: ERB and TUI share config.local.yaml:last_panel key."""
 
-    def test_config_key_is_last_panel(self, tmp_path: Path) -> None:
+    def test_config_key_is_last_panel(self, pf_config_root) -> None:
         """The shared key should be 'last_panel' in config.local.yaml."""
-        project_dir = _make_config_dir(tmp_path)
-        _write_config(project_dir, "theme: fifth-element\n")
+        pf_config_root.write_config("theme: fifth-element\n")
 
         # Save via Python function
-        save_result = save_last_panel("diffs", project_dir=project_dir)
+        save_result = save_last_panel("diffs", project_dir=pf_config_root.project_dir)
         assert save_result["success"] is True
 
         # Read raw YAML — verify the key is 'last_panel'
-        config = _read_config(project_dir)
+        config = pf_config_root.read_config()
         assert "last_panel" in config, (
             "Persistence should use 'last_panel' key in config.local.yaml"
         )

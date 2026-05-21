@@ -277,15 +277,15 @@ class TestAC3SettingsPersistence:
         assert toggles["security"] is False
         assert toggles["simplifier"] is False
 
-    def test_full_config_roundtrip(self, tmp_path: Path):
+    def test_full_config_roundtrip(self, pf_config_root):
         """set_setting → config file → get_setting must return the same value."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        config_path = config_dir / "config.local.yaml"
-        config_path.write_text("")
+        pf_config_root.write_config("")
 
         with (
-            patch("pf.settings.settings.get_project_root", return_value=tmp_path),
+            patch(
+                "pf.settings.settings.get_project_root",
+                return_value=pf_config_root.project_dir,
+            ),
             patch("pf.settings.settings.load_pennyfarthing_config", return_value={}),
         ):
             from pf.settings.settings import set_setting
@@ -293,8 +293,7 @@ class TestAC3SettingsPersistence:
             set_setting("workflow.reviewer_subagents.security", "false")
 
         # Read back what was written
-        with open(config_path) as f:
-            saved = yaml.safe_load(f)
+        saved = pf_config_root.read_config()
         assert saved["workflow"]["reviewer_subagents"]["security"] is False
 
 

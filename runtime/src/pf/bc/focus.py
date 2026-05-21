@@ -13,6 +13,8 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
+from pf import paths
+
 
 def _get_root() -> Path:
     """Get project root, falling back to cwd."""
@@ -77,9 +79,9 @@ def clear_panel_focus(project_dir: Path | None = None) -> dict:
     """
     try:
         root = project_dir or _get_root()
-        config_path = root / ".pennyfarthing" / "config.local.yaml"
+        config_yaml = paths.config_path(root)
 
-        if not config_path.exists():
+        if not config_yaml.exists():
             return {"success": True, "message": "No focus setting to clear"}
 
         config_path, config = _read_config(project_dir)
@@ -114,7 +116,7 @@ def _read_config(project_dir: Path | None = None):
         (config_path, config) where config is a CommentedMap or None if invalid.
     """
     root = project_dir or _get_root()
-    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(root)
     yml = _make_yaml()
     if config_path.exists():
         config = yml.load(config_path.read_text())
@@ -335,7 +337,7 @@ def get_panel_focus(project_dir: Path | None = None) -> dict:
     """
     try:
         root = project_dir or _get_root()
-        config_path = root / ".pennyfarthing" / "config.local.yaml"
+        config_path = paths.config_path(root)
 
         if not config_path.exists():
             return {"success": True, "focus": None}

@@ -131,6 +131,56 @@ def sample_sprint_data() -> dict:
 
 
 @pytest.fixture
+def pf_config_root(tmp_path, monkeypatch):
+    """Fixture that routes pf.paths.config_path() into a controlled tmp dir.
+
+    Sets CLAUDE_PLUGIN_DATA so that paths.config_path(tmp_path) resolves
+    to <plugin_data>/projects/<hash>/config.local.yaml instead of the
+    legacy .pennyfarthing/ layout.  Also sets GIT_CEILING_DIRECTORIES so
+    that paths.project_root() doesn't walk up into an enclosing repo.
+
+    Usage::
+
+        def test_something(pf_config_root):
+            root = pf_config_root.project_dir
+            pf_config_root.write_config("theme: test\\n")
+            # call production code with project_dir=root
+            # then read back via pf_config_root.read_text()
+    """
+    from pf import paths
+
+    plugin_data = tmp_path / "plugin_data"
+    plugin_data.mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+
+    class _ConfigRoot:
+        def __init__(self, pd):
+            self.project_dir = pd
+
+        @property
+        def config_path(self):
+            return paths.config_path(self.project_dir)
+
+        def write_config(self, text: str) -> None:
+            p = self.config_path
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(text)
+
+        def read_text(self) -> str:
+            return self.config_path.read_text()
+
+        def read_config(self) -> dict:
+            import yaml
+            return yaml.safe_load(self.read_text()) or {}
+
+    yield _ConfigRoot(project_dir)
+
+
+@pytest.fixture
 def sample_jira_issue() -> dict:
     """Return sample Jira issue data for testing."""
     return {

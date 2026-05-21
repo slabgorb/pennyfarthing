@@ -35,30 +35,23 @@ from pf.bc.focus import (
 class TestSetPanelFocus:
     """AC1: set_panel_focus writes the focus key correctly."""
 
-    def test_writes_focus_key(self, tmp_path: Path) -> None:
+    def test_writes_focus_key(self, pf_config_root) -> None:
         """set_panel_focus should write focus: <panel> to config."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        config_path = config_dir / "config.local.yaml"
-        config_path.write_text("theme: the-expanse\n")
+        pf_config_root.write_config("theme: the-expanse\n")
 
-        result = set_panel_focus("sprint", project_dir=tmp_path)
+        result = set_panel_focus("sprint", project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True
-        config = yaml.safe_load(config_path.read_text())
+        config = pf_config_root.read_config()
         assert config["focus"] == "sprint"
 
-    def test_writes_each_valid_panel(self, tmp_path: Path) -> None:
+    def test_writes_each_valid_panel(self, pf_config_root) -> None:
         """set_panel_focus should accept every valid panel name."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        config_path = config_dir / "config.local.yaml"
-
         for panel in VALID_PANELS:
-            config_path.write_text("theme: test\n")
-            result = set_panel_focus(panel, project_dir=tmp_path)
+            pf_config_root.write_config("theme: test\n")
+            result = set_panel_focus(panel, project_dir=pf_config_root.project_dir)
             assert result["success"] is True, f"Failed for panel: {panel}"
-            config = yaml.safe_load(config_path.read_text())
+            config = pf_config_root.read_config()
             assert config["focus"] == panel, f"Focus not set for: {panel}"
 
     def test_returns_panel_in_data(self, tmp_path: Path) -> None:
@@ -72,17 +65,14 @@ class TestSetPanelFocus:
         assert result["success"] is True
         assert result["data"] == "git"
 
-    def test_overwrites_existing_focus(self, tmp_path: Path) -> None:
+    def test_overwrites_existing_focus(self, pf_config_root) -> None:
         """set_panel_focus should overwrite a previously set focus."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        config_path = config_dir / "config.local.yaml"
-        config_path.write_text("theme: test\nfocus: sprint\n")
+        pf_config_root.write_config("theme: test\nfocus: sprint\n")
 
-        result = set_panel_focus("diffs", project_dir=tmp_path)
+        result = set_panel_focus("diffs", project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True
-        config = yaml.safe_load(config_path.read_text())
+        config = pf_config_root.read_config()
         assert config["focus"] == "diffs"
 
 
@@ -106,21 +96,18 @@ class TestConfigPreservation:
         config = yaml.safe_load(config_path.read_text())
         assert config["theme"] == "the-expanse"
 
-    def test_preserves_nested_keys(self, tmp_path: Path) -> None:
+    def test_preserves_nested_keys(self, pf_config_root) -> None:
         """set_panel_focus should preserve nested config structures."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        config_path = config_dir / "config.local.yaml"
         original = {
             "theme": "the-expanse",
             "workflow": {"permission_mode": "accept", "bell_mode": True},
             "tui": {"toasts": True},
         }
-        config_path.write_text(yaml.dump(original, default_flow_style=False))
+        pf_config_root.write_config(yaml.dump(original, default_flow_style=False))
 
-        set_panel_focus("git", project_dir=tmp_path)
+        set_panel_focus("git", project_dir=pf_config_root.project_dir)
 
-        config = yaml.safe_load(config_path.read_text())
+        config = pf_config_root.read_config()
         assert config["theme"] == "the-expanse"
         assert config["workflow"]["permission_mode"] == "accept"
         assert config["workflow"]["bell_mode"] is True
@@ -147,17 +134,13 @@ class TestConfigPreservation:
         assert "layout" in config
         assert config["layout"]["grid"]["root"]["type"] == "branch"
 
-    def test_uses_sort_keys_false(self, tmp_path: Path) -> None:
+    def test_uses_sort_keys_false(self, pf_config_root) -> None:
         """set_panel_focus should write YAML with sort_keys=False."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        config_path = config_dir / "config.local.yaml"
-        # Write with specific key order
-        config_path.write_text("theme: test\nworkflow:\n  bell_mode: true\n")
+        pf_config_root.write_config("theme: test\nworkflow:\n  bell_mode: true\n")
 
-        set_panel_focus("sprint", project_dir=tmp_path)
+        set_panel_focus("sprint", project_dir=pf_config_root.project_dir)
 
-        raw = config_path.read_text()
+        raw = pf_config_root.read_text()
         # theme should appear before focus (insertion order preserved)
         theme_pos = raw.index("theme:")
         focus_pos = raw.index("focus:")
@@ -172,31 +155,25 @@ class TestConfigPreservation:
 class TestClearPanelFocus:
     """AC3: clear_panel_focus removes focus key from config."""
 
-    def test_removes_focus_key(self, tmp_path: Path) -> None:
+    def test_removes_focus_key(self, pf_config_root) -> None:
         """clear_panel_focus should remove the focus key entirely."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        config_path = config_dir / "config.local.yaml"
-        config_path.write_text("theme: test\nfocus: sprint\n")
+        pf_config_root.write_config("theme: test\nfocus: sprint\n")
 
-        result = clear_panel_focus(project_dir=tmp_path)
+        result = clear_panel_focus(project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True
-        config = yaml.safe_load(config_path.read_text())
+        config = pf_config_root.read_config()
         assert "focus" not in config
 
-    def test_preserves_other_keys_on_clear(self, tmp_path: Path) -> None:
+    def test_preserves_other_keys_on_clear(self, pf_config_root) -> None:
         """clear_panel_focus should preserve other config keys."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        config_path = config_dir / "config.local.yaml"
-        config_path.write_text(
+        pf_config_root.write_config(
             "theme: the-expanse\nfocus: git\ntui:\n  toasts: true\n"
         )
 
-        clear_panel_focus(project_dir=tmp_path)
+        clear_panel_focus(project_dir=pf_config_root.project_dir)
 
-        config = yaml.safe_load(config_path.read_text())
+        config = pf_config_root.read_config()
         assert config["theme"] == "the-expanse"
         assert config["tui"]["toasts"] is True
         assert "focus" not in config
@@ -303,38 +280,31 @@ class TestInvalidPanelValidation:
 class TestConfigCreation:
     """AC5: set_panel_focus creates config file and directory if needed."""
 
-    def test_creates_config_when_missing(self, tmp_path: Path) -> None:
+    def test_creates_config_when_missing(self, pf_config_root) -> None:
         """set_panel_focus should create config.local.yaml if it doesn't exist."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        # No config file exists
+        # No config file exists yet
 
-        result = set_panel_focus("sprint", project_dir=tmp_path)
+        result = set_panel_focus("sprint", project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True
-        config_path = config_dir / "config.local.yaml"
-        assert config_path.exists()
-        config = yaml.safe_load(config_path.read_text())
+        assert pf_config_root.config_path.exists()
+        config = pf_config_root.read_config()
         assert config["focus"] == "sprint"
 
-    def test_creates_directory_when_missing(self, tmp_path: Path) -> None:
-        """set_panel_focus should create .pennyfarthing/ directory if needed."""
-        # No .pennyfarthing directory exists
+    def test_creates_directory_when_missing(self, pf_config_root) -> None:
+        """set_panel_focus should create parent directories if needed."""
+        # No config dir exists yet (pf_config_root does not pre-create it)
 
-        result = set_panel_focus("git", project_dir=tmp_path)
+        result = set_panel_focus("git", project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True
-        config_path = tmp_path / ".pennyfarthing" / "config.local.yaml"
-        assert config_path.exists()
+        assert pf_config_root.config_path.exists()
 
-    def test_new_config_has_only_focus(self, tmp_path: Path) -> None:
+    def test_new_config_has_only_focus(self, pf_config_root) -> None:
         """New config should contain only the focus key (no garbage)."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
+        set_panel_focus("todo", project_dir=pf_config_root.project_dir)
 
-        set_panel_focus("todo", project_dir=tmp_path)
-
-        config = yaml.safe_load((config_dir / "config.local.yaml").read_text())
+        config = pf_config_root.read_config()
         assert config == {"focus": "todo"}
 
 
@@ -346,14 +316,11 @@ class TestConfigCreation:
 class TestYamlErrorHandling:
     """AC6: Corrupted config handled gracefully."""
 
-    def test_handles_corrupted_yaml(self, tmp_path: Path) -> None:
+    def test_handles_corrupted_yaml(self, pf_config_root) -> None:
         """set_panel_focus should return error on corrupted YAML."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        config_path = config_dir / "config.local.yaml"
-        config_path.write_text(":\n  - :\n    invalid: [yaml: {broken")
+        pf_config_root.write_config(":\n  - :\n    invalid: [yaml: {broken")
 
-        result = set_panel_focus("sprint", project_dir=tmp_path)
+        result = set_panel_focus("sprint", project_dir=pf_config_root.project_dir)
 
         assert result["success"] is False
         assert "error" in result
@@ -370,17 +337,14 @@ class TestYamlErrorHandling:
         # Should either handle gracefully or start fresh
         assert result["success"] is True or "error" in result
 
-    def test_handles_empty_config_file(self, tmp_path: Path) -> None:
+    def test_handles_empty_config_file(self, pf_config_root) -> None:
         """set_panel_focus should handle empty config file."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        config_path = config_dir / "config.local.yaml"
-        config_path.write_text("")
+        pf_config_root.write_config("")
 
-        result = set_panel_focus("sprint", project_dir=tmp_path)
+        result = set_panel_focus("sprint", project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True
-        config = yaml.safe_load(config_path.read_text())
+        config = pf_config_root.read_config()
         assert config["focus"] == "sprint"
 
 
@@ -439,13 +403,11 @@ class TestResultObjects:
 class TestGetPanelFocus:
     """AC8: get_panel_focus reads the current focus setting."""
 
-    def test_reads_current_focus(self, tmp_path: Path) -> None:
+    def test_reads_current_focus(self, pf_config_root) -> None:
         """get_panel_focus should return the current focus panel name."""
-        config_dir = tmp_path / ".pennyfarthing"
-        config_dir.mkdir()
-        (config_dir / "config.local.yaml").write_text("theme: test\nfocus: sprint\n")
+        pf_config_root.write_config("theme: test\nfocus: sprint\n")
 
-        result = get_panel_focus(project_dir=tmp_path)
+        result = get_panel_focus(project_dir=pf_config_root.project_dir)
 
         assert result["success"] is True
         assert result["focus"] == "sprint"

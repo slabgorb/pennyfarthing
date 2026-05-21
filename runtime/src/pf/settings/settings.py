@@ -8,6 +8,7 @@ from typing import Any
 
 import yaml
 
+from pf import paths
 from pf.common.config import get_project_root, load_pennyfarthing_config
 
 # Top-level keys to show in `pf settings show` (skip layout/panel blobs)
@@ -130,7 +131,7 @@ def set_setting(key: str, value: str) -> dict:
         return {"success": False, "error": validation.errors[0].message}
 
     root = get_project_root()
-    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(root)
 
     config = load_pennyfarthing_config(root)
     _set_by_path(config, key, coerced)
@@ -158,7 +159,7 @@ def set_setting_typed(key: str, value: Any) -> dict:
         return {"success": False, "error": validation.errors[0].message}
 
     root = get_project_root()
-    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(root)
 
     config = load_pennyfarthing_config(root)
     _set_by_path(config, key, value)

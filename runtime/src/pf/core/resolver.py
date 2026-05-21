@@ -11,6 +11,7 @@ from pathlib import Path
 
 import yaml
 
+from pf import paths
 from pf.core.models import SprintContext
 
 
@@ -109,7 +110,7 @@ def resolve_sprint_context(project_root: str) -> SprintContext:
 
 def _get_active_preference(root: Path) -> str | None:
     """Read sprint.active from .pennyfarthing/config.local.yaml."""
-    config_path = root / ".pennyfarthing" / "config.local.yaml"
+    config_path = paths.config_path(root)
     if not config_path.exists():
         return None
     try:

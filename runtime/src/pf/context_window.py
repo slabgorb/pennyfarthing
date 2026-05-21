@@ -17,6 +17,13 @@ try:
 except ImportError:
     HAS_YAML = False
 
+try:
+    from pf import paths as _pf_paths
+
+    HAS_PF_PATHS = True
+except ImportError:
+    HAS_PF_PATHS = False
+
 
 @dataclass
 class ContextConfig:
@@ -132,7 +139,11 @@ def load_config(project_dir: str | None = None) -> ContextConfig:
     )
 
     # Try .pennyfarthing/config.local.yaml first
-    yaml_path = Path(project_dir) / ".pennyfarthing" / "config.local.yaml"
+    yaml_path = (
+        _pf_paths.config_path(Path(project_dir))
+        if HAS_PF_PATHS
+        else Path(project_dir) / ".pennyfarthing" / "config.local.yaml"
+    )
     if HAS_YAML and yaml_path.exists():
         try:
             with open(yaml_path) as f:
