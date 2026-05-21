@@ -98,15 +98,13 @@ class TestProjectOriginSlug:
     def test_no_git_falls_back_to_local(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
         slug = paths.project_origin_slug(tmp_path)
-        # _local/<hash> — exact hash depends on path
-        assert slug.startswith("_local/")
-        assert len(slug) == len("_local/") + 12
+        assert slug == f"_local/{paths.project_hash(tmp_path)}"
 
     def test_git_no_origin_falls_back_to_local(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
         subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
         slug = paths.project_origin_slug(tmp_path)
-        assert slug.startswith("_local/")
+        assert slug == f"_local/{paths.project_hash(tmp_path)}"
 
     def test_git_with_origin_returns_normalized_slug(self, tmp_path: Path) -> None:
         subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)

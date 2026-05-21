@@ -28,14 +28,13 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 
 _FALLBACK_DATA_ROOT = Path.home() / ".claude" / "data" / "pf"
 _GIT_DOT_GIT_SUFFIX = re.compile(r"\.git$")
 
 
-def origin_slug(url: str) -> Optional[str]:
+def origin_slug(url: str) -> str | None:
     """Normalize a git remote URL to a stable ``host/owner/repo`` slug.
 
     Returns ``None`` if the URL does not resemble a git remote. Callers
@@ -100,6 +99,9 @@ def project_root(path: Path | None = None) -> Path:
     If ``path`` (or cwd) is inside a git repo, return ``git rev-parse
     --show-toplevel`` as a ``Path``. Otherwise return the resolved
     absolute path of the input. The result is always absolute.
+
+    Times out the git invocation at 5 seconds and treats timeout as a
+    fallback case (returns the resolved input path).
     """
     start = Path(path).resolve() if path is not None else Path.cwd().resolve()
     try:
@@ -109,9 +111,10 @@ def project_root(path: Path | None = None) -> Path:
             capture_output=True,
             text=True,
             check=False,
+            timeout=5,
         )
-    except FileNotFoundError:
-        # git not on PATH — fall back
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        # git not on PATH or hung — fall back
         return start
     if result.returncode != 0:
         return start
@@ -127,6 +130,9 @@ def project_origin_slug(path: Path | None = None) -> str:
     Falls back to ``_local/<project_hash>`` when no git remote, no git
     repo, or an unparseable origin URL is detected. Never returns None;
     the caller can use the result directly as a directory name segment.
+
+    Times out the git invocation at 5 seconds and treats timeout as a
+    fallback case (returns the ``_local/<hash>`` form).
     """
     root = project_root(path)
     try:
@@ -135,8 +141,9 @@ def project_origin_slug(path: Path | None = None) -> str:
             capture_output=True,
             text=True,
             check=False,
+            timeout=5,
         )
-    except FileNotFoundError:
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         return f"_local/{project_hash(root)}"
     if result.returncode != 0:
         return f"_local/{project_hash(root)}"
