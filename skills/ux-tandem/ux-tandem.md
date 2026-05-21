@@ -154,7 +154,7 @@ Real-time UX feedback loop between the lead agent and a UX observer teammate. Th
 
 ## When NOT to Use
 
-- **Code-only review** — use the standard tandem-backseat protocol or `/pf-code-review`
+- **Code-only review** — use the standard tandem-backseat protocol or `/pf:code-review`
 - **Non-visual targets** — if there's no UI to look at, this skill adds nothing
 - **No tmux** — requires tmux for pane capture; won't work in plain terminal sessions
 

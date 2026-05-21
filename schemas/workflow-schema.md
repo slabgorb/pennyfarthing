@@ -261,5 +261,5 @@ Error: workflow.triggers.points min (10) cannot be greater than max (5)
 
 - Story 31-2: Workflow loader and validator
 - Story 31-3: Story-to-workflow routing engine
-- Story 31-5: /pf-workflow skill for listing and switching
+- Story 31-5: /pf:workflow skill for listing and switching
 - Story PROJ-11710: Permission presets by workflow

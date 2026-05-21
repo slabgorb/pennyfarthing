@@ -2,7 +2,7 @@
 description: Brainstorm ideas into designs (forwarder to superpowers:brainstorming)
 ---
 
-# /pf-brainstorming
+# /pf:brainstorming
 
 Invoke the `superpowers:brainstorming` skill via the Skill tool. No preamble.
 

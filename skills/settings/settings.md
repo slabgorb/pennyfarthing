@@ -6,7 +6,7 @@ description: |
 args: "[show|get|set] [key] [value]"
 ---
 
-# /pf-settings - Configuration Settings
+# /pf:settings - Configuration Settings
 
 View and manage `.pennyfarthing/config.local.yaml` settings.
 
@@ -14,9 +14,9 @@ View and manage `.pennyfarthing/config.local.yaml` settings.
 
 | Command | CLI | Purpose |
 |---------|-----|---------|
-| `/pf-settings show` | `pf settings show` | Pretty-print all settings |
-| `/pf-settings get <key>` | `pf settings get <key>` | Get value by dot-path |
-| `/pf-settings set <key> <value>` | `pf settings set <key> <value>` | Set value by dot-path |
+| `/pf:settings show` | `pf settings show` | Pretty-print all settings |
+| `/pf:settings get <key>` | `pf settings get <key>` | Get value by dot-path |
+| `/pf:settings set <key> <value>` | `pf settings set <key> <value>` | Set value by dot-path |
 
 ## Config Structure
 

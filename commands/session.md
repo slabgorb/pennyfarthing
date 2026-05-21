@@ -11,7 +11,7 @@ Manage work session lifecycle. Start new stories from the backlog or resume from
 
 ## Commands
 
-### `/pf-session new`
+### `/pf:session new`
 
 Start the next available story from the sprint backlog.
 
@@ -21,7 +21,7 @@ pf session new
 
 Equivalent to `pf sprint work next`. Auto-selects the highest priority story.
 
-### `/pf-session continue [--list] [--story-id ID]`
+### `/pf:session continue [--list] [--story-id ID]`
 
 Resume work from a saved checkpoint after context circuit breaker.
 
@@ -35,8 +35,8 @@ pf session continue --story-id PROJ-12345  # Resume specific story
 
 | Command | Description |
 |---------|-------------|
-| `/pf-session new` | Start next available story |
-| `/pf-session continue` | Resume from checkpoint |
+| `/pf:session new` | Start next available story |
+| `/pf:session continue` | Resume from checkpoint |
 
 ## CLI Equivalent
 
@@ -47,5 +47,5 @@ pf session continue [--list] [--story-id ID]
 
 ## Related
 
-- `/pf-work` — Smart entry point (resumes or starts new)
-- `/pf-sprint work` — Interactive story selection
+- `/pf:work` — Smart entry point (resumes or starts new)
+- `/pf:sprint work` — Interactive story selection

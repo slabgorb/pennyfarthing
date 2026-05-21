@@ -19,7 +19,7 @@ Enable rapid bug fixes without abandoning current story context. Preserves workf
 </when-to-use>
 
 <when-not-to-use>
-- For planned feature work (use `/pf-sprint work`)
+- For planned feature work (use `/pf:sprint work`)
 - For quick maintenance (use `/chore`)
 - For standalone features (use `/standalone`)
 - When not actively working on a story
@@ -201,10 +201,10 @@ When patches complete, state is restored in LIFO order.
 | `/patch` | Implicit | Feature | Feature | Preserved |
 | `/chore` | None | develop | develop | None |
 | `/standalone` | Jira | develop | develop | None |
-| `/pf-sprint work` | Jira + Sprint | develop | develop | Full session |
+| `/pf:sprint work` | Jira + Sprint | develop | develop | Full session |
 
 <related>
 - `/chore` - Quick commits without tracking
 - `/standalone` - Wrap changes into tracked Jira story
-- `/pf-sprint work` - Start planned sprint story
+- `/pf:sprint work` - Start planned sprint story
 </related>

@@ -9,7 +9,7 @@ skills/{skill-name}/SKILL.md
 ```
 
 **Examples:**
-- `skills/pf-sprint/SKILL.md`
+- `skills/pf:sprint/SKILL.md`
 - `skills/testing/SKILL.md`
 - `skills/jira/SKILL.md`
 
@@ -237,10 +237,10 @@ When filtered, only shows epics with matching stories.
 ```xml
 <when>
 - Starting new development work
-- `/pf-session new` is an alias for this command
+- `/pf:session new` is an alias for this command
 Next steps after promote:
 - Review appended YAML in current-sprint.yaml
-- Create Jira epic: `/pf-jira create epic <epic-id>`
+- Create Jira epic: `/pf:jira create epic <epic-id>`
 </when>
 ```
 
@@ -287,7 +287,7 @@ Never manually edit sprint YAML. Use the provided commands.
 
 ## Commands
 
-### `/pf-sprint story add <epic-id> "<title>" <points>`
+### `/pf:sprint story add <epic-id> "<title>" <points>`
 
 Add a new story to an epic.
 
@@ -312,12 +312,12 @@ Confirmation with new story ID and details.
 </output>
 
 <when>
-After creating, use `/pf-sprint story size` for sizing guidelines.
+After creating, use `/pf:sprint story size` for sizing guidelines.
 </when>
 
 ---
 
-### `/pf-sprint story finish <story-id>`
+### `/pf:sprint story finish <story-id>`
 
 Complete a story after PR merge.
 
@@ -359,16 +359,16 @@ pf agent start "sm"
 
 | Command | Script/CLI |
 |---------|------------|
-| `/pf-sprint story add ...` | `sprint story add` |
-| `/pf-sprint story size` | `sprint story size` |
-| `/pf-sprint story finish <id>` | `sprint story finish` |
+| `/pf:sprint story add ...` | `sprint story add` |
+| `/pf:sprint story size` | `sprint story size` |
+| `/pf:sprint story finish <id>` | `sprint story finish` |
 
 ## Related Skills
 
 | Skill | Purpose |
 |-------|---------|
-| `/pf-sprint` | Sprint management |
-| `/pf-jira` | Jira operations |
+| `/pf:sprint` | Sprint management |
+| `/pf:jira` | Jira operations |
 ```
 
 ---
@@ -407,5 +407,5 @@ When updating existing skill files:
 | File | Purpose |
 |------|---------|
 | `guides/taxonomy/xml-tags.md` | Complete XML tag taxonomy |
-| `skills/pf-sprint/SKILL.md` | Reference implementation |
+| `skills/pf:sprint/SKILL.md` | Reference implementation |
 | `skill-registry.yaml` | Skill registration |

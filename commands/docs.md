@@ -11,7 +11,7 @@ Manage domain documentation files. Currently supports updating CLAUDE-*.md domai
 
 ## Commands
 
-### `/pf-docs update`
+### `/pf:docs update`
 
 Update CLAUDE-*.md domain documentation files based on current codebase.
 
@@ -24,5 +24,5 @@ Scans the relevant files for each domain and updates documentation with:
 
 ## Related
 
-- `/pf-help` — Context-aware help
+- `/pf:help` — Context-aware help
 - `/tech-writer` — Technical Writer agent

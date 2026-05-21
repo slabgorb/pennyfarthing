@@ -15,9 +15,9 @@ Read the **[What Is Pennyfarthing?](../guides/what-is-pennyfarthing.md)** refere
 
 Start here:
 
-1. **`/pf-work`** - Smart entry point (resumes existing work or starts new)
-2. **`/pf-session new`** - Start a fresh work session from backlog
-3. **`/pf-health-check`** - Verify your installation is working
+1. **`/pf:work`** - Smart entry point (resumes existing work or starts new)
+2. **`/pf:session new`** - Start a fresh work session from backlog
+3. **`/pf:health-check`** - Verify your installation is working
 
 ### First Time Setup
 
@@ -54,70 +54,70 @@ SM → TEA → Dev → Reviewer → SM (finish)
 
 Commands are organized by resource. Each group is accessible via both slash commands and CLI.
 
-### Sprint — `/pf-sprint` · `pf sprint`
+### Sprint — `/pf:sprint` · `pf sprint`
 
 | Command | Description |
 |---------|-------------|
-| `/pf-sprint` | Show sprint status |
-| `/pf-sprint backlog` | Available stories |
-| `/pf-sprint work [id\|next]` | Start work on a story |
-| `/pf-sprint archive <id>` | Archive completed story |
-| `/pf-sprint plan` | Sprint planning session |
-| `/pf-sprint sync` | Sync work with sprint |
-| `/pf-sprint story [show\|add\|update\|size\|finish]` | Story operations |
-| `/pf-sprint epic [show\|add\|promote\|archive]` | Epic operations |
+| `/pf:sprint` | Show sprint status |
+| `/pf:sprint backlog` | Available stories |
+| `/pf:sprint work [id\|next]` | Start work on a story |
+| `/pf:sprint archive <id>` | Archive completed story |
+| `/pf:sprint plan` | Sprint planning session |
+| `/pf:sprint sync` | Sync work with sprint |
+| `/pf:sprint story [show\|add\|update\|size\|finish]` | Story operations |
+| `/pf:sprint epic [show\|add\|promote\|archive]` | Epic operations |
 
-### Git — `/pf-git` · `pf git`
-
-| Command | Description |
-|---------|-------------|
-| `/pf-git status` | Check all repo status |
-| `/pf-git cleanup` | Organize changes into commits/branches |
-| `/pf-git branches <id>` | Create feature branches from story |
-| `/pf-git release` | Interactive release workflow |
-
-### Session — `/pf-session` · `pf session`
+### Git — `/pf:git` · `pf git`
 
 | Command | Description |
 |---------|-------------|
-| `/pf-session new` | Start next available story |
-| `/pf-session continue` | Resume from checkpoint |
+| `/pf:git status` | Check all repo status |
+| `/pf:git cleanup` | Organize changes into commits/branches |
+| `/pf:git branches <id>` | Create feature branches from story |
+| `/pf:git release` | Interactive release workflow |
 
-### Epic — `/pf-epic` · `pf epic`
-
-| Command | Description |
-|---------|-------------|
-| `/pf-epic start <id>` | Start epic for development |
-| `/pf-epic close <id>` | Close completed epic |
-
-### Jira — `/pf-jira` · `pf jira`
+### Session — `/pf:session` · `pf session`
 
 | Command | Description |
 |---------|-------------|
-| `/pf-jira view <key>` | View issue details |
-| `/pf-jira claim <key>` | Claim issue |
-| `/pf-jira sync <epic-id>` | Sync YAML to Jira |
-| `/pf-jira sync-epic` | Sync epic to Jira |
-| `/pf-jira reconcile` | Report mismatches |
+| `/pf:session new` | Start next available story |
+| `/pf:session continue` | Resume from checkpoint |
 
-### Theme — `/pf-theme` · `pf theme`
+### Epic — `/pf:epic` · `pf epic`
 
 | Command | Description |
 |---------|-------------|
-| `/pf-theme list` | List all themes |
-| `/pf-theme show [name]` | Show theme details |
-| `/pf-theme set <name>` | Set active theme |
-| `/pf-theme create <name>` | Create custom theme |
-| `/pf-theme maker` | Interactive theme wizard |
+| `/pf:epic start <id>` | Start epic for development |
+| `/pf:epic close <id>` | Close completed epic |
 
-### Workflow — `/pf-workflow` · `pf workflow`
+### Jira — `/pf:jira` · `pf jira`
 
 | Command | Description |
 |---------|-------------|
-| `/pf-workflow` | List available workflows |
-| `/pf-workflow show` | Current workflow details |
-| `/pf-workflow start <name>` | Start stepped workflow |
-| `/pf-workflow resume` | Resume workflow |
+| `/pf:jira view <key>` | View issue details |
+| `/pf:jira claim <key>` | Claim issue |
+| `/pf:jira sync <epic-id>` | Sync YAML to Jira |
+| `/pf:jira sync-epic` | Sync epic to Jira |
+| `/pf:jira reconcile` | Report mismatches |
+
+### Theme — `/pf:theme` · `pf theme`
+
+| Command | Description |
+|---------|-------------|
+| `/pf:theme list` | List all themes |
+| `/pf:theme show [name]` | Show theme details |
+| `/pf:theme set <name>` | Set active theme |
+| `/pf:theme create <name>` | Create custom theme |
+| `/pf:theme maker` | Interactive theme wizard |
+
+### Workflow — `/pf:workflow` · `pf workflow`
+
+| Command | Description |
+|---------|-------------|
+| `/pf:workflow` | List available workflows |
+| `/pf:workflow show` | Current workflow details |
+| `/pf:workflow start <name>` | Start stepped workflow |
+| `/pf:workflow resume` | Resume workflow |
 
 ## Agents (11)
 
@@ -139,33 +139,33 @@ Commands are organized by resource. Each group is accessible via both slash comm
 
 | Command | Description |
 |---------|-------------|
-| `/pf-work` | Smart entry point — resume or start new |
-| `/pf-check` | Run quality gates before handoff |
-| `/pf-prime` | Load project context at agent activation |
-| `/pf-health-check` | Check installation health |
-| `/pf-setup` | First-time project setup |
-| `/pf-chore` | Quick commit for small changes |
-| `/pf-patch` | Bug fix during active story work |
-| `/pf-standalone` | Wrap changes into standalone story |
-| `/pf-ci run` | Detect and run CI locally |
-| `/pf-docs update` | Update domain documentation |
+| `/pf:work` | Smart entry point — resume or start new |
+| `/pf:check` | Run quality gates before handoff |
+| `/pf:prime` | Load project context at agent activation |
+| `/pf:health-check` | Check installation health |
+| `/pf:setup` | First-time project setup |
+| `/pf:chore` | Quick commit for small changes |
+| `/pf:patch` | Bug fix during active story work |
+| `/pf:standalone` | Wrap changes into standalone story |
+| `/pf:ci run` | Detect and run CI locally |
+| `/pf:docs update` | Update domain documentation |
 
 ## Benchmarking
 
 | Command | Description |
 |---------|-------------|
-| `/pf-benchmark` | Compare performance against baseline |
-| `/pf-benchmark-control` | Create control baseline |
-| `/pf-job-fair` | Discover best characters per role |
-| `/pf-solo` | Single agent rubric scoring |
+| `/pf:benchmark` | Compare performance against baseline |
+| `/pf:benchmark-control` | Create control baseline |
+| `/pf:job-fair` | Discover best characters per role |
+| `/pf:solo` | Single agent rubric scoring |
 
 ## Creative
 
 | Command | Description |
 |---------|-------------|
-| `/pf-party-mode` | Creative brainstorming with all agents |
-| `/pf-brainstorming` | Structured problem-solving session |
-| `/pf-retro` | Sprint retrospective |
+| `/pf:party-mode` | Creative brainstorming with all agents |
+| `/pf:brainstorming` | Structured problem-solving session |
+| `/pf:retro` | Sprint retrospective |
 
 </commands>
 
@@ -188,7 +188,7 @@ Pennyfarthing agents adopt personas from themed character sets. There are **102 
 | `breaking-bad` | Breaking Bad characters |
 | `battlestar-galactica` | Battlestar Galactica characters |
 
-Run `/pf-theme list` to see all 102 available themes.
+Run `/pf:theme list` to see all 102 available themes.
 
 </themes>
 
@@ -199,11 +199,11 @@ Run `/pf-theme list` to see all 102 available themes.
 Based on your current state, here's what you might need:
 
 ### No Active Session
-- Use `/pf-work` or `/pf-session new` to begin
-- Check `/pf-health-check` if first time
+- Use `/pf:work` or `/pf:session new` to begin
+- Check `/pf:health-check` if first time
 
 ### In Dev Phase
-- Run `/pf-check` before handoff
+- Run `/pf:check` before handoff
 - Then `/reviewer` for code review
 
 ### In Review Phase
@@ -211,8 +211,8 @@ Based on your current state, here's what you might need:
 - Then `/sm` to finish the story
 
 ### Between Stories
-- `/pf-work` to pick up next story
-- `/pf-sprint plan` for planning session
+- `/pf:work` to pick up next story
+- `/pf:sprint plan` for planning session
 
 </context-aware>
 

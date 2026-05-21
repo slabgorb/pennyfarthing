@@ -6,7 +6,7 @@ description: |
 args: "[recipe] [args...]"
 ---
 
-# /pf-just - Project Task Runner
+# /pf:just - Project Task Runner
 
 <run>
 Main commands:
@@ -23,7 +23,7 @@ Main commands:
 
 ## Commands
 
-### `/pf-just` or `/pf-just --list`
+### `/pf:just` or `/pf:just --list`
 
 List all available recipes.
 
@@ -36,7 +36,7 @@ just --list
 
 ---
 
-### `/pf-just build`
+### `/pf:just build`
 
 Build all packages in the monorepo.
 
@@ -49,7 +49,7 @@ just build
 
 ---
 
-### `/pf-just test`
+### `/pf:just test`
 
 Run tests for all packages.
 
@@ -62,7 +62,7 @@ just test
 
 ---
 
-### `/pf-just test-gui`
+### `/pf:just test-gui`
 
 Run tests for the GUI package only.
 
@@ -75,7 +75,7 @@ just test-gui
 
 ---
 
-### `/pf-just test-gui-watch`
+### `/pf:just test-gui-watch`
 
 Run GUI tests in watch mode for TDD workflow.
 
@@ -88,7 +88,7 @@ just test-gui-watch
 
 ---
 
-### `/pf-just install`
+### `/pf:just install`
 
 Install dependencies for all packages.
 
@@ -105,7 +105,7 @@ just install
 
 The `gui` recipe is the main entry point for Frame GUI operations.
 
-### `/pf-just gui` (default)
+### `/pf:just gui` (default)
 
 Launch Frame GUI in web dev mode with hot reload.
 
@@ -118,7 +118,7 @@ just gui
 
 ---
 
-### `/pf-just gui here`
+### `/pf:just gui here`
 
 Launch Frame GUI for the current directory.
 
@@ -131,7 +131,7 @@ just gui here
 
 ---
 
-### `/pf-just gui server`
+### `/pf:just gui server`
 
 Start Frame GUI web server only (no browser).
 
@@ -144,7 +144,7 @@ just gui server
 
 ---
 
-### `/pf-just gui verbose`
+### `/pf:just gui verbose`
 
 Enable debug logging for troubleshooting.
 
@@ -160,7 +160,7 @@ just gui here verbose
 
 ---
 
-### `/pf-just gui dir=<path>`
+### `/pf:just gui dir=<path>`
 
 Launch Frame GUI for a specific project directory.
 
@@ -176,7 +176,7 @@ just gui dir=/path/to/project
 
 ---
 
-### `/pf-just gui setup`
+### `/pf:just gui setup`
 
 First-time setup for Frame GUI development.
 
@@ -192,7 +192,7 @@ just gui setup
 
 ---
 
-### `/pf-just gui doctor`
+### `/pf:just gui doctor`
 
 Diagnose Frame GUI setup issues.
 
@@ -211,7 +211,7 @@ just gui doctor --fix
 
 ---
 
-### `/pf-just gui build`
+### `/pf:just gui build`
 
 Build Frame GUI TypeScript only.
 
@@ -224,7 +224,7 @@ just gui build
 
 ---
 
-### `/pf-just gui clean`
+### `/pf:just gui clean`
 
 Remove Frame GUI build artifacts.
 
@@ -241,7 +241,7 @@ just gui clean
 
 Generate AI portraits for persona themes.
 
-### `/pf-just portraits <theme>`
+### `/pf:just portraits <theme>`
 
 Generate portraits for a specific theme.
 
@@ -257,7 +257,7 @@ just portraits arthurian-mythos
 
 ---
 
-### `/pf-just portraits-all`
+### `/pf:just portraits-all`
 
 Generate portraits for all themes.
 
@@ -270,7 +270,7 @@ just portraits-all
 
 ---
 
-### `/pf-just portraits-preview <theme>`
+### `/pf:just portraits-preview <theme>`
 
 Preview portraits for a theme without saving.
 

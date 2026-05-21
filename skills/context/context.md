@@ -8,7 +8,7 @@ description: |
 args: "create epic {id} | create story {id} [--no-tandem] [--tandem architect|ux]"
 ---
 
-# /pf-context — Context Document Creation
+# /pf:context — Context Document Creation
 
 Create structured context documents that downstream agents (TEA, Dev) consume during implementation.
 
@@ -16,8 +16,8 @@ Create structured context documents that downstream agents (TEA, Dev) consume du
 
 | Command | Purpose |
 |---------|---------|
-| `/pf-context create epic {id}` | Create epic context document |
-| `/pf-context create story {id}` | Create story context document |
+| `/pf:context create epic {id}` | Create epic context document |
+| `/pf:context create story {id}` | Create story context document |
 
 ## Create Epic Context
 
@@ -149,7 +149,7 @@ ls sprint/context/context-epic-{N}.md
 If the parent epic context file is missing, **fail with a clear error message:**
 
 > Error: Parent epic context `sprint/context/context-epic-{N}.md` does not exist.
-> Run `/pf-context create epic {N}` first to create the epic context.
+> Run `/pf:context create epic {N}` first to create the epic context.
 
 Do not proceed with story context creation if the parent epic context is missing.
 
@@ -244,7 +244,7 @@ Report any validation errors. If the validator is not yet installed, skip this s
 ### Create story context for story 130-2
 
 ```
-/pf-context create story 130-2
+/pf:context create story 130-2
 ```
 
 Reads story 130-2 metadata, validates epic 130 context exists, loads template, fills sections from epic context and story ACs, writes to `sprint/context/context-story-130-2.md` with `parent: context-epic-130.md` frontmatter.
@@ -252,7 +252,7 @@ Reads story 130-2 metadata, validates epic 130 context exists, loads template, f
 ### Create epic context for epic 130
 
 ```
-/pf-context create epic 130
+/pf:context create epic 130
 ```
 
 Reads epic 130 metadata, finds planning docs (PRD, ADR-0029), fills template, writes to `sprint/context/context-epic-130.md`.
@@ -260,7 +260,7 @@ Reads epic 130 metadata, finds planning docs (PRD, ADR-0029), fills template, wr
 ### Create epic context by Jira key
 
 ```
-/pf-context create epic PROJ-15685
+/pf:context create epic PROJ-15685
 ```
 
 Resolves Jira key to ordinal ID, then follows the same flow.

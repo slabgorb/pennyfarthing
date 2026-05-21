@@ -5,7 +5,7 @@ description: |
 args: "[list|show [name]|set <name>|start <name> [--mode <mode>]|resume [name]|status|check|fix-phase]"
 ---
 
-# /pf-workflow - Workflow Management
+# /pf:workflow - Workflow Management
 
 Pennyfarthing uses YAML-defined workflows to control agent sequences. The default TDD workflow (SM > TEA > Dev > Reviewer) can be customized or replaced.
 
@@ -15,13 +15,13 @@ Pennyfarthing uses YAML-defined workflows to control agent sequences. The defaul
 
 | Command | CLI | Purpose |
 |---------|-----|---------|
-| `/pf-workflow` or `/pf-workflow list` | `pf workflow list` | List all workflows |
-| `/pf-workflow show [name]` | `pf workflow show [name]` | Show workflow details |
-| `/pf-workflow set <name>` | Edit session file `**Workflow:**` line | Switch workflow mid-session |
-| `/pf-workflow start <name>` | `pf workflow start <name> [--mode M]` | Start stepped workflow |
-| `/pf-workflow resume [name]` | `pf workflow resume [name]` | Resume interrupted workflow |
-| `/pf-workflow status` | `pf workflow status` | Show stepped workflow progress |
-| `/pf-workflow fix-phase <id> <phase>` | `pf workflow fix-phase <id> <phase> [--dry-run]` | Repair session phase |
+| `/pf:workflow` or `/pf:workflow list` | `pf workflow list` | List all workflows |
+| `/pf:workflow show [name]` | `pf workflow show [name]` | Show workflow details |
+| `/pf:workflow set <name>` | Edit session file `**Workflow:**` line | Switch workflow mid-session |
+| `/pf:workflow start <name>` | `pf workflow start <name> [--mode M]` | Start stepped workflow |
+| `/pf:workflow resume [name]` | `pf workflow resume [name]` | Resume interrupted workflow |
+| `/pf:workflow status` | `pf workflow status` | Show stepped workflow progress |
+| `/pf:workflow fix-phase <id> <phase>` | `pf workflow fix-phase <id> <phase> [--dry-run]` | Repair session phase |
 | Check workflow state | `pf workflow check [--json]` | Current story, phase, state |
 | Check phase owner | `pf workflow phase-check <workflow> <phase>` | Which agent owns a phase |
 | Get workflow type | `pf workflow type <workflow>` | phased/stepped/procedural |

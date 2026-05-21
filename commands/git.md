@@ -11,7 +11,7 @@ Manage git operations across all configured repos. Consolidates repository statu
 
 ## Commands
 
-### `/pf-git snapshot`
+### `/pf:git snapshot`
 
 Create safety branches and commit all dirty changes across all repos. Use before risky operations (rebases, branch switches) to ensure nothing is lost.
 
@@ -27,7 +27,7 @@ pf git snapshot                          # snapshot/orchestrator-2026-03-08
 pf git snapshot --label benchmark-work   # snapshot/orchestrator-benchmark-work-2026-03-08
 ```
 
-### `/pf-git status`
+### `/pf:git status`
 
 Check git status of all project repos.
 
@@ -37,7 +37,7 @@ pf git status [--brief]
 
 Shows branch, uncommitted changes, and ahead/behind status for each configured repo.
 
-### `/pf-git cleanup`
+### `/pf:git cleanup`
 
 Organize uncommitted changes into proper commits and branches.
 
@@ -49,7 +49,7 @@ pf workflow start git-cleanup
 
 Then follow each step's instructions. Use `pf workflow complete-step git-cleanup` to advance between steps. The workflow handles multi-repo analysis, change categorization, branch creation, commits, and push.
 
-### `/pf-git branches <story-id>`
+### `/pf:git branches <story-id>`
 
 Create feature branches in both repos from a story.
 
@@ -57,7 +57,7 @@ Create feature branches in both repos from a story.
 pf git branches 86-3
 ```
 
-### `/pf-git release`
+### `/pf:git release`
 
 Interactive release with verification gates.
 
@@ -71,11 +71,11 @@ Starts the release stepped workflow — an 11-step process with gates at each st
 
 | Command | Description |
 |---------|-------------|
-| `/pf-git status` | Check all repo status |
-| `/pf-git snapshot` | Safety-branch + commit all dirty repos |
-| `/pf-git cleanup` | Organize changes into commits/branches |
-| `/pf-git branches <id>` | Create feature branches from story |
-| `/pf-git release` | Interactive release workflow |
+| `/pf:git status` | Check all repo status |
+| `/pf:git snapshot` | Safety-branch + commit all dirty repos |
+| `/pf:git cleanup` | Organize changes into commits/branches |
+| `/pf:git branches <id>` | Create feature branches from story |
+| `/pf:git release` | Interactive release workflow |
 
 ## CLI Equivalent
 
@@ -90,5 +90,5 @@ pf git release
 
 ## Related
 
-- `/pf-chore` — Quick commit for small changes
-- `/pf-standalone` — Wrap changes into standalone story + PR
+- `/pf:chore` — Quick commit for small changes
+- `/pf:standalone` — Wrap changes into standalone story + PR

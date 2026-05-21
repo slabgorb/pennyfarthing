@@ -6,7 +6,7 @@ description: |
 args: "[generate] <story-id> [--dry-run] [--corrections TEXT]"
 ---
 
-# /pf-demo - Demo Artifact Generator
+# /pf:demo - Demo Artifact Generator
 
 <run>
 Main commands:
@@ -23,7 +23,7 @@ Main commands:
 
 ## Commands
 
-### `/pf-demo generate <story-id>`
+### `/pf:demo generate <story-id>`
 
 Generate demo artifacts (narrative, demo script, metadata, diagrams) for a completed story.
 
@@ -51,7 +51,7 @@ pf demo generate 42-1
 
 ---
 
-### `/pf-demo generate <story-id> --dry-run`
+### `/pf:demo generate <story-id> --dry-run`
 
 Preview what would be generated without writing any files.
 
@@ -67,7 +67,7 @@ pf demo generate 42-1 --dry-run
 
 ---
 
-### `/pf-demo generate <story-id> --corrections "feedback"`
+### `/pf:demo generate <story-id> --corrections "feedback"`
 
 Regenerate artifacts with developer feedback to refine the output.
 

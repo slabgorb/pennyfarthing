@@ -148,11 +148,11 @@ bind Space display-popup -E -w 80% -h 75% -d "#{pane_current_path}"
 
 # Prefix+a → agent selection menu
 bind a display-menu -T "Agents" -x C -y C \
-    "Scrum Master"    s "send-keys '/pf-sm' Enter" \
-    "Developer"       d "send-keys '/pf-dev' Enter" \
-    "Test Engineer"   t "send-keys '/pf-tea' Enter" \
-    "Reviewer"        r "send-keys '/pf-reviewer' Enter" \
-    "Architect"       A "send-keys '/pf-architect' Enter" \
+    "Scrum Master"    s "send-keys '/pf:sm' Enter" \
+    "Developer"       d "send-keys '/pf:dev' Enter" \
+    "Test Engineer"   t "send-keys '/pf:tea' Enter" \
+    "Reviewer"        r "send-keys '/pf:reviewer' Enter" \
+    "Architect"       A "send-keys '/pf:architect' Enter" \
     ""                "" "" \
-    "DevOps"          D "send-keys '/pf-devops' Enter" \
-    "Product Manager" p "send-keys '/pf-pm' Enter"
+    "DevOps"          D "send-keys '/pf:devops' Enter" \
+    "Product Manager" p "send-keys '/pf:pm' Enter"

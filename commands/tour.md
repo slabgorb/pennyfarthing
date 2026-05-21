@@ -51,8 +51,8 @@ Then follow the stepped workflow, starting with the first step as defined in the
 </execution>
 
 <related>
-- `/pf-setup` - Initial project setup
-- `/pf-sprint` - Sprint management
-- `/pf-workflow` - View available workflows
-- `/pf-help` - Context-aware help
+- `/pf:setup` - Initial project setup
+- `/pf:sprint` - Sprint management
+- `/pf:workflow` - View available workflows
+- `/pf:help` - Context-aware help
 </related>

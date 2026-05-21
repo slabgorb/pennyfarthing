@@ -11,7 +11,7 @@ Run CI locally by detecting the project's CI system and executing appropriate co
 
 ## Commands
 
-### `/pf-ci run`
+### `/pf:ci run`
 
 Run CI locally (auto-detects CI system).
 
@@ -37,4 +37,4 @@ $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/run-ci.sh --dry-run
 
 ## Related
 
-- `/pf-check` — Run quality gates before handoff
+- `/pf:check` — Run quality gates before handoff

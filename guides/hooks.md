@@ -74,7 +74,7 @@ Warns agents when context usage is high. Outputs a warning at 60% usage and a cr
 
 **Location:** `pf hooks context-breaker`
 
-Hard stop when context reaches 80% (configurable via `CRITICAL_THRESHOLD`). Unlike `pf hooks context-warning`, this **blocks tool execution** (exit 2). Auto-saves the active agent to a checkpoint so `/pf-session continue` can restore it with FULL tier context.
+Hard stop when context reaches 80% (configurable via `CRITICAL_THRESHOLD`). Unlike `pf hooks context-warning`, this **blocks tool execution** (exit 2). Auto-saves the active agent to a checkpoint so `/pf:session continue` can restore it with FULL tier context.
 
 #### pf hooks schema-validation
 

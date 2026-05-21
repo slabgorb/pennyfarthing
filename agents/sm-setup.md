@@ -24,13 +24,13 @@ model: haiku
 <gate>
 ## Research Steps
 
-- [ ] Use `/pf-sprint backlog` for initial backlog scan:
+- [ ] Use `/pf:sprint backlog` for initial backlog scan:
   ```bash
   pf sprint backlog
   ```
-- [ ] Use `/pf-jira` skill to enrich with Jira status/assignee:
-  - `/pf-jira search "project=PROJ AND sprint in openSprints()"` - Get all sprint stories
-  - `/pf-jira view {JIRA_KEY}` - Check individual story details
+- [ ] Use `/pf:jira` skill to enrich with Jira status/assignee:
+  - `/pf:jira search "project=PROJ AND sprint in openSprints()"` - Get all sprint stories
+  - `/pf:jira view {JIRA_KEY}` - Check individual story details
 - [ ] Check context availability
 - [ ] Check dependencies
 - [ ] Output report with recommendations
@@ -288,7 +288,7 @@ WORKFLOW_TYPE=$(pf workflow type "{WORKFLOW}")
 | Workflow Type | Routing |
 |---------------|---------|
 | `phased` | Return `next_agent` = first agent in workflow (tea/dev/orchestrator) |
-| `stepped` | Return `next_agent` = null, `start_command` = `/pf-workflow start {WORKFLOW}` |
+| `stepped` | Return `next_agent` = null, `start_command` = `/pf:workflow start {WORKFLOW}` |
 </workflow-type-detection>
 
 <output>
@@ -325,11 +325,11 @@ SETUP_RESULT:
   workflow: "{WORKFLOW}"
   workflow_type: "stepped"
   next_agent: null
-  start_command: "/pf-workflow start {WORKFLOW}"
+  start_command: "/pf:workflow start {WORKFLOW}"
 
   next_steps:
     - "Setup complete. This is a STEPPED workflow."
-    - "DO NOT run exit protocol. Tell user to run: /pf-workflow start {WORKFLOW}"
+    - "DO NOT run exit protocol. Tell user to run: /pf:workflow start {WORKFLOW}"
     - "Session file ready at: {session_file}"
 ```
 

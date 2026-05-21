@@ -48,7 +48,7 @@ Validators: `sprint`, `schema`, `agent`, `workflow`, `skill-command`, `tandem-aw
 ### Interactive Mode (Workflow — for onboarding/troubleshooting)
 
 ```
-/pf-workflow start installation-check
+/pf:workflow start installation-check
 ```
 
 Walks through guided verification with AI-assisted explanation and remediation.

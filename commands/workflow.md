@@ -12,10 +12,10 @@ Pass any arguments provided by the user to the skill commands.
 
 | Command | Action |
 |---------|--------|
-| `/pf-workflow` | List all available workflows |
-| `/pf-workflow list` | List all available workflows |
-| `/pf-workflow show [name]` | Show workflow details (current session if no name) |
-| `/pf-workflow set <name>` | Switch to a different workflow mid-session |
-| `/pf-workflow start <name> [--mode <mode>]` | Start a stepped workflow |
-| `/pf-workflow resume [name]` | Resume an interrupted stepped workflow |
-| `/pf-workflow status` | Show current stepped workflow progress |
+| `/pf:workflow` | List all available workflows |
+| `/pf:workflow list` | List all available workflows |
+| `/pf:workflow show [name]` | Show workflow details (current session if no name) |
+| `/pf:workflow set <name>` | Switch to a different workflow mid-session |
+| `/pf:workflow start <name> [--mode <mode>]` | Start a stepped workflow |
+| `/pf:workflow resume [name]` | Resume an interrupted stepped workflow |
+| `/pf:workflow status` | Show current stepped workflow progress |

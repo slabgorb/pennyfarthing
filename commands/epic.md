@@ -11,7 +11,7 @@ Manage epic lifecycle. Start an epic by moving it to the current sprint and gene
 
 ## Commands
 
-### `/pf-epic start <epic-id>`
+### `/pf:epic start <epic-id>`
 
 Start an epic — move to current sprint and generate technical context.
 
@@ -28,7 +28,7 @@ pf epic start epic-79
 5. Generate tech context to `sprint/context/context-epic-{N}.md`
 </workflow>
 
-### `/pf-epic close <epic-id>`
+### `/pf:epic close <epic-id>`
 
 Close an epic — verify completion, update status, and archive context.
 
@@ -51,8 +51,8 @@ pf epic close epic-79
 
 | Command | Description |
 |---------|-------------|
-| `/pf-epic start <id>` | Start epic for development |
-| `/pf-epic close <id>` | Close completed epic |
+| `/pf:epic start <id>` | Start epic for development |
+| `/pf:epic close <id>` | Close completed epic |
 
 ## CLI Equivalent
 
@@ -63,5 +63,5 @@ pf epic close <epic-id>
 
 ## Related
 
-- `/pf-sprint` — Sprint management
+- `/pf:sprint` — Sprint management
 - `/sm` — Scrum Master for epic tech context
