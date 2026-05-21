@@ -25,6 +25,8 @@ from pathlib import Path
 import pytest
 import yaml
 
+from pf.common.config import get_dist_root
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -32,10 +34,8 @@ import yaml
 
 @pytest.fixture
 def dist_root() -> Path:
-    """Resolve the pennyfarthing-dist root."""
-    here = Path(__file__).resolve()
-    # tests/ -> pf/ -> src/ -> pennyfarthing-dist/
-    return here.parent.parent.parent.parent
+    """Resolve the plugin root (content root)."""
+    return get_dist_root()
 
 
 @pytest.fixture

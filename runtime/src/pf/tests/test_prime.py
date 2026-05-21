@@ -1278,11 +1278,14 @@ class TestGetPhaseSkills:
     def test_returns_none_when_workflow_file_missing(self, fake_project: Path) -> None:
         assert get_phase_skills("does-not-exist", "red", fake_project) is None
 
-    def test_returns_none_when_required_is_empty(self, fake_project: Path) -> None:
-        self._write_workflow(
-            fake_project,
-            "sdd",
-            """
+    def test_returns_none_when_required_is_empty(self, fake_project: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        # Use CLAUDE_PLUGIN_ROOT so get_dist_root() reads from fake_project,
+        # not the real plugin root (which has sdd.yaml with non-empty required).
+        (fake_project / "agents").mkdir(exist_ok=True)
+        (fake_project / "workflows").mkdir(exist_ok=True)
+        monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(fake_project))
+        import textwrap as _tw
+        (fake_project / "workflows" / "sdd.yaml").write_text(_tw.dedent("""
             workflow:
               name: sdd
               phases:
@@ -1290,8 +1293,7 @@ class TestGetPhaseSkills:
                   agent: tea
                   skills:
                     required: []
-            """,
-        )
+        """).lstrip())
         assert get_phase_skills("sdd", "red", fake_project) is None
 
 

@@ -16,13 +16,13 @@ from pathlib import Path
 
 import pytest
 
+from pf.common.config import get_dist_root
+
 
 @pytest.fixture
 def dist_root() -> Path:
-    """Resolve the pennyfarthing-dist root."""
-    here = Path(__file__).resolve()
-    # tests/ -> pf/ -> src/ -> pennyfarthing-dist/
-    return here.parent.parent.parent.parent
+    """Resolve the plugin root (content root)."""
+    return get_dist_root()
 
 
 @pytest.fixture
@@ -35,9 +35,9 @@ def step_11(dist_root: Path) -> str:
 
 @pytest.fixture
 def tour_command(dist_root: Path) -> str:
-    """Read pf-tour.md command file content."""
-    path = dist_root / "commands" / "pf-tour.md"
-    assert path.exists(), f"pf-tour.md command file not found at {path}"
+    """Read tour.md command file content (formerly pf-tour.md)."""
+    path = dist_root / "commands" / "tour.md"
+    assert path.exists(), f"tour.md command file not found at {path}"
     return path.read_text()
 
 
@@ -103,9 +103,9 @@ class TestTourCommandFile:
     """AC5: A /guided-tour command file exists for independent invocation."""
 
     def test_tour_command_exists(self, dist_root: Path) -> None:
-        """pf-tour.md must exist in commands/."""
-        path = dist_root / "commands" / "pf-tour.md"
-        assert path.exists(), "pf-tour.md command file must exist"
+        """tour.md must exist in commands/ (formerly pf-tour.md)."""
+        path = dist_root / "commands" / "tour.md"
+        assert path.exists(), "tour.md command file must exist"
 
     def test_tour_command_references_workflow(self, tour_command: str) -> None:
         """Command must reference the guided-tour workflow."""

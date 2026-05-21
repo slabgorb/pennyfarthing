@@ -172,27 +172,28 @@ def test_no_company_brand_string_in_framework_redistributables():
 
 
 def test_skip_dirs_actually_exist_in_walk():
-    """Sanity check: the walk visits files inside ``pennyfarthing-dist/``.
+    """Sanity check: the walk visits content files at the repo root.
 
     Guards against an environmental fluke where REPO_ROOT resolves to a directory
     that happens to contain >100 files but does NOT include the redistributable
     tree — in which case the other tests would pass vacuously while the actual
-    redistributables are unscanned. Counting files specifically under
-    ``pennyfarthing-dist/`` makes that failure mode impossible.
+    redistributables are unscanned. After the plugin migration, content dirs
+    (agents/, gates/, workflows/, etc.) live directly at the repo root.
     """
-    # First, confirm the walk reaches the redistributable subtree at all.
-    assert (REPO_ROOT / "pennyfarthing-dist").is_dir(), (
-        f"REPO_ROOT={REPO_ROOT} does not contain pennyfarthing-dist/ — "
+    # First, confirm the walk reaches the redistributable content subtree.
+    # Post-migration: content lives at the plugin root (no pennyfarthing-dist/).
+    assert (REPO_ROOT / "agents").is_dir(), (
+        f"REPO_ROOT={REPO_ROOT} does not contain agents/ — "
         f"hygiene scan rooted incorrectly."
     )
 
-    # Second, confirm files INSIDE pennyfarthing-dist/ are actually iterated.
+    # Second, confirm files INSIDE agents/ are actually iterated.
     dist_files = [
         path for path, _content in _iter_text_files(REPO_ROOT)
-        if "pennyfarthing-dist" in path.parts
+        if "agents" in path.parts
     ]
     assert len(dist_files) > 10, (
-        f"Walk only visited {len(dist_files)} files under pennyfarthing-dist/ — "
+        f"Walk only visited {len(dist_files)} files under agents/ — "
         f"hygiene scan is not actually covering the redistributable tree even "
         f"though REPO_ROOT={REPO_ROOT} resolves to a directory containing it."
     )

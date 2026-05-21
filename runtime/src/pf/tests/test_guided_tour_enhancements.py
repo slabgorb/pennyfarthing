@@ -25,8 +25,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-# Resolve paths relative to the pennyfarthing-dist directory
-DIST_DIR = Path(__file__).resolve().parent.parent.parent.parent  # pennyfarthing-dist/
+from pf.common.config import get_dist_root
+
+# Resolve paths relative to the plugin root (content root)
+DIST_DIR = get_dist_root()
 WORKFLOW_DIR = DIST_DIR / "workflows" / "guided-tour"
 WORKFLOW_YAML = WORKFLOW_DIR / "workflow.yaml"
 STEPS_DIR = WORKFLOW_DIR / "steps"
@@ -186,53 +188,53 @@ class TestFullAgentRoster:
 
     def test_step_03_lists_eleven_agents(self, step_03_content: str) -> None:
         """AC2: Step 03 agent table should list all 11 agents."""
-        # Count rows in the agent table (lines with | that contain /pf-)
-        agent_rows = re.findall(r"\|.*?/pf-\w+.*?\|", step_03_content)
+        # Count rows in the agent table (lines with | that contain /pf: prefix)
+        agent_rows = re.findall(r"\|.*?/pf[:-]\w+.*?\|", step_03_content)
         assert len(agent_rows) >= 11, f"Step 03 lists {len(agent_rows)} agents — should list all 11"
 
     def test_step_03_has_sm(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-sm."""
-        assert "/pf-sm" in step_03_content, "Step 03 missing /pf-sm agent"
+        """AC2: Step 03 should list /pf:sm or /pf-sm."""
+        assert "/pf:sm" in step_03_content or "/pf-sm" in step_03_content, "Step 03 missing sm agent"
 
     def test_step_03_has_tea(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-tea."""
-        assert "/pf-tea" in step_03_content, "Step 03 missing /pf-tea agent"
+        """AC2: Step 03 should list /pf:tea or /pf-tea."""
+        assert "/pf:tea" in step_03_content or "/pf-tea" in step_03_content, "Step 03 missing tea agent"
 
     def test_step_03_has_dev(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-dev."""
-        assert "/pf-dev" in step_03_content, "Step 03 missing /pf-dev agent"
+        """AC2: Step 03 should list /pf:dev or /pf-dev."""
+        assert "/pf:dev" in step_03_content or "/pf-dev" in step_03_content, "Step 03 missing dev agent"
 
     def test_step_03_has_reviewer(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-reviewer."""
-        assert "/pf-reviewer" in step_03_content, "Step 03 missing /pf-reviewer agent"
+        """AC2: Step 03 should list /pf:reviewer or /pf-reviewer."""
+        assert "/pf:reviewer" in step_03_content or "/pf-reviewer" in step_03_content, "Step 03 missing reviewer agent"
 
     def test_step_03_has_architect(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-architect."""
-        assert "/pf-architect" in step_03_content, "Step 03 missing /pf-architect agent"
+        """AC2: Step 03 should list /pf:architect or /pf-architect."""
+        assert "/pf:architect" in step_03_content or "/pf-architect" in step_03_content, "Step 03 missing architect agent"
 
     def test_step_03_has_pm(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-pm."""
-        assert "/pf-pm" in step_03_content, "Step 03 missing /pf-pm agent"
+        """AC2: Step 03 should list /pf:pm or /pf-pm."""
+        assert "/pf:pm" in step_03_content or "/pf-pm" in step_03_content, "Step 03 missing pm agent"
 
     def test_step_03_has_tech_writer(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-tech-writer."""
-        assert "/pf-tech-writer" in step_03_content, "Step 03 missing /pf-tech-writer agent"
+        """AC2: Step 03 should list /pf:tech-writer or /pf-tech-writer."""
+        assert "/pf:tech-writer" in step_03_content or "/pf-tech-writer" in step_03_content, "Step 03 missing tech-writer agent"
 
     def test_step_03_has_ux_designer(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-ux-designer."""
-        assert "/pf-ux-designer" in step_03_content, "Step 03 missing /pf-ux-designer agent"
+        """AC2: Step 03 should list /pf:ux-designer or /pf-ux-designer."""
+        assert "/pf:ux-designer" in step_03_content or "/pf-ux-designer" in step_03_content, "Step 03 missing ux-designer agent"
 
     def test_step_03_has_devops(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-devops."""
-        assert "/pf-devops" in step_03_content, "Step 03 missing /pf-devops agent"
+        """AC2: Step 03 should list /pf:devops or /pf-devops."""
+        assert "/pf:devops" in step_03_content or "/pf-devops" in step_03_content, "Step 03 missing devops agent"
 
     def test_step_03_has_ba(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-ba."""
-        assert "/pf-ba" in step_03_content, "Step 03 missing /pf-ba agent"
+        """AC2: Step 03 should list /pf:ba or /pf-ba."""
+        assert "/pf:ba" in step_03_content or "/pf-ba" in step_03_content, "Step 03 missing ba agent"
 
     def test_step_03_has_orchestrator(self, step_03_content: str) -> None:
-        """AC2: Step 03 should list /pf-orchestrator."""
-        assert "/pf-orchestrator" in step_03_content, "Step 03 missing /pf-orchestrator agent"
+        """AC2: Step 03 should list /pf:orchestrator or /pf-orchestrator."""
+        assert "/pf:orchestrator" in step_03_content or "/pf-orchestrator" in step_03_content, "Step 03 missing orchestrator agent"
 
 
 # ============================================================================

@@ -396,6 +396,10 @@ class TestCacheLocation:
 
     def test_cache_path_under_pennyfarthing(self, tmp_path):
         """get_cache_path must return a path under .pennyfarthing/.cache/healthscore/."""
+        # Create a .pennyfarthing marker with config.local.yaml so _find_project_root resolves
+        pf_dir = tmp_path / ".pennyfarthing"
+        pf_dir.mkdir()
+        (pf_dir / "config.local.yaml").write_text("theme: default\n")
         cache_dir = get_cache_path(tmp_path)
         path_str = str(cache_dir)
         assert ".pennyfarthing" in path_str
