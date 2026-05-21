@@ -45,11 +45,8 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["pennyfarthing-dist/src"]
+where = ["runtime/src"]
 include = ["pf*"]
-
-[tool.setuptools.package-data]
-"pf._dist" = ["**/*.md", "**/*.yaml", "**/*.yml", "**/*.json", "**/*.sh", "**/*.txt", "**/*.toml"]
 
 [tool.ruff]
 line-length = 100
@@ -60,7 +57,7 @@ select = ["E", "F", "W", "I", "B", "C4", "UP"]
 ignore = ["E501"]
 
 [tool.pytest.ini_options]
-testpaths = ["pennyfarthing-dist/src/pf/tests"]
+testpaths = ["runtime/src/pf/tests"]
 python_files = ["test_*.py"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
