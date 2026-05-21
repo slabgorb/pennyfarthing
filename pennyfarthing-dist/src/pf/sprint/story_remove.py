@@ -55,9 +55,13 @@ def remove_story(
 
     if epic is not None:
         epic["stories"].remove(story)
-    else:
-        # Story lives in standalone_stories or top-level stories — location names it
+    elif location in ("standalone_stories", "stories"):
         data[location].remove(story)
+    else:
+        return {
+            "success": False,
+            "error": f"Internal: unexpected location '{location}' for top-level story",
+        }
 
     result = validate_full_sprint(data)
     if not result.valid:

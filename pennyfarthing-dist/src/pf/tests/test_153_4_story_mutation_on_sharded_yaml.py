@@ -253,10 +253,11 @@ class TestRemoveStoryOnShardedYaml:
         self, sharded_sprint_dir: Path
     ) -> None:
         """Removing one story must not touch siblings in the same shard."""
-        remove_story(
+        result = remove_story(
             sprint_path=sharded_sprint_dir / "current-sprint.yaml",
             story_id="151-3",
         )
+        assert result["success"] is True, result
         sibling = _read_shard_story(
             sharded_sprint_dir, "epic-PROJ-17079.yaml", "151-4"
         )
@@ -409,6 +410,12 @@ class TestJiraKeyLookupOnShardedStory:
             f"transition_story should locate shard story via Jira key, got: {result}"
         )
 
+        # Verify the status flip actually persisted to the shard file
+        story = _read_shard_story(
+            sharded_project / "sprint", "epic-PROJ-17079.yaml", "151-3"
+        )
+        assert story["status"] == "in_review"
+
     def test_cli_update_by_jira_key_persists_to_shard(
         self, runner: CliRunner, sharded_sprint_dir: Path
     ) -> None:
@@ -524,6 +531,12 @@ class TestBugReproEndToEnd:
         )
         assert r5.exit_code == 0, f"story update failed: {r5.output}"
 
+        # Final state: confirm the update persisted to the shard file
+        story = _read_shard_story(sprint_dir, "epic-E.yaml", "E-1")
+        assert story["status"] == "in_review", (
+            f"Update reported exit 0 but shard status is {story.get('status')!r}"
+        )
+
 
 # =============================================================================
 # AC6 — Shared loader contract (anti-regression)
@@ -599,6 +612,55 @@ class TestFinishStorySuccessOnShardedYaml:
         # Verify the shard file got updated, not just an in-memory dict
         story = _read_shard_story(
             sharded_project / "sprint", "epic-PROJ-17079.yaml", "151-3"
+        )
+        assert story["status"] == "done"
+        assert "completed" in story
+
+    @patch("pf.sprint.story_finish._run")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_finish_by_jira_key_from_backlog_completes_ceremony(
+        self,
+        mock_pr_mode: MagicMock,
+        mock_run: MagicMock,
+        sharded_project: Path,
+    ) -> None:
+        """Regression for the Reviewer-found bug: finish_story was reaching into
+        the old `find_epic(data, parts[0])` pattern at line ~241 to read the
+        current status before deciding which bridge transitions to fire. For a
+        Jira-keyed story_id (e.g. PROJ-*), parts[0] is "PROJ" and never matches
+        any epic id, so current_status silently defaulted to "in_progress" —
+        skipping the backlog→in_progress bridge for stories actually still at
+        backlog. The subsequent in_progress→in_review transition then failed
+        from-state validation, and the final →done failed too.
+
+        After migrating that lookup to `find_story_in_data`, finishing a
+        backlog-status shard story by Jira key must complete the ceremony and
+        land the story at `done`.
+        """
+        mock_run.return_value = MagicMock(returncode=0, stdout="")
+
+        # 151-4 is at status=backlog in the shard fixture and has jira=PROJ-17083
+        # finish_story looks for the session at .session/{story_id}-session.md,
+        # so when invoked with a Jira key the session must be at that name
+        session_dir = sharded_project / ".session"
+        (session_dir / "PROJ-17083-session.md").write_text(
+            "---\n"
+            'story_id: "151-4"\n'
+            'jira_key: "PROJ-17083"\n'
+            'epic: "PROJ-17079"\n'
+            'workflow: "tdd"\n'
+            "---\n\n# Story 151-4\n"
+        )
+
+        result = finish_story(sharded_project, "PROJ-17083")
+
+        assert result["success"] is True, (
+            f"finish_story by Jira key starting from backlog must complete: {result}"
+        )
+
+        # Verify the shard story ended up at done
+        story = _read_shard_story(
+            sharded_project / "sprint", "epic-PROJ-17079.yaml", "151-4"
         )
         assert story["status"] == "done"
         assert "completed" in story
