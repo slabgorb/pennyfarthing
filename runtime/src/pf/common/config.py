@@ -42,12 +42,15 @@ def get_project_root(start_dir: Path | None = None) -> Path:
     # Layer 2: Marker detection (pennyfarthing-dist first, then .pennyfarthing)
     current = (Path(start_dir) if start_dir else Path.cwd()).resolve()
 
-    # First pass: prefer pennyfarthing-dist/ (framework repo)
-    # Must be a real directory, not a symlink (symlinks indicate consumer context)
+    # First pass: prefer pennyfarthing-dist/ (legacy framework-repo layout) or
+    # .claude-plugin/ (plugin repo root). Must be a real directory, not a
+    # symlink (symlinks indicate consumer context).
     check = current
     while check != check.parent:
         candidate = check / "pennyfarthing-dist"
         if candidate.is_dir() and not candidate.is_symlink():
+            return check
+        if (check / ".claude-plugin").is_dir():
             return check
         check = check.parent
 

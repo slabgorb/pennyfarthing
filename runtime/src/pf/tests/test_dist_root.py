@@ -14,7 +14,7 @@ from unittest.mock import patch
 import pytest
 
 from pf import paths
-from pf.common.config import get_dist_root
+from pf.common.config import get_dist_root, get_project_root
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -742,3 +742,30 @@ class TestPluginRootResolution:
         assert result is not None
         assert (result / "agents").is_dir()
         assert (result / "commands").is_dir()
+
+
+class TestProjectRootPluginMarker:
+    """get_project_root recognizes a .claude-plugin/ dir as a root marker.
+
+    pennyfarthing-dist/ (the legacy framework-repo marker) is being deleted,
+    so the plugin repo root is identified by its .claude-plugin/ directory.
+    """
+
+    def test_claude_plugin_marker(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("PROJECT_ROOT", raising=False)
+        monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+        (tmp_path / ".claude-plugin").mkdir()
+        nested = tmp_path / "runtime" / "src"
+        nested.mkdir(parents=True)
+        assert get_project_root(nested) == tmp_path.resolve()
+
+    def test_pennyfarthing_dot_dir_fallback_still_works(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The legacy consumer fallback (.pennyfarthing/) must remain functional.
+        monkeypatch.delenv("PROJECT_ROOT", raising=False)
+        monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+        (tmp_path / ".pennyfarthing").mkdir()
+        nested = tmp_path / "sub"
+        nested.mkdir()
+        assert get_project_root(nested) == tmp_path.resolve()
