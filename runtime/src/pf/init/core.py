@@ -583,19 +583,37 @@ def init_project(
 
 
 def _find_pf_commands(dist_root: Path) -> list[Path]:
-    """Find all pf-*.md command files in dist_root/commands/."""
+    """Find all command .md files in dist_root/commands/.
+
+    In the plugin model, commands are named without a pf- prefix (e.g. sm.md,
+    tea.md). Falls back to the legacy pf-*.md glob for backward compat.
+    """
     commands_dir = dist_root / "commands"
     if not commands_dir.is_dir():
         return []
-    return sorted(f for f in commands_dir.glob("pf-*.md") if f.is_file())
+    # Legacy pf-*.md pattern (old model)
+    pf_prefixed = sorted(f for f in commands_dir.glob("pf-*.md") if f.is_file())
+    if pf_prefixed:
+        return pf_prefixed
+    # Plugin model: all *.md files in commands/
+    return sorted(f for f in commands_dir.glob("*.md") if f.is_file())
 
 
 def _find_pf_skills(dist_root: Path) -> list[Path]:
-    """Find all pf-* skill directories in dist_root/skills/."""
+    """Find all skill directories in dist_root/skills/.
+
+    In the plugin model, skills are named without a pf- prefix (e.g. judge/,
+    peloton/). Falls back to pf-* prefix for backward compat.
+    """
     skills_dir = dist_root / "skills"
     if not skills_dir.is_dir():
         return []
-    return sorted(d for d in skills_dir.iterdir() if d.is_dir() and d.name.startswith("pf-"))
+    # Legacy pf-* prefix (old model)
+    pf_prefixed = sorted(d for d in skills_dir.iterdir() if d.is_dir() and d.name.startswith("pf-"))
+    if pf_prefixed:
+        return pf_prefixed
+    # Plugin model: all subdirectories in skills/
+    return sorted(d for d in skills_dir.iterdir() if d.is_dir())
 
 
 def _write_manifest(target_dir: Path, commands_copied: int, skills_copied: int) -> None:

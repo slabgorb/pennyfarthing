@@ -27,8 +27,9 @@ def _default_schema_path() -> Path:
         if candidate.exists():
             return candidate
 
-    # Fallback: relative to this file (source layout only)
-    return Path(__file__).resolve().parents[3] / "schemas" / "context-schema.yaml"
+    # Fallback: relative to this file — config.py is at runtime/src/pf/common/config.py,
+    # so parents[4] from validator.py (runtime/src/pf/context/validator.py) is the plugin root.
+    return Path(__file__).resolve().parents[4] / "schemas" / "context-schema.yaml"
 
 
 def load_schema(schema_path: Path) -> dict:

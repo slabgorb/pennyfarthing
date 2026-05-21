@@ -20,9 +20,9 @@ TEMPLATE_REL = "workflows/guided-tour/templates/epic-tour-practice.yaml"
 
 
 def _find_dist_root() -> Path:
-    """Find the pennyfarthing-dist root from this module's location."""
-    # tour/ -> pf/ -> src/ -> pennyfarthing-dist/
-    return Path(__file__).resolve().parent.parent.parent.parent
+    """Find the plugin content root (agents/, workflows/, etc.)."""
+    from pf.common.config import get_dist_root
+    return get_dist_root()
 
 
 def _register_epic_in_index(sprint_dir: Path) -> None:
