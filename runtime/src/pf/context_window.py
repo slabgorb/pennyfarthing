@@ -17,12 +17,7 @@ try:
 except ImportError:
     HAS_YAML = False
 
-try:
-    from pf import paths as _pf_paths
-
-    HAS_PF_PATHS = True
-except ImportError:
-    HAS_PF_PATHS = False
+from pf import paths
 
 
 @dataclass
@@ -127,8 +122,8 @@ class ContextResult:
 def load_config(project_dir: str | None = None) -> ContextConfig:
     """Load context configuration from config files.
 
-    Checks .pennyfarthing/config.local.yaml first, falls back to
-    .claude/settings.local.json for legacy support.
+    Checks config.local.yaml (via pf.paths.config_path) first, falls
+    back to .claude/settings.local.json for legacy support.
     """
     config = ContextConfig()
     project_dir = (
@@ -138,12 +133,8 @@ def load_config(project_dir: str | None = None) -> ContextConfig:
         or os.getcwd()
     )
 
-    # Try .pennyfarthing/config.local.yaml first
-    yaml_path = (
-        _pf_paths.config_path(Path(project_dir))
-        if HAS_PF_PATHS
-        else Path(project_dir) / ".pennyfarthing" / "config.local.yaml"
-    )
+    # Try config.local.yaml first
+    yaml_path = paths.config_path(Path(project_dir))
     if HAS_YAML and yaml_path.exists():
         try:
             with open(yaml_path) as f:
