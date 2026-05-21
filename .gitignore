@@ -75,6 +75,7 @@ worktrees/
 .pennyfarthing/
 .env
 uv.lock
+!runtime/uv.lock
 
 
 # Pennyfarthing runtime
