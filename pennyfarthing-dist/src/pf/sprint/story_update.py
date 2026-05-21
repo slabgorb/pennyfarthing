@@ -15,7 +15,7 @@ from typing import Any
 import click
 
 from pf.jira.client import get_client, is_jira_enabled, map_status_to_jira
-from pf.sprint.loader import find_epic, find_story
+from pf.sprint.loader import find_story_in_data
 from pf.sprint.status_normalize import normalize_status
 from pf.sprint.validator import VALID_STORY_STATUSES, validate_full_sprint
 from pf.sprint.yaml_io import read_sprint, write_sprint
@@ -72,23 +72,7 @@ def update_story(
 
     data = read_sprint(sprint_path)
 
-    # Fast path: try epic-format lookup (e.g., "76-4")
-    story = None
-    parts = story_id.split("-")
-    if len(parts) >= 2:
-        epic = find_epic(data, parts[0])
-        if epic is not None:
-            story = find_story(epic, story_id)
-
-    # Fallback: search standalone_stories and top-level stories
-    if story is None:
-        for section in ("standalone_stories", "stories"):
-            for s in data.get(section, []):
-                if isinstance(s, dict) and (s.get("id") == story_id or s.get("jira") == story_id):
-                    story = s
-                    break
-            if story:
-                break
+    _epic, story, _location = find_story_in_data(data, story_id)
 
     if story is None:
         return {

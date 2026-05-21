@@ -12,7 +12,7 @@ from typing import Any
 
 import click
 
-from pf.sprint.loader import find_epic, find_story
+from pf.sprint.loader import find_story_in_data
 from pf.sprint.validator import validate_full_sprint
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
@@ -37,59 +37,36 @@ def remove_story(
     """
     data = read_sprint(sprint_path)
 
-    # Search epic stories
-    parts = story_id.split("-")
-    if len(parts) >= 2:
-        epic = find_epic(data, parts[0])
-        if epic is not None:
-            story = find_story(epic, story_id)
-            if story is not None:
-                epic_id = str(epic.get("id", parts[0]))
-                details = {
-                    "id": story.get("id"),
-                    "title": story.get("title"),
-                    "status": story.get("status"),
-                    "location": f"epic {epic_id}",
-                }
-                if dry_run:
-                    return {"success": True, "dry_run": True, "story": details}
-                epic["stories"].remove(story)
-                result = validate_full_sprint(data)
-                if not result.valid:
-                    return {
-                        "success": False,
-                        "error": f"Validation failed after removal: {result.errors}",
-                    }
-                write_sprint(sprint_path, data)
-                return {"success": True, "story": details}
+    epic, story, location = find_story_in_data(data, story_id)
+    if story is None:
+        return {
+            "success": False,
+            "error": f"Story '{story_id}' not found in epics, standalone_stories, or stories",
+        }
 
-    # Search standalone_stories and top-level stories
-    for section in ("standalone_stories", "stories"):
-        stories_list = data.get(section, [])
-        for i, s in enumerate(stories_list):
-            if isinstance(s, dict) and (s.get("id") == story_id or s.get("jira") == story_id):
-                details = {
-                    "id": s.get("id"),
-                    "title": s.get("title"),
-                    "status": s.get("status"),
-                    "location": section,
-                }
-                if dry_run:
-                    return {"success": True, "dry_run": True, "story": details}
-                stories_list.pop(i)
-                result = validate_full_sprint(data)
-                if not result.valid:
-                    return {
-                        "success": False,
-                        "error": f"Validation failed after removal: {result.errors}",
-                    }
-                write_sprint(sprint_path, data)
-                return {"success": True, "story": details}
-
-    return {
-        "success": False,
-        "error": f"Story '{story_id}' not found in epics, standalone_stories, or stories",
+    details = {
+        "id": story.get("id"),
+        "title": story.get("title"),
+        "status": story.get("status"),
+        "location": location,
     }
+    if dry_run:
+        return {"success": True, "dry_run": True, "story": details}
+
+    if epic is not None:
+        epic["stories"].remove(story)
+    else:
+        # Story lives in standalone_stories or top-level stories — location names it
+        data[location].remove(story)
+
+    result = validate_full_sprint(data)
+    if not result.valid:
+        return {
+            "success": False,
+            "error": f"Validation failed after removal: {result.errors}",
+        }
+    write_sprint(sprint_path, data)
+    return {"success": True, "story": details}
 
 
 @click.command("remove")
