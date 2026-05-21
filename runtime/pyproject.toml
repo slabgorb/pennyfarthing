@@ -22,7 +22,8 @@ test = [
   "pytest>=8.0",
   "pytest-mock>=3.14",
   "pytest-asyncio>=1.0",
-  "build>=1.0"
+  "build>=1.0",
+  "python-pptx>=1.0"
 ]
 
 [project.scripts]
