@@ -92,11 +92,22 @@ class TestResolveGateExtensionsFound:
         assert result["success"] is True
         assert result["data"] == ["gates/rustfmt-check", "gates/license-check"]
 
-    def test_extension_in_dist(self, project: Path) -> None:
-        """Extension gate found in pennyfarthing-dist/gates/ fallback."""
-        _write_gate(project / "pennyfarthing-dist" / "gates" / "shared-check.md", "shared-check")
+    def test_extension_in_dist(self, project: Path, monkeypatch, tmp_path: Path) -> None:
+        """Extension gate found in plugin root gates/ fallback."""
+        # In the plugin model, the dist root is the plugin root (CLAUDE_PLUGIN_ROOT).
+        # Point CLAUDE_PLUGIN_ROOT to a temp dir so get_dist_root() uses it.
+        plugin_root = tmp_path / "plugin-root"
+        (plugin_root / "agents").mkdir(parents=True)  # marker dir for get_dist_root
+        (plugin_root / "commands").mkdir()
+        gates_dir = plugin_root / "gates"
+        gates_dir.mkdir()
+        _write_gate(gates_dir / "shared-check.md", "shared-check")
+        monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin_root))
         _write_config(project, {"gates": {"extensions": {"dev-exit": ["shared-check"]}}})
 
+        # Reload get_dist_root to pick up the env var
+        from importlib import import_module
+        config_mod = import_module("pf.common.config")
         result = resolve_gate_extensions("dev-exit", project_root=project)
         assert result["success"] is True
         assert result["data"] == ["gates/shared-check"]
@@ -236,7 +247,17 @@ class TestResolveGateWithExtensions:
         }
         (wf_dir / "test-wf.yaml").write_text(yaml.dump(wf))
 
-    def test_no_extensions_returns_none(self, project: Path) -> None:
+    def _make_isolated_plugin_root(self, tmp_path: Path, monkeypatch) -> Path:
+        """Create an isolated plugin root with no extra gates to prevent bleed-in."""
+        plugin_root = tmp_path / "_plugin_root"
+        (plugin_root / "agents").mkdir(parents=True)
+        (plugin_root / "commands").mkdir()
+        (plugin_root / "gates").mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin_root))
+        return plugin_root
+
+    def test_no_extensions_returns_none(self, project: Path, monkeypatch, tmp_path: Path) -> None:
+        self._make_isolated_plugin_root(tmp_path, monkeypatch)
         self._make_workflow(project)
         _write_gate(project / ".pennyfarthing" / "gates" / "dev-exit.md", "dev-exit")
 
@@ -244,7 +265,8 @@ class TestResolveGateWithExtensions:
         assert result["status"] == "ready"
         assert result["gate_extensions"] is None
 
-    def test_with_extensions(self, project: Path) -> None:
+    def test_with_extensions(self, project: Path, monkeypatch, tmp_path: Path) -> None:
+        plugin_root = self._make_isolated_plugin_root(tmp_path, monkeypatch)
         self._make_workflow(project)
         _write_gate(project / ".pennyfarthing" / "gates" / "dev-exit.md", "dev-exit")
         _write_gate(project / ".pennyfarthing" / "gates" / "rustfmt-check.md", "rustfmt-check")

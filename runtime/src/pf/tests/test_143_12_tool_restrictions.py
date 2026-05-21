@@ -308,8 +308,9 @@ class TestRealNativeAgents:
     @pytest.fixture()
     def native_dir(self) -> Path | None:
         """Find the real native agents directory."""
+        from pf.common.config import get_dist_root
         candidates = [
-            Path(__file__).resolve().parents[3] / "agents" / "native",
+            get_dist_root() / "agents" / "native",
         ]
         for d in candidates:
             if d.is_dir():

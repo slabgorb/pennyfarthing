@@ -15,6 +15,7 @@ Acceptance Criteria:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -25,27 +26,44 @@ from pf.handoff.gate_file import resolve_gate_file
 # Fixtures: Project structure
 # ---------------------------------------------------------------------------
 
+GATE_CONTENT = (
+    '<gate name="tests-pass" model="haiku">\n'
+    "  <purpose>Verify tests pass</purpose>\n"
+    "  <pass>Check tests</pass>\n"
+    "  <fail>Report failures</fail>\n"
+    "</gate>\n"
+)
+
 
 @pytest.fixture
-def project(tmp_path: Path) -> Path:
+def isolated_plugin_root(tmp_path: Path, monkeypatch) -> Path:
+    """Create an isolated plugin root (no real gates) and point CLAUDE_PLUGIN_ROOT to it."""
+    plugin_root = tmp_path / "_plugin"
+    (plugin_root / "agents").mkdir(parents=True)
+    (plugin_root / "commands").mkdir()
+    (plugin_root / "gates").mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin_root))
+    return plugin_root
+
+
+@pytest.fixture
+def project(tmp_path: Path, isolated_plugin_root: Path) -> Path:
     """Create a minimal project structure with .pennyfarthing/ and gates."""
-    (tmp_path / ".pennyfarthing").mkdir()
-    (tmp_path / ".pennyfarthing" / "gates").mkdir()
-    (tmp_path / "pennyfarthing-dist" / "gates").mkdir(parents=True)
-    return tmp_path
+    proj = tmp_path / "project"
+    (proj / ".pennyfarthing").mkdir(parents=True)
+    (proj / ".pennyfarthing" / "gates").mkdir()
+    # For backward-compat with tests that use "pennyfarthing-dist" path reference,
+    # also keep this dir (some tests assert on the path string).
+    (proj / "pennyfarthing-dist" / "gates").mkdir(parents=True)
+    return proj
 
 
 @pytest.fixture
-def project_with_builtin_gate(project: Path) -> Path:
-    """Project with a gate file in pennyfarthing-dist/gates/ only."""
-    gate = project / "pennyfarthing-dist" / "gates" / "tests-pass.md"
-    gate.write_text(
-        '<gate name="tests-pass" model="haiku">\n'
-        "  <purpose>Verify tests pass</purpose>\n"
-        "  <pass>Check tests</pass>\n"
-        "  <fail>Report failures</fail>\n"
-        "</gate>\n"
-    )
+def project_with_builtin_gate(project: Path, isolated_plugin_root: Path) -> Path:
+    """Project with a gate file in the plugin root gates/ (built-in fallback)."""
+    # In the plugin model, built-in gates are at the plugin root.
+    gate = isolated_plugin_root / "gates" / "tests-pass.md"
+    gate.write_text(GATE_CONTENT)
     return project
 
 
@@ -64,10 +82,10 @@ def project_with_local_gate(project: Path) -> Path:
 
 
 @pytest.fixture
-def project_with_both_gates(project: Path) -> Path:
-    """Project with same gate in both locations (local should win)."""
-    # Built-in version
-    builtin = project / "pennyfarthing-dist" / "gates" / "tests-pass.md"
+def project_with_both_gates(project: Path, isolated_plugin_root: Path) -> Path:
+    """Project with same gate in both plugin root and local .pennyfarthing/ (local should win)."""
+    # Built-in version in plugin root
+    builtin = isolated_plugin_root / "gates" / "tests-pass.md"
     builtin.write_text(
         '<gate name="tests-pass" model="haiku">\n'
         "  <purpose>Built-in version</purpose>\n"
@@ -75,7 +93,7 @@ def project_with_both_gates(project: Path) -> Path:
         "  <fail>Built-in fail</fail>\n"
         "</gate>\n"
     )
-    # Local override
+    # Local override in project .pennyfarthing/gates/
     local = project / ".pennyfarthing" / "gates" / "tests-pass.md"
     local.write_text(
         '<gate name="tests-pass" model="haiku">\n'
@@ -168,10 +186,11 @@ class TestResolveGateFileOrder:
         assert ".pennyfarthing/gates/custom-gate.md" in result["path"]
 
     def test_builtin_gate_found_as_fallback(self, project_with_builtin_gate: Path) -> None:
-        """AC2: Gate in pennyfarthing-dist/gates/ found when not in local."""
+        """AC2: Gate in plugin root gates/ found when not in local."""
         result = resolve_gate_file("tests-pass", project_root=project_with_builtin_gate)
         assert result["status"] == "found"
-        assert "pennyfarthing-dist/gates/tests-pass.md" in result["path"]
+        # In the plugin model, built-in gates are at the CLAUDE_PLUGIN_ROOT/gates/
+        assert "gates/tests-pass.md" in result["path"]
 
     def test_local_overrides_builtin(self, project_with_both_gates: Path) -> None:
         """AC2: When same gate exists in both, local wins."""
