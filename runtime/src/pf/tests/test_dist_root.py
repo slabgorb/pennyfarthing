@@ -354,24 +354,35 @@ class TestGetDistRootFromFile:
 class TestGetDistRootNotFound:
     """AC1: Behavior when pennyfarthing-dist/ is not found anywhere."""
 
-    def test_returns_none_when_not_found(self, bare_project: Path) -> None:
-        """When no pennyfarthing-dist/ is in the project tree, get_dist_root()
-        falls back to the bundled pip package (_dist).  When the bundled
-        package is populated (is_populated() returns True), a non-None path
-        is returned; when it is absent, None is returned.  Either outcome is
-        acceptable — the important invariant is that the function never raises.
-        """
-        result = get_dist_root(project_root=bare_project)
-        # Result is either None (no fallback) or the bundled _dist path
-        assert result is None or result.is_dir()
+    def test_returns_none_when_no_content_anywhere(self, tmp_path: Path, monkeypatch) -> None:
+        """get_dist_root() returns None when BOTH resolution branches miss.
 
-    def test_returns_none_for_empty_directory(self, tmp_path: Path) -> None:
-        """For an empty directory with no pennyfarthing-dist/ tree,
-        get_dist_root() either returns None or falls back to the bundled
-        pip package.  Either is acceptable.
+        This exercises the genuine None return (the function's documented
+        failure contract). We force both candidates to lack ``agents/``:
+
+        1. ``CLAUDE_PLUGIN_ROOT`` is unset, so the env branch is skipped.
+        2. The module ``__file__`` is redirected so ``parents[4]`` lands in an
+           empty tmp dir with no ``agents/`` or ``commands/``.
+
+        Without (2), the __file__-relative fallback finds the real worktree
+        content and the None branch is never reached.
         """
-        result = get_dist_root(project_root=tmp_path)
-        assert result is None or result.is_dir()
+        import pf.common.config as config
+
+        monkeypatch.delenv("CLAUDE_PLUGIN_ROOT", raising=False)
+        # parents[4] must equal tmp_path: __file__ sits 5 levels deep.
+        # parents[0]=common, [1]=pf, [2]=src, [3]=runtime, [4]=tmp_path.
+        fake_pkg = tmp_path / "runtime" / "src" / "pf" / "common"
+        fake_pkg.mkdir(parents=True)
+        fake_file = fake_pkg / "config.py"
+        fake_file.write_text("")
+        monkeypatch.setattr(config, "__file__", str(fake_file))
+
+        # Sanity: the redirected fallback root is content-less.
+        assert Path(fake_file).resolve().parents[4] == tmp_path.resolve()
+        assert not (tmp_path / "agents").exists()
+
+        assert config.get_dist_root() is None
 
     def test_resolves_when_no_explicit_root_given(self, tmp_path: Path, monkeypatch) -> None:
         """When no project_root is given, should resolve via CLAUDE_PLUGIN_ROOT or __file__."""
@@ -382,23 +393,6 @@ class TestGetDistRootNotFound:
         result = get_dist_root()  # No project_root argument
         assert result is not None
         assert (result / "agents").is_dir()
-
-    def test_returns_none_when_no_content_found(self, tmp_path: Path, monkeypatch) -> None:
-        """Should return None (not raise) when neither env nor __file__ path has content.
-
-        Docstring promises None return on failure. We force both paths to miss by:
-        - Setting CLAUDE_PLUGIN_ROOT to an empty dir (no agents/)
-        - Monkey-patching Path.__file__ resolution would be complex, so we rely on
-          the env path being checked first and falling through when empty.
-          If the __file__-relative path also has content (worktree), we accept non-None.
-        """
-        # Empty dir: env candidate has no agents/, so env path is skipped.
-        # The __file__-relative fallback will still find real content if the
-        # worktree root has agents/ — which is expected post-migration.
-        # This test verifies the function never raises regardless.
-        monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
-        result = get_dist_root()  # Should return None or real plugin root, not raise
-        assert result is None or result.is_dir()
 
 
 # ---------------------------------------------------------------------------
