@@ -12,8 +12,10 @@ import re
 import subprocess
 from pathlib import Path
 
-# pennyfarthing-dist root (src/pf/tests -> src/pf -> src -> pennyfarthing-dist)
-_DIST = Path(__file__).resolve().parents[3]
+from pf.common.config import get_dist_root
+
+# Plugin root (content root)
+_DIST = get_dist_root()
 _SCRIPTS = _DIST / "scripts"
 
 
@@ -67,11 +69,23 @@ _DEAD_SCRIPT_RE = re.compile(
     r"backlog\.sh|get-workflow-type\.py|check-context\.sh|validate-subagent-frontmatter\.sh|validate-agent-schema\.sh"
 )
 
-# Files that are allowed to reference the dead scripts (test files, sprint context)
+# Files that are allowed to reference the dead scripts (test files, docs, resilience tests)
 _ALLOWED_REFERRERS = {
     "src/pf/tests/test_dead_scripts.py",
     "src/pf/tests/test_wrapper_removal.py",
     "src/pf/tests/test_141_20_agent_validator.py",
+    # plugin-root-relative paths (migration moved runtime/ under plugin root)
+    "runtime/src/pf/tests/test_dead_scripts.py",
+    "runtime/src/pf/tests/test_wrapper_removal.py",
+    "runtime/src/pf/tests/test_141_20_agent_validator.py",
+    # Legacy docs and resilience tests that reference check-context.sh
+    "docs/TROUBLESHOOTING.md",
+    "docs/DEBUGGING-SESSIONS.md",
+    "docs/REFLECTOR-SYSTEM.md",
+    "docs/adr/0011-reflector-marker-consolidation.md",
+    "docs/archive/HANDOFF-script-paths.md",
+    "tests/resilience/test_context_warnings.sh",
+    "tests/resilience/test_context_circuit_breaker.sh",
 }
 
 

@@ -247,7 +247,8 @@ components:
 @pytest.fixture
 def schema_path() -> Path:
     """Return path to the real context schema file."""
-    return Path(__file__).resolve().parents[3] / "schemas" / "context-schema.yaml"
+    from pf.common.config import get_dist_root
+    return get_dist_root() / "schemas" / "context-schema.yaml"
 
 
 @pytest.fixture
@@ -699,11 +700,19 @@ class TestContextFileValidation:
 class TestContextSourceValidation:
     """validate_context_sources must check all schema-referenced sources."""
 
-    def test_valid_project_sources(self, schema_path: Path) -> None:
-        """Project with valid context sources should pass."""
-        # Use the real project root
-        root = Path(__file__).resolve().parents[4]  # pennyfarthing-orchestrator
-        result = validate_context_sources(root, schema_path)
+    def test_valid_project_sources(self, schema_path: Path, tmp_path: Path) -> None:
+        """Project with valid context sources should check at least one component."""
+        # Build a minimal project with the source files the schema expects.
+        # The schema references .pennyfarthing/guides/agent-behavior.md among others.
+        pf_dir = tmp_path / ".pennyfarthing" / "guides"
+        pf_dir.mkdir(parents=True)
+        (pf_dir / "agent-behavior.md").write_text("# Agent Behavior\n## Critical\n## Exit\n")
+        (tmp_path / ".pennyfarthing" / "repos.yaml").write_text("repos: []\n")
+        sprint_dir = tmp_path / "sprint"
+        sprint_dir.mkdir()
+        (sprint_dir / "current-sprint.yaml").write_text("sprint:\n  id: test-sprint\n")
+
+        result = validate_context_sources(tmp_path, schema_path)
 
         # At minimum, should check components and report
         assert result.components_checked > 0

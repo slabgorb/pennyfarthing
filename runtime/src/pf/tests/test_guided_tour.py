@@ -26,9 +26,10 @@ import yaml
 from click.testing import CliRunner
 
 from pf.cli import cli
+from pf.common.config import get_dist_root
 
-# Resolve paths relative to the pennyfarthing-dist directory
-DIST_DIR = Path(__file__).resolve().parent.parent.parent.parent  # pennyfarthing-dist/
+# Resolve paths relative to the plugin root (content root)
+DIST_DIR = get_dist_root()
 WORKFLOW_DIR = DIST_DIR / "workflows" / "guided-tour"
 WORKFLOW_YAML = WORKFLOW_DIR / "workflow.yaml"
 STEPS_DIR = WORKFLOW_DIR / "steps"

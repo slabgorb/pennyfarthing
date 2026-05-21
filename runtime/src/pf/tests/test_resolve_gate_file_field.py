@@ -274,7 +274,8 @@ class TestTddWorkflowMigration:
     @pytest.fixture
     def tdd_yaml(self) -> dict:
         """Load the actual tdd.yaml from pennyfarthing-dist."""
-        tdd_path = Path(__file__).resolve().parents[3] / "workflows" / "tdd.yaml"
+        from pf.common.config import get_dist_root
+        tdd_path = get_dist_root() / "workflows" / "tdd.yaml"
         assert tdd_path.exists(), f"tdd.yaml not found at {tdd_path}"
         return yaml.safe_load(tdd_path.read_text())
 
@@ -352,7 +353,8 @@ class TestResolveGateWithRealTddYaml:
     @pytest.fixture
     def real_project(self, tmp_path: Path) -> Path:
         """Create a project that uses the actual tdd.yaml from pennyfarthing-dist."""
-        tdd_source = Path(__file__).resolve().parents[3] / "workflows" / "tdd.yaml"
+        from pf.common.config import get_dist_root
+        tdd_source = get_dist_root() / "workflows" / "tdd.yaml"
         assert tdd_source.exists(), f"tdd.yaml not found at {tdd_source}"
 
         workflows_dir = tmp_path / ".pennyfarthing" / "workflows"

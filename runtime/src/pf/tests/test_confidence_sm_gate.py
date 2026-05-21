@@ -25,6 +25,7 @@ from pathlib import Path
 
 import pytest
 
+from pf.common.config import get_dist_root
 from pf.handoff.gate_file import resolve_gate_file
 from pf.handoff.gate_runner import parse_gate_file
 
@@ -34,14 +35,7 @@ from pf.handoff.gate_runner import parse_gate_file
 
 GATE_NAME = "confidence"
 
-# The gate file lives in pennyfarthing-dist/gates/ relative to the framework root
-# In the dogfooding context, the project root is the orchestrator, so we need
-# to resolve paths relative to this test file.
-_THIS_DIR = Path(__file__).resolve().parent
-# src/pf/tests -> src/pf -> src -> pennyfarthing-dist (project root)
-_DIST_ROOT = _THIS_DIR.parents[2]
-# pennyfarthing-dist -> pennyfarthing (framework root)
-_FRAMEWORK_ROOT = _DIST_ROOT.parent
+_DIST_ROOT = get_dist_root()
 _GATE_FILE = _DIST_ROOT / "gates" / f"{GATE_NAME}.md"
 
 
@@ -85,12 +79,12 @@ class TestGateFileExists:
     def test_gate_discoverable(self, gate_path: Path) -> None:
         """AC1: Gate is discoverable via resolve_gate_file()."""
         # Use the framework root which has pennyfarthing-dist/gates/
-        result = resolve_gate_file(GATE_NAME, project_root=_FRAMEWORK_ROOT)
+        result = resolve_gate_file(GATE_NAME, project_root=None)
         assert result["status"] == "found", f"Gate not discoverable: {result.get('error')}"
 
     def test_gate_discoverable_with_prefix(self, gate_path: Path) -> None:
         """AC1: Gate discoverable with gates/ prefix."""
-        result = resolve_gate_file(f"gates/{GATE_NAME}", project_root=_FRAMEWORK_ROOT)
+        result = resolve_gate_file(f"gates/{GATE_NAME}", project_root=None)
         assert result["status"] == "found"
 
 

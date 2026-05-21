@@ -24,11 +24,13 @@ from pathlib import Path
 
 import pytest
 
+from pf.common.config import get_dist_root
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-PENNYFARTHING_DIST = Path(__file__).resolve().parents[3]  # pennyfarthing-dist/
+PENNYFARTHING_DIST = get_dist_root()
 GUIDE_PATH = PENNYFARTHING_DIST / "guides" / "spec-authority.md"
 
 AUTHORITY_LEVELS = [

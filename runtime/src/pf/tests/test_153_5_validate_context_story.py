@@ -61,8 +61,8 @@ def runner() -> CliRunner:
 @pytest.fixture
 def tea_agent_md() -> Path:
     """Path to the TEA agent definition (source of truth for refs)."""
-    here = Path(__file__).resolve()
-    return here.parents[3] / "agents" / "tea.md"
+    from pf.common.config import get_dist_root
+    return get_dist_root() / "agents" / "tea.md"
 
 
 @pytest.fixture

@@ -18,12 +18,14 @@ from pathlib import Path
 
 import pytest
 
+from pf.common.config import get_dist_root
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 
-_REPO = Path(__file__).resolve().parents[3]  # pennyfarthing-dist/
-_SKILL_MD = _REPO / "skills" / "pf-judge" / "judge.md"
+_REPO = get_dist_root()
+_SKILL_MD = _REPO / "skills" / "judge" / "judge.md"
 _ANCHORS_MD = _REPO / "guides" / "rubric-anchors.md"
 
 DIMENSIONS = ["correctness", "depth", "quality", "persona"]

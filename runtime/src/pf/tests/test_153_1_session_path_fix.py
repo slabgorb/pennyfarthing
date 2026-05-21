@@ -27,6 +27,8 @@ from pathlib import Path
 
 import pytest
 
+from pf.common.config import get_dist_root
+
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -175,10 +177,8 @@ class TestCanonicalSessionPath:
 class TestSmSetupAgentDocSpecifiesCanonicalPath:
     """The sm-setup.md agent definition must explicitly instruct writing to .session/."""
 
-    # Resolve agents/sm-setup.md relative to pennyfarthing-dist/
-    # test file: pennyfarthing-dist/src/pf/tests/test_*.py
-    # parents[3] = pennyfarthing-dist/
-    _AGENT_DOC = Path(__file__).resolve().parents[3] / "agents" / "sm-setup.md"
+    # Resolve agents/sm-setup.md relative to the plugin root (content root)
+    _AGENT_DOC = get_dist_root() / "agents" / "sm-setup.md"
 
     def test_agent_doc_file_exists(self) -> None:
         """Sanity: the agent definition file is where we expect it."""

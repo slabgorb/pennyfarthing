@@ -10,6 +10,8 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
+from pf.cli import cli
+from pf.common.config import get_dist_root
 from pf.context.cli import context
 from pf.context.templates import (
     file_extension,
@@ -24,7 +26,7 @@ from pf.context.templates import (
 
 @pytest.fixture
 def schema_path() -> Path:
-    return Path(__file__).resolve().parents[3] / "schemas" / "context-schema.yaml"
+    return get_dist_root() / "schemas" / "context-schema.yaml"
 
 
 @pytest.fixture

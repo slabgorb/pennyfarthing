@@ -501,10 +501,8 @@ class TestAgentDefinitionsContainHierarchy:
     @pytest.fixture
     def agents_dir(self) -> Path:
         """Return the path to agent definitions."""
-        return (
-            Path(__file__).resolve().parents[3]
-            / "agents"
-        )
+        from pf.common.config import get_dist_root
+        return get_dist_root() / "agents"
 
     @pytest.mark.parametrize("agent_file", ["tea.md", "dev.md", "architect.md"])
     def test_agent_has_spec_authority_section(self, agents_dir: Path, agent_file: str):

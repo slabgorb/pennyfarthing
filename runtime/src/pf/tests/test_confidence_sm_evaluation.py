@@ -23,13 +23,13 @@ from pathlib import Path
 
 import pytest
 
+from pf.common.config import get_dist_root
+
 # ---------------------------------------------------------------------------
 # Path resolution
 # ---------------------------------------------------------------------------
 
-_THIS_DIR = Path(__file__).resolve().parent
-# src/pf/tests -> src/pf -> src -> pennyfarthing-dist (project root)
-_DIST_ROOT = _THIS_DIR.parents[2]
+_DIST_ROOT = get_dist_root()
 _EVAL_FILE = _DIST_ROOT / "gates" / "evaluations" / "confidence-sm.md"
 
 # ---------------------------------------------------------------------------

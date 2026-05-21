@@ -16,8 +16,10 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 
-# Real pennyfarthing-dist: tests/.. -> pf/.. -> src/.. -> pennyfarthing-dist
-REAL_DIST = Path(__file__).resolve().parents[3]
+from pf.common.config import get_dist_root
+
+# Real plugin root (content root): agents/, commands/, skills/, etc.
+REAL_DIST = get_dist_root()
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +171,7 @@ class TestFreshInit:
             assert (fresh_project / ".claude" / subdir).is_dir()
 
     def test_copies_real_commands(self, fresh_project: Path) -> None:
-        """Init copies actual pf-*.md commands from real dist."""
+        """Init copies actual command .md files from real dist."""
         from pf.init.core import init_project
 
         with patch(
@@ -181,14 +183,14 @@ class TestFreshInit:
         commands_copied = result["data"]["commands_copied"]
         assert commands_copied > 0, "No commands were copied"
 
-        # Verify commands exist in both locations
-        pf_cmds = list((fresh_project / ".pennyfarthing" / "commands").glob("pf-*.md"))
-        claude_cmds = list((fresh_project / ".claude" / "commands").glob("pf-*.md"))
+        # Verify commands exist in both locations (plugin model: *.md, legacy: pf-*.md)
+        pf_cmds = list((fresh_project / ".pennyfarthing" / "commands").glob("*.md"))
+        claude_cmds = list((fresh_project / ".claude" / "commands").glob("*.md"))
         assert len(pf_cmds) == commands_copied
         assert len(claude_cmds) == commands_copied
 
     def test_copies_real_skills(self, fresh_project: Path) -> None:
-        """Init copies actual pf-* skill directories from real dist."""
+        """Init copies actual skill directories from real dist."""
         from pf.init.core import init_project
 
         with patch(
@@ -200,10 +202,11 @@ class TestFreshInit:
         skills_copied = result["data"]["skills_copied"]
         assert skills_copied > 0, "No skills were copied"
 
+        # Plugin model: skills may lack pf- prefix; count all copied skill dirs
         pf_skills = [
             d
             for d in (fresh_project / ".pennyfarthing" / "skills").iterdir()
-            if d.is_dir() and d.name.startswith("pf-")
+            if d.is_dir()
         ]
         assert len(pf_skills) == skills_copied
 

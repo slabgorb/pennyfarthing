@@ -11,8 +11,10 @@ Verifies that the uv/pf.sh wrapper chain has been fully removed:
 import re
 from pathlib import Path
 
-# pennyfarthing-dist root (src/pf/tests -> src/pf -> src -> pennyfarthing-dist)
-_DIST = Path(__file__).resolve().parents[3]
+from pf.common.config import get_dist_root
+
+# Plugin root (content root)
+_DIST = get_dist_root()
 _SCRIPTS = _DIST / "scripts"
 _AGENTS = _DIST / "agents"
 _GUIDES = _DIST / "guides"
