@@ -11,6 +11,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from pf import paths
+
+
 def create_agent(
     name: str,
     agent_type: str = "tactical",
@@ -76,7 +79,7 @@ def create_agent(
     agent_file.write_text(rendered)
 
     # --- Create sidecar files ---
-    sidecar_dir = pf_dir / "sidecars" / name
+    sidecar_dir = paths.sidecars_dir(root) / name
     sidecar_dir.mkdir(parents=True, exist_ok=True)
 
     sidecar_files = {

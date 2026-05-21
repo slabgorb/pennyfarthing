@@ -16,8 +16,8 @@ Two environments are supported:
 
 Design references:
 - Storage tiers: design spec §3.2
-- Origin slug normalization: design spec §3.3
-- Project hash: design spec §3.4
+- Project hash (per-folder bucketing for sessions, sidecars, and config):
+  design spec §3.4
 - Paths chokepoint discussion: design spec §7.2
 """
 
@@ -25,54 +25,11 @@ from __future__ import annotations
 
 import hashlib
 import os
-import re
 import subprocess
 from pathlib import Path
 
 
 _FALLBACK_DATA_ROOT = Path.home() / ".claude" / "data" / "pf"
-_GIT_DOT_GIT_SUFFIX = re.compile(r"\.git$")
-
-
-def origin_slug(url: str) -> str | None:
-    """Normalize a git remote URL to a stable ``host/owner/repo`` slug.
-
-    Returns ``None`` if the URL does not resemble a git remote. Callers
-    that need a guaranteed-non-None bucket key (e.g., for sidecar dirs)
-    should fall back to ``_local/<project_hash>`` themselves.
-    """
-    if not url:
-        return None
-
-    candidate = url.strip()
-
-    # Strip ssh://user@ prefix
-    if candidate.startswith("ssh://"):
-        candidate = candidate[len("ssh://"):]
-        if "@" in candidate.split("/", 1)[0]:
-            candidate = candidate.split("@", 1)[1]
-        # ssh://host/owner/repo — already path-form
-    elif candidate.startswith("http://") or candidate.startswith("https://"):
-        candidate = candidate.split("://", 1)[1]
-        # https://host/owner/repo — already path-form
-    elif "@" in candidate and ":" in candidate:
-        # git@github.com:owner/repo.git form
-        user_host, sep, path = candidate.partition(":")
-        if not sep:
-            return None
-        _, _, host = user_host.rpartition("@")
-        candidate = f"{host}/{path}"
-    else:
-        return None
-
-    # Strip trailing .git
-    candidate = _GIT_DOT_GIT_SUFFIX.sub("", candidate)
-
-    # Lowercase the host segment only (keep owner/repo casing)
-    host_part, sep, rest = candidate.partition("/")
-    if not sep or not rest:
-        return None
-    return f"{host_part.lower()}/{rest}"
 
 
 def project_hash(path: Path | None = None) -> str:
@@ -124,35 +81,6 @@ def project_root(path: Path | None = None) -> Path:
     return Path(top).resolve()
 
 
-def project_origin_slug(path: Path | None = None) -> str:
-    """Origin slug for sidecar bucketing.
-
-    Falls back to ``_local/<project_hash>`` when no git remote, no git
-    repo, or an unparseable origin URL is detected. Never returns None;
-    the caller can use the result directly as a directory name segment.
-
-    Times out the git invocation at 5 seconds and treats timeout as a
-    fallback case (returns the ``_local/<hash>`` form).
-    """
-    root = project_root(path)
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(root), "remote", "get-url", "origin"],
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=5,
-        )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return f"_local/{project_hash(root)}"
-    if result.returncode != 0:
-        return f"_local/{project_hash(root)}"
-    slug = origin_slug(result.stdout.strip())
-    if slug is None:
-        return f"_local/{project_hash(root)}"
-    return slug
-
-
 def runtime_data() -> Path:
     """Resolve the runtime-state root.
 
@@ -178,6 +106,10 @@ def config_path(path: Path | None = None) -> Path:
 
 
 def sidecars_dir(path: Path | None = None) -> Path:
-    """Sidecar root for the current project (bucketed by origin slug)."""
-    slug = project_origin_slug(path)
-    return runtime_data() / "sidecars" / slug
+    """Sidecar root for the current working copy (bucketed by project hash).
+
+    Per-folder bucketing: each working copy gets its own sidecar directory,
+    keyed on the same project_hash used by session_dir() and config_path().
+    """
+    root = project_root(path)
+    return runtime_data() / "sidecars" / project_hash(root)

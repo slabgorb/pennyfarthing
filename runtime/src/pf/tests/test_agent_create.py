@@ -16,6 +16,7 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 
+from pf import paths
 from pf.cli import cli
 
 
@@ -25,8 +26,14 @@ from pf.cli import cli
 
 
 @pytest.fixture()
-def project_root(tmp_path: Path) -> Path:
+def project_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Create a minimal project structure for agent creation."""
+    # Route runtime state (including sidecars) into controlled tmp dir
+    plugin_data = tmp_path / "plugin_data"
+    plugin_data.mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
     pf_dir = tmp_path / ".pennyfarthing"
     pf_dir.mkdir()
 
@@ -52,9 +59,6 @@ def project_root(tmp_path: Path) -> Path:
         "# {NAME} Agent - {Role Title}\n\n<role>\n{ROLE_DESCRIPTION}\n</role>\n\n"
         "<constraints>\nThis agent does NOT write implementation code.\n</constraints>\n"
     )
-
-    # Sidecars directory
-    (pf_dir / "sidecars").mkdir()
 
     return tmp_path
 
@@ -167,7 +171,7 @@ class TestAgentCreateSidecars:
         with patch("pf.common.config.get_project_root", return_value=project_root):
             result = runner.invoke(cli, ["agent", "create", "data-engineer"])
         assert result.exit_code == 0
-        sidecar_dir = project_root / ".pennyfarthing" / "sidecars" / "data-engineer"
+        sidecar_dir = paths.sidecars_dir(project_root) / "data-engineer"
         assert sidecar_dir.is_dir(), "Sidecar directory not created"
 
     def test_creates_patterns_file(
@@ -177,9 +181,7 @@ class TestAgentCreateSidecars:
         with patch("pf.common.config.get_project_root", return_value=project_root):
             result = runner.invoke(cli, ["agent", "create", "data-engineer"])
         assert result.exit_code == 0
-        patterns = (
-            project_root / ".pennyfarthing" / "sidecars" / "data-engineer" / "patterns.md"
-        )
+        patterns = paths.sidecars_dir(project_root) / "data-engineer" / "patterns.md"
         assert patterns.exists(), "patterns.md not created"
 
     def test_creates_gotchas_file(
@@ -189,9 +191,7 @@ class TestAgentCreateSidecars:
         with patch("pf.common.config.get_project_root", return_value=project_root):
             result = runner.invoke(cli, ["agent", "create", "data-engineer"])
         assert result.exit_code == 0
-        gotchas = (
-            project_root / ".pennyfarthing" / "sidecars" / "data-engineer" / "gotchas.md"
-        )
+        gotchas = paths.sidecars_dir(project_root) / "data-engineer" / "gotchas.md"
         assert gotchas.exists(), "gotchas.md not created"
 
     def test_creates_decisions_file(
@@ -201,9 +201,7 @@ class TestAgentCreateSidecars:
         with patch("pf.common.config.get_project_root", return_value=project_root):
             result = runner.invoke(cli, ["agent", "create", "data-engineer"])
         assert result.exit_code == 0
-        decisions = (
-            project_root / ".pennyfarthing" / "sidecars" / "data-engineer" / "decisions.md"
-        )
+        decisions = paths.sidecars_dir(project_root) / "data-engineer" / "decisions.md"
         assert decisions.exists(), "decisions.md not created"
 
     def test_sidecar_files_have_headers(
@@ -213,7 +211,7 @@ class TestAgentCreateSidecars:
         with patch("pf.common.config.get_project_root", return_value=project_root):
             result = runner.invoke(cli, ["agent", "create", "data-engineer"])
         assert result.exit_code == 0
-        sidecar_dir = project_root / ".pennyfarthing" / "sidecars" / "data-engineer"
+        sidecar_dir = paths.sidecars_dir(project_root) / "data-engineer"
         patterns = (sidecar_dir / "patterns.md").read_text()
         assert "data-engineer" in patterns.lower() or "Data Engineer" in patterns
 
@@ -366,12 +364,11 @@ class TestAgentCreateEdgeCases:
     ) -> None:
         """If sidecar files already exist with content, do not overwrite them.
         This protects against re-running create after adding patterns."""
-        sidecar_dir = project_root / ".pennyfarthing" / "sidecars" / "data-engineer"
+        sidecar_dir = paths.sidecars_dir(project_root) / "data-engineer"
         sidecar_dir.mkdir(parents=True)
         (sidecar_dir / "patterns.md").write_text("# Existing patterns\nDo not overwrite")
 
         # Create the agent — but sidecar already exists
-        local_dir = project_root / ".pennyfarthing" / "agents-local"
         # Agent file doesn't exist yet, so create should succeed
         with patch("pf.common.config.get_project_root", return_value=project_root):
             result = runner.invoke(cli, ["agent", "create", "data-engineer"])

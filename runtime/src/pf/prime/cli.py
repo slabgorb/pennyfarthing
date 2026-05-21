@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Any
 
+from pf import paths as pf_paths
 from pf.common.config import get_project_root
 from pf.prime.loader import (
     load_agent_definition,
@@ -163,7 +164,7 @@ def _component_source(name: str, agent_name: str | None, root: Path) -> str | No
         "repos_topology": ".pennyfarthing/repos.yaml",
         "session_header": None,
         "session_assessment": None,
-        "sidecars": f".pennyfarthing/sidecars/{agent_name}/",
+        "sidecars": str(pf_paths.sidecars_dir(root) / agent_name) + "/" if agent_name else None,
     }
     return paths.get(name)
 

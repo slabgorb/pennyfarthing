@@ -15,6 +15,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from pf import paths
 from pf.common.config import get_dist_root, get_project_root
 
 
@@ -275,7 +276,7 @@ def load_sidecars(agent_name: str, project_root: Path | None = None) -> dict[str
         Dict mapping filename to content (only includes existing files)
     """
     root = project_root or get_project_root()
-    sidecar_dir = root / ".pennyfarthing" / "sidecars" / agent_name
+    sidecar_dir = paths.sidecars_dir(root) / agent_name
 
     if not sidecar_dir.is_dir():
         return {}

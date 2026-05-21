@@ -86,9 +86,14 @@ class TestComponentTokenCounting:
                 f"Token count for {component} should be non-negative"
             )
 
-    def test_token_counts_are_positive_for_loaded_components(self, tmp_path: Path) -> None:
+    def test_token_counts_are_positive_for_loaded_components(self, tmp_path: Path, monkeypatch) -> None:
         """Test that loaded components have positive token counts."""
         from pf.prime.tiers import ContextTier, load_tier_components
+
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         self._setup_complete_project(tmp_path)
 
@@ -245,8 +250,8 @@ class TestComponentTokenCounting:
             "# Agent Behavior Guide\n\nShared protocols for all agents."
         )
 
-        # Sidecars
-        sidecar_dir = pf_dir / "sidecars" / "dev"
+        # Sidecars — write to per-folder path (project_hash-based)
+        sidecar_dir = paths.sidecars_dir(tmp_path) / "dev"
         sidecar_dir.mkdir(parents=True)
         (sidecar_dir / "patterns.md").write_text(
             "# Dev Patterns\n\nDevelopment patterns documentation."

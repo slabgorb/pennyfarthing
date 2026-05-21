@@ -320,10 +320,16 @@ Work complete.
 class TestLoadSidecars:
     """Tests for load_sidecars function."""
 
-    def test_load_all_sidecars(self, tmp_path: Path) -> None:
+    def test_load_all_sidecars(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test loading all sidecar files."""
-        # Setup
-        sidecar_dir = tmp_path / ".pennyfarthing" / "sidecars" / "dev"
+        # Route sidecars into the controlled tmp dir
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
+        # Setup — write to the new per-folder path
+        sidecar_dir = paths.sidecars_dir(tmp_path) / "dev"
         sidecar_dir.mkdir(parents=True)
         (sidecar_dir / "patterns.md").write_text("# Patterns")
         (sidecar_dir / "gotchas.md").write_text("# Gotchas")
@@ -338,10 +344,15 @@ class TestLoadSidecars:
         assert "# Gotchas" in result["gotchas.md"]
         assert "# Decisions" in result["decisions.md"]
 
-    def test_load_partial_sidecars(self, tmp_path: Path) -> None:
+    def test_load_partial_sidecars(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test loading when only some sidecars exist."""
-        # Setup
-        sidecar_dir = tmp_path / ".pennyfarthing" / "sidecars" / "dev"
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
+
+        # Setup — write to the new per-folder path
+        sidecar_dir = paths.sidecars_dir(tmp_path) / "dev"
         sidecar_dir.mkdir(parents=True)
         (sidecar_dir / "patterns.md").write_text("# Patterns only")
 
@@ -352,8 +363,12 @@ class TestLoadSidecars:
         assert len(result) == 1
         assert "patterns.md" in result
 
-    def test_no_sidecar_directory(self, tmp_path: Path) -> None:
+    def test_no_sidecar_directory(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test when no sidecar directory exists."""
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
         result = load_sidecars("dev", tmp_path)
         assert result == {}
 

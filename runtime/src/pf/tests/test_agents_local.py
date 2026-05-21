@@ -288,14 +288,20 @@ class TestCustomAgentFullPriming:
             "Custom agent must have standard agent markdown structure"
         )
 
-    def test_sidecars_work_for_custom_agent(self, project_with_custom_agent: Path) -> None:
+    def test_sidecars_work_for_custom_agent(
+        self, project_with_custom_agent: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Sidecars (patterns, gotchas, decisions) load for custom agents too."""
+        from pf import paths
         from pf.prime.loader import load_sidecars
 
-        # Create sidecar files for the custom agent
-        sidecar_dir = (
-            project_with_custom_agent / ".pennyfarthing" / "sidecars" / "data-engineer"
-        )
+        plugin_data = project_with_custom_agent / "plugin_data"
+        plugin_data.mkdir(exist_ok=True)
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(project_with_custom_agent.parent))
+
+        # Create sidecar files for the custom agent at the new per-folder path
+        sidecar_dir = paths.sidecars_dir(project_with_custom_agent) / "data-engineer"
         sidecar_dir.mkdir(parents=True)
         (sidecar_dir / "patterns.md").write_text("# Data Engineer Patterns\nETL best practices")
         (sidecar_dir / "gotchas.md").write_text("# Data Engineer Gotchas\nWatch for schema drift")

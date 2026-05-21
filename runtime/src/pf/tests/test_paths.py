@@ -10,41 +10,6 @@ import pytest
 from pf import paths
 
 
-class TestOriginSlug:
-    """Normalize git remote origin URLs to stable bucket keys (spec §3.3)."""
-
-    @pytest.mark.parametrize(
-        "url, expected",
-        [
-            ("git@github.com:slabgorb/pennyfarthing.git", "github.com/slabgorb/pennyfarthing"),
-            ("https://github.com/slabgorb/pennyfarthing", "github.com/slabgorb/pennyfarthing"),
-            ("https://github.com/slabgorb/pennyfarthing.git", "github.com/slabgorb/pennyfarthing"),
-            ("ssh://git@github.com/slabgorb/pennyfarthing", "github.com/slabgorb/pennyfarthing"),
-            ("ssh://git@github.com/slabgorb/pennyfarthing.git", "github.com/slabgorb/pennyfarthing"),
-            ("git@gitlab.com:foo/bar.git", "gitlab.com/foo/bar"),
-            ("https://GitHub.com/slabgorb/Pennyfarthing", "github.com/slabgorb/Pennyfarthing"),
-        ],
-        ids=[
-            "ssh_with_dot_git",
-            "https_no_dot_git",
-            "https_with_dot_git",
-            "ssh_url_form",
-            "ssh_url_form_with_dot_git",
-            "gitlab_ssh",
-            "uppercase_host_lowercased",
-        ],
-    )
-    def test_known_forms(self, url: str, expected: str) -> None:
-        assert paths.origin_slug(url) == expected
-
-    def test_empty_url_returns_none(self) -> None:
-        assert paths.origin_slug("") is None
-
-    def test_unrecognized_form_returns_none(self) -> None:
-        # An obviously broken/non-git URL — caller should fall back to _local
-        assert paths.origin_slug("not-a-url") is None
-
-
 class TestProjectHash:
     """sha256-derived per-working-copy identifier (spec §3.4)."""
 
@@ -92,31 +57,6 @@ class TestProjectRoot:
         assert result == tmp_path.resolve()
 
 
-class TestProjectOriginSlug:
-    """Resolve the origin slug for the current project, with _local fallback."""
-
-    def test_no_git_falls_back_to_local(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
-        slug = paths.project_origin_slug(tmp_path)
-        assert slug == f"_local/{paths.project_hash(tmp_path)}"
-
-    def test_git_no_origin_falls_back_to_local(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
-        subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
-        slug = paths.project_origin_slug(tmp_path)
-        assert slug == f"_local/{paths.project_hash(tmp_path)}"
-
-    def test_git_with_origin_returns_normalized_slug(self, tmp_path: Path) -> None:
-        subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
-        subprocess.run(
-            ["git", "remote", "add", "origin", "git@github.com:slabgorb/pennyfarthing.git"],
-            cwd=tmp_path,
-            check=True,
-        )
-        slug = paths.project_origin_slug(tmp_path)
-        assert slug == "github.com/slabgorb/pennyfarthing"
-
-
 class TestRuntimeData:
     """${CLAUDE_PLUGIN_DATA} with fallback to ~/.claude/data/pf/."""
 
@@ -155,24 +95,11 @@ class TestComposedPaths:
             tmp_path / "projects" / paths.project_hash(tmp_path) / "config.local.yaml"
         )
 
-    def test_sidecars_dir_uses_origin_slug(
+    def test_sidecars_dir_uses_project_hash(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
-        subprocess.run(
-            ["git", "remote", "add", "origin", "git@github.com:slabgorb/foo.git"],
-            cwd=tmp_path,
-            check=True,
-        )
-        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(tmp_path / "data"))
-        sd = paths.sidecars_dir(tmp_path)
-        assert sd == tmp_path / "data" / "sidecars" / "github.com/slabgorb/foo"
-
-    def test_sidecars_dir_local_fallback(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(tmp_path / "data"))
+        runtime_data_root = tmp_path / "data"
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(runtime_data_root))
         monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
         sd = paths.sidecars_dir(tmp_path)
-        ph = paths.project_hash(tmp_path)
-        assert sd == tmp_path / "data" / "sidecars" / "_local" / ph
+        assert sd == runtime_data_root / "sidecars" / paths.project_hash(tmp_path)

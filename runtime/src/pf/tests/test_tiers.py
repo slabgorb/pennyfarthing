@@ -123,9 +123,14 @@ class TestTierCLIArgument:
 class TestTierComponentLoading:
     """Tests for tier-specific component loading (AC2)."""
 
-    def test_full_tier_loads_all_components(self, tmp_path: Path, capsys) -> None:
+    def test_full_tier_loads_all_components(self, tmp_path: Path, capsys, monkeypatch) -> None:
         """Test FULL tier loads all 10 components."""
         from pf.prime.cli import prime
+
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         # Setup complete project structure
         self._setup_full_project(tmp_path)
@@ -274,8 +279,8 @@ class TestTierComponentLoading:
         guides_dir.mkdir()
         (guides_dir / "agent-behavior.md").write_text("# Agent Behavior Guide\n\nShared protocols.")
 
-        # Sidecars
-        sidecar_dir = pf_dir / "sidecars" / "dev"
+        # Sidecars — write to per-folder path (project_hash-based)
+        sidecar_dir = paths.sidecars_dir(tmp_path) / "dev"
         sidecar_dir.mkdir(parents=True)
         (sidecar_dir / "patterns.md").write_text("# Patterns\n\nDev patterns.")
 
@@ -444,9 +449,14 @@ class TestCompressedPersonaFormat:
 class TestDefaultBehavior:
     """Tests for default behavior / backward compatibility (AC4)."""
 
-    def test_no_tier_argument_defaults_to_full(self, tmp_path: Path, capsys) -> None:
+    def test_no_tier_argument_defaults_to_full(self, tmp_path: Path, capsys, monkeypatch) -> None:
         """Test that omitting --tier defaults to FULL behavior."""
         from pf.prime.cli import prime
+
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         # Setup
         pf_dir = tmp_path / ".pennyfarthing"
@@ -459,7 +469,7 @@ class TestDefaultBehavior:
         guides_dir.mkdir()
         (guides_dir / "agent-behavior.md").write_text("# Behavior Guide")
 
-        sidecar_dir = pf_dir / "sidecars" / "dev"
+        sidecar_dir = paths.sidecars_dir(tmp_path) / "dev"
         sidecar_dir.mkdir(parents=True)
         (sidecar_dir / "patterns.md").write_text("# Patterns")
 
@@ -711,8 +721,8 @@ class TestTierLoadingPaths:
         guides_dir.mkdir()
         (guides_dir / "agent-behavior.md").write_text("# Behavior")
 
-        # Sidecars
-        sidecar_dir = pf_dir / "sidecars" / "dev"
+        # Sidecars — write to per-folder path (project_hash-based)
+        sidecar_dir = paths.sidecars_dir(tmp_path) / "dev"
         sidecar_dir.mkdir(parents=True)
         (sidecar_dir / "patterns.md").write_text("# Patterns")
 
@@ -842,9 +852,14 @@ class TestTokenReduction:
         # At minimum, should be larger than HANDOFF limit
         assert len(captured.out) > 3600, f"FULL tier too small: {len(captured.out)} chars"
 
-    def test_tier_reduction_ratio(self, tmp_path: Path, capsys) -> None:
+    def test_tier_reduction_ratio(self, tmp_path: Path, capsys, monkeypatch) -> None:
         """Test that reduced tiers are significantly smaller than FULL."""
         from pf.prime.cli import prime
+
+        plugin_data = tmp_path / "plugin_data"
+        plugin_data.mkdir()
+        monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(plugin_data))
+        monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))
 
         self._setup_realistic_project(tmp_path)
 
@@ -942,8 +957,8 @@ Standard: SM → TEA → Dev → Reviewer → SM
             + ("Detailed behavior guidance. " * 80)
         )
 
-        # Sidecars (~1200 tokens = ~4800 chars)
-        sidecar_dir = pf_dir / "sidecars" / "dev"
+        # Sidecars (~1200 tokens = ~4800 chars) — write to per-folder path
+        sidecar_dir = paths.sidecars_dir(tmp_path) / "dev"
         sidecar_dir.mkdir(parents=True)
         (sidecar_dir / "patterns.md").write_text(
             """# Dev Patterns
