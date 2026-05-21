@@ -200,28 +200,6 @@ def npm_layout(tmp_path: Path, monkeypatch) -> Path:
     return tmp_path
 
 
-@pytest.fixture
-def bare_project(tmp_path: Path) -> Path:
-    """Create a directory tree with no pennyfarthing-dist anywhere.
-
-    Structure:
-        tmp/
-          .pennyfarthing/
-            config.local.yaml
-          src/
-            app.py
-    """
-    pf_config = tmp_path / ".pennyfarthing"
-    pf_config.mkdir()
-    (pf_config / "config.local.yaml").write_text("theme: mash\n")
-
-    src = tmp_path / "src"
-    src.mkdir()
-    (src / "app.py").write_text("print('hello')\n")
-
-    return tmp_path
-
-
 # ---------------------------------------------------------------------------
 # AC1: get_dist_root() resolves correctly in both contexts
 # ---------------------------------------------------------------------------
