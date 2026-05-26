@@ -171,15 +171,20 @@ def get_repo_config(repo_name: str, project_root: Path | None = None) -> RepoCon
 
 
 def should_create_branch(repo_config: RepoConfig | None) -> bool:
-    """Decide whether a repo gets a feature branch for story work.
+    """Decide whether story *setup* should create a feature branch for a repo.
 
-    Single source of truth for the branch decision used by both story setup
-    (sm-setup / create_feature_branches) and finish (story_finish cleanup):
+    Delegates to :attr:`RepoConfig.is_gitflow` so the trunk-based/gitflow
+    predicate lives in exactly one place (SOUL #2):
 
-    - trunk-based repos skip branch creation (no stray ``feat/*`` branches)
     - gitflow repos create feature branches as before
+    - trunk-based repos skip branch creation (no stray ``feat/*`` branches)
     - an unknown repo (``None``, i.e. not in repos.yaml) preserves the legacy
       "branch everything" behavior and never raises
+
+    Note the ``None`` case is permissive (branch) for the *setup* path. The
+    *cleanup* path (``story_finish._git_cleanup``) deliberately treats ``None``
+    conservatively (skip), since it must not guess a base branch for an
+    unidentified repo — both paths key off :attr:`RepoConfig.is_gitflow`.
 
     Args:
         repo_config: The target repo's config, or None if it is not configured.
@@ -187,9 +192,7 @@ def should_create_branch(repo_config: RepoConfig | None) -> bool:
     Returns:
         True if a feature branch should be created, False to skip.
     """
-    if repo_config is None:
-        return True
-    return repo_config.branch_strategy != "trunk-based"
+    return repo_config is None or repo_config.is_gitflow
 
 
 def load_repos_yaml_raw(project_root: Path | None = None) -> dict[str, Any]:

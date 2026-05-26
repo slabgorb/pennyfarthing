@@ -111,26 +111,27 @@ def _git_cleanup(
     branch: str | None,
     repo_config: "RepoConfig | None",
 ) -> list[dict[str, Any]]:
-    """Step 6: return to the base branch and delete the merged feature branch.
+    """Step 6: for gitflow repos, return to the base branch and delete the
+    merged feature branch; for trunk-based or unidentified repos, record a skip.
 
-    Trunk-based repos have no feature-branch workflow and no separate base
-    branch to return to, so cleanup is skipped entirely (running
-    ``git checkout develop`` on a main-only repo just fails noisily).
+    Cleanup runs only for a *known gitflow* repo. Trunk-based repos have no
+    feature-branch workflow, and an unresolved repo (``repo_config is None``)
+    must not be guessed at — running ``git checkout develop`` on a main-only
+    repo is exactly the failure this story removes. In both cases cleanup is
+    skipped, using the repo's own ``default_branch`` (never a hardcoded guess).
 
     Returns the step entries to append to the finish report.
     """
-    from pf.git.repos import should_create_branch
+    if repo_config is None or not repo_config.is_gitflow:
+        reason = "root-repo-unresolved" if repo_config is None else "trunk-based"
+        return [{"step": 6, "action": "git_cleanup", "skipped": reason, "branch": branch}]
 
-    if not should_create_branch(repo_config):
-        return [
-            {"step": 6, "action": "git_cleanup", "skipped": "trunk-based", "branch": branch}
-        ]
-
-    base = repo_config.default_branch if repo_config else "develop"
+    base = repo_config.default_branch
     _run(["git", "checkout", base], cwd=str(project_root))
     _run(["git", "pull", "origin", base], cwd=str(project_root))
     if branch:
-        _run(["git", "branch", "-d", branch], cwd=str(project_root))
+        # `--` guards against a branch value that looks like a git flag.
+        _run(["git", "branch", "-d", "--", branch], cwd=str(project_root))
     return [{"step": 6, "action": "git_cleanup", "branch": branch}]
 
 
@@ -379,7 +380,10 @@ def finish_story(
 
     # --- Step 6: Git cleanup ---
     # Resolve the config for the repo at the project root (cwd of cleanup).
-    # Trunk-based repos skip branch cleanup; gitflow repos behave as before.
+    # Only a known gitflow root repo gets branch cleanup; trunk-based or an
+    # unresolved root (root_repo is None) is skipped by _git_cleanup.
+    # Local import: avoids a circular dependency (pf.git.repos imports nothing
+    # from pf.sprint, but the reverse top-level import would couple the layers).
     from pf.git.repos import load_repos_config
 
     root_repo = next(

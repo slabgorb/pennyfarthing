@@ -45,11 +45,10 @@ All tests should FAIL until the implementation lands.
 from __future__ import annotations
 
 import asyncio
+import re
 import subprocess
 from pathlib import Path
 from unittest.mock import patch
-
-import pytest
 
 from pf.git.create_branches import BranchAction, create_feature_branches
 from pf.git.repos import RepoConfig
@@ -232,10 +231,27 @@ class TestFinishGitCleanupRespectsStrategy:
 
         invoked = [c.args[0] for c in mock_run.call_args_list if c.args]
         assert ["git", "checkout", "develop"] in invoked, invoked
+        # pull is one of the three operations that must run on gitflow (and must
+        # NOT run on trunk-based) — assert it symmetrically.
+        assert any(cmd[:3] == ["git", "pull", "origin"] for cmd in invoked), invoked
         assert any(
             cmd[:2] == ["git", "branch"] and "-d" in cmd and "feat/153-2-x" in cmd
             for cmd in invoked
         ), invoked
+
+    def test_unresolved_root_repo_skips_cleanup(self) -> None:
+        """AC6 / regression guard: an unidentified root repo (repo_config=None)
+        must NOT run `git checkout develop` — guessing a base branch on a
+        main-only repo is the exact failure this story removes."""
+        from pf.sprint.story_finish import _git_cleanup
+
+        with patch("pf.sprint.story_finish._run") as mock_run:
+            result = _git_cleanup(Path("/proj"), branch="feat/153-2-x", repo_config=None)
+
+        invoked = [c.args[0] for c in mock_run.call_args_list if c.args]
+        assert not any(cmd[:2] == ["git", "checkout"] for cmd in invoked), invoked
+        assert not any(cmd[:2] == ["git", "branch"] for cmd in invoked), invoked
+        assert result[0]["skipped"] == "root-repo-unresolved"
 
 
 # ===========================================================================
@@ -244,15 +260,23 @@ class TestFinishGitCleanupRespectsStrategy:
 
 
 class TestSmSetupTemplate:
-    def test_sm_setup_md_exists(self) -> None:
-        assert SM_SETUP_MD.is_file(), f"missing {SM_SETUP_MD}"
-
-    def test_sm_setup_reads_branch_strategy(self) -> None:
-        """AC1: sm-setup must consult branch_strategy, not just pr_strategy."""
-        text = SM_SETUP_MD.read_text(encoding="utf-8")
+    def test_sm_setup_reads_branch_strategy_via_config(self) -> None:
+        """AC1: sm-setup must actually READ branch_strategy from repo config,
+        not merely mention the word. Require it to bind branch_strategy from a
+        get_repo_config lookup."""
+        text = SM_SETUP_MD.read_text(encoding="utf-8")  # raises if file missing
         assert "branch_strategy" in text
+        assert "get_repo_config" in text
+        # The value must be assigned to a usable shell var, not just named in prose.
+        assert "BRANCH_STRATEGY=" in text
 
     def test_sm_setup_skips_branching_for_trunk_based(self) -> None:
-        """AC2/AC3: sm-setup must reference trunk-based skip behavior."""
+        """AC2/AC3: sm-setup must tie 'trunk-based' to a skip instruction, not
+        just contain the word somewhere."""
         text = SM_SETUP_MD.read_text(encoding="utf-8").lower()
         assert "trunk-based" in text
+        # 'skip' must appear in proximity to 'trunk-based' (either order),
+        # so a description that still branched would not pass.
+        assert re.search(r"trunk-based[\s\S]{0,400}skip", text) or re.search(
+            r"skip[\s\S]{0,400}trunk-based", text
+        ), "sm-setup must instruct skipping branch creation for trunk-based repos"

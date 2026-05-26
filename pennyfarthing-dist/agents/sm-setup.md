@@ -238,17 +238,21 @@ First check whether the target repo even uses a feature-branch workflow, then
 (for branching repos) whether it uses stacked PRs (see ADR-0036):
 
 ```bash
-# Read branch_strategy + pr_strategy from repos.yaml for the target repo
-BRANCH_STRATEGY=$(python3 -c "
+# Read branch_strategy + pr_strategy from repos.yaml for the target repo.
+# The repo name is passed as a positional argument (sys.argv), never
+# interpolated into the Python source string, to avoid code injection via a
+# crafted repo name (CWE-78). The heredoc body is single-quoted so the shell
+# performs no expansion inside it.
+STRATEGIES=$(python3 - "{REPOS}" <<'PYEOF'
+import sys
 from pf.git.repos import get_repo_config
-rc = get_repo_config('{REPOS}')
-print(rc.branch_strategy if rc else 'gitflow')
-")
-PR_STRATEGY=$(python3 -c "
-from pf.git.repos import get_repo_config
-rc = get_repo_config('{REPOS}')
-print(rc.pr_strategy if rc else 'standard')
-")
+rc = get_repo_config(sys.argv[1])
+print(rc.branch_strategy if rc else "gitflow")
+print(rc.pr_strategy if rc else "standard")
+PYEOF
+)
+BRANCH_STRATEGY=$(printf '%s\n' "$STRATEGIES" | sed -n 1p)
+PR_STRATEGY=$(printf '%s\n' "$STRATEGIES" | sed -n 2p)
 ```
 
 **Trunk-based repos (`branch_strategy: trunk-based`, e.g. orchestrator repos):**

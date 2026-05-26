@@ -8,7 +8,7 @@ Replaces: pennyfarthing-dist/scripts/git/create-feature-branches.sh
 Features:
 - asyncio.gather for true parallel git operations
 - Idempotent: checks out existing or creates new branches
-- Branches from develop
+- Branches from the repo default branch (gitflow); skips trunk-based repos
 - Worktree-aware detection
 - Cross-platform compatible
 """
@@ -27,7 +27,7 @@ class BranchAction(Enum):
     CREATED = "created"  # New branch created from develop
     CHECKED_OUT_LOCAL = "checked_out_local"  # Existing local branch checked out
     CHECKED_OUT_REMOTE = "checked_out_remote"  # Remote branch checked out and tracked
-    SKIPPED = "skipped"  # Repo skipped (not found)
+    SKIPPED = "skipped"  # Repo skipped: directory not found, OR trunk-based (no feature-branch workflow)
     ERROR = "error"  # Error occurred
 
 
@@ -242,6 +242,8 @@ async def create_feature_branches(
     if not repos:
         return []
 
+    # Local import: both modules live in pf.git; a top-level import risks an
+    # import cycle, so resolve the predicate lazily at call time.
     from pf.git.repos import get_repo_config, should_create_branch
 
     async def _resolve(name: str, path: Path) -> BranchResult:
