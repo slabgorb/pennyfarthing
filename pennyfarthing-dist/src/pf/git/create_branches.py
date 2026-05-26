@@ -8,7 +8,7 @@ Replaces: pennyfarthing-dist/scripts/git/create-feature-branches.sh
 Features:
 - asyncio.gather for true parallel git operations
 - Idempotent: checks out existing or creates new branches
-- Branches from develop
+- Branches from the repo default branch (gitflow); skips trunk-based repos
 - Worktree-aware detection
 - Cross-platform compatible
 """
@@ -27,7 +27,7 @@ class BranchAction(Enum):
     CREATED = "created"  # New branch created from develop
     CHECKED_OUT_LOCAL = "checked_out_local"  # Existing local branch checked out
     CHECKED_OUT_REMOTE = "checked_out_remote"  # Remote branch checked out and tracked
-    SKIPPED = "skipped"  # Repo skipped (not found)
+    SKIPPED = "skipped"  # Repo skipped: directory not found, OR trunk-based (no feature-branch workflow)
     ERROR = "error"  # Error occurred
 
 
@@ -221,12 +221,20 @@ async def create_or_checkout_branch(
 async def create_feature_branches(
     repos: Sequence[tuple[str, Path]],
     branch_name: str,
+    project_root: Path | None = None,
 ) -> list[BranchResult]:
     """Create feature branches across all repos in parallel using asyncio.gather.
+
+    Trunk-based repos (per repos.yaml ``branch_strategy``) are skipped — they
+    have no feature-branch workflow, so creating a branch would leave a stray
+    ``feat/*`` ref behind.
 
     Args:
         repos: Sequence of (name, path) tuples for each repo
         branch_name: Name of the branch to create/checkout
+        project_root: Root used to resolve each repo's branch_strategy from
+            repos.yaml. Defaults to the canonical project root detection
+            (env override → marker walk-up).
 
     Returns:
         List of BranchResult objects in same order as input
@@ -234,7 +242,21 @@ async def create_feature_branches(
     if not repos:
         return []
 
-    tasks = [create_or_checkout_branch(name, path, branch_name) for name, path in repos]
+    # Local import: both modules live in pf.git; a top-level import risks an
+    # import cycle, so resolve the predicate lazily at call time.
+    from pf.git.repos import get_repo_config, should_create_branch
+
+    async def _resolve(name: str, path: Path) -> BranchResult:
+        if not should_create_branch(get_repo_config(name, project_root)):
+            return BranchResult(
+                name=name,
+                path=path,
+                branch=branch_name,
+                action=BranchAction.SKIPPED,
+            )
+        return await create_or_checkout_branch(name, path, branch_name)
+
+    tasks = [_resolve(name, path) for name, path in repos]
     results = await asyncio.gather(*tasks, return_exceptions=False)
     return list(results)
 

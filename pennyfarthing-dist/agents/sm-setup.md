@@ -234,22 +234,47 @@ Each entry: what was changed, what the spec said, and why.
 
 ## Step 5: Create Branch
 
-Check if the repo uses stacked PRs (see ADR-0036):
+First check whether the target repo even uses a feature-branch workflow, then
+(for branching repos) whether it uses stacked PRs (see ADR-0036):
 
 ```bash
-# Read pr_strategy from repos.yaml for the target repo
-PR_STRATEGY=$(python3 -c "
+# Read branch_strategy + pr_strategy from repos.yaml for the target repo.
+# The repo name is passed as a positional argument (sys.argv), never
+# interpolated into the Python source string, to avoid code injection via a
+# crafted repo name (CWE-78). The heredoc body is single-quoted so the shell
+# performs no expansion inside it.
+STRATEGIES=$(python3 - "{REPOS}" <<'PYEOF'
+import sys
 from pf.git.repos import get_repo_config
-rc = get_repo_config('{REPOS}')
-print(rc.pr_strategy if rc else 'standard')
-")
+rc = get_repo_config(sys.argv[1])
+print(rc.branch_strategy if rc else "gitflow")
+print(rc.pr_strategy if rc else "standard")
+PYEOF
+)
+BRANCH_STRATEGY=$(printf '%s\n' "$STRATEGIES" | sed -n 1p)
+PR_STRATEGY=$(printf '%s\n' "$STRATEGIES" | sed -n 2p)
 ```
 
-**Standard repos (default):**
+**Trunk-based repos (`branch_strategy: trunk-based`, e.g. orchestrator repos):**
+
+Skip branch creation entirely — these repos have only a `main` branch and no
+feature-branch workflow, so creating `feat/*` branches just leaves stray refs.
+Do NOT run `git checkout -b`. Record the decision in the session file instead:
+
+```markdown
+**Branch Strategy:** trunk-based (branching skipped — work happens on the default branch)
+```
+
+The single source of truth for this decision is
+`pf.git.repos.should_create_branch(rc)` (returns `False` for trunk-based).
+
+**Standard repos (default, `branch_strategy: gitflow`):**
 ```bash
 git checkout develop && git pull && \
 git checkout -b feat/{STORY_ID}-{SLUG}
 ```
+
+Record: `**Branch Strategy:** gitflow (feat/{STORY_ID}-{SLUG})`
 
 **Stacked repos (`pr_strategy: stacked`):**
 
