@@ -22,6 +22,48 @@ def context():
     pass
 
 
+@context.group("create")
+def create():
+    """Generate a populated context document from the sprint YAML.
+
+    \b
+    Non-interactive counterpart to the `/pf-context create` skill — usable by
+    sm-setup and the gate recovery pipeline.
+
+    \b
+    Examples:
+      pf context create story 153-6
+      pf context create epic 153
+    """
+    pass
+
+
+@create.command("story")
+@click.argument("story_id")
+def create_story_cmd(story_id: str) -> None:
+    """Generate sprint/context/context-story-STORY_ID.md from the sprint YAML."""
+    from pf.context.generate import generate_context
+
+    result = generate_context("story", story_id)
+    if not result["success"]:
+        click.echo(f"[ERROR] {result['error']}", err=True)
+        raise SystemExit(1)
+    click.echo(f"Created {result['path']}")
+
+
+@create.command("epic")
+@click.argument("epic_id")
+def create_epic_cmd(epic_id: str) -> None:
+    """Generate sprint/context/context-epic-EPIC_ID.md from the sprint YAML."""
+    from pf.context.generate import generate_context
+
+    result = generate_context("epic", epic_id)
+    if not result["success"]:
+        click.echo(f"[ERROR] {result['error']}", err=True)
+        raise SystemExit(1)
+    click.echo(f"Created {result['path']}")
+
+
 @context.command("validate")
 @click.argument("file", required=False, type=click.Path(exists=False))
 @click.option(

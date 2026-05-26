@@ -82,6 +82,7 @@ Other formats break Frame GUI detection.
 - [ ] Check workflow permissions (auto-prompt for missing)
 - [ ] If Jira enabled AND story has a jira key: claim story in Jira
 - [ ] Write session file with Workflow Tracking section
+- [ ] Create story context file (see Step 4b)
 - [ ] Create feature branch
 - [ ] Update sprint YAML status
 </gate>
@@ -231,6 +232,28 @@ Each entry: what was changed, what the spec said, and why.
 
 <!-- Agents: append deviations below this line. Do not edit other agents' entries. -->
 ```
+
+## Step 4b: Create Story Context
+
+The TDD `tea-context` entry gate and the `sm-setup-exit` story-context check
+run `pf validate context-story {STORY_ID}`, which requires
+`sprint/context/context-story-{STORY_ID}.md` to exist. Generate it
+deterministically from the sprint YAML so the gate passes on a real artifact
+(not the SM-Assessment fallback):
+
+```bash
+pf context create story {STORY_ID}
+```
+
+This reads the story (title, type, points, workflow, repo, and acceptance
+criteria when present) from the sprint YAML and writes a populated context
+file. If the epic has no context document yet, also run:
+
+```bash
+pf context create epic {EPIC_NUMBER}
+```
+
+Do not proceed to Step 5 until `pf validate context-story {STORY_ID}` exits 0.
 
 ## Step 5: Create Branch
 
