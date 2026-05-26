@@ -221,12 +221,20 @@ async def create_or_checkout_branch(
 async def create_feature_branches(
     repos: Sequence[tuple[str, Path]],
     branch_name: str,
+    project_root: Path | None = None,
 ) -> list[BranchResult]:
     """Create feature branches across all repos in parallel using asyncio.gather.
+
+    Trunk-based repos (per repos.yaml ``branch_strategy``) are skipped — they
+    have no feature-branch workflow, so creating a branch would leave a stray
+    ``feat/*`` ref behind.
 
     Args:
         repos: Sequence of (name, path) tuples for each repo
         branch_name: Name of the branch to create/checkout
+        project_root: Root used to resolve each repo's branch_strategy from
+            repos.yaml. Defaults to the canonical project root detection
+            (env override → marker walk-up).
 
     Returns:
         List of BranchResult objects in same order as input
@@ -234,7 +242,19 @@ async def create_feature_branches(
     if not repos:
         return []
 
-    tasks = [create_or_checkout_branch(name, path, branch_name) for name, path in repos]
+    from pf.git.repos import get_repo_config, should_create_branch
+
+    async def _resolve(name: str, path: Path) -> BranchResult:
+        if not should_create_branch(get_repo_config(name, project_root)):
+            return BranchResult(
+                name=name,
+                path=path,
+                branch=branch_name,
+                action=BranchAction.SKIPPED,
+            )
+        return await create_or_checkout_branch(name, path, branch_name)
+
+    tasks = [_resolve(name, path) for name, path in repos]
     results = await asyncio.gather(*tasks, return_exceptions=False)
     return list(results)
 

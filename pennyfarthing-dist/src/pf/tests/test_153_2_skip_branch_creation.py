@@ -168,16 +168,17 @@ class TestShouldCreateBranchPredicate:
 
 
 class TestCreateFeatureBranchesSkipsTrunkBased:
-    def test_trunk_based_repo_gets_no_feature_branch(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_trunk_based_repo_gets_no_feature_branch(self, tmp_path: Path) -> None:
         repo = tmp_path
         _init_repo(repo, default_branch="main")
         _write_repos_yaml(repo, name="orch", strategy="trunk-based", default_branch="main")
-        monkeypatch.chdir(repo)
 
+        # Resolve config from this tmp project explicitly — hermetic and
+        # independent of CLAUDE_PROJECT_DIR / cwd in the test environment.
         results = asyncio.run(
-            create_feature_branches([("orch", repo)], "feat/153-2-skip-test")
+            create_feature_branches(
+                [("orch", repo)], "feat/153-2-skip-test", project_root=repo
+            )
         )
 
         assert len(results) == 1
@@ -188,16 +189,15 @@ class TestCreateFeatureBranchesSkipsTrunkBased:
         # The repo was not "created/checked-out" — it was skipped.
         assert results[0].action != BranchAction.CREATED
 
-    def test_gitflow_repo_still_creates_branch(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_gitflow_repo_still_creates_branch(self, tmp_path: Path) -> None:
         repo = tmp_path
         _init_repo(repo, default_branch="develop", extra_branch=None)
         _write_repos_yaml(repo, name="fw", strategy="gitflow", default_branch="develop")
-        monkeypatch.chdir(repo)
 
         results = asyncio.run(
-            create_feature_branches([("fw", repo)], "feat/153-2-gitflow-test")
+            create_feature_branches(
+                [("fw", repo)], "feat/153-2-gitflow-test", project_root=repo
+            )
         )
 
         assert len(results) == 1

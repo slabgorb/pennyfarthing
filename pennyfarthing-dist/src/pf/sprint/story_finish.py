@@ -19,7 +19,10 @@ import subprocess
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pf.git.repos import RepoConfig
 
 from pf.sprint.archive_epic import _load_archive_file, _write_archive_file, ensure_archive_file
 from pf.sprint.loader import find_story_in_data
@@ -101,6 +104,34 @@ def _extract_branch(fields: dict[str, str]) -> str | None:
 def _run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
     """Run a subprocess with sane defaults."""
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+
+
+def _git_cleanup(
+    project_root: Path,
+    branch: str | None,
+    repo_config: "RepoConfig | None",
+) -> list[dict[str, Any]]:
+    """Step 6: return to the base branch and delete the merged feature branch.
+
+    Trunk-based repos have no feature-branch workflow and no separate base
+    branch to return to, so cleanup is skipped entirely (running
+    ``git checkout develop`` on a main-only repo just fails noisily).
+
+    Returns the step entries to append to the finish report.
+    """
+    from pf.git.repos import should_create_branch
+
+    if not should_create_branch(repo_config):
+        return [
+            {"step": 6, "action": "git_cleanup", "skipped": "trunk-based", "branch": branch}
+        ]
+
+    base = repo_config.default_branch if repo_config else "develop"
+    _run(["git", "checkout", base], cwd=str(project_root))
+    _run(["git", "pull", "origin", base], cwd=str(project_root))
+    if branch:
+        _run(["git", "branch", "-d", branch], cwd=str(project_root))
+    return [{"step": 6, "action": "git_cleanup", "branch": branch}]
 
 
 def finish_story(
@@ -347,11 +378,15 @@ def finish_story(
     steps.append({"step": 5, "action": "archive_epics", "ran": True})
 
     # --- Step 6: Git cleanup ---
-    _run(["git", "checkout", "develop"], cwd=str(project_root))
-    _run(["git", "pull", "origin", "develop"], cwd=str(project_root))
-    if branch:
-        _run(["git", "branch", "-d", branch], cwd=str(project_root))
-    steps.append({"step": 6, "action": "git_cleanup", "branch": branch})
+    # Resolve the config for the repo at the project root (cwd of cleanup).
+    # Trunk-based repos skip branch cleanup; gitflow repos behave as before.
+    from pf.git.repos import load_repos_config
+
+    root_repo = next(
+        (rc for rc in load_repos_config(project_root).values() if rc.path in (".", "")),
+        None,
+    )
+    steps.extend(_git_cleanup(project_root, branch, root_repo))
 
     # --- Step 7: Remove session file ---
     if session_path.exists():
