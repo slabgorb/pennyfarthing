@@ -12,17 +12,17 @@ Now I have a complete picture. Time for The Portfolio's assessment.
 
 ### 1. [CRITICAL] Missing `main.rs` — no binary is produced
 
-There is no `main.rs` in `crates/axiathon-client/src/`. The story explicitly requires producing the `axiathon` binary with a `main.rs` that initializes tracing, dispatches commands, catches errors, and calls `std::process::exit()`. Without it, this crate is a library only — the entire point of Story 6.1 (an operator-facing CLI binary) is undelivered.
+There is no `main.rs` in `crates/consumer-project-client/src/`. The story explicitly requires producing the `consumer-project` binary with a `main.rs` that initializes tracing, dispatches commands, catches errors, and calls `std::process::exit()`. Without it, this crate is a library only — the entire point of Story 6.1 (an operator-facing CLI binary) is undelivered.
 
 No `[[bin]]` section in `Cargo.toml` either.
 
 ### 2. [HIGH] Missing `logout` and `tui` command groups — AC-1 violation
 
-AC-1 requires `axiathon --help` to show: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, **`login`/`logout`**, **`tui`**, `completion`, `init`. The `Commands` enum at `cli.rs:41` is missing both `Logout` and `Tui` variants.
+AC-1 requires `consumer-project --help` to show: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, **`login`/`logout`**, **`tui`**, `completion`, `init`. The `Commands` enum at `cli.rs:41` is missing both `Logout` and `Tui` variants.
 
 ### 3. [HIGH] `init` command is a stub — scope violation
 
-The story scope explicitly says "Shell completion generation (**functional, not stub**)" and "`axiathon init` first-time setup (**functional, not stub**)". Completion is functional, but `init` at `commands/init.rs:3` just returns `Err(CliError::NotImplemented("Story 6.1"))`. The init command should create the config directory and a default `cli.toml`.
+The story scope explicitly says "Shell completion generation (**functional, not stub**)" and "`consumer-project init` first-time setup (**functional, not stub**)". Completion is functional, but `init` at `commands/init.rs:3` just returns `Err(CliError::NotImplemented("Story 6.1"))`. The init command should create the config directory and a default `cli.toml`.
 
 ### 4. [HIGH] Nightly `cargo fmt` check fails
 
@@ -38,7 +38,7 @@ At `config.rs:14`: `RawConfig` uses `#[derive(Deserialize)]` without `#[serde(de
 
 ### 7. [MEDIUM] `generate_completion` silently returns empty string for unknown shell
 
-At `completion.rs:12`: unknown shell names return `String::new()` with no error. This is silent error swallowing — an operator running `axiathon completion tcsh` gets empty stdout with exit code 0, not an error. Should return `Result<String, CliError>` with a proper error for unsupported shells.
+At `completion.rs:12`: unknown shell names return `String::new()` with no error. This is silent error swallowing — an operator running `consumer-project completion tcsh` gets empty stdout with exit code 0, not an error. Should return `Result<String, CliError>` with a proper error for unsupported shells.
 
 ### 8. [MEDIUM] `toml` version mismatch — workspace has 0.8, story spec says 0.9
 

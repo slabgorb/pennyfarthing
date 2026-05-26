@@ -20,11 +20,11 @@
 **Status:** RED (failing — compilation errors due to missing modules: `cli`, `error`, `output`, `client`, `config`, `commands::completion`)
 
 **Expected public API surface tested:**
-- `axiathon_client::cli::Cli` (Parser struct with `Commands` enum)
-- `axiathon_client::error::CliError` (with `exit_code()` method)
-- `axiathon_client::output::{OutputFormat, OutputFormatter}` (with `format_table()`)
-- `axiathon_client::client::SiemClient` (with `new()`, `with_token()`, `with_tenant()`, `map_http_status()`)
-- `axiathon_client::config::ClientConfig` (with `from_toml()`, `from_file()`, `default_path()`, `server_url()`, `timeout_secs()`)
-- `axiathon_client::commands::completion::generate_completions()`
+- `consumer-project_client::cli::Cli` (Parser struct with `Commands` enum)
+- `consumer-project_client::error::CliError` (with `exit_code()` method)
+- `consumer-project_client::output::{OutputFormat, OutputFormatter}` (with `format_table()`)
+- `consumer-project_client::client::SiemClient` (with `new()`, `with_token()`, `with_tenant()`, `map_http_status()`)
+- `consumer-project_client::config::ClientConfig` (with `from_toml()`, `from_file()`, `default_path()`, `server_url()`, `timeout_secs()`)
+- `consumer-project_client::commands::completion::generate_completions()`
 
 **Handoff:** To Dev for implementation (GREEN phase)

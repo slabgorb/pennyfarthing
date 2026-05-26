@@ -36,7 +36,7 @@ findings:
   evidence: "TEA wrote header injection tests for tenant ID (CWE-113) in siem_client.rs.\
     \ However, the pipeline verified header injection prevention works via reqwest's\
     \ HeaderValue::from_str() rejection \u2014 it did not flag that tenant_id should\
-    \ use the validated TenantId type from axiathon-core. The test catches the injection\
+    \ use the validated TenantId type from consumer-project-core. The test catches the injection\
     \ vector but not the type-safety gap. Reviewer finding #12 says 'VERIFIED: Header\
     \ injection prevention works correctly' \u2014 reaching the opposite conclusion\
     \ on the type-safety aspect. Crediting as caught since CWE-113 tests were written."

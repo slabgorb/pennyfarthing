@@ -41,7 +41,7 @@ findings:
   evidence: "TEA includes 'CWE-113: Header injection prevention (CRLF in token/tenant\
     \ values)' tests. Reviewer F4 flags 'with_token() / with_tenant() bypass CWE-113\
     \ validation.' Same vulnerability class (CWE-113) identified, though the ground\
-    \ truth specifically wants TenantId type from axiathon-core rather than raw String\
+    \ truth specifically wants TenantId type from consumer-project-core rather than raw String\
     \ \u2014 the type-safety angle is not addressed, only the injection prevention\
     \ angle."
 - finding_id: I3

@@ -14,11 +14,11 @@ Now I have a complete picture. Let me compile my findings.
 other => panic!("unsupported shell: {other}"),
 ```
 
-The `generate_completion()` function panics on unsupported shell names. This is production code reachable from user input (`axiathon completion garbage`). The Rust coding rules explicitly state: **"No `unwrap()` in production code — use `?` or `expect()` with actionable message."** A `panic!` is worse than `unwrap()`. This should return `Result<String, CliError>` and map the unknown shell to `CliError::General`.
+The `generate_completion()` function panics on unsupported shell names. This is production code reachable from user input (`consumer-project completion garbage`). The Rust coding rules explicitly state: **"No `unwrap()` in production code — use `?` or `expect()` with actionable message."** A `panic!` is worse than `unwrap()`. This should return `Result<String, CliError>` and map the unknown shell to `CliError::General`.
 
 ### [HIGH] Missing `logout` and `tui` command groups — AC-1 violation at `cli.rs:47-87`
 
-AC-1 requires `axiathon --help` to show `login`/`logout` and `tui`. The `Commands` enum has neither a `Logout` nor a `Tui` variant. The tests (`help_contains_all_command_groups` at `cli_structure.rs:77`) don't check for `logout` or `tui` either, which masks this gap. These are explicitly listed in the AC:
+AC-1 requires `consumer-project --help` to show `login`/`logout` and `tui`. The `Commands` enum has neither a `Logout` nor a `Tui` variant. The tests (`help_contains_all_command_groups` at `cli_structure.rs:77`) don't check for `logout` or `tui` either, which masks this gap. These are explicitly listed in the AC:
 
 > "query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init"
 
@@ -29,7 +29,7 @@ AC-1 requires `axiathon --help` to show `login`/`logout` and `tui`. The `Command
 ServerError(u16, String),
 ```
 
-The `Display` impl echoes the second field verbatim. The test `cli_error_display_does_not_leak_internal_paths` at `security.rs:15` is **vacuous** — it only asserts `!display.is_empty()`, which proves nothing about information leakage. If the server responds with `"Internal: /var/lib/axiathon/db panicked at query.rs:42"`, that entire string appears in the user-facing error message. The error type's own doc comment says `"Display impls must not leak internal paths"`, but the implementation contradicts this.
+The `Display` impl echoes the second field verbatim. The test `cli_error_display_does_not_leak_internal_paths` at `security.rs:15` is **vacuous** — it only asserts `!display.is_empty()`, which proves nothing about information leakage. If the server responds with `"Internal: /var/lib/consumer-project/db panicked at query.rs:42"`, that entire string appears in the user-facing error message. The error type's own doc comment says `"Display impls must not leak internal paths"`, but the implementation contradicts this.
 
 ### [HIGH] `expect()` in `OutputFormatter` production code — `output.rs:57,62-67`
 
@@ -68,7 +68,7 @@ The story Technical Guardrails specify `toml 0.9`, but the workspace declares `t
 
 ### [MEDIUM] `keyring` dependency missing — AC-7/AC-8 at `Cargo.toml`
 
-The story explicitly lists `keyring 3` as a required dependency and specifies workspace addition. Neither the workspace `Cargo.toml` nor `axiathon-client/Cargo.toml` includes `keyring`. The `SiemClient` has no keyring integration for token loading. While `keyring` usage overlaps with Story 9.1 (login), the story's Technical Guardrails say to add it to workspace deps now. The story also says to load the token from keychain at startup in sync context before Tokio runtime.
+The story explicitly lists `keyring 3` as a required dependency and specifies workspace addition. Neither the workspace `Cargo.toml` nor `consumer-project-client/Cargo.toml` includes `keyring`. The `SiemClient` has no keyring integration for token loading. While `keyring` usage overlaps with Story 9.1 (login), the story's Technical Guardrails say to add it to workspace deps now. The story also says to load the token from keychain at startup in sync context before Tokio runtime.
 
 ### [MEDIUM] Nightly `rustfmt` check fails — `commands/mod.rs`, `cli_structure.rs`
 
@@ -100,7 +100,7 @@ Typos in config keys are caught. Test at `security.rs:132` confirms.
 
 ### [VERIFIED] Dependency isolation — `Cargo.toml`
 
-`axiathon-client` depends only on `axiathon-core` for internal crates. No server-side crate imports.
+`consumer-project-client` depends only on `consumer-project-core` for internal crates. No server-side crate imports.
 
 ---
 

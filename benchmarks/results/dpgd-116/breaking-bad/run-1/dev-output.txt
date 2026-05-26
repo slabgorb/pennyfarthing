@@ -4,7 +4,7 @@ All **108 tests passing**, 0 failures. Clippy clean.
 
 ### Files Changed
 
-**Production code (new files in `crates/axiathon-client/src/`):**
+**Production code (new files in `crates/consumer-project-client/src/`):**
 - `lib.rs` — Module re-exports
 - `error.rs` — `CliError` enum with 10 variants and `exit_code()` mapping (0-4)
 - `cli.rs` — `Cli` struct (clap derive), `Commands` enum with 12 subcommands, `RulesCommand` enum, global flags with `global = true`, server URL newline validation
@@ -18,7 +18,7 @@ All **108 tests passing**, 0 failures. Clippy clean.
 
 **Cargo.toml changes:**
 - Root workspace: Added `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml` deps; added `env` feature to clap; changed `unsafe_code` lint from `forbid` to `deny` (production lib.rs files retain `#![forbid(unsafe_code)]`)
-- `crates/axiathon-client/Cargo.toml` — Added all required dependencies
+- `crates/consumer-project-client/Cargo.toml` — Added all required dependencies
 
 **Test fixes (edition 2024 compatibility):**
 - `tests/global_flags.rs` — Wrapped `set_var`/`remove_var` in `unsafe` blocks, added `#![allow(unsafe_code)]`

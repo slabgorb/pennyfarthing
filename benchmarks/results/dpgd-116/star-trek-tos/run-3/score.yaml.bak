@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote CWE-113 header injection tests for tenant ID with CRLF/null\
     \ bytes. Dev implemented validation rejecting \\r, \\n, \\0. However, the deeper\
-    \ issue \u2014 using raw String instead of TenantId from axiathon-core \u2014\
+    \ issue \u2014 using raw String instead of TenantId from consumer-project-core \u2014\
     \ was flagged by Reviewer as MEDIUM: 'The --tenant flag is Option<String> (raw,\
     \ unvalidated) instead of using the TenantId newtype.' Partial catch: injection\
     \ prevented but type-safety gap remains."

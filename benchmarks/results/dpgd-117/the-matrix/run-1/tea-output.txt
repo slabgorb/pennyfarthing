@@ -14,10 +14,10 @@
 | `tests/security_edge_cases.rs` | 8 | Stack trace exposure, internal path exposure, CORS preflight, malformed JSON, empty body, oversized body, header injection, method not allowed, `#![forbid(unsafe_code)]` check |
 
 **Tests Written:** 52 tests covering all 5 ACs
-**Status:** RED (compilation failure — `axiathon_server::router()` does not exist)
+**Status:** RED (compilation failure — `consumer-project_server::router()` does not exist)
 
 **Key design decisions in test contract:**
-- Tests expect `axiathon_server::router()` as the public API entry point returning an Axum `Router`
+- Tests expect `consumer-project_server::router()` as the public API entry point returning an Axum `Router`
 - The AC requires `errors` as an always-present **array** (not the current `error: Option<ApiError>` singular) — tests enforce this
 - The AC requires `meta` with `request_id`, `timestamp`, `trace_id` (not the current pagination-focused `ApiMeta`) — tests enforce this
 - Health endpoint is public (no auth required), all other routes require authentication

@@ -39,7 +39,7 @@ findings:
   caught_by: null
   evidence: TEA and Dev addressed CRLF sanitization in tenant_id strings, and the
     reviewer verified header injection prevention. However, no phase flagged that
-    tenant_id uses raw String instead of the validated TenantId type from axiathon-core,
+    tenant_id uses raw String instead of the validated TenantId type from consumer-project-core,
     bypassing type-safe tenant isolation.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

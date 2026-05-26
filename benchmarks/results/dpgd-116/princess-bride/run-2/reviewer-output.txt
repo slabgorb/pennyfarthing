@@ -12,7 +12,7 @@ Now I have everything I need. Here is my adversarial review.
 
 `SiemClient::new()` performs zero validation on tenant ID or token inputs. While `try_new()` exists with CRLF/null byte checks, **nothing forces callers to use `try_new()`**. All test code uses `new()` directly. The unvalidated constructor is `pub` and will be the path of least resistance for future implementors, creating a latent header injection vulnerability. Either remove `new()` entirely, make `try_new()` the only constructor, or make `new()` private.
 
-### [HIGH] Edition mismatch: `axiathon-client` uses `edition = "2021"` vs workspace `edition = "2024"` at `crates/axiathon-client/Cargo.toml:2`
+### [HIGH] Edition mismatch: `consumer-project-client` uses `edition = "2021"` vs workspace `edition = "2024"` at `crates/consumer-project-client/Cargo.toml:2`
 
 The workspace defines `edition = "2024"` but the client crate overrides it with `edition = "2021"`. This means the crate misses edition 2024 language changes (e.g., `gen` keyword reservation, new borrow checker rules). The crate should use `edition.workspace = true` like other workspace members, or this divergence must be explicitly justified.
 
@@ -38,7 +38,7 @@ When a user explicitly sets `api_url = "ftp://..."` in their config file, the co
 
 ### [MEDIUM] `--tenant` accepts raw `String` instead of validated `TenantId` newtype — `cli.rs:34`
 
-Per the Rust coding rules, IDs should use newtypes (`TenantId(String)`) to prevent mixing. The `--tenant` flag accepts a raw `Option<String>`. The `axiathon-core` crate already defines `TenantId` — it should be used here or at least validated before passing to `SiemClient`.
+Per the Rust coding rules, IDs should use newtypes (`TenantId(String)`) to prevent mixing. The `--tenant` flag accepts a raw `Option<String>`. The `consumer-project-core` crate already defines `TenantId` — it should be used here or at least validated before passing to `SiemClient`.
 
 ### [MEDIUM] `NotFound` error Display leaks the full URL including server address — `error.rs:57`
 

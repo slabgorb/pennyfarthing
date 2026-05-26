@@ -35,7 +35,7 @@ findings:
   evidence: "Dev implemented CRLF sanitization in SiemClient header injection. Reviewer\
     \ verified: 'Header injection prevention \u2014 CRLF stripped from both token\
     \ and tenant values before HeaderValue::from_str(). Double defense.' However,\
-    \ the deeper issue of using raw String instead of TenantId from axiathon-core\
+    \ the deeper issue of using raw String instead of TenantId from consumer-project-core\
     \ was not flagged."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

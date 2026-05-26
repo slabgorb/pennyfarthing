@@ -32,7 +32,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer flagged [MEDIUM]: 'tenant uses raw String instead of TenantId\
-    \ newtype' \u2014 'axiathon-core exports TenantId with validated constructors.\
+    \ newtype' \u2014 'consumer-project-core exports TenantId with validated constructors.\
     \ Both the CLI --tenant flag and SiemClient::tenant_id field use raw Option<String>,\
     \ losing type safety at the trust boundary.'"
 - finding_id: I3

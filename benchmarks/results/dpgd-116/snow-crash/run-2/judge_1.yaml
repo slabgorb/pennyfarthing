@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote CWE-113 header injection tests for tenant ID and token. Dev\
     \ implemented stripping \\r\\n from tenant and token values (client.rs:23,29).\
-    \ Reviewer verified. However, the type-safety fix (using TenantId from axiathon-core\
+    \ Reviewer verified. However, the type-safety fix (using TenantId from consumer-project-core\
     \ instead of raw String) was not addressed \u2014 only the injection vector was\
     \ mitigated via sanitization."
 - finding_id: I3

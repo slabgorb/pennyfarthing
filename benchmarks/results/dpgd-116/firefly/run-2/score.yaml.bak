@@ -35,7 +35,7 @@ findings:
   evidence: "Dev implemented CR/LF sanitization in client.rs:34,43 \u2014 reviewer\
     \ verified: 'Header injection prevention: CR/LF stripped from tokens and tenant\
     \ IDs.' However, the deeper type-safety issue (using raw String instead of TenantId\
-    \ from axiathon-core) was not flagged by any phase."
+    \ from consumer-project-core) was not flagged by any phase."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

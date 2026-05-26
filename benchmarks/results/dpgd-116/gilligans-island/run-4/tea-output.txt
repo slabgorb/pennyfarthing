@@ -22,7 +22,7 @@
 
 **Dependency Changes:**
 - Workspace: added `clap_complete`, `comfy-table`, `csv`, `dirs`, `keyring`, `reqwest`, `tempfile`, `toml`; added `env` feature to `clap`
-- axiathon-client: added all Story 6.1 runtime deps + `tempfile` as dev-dep
+- consumer-project-client: added all Story 6.1 runtime deps + `tempfile` as dev-dep
 
 **Handoff:** To Dev for implementation (GREEN phase)
 

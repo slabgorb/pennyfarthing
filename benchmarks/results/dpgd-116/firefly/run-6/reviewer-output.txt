@@ -9,7 +9,7 @@ Now I have a complete picture. Here is my adversarial review.
 ## Observations
 
 ### [HIGH] Missing `main.rs` — no binary can be built
-**`crates/axiathon-client/src/main.rs`** does not exist. The story requires an `axiathon` binary produced by this crate. Without `main.rs`, there is no binary entry point — `cargo build --bin axiathon` will fail. The `Cargo.toml` doesn't declare `[[bin]]` either. This is a fundamental deliverable gap: the entire command dispatch loop, exit code mapping (`std::process::exit()`), config loading, token loading, and tracing init described in AC-3/AC-7/AC-8 cannot be exercised.
+**`crates/consumer-project-client/src/main.rs`** does not exist. The story requires an `consumer-project` binary produced by this crate. Without `main.rs`, there is no binary entry point — `cargo build --bin consumer-project` will fail. The `Cargo.toml` doesn't declare `[[bin]]` either. This is a fundamental deliverable gap: the entire command dispatch loop, exit code mapping (`std::process::exit()`), config loading, token loading, and tracing init described in AC-3/AC-7/AC-8 cannot be exercised.
 
 ### [HIGH] Nightly `cargo fmt` check fails — 3 files have formatting drift
 `cargo +nightly fmt --all --check` reports diffs in `cli.rs`, `commands/completion.rs`, and `config.rs`. Per gotchas.md: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."* This blocks approval.
@@ -33,7 +33,7 @@ AC-5 says `--server` supports `AXIATHON_SERVER` env var, but `config.rs:83` read
 `output.rs:97` — `request_id` is hardcoded to `"00000000-0000-0000-0000-000000000000"` and `timestamp` is empty string. For a stub/framework story this is acceptable, but should be noted for future stories.
 
 ### [LOW] `keyring` crate is listed as a dependency in the story spec but not in `Cargo.toml`
-The Technical Guardrails list `keyring 3` as a key dependency. It's not in the `Cargo.toml` for axiathon-client. This is acceptable since the story scope says login/auth is out of scope (Story 9.1), but it's a gap against the spec's dependency list.
+The Technical Guardrails list `keyring 3` as a key dependency. It's not in the `Cargo.toml` for consumer-project-client. This is acceptable since the story scope says login/auth is out of scope (Story 9.1), but it's a gap against the spec's dependency list.
 
 ### [VERIFIED] Header injection (CWE-113) is properly mitigated
 `client.rs:62` — `HeaderValue::from_str()` rejects CRLF characters. Tests in `security.rs:52-96` confirm this for both tenant and token headers. The `if let Ok(val)` pattern silently drops invalid values rather than erroring, which is acceptable for defense-in-depth.

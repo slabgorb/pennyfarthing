@@ -2,7 +2,7 @@ All **134 tests pass** and **clippy is clean**.
 
 ## Summary
 
-**Files created** (17 files under `crates/axiathon-client/src/`):
+**Files created** (17 files under `crates/consumer-project-client/src/`):
 
 | File | Purpose |
 |------|---------|

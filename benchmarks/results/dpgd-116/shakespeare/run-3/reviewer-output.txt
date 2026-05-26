@@ -10,7 +10,7 @@ I have examined every clause of this contract. Here is my verdict.
 
 ### [HIGH] Missing `logout` and `tui` command groups — AC-1 violation at `cli.rs:46-67`
 
-AC-1 explicitly requires: *"`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."*
+AC-1 explicitly requires: *"`consumer-project --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."*
 
 The `Commands` enum has 10 variants but is missing `Logout` and `Tui`. Even as stubs, these must exist to satisfy the help output requirement. This is a specification gap that will cause AC-1 validation to fail.
 
@@ -20,7 +20,7 @@ Per `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the pre
 
 Affected files:
 - `src/config.rs` — function signature wrapping, chained method alignment
-- `src/main.rs` — import ordering (nightly sorts `axiathon_client` before `clap`)
+- `src/main.rs` — import ordering (nightly sorts `consumer-project_client` before `clap`)
 - `tests/cli_structure_test.rs` — import ordering, line wrapping
 - `tests/output_formatter_test.rs` — assert macro formatting
 - `tests/security_test.rs` — chained method and assert formatting
@@ -44,11 +44,11 @@ Serde's default behavior accepts unknown fields silently. A user who types `api_
 
 ### [MEDIUM] `init` command is a stub despite spec requiring functional — `commands/init.rs`
 
-The story scope says *"axiathon init first-time setup (functional, not stub)"*, but `InitArgs` is an empty struct with zero initialization logic. Completion has a real `generate_completions()` function; init has nothing. This is an incomplete deliverable per the spec.
+The story scope says *"consumer-project init first-time setup (functional, not stub)"*, but `InitArgs` is an empty struct with zero initialization logic. Completion has a real `generate_completions()` function; init has nothing. This is an incomplete deliverable per the spec.
 
 ### [MEDIUM] `--tenant` accepts raw `String`, not validated `TenantId` — `cli.rs:37`
 
-The `--tenant` flag is `Option<String>` but `axiathon-core` provides `TenantId` with validation (UUID format, max 128 chars). Per the Rust coding rules: *"Validated constructors at trust boundaries."* The CLI is a trust boundary — tenant IDs from user input should be validated before being passed to `SiemClient`.
+The `--tenant` flag is `Option<String>` but `consumer-project-core` provides `TenantId` with validation (UUID format, max 128 chars). Per the Rust coding rules: *"Validated constructors at trust boundaries."* The CLI is a trust boundary — tenant IDs from user input should be validated before being passed to `SiemClient`.
 
 ### [LOW] `NotFound` Display leaks resource identifier — `error.rs:68`
 
@@ -83,7 +83,7 @@ The binary parses CLI args but discards them (`let _cli`), returning NotImplemen
 - [VERIFIED] Display sanitizes `ServerError` and `ConfigError` internals
 - [VERIFIED] Exit codes 3/4 for auth/authz — `error.rs:39-44`
 - [VERIFIED] HTTP status mapping covers 401/403/404/429/5xx — `error.rs:48-57`
-- [VERIFIED] No server-side crate imports in `axiathon-client` dependency graph
+- [VERIFIED] No server-side crate imports in `consumer-project-client` dependency graph
 - [VERIFIED] clap derive macros only, no imperative building
 - [VERIFIED] All 122 tests pass; clippy clean with `-D warnings`
 - [VERIFIED] CSV escaping uses `csv` crate (proper RFC 4180 compliance)

@@ -21,12 +21,12 @@ All right. Machine shop's done stress-testing the blueprint. Here's the damage r
 **Status:** RED (compilation failures — modules `cli`, `error`, `output`, `client`, `config`, `commands::completion` don't exist yet)
 
 **Key types the dev must create:**
-- `axiathon_client::cli::Cli` — clap `#[derive(Parser)]` with all command groups
-- `axiathon_client::error::CliError` — enum with `exit_code()` method, variants: `ServerError`, `NotFound`, `AuthenticationExpired`, `Unauthorized`, `RateLimited`, `ServerUnavailable`, `ConnectionTimeout`, `ConfigError`, `NotImplemented`
-- `axiathon_client::output::{OutputFormat, OutputFormatter}` — Table/JSON/CSV formatting
-- `axiathon_client::client::SiemClient` — HTTP wrapper with `map_http_status()`, `build_request()`, `build_url()`, header injection prevention
-- `axiathon_client::config::ClientConfig` — TOML loading with `load_from()`, `with_env_override()`, `with_cli_override()`, `token()` returns `None`
-- `axiathon_client::commands::completion::generate_completion` — clap_complete integration
+- `consumer-project_client::cli::Cli` — clap `#[derive(Parser)]` with all command groups
+- `consumer-project_client::error::CliError` — enum with `exit_code()` method, variants: `ServerError`, `NotFound`, `AuthenticationExpired`, `Unauthorized`, `RateLimited`, `ServerUnavailable`, `ConnectionTimeout`, `ConfigError`, `NotImplemented`
+- `consumer-project_client::output::{OutputFormat, OutputFormatter}` — Table/JSON/CSV formatting
+- `consumer-project_client::client::SiemClient` — HTTP wrapper with `map_http_status()`, `build_request()`, `build_url()`, header injection prevention
+- `consumer-project_client::config::ClientConfig` — TOML loading with `load_from()`, `with_env_override()`, `with_cli_override()`, `token()` returns `None`
+- `consumer-project_client::commands::completion::generate_completion` — clap_complete integration
 
 **Security coverage:**
 - Header injection via CRLF/null bytes in token and tenant (CWE-113)

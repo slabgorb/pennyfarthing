@@ -8,9 +8,9 @@ Now I have a thorough understanding. Let me deliver my review.
 
 ## Preflight Status
 
-- `cargo check -p axiathon-client`: **PASS**
-- `cargo clippy -p axiathon-client -- -D warnings`: **PASS**
-- `cargo test -p axiathon-client`: **PASS** (107 tests across 9 files)
+- `cargo check -p consumer-project-client`: **PASS**
+- `cargo clippy -p consumer-project-client -- -D warnings`: **PASS**
+- `cargo test -p consumer-project-client`: **PASS** (107 tests across 9 files)
 - `cargo +nightly fmt --all --check`: **FAIL** — formatting differences in `cli.rs`
 
 ---
@@ -19,11 +19,11 @@ Now I have a thorough understanding. Let me deliver my review.
 
 ### [CRITICAL] F1: Nightly fmt check fails — `cli.rs` formatting
 
-`cargo +nightly fmt --all --check` reports diffs in `crates/axiathon-client/src/cli.rs:53`. Per gotchas.md, nightly rustfmt enforcement is mandatory before approval. Multi-line `#[command(after_help = ...)]` attributes need reformatting to single-line. This is a CI-blocking issue.
+`cargo +nightly fmt --all --check` reports diffs in `crates/consumer-project-client/src/cli.rs:53`. Per gotchas.md, nightly rustfmt enforcement is mandatory before approval. Multi-line `#[command(after_help = ...)]` attributes need reformatting to single-line. This is a CI-blocking issue.
 
 ### [HIGH] F2: Missing `main.rs` — no binary entry point
 
-AC-3 requires `main.rs` to catch errors and call `std::process::exit()` with the correct exit code. AC-1 requires the `axiathon` binary. There is **no `main.rs`** anywhere in the crate. The `Cargo.toml` declares no `[[bin]]` target. Without `main.rs`, the binary `axiathon` cannot be built. This is a fundamental structural omission — the entire CLI cannot be invoked as a binary.
+AC-3 requires `main.rs` to catch errors and call `std::process::exit()` with the correct exit code. AC-1 requires the `consumer-project` binary. There is **no `main.rs`** anywhere in the crate. The `Cargo.toml` declares no `[[bin]]` target. Without `main.rs`, the binary `consumer-project` cannot be built. This is a fundamental structural omission — the entire CLI cannot be invoked as a binary.
 
 ### [HIGH] F3: CWE-209 — `ServerError` Display leaks internal detail via `Debug`
 
@@ -45,7 +45,7 @@ This is a **vacuous test** — it literally allows the `javascript:` scheme in t
 
 ### [MEDIUM] F6: Missing `tui` command in CLI enum
 
-AC-1 explicitly requires: *"`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, login/logout, **tui**, completion, init"*. The `Commands` enum has no `Tui` variant. The `cli_help_contains_all_command_groups` test in `cli_structure.rs:17-26` does **not** include "tui" in the required groups list. This is an AC violation.
+AC-1 explicitly requires: *"`consumer-project --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, login/logout, **tui**, completion, init"*. The `Commands` enum has no `Tui` variant. The `cli_help_contains_all_command_groups` test in `cli_structure.rs:17-26` does **not** include "tui" in the required groups list. This is an AC violation.
 
 ### [MEDIUM] F7: `RawConfig` silently ignores unknown fields
 
@@ -65,7 +65,7 @@ The workspace `Cargo.toml` declares `toml = "0.8"` but the story spec says `toml
 
 ### [LOW] F11: Stub handler tests are tautological
 
-`stub_handlers.rs` tests construct `CliError::NotImplemented("Story 6.2".into())` and then check if the string contains "6.2". This tests `thiserror`'s Display derive, not actual command dispatch. There's no test that running `axiathon status` actually produces the `NotImplemented` error. Without `main.rs` and command dispatch, there's no way to verify that stub handlers are wired to the correct story references.
+`stub_handlers.rs` tests construct `CliError::NotImplemented("Story 6.2".into())` and then check if the string contains "6.2". This tests `thiserror`'s Display derive, not actual command dispatch. There's no test that running `consumer-project status` actually produces the `NotImplemented` error. Without `main.rs` and command dispatch, there's no way to verify that stub handlers are wired to the correct story references.
 
 ### [LOW] F12: `completion.rs` silently returns empty on invalid shell
 

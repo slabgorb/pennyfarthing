@@ -36,7 +36,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote header injection tests for X-Tenant-ID in siem_client.rs covering\
     \ CRLF/null byte rejection. However, the deeper issue \u2014 that tenant_id is\
-    \ a raw String rather than using axiathon-core's validated TenantId type \u2014\
+    \ a raw String rather than using consumer-project-core's validated TenantId type \u2014\
     \ was not flagged by any phase. The injection vector is mitigated but the type-safety\
     \ gap remains uncaught. Partial catch."
 - finding_id: I3

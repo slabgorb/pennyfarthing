@@ -4,7 +4,7 @@
 
 ### Files Created (17 files)
 
-**Production code** (`crates/axiathon-client/src/`):
+**Production code** (`crates/consumer-project-client/src/`):
 | File | Description |
 |------|-------------|
 | `lib.rs` | Public API re-exports (module declarations) |
@@ -28,7 +28,7 @@
 
 **Files Modified (2)**:
 - `Cargo.toml` (workspace) — added `env` feature to clap
-- `crates/axiathon-client/Cargo.toml` — added `uuid`/`chrono` deps, set `edition = "2021"` to support test `set_var`/`remove_var` calls
+- `crates/consumer-project-client/Cargo.toml` — added `uuid`/`chrono` deps, set `edition = "2021"` to support test `set_var`/`remove_var` calls
 
 ### Tests: 92/92 passing (GREEN)
 
@@ -42,4 +42,4 @@
 
 ### Delivery Finding
 
-- **Gap** (non-blocking): Config loading tests (`config_loading.rs`) use `std::env::set_var`/`remove_var` without synchronization, causing race conditions when run with parallel test threads. Tests must run with `--test-threads=1` to pass reliably. The crate edition was set to `2021` (instead of workspace `2024`) because `set_var`/`remove_var` became unsafe in edition 2024 and the test files call them without `unsafe` blocks. Affects `crates/axiathon-client/tests/config_loading.rs` (needs `unsafe` blocks and a test serialization mechanism). *Found by Dev during implementation.*
+- **Gap** (non-blocking): Config loading tests (`config_loading.rs`) use `std::env::set_var`/`remove_var` without synchronization, causing race conditions when run with parallel test threads. Tests must run with `--test-threads=1` to pass reliably. The crate edition was set to `2021` (instead of workspace `2024`) because `set_var`/`remove_var` became unsafe in edition 2024 and the test files call them without `unsafe` blocks. Affects `crates/consumer-project-client/tests/config_loading.rs` (needs `unsafe` blocks and a test serialization mechanism). *Found by Dev during implementation.*

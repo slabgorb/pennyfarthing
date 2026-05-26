@@ -14,18 +14,18 @@ I've now read all source files and test files thoroughly. Here is my structured 
 ## Findings
 
 ### [CRITICAL] Nightly rustfmt check fails — `cli.rs` formatting violations
-`cargo +nightly fmt --all --check` reports diffs in `crates/axiathon-client/src/cli.rs`. Per gotchas.md, nightly fmt must pass before approval. Multiple `#[command(...)]` attribute macros exceed line width and need reformatting.
+`cargo +nightly fmt --all --check` reports diffs in `crates/consumer-project-client/src/cli.rs`. Per gotchas.md, nightly fmt must pass before approval. Multiple `#[command(...)]` attribute macros exceed line width and need reformatting.
 
 ### [HIGH] Missing workspace dependency declarations for `reqwest` and `toml`
-The story spec requires adding `reqwest` and `toml` to `[workspace.dependencies]` in root `Cargo.toml`. Currently `crates/axiathon-client/Cargo.toml` declares `reqwest = { version = "0.12", ... }` and `toml = "0.9"` as direct version pins instead of using `workspace = true`. This violates the workspace dependency management pattern used by all other dependencies (`clap`, `serde`, `thiserror`, etc.) and means version drift between crates is possible.
+The story spec requires adding `reqwest` and `toml` to `[workspace.dependencies]` in root `Cargo.toml`. Currently `crates/consumer-project-client/Cargo.toml` declares `reqwest = { version = "0.12", ... }` and `toml = "0.9"` as direct version pins instead of using `workspace = true`. This violates the workspace dependency management pattern used by all other dependencies (`clap`, `serde`, `thiserror`, etc.) and means version drift between crates is possible.
 
-**At:** `crates/axiathon-client/Cargo.toml:11-20` (reqwest, toml, comfy-table, csv, dirs, clap_complete all use direct version instead of workspace)
+**At:** `crates/consumer-project-client/Cargo.toml:11-20` (reqwest, toml, comfy-table, csv, dirs, clap_complete all use direct version instead of workspace)
 
 ### [HIGH] `RawConfig` silently accepts and discards unknown fields via `_ignored: IgnoredAny`
 At `config.rs:12`, the `_ignored` field with `serde(default)` and `IgnoredAny` is a no-op pattern — serde already ignores unknown fields by default unless `#[serde(deny_unknown_fields)]` is set. This gives a false sense of safety. A user who typos `server_url` as `sever_url` will silently get defaults with no warning. The config test `config_file_does_not_contain_token_field` at `cli_config.rs:47-75` explicitly verifies that a `token` field in TOML is silently accepted — this is a security concern since it means users might believe their token is being read from the file when it isn't.
 
 ### [MEDIUM] No `main.rs` — binary entry point missing
-The story spec requires producing the `axiathon` binary. There is no `main.rs` in `crates/axiathon-client/src/`. Without it, there's no binary crate, no `std::process::exit()` with exit codes, and the AC-3 exit code contract cannot be verified end-to-end. The `[[bin]]` section is also absent from `Cargo.toml`.
+The story spec requires producing the `consumer-project` binary. There is no `main.rs` in `crates/consumer-project-client/src/`. Without it, there's no binary crate, no `std::process::exit()` with exit codes, and the AC-3 exit code contract cannot be verified end-to-end. The `[[bin]]` section is also absent from `Cargo.toml`.
 
 ### [MEDIUM] `OutputFormatter` uses `expect()` extensively in production code
 At `output.rs:105-121`, there are 7 `expect()` calls in `format_as_json` and `format_as_csv`. The project's Rust rules (`.claude/rules/rust.md`) say "No `unwrap()` in production code — use `?` or `expect()` with actionable message." While `expect()` is technically allowed, these are in output formatting paths that could receive arbitrary user data. The messages like `"data serializes"` are not actionable. If `format_table` returned `Result`, callers could handle errors gracefully.
@@ -34,7 +34,7 @@ At `output.rs:105-121`, there are 7 `expect()` calls in `format_as_json` and `fo
 At `commands/completion.rs:14`, the `_ => Shell::Bash` arm means any invalid shell string (e.g., `"nushell"`) silently generates bash completions. The `Completion` variant in `cli.rs:74` restricts via `value_parser`, but the public function `generate_completions` could be called directly with an invalid shell. Should return `Result` or `unreachable!()` since the CLI already validates.
 
 ### [MEDIUM] `tenant` field uses raw `Option<String>` instead of `TenantId` newtype
-At `cli.rs:19`, `--tenant` is `Option<String>`. The project's Rust rules mandate newtypes for IDs (`TenantId(String)` prevents mixing ID types). The `SiemClient::with_tenant` at `client.rs:23` also takes `&str`. `axiathon-core` provides `TenantId` — it should be used at the CLI boundary.
+At `cli.rs:19`, `--tenant` is `Option<String>`. The project's Rust rules mandate newtypes for IDs (`TenantId(String)` prevents mixing ID types). The `SiemClient::with_tenant` at `client.rs:23` also takes `&str`. `consumer-project-core` provides `TenantId` — it should be used at the CLI boundary.
 
 ### [MEDIUM] JSON output has hardcoded empty metadata fields
 At `output.rs:108`, `ResponseMetadata::new("", "", "v1")` creates metadata with empty `request_id` and `timestamp`. This means JSON output always has `"request_id": ""` and `"timestamp": ""`, which is misleading for consumers and makes the metadata field useless.
@@ -86,5 +86,5 @@ At `cli_siem_client.rs:222-232`, the test creates a client with a newline-inject
 
 ### Strongly recommended (Medium):
 4. Make `Init` actually functional (create config dir + default file) per AC scope "functional, not stub"
-5. Use `TenantId` newtype from `axiathon-core` for the `--tenant` flag
+5. Use `TenantId` newtype from `consumer-project-core` for the `--tenant` flag
 6. Fix vacuous `siem_client_rejects_token_with_newlines` test to actually assert sanitization

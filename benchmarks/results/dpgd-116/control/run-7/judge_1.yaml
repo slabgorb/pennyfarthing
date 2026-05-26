@@ -37,7 +37,7 @@ findings:
   evidence: "TEA wrote tests for 'header injection prevention' (CWE-113). Dev implemented\
     \ newline rejection in with_tenant(). Reviewer verified 'Header injection defense\
     \ \u2014 client.rs:30-33,40-43'. Same vulnerability class (CWE-113) caught, though\
-    \ the deeper issue of using raw String instead of TenantId from axiathon-core\
+    \ the deeper issue of using raw String instead of TenantId from consumer-project-core\
     \ was not flagged."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

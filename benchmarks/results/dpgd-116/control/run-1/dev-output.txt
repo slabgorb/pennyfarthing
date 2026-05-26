@@ -2,7 +2,7 @@ All **85 tests pass** (0 failures), clippy is clean.
 
 ## Summary
 
-### Production files created (`crates/axiathon-client/src/`):
+### Production files created (`crates/consumer-project-client/src/`):
 
 | File | Description |
 |------|-------------|
@@ -18,7 +18,7 @@ All **85 tests pass** (0 failures), clippy is clean.
 
 ### Config changes:
 - `Cargo.toml` (workspace): Added `env` feature to `clap`
-- `crates/axiathon-client/Cargo.toml`: Added `uuid` dep, overrode `unsafe_code` lint to `deny` (lib.rs keeps `#![forbid(unsafe_code)]`) to allow `unsafe` blocks in test code for edition 2024's `set_var`
+- `crates/consumer-project-client/Cargo.toml`: Added `uuid` dep, overrode `unsafe_code` lint to `deny` (lib.rs keeps `#![forbid(unsafe_code)]`) to allow `unsafe` blocks in test code for edition 2024's `set_var`
 
 ### Test file fixes (edition 2024 compatibility):
 - `config_loading.rs`: Wrapped `set_var`/`remove_var` in `unsafe` blocks, added `Mutex` for env var test serialization

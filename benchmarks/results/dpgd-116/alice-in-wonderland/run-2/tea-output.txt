@@ -21,12 +21,12 @@
 **Status:** RED (all 7 test files fail to compile — modules `cli`, `error`, `output`, `client`, `config`, `commands` don't exist yet)
 
 **Handoff:** To Dev for implementation. The tests define the exact public API surface:
-- `axiathon_client::cli::{Cli, Commands, GlobalFlags}`
-- `axiathon_client::error::CliError` with `exit_code() -> i32`
-- `axiathon_client::output::{OutputFormat, OutputFormatter, TableFormatter, JsonFormatter, CsvFormatter, ResponseMetadata}`
-- `axiathon_client::client::SiemClient` with `new()`, `build_request()`, `map_http_error()`
-- `axiathon_client::config::ClientConfig` with `from_file()`, `from_file_with_env()`, `default_config_path()`
-- `axiathon_client::commands::{query, rules, alerts, config, ingest, status, tenant, login, completion}` each with `handle_stub()`
+- `consumer-project_client::cli::{Cli, Commands, GlobalFlags}`
+- `consumer-project_client::error::CliError` with `exit_code() -> i32`
+- `consumer-project_client::output::{OutputFormat, OutputFormatter, TableFormatter, JsonFormatter, CsvFormatter, ResponseMetadata}`
+- `consumer-project_client::client::SiemClient` with `new()`, `build_request()`, `map_http_error()`
+- `consumer-project_client::config::ClientConfig` with `from_file()`, `from_file_with_env()`, `default_config_path()`
+- `consumer-project_client::commands::{query, rules, alerts, config, ingest, status, tenant, login, completion}` each with `handle_stub()`
 
 ## Delivery Findings
 

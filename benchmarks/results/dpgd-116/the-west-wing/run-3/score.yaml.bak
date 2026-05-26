@@ -34,7 +34,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer flagged as [MEDIUM]: "tenant field uses raw Option<String> instead
-    of TenantId newtype" at cli.rs:19 and recommended using TenantId from axiathon-core.
+    of TenantId newtype" at cli.rs:19 and recommended using TenantId from consumer-project-core.
     TEA wrote header injection tests (CWE-113) but did not specifically test for TenantId
     type usage.'
 - finding_id: I3

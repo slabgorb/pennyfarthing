@@ -54,7 +54,7 @@ The workspace `Cargo.toml` declares `toml = "0.8"`, but the story Technical Guar
 
 **11. [LOW] Missing `keyring` dependency — `Cargo.toml`**
 
-The story requires `keyring` 3 for OS keychain credential storage. It's listed in workspace dependencies as required, but it's not in the workspace `Cargo.toml` nor in `axiathon-client/Cargo.toml`. While keychain integration is deferred to Story 9.1, the workspace-level dependency declaration was supposed to happen in this story per Technical Guardrails.
+The story requires `keyring` 3 for OS keychain credential storage. It's listed in workspace dependencies as required, but it's not in the workspace `Cargo.toml` nor in `consumer-project-client/Cargo.toml`. While keychain integration is deferred to Story 9.1, the workspace-level dependency declaration was supposed to happen in this story per Technical Guardrails.
 
 **12. [VERIFIED] `#![forbid(unsafe_code)]` present in both `lib.rs:2` and `main.rs:2`.**
 

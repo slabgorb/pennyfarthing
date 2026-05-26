@@ -34,8 +34,8 @@ findings:
   caught_by: null
   evidence: "TEA and Dev addressed CWE-113 header injection via newline rejection\
     \ in with_tenant/with_token, but the core finding \u2014 using raw String instead\
-    \ of validated TenantId from axiathon-core \u2014 was not caught. Reviewer even\
-    \ noted (#8) axiathon-core is declared but unused, yet did not connect this to\
+    \ of validated TenantId from consumer-project-core \u2014 was not caught. Reviewer even\
+    \ noted (#8) consumer-project-core is declared but unused, yet did not connect this to\
     \ the tenant_id type safety gap."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

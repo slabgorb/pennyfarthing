@@ -8,7 +8,7 @@ Now I have a comprehensive picture. Let me compile my findings.
 
 ## Preflight Check
 
-Build: **PASS** — `cargo build -p axiathon-client` compiles clean.
+Build: **PASS** — `cargo build -p consumer-project-client` compiles clean.
 Clippy: **PASS** — zero warnings.
 Tests: **PASS** — all 57 tests pass across 8 test files.
 Nightly fmt: **FAIL** — two files have formatting violations.
@@ -60,13 +60,13 @@ Since `status` is a stub that returns `Err(NotImplemented(...))`, stdout is **al
 
 The story technical guardrails specify `toml 0.9`, but the workspace declares `toml = "0.8"`. Minor semver difference, but deviates from the spec.
 
-### 7. [LOW] `From<AxiathonError>` catch-all maps everything to `ServerError` at `error.rs:69`
+### 7. [LOW] `From<Consumer ProjectError>` catch-all maps everything to `ServerError` at `error.rs:69`
 
 ```rust
 other => Self::ServerError(other.to_string()),
 ```
 
-`AxiathonError::Io`, `::Parse`, `::Json`, `::Validation`, `::Storage`, `::Internal` all become `ServerError`. An `Io` error from the core crate is not a "server error" — it's semantically misleading. Not blocking, but worth noting for future stories.
+`Consumer ProjectError::Io`, `::Parse`, `::Json`, `::Validation`, `::Storage`, `::Internal` all become `ServerError`. An `Io` error from the core crate is not a "server error" — it's semantically misleading. Not blocking, but worth noting for future stories.
 
 ### 8. [VERIFIED] Security: Header injection prevention
 

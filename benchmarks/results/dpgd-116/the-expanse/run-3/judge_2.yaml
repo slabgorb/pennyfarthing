@@ -37,7 +37,7 @@ findings:
   evidence: TEA's security.rs and siem_client.rs cover 'CWE-113 header injection'
     and 'header injection via newline chars in tenant ID/token.' Same vulnerability
     class. Dev implemented CRLF validation. However, neither phase flagged the type-safety
-    gap of using raw String instead of TenantId from axiathon-core.
+    gap of using raw String instead of TenantId from consumer-project-core.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

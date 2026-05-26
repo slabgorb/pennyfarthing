@@ -23,4 +23,4 @@ All tests committed in RED state. Here's the summary:
 
 **Cargo.toml updates:** Added workspace dependencies (`clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml`) and client crate dependencies.
 
-**Handoff:** To Dev for implementation (GREEN phase). The dev needs to create all modules in `crates/axiathon-client/src/` and export them from `lib.rs`.
+**Handoff:** To Dev for implementation (GREEN phase). The dev needs to create all modules in `crates/consumer-project-client/src/` and export them from `lib.rs`.

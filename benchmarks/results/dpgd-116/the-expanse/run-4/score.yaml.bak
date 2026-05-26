@@ -35,7 +35,7 @@ findings:
   evidence: "TEA wrote CRLF injection prevention tests for siem_client.rs (header\
     \ injection for X-Tenant-ID and Bearer token). Dev implemented the CRLF check.\
     \ However, the deeper issue of using raw String instead of validated TenantId\
-    \ from axiathon-core was not caught \u2014 only the symptom (CRLF) was addressed,\
+    \ from consumer-project-core was not caught \u2014 only the symptom (CRLF) was addressed,\
     \ not the root cause (type safety)."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
@@ -65,7 +65,7 @@ findings:
   evidence: "Reviewer flagged '[MEDIUM] CRLF injection tests are vacuous \u2014 they\
     \ accept success' noting 'let _ = client; and pass... if someone removes the CRLF\
     \ check, the test still passes. These should assert!(result.is_err()).' Also flagged\
-    \ env_axiathon_timeout_rejects_non_numeric as vacuous."
+    \ env_consumer-project_timeout_rejects_non_numeric as vacuous."
 - finding_id: I6
   title: "Test with zero assertions \u2014 only checks non-panic"
   weight: 5

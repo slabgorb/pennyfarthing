@@ -40,7 +40,7 @@ AC-4 requires "Table default for TTY, JSON for piped output" using `std::io::IsT
 
 ### `[MEDIUM]` `tenant` field is raw `String`, not `TenantId` newtype at `cli.rs:22`, `client.rs:7`
 
-Per Rust coding rules: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag and `SiemClient.tenant_id` both use raw `String`. `axiathon-core` exports `TenantId` — it should be used here, or at least documented why it's not.
+Per Rust coding rules: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag and `SiemClient.tenant_id` both use raw `String`. `consumer-project-core` exports `TenantId` — it should be used here, or at least documented why it's not.
 
 ### `[LOW]` JSON output has duplicate metadata fields at `output.rs:49-58`
 

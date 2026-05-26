@@ -38,7 +38,7 @@ findings:
     \ as a security test. Dev implemented HeaderValue::from_str() rejection of CRLF.\
     \ Reviewer verified CWE-113 prevention. Same vulnerability class caught, though\
     \ the type-safety improvement (using TenantId instead of raw String) was not flagged\
-    \ \u2014 reviewer even noted axiathon-core dependency is declared but unused."
+    \ \u2014 reviewer even noted consumer-project-core dependency is declared but unused."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

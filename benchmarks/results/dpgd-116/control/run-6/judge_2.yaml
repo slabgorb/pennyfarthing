@@ -41,7 +41,7 @@ findings:
   evidence: "TEA wrote header injection tests for CRLF in tenant IDs (CWE-113), and\
     \ the Reviewer flagged that SiemClient silently drops invalid headers and tests\
     \ are vacuous. However, the ground truth finding is specifically that tenant_id\
-    \ uses raw String instead of validated TenantId from axiathon-core \u2014 bypassing\
+    \ uses raw String instead of validated TenantId from consumer-project-core \u2014 bypassing\
     \ type-safe tenant isolation. No phase flagged the use of raw String vs TenantId\
     \ newtype. The CRLF tests are about injection, not about using the wrong type."
 - finding_id: I3

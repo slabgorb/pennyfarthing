@@ -36,7 +36,7 @@ findings:
   evidence: 'TEA wrote CRLF header injection tests and reviewer noted they rely on
     catch_unwind rather than application-level validation, but neither phase flagged
     the core issue: SiemClient.tenant_id is a raw String instead of using the validated
-    TenantId newtype from axiathon-core, bypassing type-safe tenant isolation.'
+    TenantId newtype from consumer-project-core, bypassing type-safe tenant isolation.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

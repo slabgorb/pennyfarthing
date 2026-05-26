@@ -4,12 +4,12 @@
 **Reason:** Story 6.1 is core CLI framework — foundational code requiring full test coverage across all 10 ACs.
 
 **Test Files:**
-- `crates/axiathon-client/tests/cli_structure.rs` — AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive)
-- `crates/axiathon-client/tests/error_exit_codes.rs` — AC-3 (exit codes 0-4), CWE-209 security
-- `crates/axiathon-client/tests/output_formatting.rs` — AC-4 (table/json/csv, metadata, escaping)
-- `crates/axiathon-client/tests/siem_client.rs` — AC-7 (HTTP wrapper, header injection, token safety)
-- `crates/axiathon-client/tests/config_loading.rs` — AC-8 (TOML loading, env overrides, precedence, token rejection)
-- `crates/axiathon-client/tests/completion_and_stubs.rs` — AC-9 (shell completions), AC-10 (stub handlers)
+- `crates/consumer-project-client/tests/cli_structure.rs` — AC-1 (command groups), AC-2 (help rendering), AC-5 (global flags), AC-6 (clap derive)
+- `crates/consumer-project-client/tests/error_exit_codes.rs` — AC-3 (exit codes 0-4), CWE-209 security
+- `crates/consumer-project-client/tests/output_formatting.rs` — AC-4 (table/json/csv, metadata, escaping)
+- `crates/consumer-project-client/tests/siem_client.rs` — AC-7 (HTTP wrapper, header injection, token safety)
+- `crates/consumer-project-client/tests/config_loading.rs` — AC-8 (TOML loading, env overrides, precedence, token rejection)
+- `crates/consumer-project-client/tests/completion_and_stubs.rs` — AC-9 (shell completions), AC-10 (stub handlers)
 
 **Tests Written:** 87 tests covering all 10 ACs
 **Status:** RED (failing to compile — modules `cli`, `error`, `output`, `client`, `config`, `commands` don't exist yet)

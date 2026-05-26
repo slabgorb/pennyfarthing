@@ -37,7 +37,7 @@ findings:
   caught_by: null
   evidence: "TEA wrote CRLF injection tests and the reviewer verified CRLF sanitization,\
     \ but the finding is about using raw String instead of validated TenantId from\
-    \ axiathon-core \u2014 a type-safety gap bypassing tenant isolation. No phase\
+    \ consumer-project-core \u2014 a type-safety gap bypassing tenant isolation. No phase\
     \ flagged the missing use of the TenantId newtype."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

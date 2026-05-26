@@ -37,7 +37,7 @@ findings:
   evidence: 'TEA wrote siem_client_test.rs with 14 tests including ''CWE-113: Header
     injection via newlines in token/tenant ID''. Dev implemented with_tenant_validated
     rejecting CR/LF. However, the raw String path (set_tenant_id) still exists alongside
-    the validated path, so the core issue (using String instead of TenantId from axiathon-core)
+    the validated path, so the core issue (using String instead of TenantId from consumer-project-core)
     persists. Pipeline demonstrated awareness of the risk class.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

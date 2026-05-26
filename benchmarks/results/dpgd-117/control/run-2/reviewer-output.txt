@@ -6,8 +6,8 @@ Good — the `expect()` has an actionable message per the Rust rules. Now I have
 
 ## Preflight
 
-- `cargo test -p axiathon-server`: **All 56 tests pass** (6 rate_limiting + 16 authentication + 14 endpoints + 12 envelope + 14 security + 8 versioning - some counted per file)
-- `cargo clippy -p axiathon-server -- -D warnings`: **Clean**
+- `cargo test -p consumer-project-server`: **All 56 tests pass** (6 rate_limiting + 16 authentication + 14 endpoints + 12 envelope + 14 security + 8 versioning - some counted per file)
+- `cargo clippy -p consumer-project-server -- -D warnings`: **Clean**
 - `cargo +nightly fmt --all --check`: **FAILS — 36 diffs** (import ordering, line wrapping)
 
 ---
@@ -18,7 +18,7 @@ Good — the `expect()` has an actionable message per the Rust rules. Now I have
 
 Per reviewer gotchas, `cargo +nightly fmt --all --check` must pass. Nightly enforces import ordering that stable does not. There are 36 diffs across the crate. This will fail CI post-merge.
 
-### [HIGH] Six unused dependencies declared in `Cargo.toml:9-14` — `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`
+### [HIGH] Six unused dependencies declared in `Cargo.toml:9-14` — `consumer-project-core`, `consumer-project-detection`, `consumer-project-ingestion`, `consumer-project-ot`, `consumer-project-query`, `consumer-project-storage`
 
 None of these crate dependencies are actually imported or used anywhere in `src/`. They add unnecessary compile-time cost and create false coupling. Additionally, `tracing`, `tracing-subscriber`, `thiserror`, and `bytes` are declared as dependencies but never used in the source. That's **10 unused dependencies** total.
 
@@ -102,7 +102,7 @@ Traced: authenticated POST to `/api/v1/events` with readonly token
 ### Blocking Issues (must fix)
 
 1. **[HIGH] `cargo +nightly fmt --all --check` fails** — Run `cargo +nightly fmt --all` to fix. Per gotchas, this is a pre-approval requirement.
-2. **[HIGH] 10 unused dependencies** — Remove `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `tracing`, `tracing-subscriber`, `thiserror`, and `bytes` from `[dependencies]` in `Cargo.toml`. They are not used and create false coupling.
+2. **[HIGH] 10 unused dependencies** — Remove `consumer-project-core`, `consumer-project-detection`, `consumer-project-ingestion`, `consumer-project-ot`, `consumer-project-query`, `consumer-project-storage`, `tracing`, `tracing-subscriber`, `thiserror`, and `bytes` from `[dependencies]` in `Cargo.toml`. They are not used and create false coupling.
 3. **[HIGH] `std::sync::Mutex` in async rate limiter** — Either switch to `tokio::sync::Mutex`, use `dashmap`, or document why `std::sync::Mutex` is acceptable (held for nanoseconds, no await across lock). At minimum the doc comment claiming "sliding window" should be corrected to "fixed window."
 
 ### Non-blocking (should fix before next story)

@@ -12,13 +12,13 @@ Confirmed. Now I have everything needed for my review.
 
 ### `[HIGH]` Unsupported shell completion silently exits 0 — at `completion.rs:13-16`, `main.rs:34-37`
 
-The `generate_completion()` function prints an error to stderr for unsupported shells but returns `()`. The caller in `main.rs:35` wraps it in `Ok(())`, meaning `axiathon completion garbage` exits with code **0** (success). Per AC-3, errors must exit with code 1. This is a correctness bug — scripts checking `$?` will falsely believe completion succeeded.
+The `generate_completion()` function prints an error to stderr for unsupported shells but returns `()`. The caller in `main.rs:35` wraps it in `Ok(())`, meaning `consumer-project completion garbage` exits with code **0** (success). Per AC-3, errors must exit with code 1. This is a correctness bug — scripts checking `$?` will falsely believe completion succeeded.
 
 **Dr. McCoy says:** *Dammit Jim, the function returns nothing! How's main supposed to know it failed?*
 
 ### `[HIGH]` Nightly `rustfmt` check fails — 366 lines of diff across `client.rs`, `output.rs`, `main.rs`, and test files
 
-Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval." Primary issues: import ordering in `main.rs:3-7` (external `clap` before internal `axiathon_client`), line-length violations in `client.rs:73-76` and `output.rs:132,136`. This will fail CI.
+Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval." Primary issues: import ordering in `main.rs:3-7` (external `clap` before internal `consumer-project_client`), line-length violations in `client.rs:73-76` and `output.rs:132,136`. This will fail CI.
 
 ### `[MEDIUM]` `SiemClient` does not actually wrap `reqwest::Client` — at `client.rs:8-12`
 
@@ -64,7 +64,7 @@ All variants map correctly: 3 for auth, 4 for authz, 1 for everything else. No v
 
 ### `[VERIFIED]` Dependency isolation — `Cargo.toml:12-27`
 
-Only `axiathon-core` is imported. No server-side crates. The dependency boundary is correctly enforced.
+Only `consumer-project-core` is imported. No server-side crates. The dependency boundary is correctly enforced.
 
 ### `[VERIFIED]` Token never stored in config — `config.rs:20-21,64,87-91`
 

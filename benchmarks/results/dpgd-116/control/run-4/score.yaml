@@ -37,8 +37,8 @@ findings:
   evidence: "TEA wrote CWE-113 header injection tests for tenant ID. Dev implemented\
     \ newline rejection in SiemClient::with_tenant (client.rs:59). Reviewer verified:\
     \ 'CWE-113 header injection prevention \u2014 properly handled.' However, the\
-    \ specific finding about using raw String instead of TenantId from axiathon-core\
-    \ was NOT caught \u2014 reviewer even noted axiathon-core dependency is declared\
+    \ specific finding about using raw String instead of TenantId from consumer-project-core\
+    \ was NOT caught \u2014 reviewer even noted consumer-project-core dependency is declared\
     \ but unused (observation 8) without connecting it to tenant type safety. Partial\
     \ credit: the injection vector is mitigated but the type-safety gap (using String\
     \ instead of TenantId) was not flagged."

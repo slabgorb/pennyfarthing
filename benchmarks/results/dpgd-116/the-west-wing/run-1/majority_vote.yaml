@@ -38,7 +38,7 @@ findings:
     \ rejected' tests in siem_client.rs. Dev implemented try_with_tenant rejecting\
     \ CRLF. Reviewer verified CWE-113 mitigation and flagged with_token bypassing\
     \ validation as HIGH. Same vulnerability class (CWE-113) addressed, though the\
-    \ type-safety angle of using TenantId from axiathon-core was not raised."
+    \ type-safety angle of using TenantId from consumer-project-core was not raised."
   votes: 3/3
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

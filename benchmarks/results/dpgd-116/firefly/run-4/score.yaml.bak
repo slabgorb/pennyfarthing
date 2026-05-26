@@ -36,7 +36,7 @@ findings:
   evidence: TEA wrote 'Header injection prevention (newlines, CR, LF, null bytes in
     tokens/tenant IDs)' tests in tests/siem_client.rs and tests/security.rs. Dev implemented
     header value validation that prevents CRLF/null injection. However, the underlying
-    issue of using raw String instead of TenantId from axiathon-core was not addressed.
+    issue of using raw String instead of TenantId from consumer-project-core was not addressed.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

@@ -37,7 +37,7 @@ findings:
   evidence: TEA wrote siem_client.rs tests covering header injection (CWE-113) and
     CRLF in tenant ID. Dev implemented sanitize_header_value() in client.rs:17-19.
     However, neither phase flagged that tenant_id should use the validated TenantId
-    type from axiathon-core instead of raw String. The header injection mitigation
+    type from consumer-project-core instead of raw String. The header injection mitigation
     was caught, but the type-safety concern (using Option<TenantId> instead of raw
     String) was not explicitly flagged. Scoring as caught since the same vulnerability
     class (CWE-113 header injection via tenant_id) was addressed.

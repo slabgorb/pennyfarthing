@@ -34,7 +34,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer finding #9: 'Raw `String` for tenant ID instead of `TenantId`\
-    \ newtype at `cli.rs:35`, `client.rs:10`' \u2014 explicitly flags that axiathon-core\
+    \ newtype at `cli.rs:35`, `client.rs:10`' \u2014 explicitly flags that consumer-project-core\
     \ exports TenantId but it's unused, losing type safety."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

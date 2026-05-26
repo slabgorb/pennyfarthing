@@ -35,7 +35,7 @@ findings:
   caught_by: null
   evidence: TEA wrote header injection tests for CRLF/null bytes, and Dev implemented
     validate_header_value rejecting those characters. However, tenant_id is still
-    a raw String rather than using axiathon-core's validated TenantId type. The type-safety
+    a raw String rather than using consumer-project-core's validated TenantId type. The type-safety
     gap was not flagged by any phase.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

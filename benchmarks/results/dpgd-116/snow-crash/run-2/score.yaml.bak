@@ -37,7 +37,7 @@ findings:
   caught_by: tea
   evidence: TEA wrote CWE-113 header injection prevention tests for tenant ID with
     newlines. Dev implemented stripping of \r\n from tenant values in client.rs:23,29.
-    However, the type still uses raw String rather than axiathon-core's validated
+    However, the type still uses raw String rather than consumer-project-core's validated
     TenantId, so the root cause (bypassing type-safe tenant isolation) was not addressed.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

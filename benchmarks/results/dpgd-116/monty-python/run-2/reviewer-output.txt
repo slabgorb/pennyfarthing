@@ -14,7 +14,7 @@ I've read every file. I've traced the data flows. I've run the tests. I've run n
 
 ### [CRITICAL] Missing `tui` command variant — AC-1 violation at `cli.rs:44-79`
 
-AC-1 explicitly states: *"`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."* The `Commands` enum has no `Tui` variant. The help output test at `cli_command_structure.rs:89` also conspicuously omits `tui` from the `required_groups` list — the test was crafted to pass despite the missing variant. This is a spec violation.
+AC-1 explicitly states: *"`consumer-project --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."* The `Commands` enum has no `Tui` variant. The help output test at `cli_command_structure.rs:89` also conspicuously omits `tui` from the `required_groups` list — the test was crafted to pass despite the missing variant. This is a spec violation.
 
 ### [HIGH] `cargo +nightly fmt --all --check` fails — 26 diff locations
 
@@ -26,11 +26,11 @@ Per gotchas.md: *"Always include `cargo +nightly fmt --all --check` in the prefl
 
 ### [HIGH] Missing `commands/` module directory — AC scope violation
 
-The story spec says to create `commands/mod.rs` plus 10 command modules (`query.rs`, `rules.rs`, `alerts.rs`, `ingest.rs`, `config.rs`, `status.rs`, `tenant.rs`, `login.rs`, `completion.rs`, `init.rs`). The entire `commands/` directory does not exist. All command arg structs are inlined in `cli.rs`, which means the architectural separation required by the story is absent. This also means there is no `main.rs` binary entry point — the crate is library-only with no actual `axiathon` binary being produced.
+The story spec says to create `commands/mod.rs` plus 10 command modules (`query.rs`, `rules.rs`, `alerts.rs`, `ingest.rs`, `config.rs`, `status.rs`, `tenant.rs`, `login.rs`, `completion.rs`, `init.rs`). The entire `commands/` directory does not exist. All command arg structs are inlined in `cli.rs`, which means the architectural separation required by the story is absent. This also means there is no `main.rs` binary entry point — the crate is library-only with no actual `consumer-project` binary being produced.
 
 ### [HIGH] No `main.rs` — no binary produced
 
-There is no `src/main.rs` or `[[bin]]` target. The `axiathon` binary specified by the story cannot be built. The `exit_code()` method exists but is never called from a process entry point. The error-to-stderr, output-to-stdout separation (AC-3) cannot be verified because there is no dispatch loop.
+There is no `src/main.rs` or `[[bin]]` target. The `consumer-project` binary specified by the story cannot be built. The `exit_code()` method exists but is never called from a process entry point. The error-to-stderr, output-to-stdout separation (AC-3) cannot be verified because there is no dispatch loop.
 
 ### [HIGH] `SiemClient` does not wrap `reqwest::Client` — AC-7 violation at `client.rs:1-63`
 

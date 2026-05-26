@@ -6,8 +6,8 @@ I've now read all implementation and test files, run the tests and linters. Here
 
 ## Observations
 
-### [CRITICAL] No `main.rs` binary entry point — `axiathon` binary does not exist
-**`crates/axiathon-client/src/main.rs`** — file does not exist. The story requires producing the `axiathon` binary with `main.rs` handling dispatch, tracing init, error catching, and `std::process::exit()` with proper exit codes. The Cargo.toml has no `[[bin]]` section. This crate is a library only — **there is no CLI binary**. AC-3 (exit codes via `process::exit`), AC-9 (completion script to stdout, instructions to stderr), AC-10 (stubs printing to stderr and exiting), and the entire binary contract are unmet.
+### [CRITICAL] No `main.rs` binary entry point — `consumer-project` binary does not exist
+**`crates/consumer-project-client/src/main.rs`** — file does not exist. The story requires producing the `consumer-project` binary with `main.rs` handling dispatch, tracing init, error catching, and `std::process::exit()` with proper exit codes. The Cargo.toml has no `[[bin]]` section. This crate is a library only — **there is no CLI binary**. AC-3 (exit codes via `process::exit`), AC-9 (completion script to stdout, instructions to stderr), AC-10 (stubs printing to stderr and exiting), and the entire binary contract are unmet.
 
 ### [CRITICAL] `cargo +nightly fmt --all --check` fails — formatting violations
 Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The check shows diffs in `cli.rs`, `client.rs`, and `config.rs`. This is a blocking issue per project policy.
@@ -16,7 +16,7 @@ Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the pref
 At least 6 test files call `std::env::set_var()` and `std::env::remove_var()` without any serialization mechanism. These are `unsafe` in Rust 2024 (edition declared in workspace: `edition = "2024"`) and will cause **undefined behavior** when tests run in parallel (cargo's default). This affects `global_flags.rs:189`, `config_loading.rs:94,117`, `security.rs:187,201`. On edition 2024 these should fail to compile as `set_var` is marked unsafe — the fact they compile suggests the crate's own `Cargo.toml` specifies `edition = "2021"` (line 2), which silently overrides the workspace edition. This is itself a bug (see below).
 
 ### [HIGH] Crate edition `"2021"` overrides workspace `"2024"` — `Cargo.toml:2`
-`crates/axiathon-client/Cargo.toml` line 2: `edition = "2021"`. The workspace specifies `edition = "2024"` and `rust-version = "1.85"`. The crate-level `edition` takes precedence, silently downgrading from 2024 to 2021. This breaks the project's MSRV/edition policy and hides the `set_var` unsafety issue above.
+`crates/consumer-project-client/Cargo.toml` line 2: `edition = "2021"`. The workspace specifies `edition = "2024"` and `rust-version = "1.85"`. The crate-level `edition` takes precedence, silently downgrading from 2024 to 2021. This breaks the project's MSRV/edition policy and hides the `set_var` unsafety issue above.
 
 ### [HIGH] `OutputFormatter` is a struct, not a trait — violates AC-4 spec
 The story spec states: "OutputFormatter **trait** with Table (comfy-table), JSON (serde_json), CSV (csv crate) implementations." The implementation at `output.rs:54` defines `OutputFormatter` as a `struct` with an internal enum dispatch, not a `trait`. The test file comment on line 39 even says "OutputFormatter trait" but the implementation is not a trait. This prevents downstream consumers from implementing custom formatters.
@@ -69,7 +69,7 @@ Minor: the story spec calls for `toml 0.9`, the crate uses `0.8`. Not functional
 ## Verdict: **CHANGES_REQUESTED**
 
 ### Blocking issues requiring resolution:
-1. **No `main.rs` / no binary** — The entire point of this story is the `axiathon` binary. Without it, there is no CLI.
+1. **No `main.rs` / no binary** — The entire point of this story is the `consumer-project` binary. Without it, there is no CLI.
 2. **`cargo +nightly fmt` fails** — Per project gotchas, this blocks approval.
 3. **Edition mismatch** — `edition = "2021"` in the crate Cargo.toml must be removed (use `edition.workspace = true`) to match the workspace's `"2024"`.
 4. **`env::set_var` in tests** — Once edition is fixed to 2024, these become `unsafe`. Needs `serial_test` crate or `std::sync::Mutex` guards.

@@ -36,7 +36,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote CWE-113 header injection tests for tenant ID values (CR, LF,\
     \ CRLF, null bytes rejected). Dev implemented header injection prevention in client.rs:65-71.\
-    \ However, the deeper issue of using raw String instead of TenantId from axiathon-core\
+    \ However, the deeper issue of using raw String instead of TenantId from consumer-project-core\
     \ was not flagged \u2014 only the injection vector was mitigated."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

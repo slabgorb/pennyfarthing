@@ -25,7 +25,7 @@ Workspace `Cargo.toml:47` declares `reqwest = { version = "0.12", features = ["j
 ### [MEDIUM] `ConfigFile` and `ServerSection` accept unknown fields silently (`config.rs:4-13`)
 Serde's default is to silently ignore unknown fields. A user who typos `timout = 30` or adds `tokn = "secret"` gets no warning. Adding `#[serde(deny_unknown_fields)]` would catch configuration errors early. The test `client_config_toml_does_not_contain_token_field` at `cli_types.rs:312-332` verifies that a `token` field in the TOML is ignored — but it **should** be rejected, not silently swallowed. The test's assertion `config.api_token().is_none()` passes only because `api_token()` reads from the env var, not because the config parser rejected the field.
 
-### [MEDIUM] Edition mismatch — `axiathon-client/Cargo.toml:2` uses `edition = "2021"`, workspace specifies `edition = "2024"`
+### [MEDIUM] Edition mismatch — `consumer-project-client/Cargo.toml:2` uses `edition = "2021"`, workspace specifies `edition = "2024"`
 The workspace package section sets `edition = "2024"` and the Rust rules say "Edition 2024, MSRV 1.85+". The client crate hardcodes `edition = "2021"` instead of using `edition.workspace = true`. This means the crate misses edition 2024 features and lint behavior.
 
 ### [MEDIUM] Config env var tests are not thread-safe (`cli_types.rs:267-271`, `cli_types.rs:276-279`)
@@ -38,7 +38,7 @@ The story spec's "Key Files to Create" lists 10 files under `commands/` (`comman
 `Cargo.toml:49` declares `toml = "0.8"`. The story's Technical Guardrails specify `toml 0.9`. This is low severity since 0.8 works, but it's a spec deviation.
 
 ### [LOW] `init_setup()` in `main.rs:49-78` writes to the real filesystem with no test coverage
-The `axiathon init` command writes to `~/.config/axiathon/cli.toml` (or wherever `dirs::config_dir()` points). There are no tests for `init` beyond help rendering. A test should verify the directory/file creation in a temp directory. The init command also has no `--dry-run` flag for safety.
+The `consumer-project init` command writes to `~/.config/consumer-project/cli.toml` (or wherever `dirs::config_dir()` points). There are no tests for `init` beyond help rendering. A test should verify the directory/file creation in a temp directory. The init command also has no `--dry-run` flag for safety.
 
 ### [VERIFIED] `#[non_exhaustive]` on `CliError` — correct per Rust rules
 ### [VERIFIED] `#![forbid(unsafe_code)]` present in both `lib.rs` and `main.rs`
@@ -46,7 +46,7 @@ The `axiathon init` command writes to `~/.config/axiathon/cli.toml` (or wherever
 ### [VERIFIED] CWE-209 protection on `ServerError` Display — body is stored but not shown in `format!("{err}")`
 ### [VERIFIED] Shell completions functional for all four shells, instructions to stderr, script to stdout
 ### [VERIFIED] All stub commands print "not yet implemented (Story X.Y)" with correct story references
-### [VERIFIED] No server-side crate dependencies in `axiathon-client/Cargo.toml`
+### [VERIFIED] No server-side crate dependencies in `consumer-project-client/Cargo.toml`
 ### [VERIFIED] URL validation rejects non-HTTP schemes and embedded credentials
 
 ## Verdict: **CHANGES_REQUESTED**

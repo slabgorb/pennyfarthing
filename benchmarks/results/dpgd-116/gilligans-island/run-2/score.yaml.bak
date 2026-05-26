@@ -35,7 +35,7 @@ findings:
   evidence: "TEA wrote header injection tests for tenant ID and auth token (CWE-113)\
     \ in siem_client.rs and security.rs. Dev implemented HeaderValue::from_str() which\
     \ rejects CRLF. However, the underlying issue of using raw String instead of TenantId\
-    \ from axiathon-core was NOT flagged \u2014 only the injection symptom was addressed,\
+    \ from consumer-project-core was NOT flagged \u2014 only the injection symptom was addressed,\
     \ not the type-safety root cause."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

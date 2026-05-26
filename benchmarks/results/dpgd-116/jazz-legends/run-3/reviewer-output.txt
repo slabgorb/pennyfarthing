@@ -8,8 +8,8 @@ I have now verified all claims independently. Here is my review.
 
 ## Preflight Verification
 
-- `cargo test -p axiathon-client`: **108 tests pass** (0 failures)
-- `cargo clippy -p axiathon-client -- -D warnings`: **clean**
+- `cargo test -p consumer-project-client`: **108 tests pass** (0 failures)
+- `cargo clippy -p consumer-project-client -- -D warnings`: **clean**
 - `cargo +nightly fmt --all --check`: **FAILS** — 12+ formatting diffs across source and test files
 
 ---
@@ -118,15 +118,15 @@ If serialization fails, the user gets `null` with no indication of failure. This
 
 **15. [VERIFIED]** Shell completion is functional (not stub) — generates real scripts for all 4 shells using `clap_complete::generate()`.
 
-**16. [VERIFIED]** `axiathon init` is functional — creates config directory and default config file. Handles pre-existing files gracefully.
+**16. [VERIFIED]** `consumer-project init` is functional — creates config directory and default config file. Handles pre-existing files gracefully.
 
-**17. [VERIFIED]** No server-side crate imports. `axiathon-client` depends only on `axiathon-core` + external crates. Dependency boundary is clean.
+**17. [VERIFIED]** No server-side crate imports. `consumer-project-client` depends only on `consumer-project-core` + external crates. Dependency boundary is clean.
 
 ---
 
 ## Data Flow Trace
 
-Traced `axiathon --format json rules list`:
+Traced `consumer-project --format json rules list`:
 1. `Cli::parse()` in `main.rs:9` — clap parses global flag `--format json` and subcommand
 2. `dispatch()` matches `Commands::Rules(args)` → calls `args.run()`
 3. `RulesArgs::run()` returns `Err(CliError::NotImplemented("Story 6.6"))`

@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote tests for 'Tenant ID rejects CRLF injection' and the Dev implemented\
     \ CRLF checks in client.rs:29-31. However, the core issue \u2014 using raw String\
-    \ instead of validated TenantId from axiathon-core \u2014 was not caught. The\
+    \ instead of validated TenantId from consumer-project-core \u2014 was not caught. The\
     \ Reviewer noted CRLF rejection is silent (finding 8) but didn't flag the missing\
     \ TenantId type usage."
 - finding_id: I3
@@ -45,7 +45,7 @@ findings:
   caught: false
   caught_by: null
   evidence: The Dev added dependencies to workspace Cargo.toml but used direct version
-    strings in crates/axiathon-client/Cargo.toml instead of workspace = true. No phase
+    strings in crates/consumer-project-client/Cargo.toml instead of workspace = true. No phase
     flagged this workspace dependency management issue.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"

@@ -1,8 +1,8 @@
  CLAUDE.md                                          | 315 ++++++++++++++++++---
  Cargo.lock                                         |   2 +
  Cargo.toml                                         |   2 +-
- crates/axiathon-client/Cargo.toml                  |  14 +-
- crates/axiathon-client/src/lib.rs                  |   7 +
+ crates/consumer-project-client/Cargo.toml                  |  14 +-
+ crates/consumer-project-client/src/lib.rs                  |   7 +
  .../tests/cli_completion_stub_integration.rs       |   1 -
  .../tests/cli_config_integration.rs                |  31 +-
  .../tests/cli_framework_integration.rs             |   2 +-

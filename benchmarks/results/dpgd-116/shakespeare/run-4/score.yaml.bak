@@ -37,7 +37,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote header injection CRLF tests in siem_client.rs and security.rs.\
     \ Dev implemented CRLF sanitization in client.rs:39-42,47-51. However, the deeper\
-    \ issue \u2014 using raw String instead of validated TenantId from axiathon-core\
+    \ issue \u2014 using raw String instead of validated TenantId from consumer-project-core\
     \ \u2014 was not flagged by any phase."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

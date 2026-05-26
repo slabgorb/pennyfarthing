@@ -17,7 +17,7 @@
 
 **Tests Written:** 149 tests covering all 10 ACs
 **Status:** RED (compilation failures — all modules referenced by tests are unimplemented)
-**Verification:** `cargo test -p axiathon-client` produces 40 compilation errors across all 8 test files. Zero tests pass.
+**Verification:** `cargo test -p consumer-project-client` produces 40 compilation errors across all 8 test files. Zero tests pass.
 
 **Handoff:** To Dev for implementation.
 

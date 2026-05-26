@@ -43,7 +43,7 @@ findings:
     \ siem_client.rs tests include 'header injection' coverage. Reviewer noted '[HIGH]\
     \ with_token() bypasses header injection validation' and verified 'try_with_tenant\
     \ reject \\r\\n'. However, the specific finding about using raw String instead\
-    \ of TenantId from axiathon-core was not flagged \u2014 the pipeline tested for\
+    \ of TenantId from consumer-project-core was not flagged \u2014 the pipeline tested for\
     \ CRLF injection but not the type-safety gap. Scoring as caught since CWE-113\
     \ was identified and partially mitigated via try_with_tenant validation."
 - finding_id: I3
@@ -53,7 +53,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: Reviewer flagged '[MEDIUM] Dependencies not using workspace declarations'
-    at crates/axiathon-client/Cargo.toml:16-25, listing clap_complete, comfy-table,
+    at crates/consumer-project-client/Cargo.toml:16-25, listing clap_complete, comfy-table,
     csv, dirs, keyring, reqwest, toml as using inline versions instead of workspace
     = true.
 - finding_id: I4

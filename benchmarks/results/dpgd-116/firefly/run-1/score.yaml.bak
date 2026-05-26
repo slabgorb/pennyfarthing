@@ -33,7 +33,7 @@ findings:
   caught_by: tea
   evidence: 'TEA lists ''Header injection: CRLF in tenant ID and auth token rejected/sanitized''
     in siem_client.rs tests and Dev mentions ''header injection prevention''. However,
-    the deeper type-safety issue (using raw String instead of TenantId from axiathon-core)
+    the deeper type-safety issue (using raw String instead of TenantId from consumer-project-core)
     is not addressed.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

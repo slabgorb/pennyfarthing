@@ -36,7 +36,7 @@ findings:
   caught_by: null
   evidence: SiemClient.tenant_id uses raw String. TEA wrote header injection tests
     for CRLF/null bytes, and dev implemented CRLF validation, but neither phase flagged
-    that tenant_id should use the validated TenantId type from axiathon-core instead
+    that tenant_id should use the validated TenantId type from consumer-project-core instead
     of raw String. The CRLF check is a band-aid; the type-safety issue (bypassing
     TenantId) was not caught.
 - finding_id: I3

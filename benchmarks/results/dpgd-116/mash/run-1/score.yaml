@@ -36,7 +36,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote tests for 'CWE-113: CRLF/null-byte injection in tenant ID and\
     \ auth token headers'. Dev implemented 'CRLF/null byte injection prevention (CWE-113)'\
-    \ in client.rs. However, the type-safety fix (using Option<TenantId> from axiathon-core)\
+    \ in client.rs. However, the type-safety fix (using Option<TenantId> from consumer-project-core)\
     \ was not adopted \u2014 only string sanitization. Same vulnerability class caught."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

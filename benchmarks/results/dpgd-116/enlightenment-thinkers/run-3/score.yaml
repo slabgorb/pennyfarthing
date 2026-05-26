@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer finding #9: 'SiemClient stores raw String for tenant_id \u2014\
-    \ client.rs:13. The axiathon-core crate provides TenantId as a validated newtype...\
+    \ client.rs:13. The consumer-project-core crate provides TenantId as a validated newtype...\
     \ SiemClient uses Option<String> instead of Option<TenantId>. This bypasses the\
     \ validation boundary that newtypes exist to enforce.'"
 - finding_id: I3

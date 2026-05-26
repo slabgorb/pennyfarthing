@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer flagged [MEDIUM]: '--tenant accepts raw String, not validated\
-    \ TenantId \u2014 cli.rs:37' and stated 'axiathon-core provides TenantId with\
+    \ TenantId \u2014 cli.rs:37' and stated 'consumer-project-core provides TenantId with\
     \ validation... tenant IDs from user input should be validated before being passed\
     \ to SiemClient.' TEA also wrote CWE-113 header injection tests in security_test.rs\
     \ and siem_client_test.rs."

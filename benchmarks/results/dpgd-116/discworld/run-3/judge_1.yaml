@@ -36,7 +36,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer flagged [MEDIUM]: 'tenant field is raw String, not TenantId\
-    \ newtype \u2014 The Rust coding rules mandate: Newtypes for IDs... axiathon-core\
+    \ newtype \u2014 The Rust coding rules mandate: Newtypes for IDs... consumer-project-core\
     \ exports TenantId. Both cli.rs:27 and client.rs:7 use raw strings. This defeats\
     \ the type safety the project invested in building.'"
 - finding_id: I3

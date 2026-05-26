@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: TEA wrote header injection tests for newlines in tenant/token. Dev implemented
     sanitize_header_value stripping CR/LF. Reviewer verified CWE-113 prevention. However,
-    the deeper type-safety issue (raw String vs TenantId from axiathon-core) was not
+    the deeper type-safety issue (raw String vs TenantId from consumer-project-core) was not
     flagged by any phase.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

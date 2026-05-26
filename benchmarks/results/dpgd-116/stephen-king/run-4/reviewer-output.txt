@@ -18,12 +18,12 @@ Nightly rustfmt reports formatting diffs in three files. Per `gotchas.md`: "Alwa
 
 ### 2. [HIGH] No `main.rs` binary entry point — AC-3 exit code contract is unverifiable at runtime
 
-The story requires `crates/axiathon-client/src/main.rs` as the binary entry point where `CliError::exit_code()` drives `std::process::exit()`. This file does not exist. Without it:
-- The `axiathon` binary cannot be built
+The story requires `crates/consumer-project-client/src/main.rs` as the binary entry point where `CliError::exit_code()` drives `std::process::exit()`. This file does not exist. Without it:
+- The `consumer-project` binary cannot be built
 - AC-3's exit code mapping (errors to stderr, output to stdout, `std::process::exit()`) is a dead letter — the `exit_code()` method exists but nothing calls it
 - The keyring token loading "before entering Tokio runtime" requirement (Technical Guardrails) has no place to live
 
-The `Cargo.toml` has no `[[bin]]` section either, so `cargo build -p axiathon-client` will only produce the library, not the `axiathon` binary.
+The `Cargo.toml` has no `[[bin]]` section either, so `cargo build -p consumer-project-client` will only produce the library, not the `consumer-project` binary.
 
 ### 3. [MEDIUM] `OutputFormatter::format_json` uses `.expect()` in production code — `output.rs:48`
 
@@ -35,7 +35,7 @@ The project rules state: "No `unwrap()` in production code — use `?` or `expec
 
 ### 4. [MEDIUM] `SiemClient` uses raw `String` for `tenant_id` instead of `TenantId` newtype — `client.rs:11`
 
-The project's Rust rules mandate: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `axiathon-core` crate exports `TenantId`. Yet `SiemClient` stores `tenant_id: Option<String>` and `with_tenant_id` accepts `&str`. The CLI `--tenant` flag is also `Option<String>` in `cli.rs:30`. This bypasses the type safety the project was designed around.
+The project's Rust rules mandate: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `consumer-project-core` crate exports `TenantId`. Yet `SiemClient` stores `tenant_id: Option<String>` and `with_tenant_id` accepts `&str`. The CLI `--tenant` flag is also `Option<String>` in `cli.rs:30`. This bypasses the type safety the project was designed around.
 
 ### 5. [MEDIUM] `ServerError` and `Unauthorized` Display impls pass through raw server body text — CWE-209 risk — `error.rs:26,29`
 
@@ -71,7 +71,7 @@ AC-4 specifies an "`OutputFormatter` trait with Table/JSON/CSV implementations."
 
 ### 9. [LOW] `Completion` command variant takes no arguments — `cli.rs:104`
 
-AC-9 requires `axiathon completion <shell>` — the shell should be a required argument. Currently `Commands::Completion` is a unit variant with no `Shell` field, so there's no way to specify bash/zsh/fish from the CLI. The `generate_completion` function accepts `Shell` but nothing parses it from argv.
+AC-9 requires `consumer-project completion <shell>` — the shell should be a required argument. Currently `Commands::Completion` is a unit variant with no `Shell` field, so there's no way to specify bash/zsh/fish from the CLI. The `generate_completion` function accepts `Shell` but nothing parses it from argv.
 
 ### 10. [LOW] `init.rs` creates directory but writes no default config file
 
@@ -85,7 +85,7 @@ AC-9 requires `axiathon completion <shell>` — the shell should be a required a
 
 ### 14. [VERIFIED] `#![forbid(unsafe_code)]` in `lib.rs:2` and workspace-level `unsafe_code = "forbid"` in root `Cargo.toml:73`.
 
-### 15. [VERIFIED] Dependency boundary — `axiathon-client/Cargo.toml` depends only on `axiathon-core`, no server-side crates. Test at `security.rs:60-77` enforces this.
+### 15. [VERIFIED] Dependency boundary — `consumer-project-client/Cargo.toml` depends only on `consumer-project-core`, no server-side crates. Test at `security.rs:60-77` enforces this.
 
 ---
 
@@ -94,6 +94,6 @@ AC-9 requires `axiathon completion <shell>` — the shell should be a required a
 Two **HIGH** issues block approval:
 
 1. **Nightly fmt fails** — three files need reformatting. This is a mechanical fix.
-2. **No `main.rs`** — the `axiathon` binary cannot be built. The exit code contract (AC-3), CLI dispatch, keyring loading, and stderr/stdout routing all depend on this file existing. Without it, the story's core deliverable — *an operator-facing CLI binary* — does not exist. The library compiles and tests pass, but there is no binary.
+2. **No `main.rs`** — the `consumer-project` binary cannot be built. The exit code contract (AC-3), CLI dispatch, keyring loading, and stderr/stdout routing all depend on this file existing. Without it, the story's core deliverable — *an operator-facing CLI binary* — does not exist. The library compiles and tests pass, but there is no binary.
 
 The gunslinger does not holster his irons until the Tower stands. Fix these, and we'll talk.

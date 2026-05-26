@@ -37,8 +37,8 @@ findings:
   evidence: "TEA wrote tests for 'CWE-113: Header injection via newlines in tenant\
     \ ID and token' (cli_client.rs:253,267). Dev implemented HeaderValue::from_str()\
     \ which rejects CRLF (client.rs:52,58). Reviewer verified this. However, the deeper\
-    \ issue \u2014 using raw String instead of Option<TenantId> from axiathon-core\
-    \ \u2014 was NOT caught. The reviewer even noted axiathon-core is declared but\
+    \ issue \u2014 using raw String instead of Option<TenantId> from consumer-project-core\
+    \ \u2014 was NOT caught. The reviewer even noted consumer-project-core is declared but\
     \ unused. Partially caught (injection prevented, but type-safety gap missed)."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
@@ -47,7 +47,7 @@ findings:
   caught: false
   caught_by: null
   evidence: The code changes summary shows Cargo.toml was modified, and the reviewer
-    noted axiathon-core as unused dependency, but nobody flagged that dependencies
+    noted consumer-project-core as unused dependency, but nobody flagged that dependencies
     like clap_complete, comfy-table, csv, dirs, reqwest, toml use direct version strings
     instead of workspace = true.
 - finding_id: I4

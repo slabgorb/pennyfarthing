@@ -37,7 +37,7 @@ findings:
   evidence: "TEA wrote header injection tests in siem_client_test.rs (lines 104-141)\
     \ and security_test.rs (lines 39-62) covering CWE-113 for tenant IDs. However,\
     \ the reviewer noted these tests are vacuous (Ok branch doesn't fail), and the\
-    \ dev used assert! (panic) rather than validated TenantId from axiathon-core.\
+    \ dev used assert! (panic) rather than validated TenantId from consumer-project-core.\
     \ The core issue \u2014 using raw String instead of TenantId \u2014 was not caught."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

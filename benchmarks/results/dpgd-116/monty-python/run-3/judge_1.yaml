@@ -38,7 +38,7 @@ findings:
     \ token' tests in siem_client.rs. Dev implemented with_tenant_validated/with_token_validated.\
     \ Reviewer then flagged '[HIGH] SiemClient has unvalidated with_token/with_tenant\
     \ alongside validated variants \u2014 unsafe path is the default.' Same vulnerability\
-    \ class caught, though none specifically called for using TenantId from axiathon-core."
+    \ class caught, though none specifically called for using TenantId from consumer-project-core."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

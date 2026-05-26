@@ -22,7 +22,7 @@
 
 ### Key Design Decisions in Tests
 
-1. **Tests import from module paths** (`axiathon_client::cli::Cli`, `axiathon_client::error::CliError`, etc.) — this defines the expected public API surface the Dev must implement
+1. **Tests import from module paths** (`consumer-project_client::cli::Cli`, `consumer-project_client::error::CliError`, etc.) — this defines the expected public API surface the Dev must implement
 2. **SiemClient tests use wiremock** for HTTP mocking — tests validate actual header injection and status code mapping
 3. **Security tests are paranoid** — CRLF injection in tenant IDs/tokens, null bytes, javascript: URLs, credential leakage in config serialization
 4. **Stub tests verify story references** — each stub must name the specific story (e.g., "Story 6.2") so operators know what's coming

@@ -36,7 +36,7 @@ findings:
   evidence: "TEA wrote tests for 'Header injection: CRLF in tenant ID and auth tokens\
     \ must be rejected' (CWE-113). Dev implemented CRLF sanitization in client.rs.\
     \ However, the pipeline did not flag the use of raw String instead of TenantId\
-    \ from axiathon-core \u2014 they caught the injection vector but not the type-safety\
+    \ from consumer-project-core \u2014 they caught the injection vector but not the type-safety\
     \ bypass. Same vulnerability class (CWE-113) per partial match rule 1."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer flagged '[MEDIUM] tenant field uses raw String instead of TenantId\
-    \ newtype' \u2014 'axiathon-core exports TenantId, the CLI should parse/validate\
+    \ newtype' \u2014 'consumer-project-core exports TenantId, the CLI should parse/validate\
     \ it into the newtype at the boundary.' Exact match to ground truth finding."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

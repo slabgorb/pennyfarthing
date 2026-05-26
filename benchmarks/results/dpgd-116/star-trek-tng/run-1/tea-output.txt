@@ -26,11 +26,11 @@
 
 ### Key API Surface Defined by Tests
 
-The tests define the expected public API for `axiathon-client`:
-- `axiathon_client::cli::{Cli, Commands}` — clap Parser/Subcommand types with `verbose`, `quiet`, `no_color`, `server`, `tenant` fields
-- `axiathon_client::error::CliError` — non-exhaustive enum with `exit_code()` method, variants: General, AuthenticationExpired, Unauthorized, NotFound, ConnectionTimeout, ServerUnavailable, ServerError, RateLimited, Config, NotImplemented
-- `axiathon_client::output::{OutputFormat, OutputFormatter}` — format enum (Table/Json/Csv) with Default + FromStr, formatter with `format_table()` method
-- `axiathon_client::client::SiemClient` — `new()`, `with_token()`, `with_tenant()`, `base_url()`, `has_token()`, `tenant_id()`, `default_headers()`, `map_http_status()`, `get()`
-- `axiathon_client::config::ClientConfig` — `default()`, `from_file()`, `default_path()`, `api_url()`, `timeout_seconds()`, `with_env_overrides()`, `has_token_from_file()`
-- `axiathon_client::commands::{query, rules, alerts, ingest, config, status, tenant, login}::handle_*_stub()`
-- `axiathon_client::commands::completion::generate_completions()`
+The tests define the expected public API for `consumer-project-client`:
+- `consumer-project_client::cli::{Cli, Commands}` — clap Parser/Subcommand types with `verbose`, `quiet`, `no_color`, `server`, `tenant` fields
+- `consumer-project_client::error::CliError` — non-exhaustive enum with `exit_code()` method, variants: General, AuthenticationExpired, Unauthorized, NotFound, ConnectionTimeout, ServerUnavailable, ServerError, RateLimited, Config, NotImplemented
+- `consumer-project_client::output::{OutputFormat, OutputFormatter}` — format enum (Table/Json/Csv) with Default + FromStr, formatter with `format_table()` method
+- `consumer-project_client::client::SiemClient` — `new()`, `with_token()`, `with_tenant()`, `base_url()`, `has_token()`, `tenant_id()`, `default_headers()`, `map_http_status()`, `get()`
+- `consumer-project_client::config::ClientConfig` — `default()`, `from_file()`, `default_path()`, `api_url()`, `timeout_seconds()`, `with_env_overrides()`, `has_token_from_file()`
+- `consumer-project_client::commands::{query, rules, alerts, ingest, config, status, tenant, login}::handle_*_stub()`
+- `consumer-project_client::commands::completion::generate_completions()`

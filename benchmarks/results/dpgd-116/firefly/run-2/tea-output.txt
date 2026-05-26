@@ -19,15 +19,15 @@
 **Status:** RED (failing — all test files fail to compile because target modules don't exist yet)
 
 **What the tests define (expected public API):**
-- `axiathon_client::cli::Cli` — clap derive Parser with `Commands` enum (query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init)
-- `axiathon_client::cli::Cli` fields — `format`, `verbose` (u8, repeatable), `quiet`, `server`, `tenant`, `config`, `no_color`
-- `axiathon_client::error::CliError` — enum with `exit_code()` method returning 0-4
-- `axiathon_client::output::OutputFormat` — Table/Json/Csv enum with `detect_default()`
-- `axiathon_client::output::OutputFormatter` — `format_table()`, `format_json()`, `format_csv()`
-- `axiathon_client::client::SiemClient` — HTTP wrapper with `get()`, header injection, status code mapping
-- `axiathon_client::config::ClientConfig` — TOML loading, env var overrides, CLI flag overrides
-- `axiathon_client::commands::completion::generate_completions()` — bash/zsh/fish/powershell
-- `axiathon_client::commands::{status,config,ingest,alerts,query,rules,tenant,login}::handle_*()` — stub handlers
+- `consumer-project_client::cli::Cli` — clap derive Parser with `Commands` enum (query, rules, alerts, ingest, config, status, tenant, login, logout, tui, completion, init)
+- `consumer-project_client::cli::Cli` fields — `format`, `verbose` (u8, repeatable), `quiet`, `server`, `tenant`, `config`, `no_color`
+- `consumer-project_client::error::CliError` — enum with `exit_code()` method returning 0-4
+- `consumer-project_client::output::OutputFormat` — Table/Json/Csv enum with `detect_default()`
+- `consumer-project_client::output::OutputFormatter` — `format_table()`, `format_json()`, `format_csv()`
+- `consumer-project_client::client::SiemClient` — HTTP wrapper with `get()`, header injection, status code mapping
+- `consumer-project_client::config::ClientConfig` — TOML loading, env var overrides, CLI flag overrides
+- `consumer-project_client::commands::completion::generate_completions()` — bash/zsh/fish/powershell
+- `consumer-project_client::commands::{status,config,ingest,alerts,query,rules,tenant,login}::handle_*()` — stub handlers
 
 **Security tests cover:**
 - CWE-209: Error messages don't leak stack traces

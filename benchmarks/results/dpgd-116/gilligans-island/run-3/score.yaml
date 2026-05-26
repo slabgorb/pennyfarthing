@@ -33,7 +33,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer flagged F10: ''--tenant uses raw String not TenantId newtype''
-    noting axiathon-core exports TenantId with validated constructors. TEA also wrote
+    noting consumer-project-core exports TenantId with validated constructors. TEA also wrote
     header injection tests in security.rs and siem_client.rs.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

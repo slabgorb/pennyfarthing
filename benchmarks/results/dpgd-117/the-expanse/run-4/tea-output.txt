@@ -6,12 +6,12 @@ Stress test complete, failure points identified, ready for report. Here's the Ma
 **Reason:** Story 8.1 is the REST API foundation — all five acceptance criteria require behavioral verification.
 
 **Test Files:**
-- `crates/axiathon-server/tests/api_endpoints.rs` — Route existence and health endpoint behavior (15 tests)
-- `crates/axiathon-server/tests/api_response_envelope.rs` — ApiResponse `{data, error, meta}` conformance (12 tests)
-- `crates/axiathon-server/tests/api_auth.rs` — JWT Bearer, API key, scope-based auth, edge cases (16 tests)
-- `crates/axiathon-server/tests/api_rate_limiting.rs` — 429 + Retry-After, per-tenant isolation, TOML config (6 tests)
-- `crates/axiathon-server/tests/api_versioning.rs` — `/api/v1/` prefix, 404 on v2/v0, deprecation headers (9 tests)
-- `crates/axiathon-server/tests/api_security.rs` — CWE-209, malformed input, large payloads, CORS, null bytes (13 tests)
+- `crates/consumer-project-server/tests/api_endpoints.rs` — Route existence and health endpoint behavior (15 tests)
+- `crates/consumer-project-server/tests/api_response_envelope.rs` — ApiResponse `{data, error, meta}` conformance (12 tests)
+- `crates/consumer-project-server/tests/api_auth.rs` — JWT Bearer, API key, scope-based auth, edge cases (16 tests)
+- `crates/consumer-project-server/tests/api_rate_limiting.rs` — 429 + Retry-After, per-tenant isolation, TOML config (6 tests)
+- `crates/consumer-project-server/tests/api_versioning.rs` — `/api/v1/` prefix, 404 on v2/v0, deprecation headers (9 tests)
+- `crates/consumer-project-server/tests/api_security.rs` — CWE-209, malformed input, large payloads, CORS, null bytes (13 tests)
 
 **Tests Written:** ~71 tests covering 5 ACs
 **Status:** RED (failing — all tests produce `E0432: unresolved import` since no implementation exists)
@@ -38,7 +38,7 @@ Stress test complete, failure points identified, ready for report. Here's the Ma
 
 ### Expected Public API
 
-The tests define these expected exports from `axiathon_server`:
+The tests define these expected exports from `consumer-project_server`:
 - `app()` — async fn returning an Axum `Router` (or `impl Service`)
 - `app_with_config(RateLimitConfig)` — configurable variant
 - `RateLimitConfig` — struct with `requests_per_second`, `burst_size` (Deserialize)

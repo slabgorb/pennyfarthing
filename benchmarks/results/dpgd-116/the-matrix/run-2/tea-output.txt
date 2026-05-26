@@ -20,12 +20,12 @@
 **Commit:** `15301be`
 
 **Expected public API for Dev:**
-- `axiathon_client::cli::{Cli, Commands, OutputFormat}` — clap derive structs
-- `axiathon_client::error::CliError` — with `exit_code()` method
-- `axiathon_client::output::{OutputFormat, OutputFormatter}` — formatting trait
-- `axiathon_client::client::SiemClient` — HTTP wrapper with `default_headers()`, `map_http_status()`
-- `axiathon_client::config::ClientConfig` — TOML config with `from_toml()`, `from_file()`, `default_path()`
-- `axiathon_client::commands::{query,rules,alerts,ingest,config,status,tenant,login}::handle_stub()`
-- `axiathon_client::commands::completion::generate_completion()`
+- `consumer-project_client::cli::{Cli, Commands, OutputFormat}` — clap derive structs
+- `consumer-project_client::error::CliError` — with `exit_code()` method
+- `consumer-project_client::output::{OutputFormat, OutputFormatter}` — formatting trait
+- `consumer-project_client::client::SiemClient` — HTTP wrapper with `default_headers()`, `map_http_status()`
+- `consumer-project_client::config::ClientConfig` — TOML config with `from_toml()`, `from_file()`, `default_path()`
+- `consumer-project_client::commands::{query,rules,alerts,ingest,config,status,tenant,login}::handle_stub()`
+- `consumer-project_client::commands::completion::generate_completion()`
 
 **Handoff:** To Dev for implementation (GREEN phase).

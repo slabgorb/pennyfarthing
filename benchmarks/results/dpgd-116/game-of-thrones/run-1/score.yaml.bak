@@ -36,7 +36,7 @@ findings:
   caught_by: reviewer
   evidence: "Reviewer observation #9: '--tenant flag accepts raw String instead of\
     \ TenantId' \u2014 explicitly flags that SiemClient uses Option<String> for tenant\
-    \ instead of TenantId from axiathon-core, citing project newtype rules."
+    \ instead of TenantId from consumer-project-core, citing project newtype rules."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

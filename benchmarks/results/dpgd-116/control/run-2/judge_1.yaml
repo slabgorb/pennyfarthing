@@ -37,7 +37,7 @@ findings:
   evidence: "Reviewer flagged [HIGH] 'SiemClient::new silently drops invalid headers'\
     \ and [HIGH] 'Header injection tests are vacuous \u2014 tests pass for the wrong\
     \ reason.' TEA wrote CWE-113 tests. However, neither phase caught the specific\
-    \ recommendation to use TenantId from axiathon-core \u2014 the vulnerability class\
+    \ recommendation to use TenantId from consumer-project-core \u2014 the vulnerability class\
     \ was identified but the type-safety fix was not."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

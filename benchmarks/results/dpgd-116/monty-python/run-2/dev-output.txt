@@ -2,7 +2,7 @@ All 125 tests pass, zero clippy warnings.
 
 ## Summary
 
-**Files created** (all under `crates/axiathon-client/src/`):
+**Files created** (all under `crates/consumer-project-client/src/`):
 
 | File | Purpose |
 |------|---------|

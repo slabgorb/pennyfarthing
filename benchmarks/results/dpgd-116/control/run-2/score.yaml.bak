@@ -35,7 +35,7 @@ findings:
   caught_by: reviewer
   evidence: "Reviewer flagged as HIGH: 'SiemClient::with_token() and with_tenant()\
     \ accept arbitrary strings including CRLF characters' and noted tests are vacuous.\
-    \ However, the use of raw String instead of TenantId from axiathon-core was not\
+    \ However, the use of raw String instead of TenantId from consumer-project-core was not\
     \ specifically called out \u2014 the finding focused on CRLF injection rather\
     \ than type safety."
 - finding_id: I3

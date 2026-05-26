@@ -4,7 +4,7 @@
 **Reason:** Story 8.1 is the REST API foundation — requires endpoint, auth, rate limiting, and envelope validation.
 
 **Test Files:**
-- `crates/axiathon-server/tests/rest_api_foundation.rs` — 40 integration tests
+- `crates/consumer-project-server/tests/rest_api_foundation.rs` — 40 integration tests
 
 **Tests Written:** 40 tests covering 5 ACs
 
@@ -19,10 +19,10 @@
 | **Edge cases** | 4 tests | malformed JSON → 400/422 with envelope, DELETE on health → 405, extremely long URL handled, `#![forbid(unsafe_code)]` verified |
 | **Consistency** | 1 test | all 5 endpoints return consistent envelope format |
 
-**Status:** RED (fails to compile — `axiathon_server::app()` does not exist)
+**Status:** RED (fails to compile — `consumer-project_server::app()` does not exist)
 
 **Handoff:** To Dev for implementation. The dev needth to:
-1. Export `pub fn app() -> Router` from `axiathon-server/src/lib.rs`
+1. Export `pub fn app() -> Router` from `consumer-project-server/src/lib.rs`
 2. Implement `AppState` with `FromRef` substates
 3. Wire up routes under `/api/v1/`
 4. Add auth middleware (JWT + API key)

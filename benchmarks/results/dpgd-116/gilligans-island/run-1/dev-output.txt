@@ -2,7 +2,7 @@ All **131 tests pass** (25 + 10 + 13 + 23 + 16 + 11 + 9 + 14 + 10 = 131) and **c
 
 ## Summary
 
-### Files Created (under `crates/axiathon-client/src/`)
+### Files Created (under `crates/consumer-project-client/src/`)
 
 | File | Description |
 |------|-------------|

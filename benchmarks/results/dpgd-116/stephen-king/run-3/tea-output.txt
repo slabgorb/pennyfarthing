@@ -17,8 +17,8 @@
 **Status:** RED (failing — binary tests fail at runtime, library tests fail at compilation)
 
 **RED State Breakdown:**
-- `cli_binary_integration.rs`: Compiles, 49/49 tests FAIL (binary `axiathon` doesn't exist)
-- Other 5 files: Compilation failure (modules `error`, `output`, `client`, `config`, `cli` not yet exported from `axiathon_client`)
+- `cli_binary_integration.rs`: Compiles, 49/49 tests FAIL (binary `consumer-project` doesn't exist)
+- Other 5 files: Compilation failure (modules `error`, `output`, `client`, `config`, `cli` not yet exported from `consumer-project_client`)
 
 **Security tests included:**
 - CWE-209: Error messages must not expose server paths, SQL, JWT internals

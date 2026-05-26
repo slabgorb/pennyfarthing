@@ -39,7 +39,7 @@ findings:
   evidence: "Reviewer observation #11: 'tenant field is Option<String> not TenantId\
     \ \u2014 cli.rs:22. The Rust coding rules mandate newtypes for IDs: TenantId(String).\
     \ The --tenant flag and SiemClient.tenant_id both use raw String. While TenantId\
-    \ comes from axiathon-core, the CLI should validate and convert to TenantId at\
+    \ comes from consumer-project-core, the CLI should validate and convert to TenantId at\
     \ the boundary.'"
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

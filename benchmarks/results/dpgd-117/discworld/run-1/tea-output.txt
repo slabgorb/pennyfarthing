@@ -8,12 +8,12 @@
 **Reason:** Story 8.1 has 5 acceptance criteria requiring server skeleton, envelope, auth, rate limiting, and versioning
 
 **Test Files:**
-- `crates/axiathon-server/tests/rest_endpoints.rs` — 10 tests for route group existence
-- `crates/axiathon-server/tests/api_response_envelope.rs` — 11 tests for three-field envelope
-- `crates/axiathon-server/tests/authentication.rs` — 12 tests for JWT/API key auth
-- `crates/axiathon-server/tests/rate_limiting.rs` — 5 tests for per-tenant rate limiting
-- `crates/axiathon-server/tests/api_versioning.rs` — 5 tests for URL versioning
-- `crates/axiathon-server/tests/security_edge_cases.rs` — 12 tests for security edge cases
+- `crates/consumer-project-server/tests/rest_endpoints.rs` — 10 tests for route group existence
+- `crates/consumer-project-server/tests/api_response_envelope.rs` — 11 tests for three-field envelope
+- `crates/consumer-project-server/tests/authentication.rs` — 12 tests for JWT/API key auth
+- `crates/consumer-project-server/tests/rate_limiting.rs` — 5 tests for per-tenant rate limiting
+- `crates/consumer-project-server/tests/api_versioning.rs` — 5 tests for URL versioning
+- `crates/consumer-project-server/tests/security_edge_cases.rs` — 12 tests for security edge cases
 
 **Tests Written:** 55 tests covering 5 ACs + security edge cases
 **Status:** RED (fails to compile — no implementation exists)
@@ -41,7 +41,7 @@
 
 ### What the Dev Must Implement
 
-The tests expect these public API surfaces from `axiathon_server`:
+The tests expect these public API surfaces from `consumer-project_server`:
 
 1. **`pub fn app() -> Router`** — builds the full Axum router
 2. **`pub fn app_with_config(config: ServerConfig) -> Router`** — configurable router
@@ -57,8 +57,8 @@ The tests expect these public API surfaces from `axiathon_server`:
 
 ### Delivery Findings
 
-- **Gap** (non-blocking): Current `ApiResponse<T>` in axiathon-core has `error: Option<ApiError>` (singular) and `meta: Option<ApiMeta>` (pagination). AC specifies `errors: Vec<ApiError>` (array, always present) and `meta` with `request_id`/`timestamp`/`trace_id`. Dev must reconcile — either extend the existing type or create a server-layer response wrapper.
-  Affects `crates/axiathon-core/src/types.rs` (ApiResponse, ApiMeta shapes need updating).
+- **Gap** (non-blocking): Current `ApiResponse<T>` in consumer-project-core has `error: Option<ApiError>` (singular) and `meta: Option<ApiMeta>` (pagination). AC specifies `errors: Vec<ApiError>` (array, always present) and `meta` with `request_id`/`timestamp`/`trace_id`. Dev must reconcile — either extend the existing type or create a server-layer response wrapper.
+  Affects `crates/consumer-project-core/src/types.rs` (ApiResponse, ApiMeta shapes need updating).
   *Found by TEA during test design.*
 
 - No other upstream findings during test design.

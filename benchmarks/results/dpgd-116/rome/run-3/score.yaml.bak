@@ -33,7 +33,7 @@ findings:
   caught_by: tea
   evidence: TEA wrote CWE-113 CRLF header injection tests in siem_client.rs. Dev implemented
     CRLF rejection in client.rs:20-33. However, tenant_id still uses raw String rather
-    than TenantId from axiathon-core, so the type-safety aspect was not caught.
+    than TenantId from consumer-project-core, so the type-safety aspect was not caught.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

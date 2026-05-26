@@ -15,7 +15,7 @@ Our Nanny Ogg ran the preflight. Tests pass, clippy clean. That means nothing. H
 `main.rs` parses the CLI and *throws away the result*. There is no command dispatch. No `match cli.command { ... }`. No error printing to stderr. No `std::process::exit()`. This means:
 - **AC-3 is unmet**: Exit codes 0/1/3/4 never happen. Every command exits 0.
 - **AC-10 is unmet**: Stub commands don't print "not yet implemented (Story X.Y)" — they silently succeed.
-- **AC-9 partially unmet**: `axiathon completion generate bash` parses but produces no output.
+- **AC-9 partially unmet**: `consumer-project completion generate bash` parses but produces no output.
 - **AC-7 partially unmet**: `SiemClient` exists but is never constructed or used.
 
 The binary is a parser with no behavior. This is the most critical finding.
@@ -50,7 +50,7 @@ If `AXIATHON_TIMEOUT=abc`, the `parse::<u64>()` fails silently and falls back to
 
 ### `[MEDIUM]` 9. Raw `String` for tenant ID instead of `TenantId` newtype at `cli.rs:35`, `client.rs:10`
 
-Rust rules require: "Newtypes for IDs: `TenantId(String)`". `axiathon-core` exports `TenantId`. The CLI `--tenant` flag and `SiemClient.tenant` both use raw `String`, losing type safety.
+Rust rules require: "Newtypes for IDs: `TenantId(String)`". `consumer-project-core` exports `TenantId`. The CLI `--tenant` flag and `SiemClient.tenant` both use raw `String`, losing type safety.
 
 ### `[MEDIUM]` 10. `siem_client_rejects_token_with_newlines` test is vacuous at `tests/siem_client.rs:230-234`
 
@@ -66,7 +66,7 @@ Five `expect()` calls in formatting code. While the messages are descriptive (pe
 
 ### `[LOW]` 13. Stub tests construct errors manually, don't test actual dispatch at `tests/stub_handlers.rs`
 
-All stub tests manually construct `CliError::NotImplemented(...)` and verify its Display. They don't test that running `axiathon query run "test"` actually produces that error — which it doesn't, because main.rs has no dispatch. These tests verify the error type's API, not the application's behavior.
+All stub tests manually construct `CliError::NotImplemented(...)` and verify its Display. They don't test that running `consumer-project query run "test"` actually produces that error — which it doesn't, because main.rs has no dispatch. These tests verify the error type's API, not the application's behavior.
 
 ---
 

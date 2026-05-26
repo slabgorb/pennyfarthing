@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer explicitly flagged: ''The --tenant flag is Option<String> (raw,
-    unvalidated) instead of using the TenantId newtype that axiathon-core provides
+    unvalidated) instead of using the TenantId newtype that consumer-project-core provides
     with UUID validation. This contradicts the project''s Rust rules: Newtypes for
     IDs.'' TEA also wrote CWE-113 header injection tests for tenant ID with CRLF/null
     bytes.'

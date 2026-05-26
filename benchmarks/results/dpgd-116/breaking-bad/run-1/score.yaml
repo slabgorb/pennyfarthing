@@ -34,7 +34,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote CRLF header injection prevention tests in siem_client.rs (15\
     \ tests). Reviewer verified CWE-113 prevention. However, the specific issue of\
-    \ using raw String instead of TenantId from axiathon-core was not flagged \u2014\
+    \ using raw String instead of TenantId from consumer-project-core was not flagged \u2014\
     \ the pipeline focused on CRLF injection at the HTTP layer rather than type safety.\
     \ Still, same vulnerability class (CWE-113) was caught."
 - finding_id: I3

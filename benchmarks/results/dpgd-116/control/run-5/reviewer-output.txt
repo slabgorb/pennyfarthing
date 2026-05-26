@@ -16,7 +16,7 @@ Production code uses `panic!` instead of returning a `Result<_, CliError>`. The 
 
 ### 2. `[HIGH]` Missing `main.rs` — no binary entry point
 
-The story specifies creating `main.rs` as the binary entry point with tracing init, dispatch, and exit code handling via `std::process::exit()`. There is no `main.rs` and no `[[bin]]` section in `Cargo.toml`. Without it, the `axiathon` binary cannot be built, and the exit code integration (AC-3) cannot be exercised end-to-end. The crate is library-only. This is a core deliverable of Story 6.1.
+The story specifies creating `main.rs` as the binary entry point with tracing init, dispatch, and exit code handling via `std::process::exit()`. There is no `main.rs` and no `[[bin]]` section in `Cargo.toml`. Without it, the `consumer-project` binary cannot be built, and the exit code integration (AC-3) cannot be exercised end-to-end. The crate is library-only. This is a core deliverable of Story 6.1.
 
 ### 3. `[HIGH]` `cargo +nightly fmt --all --check` fails — `client.rs`
 
@@ -52,7 +52,7 @@ The story requires stub command modules for query, rules, alerts, ingest, config
 
 ### 11. `[LOW]` `tenant` field is `Option<String>` not `TenantId` — `cli.rs:22`
 
-The Rust coding rules mandate newtypes for IDs: `TenantId(String)`. The `--tenant` flag and `SiemClient.tenant_id` both use raw `String`. While `TenantId` comes from `axiathon-core`, the CLI should validate and convert to `TenantId` at the boundary.
+The Rust coding rules mandate newtypes for IDs: `TenantId(String)`. The `--tenant` flag and `SiemClient.tenant_id` both use raw `String`. While `TenantId` comes from `consumer-project-core`, the CLI should validate and convert to `TenantId` at the boundary.
 
 ### 12. `[LOW]` `OutputFormatter` trait is not object-safe for dynamic dispatch
 
@@ -98,7 +98,7 @@ Library code correctly forbids unsafe. Integration tests downgrade to `deny` wit
 
 **Blocking issues (High):**
 
-1. **Missing `main.rs`** — The binary entry point is a core deliverable. Without it, there is no `axiathon` binary and exit codes cannot be exercised end-to-end.
+1. **Missing `main.rs`** — The binary entry point is a core deliverable. Without it, there is no `consumer-project` binary and exit codes cannot be exercised end-to-end.
 2. **`panic!` in `generate_completion`** — Production code must not panic on input. Return `Result` instead.
 3. **`cargo +nightly fmt` fails** — Per reviewer gotchas, nightly fmt must pass before approval.
 

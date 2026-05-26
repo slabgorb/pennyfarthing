@@ -3,13 +3,13 @@
 **Implementation Complete:** Yes (58/59 tests GREEN, 1 test defect)
 
 **Files Changed:**
-- `crates/axiathon-server/Cargo.toml` — added `chrono` and `uuid` dependencies
-- `crates/axiathon-server/src/lib.rs` — app builder, router setup, fallback/405 handling
-- `crates/axiathon-server/src/config.rs` — `ServerConfig` with `test_config_with_rate_limit()`
-- `crates/axiathon-server/src/response.rs` — `Envelope<T>` response type matching AC `{data, errors[], meta{request_id, timestamp, trace_id}}`
-- `crates/axiathon-server/src/auth.rs` — Bearer token + API key auth middleware with scope checking
-- `crates/axiathon-server/src/rate_limit.rs` — per-tenant rate limiting with global state
-- `crates/axiathon-server/src/handlers.rs` — health, events, alerts, rules, queries handlers + deprecated-test endpoint
+- `crates/consumer-project-server/Cargo.toml` — added `chrono` and `uuid` dependencies
+- `crates/consumer-project-server/src/lib.rs` — app builder, router setup, fallback/405 handling
+- `crates/consumer-project-server/src/config.rs` — `ServerConfig` with `test_config_with_rate_limit()`
+- `crates/consumer-project-server/src/response.rs` — `Envelope<T>` response type matching AC `{data, errors[], meta{request_id, timestamp, trace_id}}`
+- `crates/consumer-project-server/src/auth.rs` — Bearer token + API key auth middleware with scope checking
+- `crates/consumer-project-server/src/rate_limit.rs` — per-tenant rate limiting with global state
+- `crates/consumer-project-server/src/handlers.rs` — health, events, alerts, rules, queries handlers + deprecated-test endpoint
 
 **Tests:** 58/59 passing (GREEN)
 - `api_auth.rs`: 14/14
@@ -25,4 +25,4 @@
 
 ## Delivery Findings
 
-- **Gap** (non-blocking): Test `response_headers_do_not_reflect_user_input` in `api_security.rs` panics at request construction — `http` crate v1.4.0 rejects CRLF in header values. Affects `crates/axiathon-server/tests/api_security.rs` (header value needs to use a non-CRLF injection payload). *Found by Dev during implementation.*
+- **Gap** (non-blocking): Test `response_headers_do_not_reflect_user_input` in `api_security.rs` panics at request construction — `http` crate v1.4.0 rejects CRLF in header values. Affects `crates/consumer-project-server/tests/api_security.rs` (header value needs to use a non-CRLF injection payload). *Found by Dev during implementation.*

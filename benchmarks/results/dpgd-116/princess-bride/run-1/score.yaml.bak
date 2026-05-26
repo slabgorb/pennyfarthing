@@ -37,7 +37,7 @@ findings:
     at cli.rs:39, noting per rust.md newtypes should be used and validated constructors
     at trust boundaries. However, the specific CRLF/header injection risk was partially
     addressed by Dev (newline stripping in client.rs) rather than using TenantId from
-    axiathon-core.'
+    consumer-project-core.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

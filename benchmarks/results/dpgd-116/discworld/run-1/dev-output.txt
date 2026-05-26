@@ -4,7 +4,7 @@ All 81 tests pass, no warnings, clippy clean.
 
 **All 81 tests GREEN across 8 test suites.**
 
-### Production files created (`crates/axiathon-client/src/`):
+### Production files created (`crates/consumer-project-client/src/`):
 
 | File | Purpose |
 |------|---------|

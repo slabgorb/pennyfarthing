@@ -36,7 +36,7 @@ findings:
   evidence: "TEA wrote siem_client.rs tests covering 'CWE-113 header injection' and\
     \ the reviewer verified 'CWE-113 header injection protection exists for token\
     \ and tenant at client.rs:26-38'. However, the specific issue of using raw String\
-    \ instead of TenantId from axiathon-core was not flagged \u2014 the fix was newline\
+    \ instead of TenantId from consumer-project-core was not flagged \u2014 the fix was newline\
     \ rejection, not type-safe TenantId usage. Partial catch."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

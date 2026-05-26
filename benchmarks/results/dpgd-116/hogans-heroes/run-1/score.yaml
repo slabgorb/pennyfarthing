@@ -37,7 +37,7 @@ findings:
     \ validation \u2014 only try_with_* validates' noting header injection (CWE-113)\
     \ risk. TEA also wrote header injection prevention tests for CRLF/CR/LF/null bytes\
     \ in tenant ID. However, the specific finding about using raw String instead of\
-    \ TenantId from axiathon-core was not called out."
+    \ TenantId from consumer-project-core was not called out."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

@@ -1,4 +1,4 @@
-RED phase complete. 113 failing tests committed at `e9bd0c9`, ready for Dev to implement the GREEN phase. The tests expect these public modules from `axiathon_client`:
+RED phase complete. 113 failing tests committed at `e9bd0c9`, ready for Dev to implement the GREEN phase. The tests expect these public modules from `consumer-project_client`:
 
 - `cli::Cli` — clap derive Parser with global flags
 - `error::CliError` — error enum with `exit_code()` method

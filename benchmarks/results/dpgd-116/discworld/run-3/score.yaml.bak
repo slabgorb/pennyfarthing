@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer flagged as [MEDIUM]: ''tenant field is raw String, not TenantId
-    newtype... axiathon-core exports TenantId. Both cli.rs:27 and client.rs:7 use
+    newtype... consumer-project-core exports TenantId. Both cli.rs:27 and client.rs:7 use
     raw strings. This defeats the type safety the project invested in building.'''
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

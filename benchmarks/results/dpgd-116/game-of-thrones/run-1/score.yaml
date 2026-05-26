@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer observation #9: ''--tenant flag accepts raw String instead of
-    TenantId... This should use TenantId from axiathon-core at the boundary where
+    TenantId... This should use TenantId from consumer-project-core at the boundary where
     it enters the system.'' Directly matches the ground truth about SiemClient.tenant_id
     using raw String.'
 - finding_id: I3

@@ -38,7 +38,7 @@ findings:
   evidence: "TEA explicitly listed 'CWE-113: Header injection via newlines in tenant\
     \ ID / token'. Dev implemented stripping of \\r\\n in client.rs:23,29. Reviewer\
     \ verified CWE-113 prevention. However, the type-safety concern (should use Option<TenantId>\
-    \ from axiathon-core) was not flagged \u2014 pipeline addressed injection but\
+    \ from consumer-project-core) was not flagged \u2014 pipeline addressed injection but\
     \ not the raw String type issue."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

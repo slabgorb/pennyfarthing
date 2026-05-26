@@ -36,7 +36,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote tests: 'Tenant ID rejects CRLF injection (\\r\\n)'. Dev implemented\
     \ CRLF checks in client.rs:29-31. However, the finding is about using raw String\
-    \ instead of TenantId from axiathon-core \u2014 the CRLF check is a band-aid,\
+    \ instead of TenantId from consumer-project-core \u2014 the CRLF check is a band-aid,\
     \ not the type-safe fix. Reviewer verified CRLF checks but noted silent rejection\
     \ (finding 8). Partial credit: same vulnerability class caught."
   votes: 3/3

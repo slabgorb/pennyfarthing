@@ -13,10 +13,10 @@ All code read, tests run, clippy clean. Now I render my judgment.
 ### `[HIGH]` Logout dispatches to Login handler — `main.rs:30`
 
 ```rust
-Commands::Logout => axiathon_client::commands::login::handle_login(),
+Commands::Logout => consumer-project_client::commands::login::handle_login(),
 ```
 
-Both `Login` and `Logout` route to the identical `handle_login()` stub. When Story 9.1 implements login, this will silently perform *login* when the user types `axiathon logout`. This is a logic error waiting to happen. There must be a separate `handle_logout()` function, even if it's a stub. The stub message should say "Story 9.1" for logout specifically.
+Both `Login` and `Logout` route to the identical `handle_login()` stub. When Story 9.1 implements login, this will silently perform *login* when the user types `consumer-project logout`. This is a logic error waiting to happen. There must be a separate `handle_logout()` function, even if it's a stub. The stub message should say "Story 9.1" for logout specifically.
 
 ---
 
@@ -87,7 +87,7 @@ Story reference verification tests exist for status(6.2), config(6.3), ingest(6.
 
 ### `[MEDIUM]` `init` command creates directory but no default config file — `init.rs:5-13`
 
-The "first-time setup" command creates `~/.config/axiathon/` but doesn't write a skeleton `cli.toml`. An operator running `axiathon init` gets an empty directory with no guidance on config format. AC-9 says init should be "functional, not stub" — creating only a directory is barely functional.
+The "first-time setup" command creates `~/.config/consumer-project/` but doesn't write a skeleton `cli.toml`. An operator running `consumer-project init` gets an empty directory with no guidance on config format. AC-9 says init should be "functional, not stub" — creating only a directory is barely functional.
 
 ---
 
@@ -121,9 +121,9 @@ Tests explicitly verify `rules` (not `rule`) and `alerts` (not `alert`). Negativ
 
 ---
 
-### `[VERIFIED]` No server-side crate imports in axiathon-client
+### `[VERIFIED]` No server-side crate imports in consumer-project-client
 
-`Cargo.toml` depends only on `axiathon-core` and external crates. No imports from axiathon-server, axiathon-storage, axiathon-detection, axiathon-ingestion, or axiathon-query.
+`Cargo.toml` depends only on `consumer-project-core` and external crates. No imports from consumer-project-server, consumer-project-storage, consumer-project-detection, consumer-project-ingestion, or consumer-project-query.
 
 ---
 

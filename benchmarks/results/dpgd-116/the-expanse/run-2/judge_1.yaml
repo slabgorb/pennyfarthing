@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: Reviewer flagged '[MEDIUM] --tenant accepts raw String instead of validated
-    TenantId at cli.rs:29' and noted axiathon-core's TenantId should be used. TEA
+    TenantId at cli.rs:29' and noted consumer-project-core's TenantId should be used. TEA
     also wrote header injection prevention tests (CWE-113) in siem_client.rs and security.rs.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

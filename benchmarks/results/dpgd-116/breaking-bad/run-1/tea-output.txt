@@ -16,7 +16,7 @@
 | `stub_handlers.rs` | 12 | AC-10 | Stub handlers return NotImplemented with story refs |
 
 **Tests Written:** 95 tests covering all 10 ACs
-**Status:** RED (failing — all 8 test files fail to compile because `axiathon_client` modules don't exist yet)
+**Status:** RED (failing — all 8 test files fail to compile because `consumer-project_client` modules don't exist yet)
 
 **Security Tests Included:**
 - CWE-209: Error messages don't leak internal paths/stack traces

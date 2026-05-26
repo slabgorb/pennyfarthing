@@ -36,7 +36,7 @@ findings:
   caught_by: null
   evidence: "Pipeline caught CRLF header injection via validate_header_value() (Reviewer\
     \ V1), but the finding is about using raw String instead of validated TenantId\
-    \ from axiathon-core. No phase flagged the type-safety gap \u2014 tenant_id remains\
+    \ from consumer-project-core. No phase flagged the type-safety gap \u2014 tenant_id remains\
     \ a plain String, bypassing the newtype pattern required by SOUL.md principle\
     \ #2."
 - finding_id: I3

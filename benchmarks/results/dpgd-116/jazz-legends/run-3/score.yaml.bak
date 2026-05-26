@@ -32,7 +32,7 @@ findings:
   caught: false
   caught_by: null
   evidence: Dev implemented CRLF/null stripping in client.rs:16-19 (header injection
-    prevention), but SiemClient.tenant_id still uses raw String rather than axiathon-core's
+    prevention), but SiemClient.tenant_id still uses raw String rather than consumer-project-core's
     validated TenantId type. The stripping mitigates CWE-113 but doesn't use the type-safe
     approach. No phase flagged the missing TenantId usage.
 - finding_id: I3

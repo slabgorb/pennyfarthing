@@ -27,7 +27,7 @@ I've completed a thorough adversarial review. Here are my findings:
 ### [MEDIUM] `OutputFormatter` struct ignores stored format — methods are format-agnostic
 **`output.rs:27-68`** — `OutputFormatter::new(format)` stores `_format` (prefixed with `_` = unused). The caller must manually call `format_table()`, `format_json()`, or `format_csv()`. There's no dispatch method that uses the stored format. The `_format` field is dead state. This means AC-4's "consistent formatting" depends entirely on the caller wiring things correctly.
 
-### [LOW] `main.rs` does not use `init` result — `axiathon init` prints nothing on success
+### [LOW] `main.rs` does not use `init` result — `consumer-project init` prints nothing on success
 **`main.rs:35` + `init.rs`** — `init::handle()` returns `Ok(())` silently. Per AC-10 and operator UX, `init` should confirm what it did (created config directory, wrote default file, or "already initialized"). Currently the operator sees nothing.
 
 ### [LOW] `tenant` field is `Option<String>`, not `TenantId` newtype

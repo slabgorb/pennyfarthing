@@ -33,7 +33,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer''s data flow trace explicitly states: ''The tenant ID is a raw
-    String throughout, not the TenantId newtype from axiathon-core. This bypasses
+    String throughout, not the TenantId newtype from consumer-project-core. This bypasses
     validation.'' Also flagged silent header skip as blocking issue #3. TEA also wrote
     header injection tests covering CRLF in tenant ID.'
 - finding_id: I3

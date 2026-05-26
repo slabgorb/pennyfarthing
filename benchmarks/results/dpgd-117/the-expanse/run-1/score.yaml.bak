@@ -13,7 +13,7 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: Reviewer noted duplicate axiathon-core in dependencies but did not flag
+  evidence: Reviewer noted duplicate consumer-project-core in dependencies but did not flag
     the 6 inline version specs vs workspace = true pattern. Dev added chrono and uuid
     with inline versions.
 - finding_id: I2

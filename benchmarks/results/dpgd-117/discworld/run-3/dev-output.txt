@@ -8,11 +8,11 @@ All 49 tests pass, clippy clean.
 
 | File | Change |
 |------|--------|
-| `crates/axiathon-server/Cargo.toml` | Added `chrono` and `uuid` workspace dependencies |
-| `crates/axiathon-server/src/lib.rs` | `AppState` with `FromRef` substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`), `RateLimiter` (per-tenant, 100 req limit), `AuthInfo`, and `pub fn app()` building the Axum router |
-| `crates/axiathon-server/src/middleware.rs` | Auth middleware (Bearer token + API key validation, 401/403 responses) and rate limit middleware (per-tenant tracking, 429 + Retry-After) |
-| `crates/axiathon-server/src/handlers.rs` | Route handlers: `health` (public, returns version/status), stub GET/POST for events/alerts/rules/queries (auth-protected), JSON fallback 404 |
-| `crates/axiathon-server/src/response.rs` | Response envelope helpers with `request_id` (UUID v4), `timestamp` (ISO 8601), `trace_id` in every `meta` object |
+| `crates/consumer-project-server/Cargo.toml` | Added `chrono` and `uuid` workspace dependencies |
+| `crates/consumer-project-server/src/lib.rs` | `AppState` with `FromRef` substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`), `RateLimiter` (per-tenant, 100 req limit), `AuthInfo`, and `pub fn app()` building the Axum router |
+| `crates/consumer-project-server/src/middleware.rs` | Auth middleware (Bearer token + API key validation, 401/403 responses) and rate limit middleware (per-tenant tracking, 429 + Retry-After) |
+| `crates/consumer-project-server/src/handlers.rs` | Route handlers: `health` (public, returns version/status), stub GET/POST for events/alerts/rules/queries (auth-protected), JSON fallback 404 |
+| `crates/consumer-project-server/src/response.rs` | Response envelope helpers with `request_id` (UUID v4), `timestamp` (ISO 8601), `trace_id` in every `meta` object |
 
 **Architecture highlights:**
 - `#![forbid(unsafe_code)]` enforced

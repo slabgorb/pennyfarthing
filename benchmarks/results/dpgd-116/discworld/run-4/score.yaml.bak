@@ -36,7 +36,7 @@ findings:
   evidence: "TEA wrote header injection prevention tests for tenant ID (CWE-113).\
     \ Dev implemented HeaderValue::from_str() which rejects CRLF. Reviewer verified\
     \ in V3. However, the deeper issue \u2014 using raw String instead of TenantId\
-    \ from axiathon-core \u2014 was not flagged."
+    \ from consumer-project-core \u2014 was not flagged."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

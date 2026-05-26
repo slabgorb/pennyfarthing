@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer F9: 'tenant field uses raw String instead of validated TenantId\
-    \ newtype at cli.rs:29, client.rs:10 \u2014 axiathon-core exports TenantId yet\
+    \ newtype at cli.rs:29, client.rs:10 \u2014 consumer-project-core exports TenantId yet\
     \ both Cli.tenant and SiemClient.tenant use raw Option<String>.' TEA also wrote\
     \ header injection tests for CRLF in tenant IDs."
 - finding_id: I3

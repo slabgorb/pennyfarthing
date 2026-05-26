@@ -40,7 +40,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote header injection tests in siem_client_test.rs and security_test.rs\
     \ covering CWE-113. Dev implemented CR/LF/null validation. However, the ground\
-    \ truth issue is that tenant_id uses raw String instead of TenantId from axiathon-core.\
+    \ truth issue is that tenant_id uses raw String instead of TenantId from consumer-project-core.\
     \ The reviewer flagged this as Finding #7: 'with_tenant() bypasses validation\
     \ \u2014 validated variants are separate methods... Nothing prevents callers from\
     \ using the unvalidated path, making header injection prevention opt-in rather\

@@ -39,7 +39,7 @@ findings:
     \ and '[HIGH] Header injection tests are vacuous \u2014 tests pass for the wrong\
     \ reason.' TEA also wrote CWE-113 header injection prevention tests. However,\
     \ neither phase specifically flagged using raw String instead of TenantId from\
-    \ axiathon-core \u2014 the focus was on silent drops rather than type-safe tenant\
+    \ consumer-project-core \u2014 the focus was on silent drops rather than type-safe tenant\
     \ isolation."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

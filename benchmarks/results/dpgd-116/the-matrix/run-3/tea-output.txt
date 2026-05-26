@@ -14,10 +14,10 @@
 | `config_loading_test.rs` | 13 | AC-8 (TOML loading, env var overrides, precedence, XDG paths) |
 | `shell_completion_test.rs` | 10 | AC-9 (bash/zsh/fish/powershell generation, subcommand inclusion) |
 | `stub_handlers_test.rs` | 8 | AC-10 (not-yet-implemented messages, story references, module existence) |
-| `security_test.rs` | 11 | CWE-209 error exposure, CWE-113 header injection, config validation, AxiathonError conversion |
+| `security_test.rs` | 11 | CWE-209 error exposure, CWE-113 header injection, config validation, Consumer ProjectError conversion |
 
 **Tests Written:** 132 tests covering all 10 ACs
-**Status:** RED (failing — all tests fail to compile because `cli`, `error`, `output`, `client`, `config`, and `commands` modules don't exist yet in `axiathon-client`)
+**Status:** RED (failing — all tests fail to compile because `cli`, `error`, `output`, `client`, `config`, and `commands` modules don't exist yet in `consumer-project-client`)
 
 **Security tests cover:**
 - CWE-209: Error messages don't leak file paths, connection strings, or stack traces

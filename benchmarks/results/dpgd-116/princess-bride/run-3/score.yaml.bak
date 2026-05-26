@@ -37,7 +37,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote CRLF header injection tests for tenant ID (siem_client_test.rs:258-298).\
     \ Dev implemented CRLF/null byte validation at client.rs:84-92. However, the type\
-    \ still uses raw String rather than axiathon-core's TenantId, so the structural\
+    \ still uses raw String rather than consumer-project-core's TenantId, so the structural\
     \ fix was not applied \u2014 only runtime validation was added. Partial catch."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
