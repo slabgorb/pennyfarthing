@@ -34,7 +34,7 @@ findings:
   caught_by: null
   evidence: "The reviewer verified header injection CRLF stripping as correct, and\
     \ the dev implemented CRLF sanitization. However, the ground truth issue is that\
-    \ tenant_id uses raw String instead of validated TenantId from axiathon-core \u2014\
+    \ tenant_id uses raw String instead of validated TenantId from consumer-project-core \u2014\
     \ a type safety concern, not just injection. The pipeline marked header injection\
     \ as VERIFIED (correct), reaching the opposite conclusion about the tenant_id\
     \ type issue."

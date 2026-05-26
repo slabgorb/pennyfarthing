@@ -35,7 +35,7 @@ findings:
   evidence: TEA wrote header injection tests but reviewer found them vacuous ('!x
     || true' is always true). SiemClient.tenant_id remains a raw String with no validation.
     Reviewer flagged the vacuous test but did not flag the missing TenantId type usage
-    from axiathon-core.
+    from consumer-project-core.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

@@ -33,7 +33,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer flagged as [MEDIUM]: --tenant accepts raw String instead of
-    validated TenantId at cli.rs:29, noting axiathon-core has a TenantId type that
+    validated TenantId at cli.rs:29, noting consumer-project-core has a TenantId type that
     should be used. TEA also wrote header injection prevention tests for CRLF in tenant,
     but did not require TenantId type usage.'
 - finding_id: I3

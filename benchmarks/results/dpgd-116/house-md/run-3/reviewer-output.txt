@@ -12,7 +12,7 @@ Alright. I've seen enough. Time for the differential diagnosis.
 
 `cargo +nightly fmt --all --check` reports diffs in `cli.rs:1` and `client.rs:1`. Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." This will fail CI.
 
-**Files:** `crates/axiathon-client/src/cli.rs:3`, `crates/axiathon-client/src/client.rs:3`
+**Files:** `crates/consumer-project-client/src/cli.rs:3`, `crates/consumer-project-client/src/client.rs:3`
 
 ---
 
@@ -27,7 +27,7 @@ assert!(
 
 `result.is_ok() || result.is_err()` is **always true** for any `Result`. This test cannot fail. It asserts literally nothing. A missing config file could return `Ok(default)` or `Err(...)` — both are accepted. The test name claims it validates behavior for missing files, but it's a no-op.
 
-**File:** `crates/axiathon-client/tests/config_loading.rs:46`
+**File:** `crates/consumer-project-client/tests/config_loading.rs:46`
 
 ---
 
@@ -40,7 +40,7 @@ Config(String),
 
 The `{0}` payload is never included in the Display output. When `main.rs` does `eprintln!("error: {e}")`, the user sees only `"error: configuration error"` — no indication of *what* went wrong (missing file? bad syntax? type mismatch?). Config errors are not security-sensitive; the user needs to know why their config is broken.
 
-**File:** `crates/axiathon-client/src/error.rs:43`
+**File:** `crates/consumer-project-client/src/error.rs:43`
 
 ---
 
@@ -56,7 +56,7 @@ ServerError(u16, String),
 
 These variants pass `resp.text().await` directly into the Display output. If the server returns stack traces, internal paths, or database errors in 404/5xx response bodies, they flow straight to the user's terminal. The doc comment says "Display impl sanitizes internal details" — it does not.
 
-**Files:** `crates/axiathon-client/src/error.rs:24,27`, `crates/axiathon-client/src/client.rs:96-101`
+**Files:** `crates/consumer-project-client/src/error.rs:24,27`, `crates/consumer-project-client/src/client.rs:96-101`
 
 ---
 
@@ -71,7 +71,7 @@ AC-4 requires: "JSON includes `ResponseMetadata` (request_id, timestamp, api_ver
 }
 ```
 
-**File:** `crates/axiathon-client/src/output.rs:88-94`
+**File:** `crates/consumer-project-client/src/output.rs:88-94`
 
 ---
 
@@ -81,7 +81,7 @@ The wiremock mock matches any GET to `/api/v1/status` — it has no negative mat
 
 Same issue for `siem_client_omits_tenant_header_when_none`.
 
-**File:** `crates/axiathon-client/tests/siem_client.rs:190-204,210-223`
+**File:** `crates/consumer-project-client/tests/siem_client.rs:190-204,210-223`
 
 ---
 
@@ -89,7 +89,7 @@ Same issue for `siem_client_omits_tenant_header_when_none`.
 
 A config file with `token = "my-secret"` is silently ignored. While the test acknowledges this, silent acceptance of unknown fields means typos (`servr_url`) are silently ignored too, leading to confusing defaults-instead-of-configured behavior. Given that AC-8 says "Tokens in OS keychain, NOT config file," silently ignoring a `token` field is a missed opportunity to warn the user they're doing it wrong.
 
-**File:** `crates/axiathon-client/src/config.rs:8`
+**File:** `crates/consumer-project-client/src/config.rs:8`
 
 ---
 
@@ -105,15 +105,15 @@ The story's Technical Guardrails section specifies `toml 0.9`. The workspace has
 
 `timeout_secs` is a `u64` with no lower-bound check. A 0-second timeout would cause immediate request failures. The config validates `server_url` for emptiness but not `timeout_secs` for zero.
 
-**File:** `crates/axiathon-client/src/config.rs:9`
+**File:** `crates/consumer-project-client/src/config.rs:9`
 
 ---
 
 ### `[LOW]` `tenant` CLI flag accepts raw `String` — not validated as `TenantId`
 
-The `--tenant` flag is `Option<String>`. `axiathon-core` defines `TenantId` as a validated newtype. While the story says the crate depends on `axiathon-core` for shared types, the tenant value is passed through as a raw string without validation. This defers validation to the server, which is acceptable at this stage but inconsistent with the project's newtype philosophy.
+The `--tenant` flag is `Option<String>`. `consumer-project-core` defines `TenantId` as a validated newtype. While the story says the crate depends on `consumer-project-core` for shared types, the tenant value is passed through as a raw string without validation. This defers validation to the server, which is acceptable at this stage but inconsistent with the project's newtype philosophy.
 
-**File:** `crates/axiathon-client/src/cli.rs:35`
+**File:** `crates/consumer-project-client/src/cli.rs:35`
 
 ---
 
@@ -126,7 +126,7 @@ if !config_path.exists() {
 
 Another process could create the file between the check and the write. For a CLI init command this is cosmetic, but `OpenOptions::new().create_new(true)` would be atomic.
 
-**File:** `crates/axiathon-client/src/commands/init.rs:13-18`
+**File:** `crates/consumer-project-client/src/commands/init.rs:13-18`
 
 ---
 

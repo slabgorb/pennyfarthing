@@ -2,7 +2,7 @@ All **108 tests pass** across 8 test files. Clippy is clean with `-D warnings`.
 
 ## Summary
 
-### Files Created (production code in `crates/axiathon-client/src/`)
+### Files Created (production code in `crates/consumer-project-client/src/`)
 
 | File | Description |
 |------|-------------|

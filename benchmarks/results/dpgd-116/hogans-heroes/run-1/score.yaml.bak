@@ -36,7 +36,7 @@ findings:
   evidence: "TEA wrote header injection prevention tests (CRLF, bare CR, bare LF,\
     \ null bytes in tenant ID). Reviewer flagged HIGH that with_tenant() bypasses\
     \ validation (only try_with_tenant validates), noting CWE-113. However, the core\
-    \ issue \u2014 using raw String instead of TenantId from axiathon-core \u2014\
+    \ issue \u2014 using raw String instead of TenantId from consumer-project-core \u2014\
     \ was not identified by any phase."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

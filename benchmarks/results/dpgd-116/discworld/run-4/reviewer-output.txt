@@ -16,12 +16,12 @@ Right. I've seen enough. Here's my review. I don't do nice. I do RIGHT.
 The entry point is:
 ```rust
 fn main() {
-    eprintln!("axiathon: not yet implemented");
+    eprintln!("consumer-project: not yet implemented");
     std::process::exit(1);
 }
 ```
 
-No CLI parsing. No command dispatch. No config loading. No async runtime. The binary that AC-1 through AC-10 describe **does not exist**. Running `./axiathon --help` exits with code 1 and a useless message. Every other module — cli.rs, client.rs, config.rs, output.rs, error.rs — sits there like furniture in an empty house with no front door.
+No CLI parsing. No command dispatch. No config loading. No async runtime. The binary that AC-1 through AC-10 describe **does not exist**. Running `./consumer-project --help` exits with code 1 and a useless message. Every other module — cli.rs, client.rs, config.rs, output.rs, error.rs — sits there like furniture in an empty house with no front door.
 
 This is the story's *primary deliverable*. A CLI framework story that doesn't wire up the CLI is not a framework.
 
@@ -46,7 +46,7 @@ let display = format!("{err}");
 assert!(display.contains("not yet implemented"));
 ```
 
-This tests that the `Display` impl on `CliError::NotImplemented` works. It does NOT test that running `axiathon status` actually returns this error. There is no stub handler to test — the tests construct the error themselves and verify their own construction. This is a tautology. It would pass even if the `status` command segfaulted, because the test never invokes the command.
+This tests that the `Display` impl on `CliError::NotImplemented` works. It does NOT test that running `consumer-project status` actually returns this error. There is no stub handler to test — the tests construct the error themselves and verify their own construction. This is a tautology. It would pass even if the `status` command segfaulted, because the test never invokes the command.
 
 ---
 
@@ -62,7 +62,7 @@ File-sourced URLs go through `validate_url()` (line 82), but `AXIATHON_API_URL` 
 
 ---
 
-### `[HIGH]` F5 — `keyring` dependency missing from workspace and crate — `Cargo.toml`, `crates/axiathon-client/Cargo.toml`
+### `[HIGH]` F5 — `keyring` dependency missing from workspace and crate — `Cargo.toml`, `crates/consumer-project-client/Cargo.toml`
 
 AC-8 mandates: "Tokens in OS keychain, NOT config file." The architecture doc specifies `keyring` 3 as a key dependency. It appears in neither the workspace `[workspace.dependencies]` nor the client crate's `[dependencies]`. `ClientConfig::token()` returns `None` unconditionally (`config.rs:59-61`). The credential storage requirement is entirely unimplemented.
 
@@ -209,7 +209,7 @@ Per coding rules. Confirmed.
 
 The individual components — cli.rs, error.rs, output.rs, client.rs, config.rs, completion.rs — are well-crafted in isolation. The error handling design is solid. The security posture on header injection is correct. The output formatters are production-quality.
 
-But **the binary doesn't work**. There is no main dispatch loop. There are no command handlers. The stub handler tests test the error type's Display impl, not any actual command execution. The `axiathon` binary prints "not yet implemented" and exits. This is not a CLI framework — it's a parts catalog.
+But **the binary doesn't work**. There is no main dispatch loop. There are no command handlers. The stub handler tests test the error type's Display impl, not any actual command execution. The `consumer-project` binary prints "not yet implemented" and exits. This is not a CLI framework — it's a parts catalog.
 
 ---
 

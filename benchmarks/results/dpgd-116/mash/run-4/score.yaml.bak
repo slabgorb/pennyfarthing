@@ -34,7 +34,7 @@ findings:
   caught_by: dev
   evidence: "Dev implemented sanitize_header_value at client.rs:19-21 stripping \\\
     r and \\n from tenant ID values, and TEA wrote CRLF injection tests in security.rs:57-85.\
-    \ However, the deeper issue of using raw String instead of axiathon-core's validated\
+    \ However, the deeper issue of using raw String instead of consumer-project-core's validated\
     \ TenantId was not addressed \u2014 only the symptom was mitigated."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

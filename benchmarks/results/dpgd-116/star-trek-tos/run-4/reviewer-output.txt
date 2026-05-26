@@ -10,8 +10,8 @@ Fascinating. All 125 tests pass, clippy is clean, but nightly fmt fails. Now let
 
 | Check | Result |
 |-------|--------|
-| `cargo test -p axiathon-client` | 125 passed |
-| `cargo clippy -p axiathon-client -- -D warnings` | Clean |
+| `cargo test -p consumer-project-client` | 125 passed |
+| `cargo clippy -p consumer-project-client -- -D warnings` | Clean |
 | `cargo +nightly fmt --all --check` | **FAILED** |
 
 ---
@@ -32,11 +32,11 @@ Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the pref
 
 **4. [HIGH] Missing `tui` command in Commands enum — AC-1 violation** at `cli.rs:43`
 
-AC-1 explicitly requires: "`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, **`tui`**, `completion`, `init`." The `Commands` enum has no `Tui` variant. This is a direct AC violation.
+AC-1 explicitly requires: "`consumer-project --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, **`tui`**, `completion`, `init`." The `Commands` enum has no `Tui` variant. This is a direct AC violation.
 
 **5. [MEDIUM] No `main.rs` / no binary target — story deliverable gap**
 
-The story requires "the `axiathon-client` crate producing the `axiathon` binary." The crate has only `lib.rs` and no `[[bin]]` section in `Cargo.toml`. There is no binary entry point, no `std::process::exit()` call, no tracing initialization. The entire dispatch-and-exit-code flow described in the story (AC-3) cannot be exercised end-to-end.
+The story requires "the `consumer-project-client` crate producing the `consumer-project` binary." The crate has only `lib.rs` and no `[[bin]]` section in `Cargo.toml`. There is no binary entry point, no `std::process::exit()` call, no tracing initialization. The entire dispatch-and-exit-code flow described in the story (AC-3) cannot be exercised end-to-end.
 
 **6. [MEDIUM] Invalid shell name produces silent empty output instead of error** at `completion.rs:15`
 

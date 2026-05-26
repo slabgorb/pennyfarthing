@@ -26,10 +26,10 @@
 
 **Handoff:** To Dev for implementation
 
-**Note:** The Project Notes in CLAUDE.md reference `crates/axiathon-server/` as the target crate and `cargo test -p axiathon-server` for running tests. This appears incorrect for Story 6.1 which targets `crates/axiathon-client/`. Tests are placed in `crates/axiathon-client/tests/` and should be run with `cargo test -p axiathon-client`.
+**Note:** The Project Notes in CLAUDE.md reference `crates/consumer-project-server/` as the target crate and `cargo test -p consumer-project-server` for running tests. This appears incorrect for Story 6.1 which targets `crates/consumer-project-client/`. Tests are placed in `crates/consumer-project-client/tests/` and should be run with `cargo test -p consumer-project-client`.
 
 ## Delivery Findings
 
-- **Gap** (non-blocking): Project Notes in CLAUDE.md reference `axiathon-server` as target crate, but Story 6.1 targets `axiathon-client`. Dev should use `cargo test -p axiathon-client`.
+- **Gap** (non-blocking): Project Notes in CLAUDE.md reference `consumer-project-server` as target crate, but Story 6.1 targets `consumer-project-client`. Dev should use `cargo test -p consumer-project-client`.
   Affects `CLAUDE.md` (Project Notes section needs updating for this story).
   *Found by TEA during test design.*

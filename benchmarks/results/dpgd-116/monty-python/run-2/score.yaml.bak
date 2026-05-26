@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote header injection tests in cli_security.rs and cli_siem_client.rs.\
     \ Dev implemented CRLF/null rejection in with_tenant(). However, the deeper issue\
-    \ \u2014 using raw String instead of TenantId from axiathon-core \u2014 was not\
+    \ \u2014 using raw String instead of TenantId from consumer-project-core \u2014 was not\
     \ caught. The injection is prevented but the type-safety gap remains."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

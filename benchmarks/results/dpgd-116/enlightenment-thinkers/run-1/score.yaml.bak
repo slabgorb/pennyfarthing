@@ -37,7 +37,7 @@ findings:
   caught_by: null
   evidence: TEA wrote header injection tests in siem_client.rs:132-148 for CRLF in
     tokens, but SiemClient.tenant_id still uses raw String instead of TenantId from
-    axiathon-core. Reviewer F5 flagged the tests as vacuous but did not flag the type
+    consumer-project-core. Reviewer F5 flagged the tests as vacuous but did not flag the type
     safety issue of using String instead of TenantId. The core finding about bypassing
     type-safe tenant isolation was missed.
 - finding_id: I3

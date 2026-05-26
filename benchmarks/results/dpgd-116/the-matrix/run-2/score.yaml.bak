@@ -33,7 +33,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote header injection tests in security.rs and siem_client.rs covering\
     \ CRLF injection. Dev implemented CRLF stripping. However, the deeper issue of\
-    \ using raw String instead of TenantId from axiathon-core was not flagged \u2014\
+    \ using raw String instead of TenantId from consumer-project-core was not flagged \u2014\
     \ partial catch via CRLF sanitization."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
@@ -41,7 +41,7 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase flagged that axiathon-client/Cargo.toml uses direct version strings
+  evidence: No phase flagged that consumer-project-client/Cargo.toml uses direct version strings
     instead of workspace = true for dependencies that exist in workspace.dependencies.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"

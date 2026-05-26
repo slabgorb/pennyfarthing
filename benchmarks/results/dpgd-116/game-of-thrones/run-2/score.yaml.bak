@@ -37,8 +37,8 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer flagged: '[MEDIUM] tenant field uses raw String instead of TenantId\
-    \ newtype at crates/axiathon-client/src/cli.rs:30 \u2014 The --tenant flag accepts\
-    \ a raw Option<String>. While axiathon-core exports TenantId, the CLI should parse/validate\
+    \ newtype at crates/consumer-project-client/src/cli.rs:30 \u2014 The --tenant flag accepts\
+    \ a raw Option<String>. While consumer-project-core exports TenantId, the CLI should parse/validate\
     \ it into the newtype at the boundary.' TEA also wrote header injection tests\
     \ for CR/LF in tenant ID, but the core issue of using raw String instead of TenantId\
     \ was caught by reviewer."

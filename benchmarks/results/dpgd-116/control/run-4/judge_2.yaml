@@ -40,8 +40,8 @@ findings:
   evidence: "TEA wrote security tests for CWE-113 header injection via newline in\
     \ tenant ID. Dev implemented newline rejection in SiemClient::with_tenant (client.rs:59).\
     \ However, the specific finding is about using raw String instead of validated\
-    \ TenantId from axiathon-core \u2014 the pipeline caught the injection vector\
-    \ but not the type-safety gap. Reviewer even noted axiathon-core dependency is\
+    \ TenantId from consumer-project-core \u2014 the pipeline caught the injection vector\
+    \ but not the type-safety gap. Reviewer even noted consumer-project-core dependency is\
     \ declared but unused. Partial catch \u2014 same vulnerability class addressed."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

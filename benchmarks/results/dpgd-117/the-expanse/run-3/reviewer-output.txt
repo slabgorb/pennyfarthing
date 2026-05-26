@@ -10,8 +10,8 @@ All right. I've read everything. Time to deliver the verdict.
 
 ## Preflight Check
 
-`cargo test -p axiathon-server` — **all 55 tests pass**.
-`cargo clippy -p axiathon-server -- -D warnings` — **clean**.
+`cargo test -p consumer-project-server` — **all 55 tests pass**.
+`cargo clippy -p consumer-project-server -- -D warnings` — **clean**.
 `cargo +nightly fmt --all --check` — **FAILING** (329 lines of import ordering diff).
 
 ---
@@ -25,18 +25,18 @@ All right. I've read everything. Time to deliver the verdict.
 ### [HIGH] Unused dependencies in `Cargo.toml` — `Cargo.toml:9-22`
 
 Six crate dependencies are declared but **never used** anywhere in `src/`:
-- `axiathon-core` (the server defines its own `Envelope` — never imports `ApiResponse<T>` from core)
-- `axiathon-detection`
-- `axiathon-ingestion`
-- `axiathon-ot`
-- `axiathon-query`
-- `axiathon-storage`
+- `consumer-project-core` (the server defines its own `Envelope` — never imports `ApiResponse<T>` from core)
+- `consumer-project-detection`
+- `consumer-project-ingestion`
+- `consumer-project-ot`
+- `consumer-project-query`
+- `consumer-project-storage`
 - `tracing` / `tracing-subscriber`
 - `thiserror`
 - `tokio` (no direct use in lib; only test dep)
 - `serde` (only `serde::Serialize` used, but `serde_json` re-exports it — check if needed)
 
-This bloats compile times and violates workspace hygiene. At minimum `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `tracing`, `tracing-subscriber`, `thiserror`, and `tokio` are dead weight in `[dependencies]`.
+This bloats compile times and violates workspace hygiene. At minimum `consumer-project-detection`, `consumer-project-ingestion`, `consumer-project-ot`, `consumer-project-query`, `consumer-project-storage`, `tracing`, `tracing-subscriber`, `thiserror`, and `tokio` are dead weight in `[dependencies]`.
 
 ### [HIGH] No `AppState` / `FromRef` substate pattern — `lib.rs:24`
 
@@ -46,14 +46,14 @@ The story AC and technical guardrails **require** `AppState` with `FromRef` subs
 
 The auth middleware **rejects every request unconditionally**. It never calls `next.run(req).await`. This means every protected endpoint returns 401 always. The tests for protected endpoints (events, alerts, rules, queries) only assert `!= 404` or `== 401`, which passes vacuously. No test actually reaches a handler through auth. The stub should at minimum provide a test bypass or a mechanism to inject valid tokens.
 
-### [MEDIUM] `Envelope` diverges from `ApiResponse<T>` in `axiathon-core` — `response.rs:14-19` vs `types.rs:221-228`
+### [MEDIUM] `Envelope` diverges from `ApiResponse<T>` in `consumer-project-core` — `response.rs:14-19` vs `types.rs:221-228`
 
-The server defines its own `Envelope<T>` with `{ data, errors: Vec, meta }` while `axiathon-core::ApiResponse<T>` has `{ data, error: Option<ApiError>, meta: Option<ApiMeta> }`. The shapes are **incompatible**:
+The server defines its own `Envelope<T>` with `{ data, errors: Vec, meta }` while `consumer-project-core::ApiResponse<T>` has `{ data, error: Option<ApiError>, meta: Option<ApiMeta> }`. The shapes are **incompatible**:
 - Core uses `error` (singular, optional); server uses `errors` (array, always present)
 - Core's `meta` is `Option<ApiMeta>` (pagination); server's `meta` is always present with `request_id`/`timestamp`/`trace_id`
 - Core uses `skip_serializing_if` so absent fields are omitted; server always includes all three fields
 
-This will cause confusion and integration pain. The story AC says "use `ApiResponse<T>` from axiathon-core" but the server reinvents it. Need to reconcile.
+This will cause confusion and integration pain. The story AC says "use `ApiResponse<T>` from consumer-project-core" but the server reinvents it. Need to reconcile.
 
 ### [MEDIUM] Rate limiter uses global `OnceLock<Mutex<HashMap>>` — `middleware.rs:68-71`
 

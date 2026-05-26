@@ -34,7 +34,7 @@ findings:
   caught_by: tea
   evidence: TEA wrote CWE-113 header injection tests requiring tenant ID with CRLF/null
     bytes to be rejected. Dev implemented HeaderValue::from_str() validation. Reviewer
-    verified it. However, the type-safety recommendation (use TenantId from axiathon-core
+    verified it. However, the type-safety recommendation (use TenantId from consumer-project-core
     instead of raw String) was not flagged by any phase.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

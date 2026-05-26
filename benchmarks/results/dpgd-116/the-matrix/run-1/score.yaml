@@ -35,8 +35,8 @@ findings:
   evidence: TEA wrote header injection tests in tests/siem_client.rs and tests/security.rs
     covering CWE-113. Reviewer flagged as HIGH that SiemClient::new() bypasses header
     injection validation. Same vulnerability class identified, though the specific
-    fix of using TenantId type from axiathon-core was not proposed (reviewer noted
-    axiathon-core dependency is unused but didn't connect it to tenant_id typing).
+    fix of using TenantId type from consumer-project-core was not proposed (reviewer noted
+    consumer-project-core dependency is unused but didn't connect it to tenant_id typing).
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

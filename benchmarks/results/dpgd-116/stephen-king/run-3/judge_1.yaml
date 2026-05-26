@@ -37,7 +37,7 @@ findings:
   caught_by: reviewer
   evidence: "Reviewer F9: 'tenant field uses raw String instead of validated TenantId\
     \ newtype at cli.rs:29, client.rs:10 \u2014 The project's Rust rules specify newtypes\
-    \ for IDs: TenantId(String). The axiathon-core crate exports TenantId. Yet both\
+    \ for IDs: TenantId(String). The consumer-project-core crate exports TenantId. Yet both\
     \ Cli.tenant and SiemClient.tenant use raw Option<String>.'"
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

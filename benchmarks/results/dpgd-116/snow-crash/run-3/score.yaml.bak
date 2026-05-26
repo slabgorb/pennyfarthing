@@ -34,7 +34,7 @@ findings:
   caught_by: tea
   evidence: "TEA included CWE-113 header injection prevention tests in siem_client.rs,\
     \ and Dev implemented CRLF validation. However, the finding is specifically about\
-    \ tenant_id using raw String instead of TenantId from axiathon-core \u2014 that\
+    \ tenant_id using raw String instead of TenantId from consumer-project-core \u2014 that\
     \ type-safety gap was NOT caught. Reviewer flagged F4 (with_token bypass) but\
     \ not the raw String tenant_id issue. Partially caught for header injection but\
     \ not for the type-safety aspect."
@@ -46,7 +46,7 @@ findings:
   caught_by: null
   evidence: Reviewer V9 says 'Workspace dependency declarations used correctly' but
     the Dev phase output shows deps were added to workspace Cargo.toml with direct
-    versions. The actual Cargo.toml for axiathon-client likely uses direct version
+    versions. The actual Cargo.toml for consumer-project-client likely uses direct version
     strings instead of workspace = true. No phase flagged this.
 - finding_id: I4
   title: "Config token field silently ignored \u2014 secret left on disk"

@@ -37,7 +37,7 @@ findings:
   evidence: "TEA included 'Header injection via tenant ID and token (CRLF injection)'\
     \ tests. Reviewer verified at finding #11: 'HeaderValue::from_str() rejects values\
     \ containing \\r\\n... Confirmed safe against CWE-113.' However, the structural\
-    \ issue of using raw String instead of TenantId from axiathon-core was not flagged\
+    \ issue of using raw String instead of TenantId from consumer-project-core was not flagged\
     \ \u2014 only the injection vector was mitigated at the HTTP layer."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

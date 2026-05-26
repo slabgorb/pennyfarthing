@@ -46,7 +46,7 @@ The `--format` flag is `Option<String>` with a `value_parser` restriction. But t
 
 ### [MEDIUM] No `main.rs` — binary entry point is missing
 
-The story specifies `main.rs` as the binary entry point with error catching and `std::process::exit()`. There's no `main.rs` in the source, and no `[[bin]]` section in `Cargo.toml`. The crate is library-only, which means there's no actual `axiathon` binary being produced. AC-3 requires `main.rs` to catch errors and map to exit codes.
+The story specifies `main.rs` as the binary entry point with error catching and `std::process::exit()`. There's no `main.rs` in the source, and no `[[bin]]` section in `Cargo.toml`. The crate is library-only, which means there's no actual `consumer-project` binary being produced. AC-3 requires `main.rs` to catch errors and map to exit codes.
 
 ### [LOW] `toml` version mismatch — Cargo.toml says `0.8`, story spec says `0.9` at `Cargo.toml:21`
 

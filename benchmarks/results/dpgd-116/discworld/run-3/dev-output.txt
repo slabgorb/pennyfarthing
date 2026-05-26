@@ -2,7 +2,7 @@ All **137 tests pass** (0 failures) and **clippy is clean** (0 warnings with `-D
 
 ## Summary
 
-### Files Created (production code in `crates/axiathon-client/src/`)
+### Files Created (production code in `crates/consumer-project-client/src/`)
 
 | File | Description |
 |------|-------------|
@@ -19,7 +19,7 @@ All **137 tests pass** (0 failures) and **clippy is clean** (0 warnings with `-D
 | File | Change |
 |------|--------|
 | `Cargo.toml` (workspace) | Added `env` feature to clap; changed `unsafe_code` from `forbid` to `deny` (production crates keep `#![forbid(unsafe_code)]` in lib.rs) |
-| `crates/axiathon-client/Cargo.toml` | Added `uuid` dependency |
+| `crates/consumer-project-client/Cargo.toml` | Added `uuid` dependency |
 | `tests/config_loading.rs` | Fixed `set_var`/`remove_var` for edition 2024 (`unsafe` blocks), explicit `apply_env_overrides()` to fix race condition |
 | `tests/global_flags.rs` | Fixed `set_var`/`remove_var` for edition 2024 (`unsafe` blocks) |
 

@@ -37,7 +37,7 @@ findings:
   caught: false
   caught_by: null
   evidence: SiemClient.tenant_id is a raw String. Dev added CRLF sanitization (sanitize_header_value)
-    which mitigates header injection, but the finding is about using axiathon-core's
+    which mitigates header injection, but the finding is about using consumer-project-core's
     validated TenantId type instead of raw String. The type-safety gap was not flagged.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

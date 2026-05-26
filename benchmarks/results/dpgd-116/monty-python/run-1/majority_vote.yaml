@@ -34,7 +34,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote CWE-113 header injection tests for CR/LF in tenant ID. Dev\
     \ implemented CR/LF stripping in with_tenant. Reviewer verified. However, the\
-    \ type-safety aspect (using TenantId from axiathon-core) was not flagged \u2014\
+    \ type-safety aspect (using TenantId from consumer-project-core) was not flagged \u2014\
     \ only the injection mitigation was addressed."
   votes: 3/3
 - finding_id: I3

@@ -9,13 +9,13 @@ Good. I've verified the critical findings independently. Here's my structured re
 ## Findings
 
 ### `[CRITICAL]` Missing `main.rs` — no binary entry point exists
-**`crates/axiathon-client/src/main.rs`** — file does not exist. No `[[bin]]` section in `Cargo.toml` either. Story 6.1 is defined as delivering "the `axiathon` binary" but the crate is library-only. Without `main.rs`:
+**`crates/consumer-project-client/src/main.rs`** — file does not exist. No `[[bin]]` section in `Cargo.toml` either. Story 6.1 is defined as delivering "the `consumer-project` binary" but the crate is library-only. Without `main.rs`:
 - No command dispatch (CLI args → handler)
 - No tracing initialization
 - No error-to-exit-code-to-stderr flow (AC-3 partially unverifiable)
 - No config loading → CLI flag override → SiemClient wiring
 - No keyring token loading in sync context before Tokio (AC-8 requirement)
-- `axiathon --help` cannot actually run as a binary
+- `consumer-project --help` cannot actually run as a binary
 - AC-9 shell completion generation cannot execute end-to-end
 - AC-10 stub "not yet implemented" messages cannot display to users
 
@@ -35,7 +35,7 @@ The `NotFound` variant stores the full constructed URL (`format!("{}{path}", sel
 `ResponseMetadata` creates `uuid::Uuid::new_v4()` inside the formatter. This means request IDs are untraceable — they don't correlate with any server-side request. Future stories expecting request tracing will need to refactor this.
 
 ### `[LOW]` `tenant_id` passed as raw `String`, not `TenantId` newtype — `client.rs:26`
-The project's Rust rules state: *"Newtypes for IDs: `TenantId(String)` — prevents mixing ID types."* `axiathon-core` exports `TenantId`, but `SiemClient::with_tenant()` accepts `&str`. This bypasses the validated constructor pattern.
+The project's Rust rules state: *"Newtypes for IDs: `TenantId(String)` — prevents mixing ID types."* `consumer-project-core` exports `TenantId`, but `SiemClient::with_tenant()` accepts `&str`. This bypasses the validated constructor pattern.
 
 ### `[VERIFIED]` CRLF injection prevention in headers — `client.rs:21,27`
 Token and tenant_id both strip `\r` and `\n` before header injection. Tested in `siem_client.rs`. CWE-113 mitigated.
@@ -53,7 +53,7 @@ CLI structure, global flags, SiemClient HTTP mapping, config loading, output for
 
 ## Data Flow Trace
 
-`axiathon --server http://example.com status show` →
+`consumer-project --server http://example.com status show` →
 
 1. Clap parses → `Cli { server: Some(...), command: Commands::Status(...) }` ✓
 2. **BROKEN**: No `main.rs` to load config, apply `--server` override, create `SiemClient`, dispatch to handler, map error to exit code

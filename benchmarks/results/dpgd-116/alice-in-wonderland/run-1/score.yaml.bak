@@ -37,7 +37,7 @@ findings:
   evidence: "TEA wrote CWE-113 header injection tests for CRLF/null-byte rejection\
     \ in siem_client.rs and security.rs. Dev implemented validation for \\r, \\n,\
     \ \\0 at client.rs:51-69. Reviewer verified. However, the type-safety recommendation\
-    \ (using Option<TenantId> from axiathon-core) was not addressed \u2014 only runtime\
+    \ (using Option<TenantId> from consumer-project-core) was not addressed \u2014 only runtime\
     \ validation."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

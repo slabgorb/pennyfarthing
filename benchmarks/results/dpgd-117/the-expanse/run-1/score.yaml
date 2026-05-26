@@ -14,7 +14,7 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: Reviewer flagged duplicate axiathon-core in deps/dev-deps but never mentioned
+  evidence: Reviewer flagged duplicate consumer-project-core in deps/dev-deps but never mentioned
     workspace-level dependency management or version drift from inline versions.
 - finding_id: I2
   title: 'FieldErrorCode missing #[non_exhaustive]'

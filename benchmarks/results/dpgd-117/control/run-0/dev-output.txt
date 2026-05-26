@@ -1,8 +1,8 @@
 ## Summary
 
 **Files changed:**
-- `crates/axiathon-server/Cargo.toml` — added `chrono`, `uuid`, `tower` dependencies
-- `crates/axiathon-server/src/lib.rs` — full implementation of REST API foundation
+- `crates/consumer-project-server/Cargo.toml` — added `chrono`, `uuid`, `tower` dependencies
+- `crates/consumer-project-server/src/lib.rs` — full implementation of REST API foundation
 
 **Implementation includes:**
 - `AppState` with `FromRef` substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`)

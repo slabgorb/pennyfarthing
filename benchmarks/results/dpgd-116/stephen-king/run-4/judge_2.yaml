@@ -34,7 +34,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer observation #4 explicitly flags ''SiemClient uses raw String
-    for tenant_id instead of TenantId newtype'' and notes axiathon-core exports TenantId
+    for tenant_id instead of TenantId newtype'' and notes consumer-project-core exports TenantId
     but it''s unused, bypassing type safety.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

@@ -37,7 +37,7 @@ findings:
   evidence: "TEA wrote tests for 'Header injection via CRLF in URLs, tokens, tenant\
     \ IDs (AC-7)' and Dev implemented CRLF validation in SiemClient builder (client.rs:69-71,\
     \ 97-116). However, the finding is specifically about using raw String instead\
-    \ of TenantId from axiathon-core \u2014 that type-safety aspect was not caught.\
+    \ of TenantId from consumer-project-core \u2014 that type-safety aspect was not caught.\
     \ The CRLF validation mitigates the injection risk but doesn't use the validated\
     \ TenantId type."
 - finding_id: I3

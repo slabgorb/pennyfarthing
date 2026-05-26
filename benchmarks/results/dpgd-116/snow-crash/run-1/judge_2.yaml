@@ -41,7 +41,7 @@ findings:
   evidence: TEA wrote header injection tests (CWE-113) for CRLF in tenant values in
     siem_client.rs. Reviewer flagged the critical finding that with_tenant() accepts
     arbitrary strings with no validation, bypassing the try_with_tenant() validated
-    path. While the specific fix (use TenantId from axiathon-core) wasn't called out,
+    path. While the specific fix (use TenantId from consumer-project-core) wasn't called out,
     the vulnerability class was identified.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

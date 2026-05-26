@@ -123,9 +123,9 @@ A config file with `servr_url = "http://wrong:9090"` (typo) will silently be ign
 
 ---
 
-### [LOW] Missing test for `axiathon logout --help` and `axiathon tui --help`
+### [LOW] Missing test for `consumer-project logout --help` and `consumer-project tui --help`
 
-AC-2: "Every `axiathon <cmd> --help` must render without panic." Tests exist for query, rules, alerts, ingest, config, status, tenant, login, completion, init — but NOT for logout or tui. These are unit variants in the Commands enum and clap should handle them, but the coverage gap means we're trusting rather than verifying.
+AC-2: "Every `consumer-project <cmd> --help` must render without panic." Tests exist for query, rules, alerts, ingest, config, status, tenant, login, completion, init — but NOT for logout or tui. These are unit variants in the Commands enum and clap should handle them, but the coverage gap means we're trusting rather than verifying.
 
 **File:** `tests/cli_structure_test.rs` (missing tests)
 
@@ -144,7 +144,7 @@ AC-2: "Every `axiathon <cmd> --help` must render without panic." Tests exist for
 - **[VERIFIED]** Shell completions functional for all 4 shells, script→stdout, instructions→stderr
 - **[VERIFIED]** Stub handlers exit code 1 with "not yet implemented (Story X.Y)" to stderr
 - **[VERIFIED]** Workspace dependencies properly declared, no direct version pinning in crate Cargo.toml
-- **[VERIFIED]** `AxiathonError → CliError` conversion tested including auth error → exit code 3
+- **[VERIFIED]** `Consumer ProjectError → CliError` conversion tested including auth error → exit code 3
 
 ---
 

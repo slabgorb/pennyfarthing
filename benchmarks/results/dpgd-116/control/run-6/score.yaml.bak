@@ -36,7 +36,7 @@ findings:
   caught_by: null
   evidence: "TEA wrote header injection tests for CRLF in tenant IDs, but the reviewer\
     \ flagged these as vacuous (tests pass for wrong reason). The actual issue \u2014\
-    \ using raw String instead of TenantId from axiathon-core \u2014 was not identified\
+    \ using raw String instead of TenantId from consumer-project-core \u2014 was not identified\
     \ by any phase. The reviewer flagged silent header drops but not the type-safety\
     \ gap of using String vs TenantId."
 - finding_id: I3

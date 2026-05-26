@@ -28,6 +28,6 @@ No session file exists. The RED phase is complete. Here's the TEA Assessment:
 
 **Cargo.toml changes:**
 - Workspace: added `clap_complete`, `comfy-table`, `csv`, `dirs`, `keyring`, `reqwest`, `toml`
-- axiathon-client: added all story-specified dependencies + `tempfile` dev-dependency
+- consumer-project-client: added all story-specified dependencies + `tempfile` dev-dependency
 
 **Handoff:** To Dev for implementation (GREEN phase)

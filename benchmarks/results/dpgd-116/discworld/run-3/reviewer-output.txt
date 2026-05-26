@@ -14,13 +14,13 @@ Now I have everything I need. Here's my review.
 
 ## Observations
 
-### [HIGH] Missing `main.rs` binary entry point — no `axiathon` binary is produced
+### [HIGH] Missing `main.rs` binary entry point — no `consumer-project` binary is produced
 
-**`crates/axiathon-client/src/main.rs`** does not exist. There is no `[[bin]]` section in `Cargo.toml`. AC-3 requires `main.rs` catches errors and calls `std::process::exit()`. The story's entire purpose is to produce the `axiathon` binary. Without `main.rs`, there is no binary, no dispatch, no exit code handling, and no tracing initialization. The crate compiles as a library only. This is the most fundamental deliverable of Story 6.1.
+**`crates/consumer-project-client/src/main.rs`** does not exist. There is no `[[bin]]` section in `Cargo.toml`. AC-3 requires `main.rs` catches errors and calls `std::process::exit()`. The story's entire purpose is to produce the `consumer-project` binary. Without `main.rs`, there is no binary, no dispatch, no exit code handling, and no tracing initialization. The crate compiles as a library only. This is the most fundamental deliverable of Story 6.1.
 
 ### [HIGH] Missing `logout` and `tui` command groups per AC-1
 
-AC-1 explicitly requires `axiathon --help` shows: `login`/`logout`, `tui`. Neither `Logout` nor `Tui` variants exist in the `Commands` enum at `cli.rs:42-63`. The tests in `cli_structure.rs` don't test for them either, so this gap is invisible to the test suite.
+AC-1 explicitly requires `consumer-project --help` shows: `login`/`logout`, `tui`. Neither `Logout` nor `Tui` variants exist in the `Commands` enum at `cli.rs:42-63`. The tests in `cli_structure.rs` don't test for them either, so this gap is invisible to the test suite.
 
 ### [HIGH] `CliError` does not use `thiserror` — manual `impl Error` instead
 
@@ -40,7 +40,7 @@ At `client.rs:26-28`, `with_token()` silently sets `self.token = None` when the 
 
 ### [MEDIUM] `tenant` field is raw `String`, not `TenantId` newtype
 
-The Rust coding rules mandate: *"Newtypes for IDs: `TenantId(String)` — prevents mixing ID types."* `axiathon-core` exports `TenantId`. Both `cli.rs:27` (`pub tenant: Option<String>`) and `client.rs:7` (`tenant: Option<String>`) use raw strings. This defeats the type safety the project invested in building.
+The Rust coding rules mandate: *"Newtypes for IDs: `TenantId(String)` — prevents mixing ID types."* `consumer-project-core` exports `TenantId`. Both `cli.rs:27` (`pub tenant: Option<String>`) and `client.rs:7` (`tenant: Option<String>`) use raw strings. This defeats the type safety the project invested in building.
 
 ### [MEDIUM] `toml` dependency version mismatch: workspace uses `0.8`, story specifies `0.9`
 
@@ -95,6 +95,6 @@ The four HIGH findings are:
 
 ## Verdict: **CHANGES_REQUESTED**
 
-The missing `main.rs` is the showstopper. Without it, Story 6.1 doesn't deliver its primary artifact — the `axiathon` binary. The nightly fmt failures and missing command groups compound the issue. Fix the HIGHs, and I'll look again.
+The missing `main.rs` is the showstopper. Without it, Story 6.1 doesn't deliver its primary artifact — the `consumer-project` binary. The nightly fmt failures and missing command groups compound the issue. Fix the HIGHs, and I'll look again.
 
 *"I can't be havin' with this. It ain't what I'd call DONE." — Granny Weatherwax*

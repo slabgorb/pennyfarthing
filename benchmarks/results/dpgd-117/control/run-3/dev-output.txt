@@ -3,8 +3,8 @@ All **69 tests pass** (12 + 12 + 9 + 17 + 5 + 14), **clippy clean** with `-D war
 ## Summary
 
 **Files changed:**
-- `crates/axiathon-server/Cargo.toml` — added `chrono`, `uuid`, `tower-http` (CORS) dependencies
-- `crates/axiathon-server/src/lib.rs` — full implementation
+- `crates/consumer-project-server/Cargo.toml` — added `chrono`, `uuid`, `tower-http` (CORS) dependencies
+- `crates/consumer-project-server/src/lib.rs` — full implementation
 
 **Implementation covers:**
 - **`create_router()`** — Axum 0.8 router with `/api/v1/` versioned routes

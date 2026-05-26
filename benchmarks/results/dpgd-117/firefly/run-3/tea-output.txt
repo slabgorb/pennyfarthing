@@ -6,7 +6,7 @@ Tests are committed in RED state. Here's the TEA Assessment:
 **Reason:** Story 8.1 is the REST API foundation — core infrastructure that everything in Epic 8 builds on. Every AC needs test coverage.
 
 **Test Files:**
-- `crates/axiathon-server/tests/rest_api_foundation.rs` — 47 integration tests covering all 14 ACs
+- `crates/consumer-project-server/tests/rest_api_foundation.rs` — 47 integration tests covering all 14 ACs
 
 **Tests Written:** 47 tests covering 14 ACs
 
@@ -29,11 +29,11 @@ Tests are committed in RED state. Here's the TEA Assessment:
 | Error handling | Malformed input | bad JSON 400, wrong method 405, 404/401 use envelope, content-type | 5 |
 | Concurrency | Sanity | 10 concurrent health requests | 1 |
 
-**Status:** RED (failing — `axiathon_server::app()` not yet implemented)
+**Status:** RED (failing — `consumer-project_server::app()` not yet implemented)
 
-**Handoff:** To Dev for implementation. The `app()` function must be exported from `axiathon_server` and return an `axum::Router` with all middleware and routes wired up.
+**Handoff:** To Dev for implementation. The `app()` function must be exported from `consumer-project_server` and return an `axum::Router` with all middleware and routes wired up.
 
 **Delivery Findings:**
-- **Gap** (non-blocking): The existing `ApiResponse<T>` in axiathon-core uses `error: Option<ApiError>` (singular) and `meta: Option<ApiMeta>` with pagination fields. Story 8.1 spec requires `errors: Vec<...>` (plural array, always present) and `meta` with `request_id`/`timestamp`/`trace_id` (always present). Dev will need to evolve or wrap the core type.
-  Affects `crates/axiathon-core/src/types.rs` (ApiResponse, ApiMeta structs need alignment with Story 8.1 envelope spec).
+- **Gap** (non-blocking): The existing `ApiResponse<T>` in consumer-project-core uses `error: Option<ApiError>` (singular) and `meta: Option<ApiMeta>` with pagination fields. Story 8.1 spec requires `errors: Vec<...>` (plural array, always present) and `meta` with `request_id`/`timestamp`/`trace_id` (always present). Dev will need to evolve or wrap the core type.
+  Affects `crates/consumer-project-core/src/types.rs` (ApiResponse, ApiMeta structs need alignment with Story 8.1 envelope spec).
   *Found by TEA during test design.*

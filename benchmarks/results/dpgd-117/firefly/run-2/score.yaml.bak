@@ -13,7 +13,7 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: Dev added chrono and uuid dependencies inline in axiathon-server/Cargo.toml.
+  evidence: Dev added chrono and uuid dependencies inline in consumer-project-server/Cargo.toml.
     No phase flagged workspace-level dependency management.
 - finding_id: I2
   title: 'FieldErrorCode missing #[non_exhaustive]'

@@ -32,7 +32,7 @@ findings:
   caught_by: null
   evidence: Dev implemented CRLF sanitization in client.rs:39-42,47-51 and TEA wrote
     header injection tests. However, the type safety aspect (using raw String instead
-    of TenantId from axiathon-core) was not flagged. The header injection vulnerability
+    of TenantId from consumer-project-core) was not flagged. The header injection vulnerability
     class was addressed via sanitization.
   votes: 1/3
 - finding_id: I3

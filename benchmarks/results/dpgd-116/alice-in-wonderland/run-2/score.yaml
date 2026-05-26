@@ -44,7 +44,7 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: No phase flagged that axiathon-client/Cargo.toml uses direct version strings
+  evidence: No phase flagged that consumer-project-client/Cargo.toml uses direct version strings
     instead of workspace = true. The reviewer noted a toml version mismatch (0.8 vs
     0.9) but never mentioned the workspace = true pattern for the 6 affected dependencies.
 - finding_id: I4

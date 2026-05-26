@@ -35,7 +35,7 @@ findings:
   caught_by: null
   evidence: TEA wrote header injection tests for CRLF in tenant_id, and Dev implemented
     CRLF stripping in with_tenant(). However, the actual finding is that tenant_id
-    is a raw String instead of using axiathon-core's validated TenantId type. Reviewer
+    is a raw String instead of using consumer-project-core's validated TenantId type. Reviewer
     even flagged the inconsistent sanitization but did not flag the missing TenantId
     newtype usage. The type-safety gap was not caught.
 - finding_id: I3

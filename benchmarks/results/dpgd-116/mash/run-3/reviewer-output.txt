@@ -14,9 +14,9 @@ All code read, all preflight run. Here is my review.
 
 Per the gotchas sidecar: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not." The nightly fmt check **fails**. All command stub files have `use crate::error::CliError` before `use clap::Subcommand` — nightly wants external crates first. This will fail CI.
 
-### [HIGH] F2 — Edition mismatch: crate uses `edition = "2021"`, workspace declares `edition = "2024"` — `crates/axiathon-client/Cargo.toml:2`
+### [HIGH] F2 — Edition mismatch: crate uses `edition = "2021"`, workspace declares `edition = "2024"` — `crates/consumer-project-client/Cargo.toml:2`
 
-The workspace package declares `edition = "2024"` in the root `Cargo.toml`, but the `axiathon-client` crate explicitly overrides this to `edition = "2021"`. Per the Rust coding rules, the project uses "Edition 2024, MSRV 1.85+". This is either an intentional divergence that needs documenting (unlikely) or a bug. Edition 2024 has different semantics (e.g., `gen` keyword reservation, lifetime elision changes). This crate should use `edition.workspace = true`.
+The workspace package declares `edition = "2024"` in the root `Cargo.toml`, but the `consumer-project-client` crate explicitly overrides this to `edition = "2021"`. Per the Rust coding rules, the project uses "Edition 2024, MSRV 1.85+". This is either an intentional divergence that needs documenting (unlikely) or a bug. Edition 2024 has different semantics (e.g., `gen` keyword reservation, lifetime elision changes). This crate should use `edition.workspace = true`.
 
 ### [MEDIUM] F3 — `RawConfig` silently swallows unknown fields in TOML — `config.rs:19-25`
 
@@ -48,7 +48,7 @@ The Rust coding rules mandate "Use `thiserror` for error enums." `thiserror` is 
 
 ### [LOW] F10 — `--tenant` accepts raw `String`, not `TenantId` newtype — `cli.rs:30`
 
-Per the Rust coding rules: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag passes a raw `String` all the way through. For a stub this is acceptable, but the story context says `axiathon-core` already has `TenantId`. This should be validated/converted at the CLI boundary in the next story.
+Per the Rust coding rules: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag passes a raw `String` all the way through. For a stub this is acceptable, but the story context says `consumer-project-core` already has `TenantId`. This should be validated/converted at the CLI boundary in the next story.
 
 ### [VERIFIED] V1 — Header injection prevention (CWE-113)
 

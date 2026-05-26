@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: "TEA security.rs includes 'header injection (CRLF in tenant/token)' tests.\
     \ Dev client.rs implements 'header injection prevention'. However, the finding\
-    \ is specifically about using raw String instead of TenantId from axiathon-core\
+    \ is specifically about using raw String instead of TenantId from consumer-project-core\
     \ \u2014 no evidence the type-level fix was applied."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

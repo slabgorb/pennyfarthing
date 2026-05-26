@@ -12,8 +12,8 @@ Good. I have all the information needed for a thorough review. Let me now render
 
 ## Preflight Results
 
-- **`cargo test -p axiathon-client`**: 35 passed, 0 failed
-- **`cargo clippy -p axiathon-client -- -D warnings`**: Clean
+- **`cargo test -p consumer-project-client`**: 35 passed, 0 failed
+- **`cargo clippy -p consumer-project-client -- -D warnings`**: Clean
 - **`cargo +nightly fmt --all --check`**: **FAILS** — 3 formatting diffs in `config.rs` and `output.rs`
 
 ---
@@ -28,7 +28,7 @@ fn main() {
 }
 ```
 
-The parsed CLI is bound to `_cli` (underscore prefix = deliberately unused) and immediately dropped. **No command handler is ever called.** The binary parses arguments and exits 0 regardless. AC-2 requires subcommand help to render; AC-3 requires exit codes; AC-9 requires `axiathon completion bash` to emit shell scripts; AC-10 requires stubs to print "not yet implemented." None of this happens because `main()` dispatches nothing.
+The parsed CLI is bound to `_cli` (underscore prefix = deliberately unused) and immediately dropped. **No command handler is ever called.** The binary parses arguments and exits 0 regardless. AC-2 requires subcommand help to render; AC-3 requires exit codes; AC-9 requires `consumer-project completion bash` to emit shell scripts; AC-10 requires stubs to print "not yet implemented." None of this happens because `main()` dispatches nothing.
 
 The existing `commands::completion::generate_completions()` and `commands::stubs::run_stub()` functions are implemented but **dead code** — unreachable from `main()`.
 
@@ -38,7 +38,7 @@ The existing `commands::completion::generate_completions()` and `commands::stubs
 
 ### 2. `[CRITICAL]` Tests verify modules in isolation but never test the binary — test gap masks the dispatch void
 
-Every test file imports library modules directly (`axiathon_client::cli::Cli`, `axiathon_client::commands::stubs::run_stub()`). No test exercises `main()` or runs the `axiathon` binary as a subprocess. This means:
+Every test file imports library modules directly (`consumer-project_client::cli::Cli`, `consumer-project_client::commands::stubs::run_stub()`). No test exercises `main()` or runs the `consumer-project` binary as a subprocess. This means:
 
 - `run_stub("query")` returns the right string — but `main()` never calls `run_stub()`
 - `generate_completions("bash", &mut buf)` works — but `main()` never calls it
@@ -67,7 +67,7 @@ This is a blocking CI check.
 Query,  // bare variant, no QueryArgs
 ```
 
-All other command groups (`Rules`, `Alerts`, `Ingest`, `Config`, `Status`, `Tenant`) have associated `*Args` structs with `#[command(subcommand)]`. `Query` is a bare enum variant. This means `axiathon query run "SELECT ..."` would fail to parse.
+All other command groups (`Rules`, `Alerts`, `Ingest`, `Config`, `Status`, `Tenant`) have associated `*Args` structs with `#[command(subcommand)]`. `Query` is a bare enum variant. This means `consumer-project query run "SELECT ..."` would fail to parse.
 
 The test `command_groups_with_verbs_have_subcommands()` explicitly excludes `query` from its checks — it only verifies `["rules", "alerts", "ingest", "config", "status", "tenant"]`. This is a deliberate test blind spot.
 
@@ -120,7 +120,7 @@ Missing `#[serde(deny_unknown_fields)]`. If a user writes `server_ur1 = "..."` (
 
 ### 9. `[MEDIUM]` `SiemClient` stores raw `String` for tenant_id — `client.rs:13`
 
-The `axiathon-core` crate provides `TenantId` as a validated newtype (per architecture docs and Rust coding rules: "Newtypes for IDs"). `SiemClient` uses `Option<String>` instead of `Option<TenantId>`. Similarly, the CLI `--tenant` flag at `cli.rs:29` is `Option<String>`. This bypasses the validation boundary that newtypes exist to enforce.
+The `consumer-project-core` crate provides `TenantId` as a validated newtype (per architecture docs and Rust coding rules: "Newtypes for IDs"). `SiemClient` uses `Option<String>` instead of `Option<TenantId>`. Similarly, the CLI `--tenant` flag at `cli.rs:29` is `Option<String>`. This bypasses the validation boundary that newtypes exist to enforce.
 
 ---
 
@@ -160,7 +160,7 @@ Production code correctly forbids unsafe. The `Cargo.toml` uses `deny` (not `for
 
 ### 15. `[VERIFIED]` Workspace dependency declarations are correct
 
-All dependencies declared in workspace `Cargo.toml` and consumed via `{ workspace = true }` in the crate `Cargo.toml`. No version drift. `axiathon-core` is a path dependency only. No server-side crate imports (storage, detection, ingestion, query) — dependency rule respected.
+All dependencies declared in workspace `Cargo.toml` and consumed via `{ workspace = true }` in the crate `Cargo.toml`. No version drift. `consumer-project-core` is a path dependency only. No server-side crate imports (storage, detection, ingestion, query) — dependency rule respected.
 
 ---
 
@@ -186,7 +186,7 @@ But the binary itself does nothing. `main.rs` is a 10-line stub that parses argu
 2. **Fix nightly fmt failures** — 3 diffs in `config.rs` and `output.rs`
 3. **Add `QueryArgs` with subcommands** to `Commands::Query` — or document why it's intentionally bare (and add a test comment explaining the exception)
 4. **Make `SiemClient::from_config()` validate URL** — same security boundary as `new()`
-5. **Add at least one end-to-end binary test** — run `axiathon completion bash` as subprocess and verify it produces output, run `axiathon status show` and verify exit code 1 with "not yet implemented" message
+5. **Add at least one end-to-end binary test** — run `consumer-project completion bash` as subprocess and verify it produces output, run `consumer-project status show` and verify exit code 1 with "not yet implemented" message
 
 ### Recommended (non-blocking):
 

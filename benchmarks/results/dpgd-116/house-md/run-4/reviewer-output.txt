@@ -23,7 +23,7 @@ Good. Now I have all the evidence I need. Time for the diagnosis.
 
 ### `[CRITICAL]` main.rs does not exist — no binary entry point
 
-There is no `crates/axiathon-client/src/main.rs`. The story spec explicitly requires it: *"Binary entry point, tracing init, dispatch, exit codes"*. Without it, `axiathon` cannot be built as an executable. The entire command dispatch chain (Cli → Commands → handlers) is dead code with no caller. AC-1 ("axiathon --help must show all command groups") is untestable end-to-end. AC-3 exit code mapping via `std::process::exit()` has no call site.
+There is no `crates/consumer-project-client/src/main.rs`. The story spec explicitly requires it: *"Binary entry point, tracing init, dispatch, exit codes"*. Without it, `consumer-project` cannot be built as an executable. The entire command dispatch chain (Cli → Commands → handlers) is dead code with no caller. AC-1 ("consumer-project --help must show all command groups") is untestable end-to-end. AC-3 exit code mapping via `std::process::exit()` has no call site.
 
 The crate is a library, not a CLI tool.
 
@@ -39,7 +39,7 @@ The security control exists on paper but isn't wired. This is worse than not hav
 
 ### `[HIGH]` `toml` dependency pinned to `"0.8"` instead of workspace-managed `"0.9"`
 
-`crates/axiathon-client/Cargo.toml:21` uses `toml = "0.8"` as a direct dependency, not workspace-managed. The story spec requires `toml 0.9` in `[workspace.dependencies]`. This violates the workspace dependency management convention — every other dependency correctly uses `workspace = true`. Additionally, `0.8` vs `0.9` is a version mismatch against the spec.
+`crates/consumer-project-client/Cargo.toml:21` uses `toml = "0.8"` as a direct dependency, not workspace-managed. The story spec requires `toml 0.9` in `[workspace.dependencies]`. This violates the workspace dependency management convention — every other dependency correctly uses `workspace = true`. Additionally, `0.8` vs `0.9` is a version mismatch against the spec.
 
 ### `[HIGH]` `keyring` dependency entirely missing — no credential storage path
 
@@ -81,7 +81,7 @@ AC-4 states: *"Table default for TTY, JSON for piped output. Use `std::io::IsTer
 - `[VERIFIED]` Config file doesn't store tokens — `RawConfig` has no token/password fields
 - `[VERIFIED]` Exit code mapping is correct: 0/1/3/4 as specified
 - `[VERIFIED]` Stub handlers reference correct story numbers with correct error messages
-- `[VERIFIED]` `axiathon-core` is the only internal dependency — no server-side crate imports
+- `[VERIFIED]` `consumer-project-core` is the only internal dependency — no server-side crate imports
 
 ---
 
@@ -89,7 +89,7 @@ AC-4 states: *"Table default for TTY, JSON for piped output. Use `std::io::IsTer
 
 | # | Severity | Finding | Location |
 |---|----------|---------|----------|
-| 1 | CRITICAL | No `main.rs` — no binary entry point | `crates/axiathon-client/src/` |
+| 1 | CRITICAL | No `main.rs` — no binary entry point | `crates/consumer-project-client/src/` |
 | 2 | CRITICAL | `validate_header_value()` never called in `get()` — CWE-113 defense is dead code | `client.rs:81-86` |
 | 3 | HIGH | Nightly rustfmt check fails | `client.rs:66`, `commands/init.rs:7` |
 | 4 | HIGH | `toml = "0.8"` not workspace-managed, spec requires `0.9` | `Cargo.toml:21` |

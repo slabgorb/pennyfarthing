@@ -1,4 +1,4 @@
-I've read all changed files (6 new, 2 modified), all 4 test files, the Cargo.toml, and the axiathon-core types. Tests pass (81/81), clippy is clean. Nightly fmt fails. Here's the adversarial review.
+I've read all changed files (6 new, 2 modified), all 4 test files, the Cargo.toml, and the consumer-project-core types. Tests pass (81/81), clippy is clean. Nightly fmt fails. Here's the adversarial review.
 
 ---
 
@@ -45,17 +45,17 @@ The error mapping function is tested in `error_mapping_tests.rs` (17 tests pass)
 
 ---
 
-### `[MEDIUM]` Duplicate `ApiResponse<T>` type diverges from axiathon-core
-**Files:** `response.rs:12-65` vs `axiathon-core/src/types.rs:220-278`
+### `[MEDIUM]` Duplicate `ApiResponse<T>` type diverges from consumer-project-core
+**Files:** `response.rs:12-65` vs `consumer-project-core/src/types.rs:220-278`
 
-axiathon-core defines `ApiResponse<T>` with field `error` (singular `Option<ApiError>`) and `meta: Option<ApiMeta>`. The server crate defines its own `ApiResponse<T>` with `errors: Vec<ApiError>` (always-present array) and `meta: ResponseMeta` (always present). The module doc acknowledges this divergence, but having two competing envelope types in the same workspace is a maintenance trap. Downstream crates importing `axiathon_core::ApiResponse` will get a different type than what the server actually returns.
+consumer-project-core defines `ApiResponse<T>` with field `error` (singular `Option<ApiError>`) and `meta: Option<ApiMeta>`. The server crate defines its own `ApiResponse<T>` with `errors: Vec<ApiError>` (always-present array) and `meta: ResponseMeta` (always present). The module doc acknowledges this divergence, but having two competing envelope types in the same workspace is a maintenance trap. Downstream crates importing `consumer-project_core::ApiResponse` will get a different type than what the server actually returns.
 
 ---
 
 ### `[MEDIUM]` 6 unused crate dependencies inflate build times
 **File:** `Cargo.toml:10-14, 19-22`
 
-`axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage` are declared as dependencies but not imported in any source file. `thiserror`, `tracing`, and `tracing-subscriber` are also declared but unused. These add to compile time for zero benefit today.
+`consumer-project-detection`, `consumer-project-ingestion`, `consumer-project-ot`, `consumer-project-query`, `consumer-project-storage` are declared as dependencies but not imported in any source file. `thiserror`, `tracing`, and `tracing-subscriber` are also declared but unused. These add to compile time for zero benefit today.
 
 ---
 

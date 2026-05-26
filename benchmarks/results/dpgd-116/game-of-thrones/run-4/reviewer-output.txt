@@ -11,7 +11,7 @@ Very well. I've read every file, run every check, traced the data flows. Here is
 ## Review Findings: Story 6.1 — CLI Framework & Structure
 
 ### [CRITICAL] Nightly `rustfmt` check fails — `cli.rs` formatting violations
-`cargo +nightly fmt --all --check` produces diffs in `crates/axiathon-client/src/cli.rs`. The long `#[command(after_help = ...)]` attributes need reformatting. Per `gotchas.md`, nightly fmt **must** pass before approval.
+`cargo +nightly fmt --all --check` produces diffs in `crates/consumer-project-client/src/cli.rs`. The long `#[command(after_help = ...)]` attributes need reformatting. Per `gotchas.md`, nightly fmt **must** pass before approval.
 
 ### [HIGH] Hardcoded fake UUID and timestamp in `output.rs:134-148`
 `uuid_v4_string()` returns a static hex string `12345678-1234-4567-8901-234567890123` and `timestamp_now()` returns a hardcoded `"2026-03-08T00:00:00Z"`. This means **every** JSON response has the same `request_id` and `timestamp`. This is not "placeholder" behavior — AC-4 requires `ResponseMetadata` with `request_id` and `timestamp`. Every response being identical breaks auditability and is functionally wrong. Either use a real UUID crate (already in workspace deps) and `chrono::Utc::now()`, or document this is a known limitation and don't pretend to produce real metadata.
@@ -20,7 +20,7 @@ Very well. I've read every file, run every check, traced the data flows. Here is
 AC-5 says `--server` supports the `AXIATHON_SERVER` env var. The doc comment says `(env: AXIATHON_SERVER)` but the actual clap attribute lacks `env = "AXIATHON_SERVER"`. Clap won't read the env var. This is a silent behavior gap — operators will set the env var and it will be ignored.
 
 ### [HIGH] Workspace dependency hygiene violation — 6 crate-pinned dependencies not declared in `[workspace.dependencies]`
-AC spec says to add `reqwest`, `comfy-table`, `keyring`, `clap_complete`, `dirs`, `csv`, `toml` to workspace deps. Currently `clap_complete = "4"`, `comfy-table = "7"`, `csv = "1"`, `dirs = "6"`, `keyring = "3"`, `reqwest = ...`, `toml = "0.8"` are all pinned locally in `crates/axiathon-client/Cargo.toml`. This violates the workspace dependency pattern used by every other crate and the story's own technical guardrails.
+AC spec says to add `reqwest`, `comfy-table`, `keyring`, `clap_complete`, `dirs`, `csv`, `toml` to workspace deps. Currently `clap_complete = "4"`, `comfy-table = "7"`, `csv = "1"`, `dirs = "6"`, `keyring = "3"`, `reqwest = ...`, `toml = "0.8"` are all pinned locally in `crates/consumer-project-client/Cargo.toml`. This violates the workspace dependency pattern used by every other crate and the story's own technical guardrails.
 
 ### [HIGH] `toml` version mismatch — story spec says `0.9`, Cargo.toml has `0.8`
 Story spec says `toml 0.9`. `Cargo.toml:21` has `toml = "0.8"`. This could be intentional (0.9 may not exist), but it's an undocumented deviation from the spec.
@@ -32,7 +32,7 @@ Story spec says `toml 0.9`. `Cargo.toml:21` has `toml = "0.8"`. This could be in
 The `Completion` variant uses `shell: String` and then `completion.rs` manually matches on lowercase strings. If an unknown shell is passed, it silently returns an empty string instead of returning an error. This is a silent failure — the user gets no output and no error.
 
 ### [MEDIUM] `init::handle()` creates the directory but not the default config file — `commands/init.rs`
-The `init` command creates `~/.config/axiathon/` but doesn't write a default `cli.toml` into it. AC-10 says init should be "functional, not stub" and the story scope says "first-time setup (functional, not stub)". Creating an empty directory is barely functional — it should scaffold a default config file.
+The `init` command creates `~/.config/consumer-project/` but doesn't write a default `cli.toml` into it. AC-10 says init should be "functional, not stub" and the story scope says "first-time setup (functional, not stub)". Creating an empty directory is barely functional — it should scaffold a default config file.
 
 ### [MEDIUM] Multiple `expect()` calls in `output.rs` — lines 97, 108, 125, 127, 129, 130
 Seven `expect()` calls in production code. Per `rust.md`: "No `unwrap()` in production code — use `?` or `expect()` with actionable message." The `expect()` messages are descriptive, but the `OutputFormatter::format()` returns `String` not `Result`, so panics propagate. If a row has mismatched column counts or contains non-UTF-8 data, this panics instead of returning a graceful error. Consider changing the trait to return `Result<String, CliError>`.

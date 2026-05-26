@@ -39,11 +39,11 @@ findings:
   caught_by: null
   evidence: 'TEA wrote header injection tests (CWE-113) and Dev implemented newline
     rejection in with_tenant (client.rs:59). However, the ground truth is about tenant_id
-    being a raw String instead of using axiathon-core''s validated TenantId type.
-    Reviewer observation #8 notes axiathon-core is declared but never used, which
+    being a raw String instead of using consumer-project-core''s validated TenantId type.
+    Reviewer observation #8 notes consumer-project-core is declared but never used, which
     is adjacent but doesn''t connect it to tenant_id type safety. The pipeline caught
     CRLF injection but not the use of raw String bypassing the type-safe TenantId
-    from axiathon-core.'
+    from consumer-project-core.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

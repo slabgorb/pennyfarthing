@@ -43,7 +43,7 @@ findings:
   phase_ideal: dev
   caught: false
   caught_by: null
-  evidence: Dev added deps to workspace Cargo.toml but no phase flagged that axiathon-client/Cargo.toml
+  evidence: Dev added deps to workspace Cargo.toml but no phase flagged that consumer-project-client/Cargo.toml
     uses direct version strings instead of workspace = true. Reviewer didn't mention
     this.
 - finding_id: I4

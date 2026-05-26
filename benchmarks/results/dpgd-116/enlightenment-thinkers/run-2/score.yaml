@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote siem_client.rs tests covering 'Header injection prevention\
     \ (CRLF in tenant ID / server URL)' \u2014 same CWE-113 class. However, no phase\
-    \ flags the deeper issue of using raw String instead of axiathon-core's validated\
+    \ flags the deeper issue of using raw String instead of consumer-project-core's validated\
     \ TenantId type for type-safe tenant isolation. Scored as caught per same-vulnerability-class\
     \ rule."
 - finding_id: I3

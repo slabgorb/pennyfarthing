@@ -8,9 +8,9 @@ I have all the information I need for the review. Here is my assessment.
 
 ## Observations
 
-### [HIGH] No `main.rs` binary entry point — `crates/axiathon-client/src/main.rs` is missing
+### [HIGH] No `main.rs` binary entry point — `crates/consumer-project-client/src/main.rs` is missing
 
-The story requires `axiathon-client` to produce the `axiathon` binary. There is no `main.rs`, no `[[bin]]` section in `Cargo.toml`, and no dispatch loop calling command handlers. The crate is library-only. Without `main.rs`, the entire CLI is dead code — there is no binary to ship. This is the central deliverable of Story 6.1.
+The story requires `consumer-project-client` to produce the `consumer-project` binary. There is no `main.rs`, no `[[bin]]` section in `Cargo.toml`, and no dispatch loop calling command handlers. The crate is library-only. Without `main.rs`, the entire CLI is dead code — there is no binary to ship. This is the central deliverable of Story 6.1.
 
 **Impact:** AC-3 (exit codes via `std::process::exit()`), AC-9 (completion to stdout, instructions to stderr), and the basic user flow are all unverified end-to-end.
 

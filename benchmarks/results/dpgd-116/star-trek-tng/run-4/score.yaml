@@ -37,7 +37,7 @@ findings:
     \ in tenant ID.' Reviewer also flagged '[MEDIUM] validate_tenant_id() exists but\
     \ is never called \u2014 at client.rs:51', noting validation is not enforced.\
     \ However, neither phase flagged that raw String should be replaced with TenantId\
-    \ from axiathon-core."
+    \ from consumer-project-core."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

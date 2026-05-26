@@ -34,7 +34,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: Reviewer flagged '[MEDIUM] --tenant accepts raw String instead of validated
-    TenantId at cli.rs:29' and noted axiathon-core has a TenantId type that should
+    TenantId at cli.rs:29' and noted consumer-project-core has a TenantId type that should
     be used. TEA also wrote header injection prevention tests for CWE-113.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

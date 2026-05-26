@@ -22,13 +22,13 @@ Similarly, `ServerError(u16, String)` stores the raw HTTP body but the Display i
 
 ### `[HIGH]` F2 — Test suite has a failing test due to env var race condition at `cli_config.rs:216`
 
-`config_accepts_valid_toml_with_all_fields` **fails** because `config_axiathon_timeout_env_overrides_file` sets `AXIATHON_TIMEOUT=60` and the tests run in parallel. Edition 2024 made `set_var` unsafe precisely because of this. The `remove_var` call at line 106 races with the `from_file` call in other tests. This is a real test failure — **the test suite does not pass**.
+`config_accepts_valid_toml_with_all_fields` **fails** because `config_consumer-project_timeout_env_overrides_file` sets `AXIATHON_TIMEOUT=60` and the tests run in parallel. Edition 2024 made `set_var` unsafe precisely because of this. The `remove_var` call at line 106 races with the `from_file` call in other tests. This is a real test failure — **the test suite does not pass**.
 
 **Fix:** Either run env-mutating tests with `#[serial]` (from `serial_test` crate), or use `temp_env` for scoped env var mutation, or restructure `ClientConfig` to accept env vars as parameters instead of reading globals.
 
 ### `[HIGH]` F3 — Missing `logout` command per AC-1 at `cli.rs:44`
 
-AC-1 explicitly requires: *"`axiathon --help` must show all command groups: ... `login`/`logout` ..."*. There is no `Logout` variant in the `Commands` enum. The `login.rs` module only defines `LoginArgs` — no `LogoutArgs`. This is an AC violation.
+AC-1 explicitly requires: *"`consumer-project --help` must show all command groups: ... `login`/`logout` ..."*. There is no `Logout` variant in the `Commands` enum. The `login.rs` module only defines `LoginArgs` — no `LogoutArgs`. This is an AC violation.
 
 ### `[HIGH]` F4 — `build_url` path traversal prevention is broken at `client.rs:84-97`
 
@@ -68,7 +68,7 @@ The story's Technical Guardrails section says *"toml 0.9"* but the workspace dec
 
 ### `[MEDIUM]` F9 — `tenant` field uses raw `String` instead of validated `TenantId` newtype at `cli.rs:29`, `client.rs:10`
 
-The project's Rust rules specify newtypes for IDs: `TenantId(String)`. The `axiathon-core` crate exports `TenantId`. Yet both `Cli.tenant` and `SiemClient.tenant` use raw `Option<String>`. The `with_tenant` method should accept/validate a `TenantId` at the boundary. This is not blocking for a stub story but is a type safety gap.
+The project's Rust rules specify newtypes for IDs: `TenantId(String)`. The `consumer-project-core` crate exports `TenantId`. Yet both `Cli.tenant` and `SiemClient.tenant` use raw `Option<String>`. The `with_tenant` method should accept/validate a `TenantId` at the boundary. This is not blocking for a stub story but is a type safety gap.
 
 ### `[LOW]` F10 — `keyring` dependency missing from `Cargo.toml` at `Cargo.toml:8`
 

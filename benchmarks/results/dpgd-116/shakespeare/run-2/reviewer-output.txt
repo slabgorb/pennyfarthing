@@ -8,8 +8,8 @@ I have now examined every line of every file. Let me deliver the verdict.
 
 ## Preflight
 
-- `cargo test -p axiathon-client`: **All 72 tests pass**
-- `cargo clippy -p axiathon-client -- -D warnings`: **Clean**
+- `cargo test -p consumer-project-client`: **All 72 tests pass**
+- `cargo clippy -p consumer-project-client -- -D warnings`: **Clean**
 - `cargo +nightly fmt --all --check`: **3 formatting diffs** (import ordering in config.rs, fn signature in completion.rs, string wrapping in output.rs)
 
 ---
@@ -19,15 +19,15 @@ I have now examined every line of every file. Let me deliver the verdict.
 ### [HIGH] Nightly `rustfmt` check fails — 3 files have formatting violations
 
 Per `gotchas.md`: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."* Three files fail:
-- `crates/axiathon-client/src/config.rs` — import ordering (std before crate)
-- `crates/axiathon-client/src/commands/completion.rs` — fn signature formatting
-- `crates/axiathon-client/src/output.rs` — long string wrapping
+- `crates/consumer-project-client/src/config.rs` — import ordering (std before crate)
+- `crates/consumer-project-client/src/commands/completion.rs` — fn signature formatting
+- `crates/consumer-project-client/src/output.rs` — long string wrapping
 
 This is an explicit gotcha rule. Must be fixed before merge.
 
 ### [HIGH] No `main.rs` — binary entry point is missing
 
-The story scope says to create `main.rs` with "binary entry point, tracing init, dispatch, exit codes." No `main.rs` exists. The `Cargo.toml` also has no `[[bin]]` section. The crate is library-only — it cannot produce the `axiathon` binary. This means:
+The story scope says to create `main.rs` with "binary entry point, tracing init, dispatch, exit codes." No `main.rs` exists. The `Cargo.toml` also has no `[[bin]]` section. The crate is library-only — it cannot produce the `consumer-project` binary. This means:
 - No exit code dispatch (`std::process::exit(err.exit_code())`)
 - No tracing initialization
 - No credential loading from keychain before Tokio runtime (AC-7/AC-8 requirement)
@@ -57,11 +57,11 @@ The workspace `Cargo.toml` declares `toml = "0.8"` but the story's Technical Gua
 
 ### [LOW] `tenant` flag is `Option<String>` — should use `TenantId` newtype
 
-At `cli.rs:36`, the `--tenant` flag is `Option<String>`. The project's `rust.md` rules mandate newtypes for IDs: *"Newtypes for IDs: `TenantId(String)`."* `axiathon-core` exports `TenantId`. Using raw `String` here bypasses validation at the trust boundary (CLI input).
+At `cli.rs:36`, the `--tenant` flag is `Option<String>`. The project's `rust.md` rules mandate newtypes for IDs: *"Newtypes for IDs: `TenantId(String)`."* `consumer-project-core` exports `TenantId`. Using raw `String` here bypasses validation at the trust boundary (CLI input).
 
 ### [LOW] `init.rs` has no functionality — story says it should be functional
 
-AC-10 says *"Shell completion generation (functional, not stub)"* and *"`axiathon init` first-time setup (functional, not stub)."* The `completion.rs` is functional, but `init.rs` is just an empty struct with no `stub_message()` or `stub_error()`, and no actual init logic. It's neither a proper stub (no message/error) nor functional.
+AC-10 says *"Shell completion generation (functional, not stub)"* and *"`consumer-project init` first-time setup (functional, not stub)."* The `completion.rs` is functional, but `init.rs` is just an empty struct with no `stub_message()` or `stub_error()`, and no actual init logic. It's neither a proper stub (no message/error) nor functional.
 
 ### [VERIFIED] CWE-209 defense is correctly implemented
 

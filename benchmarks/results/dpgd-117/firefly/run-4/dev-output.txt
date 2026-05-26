@@ -3,17 +3,17 @@
 ## Summary
 
 **Files created:**
-- `crates/axiathon-server/src/response.rs` — Server-specific `ApiResponse<T>` envelope with always-present `errors` array and `meta` object, `ResponseMeta`, `PaginationMeta`, `ApiError`, `FieldError`
-- `crates/axiathon-server/src/error.rs` — `into_api_error_response()` mapping `AxiathonError` → sanitized HTTP responses (CWE-209 compliant)
-- `crates/axiathon-server/src/state.rs` — `AppState` with 5 `FromRef` substates: `DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`, `DatabaseServices`
-- `crates/axiathon-server/src/config.rs` — `ServerConfig` with defaults
-- `crates/axiathon-server/src/middleware.rs` — Security headers, request ID (UUID v4), CORS, tenant validation (X-Tenant-ID), auth stub (Bearer token)
-- `crates/axiathon-server/src/router.rs` — `build_router()` with health endpoint, 5 stub route groups under `/api/v1/`, middleware layering
+- `crates/consumer-project-server/src/response.rs` — Server-specific `ApiResponse<T>` envelope with always-present `errors` array and `meta` object, `ResponseMeta`, `PaginationMeta`, `ApiError`, `FieldError`
+- `crates/consumer-project-server/src/error.rs` — `into_api_error_response()` mapping `Consumer ProjectError` → sanitized HTTP responses (CWE-209 compliant)
+- `crates/consumer-project-server/src/state.rs` — `AppState` with 5 `FromRef` substates: `DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`, `DatabaseServices`
+- `crates/consumer-project-server/src/config.rs` — `ServerConfig` with defaults
+- `crates/consumer-project-server/src/middleware.rs` — Security headers, request ID (UUID v4), CORS, tenant validation (X-Tenant-ID), auth stub (Bearer token)
+- `crates/consumer-project-server/src/router.rs` — `build_router()` with health endpoint, 5 stub route groups under `/api/v1/`, middleware layering
 
 **Files modified:**
-- `crates/axiathon-server/src/lib.rs` — Added module declarations
-- `crates/axiathon-server/Cargo.toml` — Added `uuid` and `chrono` dependencies
-- `crates/axiathon-server/tests/middleware_tests.rs` — Fixed `#[tokio::test]` → `#[test]` on sync function (test bug)
+- `crates/consumer-project-server/src/lib.rs` — Added module declarations
+- `crates/consumer-project-server/Cargo.toml` — Added `uuid` and `chrono` dependencies
+- `crates/consumer-project-server/tests/middleware_tests.rs` — Fixed `#[tokio::test]` → `#[test]` on sync function (test bug)
 
 **Test results:** 81/81 passing (GREEN)
 

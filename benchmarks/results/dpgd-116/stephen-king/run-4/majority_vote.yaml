@@ -33,7 +33,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer finding #4: 'SiemClient uses raw String for tenant_id instead\
-    \ of TenantId newtype \u2014 client.rs:11' explicitly flags that axiathon-core's\
+    \ of TenantId newtype \u2014 client.rs:11' explicitly flags that consumer-project-core's\
     \ TenantId is unused, bypassing type safety."
   votes: 3/3
 - finding_id: I3

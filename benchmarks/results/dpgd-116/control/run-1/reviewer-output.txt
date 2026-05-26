@@ -6,8 +6,8 @@ Now I have all the information I need. Here is my review.
 
 ## Preflight
 
-- `cargo test -p axiathon-client`: **PASS** (all 67 tests)
-- `cargo clippy -p axiathon-client -- -D warnings`: **PASS**
+- `cargo test -p consumer-project-client`: **PASS** (all 67 tests)
+- `cargo clippy -p consumer-project-client -- -D warnings`: **PASS**
 - `cargo +nightly fmt --all --check`: **FAIL** — formatting diffs in `siem_client.rs` tests
 
 ---
@@ -20,7 +20,7 @@ Now I have all the information I need. Here is my review.
 
 ### 2. [HIGH] No `main.rs` — binary entry point missing
 
-AC-3 requires exit codes via `std::process::exit()` in `main.rs`. AC-10 requires stubs to print to stderr. There is no `main.rs` and no `[[bin]]` section in `Cargo.toml`. The `axiathon` binary literally cannot be built. Without `main.rs`, there is no proof that:
+AC-3 requires exit codes via `std::process::exit()` in `main.rs`. AC-10 requires stubs to print to stderr. There is no `main.rs` and no `[[bin]]` section in `Cargo.toml`. The `consumer-project` binary literally cannot be built. Without `main.rs`, there is no proof that:
 - `CliError::exit_code()` is wired to `std::process::exit()`
 - Errors are printed to stderr (not stdout)
 - Subcommands are dispatched to their handlers
@@ -63,7 +63,7 @@ AC-7 specifies `SiemClient` wraps `reqwest::Client`. The current implementation 
 
 ### 9. [LOW] `init.rs` stub says "Story 6.1" but AC says init should be functional, not a stub
 
-AC-9/AC-10 distinguish between functional commands (completion, init) and stubs. The story scope says: "Shell completion generation (functional, not stub)" and "axiathon init first-time setup (functional, not stub)". The `completion.rs` is indeed functional, but `init.rs` is a stub returning `CliError::General("not yet implemented (Story 6.1)")`. This contradicts the scope requirements.
+AC-9/AC-10 distinguish between functional commands (completion, init) and stubs. The story scope says: "Shell completion generation (functional, not stub)" and "consumer-project init first-time setup (functional, not stub)". The `completion.rs` is indeed functional, but `init.rs` is a stub returning `CliError::General("not yet implemented (Story 6.1)")`. This contradicts the scope requirements.
 
 ### 10. [LOW] `stubs_reference_correct_stories` test at `stub_handlers.rs:120` only checks 6 of 8 stubs
 

@@ -21,9 +21,9 @@ Good heavens. I've completed my inspection of this establishment, and I must say
 
 ## Findings
 
-### `[HIGH]` Duplicate `ApiResponse` — ignores `axiathon_core::ApiResponse` entirely
+### `[HIGH]` Duplicate `ApiResponse` — ignores `consumer-project_core::ApiResponse` entirely
 
-`axiathon-server/src/response.rs` defines its own `ApiResponse<T>`, `ApiEnvelope<T>`, `Meta`, and `ErrorEntry` types. Meanwhile, `axiathon-core/src/types.rs:221-278` already exports `ApiResponse<T>`, `ApiError`, `ApiMeta`. The story spec explicitly says *"ApiResponse<T> from axiathon-core"*. The two types are structurally incompatible:
+`consumer-project-server/src/response.rs` defines its own `ApiResponse<T>`, `ApiEnvelope<T>`, `Meta`, and `ErrorEntry` types. Meanwhile, `consumer-project-core/src/types.rs:221-278` already exports `ApiResponse<T>`, `ApiError`, `ApiMeta`. The story spec explicitly says *"ApiResponse<T> from consumer-project-core"*. The two types are structurally incompatible:
 
 - **Core:** `data`, `error` (singular, optional), `meta` (optional) — all with `skip_serializing_if`
 - **Server:** `data`, `meta` (always present), `errors` (Vec, always present)
@@ -40,7 +40,7 @@ The auth middleware (`middleware/auth.rs:18-61`) validates credentials and retur
 
 ### `[HIGH]` Six unused crate dependencies — build bloat and false coupling
 
-`Cargo.toml:9-14` declares dependencies on `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`. Zero of these are imported anywhere in `src/`. Additionally, `thiserror`, `tracing`, and `tracing-subscriber` are declared but never used. That's **9 dependencies** with zero references. This inflates compile times, creates false coupling in the dependency graph, and may pull in unnecessary transitive dependencies.
+`Cargo.toml:9-14` declares dependencies on `consumer-project-core`, `consumer-project-detection`, `consumer-project-ingestion`, `consumer-project-ot`, `consumer-project-query`, `consumer-project-storage`. Zero of these are imported anywhere in `src/`. Additionally, `thiserror`, `tracing`, and `tracing-subscriber` are declared but never used. That's **9 dependencies** with zero references. This inflates compile times, creates false coupling in the dependency graph, and may pull in unnecessary transitive dependencies.
 
 ### `[HIGH]` `std::sync::Mutex` with `expect()` in async middleware
 
@@ -86,7 +86,7 @@ The rate limiter is applied globally at the outermost layer (`lib.rs:53`). This 
 
 Three HIGH findings block approval:
 
-1. **Duplicate `ApiResponse`** — must reconcile with `axiathon-core` or update the core type. Two competing envelope types will cause integration pain in Stories 8.2+.
+1. **Duplicate `ApiResponse`** — must reconcile with `consumer-project-core` or update the core type. Two competing envelope types will cause integration pain in Stories 8.2+.
 2. **No `FromRef<AppState>` substate pattern** — this is the central architectural decision of Story 8.1. Using `Extension` throughout bypasses the compile-time least-privilege enforcement the story requires.
 3. **No `TenantContext` extraction** — auth validates credentials but doesn't produce a tenant context. This is a core AC requirement.
 

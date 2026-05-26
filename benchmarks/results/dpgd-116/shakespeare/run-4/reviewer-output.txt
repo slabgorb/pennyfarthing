@@ -12,15 +12,15 @@ I have now examined every file, every line, every clause of this contract. Let m
 
 ## Findings
 
-### [HIGH] Nightly rustfmt check fails — 247 lines of diff at `crates/axiathon-client/src/client.rs`, `commands/completion.rs`, `config.rs`, and multiple test files
+### [HIGH] Nightly rustfmt check fails — 247 lines of diff at `crates/consumer-project-client/src/client.rs`, `commands/completion.rs`, `config.rs`, and multiple test files
 
 Per gotchas.md: *"Always include `cargo +nightly fmt --all --check` in the preflight. If it fails, flag it before approval."* Import ordering violations (local before external in `completion.rs:1-2`), function signature formatting (`client.rs:70-73`), and `format!` string wrapping (`client.rs:105-110`) all diverge from nightly. **This blocks merge.**
 
-### [HIGH] New dependencies not declared at workspace level — `crates/axiathon-client/Cargo.toml:16-26`
+### [HIGH] New dependencies not declared at workspace level — `crates/consumer-project-client/Cargo.toml:16-26`
 
 The story explicitly requires: *"Add to `[workspace.dependencies]`: `reqwest` 0.12, `comfy-table` 7, `keyring` 3, `clap_complete` 4, `dirs` 6, `csv` 1, `toml` 0.9."* Instead, these six dependencies are pinned directly in the crate Cargo.toml with hardcoded versions (`clap_complete = "4"`, `comfy-table = "7"`, `csv = "1"`, `dirs = "6"`, `keyring = "3"`, `reqwest = { version = "0.12", ... }`, `toml = "0.8"`). When other crates need `reqwest` or `toml`, versions will drift. The root `Cargo.toml` `[workspace.dependencies]` section is untouched. **This violates the workspace dependency management architecture.**
 
-### [MEDIUM] `toml` version mismatch — `crates/axiathon-client/Cargo.toml:26`
+### [MEDIUM] `toml` version mismatch — `crates/consumer-project-client/Cargo.toml:26`
 
 Story specifies `toml` 0.9. Code uses `toml = "0.8"`. Minor but deviates from the specification without justification.
 
@@ -56,7 +56,7 @@ let _result = ClientConfig::load_from(&config_path);
 
 The result is discarded without assertion. The test verifies "doesn't panic" but doesn't verify *what* happened with the unknown key. Given that `RawConfig` uses `#[serde(flatten)]` to silently swallow unknowns (`config.rs:18-19`), this test provides false confidence about behavior that isn't actually validated.
 
-### [MEDIUM] `unsafe_code` lint downgraded from `forbid` to `deny` — `crates/axiathon-client/Cargo.toml:45`
+### [MEDIUM] `unsafe_code` lint downgraded from `forbid` to `deny` — `crates/consumer-project-client/Cargo.toml:45`
 
 The workspace root sets `unsafe_code = "forbid"`. This crate overrides to `deny` to allow `#[allow(unsafe_code)]` on test-only `set_var` calls. The comment at line 43-44 documents the rationale, and `lib.rs:2` / `main.rs:2` both retain `#![forbid(unsafe_code)]`. This is acceptable but creates a surface area risk — if a new binary target is added to this crate without the `#![forbid]` attribute, unsafe code could slip in.
 
@@ -78,7 +78,7 @@ Error Display implementations are concise and don't leak internal paths, stack t
 
 ### [VERIFIED] Subcommand parsing works correctly for stub scope
 
-The `{ .. }` pattern in `main.rs:13-18` discards parsed subcommand variants, but this is correct for stubs — clap still validates the subcommand structure (e.g., `axiathon config` without a subcommand correctly fails with usage error). When Stories 6.2+ implement real handlers, the `{ .. }` naturally evolves to `{ command } => match command { ... }`.
+The `{ .. }` pattern in `main.rs:13-18` discards parsed subcommand variants, but this is correct for stubs — clap still validates the subcommand structure (e.g., `consumer-project config` without a subcommand correctly fails with usage error). When Stories 6.2+ implement real handlers, the `{ .. }` naturally evolves to `{ command } => match command { ... }`.
 
 ### [VERIFIED] Config precedence chain — `config.rs:48-100`
 

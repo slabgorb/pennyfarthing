@@ -14,10 +14,10 @@ Now I have all the information needed for a thorough review. Here are my finding
 `cargo +nightly fmt --all --check` produces diffs in `output.rs:39`, `output.rs:74`, `cli_structure.rs:132`, `config_loading.rs:9`, `config_loading.rs:59`, `output_format.rs:107`, `shell_completion.rs:110`, `siem_client.rs:149`, `stub_handlers.rs:96`. Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." This is a blocking finding.
 
 ### [HIGH] F2 — No `main.rs` binary entry point
-The story requires the crate to produce the `axiathon` binary. The `Cargo.toml` has no `[[bin]]` section and no `src/main.rs` exists. The crate is library-only. Without a binary entry point, there is no CLI binary at all — the central deliverable of this story. AC-3 requires `main.rs` to catch errors and call `std::process::exit()`. This is missing.
+The story requires the crate to produce the `consumer-project` binary. The `Cargo.toml` has no `[[bin]]` section and no `src/main.rs` exists. The crate is library-only. Without a binary entry point, there is no CLI binary at all — the central deliverable of this story. AC-3 requires `main.rs` to catch errors and call `std::process::exit()`. This is missing.
 
 ### [HIGH] F3 — Missing `tui` and `logout` commands per AC-1
-AC-1 explicitly requires: "axiathon --help must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init." The `Commands` enum in `cli.rs` has no `Tui` or `Logout` variant. `tui` is an explicit requirement in AC-1 even though implementation is Epic 4. `logout` is also listed alongside `login`.
+AC-1 explicitly requires: "consumer-project --help must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init." The `Commands` enum in `cli.rs` has no `Tui` or `Logout` variant. `tui` is an explicit requirement in AC-1 even though implementation is Epic 4. `logout` is also listed alongside `login`.
 
 ### [HIGH] F4 — `with_token()` bypasses header injection validation (CWE-113)
 `SiemClient::with_token()` at `client.rs:36` accepts any string including CRLF sequences. Only `with_token_validated()` checks for injection. There's nothing preventing callers from using the unvalidated path. The validated variant should be the only public API, or `with_token` should perform validation internally. The unvalidated `with_token()` is a latent injection vector.
@@ -41,7 +41,7 @@ The story spec says `toml` 0.9 but workspace `Cargo.toml` declares 0.8. `toml` 0
 At `completion.rs:7`, the function takes a string and manually matches shell names, returning `String::new()` for unknown shells. Since the CLI already parses the shell as `clap_complete::Shell` enum (in `cli.rs:71`), the function should accept `Shell` directly. The string-matching re-implements what clap already validates, and the empty-string fallback for unknown shells is a silent failure.
 
 ### [LOW] F11 — Missing `init` stub handler test for story reference
-The `stub_handlers.rs` tests verify the story reference for `status` (Story 6.2) but the `init` command at `commands/init.rs:4` references "Story 6.1" which seems incorrect — `init` should be functional per the story scope ("axiathon init first-time setup (functional, not stub)"), yet it's implemented as a stub.
+The `stub_handlers.rs` tests verify the story reference for `status` (Story 6.2) but the `init` command at `commands/init.rs:4` references "Story 6.1" which seems incorrect — `init` should be functional per the story scope ("consumer-project init first-time setup (functional, not stub)"), yet it's implemented as a stub.
 
 ### [LOW] F12 — No test for `OutputFormatter` auto-detecting TTY vs piped
 AC-4 requires "Table default for TTY, JSON for piped output" using `std::io::IsTerminal`. There is no TTY detection logic anywhere in the codebase, and no test for this behavior.

@@ -6,7 +6,7 @@
 
 **Workspace config:**
 - `Cargo.toml` — added workspace deps: `clap_complete`, `comfy-table`, `csv`, `dirs`, `reqwest`, `toml`
-- `crates/axiathon-client/Cargo.toml` — added production deps, overrode `unsafe_code` lint from `forbid` to `deny` (tests need `set_var`/`remove_var` which are unsafe in edition 2024; lib.rs retains `#![forbid(unsafe_code)]`)
+- `crates/consumer-project-client/Cargo.toml` — added production deps, overrode `unsafe_code` lint from `forbid` to `deny` (tests need `set_var`/`remove_var` which are unsafe in edition 2024; lib.rs retains `#![forbid(unsafe_code)]`)
 
 **Production code (all new):**
 - `src/lib.rs` — module re-exports

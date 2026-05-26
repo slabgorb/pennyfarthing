@@ -7,15 +7,15 @@
 
 | # | File | Tests | ACs Covered |
 |---|------|-------|-------------|
-| 1 | `crates/axiathon-client/tests/cli_structure_test.rs` | 9 | AC-1, AC-2, AC-6 |
-| 2 | `crates/axiathon-client/tests/exit_codes_test.rs` | 14 | AC-3, AC-7 (partial) |
-| 3 | `crates/axiathon-client/tests/output_format_test.rs` | 10 | AC-4 |
-| 4 | `crates/axiathon-client/tests/global_flags_test.rs` | 16 | AC-5 |
-| 5 | `crates/axiathon-client/tests/siem_client_test.rs` | 16 | AC-7 |
-| 6 | `crates/axiathon-client/tests/config_test.rs` | 10 | AC-8 |
-| 7 | `crates/axiathon-client/tests/completion_test.rs` | 5 | AC-9 |
-| 8 | `crates/axiathon-client/tests/stub_handlers_test.rs` | 11 | AC-10 |
-| 9 | `crates/axiathon-client/tests/security_test.rs` | 9 | CWE-209, header injection, credential safety |
+| 1 | `crates/consumer-project-client/tests/cli_structure_test.rs` | 9 | AC-1, AC-2, AC-6 |
+| 2 | `crates/consumer-project-client/tests/exit_codes_test.rs` | 14 | AC-3, AC-7 (partial) |
+| 3 | `crates/consumer-project-client/tests/output_format_test.rs` | 10 | AC-4 |
+| 4 | `crates/consumer-project-client/tests/global_flags_test.rs` | 16 | AC-5 |
+| 5 | `crates/consumer-project-client/tests/siem_client_test.rs` | 16 | AC-7 |
+| 6 | `crates/consumer-project-client/tests/config_test.rs` | 10 | AC-8 |
+| 7 | `crates/consumer-project-client/tests/completion_test.rs` | 5 | AC-9 |
+| 8 | `crates/consumer-project-client/tests/stub_handlers_test.rs` | 11 | AC-10 |
+| 9 | `crates/consumer-project-client/tests/security_test.rs` | 9 | CWE-209, header injection, credential safety |
 
 **Tests Written:** ~100 tests covering all 10 ACs + security
 **Status:** RED (failing — all tests fail to compile due to unresolved module imports)

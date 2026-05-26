@@ -34,7 +34,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote CWE-113 header injection tests: 'CR, LF, CRLF, and null bytes\
     \ rejected in token and tenant ID values.' Dev implemented rejection in client.rs:65-71.\
-    \ However, the specific fix of using Option<TenantId> from axiathon-core was not\
+    \ However, the specific fix of using Option<TenantId> from consumer-project-core was not\
     \ flagged \u2014 pipeline addressed the injection symptom, not the type-safety\
     \ root cause."
 - finding_id: I3

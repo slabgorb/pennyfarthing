@@ -37,7 +37,7 @@ findings:
     \ Dev implemented with_tenant_validated. Reviewer then flagged as [HIGH] that\
     \ 'SiemClient has unvalidated with_token/with_tenant alongside validated variants\
     \ \u2014 unsafe path is the default', noting the safe path should be default.\
-    \ However, tenant_id still uses raw String rather than TenantId from axiathon-core\
+    \ However, tenant_id still uses raw String rather than TenantId from consumer-project-core\
     \ \u2014 the type-safety aspect was not caught."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

@@ -7,8 +7,8 @@ Well now. My Portfolio and I have thoroughly inspected this... *offering* from t
 # Adversarial Code Review: Story 6.1 — CLI Framework & Structure
 
 ## Preflight Results
-- `cargo test -p axiathon-client`: **101 tests PASS**
-- `cargo clippy -p axiathon-client -- -D warnings`: **CLEAN**
+- `cargo test -p consumer-project-client`: **101 tests PASS**
+- `cargo clippy -p consumer-project-client -- -D warnings`: **CLEAN**
 - `cargo +nightly fmt --all --check`: **FAIL** (514 lines of formatting diffs)
 
 ---
@@ -16,16 +16,16 @@ Well now. My Portfolio and I have thoroughly inspected this... *offering* from t
 ## Findings
 
 ### `[CRITICAL]` F1: Missing `main.rs` — Binary cannot be built or executed
-**Location:** `crates/axiathon-client/src/main.rs` does not exist
+**Location:** `crates/consumer-project-client/src/main.rs` does not exist
 
-The entire Story 6.1 scope requires an `axiathon` binary. Without `main.rs`, there is no CLI dispatch, no exit code enforcement via `std::process::exit()`, no config loading orchestration, and no operator tool. AC-3 explicitly requires main.rs to "catch errors and call `std::process::exit()`". The crate is library-only — `cargo build -p axiathon-client` produces no binary.
+The entire Story 6.1 scope requires an `consumer-project` binary. Without `main.rs`, there is no CLI dispatch, no exit code enforcement via `std::process::exit()`, no config loading orchestration, and no operator tool. AC-3 explicitly requires main.rs to "catch errors and call `std::process::exit()`". The crate is library-only — `cargo build -p consumer-project-client` produces no binary.
 
 **Blocks:** Every downstream story (6.2–6.7), AC-3, AC-8 precedence enforcement.
 
 ---
 
 ### `[HIGH]` F2: Nightly `rustfmt` check fails — 514 lines of formatting diffs
-**Location:** `crates/axiathon-client/src/cli.rs` and other files
+**Location:** `crates/consumer-project-client/src/cli.rs` and other files
 
 Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." It fails massively. The `#[command(...)]` attribute formatting throughout `cli.rs` is non-compliant with nightly rules.
 
@@ -34,7 +34,7 @@ Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the pref
 ---
 
 ### `[HIGH]` F3: `build_headers()` silently drops headers on invalid characters — no error, no log
-**Location:** `crates/axiathon-client/src/client.rs:59-69`
+**Location:** `crates/consumer-project-client/src/client.rs:59-69`
 
 ```rust
 if let Ok(hv) = HeaderValue::from_str(&value) {
@@ -50,7 +50,7 @@ If a token or tenant ID contains characters that `HeaderValue::from_str` rejects
 ---
 
 ### `[HIGH]` F4: Missing command modules — `login.rs`, `init.rs` not created
-**Location:** `crates/axiathon-client/src/commands/mod.rs`
+**Location:** `crates/consumer-project-client/src/commands/mod.rs`
 
 The `Commands` enum declares `Login`, `Logout`, `Tui`, and `Init` variants, but:
 - No `commands/login.rs` exists (AC-1 lists `login`/`logout`)
@@ -69,7 +69,7 @@ The workspace root declares `toml = "0.8"` but the story's Technical Guardrails 
 ---
 
 ### `[MEDIUM]` F6: `RawConfig` silently accepts unknown TOML fields
-**Location:** `crates/axiathon-client/src/config.rs:9-15`
+**Location:** `crates/consumer-project-client/src/config.rs:9-15`
 
 ```rust
 #[derive(Debug, Deserialize)]
@@ -85,7 +85,7 @@ No `#[serde(deny_unknown_fields)]`. An operator with `servr_url = "..."` (typo) 
 ---
 
 ### `[MEDIUM]` F7: `with_env_overrides_from()` silently ignores invalid timeout values
-**Location:** `crates/axiathon-client/src/config.rs:97-100`
+**Location:** `crates/consumer-project-client/src/config.rs:97-100`
 
 ```rust
 "AXIATHON_TIMEOUT" => {
@@ -100,7 +100,7 @@ If `AXIATHON_TIMEOUT=abc`, it's silently ignored and the previous value stands. 
 ---
 
 ### `[MEDIUM]` F8: JSON `request_id` is fabricated at format time, not from server
-**Location:** `crates/axiathon-client/src/output.rs:54`
+**Location:** `crates/consumer-project-client/src/output.rs:54`
 
 ```rust
 "request_id": Uuid::new_v4().to_string(),
@@ -111,25 +111,25 @@ This UUID is generated locally and has zero correlation to any server-side reque
 ---
 
 ### `[MEDIUM]` F9: Exit code matrix test missing `Config` variant
-**Location:** `crates/axiathon-client/tests/exit_codes.rs:132-152`
+**Location:** `crates/consumer-project-client/tests/exit_codes.rs:132-152`
 
 The `all_error_variants_have_defined_exit_codes` test covers 9 of 10 `CliError` variants but omits `Config(String)`. Since `CliError` is `#[non_exhaustive]`, this test doesn't provide the exhaustive coverage its name promises.
 
 ---
 
 ### `[MEDIUM]` F10: `--tenant` accepts raw `String`, not validated `TenantId`
-**Location:** `crates/axiathon-client/src/cli.rs:35`
+**Location:** `crates/consumer-project-client/src/cli.rs:35`
 
 ```rust
 pub tenant: Option<String>,
 ```
 
-The project's Rust rules mandate "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag accepts any string and passes it through without validation. `axiathon-core` exports `TenantId` with validated constructors. At minimum, conversion to `TenantId` should happen before it reaches `SiemClient`.
+The project's Rust rules mandate "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag accepts any string and passes it through without validation. `consumer-project-core` exports `TenantId` with validated constructors. At minimum, conversion to `TenantId` should happen before it reaches `SiemClient`.
 
 ---
 
 ### `[LOW]` F11: `SiemClient` has no HTTP request methods
-**Location:** `crates/axiathon-client/src/client.rs:11`
+**Location:** `crates/consumer-project-client/src/client.rs:11`
 
 ```rust
 _http: reqwest::Client,

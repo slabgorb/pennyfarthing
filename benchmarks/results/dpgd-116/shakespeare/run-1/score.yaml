@@ -37,7 +37,7 @@ findings:
   evidence: TEA wrote tests for 'header injection (CRLF/null)' in tenant ID. Reviewer
     verified 'SiemClient::validate_header_value() rejects \r, \n, \0 in tenant ID
     and token.' Same vulnerability class (CWE-113) was identified and tested, though
-    the specific fix of using TenantId type from axiathon-core was not flagged.
+    the specific fix of using TenantId type from consumer-project-core was not flagged.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

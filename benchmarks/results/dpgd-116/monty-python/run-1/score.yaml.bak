@@ -36,7 +36,7 @@ findings:
   evidence: "TEA wrote CWE-113 header injection tests for CR/LF in tenant ID and auth\
     \ token. Dev implemented with_tenant stripping CR/LF (client.rs:45). Reviewer\
     \ verified header injection prevention. However, the deeper issue \u2014 using\
-    \ raw String instead of TenantId from axiathon-core \u2014 was not flagged by\
+    \ raw String instead of TenantId from consumer-project-core \u2014 was not flagged by\
     \ any phase."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

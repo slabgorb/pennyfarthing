@@ -38,7 +38,7 @@ findings:
   caught_by: reviewer
   evidence: 'Reviewer flagged as [MEDIUM]: ''tenant field uses raw Option<String>
     instead of TenantId newtype'' at cli.rs:19, recommended ''Use TenantId newtype
-    from axiathon-core for the --tenant flag''. TEA also wrote CWE-113 header injection
+    from consumer-project-core for the --tenant flag''. TEA also wrote CWE-113 header injection
     tests for tenant ID with CRLF characters.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

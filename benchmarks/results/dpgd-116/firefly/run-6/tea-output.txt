@@ -20,12 +20,12 @@
 **Status:** RED (failing — all 9 test files fail to compile because modules `cli`, `error`, `client`, `output`, `config`, `commands` don't exist yet)
 
 **Public API contract defined by tests:**
-- `axiathon_client::cli::{Cli, Commands}` — clap Parser/Subcommand
-- `axiathon_client::error::CliError` — error enum with `exit_code()` method
-- `axiathon_client::output::{OutputFormat, OutputFormatter, TableFormatter, JsonFormatter, CsvFormatter}`
-- `axiathon_client::client::SiemClient` — HTTP wrapper with `map_status_code()`, `default_headers()`, `url()`
-- `axiathon_client::config::{ClientConfig, load_token}` — TOML config with env overrides
-- `axiathon_client::commands::{completion, status, config, ingest, alerts, query, tenant, login}` — command modules with `STORY_REF` constants
+- `consumer-project_client::cli::{Cli, Commands}` — clap Parser/Subcommand
+- `consumer-project_client::error::CliError` — error enum with `exit_code()` method
+- `consumer-project_client::output::{OutputFormat, OutputFormatter, TableFormatter, JsonFormatter, CsvFormatter}`
+- `consumer-project_client::client::SiemClient` — HTTP wrapper with `map_status_code()`, `default_headers()`, `url()`
+- `consumer-project_client::config::{ClientConfig, load_token}` — TOML config with env overrides
+- `consumer-project_client::commands::{completion, status, config, ingest, alerts, query, tenant, login}` — command modules with `STORY_REF` constants
 
 **Handoff:** To Dev for implementation (GREEN phase)
 

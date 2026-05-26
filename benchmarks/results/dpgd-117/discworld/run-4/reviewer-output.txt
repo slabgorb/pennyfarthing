@@ -14,7 +14,7 @@ Right then. Nanny Ogg ran the preflight and everything looked clean. Tests pass,
 
 ### CRITICAL
 
-**[CRITICAL] Nightly `rustfmt` fails — import ordering violations** at `crates/axiathon-server/src/auth.rs:6-13`
+**[CRITICAL] Nightly `rustfmt` fails — import ordering violations** at `crates/consumer-project-server/src/auth.rs:6-13`
 
 `cargo +nightly fmt --all --check` reports diff in `auth.rs` — `std::` imports must come before `axum::` imports under nightly's enforced import ordering. Per gotchas.md this is a mandatory preflight check. It was skipped or ignored.
 
@@ -24,9 +24,9 @@ The story spec is explicit: *"Axum 0.8 with `FromRef<AppState>` substate extract
 
 There is no `AppState` struct. There is no `FromRef` impl. There are no substates. The router has no `.with_state()`. Handlers use `Extension<AuthInfo>` instead — this is the Axum 0.7 pattern, not 0.8. This is a fundamental architectural requirement, not a nice-to-have.
 
-**[CRITICAL] `ApiResponse<T>` from `axiathon-core` is not used** at `crates/axiathon-server/src/response.rs`
+**[CRITICAL] `ApiResponse<T>` from `consumer-project-core` is not used** at `crates/consumer-project-server/src/response.rs`
 
-`axiathon-core` already defines `ApiResponse<T>` with `data`, `meta` (via `ApiMeta`), and `errors` (via `ApiError`). The implementation reinvents this from scratch using raw `serde_json::json!()` macros. The whole point of a typed envelope is type safety and consistency. Building JSON by hand defeats that purpose and will diverge from the canonical type as the codebase grows.
+`consumer-project-core` already defines `ApiResponse<T>` with `data`, `meta` (via `ApiMeta`), and `errors` (via `ApiError`). The implementation reinvents this from scratch using raw `serde_json::json!()` macros. The whole point of a typed envelope is type safety and consistency. Building JSON by hand defeats that purpose and will diverge from the canonical type as the codebase grows.
 
 ### HIGH
 
@@ -102,7 +102,7 @@ The JWKS test only checks for `keys` field presence, enabling the envelope viola
 **Blocking (must fix):**
 1. Run `cargo +nightly fmt --all` and commit the fix
 2. Introduce `AppState` with `FromRef` substates or document why it's deferred with a tracking issue
-3. Use `ApiResponse<T>` from `axiathon-core` instead of hand-rolled JSON
+3. Use `ApiResponse<T>` from `consumer-project-core` instead of hand-rolled JSON
 4. Fix JWKS endpoint to use response envelope
 5. Add `queries:read` to the default test JWT scopes
 6. Gate `test_support` behind `#[cfg(feature = "test-support")]`

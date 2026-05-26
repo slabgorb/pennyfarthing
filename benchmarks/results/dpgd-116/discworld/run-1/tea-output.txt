@@ -30,6 +30,6 @@ Here'th my TEA Athethment:
 
 **Workspace changes:**
 - Added workspace dependencies: `clap_complete`, `comfy-table`, `csv`, `dirs`, `keyring`, `reqwest`, `toml`
-- Updated `axiathon-client/Cargo.toml` with all required dependencies for Story 6.1
+- Updated `consumer-project-client/Cargo.toml` with all required dependencies for Story 6.1
 
 **Handoff:** To Dev for implementation (GREEN phase)

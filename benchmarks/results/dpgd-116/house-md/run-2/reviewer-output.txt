@@ -9,10 +9,10 @@ Alright. I've read every source file, every test file, verified compilation, cli
 ## Findings
 
 ### [CRITICAL] No `main.rs` — no binary produced at `cli.rs`
-The story's primary deliverable is the `axiathon` binary. There is no `main.rs`, no `[[bin]]` section in `Cargo.toml`. The crate is library-only. AC-3 explicitly requires `main.rs` to catch errors and call `std::process::exit()` with the mapped exit codes. Without this, there is no CLI binary — the entire raison d'etre of the story is missing.
+The story's primary deliverable is the `consumer-project` binary. There is no `main.rs`, no `[[bin]]` section in `Cargo.toml`. The crate is library-only. AC-3 explicitly requires `main.rs` to catch errors and call `std::process::exit()` with the mapped exit codes. Without this, there is no CLI binary — the entire raison d'etre of the story is missing.
 
 ### [HIGH] Missing `logout` and `tui` commands at `cli.rs:47-68`
-AC-1 states: *"`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."* The `Commands` enum has neither `Logout` nor `Tui`. Two required command groups are absent.
+AC-1 states: *"`consumer-project --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."* The `Commands` enum has neither `Logout` nor `Tui`. Two required command groups are absent.
 
 ### [HIGH] `build_request` silently drops invalid headers at `client.rs:99-108`
 When `HeaderValue::from_str()` fails (e.g., token contains non-visible ASCII), the `if let Ok(val)` silently skips header insertion. A request proceeds *without* the `Authorization` header, and the caller has no idea. This is a silent authentication bypass — the operator thinks they're authenticated, but the request goes out unauthenticated. The validated methods exist but aren't enforced as the only path.
@@ -42,7 +42,7 @@ The Rust coding rules state: *"#[non_exhaustive] on enums that will grow."* `Cli
 Both methods construct `reqwest::Client::new()` instead of cloning `self.http`. Any custom configuration (timeouts, connection pools, TLS settings) on the original client is silently discarded. When timeout configuration is added in a future story, this will be a subtle bug.
 
 ### [LOW] No `after_help` usage examples on any command group
-AC-2 states: *"every `axiathon <cmd> --help` must include `after_help` usage examples for each command group."* None of the command structs have `#[command(after_help = "...")]`. The help renders, but without the required examples.
+AC-2 states: *"every `consumer-project <cmd> --help` must include `after_help` usage examples for each command group."* None of the command structs have `#[command(after_help = "...")]`. The help renders, but without the required examples.
 
 ### [VERIFIED] `#![forbid(unsafe_code)]` present at `lib.rs:2`
 ### [VERIFIED] CWE-209 error display sanitization — `ServerError` and `NotFound` do not leak internal strings

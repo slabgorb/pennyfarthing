@@ -22,9 +22,9 @@ The rate limiter uses a `static LazyLock<Mutex<HashMap>>` for per-tenant counter
 
 Lines 34-40 reuse `handlers::get_alert_by_id` for `/events/{id}`, `/rules/{id}`, and `/queries/{id}`. The handler is named `get_alert_by_id` but is serving events, rules, and queries by ID. While all currently return 404 stubs, this is a copy-paste error that will be a landmine when real handlers are implemented — the wrong handler will be wired to the wrong route, and the naming makes it invisible.
 
-### [HIGH] Server-side `Envelope` diverges from `axiathon-core::ApiResponse<T>` with no migration plan — `response.rs:1-6`
+### [HIGH] Server-side `Envelope` diverges from `consumer-project-core::ApiResponse<T>` with no migration plan — `response.rs:1-6`
 
-The story spec says responses must use `ApiResponse<T>` from `axiathon-core`. Instead, a completely separate `Envelope<T>` type was created in `axiathon-server::response`. The two types have incompatible shapes:
+The story spec says responses must use `ApiResponse<T>` from `consumer-project-core`. Instead, a completely separate `Envelope<T>` type was created in `consumer-project-server::response`. The two types have incompatible shapes:
 
 - **Core `ApiResponse`**: `{ data?, error?, meta? }` with `skip_serializing_if = "Option::is_none"` — fields are absent when None
 - **Server `Envelope`**: `{ data, errors: [], meta: { request_id, timestamp, trace_id } }` — `errors` is always-present array, `meta` is always present with different fields

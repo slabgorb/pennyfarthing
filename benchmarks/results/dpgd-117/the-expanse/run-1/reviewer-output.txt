@@ -10,14 +10,14 @@ Good. Now I have everything I need. Here's the review.
 
 ### CRITICAL
 
-**[CRITICAL] Duplicate response envelope diverges from `axiathon-core::ApiResponse<T>` — `response.rs:9-92`**
+**[CRITICAL] Duplicate response envelope diverges from `consumer-project-core::ApiResponse<T>` — `response.rs:9-92`**
 
-The story explicitly requires using `ApiResponse<T>` from `axiathon-core`. Instead, a completely new `Envelope<T>` type was invented in `crates/axiathon-server/src/response.rs`. The two types have fundamentally different shapes:
+The story explicitly requires using `ApiResponse<T>` from `consumer-project-core`. Instead, a completely new `Envelope<T>` type was invented in `crates/consumer-project-server/src/response.rs`. The two types have fundamentally different shapes:
 
-- **axiathon-core `ApiResponse<T>`**: `data`, `error` (singular `Option<ApiError>`), `meta` (pagination-focused `ApiMeta`)
+- **consumer-project-core `ApiResponse<T>`**: `data`, `error` (singular `Option<ApiError>`), `meta` (pagination-focused `ApiMeta`)
 - **New `Envelope<T>`**: `data`, `errors` (Vec), `meta` (`EnvelopeMeta` with request_id/timestamp/trace_id)
 
-The story spec says: *"All responses use `ApiResponse<T>` from axiathon-core."* This either needs to use the core type directly, or the core type needs to be updated to match the RFC 9457 envelope spec. Building a parallel type system is architectural drift that will cause integration pain in every subsequent story.
+The story spec says: *"All responses use `ApiResponse<T>` from consumer-project-core."* This either needs to use the core type directly, or the core type needs to be updated to match the RFC 9457 envelope spec. Building a parallel type system is architectural drift that will cause integration pain in every subsequent story.
 
 ### HIGH
 
@@ -31,7 +31,7 @@ There is no `AppState`. There are no substates. Handlers take zero state paramet
 
 This counter never resets. Once you hit the limit, you're permanently rate-limited until process restart. That's not rate limiting — that's a kill switch. The static also leaks state across tests (it's process-global), making test ordering non-deterministic. The `expect("lock poisoned")` on line 45 will panic and crash the server if any thread panics while holding the lock.
 
-**[HIGH] `AuthInfo` ignores `TenantContext` from axiathon-core — `auth.rs:14-17`**
+**[HIGH] `AuthInfo` ignores `TenantContext` from consumer-project-core — `auth.rs:14-17`**
 
 `AuthInfo { tenant_id: String }` is a bare string. The core crate provides `TenantContext` with `TenantId` (validated newtype), `user_id`, `roles`, `permissions`, and `trace_id`. The story requires: *"Tenant context must be extracted from JWT/API key and passed explicitly to all downstream functions."* A raw string `tenant_id` provides zero type safety, no role/permission information, and no trace correlation.
 
@@ -57,9 +57,9 @@ Import ordering in `app.rs` doesn't pass nightly rustfmt. Per the reviewer gotch
 
 Returns raw `Json(json!({ "keys": [] }))` instead of the standard envelope. While JWKS is a well-known format, this is the only endpoint that doesn't wrap in `Envelope<T>`, creating inconsistency. At minimum, document why this is intentional.
 
-**[MEDIUM] `axiathon-core` duplicated in `[dependencies]` and `[dev-dependencies]` — `Cargo.toml:9,26`**
+**[MEDIUM] `consumer-project-core` duplicated in `[dependencies]` and `[dev-dependencies]` — `Cargo.toml:9,26`**
 
-`axiathon-core` appears in both sections. The `[dev-dependencies]` entry is redundant since regular dependencies are already available in tests.
+`consumer-project-core` appears in both sections. The `[dev-dependencies]` entry is redundant since regular dependencies are already available in tests.
 
 **[MEDIUM] No CORS configuration**
 
@@ -94,7 +94,7 @@ Declared in `Cargo.toml:21-22` but zero imports in source. `cargo clippy` doesn'
 
 Three blocking issues must be resolved:
 
-1. **Use or evolve `axiathon-core::ApiResponse<T>`** instead of the parallel `Envelope<T>`. If the core type needs to change shape (it probably does — the `errors` array and proper `meta` with request_id/timestamp/trace_id are correct per the story spec), update it there so all crates share one envelope.
+1. **Use or evolve `consumer-project-core::ApiResponse<T>`** instead of the parallel `Envelope<T>`. If the core type needs to change shape (it probably does — the `errors` array and proper `meta` with request_id/timestamp/trace_id are correct per the story spec), update it there so all crates share one envelope.
 
 2. **Implement `AppState` with `FromRef` substates.** Even if the substates are empty structs for now, the pattern must exist. This is the compile-time least-privilege enforcement the story was designed to establish.
 

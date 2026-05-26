@@ -14,11 +14,11 @@ I have all the data. Here's my review.
 
 ### `[CRITICAL]` No `main.rs` binary entry point — crate cannot produce an executable
 
-**At:** `crates/axiathon-client/` (missing `src/main.rs`, no `[[bin]]` in `Cargo.toml`)
+**At:** `crates/consumer-project-client/` (missing `src/main.rs`, no `[[bin]]` in `Cargo.toml`)
 
-The story's first sentence says this crate produces the `axiathon` binary. There is no `main.rs`. There is no `[[bin]]` section in `Cargo.toml`. This is a library, not a CLI tool. Operators cannot run `axiathon --help`. AC-1 through AC-3 are structurally untestable at the binary level.
+The story's first sentence says this crate produces the `consumer-project` binary. There is no `main.rs`. There is no `[[bin]]` section in `Cargo.toml`. This is a library, not a CLI tool. Operators cannot run `consumer-project --help`. AC-1 through AC-3 are structurally untestable at the binary level.
 
-The tests only exercise library modules via `use axiathon_client::cli::Cli` — they never invoke a binary. They prove the structs compile, not that the tool works.
+The tests only exercise library modules via `use consumer-project_client::cli::Cli` — they never invoke a binary. They prove the structs compile, not that the tool works.
 
 ### `[CRITICAL]` No command dispatch — framework is wired but never connected
 
@@ -54,11 +54,11 @@ Specific cases:
 
 **At:** `tests/exit_codes.rs:138`
 
-`cargo clippy -p axiathon-client --all-targets -- -D warnings` fails. The project rules state "warnings are errors." This code doesn't pass the project's own quality gate.
+`cargo clippy -p consumer-project-client --all-targets -- -D warnings` fails. The project rules state "warnings are errors." This code doesn't pass the project's own quality gate.
 
 ### `[MEDIUM]` `keyring` dependency declared in workspace but never used in crate
 
-**At:** `Cargo.toml` workspace root line 47 declares `keyring = "3"`, but `crates/axiathon-client/Cargo.toml` never imports it. AC-8 specifies token loading from OS keychain. `ClientConfig::token()` returns `None` unconditionally with a comment "security: use keychain" — but the keychain is never integrated. The env var fallback (`AXIATHON_API_TOKEN`) is also missing.
+**At:** `Cargo.toml` workspace root line 47 declares `keyring = "3"`, but `crates/consumer-project-client/Cargo.toml` never imports it. AC-8 specifies token loading from OS keychain. `ClientConfig::token()` returns `None` unconditionally with a comment "security: use keychain" — but the keychain is never integrated. The env var fallback (`AXIATHON_API_TOKEN`) is also missing.
 
 ### `[MEDIUM]` `RawConfig` silently accepts unknown fields — no `#[serde(deny_unknown_fields)]`
 
@@ -70,7 +70,7 @@ A TOML file with `api_url = "..."` and `sevrer_timeout = 30` (typo) silently ign
 
 **At:** `src/cli.rs:15-20`
 
-`axiathon --quiet -vv status` parses successfully with `quiet: true` and `verbose: 2`. These are contradictory. clap supports `conflicts_with` to enforce mutual exclusion. Since there's no dispatch code, this contradiction is never resolved at runtime.
+`consumer-project --quiet -vv status` parses successfully with `quiet: true` and `verbose: 2`. These are contradictory. clap supports `conflicts_with` to enforce mutual exclusion. Since there's no dispatch code, this contradiction is never resolved at runtime.
 
 ### `[MEDIUM]` JSON metadata uses hardcoded dummy values
 

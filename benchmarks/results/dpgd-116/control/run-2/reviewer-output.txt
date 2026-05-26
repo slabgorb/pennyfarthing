@@ -21,7 +21,7 @@ All tests pass, clippy clean, but **nightly fmt fails**. Now I have a complete p
 
 ### `[CRITICAL]` No `main.rs` — binary cannot be built
 
-The story's core deliverable is the `axiathon` binary. There is no `src/main.rs` and no `[[bin]]` section in `Cargo.toml`. This crate produces only a library. `cargo run -p axiathon-client` would fail. The story spec explicitly lists `main.rs` as "Binary entry point, tracing init, dispatch, exit codes" under Key Files to Create. Without it, there is no CLI — every AC that involves actually running `axiathon <command>` is untestable at the binary level.
+The story's core deliverable is the `consumer-project` binary. There is no `src/main.rs` and no `[[bin]]` section in `Cargo.toml`. This crate produces only a library. `cargo run -p consumer-project-client` would fail. The story spec explicitly lists `main.rs` as "Binary entry point, tracing init, dispatch, exit codes" under Key Files to Create. Without it, there is no CLI — every AC that involves actually running `consumer-project <command>` is untestable at the binary level.
 
 ### `[HIGH]` `SiemClient::new` silently drops invalid headers — at `client.rs:24,30`
 
@@ -41,7 +41,7 @@ This is a silent failure that could cause tenant data leakage. The function shou
 
 ### `[MEDIUM]` `init` command is a stub, not functional — at `commands/init.rs:3`
 
-AC scope says "axiathon init first-time setup (functional, not stub)". The implementation returns `NotImplemented("not yet implemented")`. This violates the in-scope requirement.
+AC scope says "consumer-project init first-time setup (functional, not stub)". The implementation returns `NotImplemented("not yet implemented")`. This violates the in-scope requirement.
 
 ### `[MEDIUM]` Nightly `cargo fmt` check fails — at `siem_client.rs`
 
@@ -49,7 +49,7 @@ Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the pref
 
 ### `[MEDIUM]` `Completion` shell argument is raw `String`, not `Shell` enum — at `cli.rs:88`
 
-The `shell` field is `String`, so `axiathon completion garbage` parses successfully at the clap level but returns an empty string at runtime (`completion.rs:12`). Using `clap_complete::Shell` directly as the clap value type would give immediate validation with proper error messages. Current behavior is a silent failure for invalid shell names.
+The `shell` field is `String`, so `consumer-project completion garbage` parses successfully at the clap level but returns an empty string at runtime (`completion.rs:12`). Using `clap_complete::Shell` directly as the clap value type would give immediate validation with proper error messages. Current behavior is a silent failure for invalid shell names.
 
 ### `[MEDIUM]` `OutputFormatter` is a struct, not a trait — at `output.rs:18`
 

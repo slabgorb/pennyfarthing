@@ -18,7 +18,7 @@ The `ServerError` variant uses `#[error("server error — contact your administr
 
 ### HIGH
 
-**[HIGH] No `main.rs` binary entry point** — Story spec requires producing the `axiathon` binary. There is no `main.rs` and no `[[bin]]` section in `Cargo.toml`. The crate is library-only. AC-3 requires `main.rs` to catch errors and call `std::process::exit()`. Without `main.rs`, the binary doesn't exist and exit codes are never exercised end-to-end. This is a fundamental deliverable gap.
+**[HIGH] No `main.rs` binary entry point** — Story spec requires producing the `consumer-project` binary. There is no `main.rs` and no `[[bin]]` section in `Cargo.toml`. The crate is library-only. AC-3 requires `main.rs` to catch errors and call `std::process::exit()`. Without `main.rs`, the binary doesn't exist and exit codes are never exercised end-to-end. This is a fundamental deliverable gap.
 
 **[HIGH] `toml` workspace dependency is `0.8` but story spec requires `0.9`** — at `Cargo.toml:50`. The story Technical Guardrails specify `toml 0.9`. The workspace declares `toml = "0.8"`. This is a spec deviation. (Note: toml 0.9 may not exist yet as a published crate, which means the story spec may be aspirational — but the reviewer role requires flagging the discrepancy.)
 
@@ -38,7 +38,7 @@ The `ServerError` variant uses `#[error("server error — contact your administr
 
 **[MEDIUM] `chrono_like_timestamp()` produces epoch seconds, not ISO 8601** — at `output.rs:157-163`. The timestamp format is `"1709900000Z"` which is not a standard timestamp format. ISO 8601 (`2024-03-08T12:00:00Z`) would be expected for `ResponseMetadata.timestamp`.
 
-**[MEDIUM] `Ingest`, `Config`, `Status`, `Tenant`, `Login`, `Query` commands have no subcommands** — at `cli.rs:73-89`. Per the architecture doc, commands should follow "plural-noun + verb" pattern (`axiathon ingest start`). Currently `axiathon ingest` is a leaf command with no verb subcommands, making it impossible to add verbs later without a breaking CLI change.
+**[MEDIUM] `Ingest`, `Config`, `Status`, `Tenant`, `Login`, `Query` commands have no subcommands** — at `cli.rs:73-89`. Per the architecture doc, commands should follow "plural-noun + verb" pattern (`consumer-project ingest start`). Currently `consumer-project ingest` is a leaf command with no verb subcommands, making it impossible to add verbs later without a breaking CLI change.
 
 **[MEDIUM] Table formatter silently drops non-Object rows** — at `output.rs:42`. If `serde_json::to_value(row)` produces an `Array` or `String` instead of `Object`, the row is silently skipped with no warning. Same issue in `CsvFormatter` at line 120.
 
@@ -50,7 +50,7 @@ The `ServerError` variant uses `#[error("server error — contact your administr
 
 **[LOW] Redundant `about` + doc comment on every command** — at `cli.rs:53-108`. Every variant has both `/// doc comment` and `#[command(about = "...")]` with identical text. clap uses the doc comment as `about` by default — the explicit `about` is redundant.
 
-**[LOW] `keyring` dependency declared in workspace but not used by axiathon-client** — at `Cargo.toml:47`. The `keyring` crate is in workspace deps but `axiathon-client/Cargo.toml` doesn't include it. This is fine for now (Story 9.1), but the workspace dep pulls in platform-specific features that affect compile times.
+**[LOW] `keyring` dependency declared in workspace but not used by consumer-project-client** — at `Cargo.toml:47`. The `keyring` crate is in workspace deps but `consumer-project-client/Cargo.toml` doesn't include it. This is fine for now (Story 9.1), but the workspace dep pulls in platform-specific features that affect compile times.
 
 ### VERIFIED
 

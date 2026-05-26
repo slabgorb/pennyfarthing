@@ -12,13 +12,13 @@ I've completed my thorough review. Here are my findings.
 
 Per the gotchas sidecar: *"Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not."* Three formatting diffs found in `client.rs:79`, `client.rs:108`, and `config.rs:62`. This blocks merge.
 
-**2. [HIGH] No `main.rs` binary entry point — the `axiathon` binary does not exist**
+**2. [HIGH] No `main.rs` binary entry point — the `consumer-project` binary does not exist**
 
-AC-1 through AC-3 require `axiathon --help` to work, `main.rs` to dispatch commands, catch errors, and call `std::process::exit()`. The story spec explicitly lists `main.rs` as a key file to create: *"Binary entry point, tracing init, dispatch, exit codes."* The `Cargo.toml` has no `[[bin]]` section either. Without `main.rs`, there is no CLI binary — the entire deliverable is a library crate that can't actually be run. This is a showstopper.
+AC-1 through AC-3 require `consumer-project --help` to work, `main.rs` to dispatch commands, catch errors, and call `std::process::exit()`. The story spec explicitly lists `main.rs` as a key file to create: *"Binary entry point, tracing init, dispatch, exit codes."* The `Cargo.toml` has no `[[bin]]` section either. Without `main.rs`, there is no CLI binary — the entire deliverable is a library crate that can't actually be run. This is a showstopper.
 
 **3. [HIGH] `init` command is a stub, but AC-10/story scope says it must be functional**
 
-Story scope: *"Shell completion generation (functional, not stub)"* and *"`axiathon init` first-time setup (functional, not stub)"*. The `commands/init.rs` returns `handle_stub()` with "not yet implemented (Story 6.1)" — meaning it's a stub for the current story itself, which makes no sense. Completion generation *is* functional, but `init` is not.
+Story scope: *"Shell completion generation (functional, not stub)"* and *"`consumer-project init` first-time setup (functional, not stub)"*. The `commands/init.rs` returns `handle_stub()` with "not yet implemented (Story 6.1)" — meaning it's a stub for the current story itself, which makes no sense. Completion generation *is* functional, but `init` is not.
 
 **4. [MEDIUM] `RawConfig` silently ignores unknown fields — no `#[serde(deny_unknown_fields)]`**
 
@@ -73,7 +73,7 @@ At `cli.rs:25`, `--config` is `Option<String>` instead of `Option<PathBuf>`. cla
 Three High-severity findings block this PR:
 
 1. **Nightly fmt failures** — fix the formatting.
-2. **No `main.rs`** — without a binary entry point, there is literally no CLI. The crate compiles as a library but produces no `axiathon` executable.
+2. **No `main.rs`** — without a binary entry point, there is literally no CLI. The crate compiles as a library but produces no `consumer-project` executable.
 3. **`init` command is a stub for its own story** — the scope document says it must be functional.
 
 The Medium findings on env var validation bypass, missing JSON metadata fields, and silent unknown-field acceptance should also be addressed before approval. The validated-vs-unvalidated API split on `SiemClient` is a design smell that will bite you when someone forgets to call the `_validated` variant.

@@ -34,7 +34,7 @@ findings:
   caught_by: tea
   evidence: "TEA included 'Header injection: CRLF in tenant ID and auth token rejected'\
     \ tests, and Dev implemented CRLF checks in client.rs:56-72. However, the deeper\
-    \ issue \u2014 using raw String instead of validated TenantId from axiathon-core\
+    \ issue \u2014 using raw String instead of validated TenantId from consumer-project-core\
     \ \u2014 was not flagged. Partial credit: injection is prevented but the type-safety\
     \ gap remains."
 - finding_id: I3

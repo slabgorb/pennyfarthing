@@ -40,7 +40,7 @@ findings:
   evidence: "Reviewer flagged [LOW]: 'tenant flag is Option<String> \u2014 should\
     \ use TenantId newtype' citing rust.md rules. Also verified header injection prevention\
     \ via HeaderValue::from_str() rejecting CRLF, but noted the type-safety gap of\
-    \ using raw String instead of TenantId from axiathon-core."
+    \ using raw String instead of TenantId from consumer-project-core."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

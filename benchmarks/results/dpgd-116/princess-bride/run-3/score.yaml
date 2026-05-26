@@ -37,7 +37,7 @@ findings:
   evidence: TEA wrote 'CRLF header injection in tenant ID and auth token (3 tests)'
     and dev implemented CRLF/null byte validation at client.rs:84-92. Same vulnerability
     class (CWE-113 header injection) addressed via runtime validation, though the
-    type-safety fix (using TenantId from axiathon-core) was not adopted.
+    type-safety fix (using TenantId from consumer-project-core) was not adopted.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

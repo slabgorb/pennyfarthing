@@ -17,7 +17,7 @@ The `main.rs` parses arguments via `Cli::parse()` and then **discards** the resu
 - AC-3 (exit codes from the binary) is not satisfied at the integration level
 - AC-10 (stubs print "not yet implemented") never happens from running the binary
 
-The unit tests pass because they test the library functions directly, but running `cargo run -p axiathon-client -- status` silently exits 0.
+The unit tests pass because they test the library functions directly, but running `cargo run -p consumer-project-client -- status` silently exits 0.
 
 ### [HIGH] `with_token()` and `with_tenant()` silently discard invalid input at `client.rs:26-38`
 

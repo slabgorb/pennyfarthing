@@ -16,7 +16,7 @@ findings:
   caught_by: null
   evidence: The reviewer flagged 'unused dependencies' but never mentioned that dependencies
     specify versions inline instead of using workspace = true. The code changes show
-    2 deps added to axiathon-server/Cargo.toml but no mention of workspace-level declarations.
+    2 deps added to consumer-project-server/Cargo.toml but no mention of workspace-level declarations.
 - finding_id: I2
   title: 'FieldErrorCode missing #[non_exhaustive]'
   weight: 5

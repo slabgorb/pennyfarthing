@@ -35,7 +35,7 @@ findings:
   evidence: "The reviewer verified CRLF stripping as correct ('[VERIFIED] Header injection\
     \ prevention'). TEA mentions 'header injection' tests exist. However, the ground\
     \ truth issue is that tenant_id uses raw String instead of validated TenantId\
-    \ from axiathon-core \u2014 this type-safety concern was never flagged. The pipeline\
+    \ from consumer-project-core \u2014 this type-safety concern was never flagged. The pipeline\
     \ concluded the current approach is correct."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

@@ -36,7 +36,7 @@ findings:
   evidence: TEA wrote tests for 'CWE-113 header injection' in siem_client.rs. Reviewer
     also flagged '[HIGH] with_token() and with_tenant() bypass header injection validation'
     noting unchecked methods are public. Same vulnerability class (CWE-113) caught,
-    though specific fix of using TenantId type from axiathon-core was not mentioned.
+    though specific fix of using TenantId type from consumer-project-core was not mentioned.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

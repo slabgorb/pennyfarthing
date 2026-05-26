@@ -20,7 +20,7 @@ The `CliError::ServerError` variant carries a `String` payload, but `#[error("se
 
 **2. [HIGH] Missing `main.rs` — binary entry point does not exist**
 
-AC-3 requires exit code handling via `std::process::exit()` in `main.rs`. AC-7 requires `SiemClient` construction. AC-8 requires config loading orchestration. The story explicitly lists `main.rs` as a required file. Without it, `cargo build --bin axiathon` will fail — there is no binary. The crate is library-only right now. This is a **blocking incompleteness** for Story 6.1.
+AC-3 requires exit code handling via `std::process::exit()` in `main.rs`. AC-7 requires `SiemClient` construction. AC-8 requires config loading orchestration. The story explicitly lists `main.rs` as a required file. Without it, `cargo build --bin consumer-project` will fail — there is no binary. The crate is library-only right now. This is a **blocking incompleteness** for Story 6.1.
 
 **3. [HIGH] Missing 9 of 10 command stub files — `commands/` directory**
 
@@ -54,7 +54,7 @@ The `as u64` cast at line 63 is unchecked. While the `t <= 0` guard above preven
 
 **10. [MEDIUM] Stub handler tests are vacuous — `stub_handlers.rs`**
 
-The stub tests construct `CliError::NotImplemented` directly and check its `Display` output. They don't test actual command dispatch. When `main.rs` and command modules exist, a user running `axiathon status` should get the NotImplemented error — but that code path doesn't exist and isn't tested. These tests verify the error type, not the integration.
+The stub tests construct `CliError::NotImplemented` directly and check its `Display` output. They don't test actual command dispatch. When `main.rs` and command modules exist, a user running `consumer-project status` should get the NotImplemented error — but that code path doesn't exist and isn't tested. These tests verify the error type, not the integration.
 
 **11. [MEDIUM] `config_handles_unknown_fields_gracefully` test has vacuous assertion — `config_loading.rs:219-222`**
 
@@ -130,7 +130,7 @@ The High findings are:
 
 *The gunslinger does not approve. The tower stands, but the foundation is incomplete.*
 
-The code that exists is well-structured, secure (header injection prevention, `deny_unknown_fields`, `#[non_exhaustive]`, CWE-209 mitigation), and the tests are solid for what they cover. But Story 6.1 requires a working `axiathon` binary with command dispatch, and the binary entry point (`main.rs`) doesn't exist. Nine of ten command modules are missing. The nightly `rustfmt` check fails with 324 lines of diff. These are not polish issues — they're structural incompleteness.
+The code that exists is well-structured, secure (header injection prevention, `deny_unknown_fields`, `#[non_exhaustive]`, CWE-209 mitigation), and the tests are solid for what they cover. But Story 6.1 requires a working `consumer-project` binary with command dispatch, and the binary entry point (`main.rs`) doesn't exist. Nine of ten command modules are missing. The nightly `rustfmt` check fails with 324 lines of diff. These are not polish issues — they're structural incompleteness.
 
 **Required before approval:**
 1. Create `main.rs` with command dispatch, config loading, exit code handling

@@ -27,6 +27,6 @@
 
 **Cargo.toml changes:**
 - Added workspace deps: `reqwest`, `clap_complete`, `comfy-table`, `dirs`, `csv`, `toml`, `tempfile`, `assert_cmd`
-- Updated `axiathon-client/Cargo.toml` with all Story 6.1 dependencies and `[[bin]]` target
+- Updated `consumer-project-client/Cargo.toml` with all Story 6.1 dependencies and `[[bin]]` target
 
 **Handoff:** To Dev for implementation (GREEN phase)

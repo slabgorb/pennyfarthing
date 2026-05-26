@@ -8,19 +8,19 @@ I've now read all production code, all test files, run tests (all pass), run cli
 
 ### [HIGH] Missing `login.rs` and `init.rs` command modules — `commands/mod.rs` at `:1`
 
-The story spec explicitly requires `commands/login.rs`, `commands/init.rs`, and `commands/completion.rs` as files. The `cli.rs` `Commands` enum defines `Login`, `Logout`, `Tui`, `Completion`, and `Init` variants, but `commands/mod.rs` only re-exports 8 modules — missing `login`, `init`. There are no `login.rs` or `init.rs` files in `commands/`. The `Completion` and `Init` commands are specified as **functional** (not stubs) per AC-9 and AC-10 notes. `completion.rs` exists and is functional, but `init.rs` is completely absent. Login/logout are stubs (Story 9.1) but still need a file with a stub handler. The `Commands` enum includes these variants but there's no dispatch code in `main.rs` that routes them — `main.rs` just prints "axiathon CLI" and exits.
+The story spec explicitly requires `commands/login.rs`, `commands/init.rs`, and `commands/completion.rs` as files. The `cli.rs` `Commands` enum defines `Login`, `Logout`, `Tui`, `Completion`, and `Init` variants, but `commands/mod.rs` only re-exports 8 modules — missing `login`, `init`. There are no `login.rs` or `init.rs` files in `commands/`. The `Completion` and `Init` commands are specified as **functional** (not stubs) per AC-9 and AC-10 notes. `completion.rs` exists and is functional, but `init.rs` is completely absent. Login/logout are stubs (Story 9.1) but still need a file with a stub handler. The `Commands` enum includes these variants but there's no dispatch code in `main.rs` that routes them — `main.rs` just prints "consumer-project CLI" and exits.
 
 ### [HIGH] `main.rs` is a dead stub — no command dispatch at `main.rs:3`
 
 `main.rs` currently does:
 ```rust
 fn main() {
-    println!("axiathon CLI");
+    println!("consumer-project CLI");
 }
 ```
 
 It never parses CLI args, never dispatches to commands, never maps errors to exit codes, never initializes tracing. The entire `Cli` struct, `Commands` enum, `SiemClient`, `ClientConfig`, `OutputFormatter`, and all command handlers are **dead code from the binary's perspective**. The binary does nothing. This means:
-- AC-1 (`axiathon --help` shows command groups): **FAILS** — binary ignores arguments
+- AC-1 (`consumer-project --help` shows command groups): **FAILS** — binary ignores arguments
 - AC-3 (exit codes): **FAILS** — binary always exits 0
 - AC-9 (shell completion): **FAILS** — binary doesn't route to completion handler
 - AC-10 (stub messages): **FAILS** — binary doesn't route to stubs
@@ -33,7 +33,7 @@ The tests pass only because they exercise the library API directly, never the bi
 
 ### [MEDIUM] Edition mismatch: crate uses 2021, workspace declares 2024 — `Cargo.toml:2`
 
-`crates/axiathon-client/Cargo.toml` has `edition = "2021"` but the workspace `[workspace.package]` declares `edition = "2024"`. Since the crate doesn't use `edition.workspace = true`, it silently overrides to 2021. This dodges the 2024 edition's `unsafe` requirement on `set_var`/`remove_var` but contradicts the project's stated MSRV/edition policy. Either the crate should use `edition.workspace = true` (and fix the `set_var` calls), or the divergence needs explicit justification.
+`crates/consumer-project-client/Cargo.toml` has `edition = "2021"` but the workspace `[workspace.package]` declares `edition = "2024"`. Since the crate doesn't use `edition.workspace = true`, it silently overrides to 2021. This dodges the 2024 edition's `unsafe` requirement on `set_var`/`remove_var` but contradicts the project's stated MSRV/edition policy. Either the crate should use `edition.workspace = true` (and fix the `set_var` calls), or the divergence needs explicit justification.
 
 ### [MEDIUM] `RawConfig` silently ignores unknown fields — `config.rs:7-15`
 
@@ -68,7 +68,7 @@ Story spec says `toml 0.9` but `Cargo.toml` declares `toml = "0.8"`. Minor, but 
 ### [VERIFIED] `CliError::Display` does not leak `InternalDetail` strings to user-facing output
 ### [VERIFIED] Token not loadable from config file — `config.rs:101-104` correctly returns `None`
 ### [VERIFIED] Exit code mapping covers all required codes (0/1/2/3/4)
-### [VERIFIED] All workspace dependencies properly declared; `axiathon-core` is the only internal dep
+### [VERIFIED] All workspace dependencies properly declared; `consumer-project-core` is the only internal dep
 
 ---
 

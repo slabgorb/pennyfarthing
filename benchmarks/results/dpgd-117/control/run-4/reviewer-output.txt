@@ -4,8 +4,8 @@
 
 ## Preflight Results
 
-- `cargo test -p axiathon-server`: **69/69 pass**
-- `cargo clippy -p axiathon-server -- -D warnings`: **clean**
+- `cargo test -p consumer-project-server`: **69/69 pass**
+- `cargo clippy -p consumer-project-server -- -D warnings`: **clean**
 - `cargo +nightly fmt --all --check`: **FAILS** (formatting diffs in `api_versioning.rs`)
 
 ---
@@ -18,7 +18,7 @@ The reviewer gotchas document (`gotchas.md`) explicitly states: *"Always include
 
 ### 2. `[HIGH]` 10 unused production dependencies — `Cargo.toml:9-22`
 
-`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber`, and `tokio` are declared as production dependencies but **zero imports** from any of them exist in `src/`. This bloats compile time, inflates the dependency graph, and increases attack surface for no benefit. Only `axum`, `chrono`, `serde`, `serde_json`, and `uuid` are actually used.
+`consumer-project-core`, `consumer-project-detection`, `consumer-project-ingestion`, `consumer-project-ot`, `consumer-project-query`, `consumer-project-storage`, `thiserror`, `tracing`, `tracing-subscriber`, and `tokio` are declared as production dependencies but **zero imports** from any of them exist in `src/`. This bloats compile time, inflates the dependency graph, and increases attack surface for no benefit. Only `axum`, `chrono`, `serde`, `serde_json`, and `uuid` are actually used.
 
 ### 3. `[HIGH]` Rate limiter is permanently blocking — no time window — `rate_limit.rs:18-34`
 
@@ -87,7 +87,7 @@ Correctly placed outside auth middleware at `/.well-known/jwks.json`.
 Three HIGH findings block approval:
 
 1. **Fix nightly fmt** — run `cargo +nightly fmt --all` and commit.
-2. **Remove unused dependencies** — strip `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber`, `tokio` from `[dependencies]` (keep the ones that are actually imported).
+2. **Remove unused dependencies** — strip `consumer-project-core`, `consumer-project-detection`, `consumer-project-ingestion`, `consumer-project-ot`, `consumer-project-query`, `consumer-project-storage`, `thiserror`, `tracing`, `tracing-subscriber`, `tokio` from `[dependencies]` (keep the ones that are actually imported).
 3. **Rate limiter needs a time window** — either use `tower-governor` as the story specifies, or at minimum implement a sliding window with expiry so tenants aren't permanently blocked. The current design is a production DoS on your own tenants.
 
 The MEDIUM findings (naming, `#[non_exhaustive]`, empty `AppState`, tracing, `AuthInfo` visibility) should be addressed but are not individually blocking.
