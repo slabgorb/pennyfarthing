@@ -351,7 +351,10 @@ def backfill_epics(output_json: bool):
 
 @sprint.group()
 def story():
-    """Story operations (show, add, update, size, template, finish, claim)."""
+    """Story operations (lifecycle: add, move, remove, update, finish).
+
+    Also: show, size, template, claim, split, field.
+    """
     pass
 
 
@@ -531,6 +534,11 @@ story.add_command(story_split_command, "split")
 from pf.sprint.story_remove import story_remove_command  # noqa: E402
 
 story.add_command(story_remove_command, "remove")
+
+# Register story-move as story.move
+from pf.sprint.story_move import story_move_command  # noqa: E402
+
+story.add_command(story_move_command, "move")
 
 
 # --- Epic subgroup ---

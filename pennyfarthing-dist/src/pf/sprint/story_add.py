@@ -300,6 +300,13 @@ def add_initiative_story(
 )
 @click.option("--repos", type=str, default="pennyfarthing", help="Repos (default: pennyfarthing)")
 @click.option("--depends-on", type=str, default=None, help="Story ID this depends on (stacked PRs)")
+@click.option(
+    "--epic",
+    "epic_override",
+    type=str,
+    default=None,
+    help="Target epic ID — overrides the positional EPIC_ID",
+)
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def story_add_command(
     epic_id: str | None,
@@ -313,6 +320,7 @@ def story_add_command(
     initiative: str | None,
     repos: str,
     depends_on: str | None,
+    epic_override: str | None,
     dry_run: bool,
 ) -> None:
     """Add a new story to an epic or initiative.
@@ -361,8 +369,9 @@ def story_add_command(
         else:
             raise click.ClickException(result["error"])
     else:
-        # Epic mode: all three positional args required
-        if epic_id is None:
+        # Epic mode: --epic overrides the positional EPIC_ID when supplied.
+        target_epic = epic_override or epic_id
+        if target_epic is None:
             raise click.ClickException("EPIC_ID is required")
         if title is None:
             raise click.ClickException("TITLE is required")
@@ -370,7 +379,7 @@ def story_add_command(
             raise click.ClickException("POINTS is required")
 
         if dry_run:
-            click.echo(f"[DRY-RUN] Would add story to epic {epic_id}: {title} [{points}pts]")
+            click.echo(f"[DRY-RUN] Would add story to epic {target_epic}: {title} [{points}pts]")
             return
 
         if sprint_file is None:
@@ -382,7 +391,7 @@ def story_add_command(
 
         result = add_story(
             sprint_path=path,
-            epic_id=epic_id,
+            epic_id=target_epic,
             title=title,
             points=points,
             story_type=story_type if story_type != "feature" else None,
