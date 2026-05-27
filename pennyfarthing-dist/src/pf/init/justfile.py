@@ -18,7 +18,6 @@ FRAMEWORK_RECIPES: frozenset[str] = frozenset(
         "frame-stop",
         "dashboard",
         "tui",
-        "gui",
         "claude",
         "start",
         "start-at",

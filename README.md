@@ -36,7 +36,7 @@ The 45 persona themes (Discworld, Star Trek, Breaking Bad, Alice in Wonderland, 
 
 ### 3. Integration & Tooling
 
-- **Frame** - Dashboard panel viewer for CLI-first developers — browser GUI or terminal TUI alongside Claude Code
+- **Frame** - Dashboard panel viewer for CLI-first developers — terminal TUI alongside Claude Code
 - **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity
 - **Sprint Management** - Story tracking with `current-sprint.yaml`
 - **Codebase Analysis** - Hotspots, complexity, dead code, dependencies, code markers, and health score via `pf debug`
@@ -128,7 +128,6 @@ Pennyfarthing works in any terminal. Optional dashboards add real-time visibilit
 | I want to... | Mode | Command |
 |--------------|------|---------|
 | Just use agents in my terminal | **CLI only** | `claude` (no dashboard needed) |
-| See dashboards in my browser | **Frame GUI** | `just gui` + `just claude` |
 | Stay fully in the terminal | **Frame TUI** | `just tui` + `just claude` |
 | One command, everything | **Frame all-in-one** | `pf frame start` |
 
