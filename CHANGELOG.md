@@ -229,7 +229,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **BREAKING: React GUI and Electron app removed** — All JavaScript/TypeScript application code removed; framework is now Python-only (ADR-0034)
+- **BREAKING: React GUI and Electron app removed** — All JavaScript/TypeScript application code removed; framework is now Python-only (ADR-0039)
 - **Reviewer specialist subagents** — 6 specialist subagents (silent-failure, test, comment, type-design, security, simplifier) plus existing preflight and edge-hunter = 8 parallel Haiku subagents (PROJ-16335, #1324)
 - **Benchmark pipeline upgrade** — Pipeline replay exercises full Pennyfarthing machinery including workflow phases and gate enforcement (PROJ-16336, #1326)
 - **BMAD pipeline replay adapter** — Wire BMAD adapter into pipeline replay harness (142-3)
