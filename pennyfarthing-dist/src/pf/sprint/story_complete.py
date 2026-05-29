@@ -15,7 +15,7 @@ from pf.sprint.yaml_io import read_sprint
 
 def _check_complete_box(plan_file: Path, story_id: str, *, dry_run: bool) -> bool:
     """Flip the `- [ ]` -> `- [x]` on the line invoking complete for this story."""
-    needle = f"pf sprint story complete {story_id}"
+    needle = f"**Story {story_id} complete**"
     lines = plan_file.read_text().splitlines()
     for i, ln in enumerate(lines):
         if needle in ln and "- [ ]" in ln:
