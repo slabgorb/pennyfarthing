@@ -23,7 +23,7 @@ def _rel_plan(plan_path: Path, root: Path) -> str:
     try:
         return str(plan_path.resolve().relative_to(root.resolve()))
     except ValueError:
-        return str(plan_path)
+        return str(plan_path.resolve())
 
 
 def _story_with_ref(epic: dict[str, Any], ref: str) -> dict[str, Any] | None:
@@ -93,6 +93,7 @@ def epic_from_plan(
     lines = plan_file.read_text().splitlines()
 
     for task in tasks:
+        # positional anchor — renumbering tasks in an edited plan will not match prior refs (may create a new story)
         ref = f"plan:{rel}#{task.anchor}"
         data = read_sprint(sprint_path)
         epic = find_epic(data, epic_id)
@@ -110,6 +111,7 @@ def epic_from_plan(
         res = add_story(
             sprint_path, epic_id, task.title, default_points,
             workflow="superpowers", repos=repos_str, plan_ref=ref,
+            priority="p1",
         )
         if not res.get("success"):
             return {"success": False, "error": f"Task {task.number}: {res.get('error')}"}

@@ -56,7 +56,9 @@ def test_annotates_plan_with_closing_step(tmp_path):
     res = epic_from_plan(sprint_file, plan, "99", project_root=tmp_path)
     text = plan.read_text()
     sid0 = res["created"][0]
+    sid1 = res["created"][1]
     assert f"pf sprint story complete {sid0}" in text
+    assert f"pf sprint story complete {sid1}" in text
 
 
 def test_idempotent_rerun_skips_existing(tmp_path):
