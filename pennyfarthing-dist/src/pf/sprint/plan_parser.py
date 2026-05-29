@@ -27,12 +27,21 @@ def parse_plan(text: str) -> list[PlanTask]:
 
     A Task block runs from its ``### Task N:`` header until the next ``### ``
     or ``## `` header (or EOF). File paths come from ``- Create:``/``- Modify:``/
-    ``- Test:`` bullets; any ``:line-range`` suffix is stripped.
+    ``- Test:`` bullets; any ``:line-range`` suffix is stripped. Lines inside
+    fenced code blocks (``` or ~~~) are ignored, so example task headers in code
+    samples are not mistaken for real tasks.
     """
     tasks: list[PlanTask] = []
     current: PlanTask | None = None
+    in_fence = False
 
     for line in text.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
         m = _TASK_RE.match(line)
         if m:
             current = PlanTask(number=int(m.group(1)), title=m.group(2))

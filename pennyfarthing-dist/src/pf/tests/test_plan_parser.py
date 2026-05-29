@@ -58,3 +58,20 @@ def test_anchor_is_task_n():
 
 def test_empty_plan_returns_empty():
     assert parse_plan("# Nothing here\n") == []
+
+
+def test_ignores_task_headers_inside_code_fences():
+    text = (
+        "### Task 1: Real task\n\n"
+        "Here is an example plan in a code block:\n\n"
+        "```\n"
+        "### Task 2: Fake task in a fence\n"
+        "- Create: `should/not/count.py`\n"
+        "```\n\n"
+        "### Task 3: Another real task\n"
+    )
+    tasks = parse_plan(text)
+    assert [t.number for t in tasks] == [1, 3]
+    assert [t.title for t in tasks] == ["Real task", "Another real task"]
+    # the fenced Create: path must not attach to Task 1
+    assert tasks[0].files == []
