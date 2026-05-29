@@ -70,6 +70,7 @@ def add_story(
     jira: str | None = None,
     repos: str | None = None,
     depends_on: str | None = None,
+    refs: str | None = None,
 ) -> dict[str, Any]:
     """Add a new story to an epic in the sprint YAML.
 
@@ -116,6 +117,8 @@ def add_story(
         fields["repos"] = repos
     if depends_on is not None:
         fields["depends_on"] = depends_on
+    if refs is not None:
+        fields["refs"] = refs
     if story_type is not None:
         fields["type"] = story_type
 
@@ -289,7 +292,7 @@ def add_initiative_story(
 @click.option(
     "--priority", type=click.Choice(["p0", "p1", "p2", "p3"], case_sensitive=False), default="p1"
 )
-@click.option("--workflow", type=click.Choice(["tdd", "trivial", "bdd"]), default="tdd")
+@click.option("--workflow", type=click.Choice(["tdd", "trivial", "bdd", "superpowers"]), default="tdd")
 @click.option("--jira", "jira_id", type=str, default=None)
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 @click.option(
