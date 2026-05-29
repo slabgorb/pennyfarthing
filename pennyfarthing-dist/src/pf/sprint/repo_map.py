@@ -14,7 +14,7 @@ def map_path_to_repo(file_path: str, repos: dict[str, RepoConfig]) -> str | None
     used only when no more-specific repo prefix matches. Returns None when no
     repo matches and there is no ``"."`` repo.
     """
-    norm = file_path.strip()
+    norm = file_path
     if norm.startswith("./"):
         norm = norm[2:]
 
@@ -23,7 +23,7 @@ def map_path_to_repo(file_path: str, repos: dict[str, RepoConfig]) -> str | None
     dot_repo: str | None = None
 
     for name, rc in repos.items():
-        rp = rc.path.strip()
+        rp = rc.path
         if rp in (".", ""):
             dot_repo = name
             continue
