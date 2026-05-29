@@ -540,6 +540,11 @@ from pf.sprint.story_move import story_move_command  # noqa: E402
 
 story.add_command(story_move_command, "move")
 
+# Register story-complete as story.complete
+from pf.sprint.story_complete import story_complete_command  # noqa: E402
+
+story.add_command(story_complete_command, "complete")
+
 
 # --- Epic subgroup ---
 
