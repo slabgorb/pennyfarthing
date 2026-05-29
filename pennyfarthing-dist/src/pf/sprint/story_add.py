@@ -70,7 +70,7 @@ def add_story(
     jira: str | None = None,
     repos: str | None = None,
     depends_on: str | None = None,
-    refs: str | None = None,
+    plan_ref: str | None = None,
 ) -> dict[str, Any]:
     """Add a new story to an epic in the sprint YAML.
 
@@ -83,6 +83,7 @@ def add_story(
         priority: Priority (default: P1)
         workflow: Workflow (default: tdd)
         jira: Optional Jira key
+        plan_ref: Optional plan back-link string (e.g. "plan:path/to/plan.md#task-1")
 
     Returns:
         Dict with success status and story_id or error
@@ -117,8 +118,8 @@ def add_story(
         fields["repos"] = repos
     if depends_on is not None:
         fields["depends_on"] = depends_on
-    if refs is not None:
-        fields["refs"] = refs
+    if plan_ref is not None:
+        fields["plan_ref"] = plan_ref
     if story_type is not None:
         fields["type"] = story_type
 
