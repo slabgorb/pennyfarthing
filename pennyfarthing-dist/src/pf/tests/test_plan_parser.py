@@ -1,4 +1,4 @@
-from pf.sprint.plan_parser import PlanTask, parse_plan  # noqa: F401
+from pf.sprint.plan_parser import PlanTask, parse_plan
 
 SAMPLE = """\
 # Some Plan
@@ -43,12 +43,17 @@ def test_extracts_files_stripping_line_ranges():
 
 def test_section_header_ends_task_block():
     tasks = parse_plan(SAMPLE)
-    assert all(t.number in (1, 2) for t in tasks)
+    titles = [t.title for t in tasks]
+    assert "Closing Section" not in titles
+    # Task 2 files must not include anything bled from the ## block
+    assert tasks[1].files == ["sidequest-server/app.py"]
 
 
 def test_anchor_is_task_n():
     tasks = parse_plan(SAMPLE)
+    assert isinstance(tasks[0], PlanTask)
     assert tasks[0].anchor == "task-1"
+    assert PlanTask(number=3, title="X").anchor == "task-3"
 
 
 def test_empty_plan_returns_empty():

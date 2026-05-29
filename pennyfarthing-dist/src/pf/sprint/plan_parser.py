@@ -44,7 +44,7 @@ def parse_plan(text: str) -> list[PlanTask]:
         if current is not None:
             fm = _FILE_RE.match(line)
             if fm:
-                path = fm.group(1).split(":")[0].strip()
+                path = fm.group(1).split(":")[0].strip()  # strip optional :line-range suffix
                 if path and path not in current.files:
                     current.files.append(path)
 
