@@ -81,10 +81,12 @@ def close(epic_id: str):
 # Register sprint epic subcommands on this group for discoverability.
 # Click allows the same command object to be registered on multiple groups.
 from pf.sprint.epic_add import epic_add_command  # noqa: E402
+from pf.sprint.epic_from_plan import epic_from_plan_command  # noqa: E402
 from pf.sprint.epic_reindex import epic_reindex_command  # noqa: E402
 from pf.sprint.epic_update import epic_update_command  # noqa: E402
 
 epic.add_command(epic_add_command, "add")
+epic.add_command(epic_from_plan_command, "from-plan")
 epic.add_command(epic_update_command, "update")
 epic.add_command(epic_reindex_command, "reindex")
 

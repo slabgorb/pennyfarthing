@@ -56,6 +56,7 @@ STORY_KEY_ORDER: list[str] = [
     "points",
     "priority",
     "refs",
+    "plan_ref",
     "status",
     "in_sprint",
     "assigned_to",
