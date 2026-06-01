@@ -15,7 +15,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Staffer
-  portrait_style: ", 19th century political cartoon style, bold ink linework, ink on paper, muted colors"
+  portrait_style: ", 19th-century political-cartoon illustration, bold pen-and-ink linework, ink-on-paper crosshatching, muted editorial palette, dignified satirical style"
   tier: B
   optimized: true
   spinner_verbs:
@@ -98,7 +98,7 @@ agents:
     shortName: Jed
   sm:
     character: Leo McGarry
-    visual: "Adult man in his mid-sixties, deeply lined face, disheveled silver hair, dark eyes behind rectangular reading glasses, rumpled white dress shirt with tie loosened and top button undone, coffee cup gripped in one hand. Standing in a cramped government office with stacks of papers and thick briefing binders covering every surface"
+    visual: "Adult man in his mid-sixties, disheveled silver hair, dark eyes behind rectangular reading glasses, rumpled white dress shirt with tie loosened and top button undone, coffee cup gripped in one hand. Standing in a cramped government office with stacks of papers and thick briefing binders covering every surface"
     ocean:
       O: 3
       C: 5

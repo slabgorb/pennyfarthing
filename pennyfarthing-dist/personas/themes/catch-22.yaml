@@ -15,7 +15,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Soldier
-  portrait_style: ", WWII allied propaganda poster, no words or text, red white and blue color scheme"
+  portrait_style: ", WWII Allied propaganda-poster illustration, bold flat shapes, red white and blue palette, heavy printed ink, dramatic upward heroic angle"
   tier: U
   optimized: true
   dimensions:
@@ -302,7 +302,7 @@ agents:
     shortName: Chaplain
   devops:
     character: Chief White Halfoat
-    visual: "An adult intelligence officer with weathered brown skin, dark eyes under heavy brows, close-cropped dark hair, wearing a rumpled military field uniform, seated on a cot in a canvas tent with hands resting loosely on his knees, several tall oil derrick silhouettes visible through the open tent flap behind him, hands resting loosely on his knees, back straight"
+    visual: "An adult intelligence officer with brown skin, dark eyes under heavy brows, close-cropped dark hair, wearing a rumpled military field uniform, seated on a cot in a canvas tent with hands resting loosely on his knees, several tall oil derrick silhouettes visible through the open tent flap behind him, hands resting loosely on his knees, back straight"
     ocean:
       O: 3
       C: 3

@@ -20,7 +20,7 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_prefix: "Watercolor painting on rough paper:"
-  portrait_style: ", soft washes, visible paper texture, warm muted palette"
+  portrait_style: ", Alan Lee and John Howe-style watercolor illustration, soft atmospheric washes, visible paper texture, muted earthy palette, delicate pencil underdrawing"
   negative_prompt: "photorealistic, glossy, 3d render, digital art, smooth skin, airbrushed, photograph, sharp focus"
   tier: D
   optimized: true

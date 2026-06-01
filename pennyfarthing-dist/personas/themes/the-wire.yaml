@@ -15,7 +15,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Partner
-  portrait_style: ", gritty urban screenprinted-poster style, Baltimore street scenes"
+  portrait_style: ", gritty urban screen-printed poster illustration, halftone texture, limited high-contrast palette, raw stencil-style rendering"
   tier: S
   optimized: true
   spinner_verbs:
@@ -70,7 +70,7 @@ zeitgeist:
 agents:
   orchestrator:
     character: The Greek
-    visual: "An adult older man with thinning gray hair, weathered olive-toned skin, and heavy-lidded dark eyes, wearing an expensive but understated charcoal suit with a white dress shirt, a gold watch on his wrist, seated or standing at a slight angle, expression neutral, lips together, gaze level and steady"
+    visual: "An adult older man with thinning gray hair, an olive complexion, and dark eyes, wearing an expensive but understated charcoal suit with a white dress shirt, a gold watch on his wrist, seated or standing at a slight angle, expression neutral, lips together, gaze level and steady"
     ocean:
       O: 3
       C: 4
@@ -228,7 +228,7 @@ agents:
 
   pm:
     character: Major Colvin (Bunny)
-    visual: "An adult weathered white man in his fifties with salt-and-pepper hair cropped short, wearing a dark police major's dress uniform with gold oak-leaf clusters on the collar and a badge on the chest, standing upright, mouth in a flat line, eyes looking ahead with slightly lowered brows"
+    visual: "An adult white man in his fifties with salt-and-pepper hair cropped short, wearing a dark police major's dress uniform with gold oak-leaf clusters on the collar and a badge on the chest, standing upright, mouth in a flat line, eyes looking ahead with slightly lowered brows"
     ocean:
       O: 4
       C: 4

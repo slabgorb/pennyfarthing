@@ -15,7 +15,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Patient
-  portrait_style: ", medical book, anatomy chart, medical illustrations"
+  portrait_style: ", vintage medical-textbook illustration, anatomical-plate engraving style, fine cross-hatched linework, muted clinical ink-and-wash palette"
   tier: S
   optimized: true
   spinner_verbs:

@@ -15,7 +15,7 @@ theme:
   default_humor: subtle
   character_immersion: medium
   user_title: Colleague
-  portrait_style: ", woodcut engraving, scientific journal illustration, fine crosshatching, black ink on cream paper"
+  portrait_style: ", woodcut-engraving illustration, scientific-journal plate style, fine crosshatching, black ink on cream paper, dignified composition"
   tier: U
   optimized: true
   spinner_verbs:
@@ -372,7 +372,7 @@ agents:
 
   ba:
     character: Peter Drucker
-    visual: "An adult older man with thinning white hair, heavy-framed glasses, and deep-set eyes, wearing a dark business suit with a white shirt and plain tie, holding a closed hardbound book under one arm, head tilted slightly to one side, gaze directed at the viewer, brow gently furrowed"
+    visual: "An adult older man with thinning white hair, heavy-framed glasses, and dark eyes, wearing a dark business suit with a white shirt and plain tie, holding a closed hardbound book under one arm, head tilted slightly to one side, gaze directed at the viewer, brow gently furrowed"
     ocean:
       O: 5          # Management innovation, knowledge work concept
       C: 5 # Systematic methodology, rigorous analysis

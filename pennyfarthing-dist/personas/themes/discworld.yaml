@@ -16,7 +16,7 @@ theme:
   character_immersion: high
   user_title: Citizen of Ankh-Morpork
   portrait_prefix: "Watercolor painting on rough paper:"
-  portrait_style: ", soft washes, visible paper texture, warm muted palette"
+  portrait_style: ", loose watercolor-and-ink illustration, soft transparent washes, visible cold-press paper texture, warm muted earthy palette, gentle expressive linework"
   negative_prompt: "photorealistic, glossy, 3d render, digital art, smooth skin, airbrushed, photograph, sharp focus"
   tier: A
   dimensions:

@@ -14,7 +14,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Dear Client
-  portrait_style: ", Victorian detective, gaslight and fog, Baker Street, Victorian pen and ink"
+  portrait_style: ", Victorian pen-and-ink illustration, fine cross-hatching, gaslit fog atmosphere, sepia-and-ink wash, 1890s periodical-engraving style"
   tier: A
   optimized: true
   spinner_verbs:
@@ -126,7 +126,7 @@ agents:
     shortName: John
   tea:
     character: Sherlock Holmes
-    visual: "A tall, lean adult figure in a purple dressing gown over a dark Victorian shirt, sharp aquiline nose, deep-set grey eyes, high cheekbones, holding a magnifying glass in long thin fingers, calabash pipe clenched between teeth, cluttered Victorian sitting room behind him with chemical apparatus on a side table and papers strewn across the floor"
+    visual: "A tall, lean adult figure in a purple dressing gown over a dark Victorian shirt, sharp aquiline nose, grey eyes, high cheekbones, holding a magnifying glass in long thin fingers, calabash pipe clenched between teeth, cluttered Victorian sitting room behind him with chemical apparatus on a side table and papers strewn across the floor"
     ocean:
       O: 5
       C: 5
