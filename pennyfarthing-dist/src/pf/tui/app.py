@@ -10,6 +10,7 @@ Panel navigation: Mount all panels, tab bar, keyboard switching, command palette
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 import termios
@@ -39,6 +40,8 @@ from pf.tui.progress_panel import ProgressPanel
 from pf.tui.repos_panel import ReposPanel
 from pf.tui.settings_panel import SettingsPanel
 from pf.tui.sprint_panel import SprintPanel
+
+logger = logging.getLogger(__name__)
 
 STATE_DISPLAY: dict[ConnectionState, str] = {
     ConnectionState.CONNECTED: "[green]● Connected[/green]",
@@ -413,8 +416,18 @@ class AgentHeader(Static):
                     img.styles.width = w
                     img.styles.height = h
                     row.styles.height = rh
-            except (ImportError, Exception):
-                # Image mount failed — reset cache so next update retries
+            except Exception:
+                # Image mount failed — e.g. textual-image broken/missing, or a
+                # widget mount error. Log it (a real failure must not vanish, as
+                # the empty textual-image 0.13.1 wheel once did), then degrade
+                # gracefully to the text-only header. This is distinct from the
+                # protocol-is-None branch above, which is expected (no graphics
+                # terminal) and intentionally silent.
+                logger.warning(
+                    "Portrait render failed for %s; falling back to text-only header",
+                    event.portrait_path,
+                    exc_info=True,
+                )
                 self._current_portrait = None
                 for child in list(self.query("Horizontal")):
                     await child.remove()

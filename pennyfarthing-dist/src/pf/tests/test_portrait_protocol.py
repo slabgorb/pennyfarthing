@@ -71,3 +71,18 @@ def test_tmux_with_no_graphics_host_is_not_kitty(clean_env):
     clean_env.setenv("TERM_PROGRAM", "tmux")
     clean_env.setenv("TMUX", "/tmp/tmux-501/default,123,0")
     assert detect_image_protocol() != "kitty"
+
+
+def test_textual_image_widgets_importable():
+    """Regression guard for the empty-wheel class of bug.
+
+    textual-image 0.13.1 shipped a wheel with no Python modules, so the TUI's
+    `from textual_image.widget import TGPImage` raised ModuleNotFoundError and
+    the portrait header silently degraded to text. pyproject pins <0.13 to keep
+    a release that actually ships the widgets the TUI imports (app.py).
+    """
+    from textual_image.widget import HalfcellImage, SixelImage, TGPImage
+
+    assert TGPImage is not None
+    assert SixelImage is not None
+    assert HalfcellImage is not None
