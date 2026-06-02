@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.2.0] - 2026-06-02
+
+### Added
+
+- **Epic-as-unit conductor** — `/pf-epic` repurposed as a superpowers conductor (brainstorm → plan → materialize → execute → review); `pf epic from-plan` generates sprint stories from a superpowers plan and annotates it; `pf sprint story complete` flips status and verifies the plan checkbox; distinct `plan_ref` field links stories to their source plan
+- **Plan parser + repo map** — `sprint/plan_parser.py` extracts tasks from superpowers plans (ignoring fenced code); `repo_map` resolves file paths to repos
+- **Z-Image portrait pipeline** — Z-Image `portrait_style` rewrite across themes; LOD fanout (small/medium/large/original) from a 512px master; R2 `--variants` sync of the full multi-resolution set; portrait masters stored in git LFS
+- **Portrait render tooling** — `regen-from-daemon.py` renders missing portraits via the sidequest Z-Image daemon and auto-slices LODs; `render-all-portraits.sh` drives the full render → store pipeline on a render box with daemon-OOM resume
+
+### Fixed
+
+- **TUI kitty-graphics under tmux** — detect the kitty graphics protocol through tmux/screen via leaked host-terminal env (Ghostty); `python -m pf.tui` routes through `app.main` so the detached path applies the tmux passthrough patch; portrait render failures are logged instead of swallowed
+- **textual-image pin** — pinned `<0.13` (the 0.13.1 wheel ships no modules and broke the TUI import on py3.14)
+- **Sprint reliability (153-x)** — jira subcommands gated on enabled config; context-story files generated during sm-setup; `pf sprint story move` + `story add --epic`; branch creation skipped on trunk-based (main-only) repos; canonical `.session/` path with legacy migration
+
+### Changed
+
+- **GUI references scrubbed** — removed stale GUI references and the dead gui recipe (ADR-0039)
+
 ## [13.1.2] - 2026-03-23
 
 ### Added
