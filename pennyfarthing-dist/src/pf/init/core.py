@@ -14,6 +14,7 @@ of portrait data per consumer.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -340,6 +341,7 @@ def init_project(
     dist_root: Path,
     dry_run: bool = False,
     skip_hooks: bool = False,
+    force_portraits: bool = False,
 ) -> dict:
     """Initialize a Pennyfarthing project.
 
@@ -351,6 +353,9 @@ def init_project(
         target_dir: Directory to initialize
         dist_root: Path to pennyfarthing-dist source
         dry_run: If True, show plan without executing
+        skip_hooks: If True, leave settings.local.json hooks untouched
+        force_portraits: If True, re-copy the shared portrait cache even when
+            the version and content fingerprint already match
 
     Returns:
         Result dict: {success: bool, data?: dict, error?: str}
@@ -431,7 +436,7 @@ def init_project(
         symlinks_fixed = _ensure_dogfooding_symlinks(target_dir)
 
         # Skip portrait symlinking — personas dir is already a symlink
-        portrait_result = _install_portraits(dist_root)
+        portrait_result = _install_portraits(dist_root, force=force_portraits)
         portraits_linked = False
 
     else:
@@ -477,7 +482,7 @@ def init_project(
                 _copy_tree(dist_root / dir_name, target_dir / ".claude" / "agents")
 
         # --- Centralize portraits to shared XDG location ---
-        portrait_result = _install_portraits(dist_root)
+        portrait_result = _install_portraits(dist_root, force=force_portraits)
         portraits_linked = _symlink_portraits(target_dir)
 
         symlinks_fixed = 0
@@ -1122,6 +1127,27 @@ def _is_lfs_pointer(file_path: Path) -> bool:
         return False
 
 
+def _compute_portraits_fingerprint(source: Path) -> str:
+    """Cheap, stat-only fingerprint of portrait source content.
+
+    Hashes the sorted ``{relpath}\\t{size}`` line for every ``*.png`` under
+    ``source``. This detects added, removed, and resized portraits without
+    reading pixel data, so the XDG cache can be refreshed when content changes
+    within a single pf version (renders, resizes, restyles). It does NOT depend
+    on mtime, keeping the result stable across git checkouts and copies.
+    """
+    entries = []
+    for png in sorted(source.rglob("*.png")):
+        rel = png.relative_to(source).as_posix()
+        try:
+            size = png.stat().st_size
+        except OSError:
+            continue
+        entries.append(f"{rel}\t{size}")
+    blob = "\n".join(entries)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
 def _find_portraits_source(dist_root: Path) -> Path | None:
     """Find a source of real portrait images (not LFS pointers).
 
@@ -1155,12 +1181,14 @@ def _find_portraits_source(dist_root: Path) -> Path | None:
     return None
 
 
-def _install_portraits(dist_root: Path) -> dict:
+def _install_portraits(dist_root: Path, force: bool = False) -> dict:
     """Install portraits to the shared XDG data directory.
 
     Copies portrait images to ~/.local/share/pennyfarthing/portraits/
-    once, then consumer projects symlink to this shared cache. Skips
-    re-copy if the manifest version matches the current pf version.
+    once, then consumer projects symlink to this shared cache. Re-copies
+    when EITHER the pf version OR the source content fingerprint differs
+    from the manifest — so renders, resizes, and restyles that land without
+    a version bump still propagate. Pass ``force=True`` to copy regardless.
 
     Returns:
         Result dict with keys: installed (bool), path (str),
@@ -1171,23 +1199,27 @@ def _install_portraits(dist_root: Path) -> dict:
     target = _get_portraits_data_dir()
     manifest_path = target / ".manifest.json"
 
-    # Check if already installed at current version
+    # Read the existing manifest (if any).
+    manifest: dict = {}
     if manifest_path.is_file():
         try:
             manifest = json.loads(manifest_path.read_text())
-            if manifest.get("pf_version") == __version__:
-                return {
-                    "installed": False,
-                    "path": str(target),
-                    "source": "cached",
-                    "skipped_reason": f"already at {__version__}",
-                }
         except (json.JSONDecodeError, OSError):
-            pass
+            manifest = {}
 
-    # Find a source with real images
+    # Find a source with real images.
     source = _find_portraits_source(dist_root)
     if source is None:
+        # No real source on disk. If the cache is already populated at this
+        # version, leave it alone (preserves prior behavior); otherwise report
+        # there is nothing to install.
+        if not force and manifest.get("pf_version") == __version__:
+            return {
+                "installed": False,
+                "path": str(target),
+                "source": "cached",
+                "skipped_reason": f"already at {__version__}",
+            }
         return {
             "installed": False,
             "path": str(target),
@@ -1195,15 +1227,31 @@ def _install_portraits(dist_root: Path) -> dict:
             "skipped_reason": "no portrait source with real images found (LFS pointers only)",
         }
 
-    # Copy portraits to shared location
+    fingerprint = _compute_portraits_fingerprint(source)
+
+    # Skip only when version AND content both match — and not forced.
+    if (
+        not force
+        and manifest.get("pf_version") == __version__
+        and manifest.get("source_fingerprint") == fingerprint
+    ):
+        return {
+            "installed": False,
+            "path": str(target),
+            "source": "cached",
+            "skipped_reason": f"already at {__version__} (content unchanged)",
+        }
+
+    # Copy portraits to shared location.
     target.mkdir(parents=True, exist_ok=True)
     _copy_tree(source, target)
 
-    # Write version manifest
+    # Write the manifest with version + content fingerprint.
     manifest_path.write_text(
         json.dumps(
             {
                 "pf_version": __version__,
+                "source_fingerprint": fingerprint,
                 "installed_at": datetime.now(UTC).isoformat(),
                 "source": str(source),
             },
