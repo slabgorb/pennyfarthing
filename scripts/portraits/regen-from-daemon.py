@@ -7,11 +7,14 @@ sends one render request per agent using the ``portrait_square`` tier
 
     {pennyfarthing-dist}/personas/portraits/{theme}/{slug}-{OCEAN}.png
 
-That 512px file is the *master* the multi-resolution pipeline consumes — run
-``scripts/resize-portraits.sh`` afterwards to fan it out into
-small/medium/large/original.
+That 512px render is the *master*. Each render is sliced automatically into the
+multi-resolution set — small (64) / medium (128) / large (256) and the 512px
+master archived to original/ — so no separate ``scripts/resize-portraits.sh``
+pass is needed (``--no-slice`` opts out).
 
-Skips files that already exist (resumable). Use --force to regenerate.
+Skips characters that are already rendered (resumable): a real master at the
+theme root OR in original/ counts as done. Unresolved git-lfs pointer stubs do
+NOT count, so un-rendered themes still render. Use --force to regenerate.
 
 Z-Image daemon notes (vs. the retired Flux daemon this replaces):
   - Same socket: /tmp/sidequest-renderer.sock
@@ -70,6 +73,10 @@ PORTRAITS_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "portraits"
 
 OUTPUT_SIZE = 512
 TIER = "portrait_square"  # always 1024x1024, fidelity-independent (see zimage_config)
+
+# LOD buckets fanned out from the 512px master (mirrors resize-portraits.sh).
+# The master itself is archived into original/.
+LOD_SIZES: tuple[tuple[str, int], ...] = (("small", 64), ("medium", 128), ("large", 256))
 
 # Render timeout per portrait. base Z-Image (high_fidelity) is ~108s/render;
 # give generous headroom so a slow render is not mistaken for a hang.
@@ -249,6 +256,47 @@ def downscale_to_square(src: Path, dst: Path, size: int = OUTPUT_SIZE) -> None:
         img.save(dst, "PNG", optimize=True)
 
 
+def _is_lfs_pointer(path: Path) -> bool:
+    """True if the file is an unresolved git-lfs pointer stub, not real image data."""
+    try:
+        with path.open("rb") as f:
+            return f.read(44).startswith(b"version https://git-lfs")
+    except OSError:
+        return False
+
+
+def already_rendered(out_dir: Path, filename: str) -> Path | None:
+    """Return the existing real master, honoring already-sliced output.
+
+    A character is "done" if a real (non-lfs-pointer) PNG exists either at the
+    theme root (rendered, not yet sliced) or in original/ (rendered + sliced).
+    Pointer stubs return None so un-rendered themes still render.
+    """
+    for cand in (out_dir / filename, out_dir / "original" / filename):
+        if cand.is_file() and not _is_lfs_pointer(cand):
+            return cand
+    return None
+
+
+def slice_portrait(master: Path, out_dir: Path) -> None:
+    """Fan the 512px master into small/medium/large buckets, archive it to original/.
+
+    Mirrors scripts/resize-portraits.sh: the master is moved (not copied) into
+    original/ so the theme root is left clean.
+    """
+    with Image.open(master) as img:
+        img = img.convert("RGB")
+        for name, dim in LOD_SIZES:
+            dest_dir = out_dir / name
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            img.resize((dim, dim), Image.Resampling.LANCZOS).save(
+                dest_dir / master.name, "PNG", optimize=True
+            )
+    original_dir = out_dir / "original"
+    original_dir.mkdir(parents=True, exist_ok=True)
+    master.replace(original_dir / master.name)
+
+
 # --- Per-theme run -----------------------------------------------------------
 
 async def run_theme(reader, writer, theme_path: Path, args) -> tuple[int, int, int]:
@@ -269,10 +317,12 @@ async def run_theme(reader, writer, theme_path: Path, args) -> tuple[int, int, i
         if not char:
             continue
         dst = out_dir / char["filename"]
-        if dst.exists() and not args.force:
-            print(f"  SKIP {char['filename']} (exists)")
-            skipped += 1
-            continue
+        if not args.force:
+            existing = already_rendered(out_dir, char["filename"])
+            if existing:
+                print(f"  SKIP {char['filename']} (exists: {existing.relative_to(out_dir)})")
+                skipped += 1
+                continue
 
         prompt = build_prompt(
             char["visual"], parsed["style"], parsed["prefix"], parsed["allow_text"]
@@ -290,8 +340,11 @@ async def run_theme(reader, writer, theme_path: Path, args) -> tuple[int, int, i
         try:
             src = await render_one(reader, writer, prompt, parsed["negative"], seed)
             downscale_to_square(src, dst)
+            if not args.no_slice:
+                slice_portrait(dst, out_dir)
             elapsed = time.monotonic() - started
-            print(f"    OK  {char['filename']} ({elapsed:.1f}s, src={src.name})")
+            sliced = "" if args.no_slice else " +sliced(s/m/l/orig)"
+            print(f"    OK  {char['filename']} ({elapsed:.1f}s, src={src.name}){sliced}")
             generated += 1
         except Exception as e:
             print(f"    FAIL {char['filename']}: {e}")
@@ -363,6 +416,8 @@ def main() -> None:
     parser.add_argument("--role", type=str, help="Only this role (with --theme)")
     parser.add_argument("--dry-run", action="store_true", help="Don't render, just print")
     parser.add_argument("--force", action="store_true", help="Regenerate even if file exists")
+    parser.add_argument("--no-slice", action="store_true",
+                        help="Skip auto fan-out; leave the 512px master at the theme root")
     parser.add_argument("--seed", type=int, default=None, help="Fixed seed (default: per-role)")
     args = parser.parse_args()
 
