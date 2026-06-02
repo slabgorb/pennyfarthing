@@ -13,7 +13,7 @@ Usage:
     # Use the client module
     from pf.jira import JiraClient
     client = JiraClient()
-    issue = client.get_issue_sync("MSSCI-12345")
+    issue = client.get_issue_sync("PROJ-12345")
 
     # Use CLI
     python -m pf.jira <subcommand> [args]

@@ -36,7 +36,7 @@ findings:
   evidence: "TEA wrote header injection tests in siem_client.rs (19 tests) and security.rs\
     \ (CWE-113 newline validation). Dev implemented CWE-113 newline validation in\
     \ client.rs:28-40. However, the deeper issue of using raw String instead of TenantId\
-    \ from axiathon-core was not caught \u2014 only the symptom (CRLF injection) was\
+    \ from consumer-project-core was not caught \u2014 only the symptom (CRLF injection) was\
     \ addressed, not the type-safety root cause."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

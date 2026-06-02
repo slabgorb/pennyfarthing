@@ -35,7 +35,7 @@ findings:
   evidence: 'TEA wrote tests for ''CWE-113: Header injection via newlines in token/tenant
     values''. Dev implemented CWE-113 header injection prevention in client.rs. Reviewer
     flagged silent failure on header injection (#2). Same vulnerability class caught,
-    though the specific recommendation to use TenantId from axiathon-core was not
+    though the specific recommendation to use TenantId from consumer-project-core was not
     made.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

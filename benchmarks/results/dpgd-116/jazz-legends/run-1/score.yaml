@@ -34,7 +34,7 @@ findings:
   caught_by: tea
   evidence: TEA wrote 'Header injection prevention (newlines in tenant ID and token)'
     tests. Reviewer flagged '[MEDIUM] tenant field is raw String, not TenantId newtype'
-    at client.rs:7, noting axiathon-core exports TenantId but it's unused.
+    at client.rs:7, noting consumer-project-core exports TenantId but it's unused.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

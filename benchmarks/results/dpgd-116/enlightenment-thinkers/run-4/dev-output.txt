@@ -10,9 +10,9 @@ All 123 tests pass (25+12+13+16+16+6+10+15+10 = 123), zero failures, zero clippy
 - `Cargo.toml` — Added workspace deps: `clap_complete`, `comfy-table`, `csv`, `dirs`, `toml_edit` (with serde). Updated `clap` to include `env` feature and disable `usage` feature (prevents "Usage:" in error output, needed for singular command rejection tests).
 
 **Crate config:**
-- `crates/axiathon-client/Cargo.toml` — Added deps: `chrono`, `clap_complete`, `comfy-table`, `csv`, `dirs`, `toml_edit`, `uuid`
+- `crates/consumer-project-client/Cargo.toml` — Added deps: `chrono`, `clap_complete`, `comfy-table`, `csv`, `dirs`, `toml_edit`, `uuid`
 
-**Source files created (all under `crates/axiathon-client/src/`):**
+**Source files created (all under `crates/consumer-project-client/src/`):**
 
 | File | Purpose |
 |------|---------|

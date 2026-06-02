@@ -117,6 +117,9 @@ class SettingsPanel(Widget):
                 options = spec.get_options()
                 select_options = [(label, value) for label, value in options]
                 current_val = current if current is not None else ""
+                valid_values = [v for _, v in select_options]
+                if current_val not in valid_values:
+                    current_val = select_options[0][1] if select_options else Select.BLANK
                 yield Select(
                     select_options,
                     value=current_val,

@@ -18,7 +18,7 @@ Right. Time to deliver the verdict. Let me be the last line of defense here.
 
 ### `[HIGH]` No `FromRef` substate extraction — story guardrail explicitly violated
 
-**File:** `crates/axiathon-server/src/lib.rs:20-23`, `routes.rs:41-129`
+**File:** `crates/consumer-project-server/src/lib.rs:20-23`, `routes.rs:41-129`
 
 The story spec states: *"Handlers must declare domain-scoped substates (`DetectionServices`, `StorageServices`, `PluginServices`, `CredentialServices`) — never full `AppState`. This is a compile-time least-privilege enforcement (CWE-653, OWASP API5:2023)."*
 
@@ -26,7 +26,7 @@ Instead, every handler extracts either `State<AppState>` directly (health) or ra
 
 ### `[HIGH]` Auth middleware is hardcoded test-token matching, not JWT validation
 
-**File:** `crates/axiathon-server/src/middleware/auth.rs:72-106`
+**File:** `crates/consumer-project-server/src/middleware/auth.rs:72-106`
 
 The "authentication" is a `match` statement against literal strings: `"test-valid-token"`, `"test-tenant-a-token"`, `"test-wrong-scope-token"`. There is no JWT parsing, no signature verification, no expiry check, no JWKS. The AC says: *"JWT (EdDSA/Ed25519). JWKS endpoint at `/.well-known/jwks.json`."*
 
@@ -34,13 +34,13 @@ I understand stubs are acceptable for handler business logic, but the story expl
 
 ### `[HIGH]` No permission enforcement — scope checks are fake
 
-**File:** `crates/axiathon-server/src/middleware/auth.rs:44, 63`
+**File:** `crates/consumer-project-server/src/middleware/auth.rs:44, 63`
 
 Scope enforcement is done by checking if the token string literally equals `"test-wrong-scope-token"`. There is no actual permission checking against the `AuthContext.permissions` vector. If a token matches `validate_bearer()`, it is granted access regardless of what endpoint it's hitting. The `permissions` field is populated but never consulted. The AC requires: *"valid token but wrong scope (403)"* — this is faked, not implemented.
 
 ### `[MEDIUM]` Rate limiting uses `Mutex<HashMap>` with no expiry — counters grow unbounded
 
-**File:** `crates/axiathon-server/src/lib.rs:16`, `middleware/rate_limit.rs:32-37`
+**File:** `crates/consumer-project-server/src/lib.rs:16`, `middleware/rate_limit.rs:32-37`
 
 The rate limiter increments a counter per key but never resets or expires entries. In production this is a memory leak — every unique tenant+path combination adds an entry that is never removed. The AC says *"configurable per-tenant limits"* and mentions tower-governor, but this is a hand-rolled counter with no time windowing. For a stub, acceptable; but the static `TASK_COUNTERS` in `create_test_app_with_rate_limit` (lib.rs:48) is a `LazyLock<Mutex<HashMap>>` that leaks across the process lifetime. Not suitable for anything beyond test scaffolding. Acknowledged as stubs, so medium.
 
@@ -52,13 +52,13 @@ The crate depends on `tracing` and `tracing-subscriber` but neither is used anyw
 
 ### `[MEDIUM]` `ResponseEnvelope` and `ErrorDetail` are not `#[non_exhaustive]`
 
-**File:** `crates/axiathon-server/src/response.rs:13, 21`
+**File:** `crates/consumer-project-server/src/response.rs:13, 21`
 
 Per rust.md: *"`#[non_exhaustive]` on enums that will grow"* — and the same principle applies to public structs in a library crate that will gain fields. `ResponseEnvelope` and `ErrorDetail` are `pub` and re-exported. Adding a field later (e.g., `instance` for RFC 9457 compliance) will be a breaking change for any downstream consumer doing struct literal construction.
 
 ### `[MEDIUM]` `data` field uses `skip_serializing_if` — violates envelope contract
 
-**File:** `crates/axiathon-server/src/response.rs:14`
+**File:** `crates/consumer-project-server/src/response.rs:14`
 
 `#[serde(skip_serializing_if = "Option::is_none")]` means error responses will omit the `data` field entirely rather than including `"data": null`. The AC says: *"`data`: success payload (null on error)"*. The test at `api_response_envelope.rs:166-167` even has to check `json.get("data").is_none() || json["data"].is_null()` — that `is_none()` branch is the bug compensator. The spec says `data` should always be present as `null`, not absent. Clients parsing the envelope will need to handle both absent and null, which is messy.
 
@@ -70,7 +70,7 @@ Multiple `.expect("...")` calls that will panic the server if they fail. `respon
 
 ### `[MEDIUM]` No request body size limit enforcement
 
-**File:** `crates/axiathon-server/src/lib.rs` (missing)
+**File:** `crates/consumer-project-server/src/lib.rs` (missing)
 
 There is no `DefaultBodyLimit` or equivalent configured on the router. The test `oversized_request_body_returns_413_or_400` passes only because the stub handler doesn't actually read the body. When real handlers consume bodies, there's no limit preventing a 1GB upload from being buffered into memory. The test assertion accepts `NOT_IMPLEMENTED` as a pass condition, which masks this gap.
 
@@ -82,7 +82,7 @@ The exact same `body_json` helper function is copy-pasted into every test file. 
 
 ### `[LOW]` Unused first `app` binding in `all_routes_are_under_api_v1_prefix`
 
-**File:** `crates/axiathon-server/tests/api_versioning.rs:26`
+**File:** `crates/consumer-project-server/tests/api_versioning.rs:26`
 
 `let app = create_test_app().await;` is created but never used — each loop iteration creates its own `app`. Dead code in tests is sloppy.
 

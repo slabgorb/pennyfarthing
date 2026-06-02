@@ -310,12 +310,51 @@ def archive(story_id: str, pr_number: str | None, apply: bool, dry_run: bool):
         raise click.ClickException(f"Failed: {result.get('error')}")
 
 
+@sprint.command("backfill-epics")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def backfill_epics(output_json: bool):
+    """Repair archive entries whose `epic` field is missing or empty.
+
+    Walks sprint/archive/sprint-*-completed.yaml, looks each epic-less
+    story up by id in the live sprint YAML, and patches the parent epic
+    in place. Entries whose parent epic cannot be determined are reported
+    as irrecoverable and left untouched.
+
+    Exits non-zero if any irrecoverable entries remain after the walk.
+    """
+    from pf.sprint.archive_epic import backfill_epic_refs
+
+    result = backfill_epic_refs()
+    backfilled = result.get("backfilled") or []
+    irrecoverable = result.get("irrecoverable") or []
+
+    if output_json:
+        import json
+
+        click.echo(json.dumps(result, default=str))
+    else:
+        click.echo(f"Backfilled: {len(backfilled)}")
+        for entry in backfilled:
+            click.echo(f"  ✓ {entry['id']} → epic {entry['epic']}")
+        click.echo(f"Irrecoverable: {len(irrecoverable)}")
+        for entry in irrecoverable:
+            click.echo(f"  ✗ {entry['id']} (no parent epic found in sprint YAML)")
+
+    if irrecoverable:
+        raise click.ClickException(
+            f"{len(irrecoverable)} archive entries could not be backfilled"
+        )
+
+
 # --- Story subgroup ---
 
 
 @sprint.group()
 def story():
-    """Story operations (show, add, update, size, template, finish, claim)."""
+    """Story operations (lifecycle: add, move, remove, update, finish).
+
+    Also: show, size, template, claim, split, field.
+    """
     pass
 
 
@@ -327,7 +366,7 @@ def story_show(story_id: str, output_json: bool):
 
     \b
     Arguments:
-      STORY_ID  - Story ID (e.g., MSSCI-12664 or 67-1)
+      STORY_ID  - Story ID (e.g., PROJ-12664 or 67-1)
     """
     # Lazy import
     from pf.sprint.loader import get_story_by_id
@@ -440,7 +479,7 @@ def story_finish(story_id: str, dry_run: bool):
     click.echo(f"=== Story {story_id} Complete ===")
     jira_key = result.get("jira_key")
     if jira_key:
-        click.echo(f"Jira: https://1898andco.atlassian.net/browse/{jira_key}")
+        click.echo(f"Jira: https://your-jira.atlassian.net/browse/{jira_key}")
     for step in result.get("steps", []):
         warning = step.get("warning", "")
         error = step.get("error", "")
@@ -496,6 +535,16 @@ from pf.sprint.story_remove import story_remove_command  # noqa: E402
 
 story.add_command(story_remove_command, "remove")
 
+# Register story-move as story.move
+from pf.sprint.story_move import story_move_command  # noqa: E402
+
+story.add_command(story_move_command, "move")
+
+# Register story-complete as story.complete
+from pf.sprint.story_complete import story_complete_command  # noqa: E402
+
+story.add_command(story_complete_command, "complete")
+
 
 # --- Epic subgroup ---
 
@@ -516,11 +565,11 @@ def epic_show(epic_id: str, output_json: bool):
 
     \b
     Arguments:
-      EPIC_ID  - Epic ID (e.g., epic-42 or MSSCI-14298)
+      EPIC_ID  - Epic ID (e.g., epic-42 or PROJ-14298)
 
     \b
     Examples:
-      pf sprint epic show MSSCI-14298
+      pf sprint epic show PROJ-14298
       pf sprint epic show epic-42
       pf sprint epic show epic-42 --json
     """
@@ -586,7 +635,7 @@ def epic_show(epic_id: str, output_json: bool):
 def _epic_shard_path(sprint_dir, ref: str):
     """Resolve an epic shard file path from a ref string.
 
-    Handles both 'epic-42' and 'MSSCI-12792' style refs.
+    Handles both 'epic-42' and 'PROJ-12792' style refs.
     The file naming convention is epic-{ref}.yaml, but refs that
     already start with 'epic-' should not be double-prefixed.
     """
@@ -648,7 +697,7 @@ def epic_cancel(epic_id: str, jira: bool, dry_run: bool):
 
     \b
     Arguments:
-      EPIC_ID  - Epic ID (e.g., epic-42 or MSSCI-14298)
+      EPIC_ID  - Epic ID (e.g., epic-42 or PROJ-14298)
 
     \b
     Examples:
@@ -1850,7 +1899,7 @@ def story_field(story_id: str, field_name: str):
 
     \b
     Arguments:
-      STORY_ID    - Story ID (e.g., 79-1 or MSSCI-12345)
+      STORY_ID    - Story ID (e.g., 79-1 or PROJ-12345)
       FIELD_NAME  - Field to extract (e.g., workflow, status, points)
 
     Returns the field value or "null" if not found.

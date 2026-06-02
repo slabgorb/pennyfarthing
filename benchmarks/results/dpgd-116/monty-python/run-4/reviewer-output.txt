@@ -30,7 +30,7 @@ AC-1 explicitly requires: "query, rules, alerts, ingest, config, status, tenant,
 `format` is `Option<String>` with no `value_parser` constraint. A user can pass `--format xml` and it will parse without error. AC-4 mandates `--format table|json|csv`. Compare with `CompletionArgs::shell` at `cli.rs:173` which correctly uses `value_parser = ["bash", "zsh", "fish", "powershell"]`. The format flag should use the same pattern: `#[arg(long, global = true, value_parser = ["table", "json", "csv"])]`.
 
 **[HIGH] No `main.rs` binary entry point — story deliverable missing** 
-The story requires a `main.rs` that initializes tracing, dispatches commands, catches errors, and calls `std::process::exit()` with the proper exit code. There is no `main.rs` and no `[[bin]]` target. The crate is library-only. Without `main.rs`, exit codes (AC-3) are never actually mapped to process exits, errors are never printed to stderr, and there is no `axiathon` binary. This is the entire purpose of the story — producing the `axiathon` binary.
+The story requires a `main.rs` that initializes tracing, dispatches commands, catches errors, and calls `std::process::exit()` with the proper exit code. There is no `main.rs` and no `[[bin]]` target. The crate is library-only. Without `main.rs`, exit codes (AC-3) are never actually mapped to process exits, errors are never printed to stderr, and there is no `consumer-project` binary. This is the entire purpose of the story — producing the `consumer-project` binary.
 
 **[HIGH] `generate_completion` panics on unsupported shell — violates Rust safety rules** at `commands/completion.rs:8`
 `panic!("unsupported shell: {other}")` violates the project rule "No `unwrap()` in production code — use `?` or `expect()` with actionable message." While clap's `value_parser` prevents this path in normal usage, library code should return `Result`, not panic. If someone calls `generate_completion` programmatically (as tests do), an invalid input causes a hard crash.
@@ -91,7 +91,7 @@ No, no, no. This isn't an argument, this is just contradiction. Well, *yes* — 
 There are **2 Critical/High issues that block approval**:
 
 1. **Missing `tui` and `logout` commands** — direct AC-1 violation. The acceptance criteria explicitly lists them. Not optional.
-2. **No `main.rs` binary** — the story's *entire purpose* is producing the `axiathon` binary. Without a binary entry point, exit codes aren't mapped, errors don't go to stderr, and `axiathon` doesn't exist as a runnable command. The crate is a library with no binary target.
+2. **No `main.rs` binary** — the story's *entire purpose* is producing the `consumer-project` binary. Without a binary entry point, exit codes aren't mapped, errors don't go to stderr, and `consumer-project` doesn't exist as a runnable command. The crate is a library with no binary target.
 3. **`--format` accepts arbitrary strings** — AC-4 says `table|json|csv`. Currently accepts anything.
 4. **Workspace dependency hygiene** — 6 new deps should be in workspace `[workspace.dependencies]` per both the story and project rules.
 5. **`keyring` not even declared** — required by the story spec.

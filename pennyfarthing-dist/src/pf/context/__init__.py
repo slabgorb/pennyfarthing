@@ -1,6 +1,6 @@
 """Context validation module — validates context documents against schema.
 
-Story: MSSCI-15683 (129-3) — Build Context Validator Python Module and CLI
+Story: PROJ-15683 (129-3) — Build Context Validator Python Module and CLI
 
 Stubs only. Implementation in GREEN phase.
 """

@@ -538,10 +538,10 @@ class TestOriginValidation:
         manager = ChannelManager()
         # Manager should have origin validation matching Node.js:
         # Only allow http://localhost and http://127.0.0.1
-        assert manager.is_origin_allowed("http://localhost:1898")
-        assert manager.is_origin_allowed("http://127.0.0.1:1898")
+        assert manager.is_origin_allowed("http://localhost:2898")
+        assert manager.is_origin_allowed("http://127.0.0.1:2898")
         assert not manager.is_origin_allowed("http://evil.com")
-        assert not manager.is_origin_allowed("http://example.com:1898")
+        assert not manager.is_origin_allowed("http://example.com:2898")
 
     def test_no_origin_is_allowed(self):
         """AC5: Connections without Origin header are allowed (CLI clients)."""

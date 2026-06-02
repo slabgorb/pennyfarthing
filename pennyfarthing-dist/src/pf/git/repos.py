@@ -170,6 +170,31 @@ def get_repo_config(repo_name: str, project_root: Path | None = None) -> RepoCon
     return repos.get(repo_name)
 
 
+def should_create_branch(repo_config: RepoConfig | None) -> bool:
+    """Decide whether story *setup* should create a feature branch for a repo.
+
+    Delegates to :attr:`RepoConfig.is_gitflow` so the trunk-based/gitflow
+    predicate lives in exactly one place (SOUL #2):
+
+    - gitflow repos create feature branches as before
+    - trunk-based repos skip branch creation (no stray ``feat/*`` branches)
+    - an unknown repo (``None``, i.e. not in repos.yaml) preserves the legacy
+      "branch everything" behavior and never raises
+
+    Note the ``None`` case is permissive (branch) for the *setup* path. The
+    *cleanup* path (``story_finish._git_cleanup``) deliberately treats ``None``
+    conservatively (skip), since it must not guess a base branch for an
+    unidentified repo — both paths key off :attr:`RepoConfig.is_gitflow`.
+
+    Args:
+        repo_config: The target repo's config, or None if it is not configured.
+
+    Returns:
+        True if a feature branch should be created, False to skip.
+    """
+    return repo_config is None or repo_config.is_gitflow
+
+
 def load_repos_yaml_raw(project_root: Path | None = None) -> dict[str, Any]:
     """Load raw repos.yaml as a dict (not parsed into RepoConfig).
 
@@ -227,7 +252,7 @@ def format_pr_title(
     """Format a PR title using the project's configured template.
 
     Args:
-        jira_key: Jira issue key (e.g., "MSSCI-16204") or story ID fallback.
+        jira_key: Jira issue key (e.g., "PROJ-16204") or story ID fallback.
         title: Short summary of the change.
         pr_type: Conventional commit type (feat, fix, chore, etc.).
         scope: Optional scope (e.g., "gates", "ui").
@@ -299,6 +324,13 @@ def set_repo_field(
         Result dict {success, data?, error?}. Never throws.
     """
     try:
+        # Validate before writing
+        from pf.settings.validators import validate_repo_field
+
+        validation = validate_repo_field(field, value)
+        if not validation.valid:
+            return {"success": False, "error": validation.errors[0].message}
+
         if project_root is None:
             project_root = get_project_root()
 

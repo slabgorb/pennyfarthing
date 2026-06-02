@@ -36,7 +36,7 @@ findings:
   evidence: TEA wrote CRLF header injection tests in security.rs:48-66. Dev implemented
     with_tenant_validated() rejecting \r and \n at client.rs:49-83. Reviewer verified
     CRLF prevention works and flagged that with_token() bypasses validation. Type-safety
-    aspect (using TenantId from axiathon-core) not caught, but same CWE-113 vulnerability
+    aspect (using TenantId from consumer-project-core) not caught, but same CWE-113 vulnerability
     class addressed.
   votes: 3/3
 - finding_id: I3

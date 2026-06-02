@@ -1,4 +1,4 @@
  CLAUDE.md                         | 315 +++++++++++++++++++++++++++++++++-----
  Cargo.toml                        |   2 +-
- crates/axiathon-client/src/lib.rs |   7 +
+ crates/consumer-project-client/src/lib.rs |   7 +
  3 files changed, 288 insertions(+), 36 deletions(-)

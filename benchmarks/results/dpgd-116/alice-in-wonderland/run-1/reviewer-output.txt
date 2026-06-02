@@ -6,8 +6,8 @@
 
 ## Observations
 
-### [HIGH] Missing `main.rs` binary entry point — no `axiathon` binary produced
-**`crates/axiathon-client/src/main.rs`** does not exist. There is no `[[bin]]` section in `Cargo.toml`. The story explicitly requires producing an `axiathon` binary with `main.rs` handling tracing init, dispatch, exit codes via `std::process::exit()`. Without this, the crate is a library only — you cannot run `axiathon status` from the command line. This is the **core deliverable** of the story.
+### [HIGH] Missing `main.rs` binary entry point — no `consumer-project` binary produced
+**`crates/consumer-project-client/src/main.rs`** does not exist. There is no `[[bin]]` section in `Cargo.toml`. The story explicitly requires producing an `consumer-project` binary with `main.rs` handling tracing init, dispatch, exit codes via `std::process::exit()`. Without this, the crate is a library only — you cannot run `consumer-project status` from the command line. This is the **core deliverable** of the story.
 
 ### [HIGH] Missing `logout` and `tui` command groups (AC-1 violation)
 AC-1 explicitly requires: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/**`logout`**, `tui`, `completion`, `init`. The `Commands` enum at `cli.rs:46` is missing both `Logout` and `Tui` variants. The help output test at `cli_structure.rs:80` also omits checking for `logout` and `tui`.

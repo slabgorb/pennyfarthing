@@ -1,7 +1,7 @@
 """
 Sprint and Story YAML validators for Pennyfarthing.
 
-Story: MSSCI-12394 - Sprint and Story YAML validators
+Story: PROJ-12394 - Sprint and Story YAML validators
 
 This module provides validation for:
 - Sprint-level structure and required fields

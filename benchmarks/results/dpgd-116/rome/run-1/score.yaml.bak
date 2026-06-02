@@ -33,7 +33,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote CWE-113 header injection tests for tenant ID. Dev implemented\
     \ with_tenant_validated that rejects CR/LF. However, SiemClient.tenant_id still\
-    \ uses raw String internally rather than Option<TenantId> from axiathon-core,\
+    \ uses raw String internally rather than Option<TenantId> from consumer-project-core,\
     \ so the finding is partially caught \u2014 injection is prevented but the type-safety\
     \ improvement of using TenantId is missed."
 - finding_id: I3

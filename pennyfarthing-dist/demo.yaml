@@ -2,11 +2,11 @@
 # for the demo artifact generation pipeline (pf demo generate).
 
 branding:
-  company_name: "1898 & Co."
-  tagline: "Possibilities Powered by Experience"
-  description: "We turn business and technology insights into strategic solutions for critical infrastructure industries."
-  parent_company: "Burns & McDonnell"
-  website: "https://1898andco.burnsmcd.com/"
+  company_name: "Your Company"
+  tagline: "Your Tagline"
+  description: "Your company description."
+  parent_company: ""
+  website: "https://example.com/"
 
   colors:
     primary: "#ff6a39"
@@ -42,7 +42,7 @@ format_preferences:
     body_font_size: 18
     max_bullets_per_slide: 5
     include_speaker_notes: true
-    footer_text: "1898 & Co. | Confidential"
+    footer_text: "Your Company | Confidential"
 
   narrative:
     tone: "executive-friendly"

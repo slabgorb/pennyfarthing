@@ -34,7 +34,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer flagged as HIGH: 'SiemClient::new() bypasses header injection\
-    \ validation \u2014 CWE-113 risk'. Also noted 'axiathon-core dependency unused'\
+    \ validation \u2014 CWE-113 risk'. Also noted 'consumer-project-core dependency unused'\
     \ (which contains validated TenantId). TEA wrote header injection tests in siem_client.rs\
     \ and security.rs."
 - finding_id: I3

@@ -5,19 +5,19 @@ All **93 tests pass**, clippy is clean.
 **Implementation Complete:** Yes
 
 **Files Changed:**
-- `crates/axiathon-client/src/lib.rs` — Added module declarations for all public modules
-- `crates/axiathon-client/src/cli.rs` — Cli struct with clap 4.x derive Parser, Commands enum (12 subcommands), 7 global flags, inherent `try_parse_from` wrapper
-- `crates/axiathon-client/src/error.rs` — CliError enum with 9 variants, exit_code() mapping (3=auth, 4=authz, 1=all others), security-safe Display impls
-- `crates/axiathon-client/src/client.rs` — SiemClient wrapping reqwest::Client with header injection, HTTP status→CliError mapping, CRLF sanitization
-- `crates/axiathon-client/src/config.rs` — ClientConfig with TOML parsing, env var overrides, CLI flag precedence, validation
-- `crates/axiathon-client/src/output.rs` — OutputFormatter trait + Table/JSON/CSV implementations
-- `crates/axiathon-client/src/commands/mod.rs` — Module re-exports
-- `crates/axiathon-client/src/commands/{query,rules,alerts,ingest,config,status,tenant,login}.rs` — Stub handlers returning NotImplemented with story references
-- `crates/axiathon-client/src/commands/completion.rs` — Functional shell completion generation
-- `crates/axiathon-client/src/commands/init.rs` — Functional first-time setup
-- `crates/axiathon-client/Cargo.toml` — Added uuid, chrono dependencies
+- `crates/consumer-project-client/src/lib.rs` — Added module declarations for all public modules
+- `crates/consumer-project-client/src/cli.rs` — Cli struct with clap 4.x derive Parser, Commands enum (12 subcommands), 7 global flags, inherent `try_parse_from` wrapper
+- `crates/consumer-project-client/src/error.rs` — CliError enum with 9 variants, exit_code() mapping (3=auth, 4=authz, 1=all others), security-safe Display impls
+- `crates/consumer-project-client/src/client.rs` — SiemClient wrapping reqwest::Client with header injection, HTTP status→CliError mapping, CRLF sanitization
+- `crates/consumer-project-client/src/config.rs` — ClientConfig with TOML parsing, env var overrides, CLI flag precedence, validation
+- `crates/consumer-project-client/src/output.rs` — OutputFormatter trait + Table/JSON/CSV implementations
+- `crates/consumer-project-client/src/commands/mod.rs` — Module re-exports
+- `crates/consumer-project-client/src/commands/{query,rules,alerts,ingest,config,status,tenant,login}.rs` — Stub handlers returning NotImplemented with story references
+- `crates/consumer-project-client/src/commands/completion.rs` — Functional shell completion generation
+- `crates/consumer-project-client/src/commands/init.rs` — Functional first-time setup
+- `crates/consumer-project-client/Cargo.toml` — Added uuid, chrono dependencies
 - `Cargo.toml` (workspace) — Added `env` feature to clap
-- `crates/axiathon-client/tests/cli_structure.rs` — Fixed mutability bug (`let` → `let mut` for `render_help()`)
+- `crates/consumer-project-client/tests/cli_structure.rs` — Fixed mutability bug (`let` → `let mut` for `render_help()`)
 
 **Tests:** 93/93 passing (GREEN)
 **Clippy:** Clean (0 warnings)

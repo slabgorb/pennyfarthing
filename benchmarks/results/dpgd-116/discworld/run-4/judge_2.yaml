@@ -74,6 +74,6 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer flagged F3: ''This tests that the Display impl on CliError::NotImplemented
-    works. It does NOT test that running axiathon status actually returns this error...
+    works. It does NOT test that running consumer-project status actually returns this error...
     This is a tautology.'' Same category of tests with no meaningful assertions on
     actual behavior.'

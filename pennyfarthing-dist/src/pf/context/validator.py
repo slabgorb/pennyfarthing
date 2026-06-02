@@ -1,6 +1,6 @@
 """Context validator — validates context documents against the context schema.
 
-Story: MSSCI-15683 (129-3) — Build Context Validator Python Module and CLI
+Story: PROJ-15683 (129-3) — Build Context Validator Python Module and CLI
 """
 
 from __future__ import annotations

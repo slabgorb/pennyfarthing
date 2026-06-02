@@ -17,7 +17,7 @@
 | `tests/api_security.rs` | 10 | Security edge cases — CWE-209 info exposure, CORS, input validation, security headers, method restrictions, `forbid(unsafe_code)` |
 
 **Tests Written:** 54 tests covering 5 ACs + security edge cases
-**Status:** RED (compilation failure — `axiathon_server::app()` and `axiathon_server::test_support` not yet implemented)
+**Status:** RED (compilation failure — `consumer-project_server::app()` and `consumer-project_server::test_support` not yet implemented)
 
 **What Dev needs to implement:**
 1. `pub async fn app() -> Router` — builds the Axum router with AppState and all middleware

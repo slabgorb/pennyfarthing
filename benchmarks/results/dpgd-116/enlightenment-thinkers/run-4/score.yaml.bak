@@ -34,7 +34,7 @@ findings:
   caught: false
   caught_by: null
   evidence: "TEA tested CRLF injection and dev implemented CRLF stripping, but the\
-    \ core finding \u2014 using raw String instead of validated TenantId from axiathon-core\
+    \ core finding \u2014 using raw String instead of validated TenantId from consumer-project-core\
     \ \u2014 was not flagged by any phase. The type safety gap bypassing tenant isolation\
     \ was missed."
 - finding_id: I3

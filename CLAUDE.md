@@ -1,6 +1,6 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 13.1.0. Python-first architecture.
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 13.1.2. Python-first architecture.
 
 <critical>
 ## Implementation Rules
@@ -11,6 +11,18 @@ Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workf
 4. **Scripts must exist in ONE location only** — build-time validation prevents duplication
 5. **Never edit symlink targets** — trace to `pennyfarthing-dist/`
 6. **Python is the only language** — no JavaScript/TypeScript logic in this repo
+</critical>
+
+<critical>
+## Required Companion Plugin
+
+Pennyfarthing requires the `superpowers@claude-plugins-official` Claude Code plugin. Install it once per Claude Code environment:
+
+```
+/plugin install superpowers@claude-plugins-official
+```
+
+Superpowers provides the generic software-craft skills (brainstorming, writing-plans, verification-before-completion, test-driven-development, systematic-debugging, etc.) that pennyfarthing forwarder commands and gates reference. Running `pf doctor` will report `superpowers_plugin` as FAIL if it is missing.
 </critical>
 
 <critical>
@@ -58,6 +70,9 @@ pf validate                                          # Framework validation
 ## Workflows & Agents
 
 BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (progressive gates). Workflow definitions live in `pennyfarthing-dist/workflows/*.yaml` — read the YAML for phase order, agents, tandem/team pairings, and gates. Use `pf workflow list` and `pf workflow show <name>` to inspect.
+
+**Experimental workflows:**
+- `sdd` (Superpower Driven Development): Parallels `tdd.yaml` with per-phase `skills.required` lists that agents invoke and attest to in the session file. Composite gates (`sdd-red-exit`, `sdd-green-exit`) verify both artifacts and skill attestation. Opt-in via `workflow: sdd` on a story.
 
 | Agent | Role | Agent | Role |
 |-------|------|-------|------|

@@ -30,4 +30,4 @@ All clean. **122 tests pass**, clippy is clean (the one warning is in the test f
 
 **Files modified:**
 - `Cargo.toml` (workspace) — added `env` feature to clap
-- `crates/axiathon-client/Cargo.toml` — added `uuid` dependency
+- `crates/consumer-project-client/Cargo.toml` — added `uuid` dependency

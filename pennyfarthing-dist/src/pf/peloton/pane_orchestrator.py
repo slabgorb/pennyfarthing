@@ -12,9 +12,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from pf.tmux.panes import set_pane_title, split_pane
+
 logger = logging.getLogger(__name__)
 
-from pf.tmux.panes import kill_pane, set_pane_title, split_pane
 
 
 def create_peloton_layout(
@@ -124,8 +125,17 @@ class PaneOrchestrator:
         if not scenario_phases:
             return {"success": False, "error": "No phases specified"}
 
-        result: dict[str, ManagedPane] = {}
+        # Deduplicate roles — a workflow may list the same agent in multiple
+        # phases (e.g., TEA in both "red" and "verify"). One pane per role.
+        seen: set[str] = set()
+        unique_roles: list[str] = []
         for role in scenario_phases:
+            if role not in seen:
+                seen.add(role)
+                unique_roles.append(role)
+
+        result: dict[str, ManagedPane] = {}
+        for role in unique_roles:
             pane = self._create_pane(role)
             if pane is None:
                 return {"success": False, "error": f"Failed to create pane for {role}"}
@@ -327,6 +337,10 @@ class PaneOrchestrator:
         self, role: str, theme: str, agent_pane: ManagedPane
     ) -> None:
         """Attempt to create a portrait pane beside an agent's CLI pane."""
+        # Never create a duplicate portrait for the same role
+        if self.get_portrait_pane(role) is not None:
+            return
+
         # Verify agent exists in the project's theme YAML before resolving
         theme_yaml = (
             self.project_root / ".pennyfarthing" / "personas" / "themes" / f"{theme}.yaml"

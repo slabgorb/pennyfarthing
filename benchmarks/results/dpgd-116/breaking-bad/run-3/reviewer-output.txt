@@ -20,9 +20,9 @@ AC-4 specifies `--format table|json|csv`. The flag is typed as `Option<String>`,
 
 `CliError::NotFound(String)` stores the URL (set at `client.rs:81` as the full constructed URL), but the `#[error("resource not found")]` Display impl hides it. The inner string is there in debug output. However — the `main.rs:15` does `eprintln!("{e}")` which uses Display, so the URL doesn't leak to the user. But the inner data is still accessible via pattern matching on the `pub` enum. More importantly, the CWE-209 test at `cli_error.rs:91` tests `ServerError` not `NotFound` — and `ServerError` Display also hides its inner string correctly. This is borderline — the data is stored but not displayed. Marking HIGH because the inner URL containing server hostname is accessible to downstream consumers of the public API.
 
-### [MEDIUM] `axiathon-core` dependency declared but never used at `Cargo.toml:13`
+### [MEDIUM] `consumer-project-core` dependency declared but never used at `Cargo.toml:13`
 
-`axiathon-core` is listed as a dependency, but `grep -r "use axiathon_core"` across all source files returns zero hits. The crate compiles but carries a phantom dependency. It won't cause a build failure, but it's dead weight and signals the dependency rule ("depends on axiathon-core ONLY for shared types") is aspirational rather than actual.
+`consumer-project-core` is listed as a dependency, but `grep -r "use consumer-project_core"` across all source files returns zero hits. The crate compiles but carries a phantom dependency. It won't cause a build failure, but it's dead weight and signals the dependency rule ("depends on consumer-project-core ONLY for shared types") is aspirational rather than actual.
 
 ### [MEDIUM] `output.rs` uses `expect()` 6 times in production code at `output.rs:64-95`
 

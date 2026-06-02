@@ -22,7 +22,7 @@ Pennyfarthing uses Jira integration as the primary conflict prevention mechanism
 /pf-work
 
 # SM will run:
-.pennyfarthing/scripts/jira/jira-claim-story.sh MSSCI-10988 --claim
+.pennyfarthing/scripts/jira/jira-claim-story.sh PROJ-10988 --claim
 ```
 
 If story is already assigned:
@@ -42,7 +42,7 @@ Stories track assignment in `sprint/current-sprint.yaml`:
   status: in-progress
   assigned_to: Keith Avery
   started: 2026-01-12
-  jira: https://jira.example.com/browse/MSSCI-10991
+  jira: https://jira.example.com/browse/PROJ-10991
 ```
 
 ## Parallel Work Patterns
@@ -181,7 +181,7 @@ When one developer needs to hand off to another:
 
 ```bash
 # Unassign story (allows teammate to claim)
-jira issue assign MSSCI-10988 -u ""
+jira issue assign PROJ-10988 -u ""
 ```
 
 ### Shared vs Personal Configuration

@@ -38,7 +38,7 @@ findings:
     \ with_tenant_validated() and with_token_validated() with \\r\\n rejection at\
     \ client.rs:49-83. Reviewer verified CRLF prevention works and flagged that with_token()/with_tenant()\
     \ bypass validation (MEDIUM finding). However, the type-safety fix (using TenantId\
-    \ from axiathon-core) was not adopted \u2014 runtime validation used instead."
+    \ from consumer-project-core) was not adopted \u2014 runtime validation used instead."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

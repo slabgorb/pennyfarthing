@@ -36,7 +36,7 @@ findings:
     \ \u2014 validated variants are separate methods... Nothing prevents callers from\
     \ using the unvalidated path, making header injection prevention opt-in rather\
     \ than default-safe.' TEA also wrote header injection tests, and dev implemented\
-    \ CR/LF/null validation, but neither enforced TenantId from axiathon-core at the\
+    \ CR/LF/null validation, but neither enforced TenantId from consumer-project-core at the\
     \ type level."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

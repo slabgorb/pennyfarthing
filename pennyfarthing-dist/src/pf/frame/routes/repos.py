@@ -1,6 +1,7 @@
 """Repos routes — expose repo topology from repos.yaml.
 
-Story 147-7. Endpoints: /api/repos (list), /api/repos/{name} (detail).
+Story 147-7. Endpoints: /api/repos (list), /api/repos/{name} (detail),
+/api/repos/{name} PATCH (update), /api/repos/pr-title-format (global).
 """
 
 from __future__ import annotations
@@ -10,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 # ---------------------------------------------------------------------------
@@ -93,6 +94,17 @@ async def list_repos() -> JSONResponse:
     return JSONResponse(result)
 
 
+@repos_router.get("/pr-title-format")
+async def get_pr_title_format() -> JSONResponse:
+    """Return the global PR title format from repos.yaml."""
+    project_dir = _get_project_dir()
+    config = _load_repos_yaml(project_dir)
+    if not config:
+        return JSONResponse({"error": "No repos.yaml found"}, status_code=404)
+
+    return JSONResponse({"pr_title_format": config.get("pr_title_format")})
+
+
 @repos_router.get("/{name}")
 async def get_repo(name: str) -> JSONResponse:
     """Get topology data for a single repo by name."""
@@ -106,6 +118,32 @@ async def get_repo(name: str) -> JSONResponse:
         return JSONResponse({"error": f"Repo '{name}' not found"}, status_code=404)
 
     return JSONResponse(_serialize_repo(name, repo_config))
+
+
+@repos_router.patch("/{name}")
+async def patch_repo(name: str, request: Request) -> JSONResponse:
+    """Update fields on a repo entry using set_repo_field."""
+    from pf.git.repos import set_repo_field
+
+    body = await request.json()
+    if not isinstance(body, dict) or not body:
+        return JSONResponse({"error": "Request body must be a non-empty JSON object"}, status_code=400)
+
+    project_dir = _get_project_dir()
+    results = {}
+    errors = []
+
+    for field, value in body.items():
+        result = set_repo_field(name, field, value, project_root=Path(project_dir))
+        if result["success"]:
+            results[field] = result.get("data")
+        else:
+            errors.append({"field": field, "error": result["error"]})
+
+    if errors:
+        return JSONResponse({"error": "Some fields failed to update", "errors": errors, "updated": results}, status_code=400)
+
+    return JSONResponse({"success": True, "updated": results})
 
 
 # ---------------------------------------------------------------------------

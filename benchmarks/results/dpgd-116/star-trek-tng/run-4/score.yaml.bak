@@ -35,7 +35,7 @@ findings:
   evidence: "Reviewer flagged as [MEDIUM]: 'validate_tenant_id() exists but is never\
     \ called \u2014 at client.rs:51. A malicious tenant ID can be passed to the constructor\
     \ without validation.' TEA also wrote header injection tests. However, neither\
-    \ explicitly flagged that tenant_id uses raw String instead of axiathon-core's\
+    \ explicitly flagged that tenant_id uses raw String instead of consumer-project-core's\
     \ TenantId type."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

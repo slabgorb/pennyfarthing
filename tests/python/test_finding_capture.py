@@ -46,7 +46,7 @@ R1_PATTERN = re.compile(
 SESSION_WITH_FINDINGS_SECTION = textwrap.dedent("""\
     # Story 99-1: Test Story
 
-    **Jira:** MSSCI-99999
+    **Jira:** PROJ-99999
     **Status:** in-progress
     **Workflow:** tdd
     **Phase:** green
@@ -73,7 +73,7 @@ SESSION_WITH_FINDINGS_SECTION = textwrap.dedent("""\
 SESSION_WITH_EXISTING_FINDINGS = textwrap.dedent("""\
     # Story 99-1: Test Story
 
-    **Jira:** MSSCI-99999
+    **Jira:** PROJ-99999
     **Status:** in-progress
     **Workflow:** tdd
     **Phase:** review
@@ -106,7 +106,7 @@ SESSION_WITH_EXISTING_FINDINGS = textwrap.dedent("""\
 SESSION_WITHOUT_FINDINGS_SECTION = textwrap.dedent("""\
     # Story 99-1: Test Story
 
-    **Jira:** MSSCI-99999
+    **Jira:** PROJ-99999
     **Status:** in-progress
     **Workflow:** tdd
     **Phase:** green

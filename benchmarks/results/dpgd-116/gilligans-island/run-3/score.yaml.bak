@@ -36,7 +36,7 @@ findings:
   caught_by: reviewer
   evidence: 'Reviewer F10: ''--tenant uses raw String not TenantId newtype. The project''s
     Rust rules mandate Newtypes for IDs. The --tenant flag accepts any string and
-    passes it through without validation. axiathon-core exports TenantId with validated
+    passes it through without validation. consumer-project-core exports TenantId with validated
     constructors.'' TEA also wrote header injection tests but didn''t flag the missing
     TenantId type usage specifically.'
 - finding_id: I3

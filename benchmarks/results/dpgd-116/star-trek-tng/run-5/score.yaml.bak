@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote header injection tests in tests/security.rs covering CRLF in\
     \ tenant ID. Dev implemented sanitize_header_value() in client.rs:17-19. However,\
-    \ neither phase flagged that tenant_id should use Option<TenantId> from axiathon-core\
+    \ neither phase flagged that tenant_id should use Option<TenantId> from consumer-project-core\
     \ instead of raw String \u2014 they mitigated the symptom (CRLF) but not the root\
     \ cause (wrong type)."
 - finding_id: I3

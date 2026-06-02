@@ -14,7 +14,7 @@
 | `api_security_integration.rs` | 12 tests | Security: CWE-209 (no token echo, no stack traces, no internal names), input validation (bad JSON, empty body), security headers (X-Content-Type-Options, X-Frame-Options), CORS, AppState substate pattern |
 
 **Tests Written:** 68 tests covering all 5 ACs + security edge cases
-**Status:** RED (failing — `axiathon_server::app`, `axiathon_server::config::RateLimitConfig`, `axiathon_server::state::AppState` do not exist yet)
+**Status:** RED (failing — `consumer-project_server::app`, `consumer-project_server::config::RateLimitConfig`, `consumer-project_server::state::AppState` do not exist yet)
 
 **Handoff:** To Dev for implementation. The tests expect:
 1. `pub fn app() -> Router` — returns the configured Axum router

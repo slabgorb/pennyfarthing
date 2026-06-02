@@ -36,7 +36,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote header injection prevention tests in siem_client.rs and security.rs\
     \ covering CWE-113. Dev implemented newline rejection in client.rs:30-33,40-43.\
-    \ However, the type-safety fix (using TenantId from axiathon-core instead of raw\
+    \ However, the type-safety fix (using TenantId from consumer-project-core instead of raw\
     \ String) was not flagged \u2014 runtime validation was used instead."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

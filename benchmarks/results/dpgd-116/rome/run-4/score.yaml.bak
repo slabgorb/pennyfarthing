@@ -33,7 +33,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote security tests for CRLF injection in tenant IDs (header injection\
     \ risk). Dev implemented CRLF/null-byte validation in SiemClient::new(). However,\
-    \ the deeper issue of using raw String instead of TenantId from axiathon-core\
+    \ the deeper issue of using raw String instead of TenantId from consumer-project-core\
     \ was not flagged \u2014 only the injection vector was mitigated, not the type-safety\
     \ gap."
 - finding_id: I3

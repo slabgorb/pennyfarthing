@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v13.1.0** | *The outer loop goes once, the inner loop goes many times.*
+**v13.1.2** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -36,7 +36,7 @@ The 45 persona themes (Discworld, Star Trek, Breaking Bad, Alice in Wonderland, 
 
 ### 3. Integration & Tooling
 
-- **Frame** - Dashboard panel viewer for CLI-first developers — browser GUI or terminal TUI alongside Claude Code
+- **Frame** - Dashboard panel viewer for CLI-first developers — terminal TUI alongside Claude Code
 - **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity
 - **Sprint Management** - Story tracking with `current-sprint.yaml`
 - **Codebase Analysis** - Hotspots, complexity, dead code, dependencies, code markers, and health score via `pf debug`
@@ -53,8 +53,8 @@ Someone on your team already ran `/pf-setup`. You just need the CLI and to clone
 
 ```bash
 # 1. Install the CLI (pick one)
-pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
-# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
+pipx install "git+https://github.com/slabgorb/pennyfarthing.git"
+# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/slabgorb/pennyfarthing.git"
 
 # 2. Clone the project
 git clone git@github.com:your-org/your-project.git && cd your-project
@@ -76,9 +76,9 @@ You're bringing Pennyfarthing into a repo for the first time.
 gh auth login
 
 # 2. Install the CLI (pick one)
-pipx install "git+https://github.com/1898andCo/pennyfarthing.git"
-# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/1898andCo/pennyfarthing.git"
-# or: curl -fsSL https://raw.githubusercontent.com/1898andCo/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
+pipx install "git+https://github.com/slabgorb/pennyfarthing.git"
+# or: uv tool install "pennyfarthing-scripts @ git+https://github.com/slabgorb/pennyfarthing.git"
+# or: curl -fsSL https://raw.githubusercontent.com/slabgorb/pennyfarthing/main/pennyfarthing-dist/scripts/install.sh | bash
 
 # 3. Initialize your project
 cd your-project
@@ -103,7 +103,7 @@ You're contributing to the framework using the orchestrator repo.
 
 ```bash
 # 1. Clone the orchestrator (includes pennyfarthing/ as inlined subrepo)
-git clone git@github.com:1898andCo/orc-penny.git && cd orc-penny
+git clone git@github.com:slabgorb/orc-penny.git && cd orc-penny
 
 # 2. Setup — clones pennyfarthing/, installs deps, builds, installs pf CLI
 just setup
@@ -115,7 +115,7 @@ just claude
 /guided-tour
 ```
 
-Prerequisites: Python 3.11+, Node 18+, [pnpm](https://pnpm.io/) 9+, [just](https://github.com/casey/just), Claude Code CLI, Git SSH access to `1898andCo`.
+Prerequisites: Python 3.11+, Node 18+, [pnpm](https://pnpm.io/) 9+, [just](https://github.com/casey/just), Claude Code CLI, Git SSH access to `slabgorb`.
 
 The orchestrator has two git repos — `orc-penny/` (sprint files, sessions, docs, trunk-based on `main`) and `pennyfarthing/` (framework source, gitflow on `develop`). The `.pennyfarthing/` runtime directory symlinks to `pennyfarthing/pennyfarthing-dist/` so changes are live immediately.
 
@@ -128,7 +128,6 @@ Pennyfarthing works in any terminal. Optional dashboards add real-time visibilit
 | I want to... | Mode | Command |
 |--------------|------|---------|
 | Just use agents in my terminal | **CLI only** | `claude` (no dashboard needed) |
-| See dashboards in my browser | **Frame GUI** | `just gui` + `just claude` |
 | Stay fully in the terminal | **Frame TUI** | `just tui` + `just claude` |
 | One command, everything | **Frame all-in-one** | `pf frame start` |
 
@@ -397,4 +396,4 @@ See [CHANGELOG.md](CHANGELOG.md) for full details.
 
 ## License
 
-Copyright 2025-2026 1898 & Co. All rights reserved.
+Copyright 2025-2026 Keith Avery. Licensed under Apache-2.0.

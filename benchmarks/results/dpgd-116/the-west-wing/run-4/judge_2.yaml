@@ -37,7 +37,7 @@ findings:
   evidence: TEA wrote header injection tests in siem_client.rs and security.rs covering
     CRLF sanitization. Dev implemented sanitize_header_value rejecting \r and \n.
     However, SiemClient.tenant_id still uses raw String rather than TenantId from
-    axiathon-core - the CRLF mitigation was implemented but the type-safety aspect
+    consumer-project-core - the CRLF mitigation was implemented but the type-safety aspect
     (using Option<TenantId>) was not addressed. The pipeline caught the injection
     risk but not the type-safety gap.
 - finding_id: I3

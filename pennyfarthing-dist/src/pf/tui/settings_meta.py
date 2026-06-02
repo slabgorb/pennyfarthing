@@ -129,7 +129,7 @@ _SPECS: list[SettingSpec] = [
         label="PR Merge",
         widget_type="select",
         group="Workflow",
-        options=[("Auto", "auto"), ("Manual", "manual")],
+        options=[("Auto", "auto"), ("Human", "human")],
         description="PR merge strategy",
     ),
     SettingSpec(
@@ -152,6 +152,18 @@ _SPECS: list[SettingSpec] = [
         widget_type="switch",
         group="Workflow",
         description="Use saddle commands for agent handoffs",
+    ),
+    SettingSpec(
+        key="workflow.strictness",
+        label="Gate Strictness",
+        widget_type="select",
+        group="Workflow",
+        options=[
+            ("Strict", "strict"),
+            ("Standard", "standard"),
+            ("Minimal", "minimal"),
+        ],
+        description="Gate enforcement level: strict (all block), standard (critical block), minimal (only critical block)",
     ),
     SettingSpec(
         key="workflow.startup_agent",
@@ -278,6 +290,14 @@ _SPECS: list[SettingSpec] = [
         widget_type="input",
         group="Jira",
         description="Jira instance base URL",
+    ),
+    SettingSpec(
+        key="peloton.layout",
+        label="Peloton Layout",
+        widget_type="select",
+        group="Peloton",
+        options=[("Grid", "grid"), ("Vertical", "vertical"), ("Horizontal", "horizontal")],
+        description="Pane layout for team workflows",
     ),
 ]
 

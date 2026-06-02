@@ -38,7 +38,7 @@ findings:
   evidence: TEA wrote tests for 'CRLF in tenant ID and auth token must be rejected.'
     Dev implemented CRLF validation in with_tenant_validated/with_token_validated.
     Reviewer flagged 'with_token() bypasses CRLF validation' as MEDIUM. However, no
-    phase flagged the use of raw String instead of TenantId from axiathon-core.
+    phase flagged the use of raw String instead of TenantId from consumer-project-core.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

@@ -12,7 +12,7 @@ from typing import Any
 
 import yaml
 
-from pf.common.config import get_project_root, load_yaml_config
+from pf.common.config import get_project_root, load_pennyfarthing_config, load_yaml_config
 from pf.common.themes import (
     get_current_theme as _get_current_theme,
 )
@@ -108,19 +108,28 @@ def load_persona(
     if not theme:
         return None, None
 
+    # Check config.local.yaml theme_characters for override or custom role
+    config = load_pennyfarthing_config(root)
+    theme_characters = config.get("theme_characters", {}) or {}
+    character_override = theme_characters.get(agent_name)
+
     theme_data = load_theme(theme, root)
-    if not theme_data or "agents" not in theme_data:
+    if not theme_data:
+        theme_data = {"agents": {}}
+
+    agents_section = theme_data.get("agents", {})
+    agent_data = agents_section.get(agent_name)
+
+    # If no agent data in theme AND no config override, not found
+    if not agent_data and not character_override:
         return None, None
 
-    agent_data = theme_data["agents"].get(agent_name)
-    if not agent_data:
-        return None, None
-
-    # Extract helper info if present
+    # Build persona — config override wins for character name
+    agent_data = agent_data or {}
     helper = agent_data.get("helper", {})
 
     persona = Persona(
-        character=agent_data.get("character", "Unknown"),
+        character=character_override or agent_data.get("character", "Unknown"),
         style=agent_data.get("style", ""),
         role=agent_data.get("role", ""),
         quote=_quote_cache.setdefault((agent_name, theme), random.choice(catchphrases)) if (catchphrases := agent_data.get("catchphrases")) else agent_data.get("quote"),
@@ -151,15 +160,28 @@ def get_crew_manifest(project_root: Path | None = None) -> list[CrewMember]:
     if not theme:
         return []
 
+    # Load config overrides
+    config = load_pennyfarthing_config(root)
+    theme_characters = config.get("theme_characters", {}) or {}
+
     theme_data = load_theme(theme, root)
-    if not theme_data or "agents" not in theme_data:
-        return []
+    agents_section = theme_data.get("agents", {}) if theme_data else {}
+
+    # Collect all roles: standard roles + any custom roles from theme_characters
+    all_roles = list(AGENT_ROLES)
+    for role in theme_characters:
+        if role not in all_roles:
+            all_roles.append(role)
 
     crew = []
-    for role in AGENT_ROLES:
-        agent_data = theme_data["agents"].get(role)
-        if agent_data and "character" in agent_data:
-            crew.append(CrewMember(role=role, character=agent_data["character"]))
+    for role in all_roles:
+        # Config override wins
+        if role in theme_characters:
+            crew.append(CrewMember(role=role, character=theme_characters[role]))
+        else:
+            agent_data = agents_section.get(role)
+            if agent_data and "character" in agent_data:
+                crew.append(CrewMember(role=role, character=agent_data["character"]))
 
     return crew
 

@@ -16,21 +16,81 @@ from typing import Any
 # Configuration
 
 
-def _resolve_jira_config():
-    """Resolve Jira project and URL from config file, env, or defaults."""
+class JiraConfigError(RuntimeError):
+    """Raised when a Jira operation needs config that is not present."""
+
+
+def _resolve_jira_config() -> tuple[str | None, str | None]:
+    """Resolve Jira project and URL from config file or env.
+
+    Returns a tuple of (project, url) where each value is either the configured
+    string or ``None`` when unset. The framework must work in projects with no
+    Jira at all, so this function does not raise; callers that need a project
+    key call :func:`require_jira_project` to fail loudly at point of use.
+    """
     try:
         from pf.common.config import load_pennyfarthing_config
 
         config = load_pennyfarthing_config()
-        jira_cfg = config.get("jira", {})
-    except Exception:
+        jira_cfg = config.get("jira") or {}
+    except Exception:  # config is optional; Jira ops work without it
         jira_cfg = {}
-    project = jira_cfg.get("project") or os.environ.get("JIRA_PROJECT") or ""
-    url = jira_cfg.get("url") or os.environ.get("JIRA_URL") or ""
+    project = jira_cfg.get("project") or os.environ.get("JIRA_PROJECT") or None
+    url = jira_cfg.get("url") or os.environ.get("JIRA_URL") or None
     return project, url
 
 
-JIRA_PROJECT, JIRA_URL = _resolve_jira_config()
+def require_jira_project(value: str | None = None) -> str:
+    """Return the configured Jira project key or raise :class:`JiraConfigError`.
+
+    Pass an explicit ``value`` (e.g. the imported ``JIRA_PROJECT`` constant) to
+    avoid re-resolving config. Empty strings are treated as unset.
+    """
+    if value is None:
+        value, _url = _resolve_jira_config()
+    if not (value and value.strip()):
+        raise JiraConfigError(
+            "Jira project key not configured. "
+            "Set jira.project in .pennyfarthing/config.local.yaml or "
+            "export JIRA_PROJECT before running Jira operations."
+        )
+    return value.strip()
+
+
+_resolved_project, _resolved_url = _resolve_jira_config()
+# Module-level constants kept as strings for backward compat with existing
+# importers. Callers that need fail-loud behavior must use require_jira_project.
+JIRA_PROJECT: str = _resolved_project or ""
+JIRA_URL: str = _resolved_url or ""
+
+
+def is_jira_enabled() -> bool:
+    """Return True only when both `jira.project` and `jira.url` resolve to
+    non-empty `str` values via config or env.
+
+    Re-reads config on every call so tests can monkeypatch
+    `pf.common.config.load_pennyfarthing_config`.
+
+    Non-string truthy values (e.g. `project: true` or `project: 1` in YAML)
+    and whitespace-only strings (`project: '   '`) do NOT enable jira —
+    AC1 of story 152-2 requires explicit non-empty string config.
+
+    Fail-closed with defense in depth: `_resolve_jira_config` swallows
+    config-load errors internally and returns `("", "")`. As a second
+    layer, this predicate also wraps the resolver call so any future
+    refactor that removes the inner handler still yields False rather
+    than propagating an exception to gate call sites.
+    """
+    try:
+        project, url = _resolve_jira_config()
+    except Exception:
+        return False
+    return (
+        isinstance(project, str)
+        and bool(project.strip())
+        and isinstance(url, str)
+        and bool(url.strip())
+    )
 
 # Status mappings: Pennyfarthing -> Jira
 STATUS_TO_JIRA = {
@@ -307,11 +367,11 @@ class JiraClient:
 
     Usage (sync):
         client = JiraClient()
-        issue = client.get_issue_sync("MSSCI-12345")
+        issue = client.get_issue_sync("PROJ-12345")
 
     Usage (async):
         client = JiraClient()
-        issue = await client.get_issue_async("MSSCI-12345")
+        issue = await client.get_issue_async("PROJ-12345")
     """
 
     def __init__(
@@ -328,7 +388,7 @@ class JiraClient:
             token: API token (defaults to JIRA_API_TOKEN env)
         """
         self.base_url = base_url or JIRA_URL
-        self.user = user or os.environ.get("JIRA_USER", "keith.avery@1898andco.io")
+        self.user = user or os.environ.get("JIRA_USER", "user@example.com")
         # Use explicit token if provided (even empty), otherwise fall back to env var
         self.token = token if token is not None else os.environ.get("JIRA_API_TOKEN", "")
 
@@ -373,7 +433,7 @@ class JiraClient:
 
         Args:
             method: HTTP method (GET, POST, PUT)
-            endpoint: API endpoint (e.g., /rest/api/3/issue/MSSCI-123)
+            endpoint: API endpoint (e.g., /rest/api/3/issue/PROJ-123)
             data: Request body data
 
         Returns:
@@ -416,7 +476,7 @@ class JiraClient:
         """Fetch issue from Jira synchronously.
 
         Args:
-            issue_key: Jira issue key (e.g., MSSCI-12345)
+            issue_key: Jira issue key (e.g., PROJ-12345)
 
         Returns:
             Issue JSON dict or None if not found

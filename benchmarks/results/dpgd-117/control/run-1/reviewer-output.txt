@@ -8,8 +8,8 @@ I have all the information I need. Let me compile my findings.
 
 | Check | Result |
 |-------|--------|
-| `cargo clippy -p axiathon-server -- -D warnings` | PASS |
-| `cargo test -p axiathon-server` | **FAIL** — 1 test failure (`null_bytes_in_auth_header_returns_401`) |
+| `cargo clippy -p consumer-project-server -- -D warnings` | PASS |
+| `cargo test -p consumer-project-server` | **FAIL** — 1 test failure (`null_bytes_in_auth_header_returns_401`) |
 | `cargo +nightly fmt --all --check` | **FAIL** — formatting diffs in `tests/security.rs` |
 
 ---
@@ -20,13 +20,13 @@ I have all the information I need. Let me compile my findings.
 
 The test `null_bytes_in_auth_header_returns_401` panics at line 35 because `"Bearer test\0injected"` contains a null byte, which is invalid for HTTP header values. The `Request::builder()` returns `Err(InvalidHeaderValue)` and the `.expect("request builder")` panics. This is a test bug — it tests something HTTP itself rejects at the framework level — but a failing test in the suite is a blocking issue. It must be fixed (either remove the test or use a raw hyper request that handles the error).
 
-### [HIGH] Duplicate `ApiResponse` types — server ignores `axiathon-core::ApiResponse<T>` entirely — `lib.rs:103-108`
+### [HIGH] Duplicate `ApiResponse` types — server ignores `consumer-project-core::ApiResponse<T>` entirely — `lib.rs:103-108`
 
-The story specifies that `ApiResponse<T>` should come from `axiathon-core`. Instead, the server defines its own `ApiResponseEnvelope<T>` with a different shape (`errors: Vec<ApiErrorDetail>` + `meta: ResponseMeta`) while `axiathon-core::types::ApiResponse<T>` uses `error: Option<ApiError>` + `meta: Option<ApiMeta>` with pagination fields. Neither the `axiathon-core` dependency nor any of its types are used anywhere in the server source. The AC says: "All responses use `ApiResponse<T>` from axiathon-core." The two types have incompatible semantics (plural `errors[]` array vs singular `error` object; always-present `meta` vs optional `meta`). This will cause integration pain in later stories when other crates expect the core type.
+The story specifies that `ApiResponse<T>` should come from `consumer-project-core`. Instead, the server defines its own `ApiResponseEnvelope<T>` with a different shape (`errors: Vec<ApiErrorDetail>` + `meta: ResponseMeta`) while `consumer-project-core::types::ApiResponse<T>` uses `error: Option<ApiError>` + `meta: Option<ApiMeta>` with pagination fields. Neither the `consumer-project-core` dependency nor any of its types are used anywhere in the server source. The AC says: "All responses use `ApiResponse<T>` from consumer-project-core." The two types have incompatible semantics (plural `errors[]` array vs singular `error` object; always-present `meta` vs optional `meta`). This will cause integration pain in later stories when other crates expect the core type.
 
 ### [HIGH] Six unused crate dependencies in `Cargo.toml` — `Cargo.toml:9-13,19,22-23`
 
-`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, and `tracing-subscriber` are declared as dependencies but **none are used** in `src/lib.rs`. This bloats compile times and creates false dependency edges in the workspace graph. `thiserror`, `tracing`, and `tracing-subscriber` are workspace deps pulled in but never imported.
+`consumer-project-core`, `consumer-project-detection`, `consumer-project-ingestion`, `consumer-project-ot`, `consumer-project-query`, `consumer-project-storage`, `thiserror`, `tracing`, and `tracing-subscriber` are declared as dependencies but **none are used** in `src/lib.rs`. This bloats compile times and creates false dependency edges in the workspace graph. `thiserror`, `tracing`, and `tracing-subscriber` are workspace deps pulled in but never imported.
 
 ### [HIGH] Global static rate limiter shared across tests — `lib.rs:39-40`
 
@@ -42,7 +42,7 @@ Per project gotchas (`gotchas.md`): "Always include `cargo +nightly fmt --all --
 
 ### [MEDIUM] `TenantContext` is never constructed from auth info — `lib.rs:294-354`
 
-The auth middleware extracts `AuthInfo { tenant_id, scopes }` but never builds a `TenantContext` or passes it downstream. The `tenant_id` from auth is used only for rate limiting. Handlers receive `DetectionServices`/`StorageServices` substates but have no access to tenant identity. The AC states: "Tenant context must be extractable from the authenticated credential." This is partially unmet — the mechanism exists in `axiathon-core` but is not wired.
+The auth middleware extracts `AuthInfo { tenant_id, scopes }` but never builds a `TenantContext` or passes it downstream. The `tenant_id` from auth is used only for rate limiting. Handlers receive `DetectionServices`/`StorageServices` substates but have no access to tenant identity. The AC states: "Tenant context must be extractable from the authenticated credential." This is partially unmet — the mechanism exists in `consumer-project-core` but is not wired.
 
 ### [MEDIUM] Hardcoded test tokens instead of JWT validation — `lib.rs:226-249`
 
@@ -66,7 +66,7 @@ Using `.expect("serialize")` on `serde_json::to_value()` will panic if serializa
 
 ### [VERIFIED] `#![forbid(unsafe_code)]` present — `lib.rs:2`
 
-Confirmed in both `axiathon-server` and `axiathon-core`.
+Confirmed in both `consumer-project-server` and `consumer-project-core`.
 
 ### [VERIFIED] Five route groups registered — `lib.rs:483-489`
 
@@ -91,9 +91,9 @@ All unmatched routes return the envelope format.
 ### Blocking issues (must fix):
 1. **Failing test** (`null_bytes_in_auth_header_returns_401`) — test suite must be green
 2. **Nightly fmt check fails** — per project gotchas, this blocks approval
-3. **Duplicate ApiResponse type** — server defines its own envelope instead of using/extending `axiathon-core::ApiResponse<T>`. This divergence will break cross-crate contracts in stories 8.2+
+3. **Duplicate ApiResponse type** — server defines its own envelope instead of using/extending `consumer-project-core::ApiResponse<T>`. This divergence will break cross-crate contracts in stories 8.2+
 4. **Global rate limiter causes test isolation issues** — shared mutable state across test invocations
-5. **Six unused crate dependencies** — `axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber` are dead weight
+5. **Six unused crate dependencies** — `consumer-project-core`, `consumer-project-detection`, `consumer-project-ingestion`, `consumer-project-ot`, `consumer-project-query`, `consumer-project-storage`, `thiserror`, `tracing`, `tracing-subscriber` are dead weight
 
 ### Should fix before merge:
 6. Wire `TenantContext` construction from `AuthInfo` in the auth middleware

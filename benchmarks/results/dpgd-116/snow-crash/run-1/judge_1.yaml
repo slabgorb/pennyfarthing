@@ -37,7 +37,7 @@ findings:
   evidence: 'TEA wrote tests for ''CWE-113: Header injection via CRLF in token/tenant
     values'' in siem_client.rs:160-189. Reviewer escalated as [CRITICAL] that with_token()/with_tenant()
     bypass validation. Same CWE-113 class caught, though the specific fix of using
-    TenantId from axiathon-core was not mentioned.'
+    TenantId from consumer-project-core was not mentioned.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

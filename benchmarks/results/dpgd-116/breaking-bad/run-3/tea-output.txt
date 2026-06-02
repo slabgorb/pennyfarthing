@@ -24,10 +24,10 @@
 - Config token exclusion: Token fields in TOML are ignored (keychain only)
 
 **Handoff:** To Dev for implementation. The tests define the public API contract:
-- `axiathon_client::cli::{Cli, Commands}` — clap Parser/Subcommand
-- `axiathon_client::error::CliError` — with `exit_code() -> i32`
-- `axiathon_client::output::{OutputFormatter, TableFormatter, JsonFormatter, CsvFormatter, OutputFormat}`
-- `axiathon_client::client::SiemClient` — with `new()`, `with_token()`, `with_tenant()`, `get()`
-- `axiathon_client::config::ClientConfig` — with `from_toml()`, `from_file()`, `default_config_path()`, `apply_env_overrides_from()`, `apply_cli_overrides()`
-- `axiathon_client::commands::completion::generate_completion()`
-- Binary `axiathon` via `src/main.rs`
+- `consumer-project_client::cli::{Cli, Commands}` — clap Parser/Subcommand
+- `consumer-project_client::error::CliError` — with `exit_code() -> i32`
+- `consumer-project_client::output::{OutputFormatter, TableFormatter, JsonFormatter, CsvFormatter, OutputFormat}`
+- `consumer-project_client::client::SiemClient` — with `new()`, `with_token()`, `with_tenant()`, `get()`
+- `consumer-project_client::config::ClientConfig` — with `from_toml()`, `from_file()`, `default_config_path()`, `apply_env_overrides_from()`, `apply_cli_overrides()`
+- `consumer-project_client::commands::completion::generate_completion()`
+- Binary `consumer-project` via `src/main.rs`

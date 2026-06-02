@@ -18,11 +18,11 @@ The `ServerError` variant's Display impl is `#[error("server error ({0})")]`, wh
 
 **[HIGH] Missing `main.rs` — binary cannot be built**
 
-No `main.rs` exists. No `[[bin]]` section in `Cargo.toml`. The story requires an `axiathon` binary entry point with tracing init, dispatch, and exit code mapping via `std::process::exit()`. Without it, the crate is a library only — AC-1, AC-3 (exit codes in practice), and AC-9 (completion to stdout, instructions to stderr) cannot be validated end-to-end.
+No `main.rs` exists. No `[[bin]]` section in `Cargo.toml`. The story requires an `consumer-project` binary entry point with tracing init, dispatch, and exit code mapping via `std::process::exit()`. Without it, the crate is a library only — AC-1, AC-3 (exit codes in practice), and AC-9 (completion to stdout, instructions to stderr) cannot be validated end-to-end.
 
 **[HIGH] Missing `logout` and `tui` commands — `cli.rs`**
 
-AC-1 explicitly requires: *"`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init."* The `Commands` enum has `Login` but no `Logout` variant and no `Tui` variant. This is a direct AC violation.
+AC-1 explicitly requires: *"`consumer-project --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init."* The `Commands` enum has `Login` but no `Logout` variant and no `Tui` variant. This is a direct AC violation.
 
 **[MEDIUM] `chrono_now_iso()` produces Unix timestamp, not ISO 8601 — `output.rs:114-119`**
 
@@ -94,7 +94,7 @@ AC-9 says init should be "functional, not stub." Currently it's just `pub struct
 
 Three High findings block approval:
 
-1. **Missing `main.rs`** — the binary entry point does not exist; the crate cannot produce the `axiathon` binary
+1. **Missing `main.rs`** — the binary entry point does not exist; the crate cannot produce the `consumer-project` binary
 2. **Missing `logout` and `tui` commands** — AC-1 violation
 3. **`ServerError` Display security test is vacuous** — the test at `security.rs:33` does not assert the sensitive message is excluded
 

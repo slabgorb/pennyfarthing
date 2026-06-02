@@ -48,7 +48,7 @@ Story spec says `toml 0.9`, but `Cargo.toml` declares `toml = "0.8"`. The worksp
 
 **6. [MEDIUM] No `main.rs` — binary cannot be built**
 
-The story requires producing the `axiathon` binary, and the Cargo.toml has no `[[bin]]` section. There is no `main.rs`. The crate currently only builds as a library. AC-1 requires `axiathon --help` to show command groups — impossible without a binary entry point.
+The story requires producing the `consumer-project` binary, and the Cargo.toml has no `[[bin]]` section. There is no `main.rs`. The crate currently only builds as a library. AC-1 requires `consumer-project --help` to show command groups — impossible without a binary entry point.
 
 **7. [MEDIUM] `NotImplemented` variant missing from `cli_error_is_not_silently_swallowed` test** at `tests/security.rs:179`
 
@@ -60,7 +60,7 @@ Five `expect()` calls in production code. Per project rules: "No `unwrap()` in p
 
 **9. [LOW] `--tenant` flag accepts raw `String` instead of `TenantId`** at `cli.rs:32`
 
-Per project rules: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag is `Option<String>`, and `SiemClient::new()` takes `Option<String>` for tenant. This should use `TenantId` from `axiathon-core` at the boundary where it enters the system.
+Per project rules: "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag is `Option<String>`, and `SiemClient::new()` takes `Option<String>` for tenant. This should use `TenantId` from `consumer-project-core` at the boundary where it enters the system.
 
 **10. [LOW] Unused import warnings** at `tests/shell_completion.rs:8`, `tests/cli_structure.rs:9`
 
@@ -76,7 +76,7 @@ The `token` field in TOML is deserialized into `RawConfig` but `ClientConfig::to
 
 **13. [VERIFIED] Dependency boundary is enforced** at `Cargo.toml:8-23`
 
-`axiathon-client` depends only on `axiathon-core`. No server-side crate imports. Compile-time test at `tests/security.rs:218-238` reinforces this.
+`consumer-project-client` depends only on `consumer-project-core`. No server-side crate imports. Compile-time test at `tests/security.rs:218-238` reinforces this.
 
 **14. [VERIFIED] Exit code mapping is correct** at `error.rs:43-49`
 

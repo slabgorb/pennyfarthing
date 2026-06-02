@@ -1,5 +1,5 @@
 """
-Tests for jira_bidirectional_sync.py (Story 63-6: MSSCI-12400).
+Tests for jira_bidirectional_sync.py (Story 63-6: PROJ-12400).
 
 Run with: python -m pytest tests/python/test_jira_bidirectional_sync.py -v
 
@@ -132,9 +132,9 @@ class TestGenerateSyncPlan:
     def sample_yaml_stories(self):
         """Sample YAML stories for testing."""
         return [
-            {"id": "63-1", "jira": "MSSCI-12398", "status": "done", "points": 1},
-            {"id": "63-2", "jira": "MSSCI-12399", "status": "in_progress", "points": 2},
-            {"id": "63-3", "jira": "MSSCI-12400", "status": "backlog", "points": 3},
+            {"id": "63-1", "jira": "PROJ-12398", "status": "done", "points": 1},
+            {"id": "63-2", "jira": "PROJ-12399", "status": "in_progress", "points": 2},
+            {"id": "63-3", "jira": "PROJ-12400", "status": "backlog", "points": 3},
             {"id": "63-4", "status": "backlog", "points": 1},  # No Jira key
         ]
 
@@ -143,19 +143,19 @@ class TestGenerateSyncPlan:
         """Sample Jira stories for testing."""
         return [
             {
-                "key": "MSSCI-12398",
+                "key": "PROJ-12398",
                 "fields": {"status": {"name": "Done"}, "customfield_10031": 1},
             },
             {
-                "key": "MSSCI-12399",
+                "key": "PROJ-12399",
                 "fields": {"status": {"name": "To Do"}, "customfield_10031": 2},
             },
             {
-                "key": "MSSCI-12400",
+                "key": "PROJ-12400",
                 "fields": {"status": {"name": "To Do"}, "customfield_10031": 5},
             },
             {
-                "key": "MSSCI-12401",  # Only in Jira
+                "key": "PROJ-12401",  # Only in Jira
                 "fields": {"status": {"name": "In Progress"}, "customfield_10031": 2},
             },
         ]
@@ -174,14 +174,14 @@ class TestGenerateSyncPlan:
     def test_categorizes_jira_only(self, generate_sync_plan, sample_yaml_stories, sample_jira_stories):
         """Should identify stories only in Jira."""
         plan = generate_sync_plan(sample_yaml_stories, sample_jira_stories)
-        assert "MSSCI-12401" in plan.jira_only
+        assert "PROJ-12401" in plan.jira_only
 
     def test_categorizes_both(self, generate_sync_plan, sample_yaml_stories, sample_jira_stories):
         """Should identify stories in both systems."""
         plan = generate_sync_plan(sample_yaml_stories, sample_jira_stories)
-        assert "MSSCI-12398" in plan.both
-        assert "MSSCI-12399" in plan.both
-        assert "MSSCI-12400" in plan.both
+        assert "PROJ-12398" in plan.both
+        assert "PROJ-12399" in plan.both
+        assert "PROJ-12400" in plan.both
 
     def test_detects_status_differences(self, generate_sync_plan, sample_yaml_stories, sample_jira_stories):
         """Should detect status differences when sync_status=True."""
@@ -190,7 +190,7 @@ class TestGenerateSyncPlan:
             sample_jira_stories,
             sync_status=True,
         )
-        # MSSCI-12399: YAML=in_progress, Jira=To Do
+        # PROJ-12399: YAML=in_progress, Jira=To Do
         status_changes = [c for c in plan.changes if c.field == "status"]
         assert len(status_changes) >= 1
 
@@ -201,7 +201,7 @@ class TestGenerateSyncPlan:
             sample_jira_stories,
             sync_points=True,
         )
-        # MSSCI-12400: YAML=3, Jira=5
+        # PROJ-12400: YAML=3, Jira=5
         points_changes = [c for c in plan.changes if c.field == "points"]
         assert len(points_changes) >= 1
 
@@ -259,7 +259,7 @@ class TestFormatSyncPlan:
         return SyncPlan(
             changes=[
                 SyncChange(
-                    key="MSSCI-12399",
+                    key="PROJ-12399",
                     field="status",
                     action="update-yaml",
                     yaml_value="in_progress",
@@ -267,9 +267,9 @@ class TestFormatSyncPlan:
                     target_value="backlog",
                 ),
             ],
-            yaml_only=["MSSCI-12500"],
-            jira_only=["MSSCI-12401"],
-            both=["MSSCI-12398", "MSSCI-12399"],
+            yaml_only=["PROJ-12500"],
+            jira_only=["PROJ-12401"],
+            both=["PROJ-12398", "PROJ-12399"],
         )
 
     def test_format_sync_plan_exists(self):
@@ -294,19 +294,19 @@ class TestFormatSyncPlan:
         """Output should list YAML-only stories."""
         output = format_sync_plan(sample_plan)
         assert "YAML Only" in output
-        assert "MSSCI-12500" in output
+        assert "PROJ-12500" in output
 
     def test_format_includes_jira_only(self, format_sync_plan, sample_plan):
         """Output should list Jira-only stories."""
         output = format_sync_plan(sample_plan)
         assert "Jira Only" in output
-        assert "MSSCI-12401" in output
+        assert "PROJ-12401" in output
 
     def test_format_includes_changes(self, format_sync_plan, sample_plan):
         """Output should list changes."""
         output = format_sync_plan(sample_plan)
         assert "Changes" in output
-        assert "MSSCI-12399" in output
+        assert "PROJ-12399" in output
         assert "status" in output
 
     def test_format_empty_plan(self, format_sync_plan):
@@ -338,7 +338,7 @@ class TestExecuteSyncPlan:
         return SyncPlan(
             changes=[
                 SyncChange(
-                    key="MSSCI-12399",
+                    key="PROJ-12399",
                     field="status",
                     action="update-jira",
                     yaml_value="in_progress",
@@ -346,7 +346,7 @@ class TestExecuteSyncPlan:
                     target_value="In Progress",
                 ),
             ],
-            both=["MSSCI-12399"],
+            both=["PROJ-12399"],
         )
 
     @pytest.mark.asyncio
@@ -388,7 +388,7 @@ class TestExecuteSyncPlan:
             client=mock_client,
         )
 
-        mock_client.transition_async.assert_called_once_with("MSSCI-12399", "In Progress")
+        mock_client.transition_async.assert_called_once_with("PROJ-12399", "In Progress")
         assert result.jira_api_calls == 1
         assert result.changes_applied == 1
 
@@ -400,7 +400,7 @@ class TestExecuteSyncPlan:
         plan = SyncPlan(
             changes=[
                 SyncChange(
-                    key="MSSCI-12400",
+                    key="PROJ-12400",
                     field="points",
                     action="update-jira",
                     yaml_value=3,
@@ -408,7 +408,7 @@ class TestExecuteSyncPlan:
                     target_value=3,
                 ),
             ],
-            both=["MSSCI-12400"],
+            both=["PROJ-12400"],
         )
 
         mock_client = MagicMock()
@@ -416,7 +416,7 @@ class TestExecuteSyncPlan:
 
         result = await execute_sync_plan(plan, dry_run=False, client=mock_client)
 
-        mock_client.sync_story_points_async.assert_called_once_with("MSSCI-12400", 3)
+        mock_client.sync_story_points_async.assert_called_once_with("PROJ-12400", 3)
         assert result.changes_applied == 1
 
     @pytest.mark.asyncio
@@ -486,10 +486,10 @@ class TestStatusMappingIntegration:
         from pf.jira.bidirectional import generate_sync_plan
 
         yaml_stories = [
-            {"id": "63-1", "jira": "MSSCI-12398", "status": "in_progress", "points": 1},
+            {"id": "63-1", "jira": "PROJ-12398", "status": "in_progress", "points": 1},
         ]
         jira_stories = [
-            {"key": "MSSCI-12398", "fields": {"status": {"name": "To Do"}, "customfield_10031": 1}},
+            {"key": "PROJ-12398", "fields": {"status": {"name": "To Do"}, "customfield_10031": 1}},
         ]
 
         plan = generate_sync_plan(yaml_stories, jira_stories, sync_status=True, yaml_wins=True)
@@ -504,10 +504,10 @@ class TestStatusMappingIntegration:
         from pf.jira.bidirectional import generate_sync_plan
 
         yaml_stories = [
-            {"id": "63-1", "jira": "MSSCI-12398", "status": "done", "points": 1},
+            {"id": "63-1", "jira": "PROJ-12398", "status": "done", "points": 1},
         ]
         jira_stories = [
-            {"key": "MSSCI-12398", "fields": {"status": {"name": "In Progress"}, "customfield_10031": 1}},
+            {"key": "PROJ-12398", "fields": {"status": {"name": "In Progress"}, "customfield_10031": 1}},
         ]
 
         plan = generate_sync_plan(yaml_stories, jira_stories, sync_status=True, yaml_wins=False)

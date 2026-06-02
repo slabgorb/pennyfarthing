@@ -36,7 +36,7 @@ findings:
   evidence: TEA wrote CRLF header injection tests for tenant ID (siem_client.rs:165-178,
     security.rs:98-109). Reviewer also flagged these tests as relying on catch_unwind
     rather than explicit validation. Same CWE-113 vulnerability class addressed, though
-    the type-safety fix (using TenantId from axiathon-core) was not specifically recommended.
+    the type-safety fix (using TenantId from consumer-project-core) was not specifically recommended.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

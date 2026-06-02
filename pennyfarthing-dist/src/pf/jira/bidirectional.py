@@ -1,7 +1,7 @@
 """
 Bidirectional sync between sprint YAML and Jira.
 
-Story: MSSCI-12400 (Port from jira-bidirectional-sync.mjs)
+Story: PROJ-12400 (Port from jira-bidirectional-sync.mjs)
 
 Usage: python -m pf.jira bidirectional [options]
 
@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -208,7 +209,7 @@ def generate_sync_plan(
         yaml_status = yaml_story.get("status")
         jira_status_raw = jira_story.get("fields", {}).get("status", {}).get("name")
         yaml_points = yaml_story.get("points")
-        # customfield_10031 is Story Points for 1898andco Jira
+        # customfield_10031 is Story Points (Jira custom field)
         jira_points = jira_story.get("fields", {}).get("customfield_10031")
 
         # Normalize statuses for comparison
@@ -364,6 +365,11 @@ async def execute_sync_plan(
                 if updated:
                     result.changes_applied += 1
                     result.yaml_modified = True
+                else:
+                    result.errors.append(
+                        f"{change.key}: story not found in sprint YAML — "
+                        f"{change.field} update was not applied"
+                    )
 
             # Write back if modified (handles shards automatically)
             if result.yaml_modified:
@@ -380,25 +386,43 @@ def _update_story_in_sprint(
 ) -> bool:
     """Update a story field in sprint data by Jira key.
 
+    Searches every story-bearing section of the sprint document so updates
+    are applied wherever the story actually lives:
+
+    - ``epics[].stories`` (sharded epic shards merged in by ``read_sprint``)
+    - ``standalone_stories`` (top-level)
+    - ``stories`` (top-level)
+
     Args:
         sprint_data: Sprint YAML data
-        jira_key: Jira issue key (e.g., MSSCI-12400)
-        field: Field to update (status, points)
-        value: New value
+        jira_key: Jira issue key (e.g., PROJ-12400)
+        field: Field to update (status, points, assigned_to)
+        value: New value (``None`` deletes the field if present)
 
     Returns:
-        True if story was found and updated
+        True if story was found and updated; False otherwise.
     """
-    if not sprint_data or "epics" not in sprint_data:
+    if not sprint_data:
         return False
 
+    def _apply(story: dict[str, Any]) -> None:
+        if value is None and field in story:
+            del story[field]
+        elif value is not None:
+            story[field] = value
+
     for epic in sprint_data.get("epics", []):
+        if not isinstance(epic, Mapping):
+            continue
         for story in epic.get("stories", []):
-            if story.get("jira") == jira_key:
-                if value is None and field in story:
-                    del story[field]
-                elif value is not None:
-                    story[field] = value
+            if isinstance(story, Mapping) and story.get("jira") == jira_key:
+                _apply(story)
+                return True
+
+    for section in ("standalone_stories", "stories"):
+        for story in sprint_data.get(section, []):
+            if isinstance(story, Mapping) and story.get("jira") == jira_key:
+                _apply(story)
                 return True
 
     return False

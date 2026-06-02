@@ -55,6 +55,7 @@ from pf.prime.workflow import (
     check_redirect,
     detect_workflow_state,
     get_phase_gate_recovery,
+    get_phase_skills,
     get_phase_team_config,
 )
 
@@ -585,6 +586,42 @@ def prime(
                 if gate_guide:
                     _print_header("Gate Recovery Guide", quiet)
                     print(gate_guide)
+
+    # ==========================================================================
+    # PRIORITY 4d: Skills Required (only when phase has skills.required)
+    # ==========================================================================
+    if agent_name and not json_output and result.workflow_status:
+        ws = result.workflow_status
+        if ws.workflow and ws.phase:
+            required_skills = get_phase_skills(ws.workflow, ws.phase, root)
+            if required_skills:
+                _print_header("Skills Required", quiet)
+                print(
+                    f"Skills Required: the `{ws.phase}` phase of the "
+                    f"`{ws.workflow}` workflow requires invocation and "
+                    f"attestation of the following skills:\n"
+                )
+                for skill in required_skills:
+                    # Skill identifiers carry a plugin prefix (e.g.,
+                    # `superpowers:test-driven-development`). Invocation uses
+                    # the full id; attestation drops the prefix per
+                    # schemas/session-schema.md. Display both to prevent
+                    # transcription errors.
+                    attest_name = skill.split(":", 1)[1] if ":" in skill else skill
+                    print(
+                        f"- `{skill}` — invoke via the Skill tool, "
+                        f'attest with `name="{attest_name}"`'
+                    )
+                print(
+                    "\nAfter invoking each skill via the Skill tool, append an "
+                    "entry to the `<skills-invoked>` element in the session "
+                    "file. Use the unprefixed skill name in the `name` "
+                    "attribute. Example:\n\n"
+                    '    <skill name="<unprefixed-name>" phase="' + ws.phase + '" '
+                    'at="<ISO8601 timestamp>"/>\n\n'
+                    "The phase exit gate will verify every listed skill has an "
+                    "attestation entry for this phase."
+                )
 
     # ==========================================================================
     # PRIORITY 5: Sprint context

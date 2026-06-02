@@ -33,7 +33,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer flagged '[LOW] tenant CLI flag accepts raw String \u2014 not\
-    \ validated as TenantId' noting 'axiathon-core defines TenantId as a validated\
+    \ validated as TenantId' noting 'consumer-project-core defines TenantId as a validated\
     \ newtype' and it's 'inconsistent with the project's newtype philosophy.' TEA\
     \ also wrote header injection tests for CRLF in tenant ID."
 - finding_id: I3

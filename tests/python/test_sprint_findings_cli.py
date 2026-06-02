@@ -29,7 +29,7 @@ from pf.sprint.findings_cmd import findings_command  # noqa: E402
 SESSION_WITH_FINDINGS = textwrap.dedent("""\
     ---
     story_id: "99-1"
-    jira_key: "MSSCI-99001"
+    jira_key: "PROJ-99001"
     title: "Test story alpha"
     ---
 
@@ -49,7 +49,7 @@ SESSION_WITH_FINDINGS = textwrap.dedent("""\
 SESSION_NO_FINDINGS = textwrap.dedent("""\
     ---
     story_id: "99-3"
-    jira_key: "MSSCI-99003"
+    jira_key: "PROJ-99003"
     title: "Test story gamma"
     ---
 
@@ -69,12 +69,12 @@ SPRINT_COMPLETED_YAML = textwrap.dedent("""\
       number: 9999
     completed_stories:
       - id: 99-1
-        epic: MSSCI-99000
+        epic: PROJ-99000
         title: Test story alpha
         points: 3
         completed: '2026-01-10'
       - id: 99-3
-        epic: MSSCI-99000
+        epic: PROJ-99000
         title: Test story gamma
         points: 1
         completed: '2026-01-12'
@@ -102,8 +102,8 @@ def _setup_archive(tmp_path, sprint_number=9999, sessions=None):
 
     if sessions is None:
         sessions = {
-            "MSSCI-99001": SESSION_WITH_FINDINGS,
-            "MSSCI-99003": SESSION_NO_FINDINGS,
+            "PROJ-99001": SESSION_WITH_FINDINGS,
+            "PROJ-99003": SESSION_NO_FINDINGS,
         }
     for jira_key, content in sessions.items():
         (archive / f"{jira_key}-session.md").write_text(content)
@@ -306,13 +306,13 @@ class TestGracefulHandling:
               number: 6666
             completed_stories:
               - id: 99-3
-                epic: MSSCI-99000
+                epic: PROJ-99000
                 title: Test
                 points: 1
                 completed: '2026-01-12'
         """)
         (archive / "sprint-6666-completed.yaml").write_text(no_findings_yaml)
-        (archive / "MSSCI-99003-session.md").write_text(SESSION_NO_FINDINGS)
+        (archive / "PROJ-99003-session.md").write_text(SESSION_NO_FINDINGS)
         _setup_current_sprint(tmp_path)
 
         runner = CliRunner()

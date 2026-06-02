@@ -41,7 +41,7 @@ findings:
     \ should happen at the CLI boundary using TenantId::new() before constructing\
     \ the client.' TEA also wrote header injection tests in cli_security.rs and cli_siem_client.rs.\
     \ The reviewer specifically identified the raw String type for tenant_id and recommended\
-    \ using TenantId from axiathon-core."
+    \ using TenantId from consumer-project-core."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

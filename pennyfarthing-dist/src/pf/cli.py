@@ -99,6 +99,7 @@ _LAZY_COMMANDS: dict[str, tuple[str, str]] = {
     "saddle": ("pf.saddle.cli", "saddle"),
     "demo": ("pf.demo.cli", "demo"),
     "peloton": ("pf.peloton.cli", "peloton"),
+    "check": ("pf.check.cli", "check"),
 }
 
 
@@ -218,6 +219,38 @@ def agent():
       heatmap  - Visualize context distribution and attention
     """
     pass
+
+
+@agent.command("create")
+@click.argument("name")
+@click.option(
+    "--type",
+    "agent_type",
+    type=click.Choice(["tactical", "strategic"], case_sensitive=False),
+    default="tactical",
+    help="Agent template type (default: tactical)",
+)
+def agent_create(name: str, agent_type: str):
+    """Create a custom agent from template.
+
+    Scaffolds an agent definition in agents-local/ and creates
+    sidecar files (patterns.md, gotchas.md, decisions.md).
+
+    \b
+    Arguments:
+      NAME  - Agent name (e.g., "data-engineer")
+    """
+    from pf.agent_create import create_agent
+
+    result = create_agent(name, agent_type=agent_type)
+
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        raise SystemExit(1)
+
+    click.echo(f"Created agent '{name}' ({agent_type})")
+    click.echo(f"  Agent file: {result['agent_file']}")
+    click.echo(f"  Sidecars:   {result['sidecar_dir']}")
 
 
 @agent.command("start")

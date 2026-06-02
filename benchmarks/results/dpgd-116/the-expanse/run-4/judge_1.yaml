@@ -65,7 +65,7 @@ findings:
   phase_ideal: tea
   caught: true
   caught_by: reviewer
-  evidence: "Reviewer flagged '[MEDIUM] env_axiathon_timeout_rejects_non_numeric test\
+  evidence: "Reviewer flagged '[MEDIUM] env_consumer-project_timeout_rejects_non_numeric test\
     \ is also vacuous' and '[MEDIUM] CRLF injection tests are vacuous \u2014 they\
     \ accept success'. Same category of vacuous/always-true assertions detected across\
     \ multiple test files."

@@ -35,7 +35,7 @@ findings:
   evidence: "TEA included 'CWE-113: Header injection via CR/LF in tenant ID and auth\
     \ token'. Dev implemented CR/LF stripping in with_token and with_tenant. Reviewer\
     \ verified. However, the specific finding about using raw String instead of TenantId\
-    \ from axiathon-core was not flagged \u2014 the pipeline mitigated the symptom\
+    \ from consumer-project-core was not flagged \u2014 the pipeline mitigated the symptom\
     \ (injection) but not the root cause (type safety bypass)."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

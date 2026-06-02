@@ -28,7 +28,7 @@ A scientific study of how strong personalities affect agent behavior:
 
 The persona themes (97 across Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
 
-### 3. 1898 Integration
+### 3. Project Integration
 
 Tooling to smooth out annoying development processes:
 
@@ -111,4 +111,4 @@ This is one of many BikeLane workflows. Others include stepped planning workflow
 
 - See [User Guide](USER-GUIDE.md) for complete documentation
 - See [Troubleshooting](TROUBLESHOOTING.md) for common issues
-- GitHub Issues: https://github.com/1898andCo/pennyfarthing/issues
+- GitHub Issues: https://github.com/slabgorb/pennyfarthing/issues

@@ -1,6 +1,6 @@
 """Version sentinel detection for auto-update in prime.
 
-MSSCI-14698: Reads .pennyfarthing/.installed-version sentinel and compares
+PROJ-14698: Reads .pennyfarthing/.installed-version sentinel and compares
 against current package version. On mismatch, signals that auto-update
 is needed.
 """

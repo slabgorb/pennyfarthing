@@ -39,7 +39,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote tests for CWE-113 header injection in siem_client.rs and security.rs.\
     \ Dev implemented CRLF validation. However, the specific finding is that tenant_id\
-    \ uses raw String instead of TenantId from axiathon-core \u2014 the validated\
+    \ uses raw String instead of TenantId from consumer-project-core \u2014 the validated\
     \ path exists but tenant_id itself is still a raw String. The pipeline caught\
     \ header injection (CWE-113) as a class but not the specific tenant_id type-safety\
     \ gap. Scoring as caught since same vulnerability class was addressed."

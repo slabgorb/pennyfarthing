@@ -92,7 +92,7 @@ Claude Opus 4.6 (1M context) via Claude Code CLI
 
 ### Debug Log References
 
-- PR #17: https://github.com/1898andCo/axiathon/pull/17
+- PR #17: https://github.com/slabgorb/axiathon/pull/17
 
 ### Completion Notes List
 

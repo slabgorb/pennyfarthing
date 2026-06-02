@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote header injection tests in siem_client.rs and security.rs covering\
     \ CRLF in tenant_id. Dev implemented sanitize_header_value rejecting \\r and \\\
-    n. However, the finding is about using raw String instead of TenantId from axiathon-core\
+    n. However, the finding is about using raw String instead of TenantId from consumer-project-core\
     \ \u2014 the CRLF mitigation was caught but the type-safety aspect (using validated\
     \ TenantId) was not flagged."
 - finding_id: I3

@@ -1,5 +1,5 @@
 """
-Integration Tests for Bash/Python CLI Parity (Story MSSCI-12665).
+Integration Tests for Bash/Python CLI Parity (Story PROJ-12665).
 
 These tests verify that Python CLI commands produce equivalent output
 to their bash script counterparts.

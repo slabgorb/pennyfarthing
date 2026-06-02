@@ -37,7 +37,7 @@ findings:
   caught_by: tea
   evidence: TEA demanded 'CRLF/null-byte rejection in HTTP headers (header injection)'
     tests for CWE-113. Dev implemented header validation at client.rs:51-59. Reviewer
-    verified checks. However, the specific recommendation to use TenantId from axiathon-core
+    verified checks. However, the specific recommendation to use TenantId from consumer-project-core
     instead of raw String was not made.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

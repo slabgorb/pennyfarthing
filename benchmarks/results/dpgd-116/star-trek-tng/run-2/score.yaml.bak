@@ -32,7 +32,7 @@ findings:
   caught: false
   caught_by: null
   evidence: "Dev strips CR/LF from tenant IDs (header injection prevention) but still\
-    \ uses raw String, not Option<TenantId> from axiathon-core. The type-safety gap\
+    \ uses raw String, not Option<TenantId> from consumer-project-core. The type-safety gap\
     \ \u2014 bypassing validated TenantId \u2014 was not flagged by any phase."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

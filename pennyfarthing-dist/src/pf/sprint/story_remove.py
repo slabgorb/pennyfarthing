@@ -12,7 +12,7 @@ from typing import Any
 
 import click
 
-from pf.sprint.loader import find_epic, find_story
+from pf.sprint.loader import find_story_in_data
 from pf.sprint.validator import validate_full_sprint
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
@@ -29,7 +29,7 @@ def remove_story(
 
     Args:
         sprint_path: Path to sprint YAML file
-        story_id: Story ID (e.g., "76-4", "td-1", "MSSCI-15038")
+        story_id: Story ID (e.g., "76-4", "td-1", "PROJ-15038")
         dry_run: If True, report what would be removed without writing
 
     Returns:
@@ -37,59 +37,40 @@ def remove_story(
     """
     data = read_sprint(sprint_path)
 
-    # Search epic stories
-    parts = story_id.split("-")
-    if len(parts) >= 2:
-        epic = find_epic(data, parts[0])
-        if epic is not None:
-            story = find_story(epic, story_id)
-            if story is not None:
-                epic_id = str(epic.get("id", parts[0]))
-                details = {
-                    "id": story.get("id"),
-                    "title": story.get("title"),
-                    "status": story.get("status"),
-                    "location": f"epic {epic_id}",
-                }
-                if dry_run:
-                    return {"success": True, "dry_run": True, "story": details}
-                epic["stories"].remove(story)
-                result = validate_full_sprint(data)
-                if not result.valid:
-                    return {
-                        "success": False,
-                        "error": f"Validation failed after removal: {result.errors}",
-                    }
-                write_sprint(sprint_path, data)
-                return {"success": True, "story": details}
+    epic, story, location = find_story_in_data(data, story_id)
+    if story is None:
+        return {
+            "success": False,
+            "error": f"Story '{story_id}' not found in epics, standalone_stories, or stories",
+        }
 
-    # Search standalone_stories and top-level stories
-    for section in ("standalone_stories", "stories"):
-        stories_list = data.get(section, [])
-        for i, s in enumerate(stories_list):
-            if isinstance(s, dict) and (s.get("id") == story_id or s.get("jira") == story_id):
-                details = {
-                    "id": s.get("id"),
-                    "title": s.get("title"),
-                    "status": s.get("status"),
-                    "location": section,
-                }
-                if dry_run:
-                    return {"success": True, "dry_run": True, "story": details}
-                stories_list.pop(i)
-                result = validate_full_sprint(data)
-                if not result.valid:
-                    return {
-                        "success": False,
-                        "error": f"Validation failed after removal: {result.errors}",
-                    }
-                write_sprint(sprint_path, data)
-                return {"success": True, "story": details}
-
-    return {
-        "success": False,
-        "error": f"Story '{story_id}' not found in epics, standalone_stories, or stories",
+    details = {
+        "id": story.get("id"),
+        "title": story.get("title"),
+        "status": story.get("status"),
+        "location": location,
     }
+    if dry_run:
+        return {"success": True, "dry_run": True, "story": details}
+
+    if epic is not None:
+        epic["stories"].remove(story)
+    elif location in ("standalone_stories", "stories"):
+        data[location].remove(story)
+    else:
+        return {
+            "success": False,
+            "error": f"Internal: unexpected location '{location}' for top-level story",
+        }
+
+    result = validate_full_sprint(data)
+    if not result.valid:
+        return {
+            "success": False,
+            "error": f"Validation failed after removal: {result.errors}",
+        }
+    write_sprint(sprint_path, data)
+    return {"success": True, "story": details}
 
 
 @click.command("remove")
@@ -105,12 +86,12 @@ def story_remove_command(
 
     \b
     Arguments:
-      STORY_ID  - Story ID (e.g., 76-4, td-1, MSSCI-15038)
+      STORY_ID  - Story ID (e.g., 76-4, td-1, PROJ-15038)
 
     \b
     Examples:
       pf sprint story remove td-1 --dry-run
-      pf sprint story remove MSSCI-15038
+      pf sprint story remove PROJ-15038
       pf sprint story remove 129-3
     """
     if sprint_file is None:

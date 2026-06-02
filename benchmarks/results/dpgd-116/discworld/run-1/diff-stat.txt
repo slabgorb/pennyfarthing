@@ -1,5 +1,5 @@
  CLAUDE.md                                      | 315 ++++++++++++++++++++++---
- crates/axiathon-client/src/lib.rs              |   7 +
- crates/axiathon-client/tests/cli_structure.rs  |   4 +-
- crates/axiathon-client/tests/config_loading.rs |  90 +++++--
+ crates/consumer-project-client/src/lib.rs              |   7 +
+ crates/consumer-project-client/tests/cli_structure.rs  |   4 +-
+ crates/consumer-project-client/tests/config_loading.rs |  90 +++++--
  4 files changed, 358 insertions(+), 58 deletions(-)

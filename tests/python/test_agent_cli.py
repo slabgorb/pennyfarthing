@@ -1,6 +1,6 @@
 """Tests for agent CLI commands.
 
-Story MSSCI-12659: Implement pf agent start command
+Story PROJ-12659: Implement pf agent start command
 
 Acceptance Criteria:
 1. pf agent start <name> starts session

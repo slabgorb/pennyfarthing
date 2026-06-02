@@ -38,7 +38,7 @@ findings:
   evidence: "TEA wrote header injection prevention tests in security.rs. Dev implemented\
     \ validate_header_value() at client.rs:84-91 rejecting CRLF and null bytes in\
     \ tenant ID. Reviewer V1 verified. However, the specific issue of using raw String\
-    \ instead of TenantId from axiathon-core was not flagged \u2014 the pipeline caught\
+    \ instead of TenantId from consumer-project-core was not flagged \u2014 the pipeline caught\
     \ the injection symptom but not the type-safety root cause. Still counts as same\
     \ vulnerability class (CWE-113)."
 - finding_id: I3

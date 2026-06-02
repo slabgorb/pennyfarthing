@@ -38,7 +38,7 @@ findings:
   evidence: TEA wrote cli_siem_client.rs tests (14 tests) and cli_security.rs tests
     for header injection. Dev implemented CRLF/null prevention in with_tenant(). Reviewer
     verified header injection prevention at client.rs:31-52. Same CWE-113 class caught,
-    though using validated TenantId type from axiathon-core was not flagged.
+    though using validated TenantId type from consumer-project-core was not flagged.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

@@ -33,7 +33,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: Reviewer flagged '[MEDIUM] tenant field is raw String, not TenantId newtype
-    at cli.rs:22, client.rs:7' noting axiathon-core exports TenantId and it should
+    at cli.rs:22, client.rs:7' noting consumer-project-core exports TenantId and it should
     be used. Also flagged '[HIGH] set_token/set_tenant bypass header injection validation'
     (CWE-113). TEA also wrote header injection tests but the underlying type issue
     was caught by reviewer.

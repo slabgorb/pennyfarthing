@@ -1152,7 +1152,7 @@ def workflow_fix_phase_cmd(story_id: str, target_phase: str, dry_run: bool):
 
     \b
     Arguments:
-      STORY_ID      - Story ID (e.g., 56-1 or MSSCI-12190)
+      STORY_ID      - Story ID (e.g., 56-1 or PROJ-12190)
       TARGET_PHASE  - Target phase to set (e.g., review, approved, finish)
     """
     import re

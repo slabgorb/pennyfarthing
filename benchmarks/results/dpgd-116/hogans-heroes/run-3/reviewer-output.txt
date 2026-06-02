@@ -15,12 +15,12 @@ So. They tell me this is ready for review. Let us see if that is true, or if thi
 ### [HIGH] Completion and Init commands are stubbed — violates AC-9 and story scope
 **`main.rs:29-30`**
 
-The story scope explicitly says: *"Shell completion generation (functional, not stub)"* and *"axiathon init first-time setup (functional, not stub)."* Yet both are wired as `NotImplemented` stubs in `main.rs`:
+The story scope explicitly says: *"Shell completion generation (functional, not stub)"* and *"consumer-project init first-time setup (functional, not stub)."* Yet both are wired as `NotImplemented` stubs in `main.rs`:
 ```rust
 Commands::Completion(_) => Err(CliError::NotImplemented("Story 6.1".into())),
 Commands::Init(_) => Err(CliError::NotImplemented("Story 6.1".into())),
 ```
-The `generate_completion()` function exists in `commands/completion.rs` and works — the tests prove it. But it is **never called from the dispatch**. AC-9 requires `axiathon completion <shell>` to actually output a script. This is dead code with a working implementation sitting right next to a stub that ignores it.
+The `generate_completion()` function exists in `commands/completion.rs` and works — the tests prove it. But it is **never called from the dispatch**. AC-9 requires `consumer-project completion <shell>` to actually output a script. This is dead code with a working implementation sitting right next to a stub that ignores it.
 
 ---
 
@@ -116,7 +116,7 @@ All 10 `CliError` variants are tested individually and collectively. No variant 
 ---
 
 ### [VERIFIED] Dependency isolation
-`axiathon-client/Cargo.toml` depends on `axiathon-core` only. No server-side crate imports. The two-binary separation is maintained.
+`consumer-project-client/Cargo.toml` depends on `consumer-project-core` only. No server-side crate imports. The two-binary separation is maintained.
 
 ---
 

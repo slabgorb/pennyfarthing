@@ -8,9 +8,9 @@ I have everything I need. Let me compile the full review.
 
 ## Preflight
 
-- `cargo clippy -p axiathon-client -- -D warnings`: **PASS**
+- `cargo clippy -p consumer-project-client -- -D warnings`: **PASS**
 - `cargo +nightly fmt --all --check`: **FAIL** (import ordering)
-- `cargo test -p axiathon-client`: **FAIL** (1 test failure: `siem_client_url_no_double_slash`)
+- `cargo test -p consumer-project-client`: **FAIL** (1 test failure: `siem_client_url_no_double_slash`)
 
 ---
 
@@ -18,19 +18,19 @@ I have everything I need. Let me compile the full review.
 
 ### [CRITICAL] F1: Test failure — `siem_client_url_no_double_slash` at `tests/siem_client.rs:199`
 
-The test creates `SiemClient::new("https://api.axiathon.local/")` then calls `build_url("/api/v1/status")`. `build_url` strips the trailing slash from the base URL, producing `https://api.axiathon.local/api/v1/status`. The test then asserts `!url.contains("//api")` — but `https://` contains `//` and the assertion message says "URL should not have double slashes" while the URL is actually **correct**. The test is a false-negative bug: it panics on valid output. The assertion pattern `//api` doesn't match (the `//` is in the scheme), so looking more carefully — actually the URL `https://api.axiathon.local/api/v1/status` does contain the substring `//api` within `local//api` — wait, no. The trailing slash is stripped, so it's `https://api.axiathon.local` + `/api/v1/status` = `https://api.axiathon.local/api/v1/status`. The substring `//api` only appears if... Ah, the `//` is in `https://api` — yes, `https://api` contains `//a` not `//api`. Let me re-read: `https://api.axiathon.local/api/v1/status` — searching for `//api`: positions are `https:` then `//api.axiathon...` — YES, `//api` matches at position 6 in the scheme! The test is broken because it's matching the `//` in the `https://` scheme. This is a **buggy test assertion**, not a code bug. But it means the test suite doesn't pass, which is a blocking issue.
+The test creates `SiemClient::new("https://api.consumer-project.local/")` then calls `build_url("/api/v1/status")`. `build_url` strips the trailing slash from the base URL, producing `https://api.consumer-project.local/api/v1/status`. The test then asserts `!url.contains("//api")` — but `https://` contains `//` and the assertion message says "URL should not have double slashes" while the URL is actually **correct**. The test is a false-negative bug: it panics on valid output. The assertion pattern `//api` doesn't match (the `//` is in the scheme), so looking more carefully — actually the URL `https://api.consumer-project.local/api/v1/status` does contain the substring `//api` within `local//api` — wait, no. The trailing slash is stripped, so it's `https://api.consumer-project.local` + `/api/v1/status` = `https://api.consumer-project.local/api/v1/status`. The substring `//api` only appears if... Ah, the `//` is in `https://api` — yes, `https://api` contains `//a` not `//api`. Let me re-read: `https://api.consumer-project.local/api/v1/status` — searching for `//api`: positions are `https:` then `//api.consumer-project...` — YES, `//api` matches at position 6 in the scheme! The test is broken because it's matching the `//` in the `https://` scheme. This is a **buggy test assertion**, not a code bug. But it means the test suite doesn't pass, which is a blocking issue.
 
 ### [HIGH] F2: Missing `main.rs` — no binary entry point
 
 AC-3 requires `main.rs` that catches errors and calls `std::process::exit()`. There is no `main.rs` in the crate. The `Cargo.toml` has no `[[bin]]` section. The crate is library-only. This means:
-- No `axiathon` binary is produced
+- No `consumer-project` binary is produced
 - No exit code dispatch logic exists
 - No tracing initialization
 - The story's fundamental deliverable (an operator-facing CLI binary) doesn't exist yet
 
 ### [HIGH] F3: Missing `logout` and `tui` commands — AC-1 violation at `src/cli.rs:51`
 
-AC-1 explicitly requires: "`axiathon --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init." The `Commands` enum is missing both `Logout` and `Tui` variants. Two of the required command groups are absent.
+AC-1 explicitly requires: "`consumer-project --help` must show all command groups: query, rules, alerts, ingest, config, status, tenant, **login/logout**, **tui**, completion, init." The `Commands` enum is missing both `Logout` and `Tui` variants. Two of the required command groups are absent.
 
 ### [HIGH] F4: `RawConfig` silently ignores unknown fields — config security at `src/config.rs:8`
 
@@ -58,7 +58,7 @@ Every call to `format_json` generates a fresh `Uuid::new_v4()`, making JSON outp
 
 ### [MEDIUM] F10: `completion.rs` silently returns nothing for unknown shells at `commands/completion.rs:16`
 
-`generate_completion("unknown-shell", &mut buf)` silently writes nothing. No error, no warning. The user runs `axiathon completion unknown-shell` and gets empty stdout. This should return a `CliError` listing supported shells.
+`generate_completion("unknown-shell", &mut buf)` silently writes nothing. No error, no warning. The user runs `consumer-project completion unknown-shell` and gets empty stdout. This should return a `CliError` listing supported shells.
 
 ### [LOW] F11: `--format` is `Option<String>` instead of typed enum at `src/cli.rs:24`
 

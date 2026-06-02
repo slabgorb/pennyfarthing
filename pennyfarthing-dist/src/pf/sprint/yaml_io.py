@@ -1,7 +1,7 @@
 """
 Deterministic YAML I/O for sprint data.
 
-Story: MSSCI-14254 - Core yaml_io module with deterministic serialization
+Story: PROJ-14254 - Core yaml_io module with deterministic serialization
 
 Provides:
 - read_sprint(path) -> CommentedMap (preserves ordering/comments, merges shards)
@@ -20,7 +20,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.scalarstring import LiteralScalarString
 
-JIRA_PATTERN = re.compile(r"^MSSCI-\d{5}$")
+JIRA_PATTERN = re.compile(r"^[A-Z][A-Z0-9]+-\d+$")
 
 
 # Canonical key ordering derived from sprint-template.yaml
@@ -56,6 +56,7 @@ STORY_KEY_ORDER: list[str] = [
     "points",
     "priority",
     "refs",
+    "plan_ref",
     "status",
     "in_sprint",
     "assigned_to",

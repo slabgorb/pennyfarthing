@@ -37,7 +37,7 @@ findings:
   evidence: 'TEA lists ''CWE-113: Header injection prevention (CRLF in token/tenant
     values)'' in siem_client.rs tests. Reviewer F4 flags ''with_token() bypasses CWE-113
     validation'' and V5 verifies header injection checks exist for token and tenant.
-    However, the specific recommendation to use TenantId from axiathon-core was not
+    However, the specific recommendation to use TenantId from consumer-project-core was not
     made.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

@@ -2,7 +2,7 @@
 
 ## Summary
 
-### Production files created (in `crates/axiathon-client/src/`):
+### Production files created (in `crates/consumer-project-client/src/`):
 
 | File | Description |
 |------|-------------|

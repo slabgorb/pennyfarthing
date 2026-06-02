@@ -1,6 +1,6 @@
 """Tests for StoryDetailWidget and enriched story detail views (Story 120-8).
 
-Epic: 120 — Frame TUI TUI Enhancements (MSSCI-15396)
+Epic: 120 — Frame TUI TUI Enhancements (PROJ-15396)
 
 Acceptance Criteria:
 - [AC1] New StoryDetailWidget exists as a reusable Textual Widget with compose()
@@ -38,7 +38,7 @@ FULL_STORY_DATA: dict[str, Any] = {
     "points": 3,
     "status": "in_progress",
     "priority": "p2",
-    "jiraKey": "MSSCI-15412",
+    "jiraKey": "PROJ-15412",
     "assignee": "K. Avery",
     "acceptance_criteria": [
         {"text": "StoryDetailWidget exists as reusable Widget", "done": True},

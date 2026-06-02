@@ -36,7 +36,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote 'Header injection: CRLF in tenant ID and auth token rejected'\
     \ tests. Dev implemented CRLF checks in client.rs:56-72. Reviewer verified the\
-    \ prevention. However, no phase flagged that tenant_id should use axiathon-core's\
+    \ prevention. However, no phase flagged that tenant_id should use consumer-project-core's\
     \ validated TenantId type instead of raw String \u2014 the runtime CRLF check\
     \ is a mitigation but not the type-safe fix. Credit given for same vulnerability\
     \ class (CWE-113)."

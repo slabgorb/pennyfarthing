@@ -37,7 +37,7 @@ findings:
   evidence: TEA wrote header injection tests in cli_siem_client.rs and cli_security.rs
     covering CWE-113. Dev implemented CR/LF stripping in with_tenant and rejection
     in with_token. Same vulnerability class (CWE-113 header injection) addressed,
-    though the type-safety fix (using TenantId from axiathon-core) was not adopted.
+    though the type-safety fix (using TenantId from consumer-project-core) was not adopted.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

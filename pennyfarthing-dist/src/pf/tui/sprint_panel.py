@@ -56,7 +56,7 @@ def _status_badge(status: str) -> Text:
 def _format_assignee(email: str | None) -> str:
     """Format an email address into two-letter initials.
 
-    ``"keith.avery@1898andco.io"`` → ``"KA"``
+    ``"user@example.com"`` → ``"KA"``
     ``None`` → ``""``
     """
     if not email:
@@ -158,7 +158,7 @@ def _build_epic_label(
 def _build_story_label(story: dict[str, Any], current_story_id: str, max_width: int = 80) -> Text:
     """Build Rich Text label for a story tree leaf.
 
-    Layout: ``✓  126-1  KA MSSCI-1495  2pt  Story title``
+    Layout: ``✓  126-1  KA PROJ-1495  2pt  Story title``
     Done stories are rendered entirely dim.
     """
     story_id = story.get("id", "")

@@ -18,7 +18,7 @@ The `ConfigFile` and `ServerConfig` structs use serde's default behavior which s
 
 ### [HIGH] Missing `main.rs` binary entry point
 
-The story requires a `crates/axiathon-client/src/main.rs` as the binary entry point (AC-3 says main.rs catches errors and calls `std::process::exit()`). No `main.rs` exists. The crate is library-only. Without `main.rs`, there is no `axiathon` binary, which is the entire point of this story. The `[[bin]]` section is also missing from `Cargo.toml`.
+The story requires a `crates/consumer-project-client/src/main.rs` as the binary entry point (AC-3 says main.rs catches errors and calls `std::process::exit()`). No `main.rs` exists. The crate is library-only. Without `main.rs`, there is no `consumer-project` binary, which is the entire point of this story. The `[[bin]]` section is also missing from `Cargo.toml`.
 
 ### [MEDIUM] `has_token_field()` is a no-op stub — `config.rs:106-108`
 
@@ -62,7 +62,7 @@ All `CliError` variants map to documented exit codes (0/1/2/3/4). Test coverage 
 
 ### [VERIFIED] Dependency isolation — no server-side crate imports
 
-`Cargo.toml` depends only on `axiathon-core`. No imports of storage, detection, ingestion, or query crates.
+`Cargo.toml` depends only on `consumer-project-core`. No imports of storage, detection, ingestion, or query crates.
 
 ### [VERIFIED] `#![forbid(unsafe_code)]` present at `lib.rs:2`
 
@@ -75,7 +75,7 @@ Production code correctly forbids unsafe. Test files appropriately use `#![allow
 Three HIGH issues block approval:
 
 1. **Nightly fmt fails** — must pass per gotchas.md
-2. **No `main.rs`** — the story's primary deliverable (the `axiathon` binary) doesn't exist
+2. **No `main.rs`** — the story's primary deliverable (the `consumer-project` binary) doesn't exist
 3. **Silent token field handling** — security concern with vacuous test coverage
 
 The missing binary entry point is the most critical: without `main.rs`, there is no CLI tool. The fmt fix is mechanical. The token field handling needs either `deny_unknown_fields` on `ServerConfig` or an explicit warning when token-like fields are detected in the config file.

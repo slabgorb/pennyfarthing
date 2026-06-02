@@ -6,12 +6,12 @@ All **69 tests pass** across 6 test suites, clippy clean with `-D warnings`.
 
 | File | Description |
 |------|-------------|
-| `crates/axiathon-server/Cargo.toml` | Added `chrono` and `uuid` as regular dependencies |
-| `crates/axiathon-server/src/lib.rs` | `app()` function wiring router with auth/rate-limit middleware |
-| `crates/axiathon-server/src/response.rs` | `ApiEnvelope<T>` with `data`/`errors`/`meta` fields, `error_response` and `success_response` helpers |
-| `crates/axiathon-server/src/auth.rs` | Auth middleware — Bearer token + API key validation, scope checking, `AuthInfo` extraction |
-| `crates/axiathon-server/src/rate_limit.rs` | Per-tenant rate limiting with global shared state (100 req/tenant limit) |
-| `crates/axiathon-server/src/routes.rs` | Handlers for health, events (GET/POST), alerts, rules, queries, JWKS, 404 fallback |
+| `crates/consumer-project-server/Cargo.toml` | Added `chrono` and `uuid` as regular dependencies |
+| `crates/consumer-project-server/src/lib.rs` | `app()` function wiring router with auth/rate-limit middleware |
+| `crates/consumer-project-server/src/response.rs` | `ApiEnvelope<T>` with `data`/`errors`/`meta` fields, `error_response` and `success_response` helpers |
+| `crates/consumer-project-server/src/auth.rs` | Auth middleware — Bearer token + API key validation, scope checking, `AuthInfo` extraction |
+| `crates/consumer-project-server/src/rate_limit.rs` | Per-tenant rate limiting with global shared state (100 req/tenant limit) |
+| `crates/consumer-project-server/src/routes.rs` | Handlers for health, events (GET/POST), alerts, rules, queries, JWKS, 404 fallback |
 
 ### Test Results
 

@@ -36,7 +36,7 @@ findings:
   evidence: "TEA wrote header injection prevention tests in siem_client.rs. Dev implemented\
     \ newline rejection in client.rs:30-33,40-43. Reviewer verified header injection\
     \ defense. However, the pipeline used String validation rather than the type-safe\
-    \ TenantId from axiathon-core \u2014 same vulnerability class (CWE-113) caught,\
+    \ TenantId from consumer-project-core \u2014 same vulnerability class (CWE-113) caught,\
     \ different remediation approach."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

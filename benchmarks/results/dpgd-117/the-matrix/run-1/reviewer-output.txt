@@ -10,13 +10,13 @@ I have now read all source and test files. Here is my adversarial review.
 
 ### CRITICAL
 
-**1. [CRITICAL] `ApiResponse<T>` from `axiathon-core` is completely ignored — parallel, divergent envelope implementation** at `response.rs:1-31`
+**1. [CRITICAL] `ApiResponse<T>` from `consumer-project-core` is completely ignored — parallel, divergent envelope implementation** at `response.rs:1-31`
 
-The story *explicitly* requires: "All responses use `ApiResponse<T>` from axiathon-core." The core crate already has `ApiResponse<T>`, `ApiError`, `ApiMeta`, `FieldError` — a fully typed, tested envelope with `Serialize`/`Deserialize` derives, snapshot tests, and property tests.
+The story *explicitly* requires: "All responses use `ApiResponse<T>` from consumer-project-core." The core crate already has `ApiResponse<T>`, `ApiError`, `ApiMeta`, `FieldError` — a fully typed, tested envelope with `Serialize`/`Deserialize` derives, snapshot tests, and property tests.
 
 Instead, the implementation creates `response.rs` with `success_envelope()` and `error_envelope()` functions that return raw `serde_json::Value`. This means:
-- **Two competing envelope schemas exist** — `axiathon-core` has `{data, error, meta}` (singular `error` with `code/message/trace_id`), while `response.rs` produces `{data, errors, meta}` (plural `errors` array with `type/title/status`).
-- The `axiathon-core` dependency is declared in `Cargo.toml:9` but **never imported** in any source file.
+- **Two competing envelope schemas exist** — `consumer-project-core` has `{data, error, meta}` (singular `error` with `code/message/trace_id`), while `response.rs` produces `{data, errors, meta}` (plural `errors` array with `type/title/status`).
+- The `consumer-project-core` dependency is declared in `Cargo.toml:9` but **never imported** in any source file.
 - The story's requirement for RFC 9457 alignment is met by `response.rs`, but it directly contradicts the typed core envelope. This will cause integration breakage when Stories 8.2+ try to use the core `ApiResponse<T>`.
 
 **2. [CRITICAL] Authentication is hardcoded test fixtures in production code — no JWT infrastructure** at `auth.rs:93-148`
@@ -47,7 +47,7 @@ The story *explicitly* requires: "Handlers must declare domain-scoped substates 
 
 **6. [HIGH] `AuthContext` reinvents `TenantContext`/`TenantId` with weaker typing** at `auth.rs:9-13`
 
-The `AuthContext` has `pub tenant_id: String` and `pub scopes: Vec<String>`. Meanwhile, `axiathon-core` already provides:
+The `AuthContext` has `pub tenant_id: String` and `pub scopes: Vec<String>`. Meanwhile, `consumer-project-core` already provides:
 - `TenantId` — a validated newtype that enforces UUID format
 - `TenantContext` — with `tenant_id`, `user_id`, `roles`, `permissions`, `trace_id`, private fields with getters
 
@@ -69,9 +69,9 @@ RFC 7235 §3.1 requires: "A server generating a 401 response MUST send a WWW-Aut
 
 **10. [MEDIUM] 6 unused production dependencies inflate build graph** at `Cargo.toml:9-14,19-21`
 
-`axiathon-core`, `axiathon-detection`, `axiathon-ingestion`, `axiathon-ot`, `axiathon-query`, `axiathon-storage`, `thiserror`, `tracing`, `tracing-subscriber` are all declared as production dependencies but never imported in any source file. This creates phantom dependency edges and inflates compile time.
+`consumer-project-core`, `consumer-project-detection`, `consumer-project-ingestion`, `consumer-project-ot`, `consumer-project-query`, `consumer-project-storage`, `thiserror`, `tracing`, `tracing-subscriber` are all declared as production dependencies but never imported in any source file. This creates phantom dependency edges and inflates compile time.
 
-**11. [MEDIUM] `ApiMeta` from core has no `request_id`/`timestamp`/`trace_id`** at `axiathon-core/src/types.rs:296-304`
+**11. [MEDIUM] `ApiMeta` from core has no `request_id`/`timestamp`/`trace_id`** at `consumer-project-core/src/types.rs:296-304`
 
 The core `ApiMeta` struct has `{total, limit, offset}` — pagination fields only. The story requires `{request_id, timestamp, trace_id}`. Neither the core type nor the ad-hoc `response.rs` implementation properly reconciles this. This is a design gap that needs resolution before Stories 8.2+.
 
@@ -113,7 +113,7 @@ Traced: `POST /api/v1/events` with `Authorization: Bearer test-valid-token` and 
 
 Two Critical findings and four High findings block this PR. The most concerning issues:
 
-1. The `ApiResponse<T>` from `axiathon-core` is completely bypassed in favor of ad-hoc JSON construction. This will cause schema divergence across the entire epic.
+1. The `ApiResponse<T>` from `consumer-project-core` is completely bypassed in favor of ad-hoc JSON construction. This will cause schema divergence across the entire epic.
 2. The auth "middleware" is a hardcoded lookup table with no JWT infrastructure. This is not a stub — it's test code in a production path.
 3. Auth failures bypass rate limiting entirely, enabling brute-force attacks.
 4. The rate limiter has no time window — it's a lifetime counter, not a rate limiter.

@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: 'Reviewer flagged as [MEDIUM]: "tenant field uses raw Option<String> instead
-    of TenantId newtype" at cli.rs:19, noting axiathon-core provides TenantId and
+    of TenantId newtype" at cli.rs:19, noting consumer-project-core provides TenantId and
     it should be used at the CLI boundary.'
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

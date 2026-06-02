@@ -404,4 +404,4 @@ Problem?
 - Run `pf doctor` for automated diagnostics
 - Check agent sidecars: `.pennyfarthing/sidecars/{agent}/gotchas.md`
 - Review session file: `.session/{story-id}-session.md`
-- GitHub Issues: https://github.com/1898andCo/pennyfarthing/issues
+- GitHub Issues: https://github.com/slabgorb/pennyfarthing/issues

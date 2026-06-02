@@ -18,7 +18,7 @@ assert!(!url.contains("//api"), ...)  // matches "https://api..."
 
 ### `[HIGH]` 2. Missing `main.rs` — no binary entry point exists
 
-Story 6.1 AC explicitly requires the `axiathon` binary. There is no `main.rs` and no `[[bin]]` target in `crates/axiathon-client/Cargo.toml`. The crate is library-only. Without `main.rs`, there is no:
+Story 6.1 AC explicitly requires the `consumer-project` binary. There is no `main.rs` and no `[[bin]]` target in `crates/consumer-project-client/Cargo.toml`. The crate is library-only. Without `main.rs`, there is no:
 - Binary dispatch to command handlers
 - Exit code propagation via `std::process::exit()`
 - Tracing initialization

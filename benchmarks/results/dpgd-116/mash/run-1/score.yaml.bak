@@ -33,7 +33,7 @@ findings:
   caught_by: null
   evidence: "Pipeline addressed CWE-113 header injection via runtime sanitization\
     \ (sanitize_header_value), but tenant_id remains a raw String. The finding's core\
-    \ issue \u2014 that axiathon-core's validated TenantId is unused, bypassing type-safe\
+    \ issue \u2014 that consumer-project-core's validated TenantId is unused, bypassing type-safe\
     \ tenant isolation \u2014 was never flagged. Sanitization mitigates injection\
     \ but doesn't fix the type design violation of SOUL.md Principle #2."
 - finding_id: I3

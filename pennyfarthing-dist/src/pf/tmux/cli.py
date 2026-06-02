@@ -483,12 +483,24 @@ def run_command(command: str, title: str | None):
         pane_title = title or f"Worker {worker_num}"
 
         panes.set_pane_title(target, pane_title)
+
+        # Auto-tag with owner="peloton" when a peloton session is active,
+        # so pf peloton stop cleans up subagent-spawned worker panes.
+        owner = None
+        try:
+            from pf.peloton.live import load_state as _load_peloton_state
+            peloton_state = _load_peloton_state(root)
+            if peloton_state.get("active"):
+                owner = "peloton"
+        except Exception:
+            pass
+
         reg["panes"].append({
             "pane_id": target,
             "role": "worker",
             "title": pane_title,
             "protected": False,
-            "owner": None,
+            "owner": owner,
         })
         save_registry(root, reg)
 

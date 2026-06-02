@@ -27,14 +27,29 @@ import click
 
 
 @click.group()
-def jira():
+@click.pass_context
+def jira(ctx):
     """Jira issue management for Pennyfarthing.
 
     \b
     All operations use REST API where possible.
     No interactive prompts, no subprocess stdin issues.
+
+    All subcommands fail-closed when Jira integration is not configured
+    (i.e. `is_jira_enabled()` returns False). A Pennyfarthing project that
+    does not set both `jira.project` and `jira.url` is treated as Jira-less,
+    and `pf jira ...` will refuse to contact Jira from any subcommand.
     """
-    pass
+    # Re-read config every invocation (tests monkeypatch the loader).
+    from pf.jira.client import is_jira_enabled
+
+    if not is_jira_enabled() and ctx.invoked_subcommand is not None:
+        click.echo(
+            "pf jira: jira integration is not configured (jira.project and "
+            "jira.url must be set). Refusing to contact Jira.",
+            err=True,
+        )
+        ctx.exit(2)
 
 
 @jira.command()
@@ -152,7 +167,7 @@ def search(query, project, max_results, status, issue_type, json_out):
     \b
     Examples:
       pf jira search "Frame TUI reconnect"
-      pf jira search "sprint fix" --project MSSCI
+      pf jira search "sprint fix" --project PROJ
       pf jira search "status = 'In Progress' AND assignee = currentUser()"
       pf jira search "install" --status "To Do" --type Story
     """
@@ -373,7 +388,7 @@ def create_standalone(title, points, description, dry_run):
         click.echo(f"Warning: could not transition to Done: {result.get('error')}")
 
     click.echo(f"\n{jira_key}: {title}")
-    click.echo(f"https://1898andco.atlassian.net/browse/{jira_key}")
+    click.echo(f"https://your-jira.atlassian.net/browse/{jira_key}")
 
 
 @jira.command()

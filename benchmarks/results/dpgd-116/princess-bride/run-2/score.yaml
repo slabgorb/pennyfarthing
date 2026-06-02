@@ -38,7 +38,7 @@ findings:
   evidence: "TEA wrote security.rs tests for 'CRLF header injection, null byte injection.'\
     \ Reviewer flagged [HIGH] 'SiemClient::new() bypasses all validation \u2014 CWE-113\
     \ header injection' and [MEDIUM] '--tenant accepts raw String instead of validated\
-    \ TenantId newtype \u2014 cli.rs:34' explicitly noting axiathon-core's TenantId\
+    \ TenantId newtype \u2014 cli.rs:34' explicitly noting consumer-project-core's TenantId\
     \ should be used."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

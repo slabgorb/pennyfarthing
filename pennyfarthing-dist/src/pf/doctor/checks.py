@@ -8,6 +8,7 @@ Each check function takes a project root Path and returns a CheckResult.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -187,6 +188,39 @@ def check_theme(root: Path) -> CheckResult:
     return CheckResult(name="theme", status="pass", detail=f"Theme: {theme}")
 
 
+def check_superpowers_plugin(root: Path) -> CheckResult:
+    """Check that the superpowers Claude Code plugin is installed.
+
+    Pennyfarthing declares superpowers@claude-plugins-official as a required
+    companion plugin. The plugin is installed via Claude Code's /plugin system
+    and cached under ~/.claude/plugins/cache/claude-plugins-official/superpowers/.
+    """
+    home = Path(os.environ.get("HOME", ""))
+    if not home.parts:
+        return CheckResult(
+            name="superpowers_plugin",
+            status="fail",
+            detail="HOME environment variable not set; cannot locate plugin cache.",
+        )
+
+    plugin_root = home / ".claude" / "plugins" / "cache" / "claude-plugins-official" / "superpowers"
+    if plugin_root.is_dir():
+        return CheckResult(
+            name="superpowers_plugin",
+            status="pass",
+            detail=f"superpowers plugin found at {plugin_root}",
+        )
+
+    return CheckResult(
+        name="superpowers_plugin",
+        status="fail",
+        detail=(
+            "superpowers plugin not installed. "
+            "Run: /plugin install superpowers@claude-plugins-official"
+        ),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fix helpers
 # ---------------------------------------------------------------------------
@@ -219,4 +253,5 @@ CHECKS: list[tuple[str, str]] = [
     ("node_packages", "Node packages installed"),
     ("git_hooks", "Git hooks dispatcher installed"),
     ("theme", "Active theme is valid"),
+    ("superpowers_plugin", "superpowers companion plugin installed"),
 ]

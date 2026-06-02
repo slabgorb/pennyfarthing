@@ -34,7 +34,7 @@ findings:
   evidence: "TEA wrote header injection tests in siem_client.rs covering CRLF rejection\
     \ in token/tenant values. Dev implemented explicit \\n/\\r checks in client.rs:19-23,31-35.\
     \ However, the deeper issue of using raw String instead of validated TenantId\
-    \ from axiathon-core was not flagged \u2014 only the injection vector was partially\
+    \ from consumer-project-core was not flagged \u2014 only the injection vector was partially\
     \ mitigated."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

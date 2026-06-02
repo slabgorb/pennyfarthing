@@ -37,7 +37,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote tests for header injection (CRLF) in siem_client.rs and security.rs.\
     \ Dev implemented sanitize_header_value in client.rs:15-21 rejecting \\r and \\\
-    n. However, tenant_id is still a raw String rather than using TenantId from axiathon-core\
+    n. However, tenant_id is still a raw String rather than using TenantId from consumer-project-core\
     \ \u2014 the CRLF sanitization mitigates CWE-113 but doesn't use the type-safe\
     \ TenantId. The core issue of using raw String instead of validated TenantId was\
     \ not caught."

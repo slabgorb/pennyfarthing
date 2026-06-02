@@ -27,11 +27,11 @@
 - Config validation (empty URLs, negative timeouts)
 
 **Required modules for Dev to implement:**
-- `axiathon_client::cli` — `Cli` (Parser), `Commands` (Subcommand)
-- `axiathon_client::error` — `CliError` with `exit_code()` method
-- `axiathon_client::output` — `OutputFormat`, `OutputFormatter`
-- `axiathon_client::client` — `SiemClient` with `new()`, `get()`
-- `axiathon_client::config` — `ClientConfig` with TOML/env/CLI loading
-- `axiathon_client::commands::completion` — `generate_completion()`
+- `consumer-project_client::cli` — `Cli` (Parser), `Commands` (Subcommand)
+- `consumer-project_client::error` — `CliError` with `exit_code()` method
+- `consumer-project_client::output` — `OutputFormat`, `OutputFormatter`
+- `consumer-project_client::client` — `SiemClient` with `new()`, `get()`
+- `consumer-project_client::config` — `ClientConfig` with TOML/env/CLI loading
+- `consumer-project_client::commands::completion` — `generate_completion()`
 
 **Handoff:** To Dev for implementation (GREEN phase)

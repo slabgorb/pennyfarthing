@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from pf.sprint.status_normalize import normalize_status
+
 POLL_INTERVAL_S = 5.0
 
 
@@ -187,6 +189,46 @@ def fetch_sprint() -> dict[str, Any]:
             "stories": standalone,
         })
 
+    # Load archived stories from sprint archive (completed epics with shards)
+    archive_dir = Path(project_dir, "sprint", "archive")
+    if archive_dir.is_dir():
+        sprint_number = sprint_info.get("number")
+        for archive_path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
+            try:
+                archive_data = yaml.safe_load(archive_path.read_text()) or {}
+            except Exception:
+                continue
+            # Only include current sprint's archive
+            if sprint_number and archive_data.get("sprint", {}).get("number") != sprint_number:
+                continue
+            # Load stories from archived epic shards
+            for epic_ref in archive_data.get("completed_epics", []):
+                shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+                if not shard_path.is_file():
+                    continue
+                try:
+                    shard_data = yaml.safe_load(shard_path.read_text()) or {}
+                except Exception:
+                    continue
+                epic_entry = {
+                    "id": shard_data.get("id", ""),
+                    "title": shard_data.get("title", ""),
+                    "jiraKey": str(epic_ref),
+                    "status": shard_data.get("status", "done"),
+                    "stories": shard_data.get("stories", []),
+                }
+                completed_epics.append(epic_entry)
+            # Also include inline completed_stories as a pseudo-epic
+            inline_completed = archive_data.get("completed_stories", [])
+            if inline_completed:
+                completed_epics.append({
+                    "id": "archived",
+                    "title": "Archived Stories",
+                    "jiraKey": "",
+                    "status": "done",
+                    "stories": inline_completed,
+                })
+
     # Compute sprint summary
     all_stories = []
     for e in epics + completed_epics:
@@ -195,17 +237,17 @@ def fetch_sprint() -> dict[str, Any]:
     done_pts = sum(
         s.get("points", 0) or 0
         for s in all_stories
-        if s.get("status") in ("done", "completed", "cancelled")
+        if (s.get("status") or "done") in ("done", "completed", "cancelled")
     )
     in_progress_pts = sum(
         s.get("points", 0) or 0
         for s in all_stories
-        if s.get("status") in ("in_progress", "in-progress")
+        if normalize_status(s.get("status") or "") == "in_progress"
     )
     in_review_pts = sum(
         s.get("points", 0) or 0
         for s in all_stories
-        if s.get("status") in ("in_review", "in-review")
+        if normalize_status(s.get("status") or "") == "in_review"
     )
     total_pts = sum(s.get("points", 0) or 0 for s in all_stories)
     remaining_pts = total_pts - done_pts - in_progress_pts - in_review_pts

@@ -35,7 +35,7 @@ findings:
   caught_by: null
   evidence: "TEA wrote header injection tests (CRLF rejection) and Dev implemented\
     \ HeaderValue::from_str() which rejects CRLF. But the finding is about tenant_id\
-    \ being a raw String instead of using axiathon-core's validated TenantId type.\
+    \ being a raw String instead of using consumer-project-core's validated TenantId type.\
     \ No phase flagged the type-safety gap \u2014 only the CRLF injection vector was\
     \ addressed."
 - finding_id: I3

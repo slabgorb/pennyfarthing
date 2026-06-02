@@ -34,7 +34,7 @@ findings:
   evidence: "TEA tested header injection (CRLF in tenant) and dev implemented 'header\
     \ injection prevention', which mitigates the injection vector at runtime. However,\
     \ the core finding is that SiemClient.tenant_id is a raw String bypassing the\
-    \ type-safe TenantId from axiathon-core \u2014 no phase flagged the type mismatch\
+    \ type-safe TenantId from consumer-project-core \u2014 no phase flagged the type mismatch\
     \ or recommended using Option<TenantId>."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

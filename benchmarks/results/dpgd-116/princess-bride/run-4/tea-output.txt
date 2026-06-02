@@ -16,4 +16,4 @@
 **Tests Written:** 131 tests covering all 10 ACs
 **Status:** RED (failing to compile — modules `cli`, `client`, `commands`, `config`, `error`, `output` do not exist yet)
 
-**Handoff:** To Dev for implementation. The Dev must create these modules in `crates/axiathon-client/src/` and re-export them from `lib.rs` to reach GREEN state.
+**Handoff:** To Dev for implementation. The Dev must create these modules in `crates/consumer-project-client/src/` and re-export them from `lib.rs` to reach GREEN state.

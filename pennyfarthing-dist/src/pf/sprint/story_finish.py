@@ -19,10 +19,13 @@ import subprocess
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from pf.git.repos import RepoConfig
 
 from pf.sprint.archive_epic import _load_archive_file, _write_archive_file, ensure_archive_file
-from pf.sprint.loader import find_epic, find_story
+from pf.sprint.loader import find_story_in_data
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import read_sprint
 
@@ -60,7 +63,7 @@ def _add_story_to_completed(project_root: Path, story_id: str, story: dict) -> N
 def _parse_session(session_path: Path) -> dict[str, str]:
     """Extract metadata fields from a session markdown file.
 
-    Parses lines like ``**Jira:** MSSCI-14467`` and
+    Parses lines like ``**Jira:** PROJ-14467`` and
     ``**PR:** #748 - title`` into a dict.
     """
     fields: dict[str, str] = {}
@@ -78,9 +81,9 @@ def _parse_session(session_path: Path) -> dict[str, str]:
 def _extract_jira_key(fields: dict[str, str]) -> str | None:
     """Get Jira key from session fields, handling markdown link format."""
     raw = fields.get("jira", "")
-    # Strip markdown link: [MSSCI-14467](https://...)
+    # Strip markdown link: [PROJ-14467](https://...)
     raw = re.sub(r"\[([^\]]+)\].*", r"\1", raw).strip()
-    if re.match(r"^MSSCI-\d+$", raw):
+    if re.match(r"^PROJ-\d+$", raw):
         return raw
     return None
 
@@ -101,6 +104,35 @@ def _extract_branch(fields: dict[str, str]) -> str | None:
 def _run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
     """Run a subprocess with sane defaults."""
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+
+
+def _git_cleanup(
+    project_root: Path,
+    branch: str | None,
+    repo_config: "RepoConfig | None",
+) -> list[dict[str, Any]]:
+    """Step 6: for gitflow repos, return to the base branch and delete the
+    merged feature branch; for trunk-based or unidentified repos, record a skip.
+
+    Cleanup runs only for a *known gitflow* repo. Trunk-based repos have no
+    feature-branch workflow, and an unresolved repo (``repo_config is None``)
+    must not be guessed at — running ``git checkout develop`` on a main-only
+    repo is exactly the failure this story removes. In both cases cleanup is
+    skipped, using the repo's own ``default_branch`` (never a hardcoded guess).
+
+    Returns the step entries to append to the finish report.
+    """
+    if repo_config is None or not repo_config.is_gitflow:
+        reason = "root-repo-unresolved" if repo_config is None else "trunk-based"
+        return [{"step": 6, "action": "git_cleanup", "skipped": reason, "branch": branch}]
+
+    base = repo_config.default_branch
+    _run(["git", "checkout", base], cwd=str(project_root))
+    _run(["git", "pull", "origin", base], cwd=str(project_root))
+    if branch:
+        # `--` guards against a branch value that looks like a git flag.
+        _run(["git", "branch", "-d", "--", branch], cwd=str(project_root))
+    return [{"step": 6, "action": "git_cleanup", "branch": branch}]
 
 
 def finish_story(
@@ -137,12 +169,9 @@ def finish_story(
     if not jira_key:
         try:
             data = read_sprint(sprint_path)
-            parts = story_id.split("-")
-            if len(parts) >= 2:
-                epic = find_epic(data, parts[0])
-                story = find_story(epic, story_id) if epic else None
-                if story:
-                    jira_key = story.get("jira")
+            _epic, story, _location = find_story_in_data(data, story_id)
+            if story:
+                jira_key = story.get("jira")
         except Exception:
             pass
 
@@ -240,15 +269,18 @@ def finish_story(
     # If still in_progress (legacy/edge case), do the two-step.
     try:
         data = read_sprint(sprint_path)
-        parts = story_id.split("-")
-        epic = find_epic(data, parts[0]) if len(parts) >= 2 else None
-        current_story = find_story(epic, story_id) if epic else None
+        _epic, current_story, _location = find_story_in_data(data, story_id)
         current_status = (
             current_story.get("status", "in_progress") if current_story else "in_progress"
         )
     except Exception:
         current_status = "in_progress"
 
+    # Bridge through intermediate states to reach in_review (or done).
+    # Stories may be stuck in backlog if work.py:start_work() never ran.
+    if current_status == "backlog":
+        transition_story(project_root, story_id, "in_progress")
+        current_status = "in_progress"
     if current_status == "in_progress":
         transition_story(project_root, story_id, "in_review")
 
@@ -264,13 +296,18 @@ def finish_story(
             steps.append({"step": 3, "action": "jira_done", "skipped": True})
         steps.append({"step": 4, "action": "yaml_update", "status": "done", "completed": today})
     else:
+        # Loud fail: a yaml-update failure during the final transition leaves
+        # the sprint in inconsistent state. Stop now — do NOT run irreversible
+        # cleanup (epic archive, branch delete, session removal).
+        transition_error = t_result.get("error", "Transition failed")
         if jira_key:
             steps.append(
                 {
                     "step": 3,
                     "action": "jira_done",
                     "key": jira_key,
-                    "warning": t_result.get("error", "Transition failed"),
+                    "success": False,
+                    "error": transition_error,
                 }
             )
         else:
@@ -279,26 +316,32 @@ def finish_story(
                     "step": 3,
                     "action": "jira_done",
                     "skipped": True,
-                    "warning": "No Jira key available",
+                    "success": False,
+                    "error": "No Jira key available",
                 }
             )
         steps.append(
             {
                 "step": 4,
                 "action": "yaml_update",
-                "warning": t_result.get("error", "Transition failed"),
+                "success": False,
+                "error": transition_error,
             }
         )
+        return {
+            "success": False,
+            "story_id": story_id,
+            "jira_key": jira_key,
+            "error": f"yaml-update step failed during finish: {transition_error}",
+            "steps": steps,
+        }
 
     # --- Step 4b: Add story to completed file ---
     try:
         data = read_sprint(sprint_path)
-        parts = story_id.split("-")
-        if len(parts) >= 2:
-            epic = find_epic(data, parts[0])
-            story = find_story(epic, story_id) if epic else None
-            if story:
-                _add_story_to_completed(project_root, story_id, story)
+        _epic, story, _location = find_story_in_data(data, story_id)
+        if story:
+            _add_story_to_completed(project_root, story_id, story)
     except Exception:
         pass
 
@@ -336,11 +379,18 @@ def finish_story(
     steps.append({"step": 5, "action": "archive_epics", "ran": True})
 
     # --- Step 6: Git cleanup ---
-    _run(["git", "checkout", "develop"], cwd=str(project_root))
-    _run(["git", "pull", "origin", "develop"], cwd=str(project_root))
-    if branch:
-        _run(["git", "branch", "-d", branch], cwd=str(project_root))
-    steps.append({"step": 6, "action": "git_cleanup", "branch": branch})
+    # Resolve the config for the repo at the project root (cwd of cleanup).
+    # Only a known gitflow root repo gets branch cleanup; trunk-based or an
+    # unresolved root (root_repo is None) is skipped by _git_cleanup.
+    # Local import: avoids a circular dependency (pf.git.repos imports nothing
+    # from pf.sprint, but the reverse top-level import would couple the layers).
+    from pf.git.repos import load_repos_config
+
+    root_repo = next(
+        (rc for rc in load_repos_config(project_root).values() if rc.path in (".", "")),
+        None,
+    )
+    steps.extend(_git_cleanup(project_root, branch, root_repo))
 
     # --- Step 7: Remove session file ---
     if session_path.exists():

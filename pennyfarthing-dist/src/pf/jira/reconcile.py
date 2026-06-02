@@ -28,8 +28,10 @@ from pf.jira.client import (
 from pf.sprint.loader import load_sprint
 
 
-def _normalize_status(status: str) -> str:
+def _normalize_status(status: str | None) -> str:
     """Normalize status for comparison."""
+    if not status:
+        return ""
     return status.lower().replace(" ", "_")
 
 

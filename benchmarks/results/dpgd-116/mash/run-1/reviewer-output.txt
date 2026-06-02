@@ -18,9 +18,9 @@ Now I have a complete picture. Time for the adversarial review.
 
 ### [HIGH] Missing `main.rs` — binary cannot be built
 
-No `main.rs` exists in `crates/axiathon-client/src/`. The `Cargo.toml` has no `[[bin]]` section either. The crate compiles as a library only. AC-1 requires `axiathon --help` to work — that requires a binary entry point with command dispatch, tracing init, and `std::process::exit()` for exit codes. Without `main.rs`, exit code mapping (AC-3), the `--help` command (AC-1), and the actual CLI binary all exist only in unit-test fantasy land.
+No `main.rs` exists in `crates/consumer-project-client/src/`. The `Cargo.toml` has no `[[bin]]` section either. The crate compiles as a library only. AC-1 requires `consumer-project --help` to work — that requires a binary entry point with command dispatch, tracing init, and `std::process::exit()` for exit codes. Without `main.rs`, exit code mapping (AC-3), the `--help` command (AC-1), and the actual CLI binary all exist only in unit-test fantasy land.
 
-**Impact:** The entire CLI binary doesn't exist. Tests exercise library code but the story's primary deliverable — the `axiathon` binary — is unproducable.
+**Impact:** The entire CLI binary doesn't exist. Tests exercise library code but the story's primary deliverable — the `consumer-project` binary — is unproducable.
 
 ### [HIGH] Nightly `rustfmt` check fails at `cli.rs:3` and `client.rs:33`
 
@@ -48,7 +48,7 @@ At `error.rs:56`: `write!(f, "Not found: {resource}")`. The `resource` value com
 
 ### [LOW] `CompletionArgs.shell` is `String` not `ValueEnum`
 
-At `cli.rs:157`, `shell` is a raw `String`. Unrecognized values silently return empty string from `generate_completions()`. This should use a `ValueEnum` enum (like `OutputFormat`) so clap validates at parse time and generates proper help text showing valid values. The user gets no error for `axiathon completion powershel` (typo).
+At `cli.rs:157`, `shell` is a raw `String`. Unrecognized values silently return empty string from `generate_completions()`. This should use a `ValueEnum` enum (like `OutputFormat`) so clap validates at parse time and generates proper help text showing valid values. The user gets no error for `consumer-project completion powershel` (typo).
 
 ### [VERIFIED] CWE-113 header injection protection for tenant_id and token — `client.rs:26-31`
 ### [VERIFIED] CWE-209 error message sanitization — `error.rs:46-78`, ServerError inner string not exposed
@@ -58,7 +58,7 @@ At `cli.rs:157`, `shell` is a raw `String`. Unrecognized values silently return 
 ### [VERIFIED] All global flags use `global = true` — `cli.rs:22-47`
 ### [VERIFIED] Exit codes correctly mapped: auth=3, authz=4, general=1 — `error.rs:35-41`
 ### [VERIFIED] Workspace dependencies properly declared — `Cargo.toml:42-50`
-### [VERIFIED] `keyring` dependency in workspace but NOT in axiathon-client `Cargo.toml` — correct, keyring is for Story 9.1
+### [VERIFIED] `keyring` dependency in workspace but NOT in consumer-project-client `Cargo.toml` — correct, keyring is for Story 9.1
 
 ---
 

@@ -348,7 +348,7 @@ Accept duplication.
 
 - [ADR-0001: Consolidate Code Duplication](./0001-consolidate-code-duplication.md)
 - [docs/REFLECTOR-SYSTEM.md](../REFLECTOR-SYSTEM.md) - Full technical documentation
-- Story MSSCI-12049: Original Reflector adapter implementation
+- Story PROJ-12049: Original Reflector adapter implementation
 
 ## Implementation Notes for Dev
 

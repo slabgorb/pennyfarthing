@@ -191,6 +191,6 @@ Allow relay_mode per workflow type.
 - Implementation: `packages/cyclist/src/settings.ts`
 - UI controls: `packages/cyclist/src/public/js/controls.js`
 - Marker handling: `packages/cyclist/src/public/js/components/message-view/quick-actions.js`
-- Tests: `packages/cyclist/tests/MSSCI-12395-relay-toggle.test.ts`
-- Story: MSSCI-12395 (Relay mode separation from turbo)
+- Tests: `packages/cyclist/tests/PROJ-12395-relay-toggle.test.ts`
+- Story: PROJ-12395 (Relay mode separation from turbo)
 - ADR-0011: Reflector Marker Consolidation (HANDOFF marker format)

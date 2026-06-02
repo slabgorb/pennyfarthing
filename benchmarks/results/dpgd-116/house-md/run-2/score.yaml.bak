@@ -35,7 +35,7 @@ findings:
   caught_by: null
   evidence: "SiemClient.tenant_id uses raw String. TEA wrote CWE-113 header injection\
     \ tests and Dev added CRLF validation on 'validated' paths, but the core issue\
-    \ \u2014 that tenant_id should use TenantId from axiathon-core instead of raw\
+    \ \u2014 that tenant_id should use TenantId from consumer-project-core instead of raw\
     \ String \u2014 was not flagged by any phase."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

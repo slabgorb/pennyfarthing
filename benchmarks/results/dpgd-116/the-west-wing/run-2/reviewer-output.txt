@@ -21,9 +21,9 @@ Now I have everything I need for a thorough review.
 
 ### `[HIGH]` 1. No `main.rs` — binary cannot be built
 
-The story requires producing an `axiathon` binary, but there is **no `main.rs`** and no `[[bin]]` section in `Cargo.toml`. The crate is library-only. Without `main.rs`, there is no command dispatch, no exit code mapping via `std::process::exit()`, no tracing initialization, and no actual binary. AC-3 (exit codes applied via `main.rs`), AC-10 (stubs printing to stderr and exiting with code 1), and AC-1 (working `axiathon --help`) are all structurally unmet at the binary level.
+The story requires producing an `consumer-project` binary, but there is **no `main.rs`** and no `[[bin]]` section in `Cargo.toml`. The crate is library-only. Without `main.rs`, there is no command dispatch, no exit code mapping via `std::process::exit()`, no tracing initialization, and no actual binary. AC-3 (exit codes applied via `main.rs`), AC-10 (stubs printing to stderr and exiting with code 1), and AC-1 (working `consumer-project --help`) are all structurally unmet at the binary level.
 
-**Location:** `crates/axiathon-client/Cargo.toml` — missing `[[bin]]` and `src/main.rs`
+**Location:** `crates/consumer-project-client/Cargo.toml` — missing `[[bin]]` and `src/main.rs`
 
 ---
 
@@ -31,7 +31,7 @@ The story requires producing an `axiathon` binary, but there is **no `main.rs`**
 
 `cargo +nightly fmt --all --check` produces diffs in multiple command files (`alerts.rs`, `config.rs`, `ingest.rs`, `query.rs`, `rules.rs`, `status.rs`, `tenant.rs`). Per `gotchas.md`, nightly fmt must pass before approval.
 
-**Location:** Multiple files under `crates/axiathon-client/src/commands/`
+**Location:** Multiple files under `crates/consumer-project-client/src/commands/`
 
 ---
 
@@ -39,7 +39,7 @@ The story requires producing an `axiathon` binary, but there is **no `main.rs`**
 
 AC-5 requires `--server` supports `AXIATHON_SERVER` env var. The `cli.rs:22` definition has `hide = true` but no `env = "AXIATHON_SERVER"` attribute. Clap supports `#[arg(env = "AXIATHON_SERVER")]` natively for this purpose.
 
-**Location:** `crates/axiathon-client/src/cli.rs:22`
+**Location:** `crates/consumer-project-client/src/cli.rs:22`
 
 ---
 
@@ -47,7 +47,7 @@ AC-5 requires `--server` supports `AXIATHON_SERVER` env var. The `cli.rs:22` def
 
 The crate-level `Cargo.toml` declares `edition = "2018"` at line 2, while the workspace declares `edition = "2024"`. The crate-level value **overrides** the workspace value. This causes the `non_fmt_panics` warnings seen in the test build (Rust 2021+ format string behavior) and means the crate doesn't benefit from edition 2024 features. This should be `edition.workspace = true` or removed entirely.
 
-**Location:** `crates/axiathon-client/Cargo.toml:2`
+**Location:** `crates/consumer-project-client/Cargo.toml:2`
 
 ---
 
@@ -55,7 +55,7 @@ The crate-level `Cargo.toml` declares `edition = "2018"` at line 2, while the wo
 
 `RawConfig` uses `#[derive(Deserialize)]` without `#[serde(deny_unknown_fields)]`. A typo like `api_urll = "..."` or `tokne = "..."` silently compiles and runs with defaults. The test `client_config_does_not_store_tokens` at `security.rs:117-131` demonstrates this — `token = "should-not-be-here"` is silently ignored. The test's `if let Ok(config)` pattern means it passes whether the field is rejected OR silently swallowed, making the assertion vacuous for the silent-swallow case (which is the actual behavior).
 
-**Location:** `crates/axiathon-client/src/config.rs:13-17`
+**Location:** `crates/consumer-project-client/src/config.rs:13-17`
 
 ---
 
@@ -63,15 +63,15 @@ The crate-level `Cargo.toml` declares `edition = "2018"` at line 2, while the wo
 
 At `output.rs:112-113`, CSV write errors are discarded with `let _ = wtr.write_record(...)`. If a write fails (e.g., encoding issue), the output silently truncates without any indication to the operator. This violates the principle of not silently swallowing errors.
 
-**Location:** `crates/axiathon-client/src/output.rs:112-115`
+**Location:** `crates/consumer-project-client/src/output.rs:112-115`
 
 ---
 
 ### `[MEDIUM]` 7. `completion.rs` returns empty string for unknown shell instead of erroring
 
-At `completion.rs:18`, an unknown shell name silently returns `String::new()` instead of returning a `CliError`. An operator typo like `axiathon completion bsh` would produce empty stdout with exit code 0 — a silent failure.
+At `completion.rs:18`, an unknown shell name silently returns `String::new()` instead of returning a `CliError`. An operator typo like `consumer-project completion bsh` would produce empty stdout with exit code 0 — a silent failure.
 
-**Location:** `crates/axiathon-client/src/commands/completion.rs:18`
+**Location:** `crates/consumer-project-client/src/commands/completion.rs:18`
 
 ---
 
@@ -79,7 +79,7 @@ At `completion.rs:18`, an unknown shell name silently returns `String::new()` in
 
 `CliError::ServerError(u16, String)` at `error.rs:18` includes the raw server response body in its Display output: `"server error ({0}): {1}"`. If the server returns internal details (stack traces, SQL errors, internal paths), they pass through to the operator's terminal. The SECURITY doc comment at line 7-8 says not to include internal details, but the implementation does exactly that via the body passthrough.
 
-**Location:** `crates/axiathon-client/src/error.rs:18`
+**Location:** `crates/consumer-project-client/src/error.rs:18`
 
 ---
 
@@ -95,7 +95,7 @@ The workspace `Cargo.toml` declares `toml = "0.8"` but the story technical guard
 
 At `exit_codes.rs:14`, the test asserts `assert_eq!(0, 0)` — a tautology. It tests nothing about the actual code. A meaningful test would verify that a successful `handle_init()` or similar returns `Ok(())` and that the main loop would map that to exit code 0.
 
-**Location:** `crates/axiathon-client/tests/exit_codes.rs:10-15`
+**Location:** `crates/consumer-project-client/tests/exit_codes.rs:10-15`
 
 ---
 
@@ -103,7 +103,7 @@ At `exit_codes.rs:14`, the test asserts `assert_eq!(0, 0)` — a tautology. It t
 
 At `output_format.rs:53-58`, the test declares a local function `assert_formatter` but never calls it. The test passes vacuously.
 
-**Location:** `crates/axiathon-client/tests/output_format.rs:53-58`
+**Location:** `crates/consumer-project-client/tests/output_format.rs:53-58`
 
 ---
 
@@ -111,7 +111,7 @@ At `output_format.rs:53-58`, the test declares a local function `assert_formatte
 
 At `Cargo.toml:31`, `bare_trait_objects = "allow"` is set. The `dyn OutputFormatter` usage at `output.rs:45` uses proper `dyn` syntax already. This lint relaxation is unnecessary and may mask issues elsewhere.
 
-**Location:** `crates/axiathon-client/Cargo.toml:31`
+**Location:** `crates/consumer-project-client/Cargo.toml:31`
 
 ---
 
@@ -123,7 +123,7 @@ At `Cargo.toml:31`, `bare_trait_objects = "allow"` is set. The `dyn OutputFormat
 
 ### `[VERIFIED]` All 114 tests pass, clippy clean (no warnings with `-D warnings`).
 
-### `[VERIFIED]` Dependency boundary — `axiathon-client` depends only on `axiathon-core`, no server-side crate imports.
+### `[VERIFIED]` Dependency boundary — `consumer-project-client` depends only on `consumer-project-core`, no server-side crate imports.
 
 ### `[VERIFIED]` Config file path uses `dirs::config_dir()` for XDG compliance.
 

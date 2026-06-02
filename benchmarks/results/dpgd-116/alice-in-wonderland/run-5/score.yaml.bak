@@ -37,7 +37,7 @@ findings:
   evidence: "TEA wrote CRLF header injection tests in security.rs:48-66. Dev implemented\
     \ CRLF rejection in with_tenant_validated() and with_token_validated(). Reviewer\
     \ flagged that with_token()/with_tenant() bypass validation (MEDIUM). However,\
-    \ no phase flagged that tenant_id should use TenantId type from axiathon-core\
+    \ no phase flagged that tenant_id should use TenantId type from consumer-project-core\
     \ instead of raw String \u2014 the injection symptom is caught but not the type-safety\
     \ root cause."
 - finding_id: I3

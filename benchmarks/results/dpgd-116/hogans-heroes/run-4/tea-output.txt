@@ -29,4 +29,4 @@
 
 ### Cargo Changes
 - Added workspace dependencies: `clap_complete`, `comfy-table`, `csv`, `dirs`, `keyring`, `reqwest`, `toml`
-- Updated `crates/axiathon-client/Cargo.toml` with all required deps + `tempfile` for dev-dependencies
+- Updated `crates/consumer-project-client/Cargo.toml` with all required deps + `tempfile` for dev-dependencies

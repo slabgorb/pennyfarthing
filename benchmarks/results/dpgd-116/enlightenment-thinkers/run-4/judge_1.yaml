@@ -38,7 +38,7 @@ findings:
   caught_by: tea
   evidence: TEA wrote CWE-113 header injection tests for CRLF in tenant ID. Dev implemented
     CRLF sanitization in client.rs:41-44. Same vulnerability class (CWE-113) addressed,
-    though via sanitization rather than using the validated TenantId type from axiathon-core.
+    though via sanitization rather than using the validated TenantId type from consumer-project-core.
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true
   weight: 3

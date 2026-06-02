@@ -40,7 +40,7 @@ def add_epic(
 
     Args:
         sprint_path: Path to sprint index YAML file
-        epic_id: Epic ID (e.g., "epic-85" or "MSSCI-14400")
+        epic_id: Epic ID (e.g., "epic-85" or "PROJ-14400")
         title: Epic title
         priority: Priority (default: P1)
         status: Initial status (default: backlog)
@@ -142,7 +142,7 @@ def add_epic(
 )
 @click.option("--status", type=click.Choice(["backlog", "ready", "in_progress"]), default="backlog")
 @click.option("--repos", default="pennyfarthing")
-@click.option("--jira", "jira_id", type=str, default=None, help="Jira epic key (MSSCI-NNNNN)")
+@click.option("--jira", "jira_id", type=str, default=None, help="Jira epic key (PROJ-NNNNN)")
 @click.option("--description", "-d", type=str, default=None, help="Epic description")
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")

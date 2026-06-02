@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer F9 flags 'tenant field uses raw String instead of validated\
-    \ TenantId newtype at cli.rs:29, client.rs:10' \u2014 notes axiathon-core exports\
+    \ TenantId newtype at cli.rs:29, client.rs:10' \u2014 notes consumer-project-core exports\
     \ TenantId but it's unused, calling it a type safety gap."
   votes: 3/3
 - finding_id: I3

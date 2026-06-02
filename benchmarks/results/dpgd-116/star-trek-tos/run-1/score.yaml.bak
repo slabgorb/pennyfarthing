@@ -34,7 +34,7 @@ findings:
   evidence: "TEA wrote header injection prevention tests for CRLF in tenant ID. Dev\
     \ implemented sanitize_header_value() stripping \\r and \\n. Reviewer verified\
     \ CWE-113 prevention. However, the finding is about using raw String instead of\
-    \ TenantId from axiathon-core \u2014 the CRLF sanitization is a band-aid, not\
+    \ TenantId from consumer-project-core \u2014 the CRLF sanitization is a band-aid, not\
     \ the type-safe fix. Partial catch at best, but the security risk is mitigated."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

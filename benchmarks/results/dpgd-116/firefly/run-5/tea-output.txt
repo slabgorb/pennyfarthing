@@ -22,10 +22,10 @@
 **Handoff:** To Dev for implementation
 
 The tests define the public API contract the Dev must implement:
-- `axiathon_client::cli::{Cli, Commands}` — clap Parser/Subcommand with global flags as pub fields
-- `axiathon_client::error::CliError` — thiserror enum with `exit_code()` method
-- `axiathon_client::output::{OutputFormat, OutputFormatter}` — format trait with `format_table`, `format_json`, `format_csv`
-- `axiathon_client::client::SiemClient` — HTTP wrapper with `new()`, `base_url()`, `map_http_status()`
-- `axiathon_client::config::ClientConfig` — TOML config with `from_toml_str`, `from_file`, `apply_env_overrides_from`, `default_config_path`
-- `axiathon_client::commands::{query,rules,alerts,ingest,config,status,tenant,login}::handle()` — stub handlers
-- `axiathon_client::commands::completion::generate_completion(Shell)` — shell completion generation
+- `consumer-project_client::cli::{Cli, Commands}` — clap Parser/Subcommand with global flags as pub fields
+- `consumer-project_client::error::CliError` — thiserror enum with `exit_code()` method
+- `consumer-project_client::output::{OutputFormat, OutputFormatter}` — format trait with `format_table`, `format_json`, `format_csv`
+- `consumer-project_client::client::SiemClient` — HTTP wrapper with `new()`, `base_url()`, `map_http_status()`
+- `consumer-project_client::config::ClientConfig` — TOML config with `from_toml_str`, `from_file`, `apply_env_overrides_from`, `default_config_path`
+- `consumer-project_client::commands::{query,rules,alerts,ingest,config,status,tenant,login}::handle()` — stub handlers
+- `consumer-project_client::commands::completion::generate_completion(Shell)` — shell completion generation

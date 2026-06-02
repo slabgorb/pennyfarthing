@@ -37,7 +37,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote header injection prevention tests covering CWE-113. Dev implemented\
     \ newline rejection in with_tenant(). Reviewer verified header injection defense.\
-    \ However, no phase flagged that tenant_id should use TenantId from axiathon-core\
+    \ However, no phase flagged that tenant_id should use TenantId from consumer-project-core\
     \ instead of raw String \u2014 the type safety gap was missed, but the vulnerability\
     \ class was caught."
 - finding_id: I3

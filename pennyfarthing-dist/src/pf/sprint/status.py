@@ -7,15 +7,17 @@ Provides functions for getting and displaying sprint status.
 from typing import Any
 
 from pf.sprint.loader import get_archived_stories, get_sprint_info, load_sprint
+from pf.sprint.status_normalize import normalize_status
 
-# Map CLI filter names to YAML status values
+# Map CLI filter names to canonical YAML status values.
+# Uses canonical underscore form; normalize_status handles variant input.
 _FILTER_MAP: dict[str, set[str]] = {
     "backlog": {"backlog", "ready", "planning"},
     "todo": {"backlog", "ready", "planning"},
-    "in-progress": {"in_progress", "in-progress"},
-    "in_progress": {"in_progress", "in-progress"},
-    "in-review": {"in_review", "in-review"},
-    "in_review": {"in_review", "in-review"},
+    "in-progress": {"in_progress"},
+    "in_progress": {"in_progress"},
+    "in-review": {"in_review"},
+    "in_review": {"in_review"},
     "done": {"done", "completed"},
     "completed": {"done", "completed"},
 }
@@ -71,7 +73,7 @@ def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
     in_review_points = 0
 
     for story in stories:
-        status = story.get("status", "backlog")
+        status = normalize_status(story.get("status", "backlog"))
         points = story.get("points", 0) or 0
 
         status_counts[status] = status_counts.get(status, 0) + 1
@@ -86,7 +88,9 @@ def get_sprint_status(filter_status: str | None = None) -> dict[str, Any]:
     filtered_stories: list[dict] = []
     if filter_status:
         match_statuses = _FILTER_MAP.get(filter_status, {filter_status})
-        filtered_stories = [s for s in stories if s.get("status", "backlog") in match_statuses]
+        filtered_stories = [
+            s for s in stories if normalize_status(s.get("status", "backlog")) in match_statuses
+        ]
 
     return {
         "sprint": sprint_info,

@@ -25,11 +25,11 @@ Good. I've now read every source file, every test file, run the test suite (all 
 
 ### `[CRITICAL]` No binary entry point — `main.rs` does not exist
 
-The story spec requires: *"The story delivers the `axiathon-client` crate producing the `axiathon` binary"*. AC-3 states: *"`main.rs` catches errors and calls `std::process::exit()`"*.
+The story spec requires: *"The story delivers the `consumer-project-client` crate producing the `consumer-project` binary"*. AC-3 states: *"`main.rs` catches errors and calls `std::process::exit()`"*.
 
-**There is no `src/main.rs`.** No `[[bin]]` in Cargo.toml. The crate is library-only. You cannot run `axiathon --help`. The data flow trace breaks at dispatch: `Cli::parse()` produces a `Commands` enum variant, but nothing matches on it, nothing calls handlers, nothing calls `process::exit()`.
+**There is no `src/main.rs`.** No `[[bin]]` in Cargo.toml. The crate is library-only. You cannot run `consumer-project --help`. The data flow trace breaks at dispatch: `Cli::parse()` produces a `Commands` enum variant, but nothing matches on it, nothing calls handlers, nothing calls `process::exit()`.
 
-This means AC-1 ("axiathon --help must show all command groups") is **untestable in practice** — the tests verify the parser in isolation, not the actual binary.
+This means AC-1 ("consumer-project --help must show all command groups") is **untestable in practice** — the tests verify the parser in isolation, not the actual binary.
 
 ### `[CRITICAL]` Edition mismatch — `edition = "2018"` vs workspace `"2024"` at `Cargo.toml:2`
 
@@ -109,7 +109,7 @@ test result: ok. 77 passed; 0 failed; 0 ignored
 
 ## Data Flow Trace
 
-**Input:** `axiathon --tenant abc123 --format json status`
+**Input:** `consumer-project --tenant abc123 --format json status`
 
 1. **Parse** (`cli.rs`): `Cli::try_parse_from()` → `Cli { command: Commands::Status(_), tenant: Some("abc123"), format: Json }`
 2. **Config** (`config.rs:34`): `ClientConfig::load_from(path)` → reads TOML, applies env overrides

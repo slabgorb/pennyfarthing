@@ -35,7 +35,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: Reviewer flagged '[MEDIUM] `--tenant` accepts raw `String`, not validated
-    `TenantId`' noting 'axiathon-core provides TenantId with validation... tenant
+    `TenantId`' noting 'consumer-project-core provides TenantId with validation... tenant
     IDs from user input should be validated before being passed to SiemClient.' TEA
     also wrote CWE-113 header injection tests.
 - finding_id: I3

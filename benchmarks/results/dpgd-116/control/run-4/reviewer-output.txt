@@ -8,11 +8,11 @@ I have now reviewed all implementation files, all test files, run the test suite
 
 ### 1. `[HIGH]` Nightly `rustfmt` check fails — `cli.rs` has formatting violations
 
-`cargo +nightly fmt --all --check` reports diffs in `crates/axiathon-client/src/cli.rs`. Per the reviewer gotchas (`gotchas.md`), nightly fmt must pass before approval. The long `#[command(...)]` attributes need line-wrapping per nightly rules.
+`cargo +nightly fmt --all --check` reports diffs in `crates/consumer-project-client/src/cli.rs`. Per the reviewer gotchas (`gotchas.md`), nightly fmt must pass before approval. The long `#[command(...)]` attributes need line-wrapping per nightly rules.
 
 ### 2. `[HIGH]` `init` command is a stub, violating AC-9/scope — story says it must be functional
 
-The story scope explicitly states: *"Shell completion generation (functional, not stub)"* and *"`axiathon init` first-time setup (functional, not stub)"*. The `init` handler at `commands/init.rs:3` returns `Err(CliError::NotYetImplemented("Story 6.1"))` — it's a stub, not a functional implementation. This is a scope gap within this story's own deliverables.
+The story scope explicitly states: *"Shell completion generation (functional, not stub)"* and *"`consumer-project init` first-time setup (functional, not stub)"*. The `init` handler at `commands/init.rs:3` returns `Err(CliError::NotYetImplemented("Story 6.1"))` — it's a stub, not a functional implementation. This is a scope gap within this story's own deliverables.
 
 ### 3. `[MEDIUM]` `toml` workspace version mismatch — spec says 0.9, workspace declares 0.8
 
@@ -34,9 +34,9 @@ AC-8 and Technical Guardrails state: *"Fall back to `AXIATHON_API_TOKEN` env var
 
 At `output.rs:134,155,159,162,163`, five `expect()` calls exist in production (non-test) code. Per rust.md rules: *"No `unwrap()` in production code — use `?` or `expect()` with actionable message"*. The `expect()` calls have messages, which technically satisfies the rule, but the `OutputFormatter::format_rows` trait returns `String` not `Result<String>`, making error propagation impossible. If the trait signature can't change, these are acceptable, but this is a design concern.
 
-### 8. `[MEDIUM]` `axiathon-core` dependency declared but never used
+### 8. `[MEDIUM]` `consumer-project-core` dependency declared but never used
 
-`Cargo.toml:13` declares `axiathon-core = { path = "../axiathon-core" }` as a dependency, but grep finds zero `use axiathon_core` statements in any source file. This is dead weight and will cause unnecessary compilation.
+`Cargo.toml:13` declares `consumer-project-core = { path = "../consumer-project-core" }` as a dependency, but grep finds zero `use consumer-project_core` statements in any source file. This is dead weight and will cause unnecessary compilation.
 
 ### 9. `[LOW]` `SiemClient::new` silently produces empty `base_url` for invalid schemes
 
@@ -85,4 +85,4 @@ Two High-severity issues block approval:
 1. **Nightly `rustfmt` fails** — must pass per reviewer gotchas. Fix: run `cargo +nightly fmt --all`.
 2. **`init` command is a stub when story scope requires it functional** — either implement a minimal `init` (create config directory + default `cli.toml`) or document in the PR why it's deferred. The story text is unambiguous: *"functional, not stub"*.
 
-The Medium findings (no TTY auto-detection, no `AXIATHON_API_TOKEN` fallback, unused `axiathon-core` dep, silent unknown field handling, `toml` version note) should be addressed or explicitly acknowledged as known gaps before merging.
+The Medium findings (no TTY auto-detection, no `AXIATHON_API_TOKEN` fallback, unused `consumer-project-core` dep, silent unknown field handling, `toml` version note) should be addressed or explicitly acknowledged as known gaps before merging.

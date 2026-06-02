@@ -195,11 +195,11 @@ class TestJiraModule:
         # Mock subprocess to avoid actual Jira calls
         mock_result = MagicMock()
         mock_result.returncode = 0
-        mock_result.stdout = '{"key": "MSSCI-12398", "fields": {"summary": "Test"}}'
+        mock_result.stdout = '{"key": "PROJ-12398", "fields": {"summary": "Test"}}'
         monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
 
-        issue = jira_module.get_issue("MSSCI-12398")
-        assert issue["key"] == "MSSCI-12398"
+        issue = jira_module.get_issue("PROJ-12398")
+        assert issue["key"] == "PROJ-12398"
 
     def test_get_issue_not_found(self, jira_module, monkeypatch):
         """get_issue should return None for missing issues."""
@@ -217,5 +217,5 @@ class TestJiraModule:
         mock_result.returncode = 0
         monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
 
-        result = jira_module.update_issue_status("MSSCI-12398", "In Progress")
+        result = jira_module.update_issue_status("PROJ-12398", "In Progress")
         assert result is True

@@ -210,6 +210,24 @@ def detect_image_protocol() -> str | None:
     if "ghostty" in term or term_program.lower() == "ghostty":
         return "kitty"
 
+    # Inside tmux/screen the multiplexer masks TERM (→ ``tmux-256color``) and
+    # TERM_PROGRAM (→ ``tmux``), hiding the host terminal. But host terminals
+    # leak identifying env vars into the pane — sniff those. All hosts matched
+    # here speak the Kitty graphics protocol, which the TUI forwards through
+    # tmux via DCS passthrough (see app.py ``_patch_tgp_for_tmux``).
+    in_multiplexer = bool(os.environ.get("TMUX")) or term.startswith(("tmux", "screen"))
+    if in_multiplexer:
+        cf_bundle = os.environ.get("__CFBundleIdentifier", "").lower()
+        if (
+            os.environ.get("GHOSTTY_RESOURCES_DIR")
+            or os.environ.get("GHOSTTY_BIN_DIR")
+            or "ghostty" in cf_bundle
+            or os.environ.get("KITTY_PID")
+            or os.environ.get("WEZTERM_EXECUTABLE")  # WezTerm supports kitty graphics
+            or os.environ.get("WEZTERM_PANE")
+        ):
+            return "kitty"
+
     # Sixel: some terminals advertise via TERM or COLORTERM
     # WezTerm, foot, mlterm support sixel
     if term_program.lower() in ("wezterm", "foot", "mlterm"):

@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote CRLF header injection tests for tenant ID. Dev implemented\
     \ CRLF checking. However, the finding is about using raw String instead of TenantId\
-    \ from axiathon-core \u2014 the type-safety aspect was NOT caught. Only the injection\
+    \ from consumer-project-core \u2014 the type-safety aspect was NOT caught. Only the injection\
     \ symptom was partially mitigated via runtime checks, not the root cause (wrong\
     \ type)."
 - finding_id: I3

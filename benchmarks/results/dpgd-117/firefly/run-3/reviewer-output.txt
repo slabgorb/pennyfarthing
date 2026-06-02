@@ -12,7 +12,7 @@ Now I have everything I need. Let me compile my findings.
 
 ### CRITICAL
 
-**[CRITICAL] ApiResponse envelope schema contradicts story AC and test expectations** — `crates/axiathon-core/src/types.rs:220-228`
+**[CRITICAL] ApiResponse envelope schema contradicts story AC and test expectations** — `crates/consumer-project-core/src/types.rs:220-228`
 
 The `ApiResponse<T>` struct has `error: Option<ApiError>` (singular) and uses `skip_serializing_if = "Option::is_none"` on ALL three fields (`data`, `error`, `meta`). The story AC and tests demand:
 - `meta` **always present** with `request_id`, `timestamp`, `trace_id`
@@ -29,7 +29,7 @@ This is a **schema mismatch between core types and the API contract**. The imple
 
 ---
 
-**[CRITICAL] ApiMeta missing required fields** — `crates/axiathon-core/src/types.rs:296-304`
+**[CRITICAL] ApiMeta missing required fields** — `crates/consumer-project-core/src/types.rs:296-304`
 
 `ApiMeta` has `total`, `limit`, `offset` (pagination fields). The AC requires `request_id` (UUID), `timestamp` (ISO 8601), and `trace_id` (String). These three fields are entirely absent from the struct. Every meta-related test will fail.
 
@@ -37,13 +37,13 @@ This is a **schema mismatch between core types and the API contract**. The imple
 
 ### HIGH
 
-**[HIGH] Nightly rustfmt check fails** — `crates/axiathon-server/tests/rest_api_foundation.rs:48-49,66-67`
+**[HIGH] Nightly rustfmt check fails** — `crates/consumer-project-server/tests/rest_api_foundation.rs:48-49,66-67`
 
 `cargo +nightly fmt --all --check` reports formatting diffs in `rest_api_foundation.rs`. Per `gotchas.md`: "Always include `cargo +nightly fmt --all --check` in the preflight. Nightly rustfmt enforces import ordering that stable does not. If it fails, flag it before approval." Two line-wrapping diffs in the `send_request` and `send_request_with_headers` helpers.
 
 ---
 
-**[HIGH] ApiError struct does not match RFC 9457 Problem Details** — `crates/axiathon-core/src/types.rs:280-287`
+**[HIGH] ApiError struct does not match RFC 9457 Problem Details** — `crates/consumer-project-core/src/types.rs:280-287`
 
 The `ApiError` has fields `code`, `message`, `trace_id`, `details`. RFC 9457 requires `type` (URI), `title`, `status` (integer). Tests at lines 251-262 assert `error["type"]`, `error["title"]`, `error["status"]` — none of which exist on the current `ApiError` struct. The error shape is fundamentally wrong for the AC.
 
@@ -55,7 +55,7 @@ The test `client_provided_request_id_is_honored` passes `"client-supplied-reques
 
 ---
 
-**[HIGH] No test for `#![forbid(unsafe_code)]` enforcement** — `crates/axiathon-server/src/lib.rs:2`
+**[HIGH] No test for `#![forbid(unsafe_code)]` enforcement** — `crates/consumer-project-server/src/lib.rs:2`
 
 The `forbid(unsafe_code)` attribute is present but there is no CI or structural test asserting it remains. Other crates in the workspace could remove it silently. Given the security criticality, a compile-time or CI check is warranted.
 
@@ -63,7 +63,7 @@ The `forbid(unsafe_code)` attribute is present but there is no CI or structural 
 
 ### MEDIUM
 
-**[MEDIUM] Rate limiting tests may be flaky** — `crates/axiathon-server/tests/rest_api_foundation.rs:640-699`
+**[MEDIUM] Rate limiting tests may be flaky** — `crates/consumer-project-server/tests/rest_api_foundation.rs:640-699`
 
 Three rate limit tests send up to 200 sequential requests using `app().oneshot()`. Each call creates a fresh `Router` via `app()` — if the rate limiter state lives inside `AppState` and `app()` creates a new state each time, the rate limiter resets on every call and 429 is never triggered. The test helpers call `app()` per-request (line 40). This design makes rate limit tests structurally unfalsifiable unless `app()` returns a shared-state router. The test should build one router and call `.clone()` on it.
 
@@ -77,13 +77,13 @@ Three rate limit tests send up to 200 sequential requests using `app().oneshot()
 
 ---
 
-**[MEDIUM] `http-body-util` and `tower` dev-dependencies not workspace-managed** — `crates/axiathon-server/Cargo.toml:25,29`
+**[MEDIUM] `http-body-util` and `tower` dev-dependencies not workspace-managed** — `crates/consumer-project-server/Cargo.toml:25,29`
 
 `http-body-util = "0.1"` and `tower = { version = "0.5" ... }` are declared inline rather than in `[workspace.dependencies]`. This violates the "workspace-level dependency declarations" rule from `rust.md`. `hyper = "1"` at line 26 is also not workspace-managed.
 
 ---
 
-**[MEDIUM] `send_request` fallback silently swallows non-JSON responses** — `crates/axiathon-server/tests/rest_api_foundation.rs:48-49`
+**[MEDIUM] `send_request` fallback silently swallows non-JSON responses** — `crates/consumer-project-server/tests/rest_api_foundation.rs:48-49`
 
 When `serde_json::from_slice` fails, the helper wraps the body in `Value::String(...)`. This means a test could pass on a non-JSON response that happens to contain the string `"errors"` as a substring. The helper should `panic!` on non-JSON for tests that require JSON, or at minimum the envelope tests should assert the raw content-type first.
 
@@ -97,7 +97,7 @@ This test only verifies that a non-deprecated endpoint lacks the header. It neve
 
 ### LOW
 
-**[LOW] Unnecessary `serde_json` in both `[dependencies]` and `[dev-dependencies]`** — `crates/axiathon-server/Cargo.toml:17,27`
+**[LOW] Unnecessary `serde_json` in both `[dependencies]` and `[dev-dependencies]`** — `crates/consumer-project-server/Cargo.toml:17,27`
 
 `serde_json` appears in both dependency sections. The dev-dependency entry is redundant since the main dependency already makes it available to tests.
 
@@ -117,12 +117,12 @@ The "AC10: Graceful shutdown" section comment at line 1093 is misleading. The ac
 
 ### VERIFIED
 
-- **[VERIFIED]** `#![forbid(unsafe_code)]` present in both `axiathon-server/src/lib.rs:2` and `axiathon-core/src/lib.rs:2`
-- **[VERIFIED]** `AxiathonError` is `#[non_exhaustive]` at `axiathon-core/src/error.rs:14`
-- **[VERIFIED]** Security `Display` doc-comment present on `AxiathonError` at `axiathon-core/src/error.rs:6-12`
-- **[VERIFIED]** `TenantContext` fields are private with getters at `axiathon-core/src/types.rs:113-149`
-- **[VERIFIED]** `TenantId::new()` validates at trust boundary (UUID format, length) at `axiathon-core/src/types.rs:17-31`
-- **[VERIFIED]** UUID v7 used for `EventId` and `AlertId` at `axiathon-core/src/types.rs:62,87`
+- **[VERIFIED]** `#![forbid(unsafe_code)]` present in both `consumer-project-server/src/lib.rs:2` and `consumer-project-core/src/lib.rs:2`
+- **[VERIFIED]** `Consumer ProjectError` is `#[non_exhaustive]` at `consumer-project-core/src/error.rs:14`
+- **[VERIFIED]** Security `Display` doc-comment present on `Consumer ProjectError` at `consumer-project-core/src/error.rs:6-12`
+- **[VERIFIED]** `TenantContext` fields are private with getters at `consumer-project-core/src/types.rs:113-149`
+- **[VERIFIED]** `TenantId::new()` validates at trust boundary (UUID format, length) at `consumer-project-core/src/types.rs:17-31`
+- **[VERIFIED]** UUID v7 used for `EventId` and `AlertId` at `consumer-project-core/src/types.rs:62,87`
 - **[VERIFIED]** Workspace lints configured at root `Cargo.toml:58-65`, inherited by crates
 - **[VERIFIED]** Tests cover auth edge cases: missing header, expired, malformed, empty bearer, wrong scope, revoked key
 - **[VERIFIED]** CWE-209 information exposure tests present at lines 926-973

@@ -5,16 +5,16 @@ All **93 tests passing**, **0 clippy warnings**. Here's the summary:
 **Implementation Complete:** Yes
 
 **Files Changed:**
-- `crates/axiathon-client/Cargo.toml` — added `clap` env feature, custom lint config for test `unsafe` compatibility
-- `crates/axiathon-client/src/lib.rs` — module re-exports for cli, client, commands, config, error, output
-- `crates/axiathon-client/src/main.rs` — binary entry point with clap parsing, command dispatch, exit codes
-- `crates/axiathon-client/src/cli.rs` — `Cli` struct (Parser derive) with global flags, `Commands` enum (Subcommand derive) with all 12 command groups
-- `crates/axiathon-client/src/error.rs` — `CliError` enum (#[non_exhaustive], thiserror) with exit code mapping (1/3/4)
-- `crates/axiathon-client/src/output.rs` — `OutputFormatter` trait, `TableFormatter` (comfy-table), `JsonFormatter` (with metadata), `CsvFormatter` (RFC 4180), `OutputFormat` enum
-- `crates/axiathon-client/src/config.rs` — `ClientConfig` TOML loading, env var overrides, XDG path, validation
-- `crates/axiathon-client/src/client.rs` — `SiemClient` HTTP wrapper with header injection, status code mapping, URL/header validation
-- `crates/axiathon-client/src/commands/` — 10 command modules (query, rules, alerts, ingest, config, status, tenant, login, completion, init)
-- `crates/axiathon-client/tests/config_loading.rs` — added `#[allow(unsafe_code)]` and `unsafe` blocks for `set_var` (required by edition 2024)
+- `crates/consumer-project-client/Cargo.toml` — added `clap` env feature, custom lint config for test `unsafe` compatibility
+- `crates/consumer-project-client/src/lib.rs` — module re-exports for cli, client, commands, config, error, output
+- `crates/consumer-project-client/src/main.rs` — binary entry point with clap parsing, command dispatch, exit codes
+- `crates/consumer-project-client/src/cli.rs` — `Cli` struct (Parser derive) with global flags, `Commands` enum (Subcommand derive) with all 12 command groups
+- `crates/consumer-project-client/src/error.rs` — `CliError` enum (#[non_exhaustive], thiserror) with exit code mapping (1/3/4)
+- `crates/consumer-project-client/src/output.rs` — `OutputFormatter` trait, `TableFormatter` (comfy-table), `JsonFormatter` (with metadata), `CsvFormatter` (RFC 4180), `OutputFormat` enum
+- `crates/consumer-project-client/src/config.rs` — `ClientConfig` TOML loading, env var overrides, XDG path, validation
+- `crates/consumer-project-client/src/client.rs` — `SiemClient` HTTP wrapper with header injection, status code mapping, URL/header validation
+- `crates/consumer-project-client/src/commands/` — 10 command modules (query, rules, alerts, ingest, config, status, tenant, login, completion, init)
+- `crates/consumer-project-client/tests/config_loading.rs` — added `#[allow(unsafe_code)]` and `unsafe` blocks for `set_var` (required by edition 2024)
 
 **Tests:** 93/93 passing (GREEN)
 **Clippy:** 0 warnings

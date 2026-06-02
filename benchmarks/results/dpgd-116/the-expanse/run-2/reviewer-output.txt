@@ -10,15 +10,15 @@ Right. Now I have the full picture. Let me deliver the review.
 
 ### [HIGH] `main.rs` is a placeholder — no dispatch, no exit codes, no error handling at `main.rs:1-6`
 
-The `main.rs` is literally `println!("axiathon CLI")`. There is no clap parsing, no command dispatch, no `std::process::exit()` with `CliError::exit_code()`, no tracing init. AC-3 requires `main.rs` to catch errors and call `std::process::exit()`. AC-10 requires stubs to print "not yet implemented (Story X.Y)" and exit with code 1. None of this works because `main()` doesn't call into `Cli::parse()` or dispatch to any command handler. The binary is a dead end.
+The `main.rs` is literally `println!("consumer-project CLI")`. There is no clap parsing, no command dispatch, no `std::process::exit()` with `CliError::exit_code()`, no tracing init. AC-3 requires `main.rs` to catch errors and call `std::process::exit()`. AC-10 requires stubs to print "not yet implemented (Story X.Y)" and exit with code 1. None of this works because `main()` doesn't call into `Cli::parse()` or dispatch to any command handler. The binary is a dead end.
 
-**Impact:** The `axiathon` binary does literally nothing. Running `axiathon status` prints "axiathon CLI" and exits 0. Every AC that involves running the actual binary is unverifiable through the binary itself.
+**Impact:** The `consumer-project` binary does literally nothing. Running `consumer-project status` prints "consumer-project CLI" and exits 0. Every AC that involves running the actual binary is unverifiable through the binary itself.
 
 ### [HIGH] Missing command module files — 10 of 11 command modules absent at `commands/mod.rs:1`
 
 The story spec requires: `query.rs`, `rules.rs`, `alerts.rs`, `ingest.rs`, `config.rs`, `status.rs`, `tenant.rs`, `login.rs`, `completion.rs`, `init.rs`. Only `completion.rs` exists. The `mod.rs` only exports `completion`. There are no stub handler functions for any command group. AC-10 cannot be satisfied — there are no stub handlers to call, only a `CliError::NotImplemented` variant that exists in a vacuum.
 
-**Impact:** No command dispatch exists. The tests for stub handlers (AC-10) only test that `CliError::NotImplemented` formats correctly — they never test that running `axiathon status` actually produces a stub error. These are unit tests of the error type, not integration tests of the command flow.
+**Impact:** No command dispatch exists. The tests for stub handlers (AC-10) only test that `CliError::NotImplemented` formats correctly — they never test that running `consumer-project status` actually produces a stub error. These are unit tests of the error type, not integration tests of the command flow.
 
 ### [HIGH] `cargo +nightly fmt --all --check` fails — 13 formatting diffs across 7 files
 
@@ -42,7 +42,7 @@ Four `expect()` calls in `format_json` and `format_csv`. The rust rules say "No 
 
 ### [MEDIUM] `--tenant` accepts raw `String` instead of validated `TenantId` at `cli.rs:29`
 
-The rust rules require "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag accepts `Option<String>` and `SiemClient::with_tenant` takes `&str`. No validation, no type safety. `axiathon-core` has a `TenantId` type that should be used.
+The rust rules require "Newtypes for IDs: `TenantId(String)` — prevents mixing ID types." The `--tenant` flag accepts `Option<String>` and `SiemClient::with_tenant` takes `&str`. No validation, no type safety. `consumer-project-core` has a `TenantId` type that should be used.
 
 ### [MEDIUM] JSON output includes random UUID as `request_id` at `output.rs:50`
 
@@ -58,7 +58,7 @@ AC-5 says "`--server` supports `AXIATHON_SERVER` env var." The `--server` arg ha
 
 ### [LOW] `init` command has no handler, even though story says it should be functional at `cli.rs:83`
 
-The story says "Shell completion generation (functional, not stub)" and "`axiathon init` first-time setup (functional, not stub)." Completion is functional. Init has zero implementation — not even a stub error handler.
+The story says "Shell completion generation (functional, not stub)" and "`consumer-project init` first-time setup (functional, not stub)." Completion is functional. Init has zero implementation — not even a stub error handler.
 
 ### [VERIFIED] Token redaction in `Debug` impl — `client.rs:14` correctly replaces token with `[REDACTED]`
 

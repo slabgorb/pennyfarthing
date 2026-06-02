@@ -26,10 +26,10 @@
 - Silent error swallowing: Stubs never exit with code 0
 
 **Expected public API the Dev must implement:**
-- `axiathon_client::cli::Cli` — clap Parser with all command groups
-- `axiathon_client::error::CliError` — error enum with `exit_code()` method
-- `axiathon_client::client::SiemClient` — HTTP wrapper with `get()`, `with_token()`, `with_tenant()`
-- `axiathon_client::config::ClientConfig` — TOML config with `from_file()`, `default_path()`
-- `axiathon_client::output::{OutputFormat, OutputFormatter}` — formatting with `format_table()`
+- `consumer-project_client::cli::Cli` — clap Parser with all command groups
+- `consumer-project_client::error::CliError` — error enum with `exit_code()` method
+- `consumer-project_client::client::SiemClient` — HTTP wrapper with `get()`, `with_token()`, `with_tenant()`
+- `consumer-project_client::config::ClientConfig` — TOML config with `from_file()`, `default_path()`
+- `consumer-project_client::output::{OutputFormat, OutputFormatter}` — formatting with `format_table()`
 
 **Handoff:** To Dev for implementation (GREEN phase)

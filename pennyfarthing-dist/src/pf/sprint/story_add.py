@@ -1,6 +1,6 @@
 """Sprint story add command.
 
-Story: MSSCI-14256 - Sprint story add command
+Story: PROJ-14256 - Sprint story add command
 
 This module provides:
 - generate_story_id(sprint_data, epic) -> str
@@ -70,6 +70,7 @@ def add_story(
     jira: str | None = None,
     repos: str | None = None,
     depends_on: str | None = None,
+    plan_ref: str | None = None,
 ) -> dict[str, Any]:
     """Add a new story to an epic in the sprint YAML.
 
@@ -82,6 +83,7 @@ def add_story(
         priority: Priority (default: P1)
         workflow: Workflow (default: tdd)
         jira: Optional Jira key
+        plan_ref: Optional plan back-link string (e.g. "plan:path/to/plan.md#task-1")
 
     Returns:
         Dict with success status and story_id or error
@@ -116,6 +118,8 @@ def add_story(
         fields["repos"] = repos
     if depends_on is not None:
         fields["depends_on"] = depends_on
+    if plan_ref is not None:
+        fields["plan_ref"] = plan_ref
     if story_type is not None:
         fields["type"] = story_type
 
@@ -289,7 +293,7 @@ def add_initiative_story(
 @click.option(
     "--priority", type=click.Choice(["p0", "p1", "p2", "p3"], case_sensitive=False), default="p1"
 )
-@click.option("--workflow", type=click.Choice(["tdd", "trivial", "bdd"]), default="tdd")
+@click.option("--workflow", type=click.Choice(["tdd", "trivial", "bdd", "superpowers"]), default="tdd")
 @click.option("--jira", "jira_id", type=str, default=None)
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 @click.option(
@@ -300,6 +304,13 @@ def add_initiative_story(
 )
 @click.option("--repos", type=str, default="pennyfarthing", help="Repos (default: pennyfarthing)")
 @click.option("--depends-on", type=str, default=None, help="Story ID this depends on (stacked PRs)")
+@click.option(
+    "--epic",
+    "epic_override",
+    type=str,
+    default=None,
+    help="Target epic ID — overrides the positional EPIC_ID",
+)
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def story_add_command(
     epic_id: str | None,
@@ -313,6 +324,7 @@ def story_add_command(
     initiative: str | None,
     repos: str,
     depends_on: str | None,
+    epic_override: str | None,
     dry_run: bool,
 ) -> None:
     """Add a new story to an epic or initiative.
@@ -361,8 +373,9 @@ def story_add_command(
         else:
             raise click.ClickException(result["error"])
     else:
-        # Epic mode: all three positional args required
-        if epic_id is None:
+        # Epic mode: --epic overrides the positional EPIC_ID when supplied.
+        target_epic = epic_override or epic_id
+        if target_epic is None:
             raise click.ClickException("EPIC_ID is required")
         if title is None:
             raise click.ClickException("TITLE is required")
@@ -370,7 +383,7 @@ def story_add_command(
             raise click.ClickException("POINTS is required")
 
         if dry_run:
-            click.echo(f"[DRY-RUN] Would add story to epic {epic_id}: {title} [{points}pts]")
+            click.echo(f"[DRY-RUN] Would add story to epic {target_epic}: {title} [{points}pts]")
             return
 
         if sprint_file is None:
@@ -382,7 +395,7 @@ def story_add_command(
 
         result = add_story(
             sprint_path=path,
-            epic_id=epic_id,
+            epic_id=target_epic,
             title=title,
             points=points,
             story_type=story_type if story_type != "feature" else None,

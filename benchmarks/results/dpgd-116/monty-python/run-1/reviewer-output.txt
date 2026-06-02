@@ -16,13 +16,13 @@ I've completed my review. Here's the structured findings:
 
 ### `[HIGH]` F2 — Missing `tui` and `logout` command groups (AC-1 violation) at `cli.rs:48-69`
 
-AC-1 explicitly requires: *"`axiathon --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."* The `Commands` enum is missing both `Tui` and `Logout` variants. The test `help_text_lists_all_command_groups` at `cli_structure.rs:80` doesn't check for `tui` or `logout` either, so this gap is untested.
+AC-1 explicitly requires: *"`consumer-project --help` must show all command groups: `query`, `rules`, `alerts`, `ingest`, `config`, `status`, `tenant`, `login`/`logout`, `tui`, `completion`, `init`."* The `Commands` enum is missing both `Tui` and `Logout` variants. The test `help_text_lists_all_command_groups` at `cli_structure.rs:80` doesn't check for `tui` or `logout` either, so this gap is untested.
 
 ---
 
-### `[HIGH]` F3 — No `main.rs` binary entry point exists at `crates/axiathon-client/src/main.rs`
+### `[HIGH]` F3 — No `main.rs` binary entry point exists at `crates/consumer-project-client/src/main.rs`
 
-The story requires producing an `axiathon` binary. There is no `main.rs`, no `[[bin]]` section in `Cargo.toml`, and no dispatch logic. The crate is library-only. This means `axiathon` cannot be run as a CLI tool — the central deliverable of the story.
+The story requires producing an `consumer-project` binary. There is no `main.rs`, no `[[bin]]` section in `Cargo.toml`, and no dispatch logic. The crate is library-only. This means `consumer-project` cannot be run as a CLI tool — the central deliverable of the story.
 
 ---
 
@@ -38,9 +38,9 @@ The story technical guardrails specify `toml 0.9` but the workspace declares `to
 
 ---
 
-### `[MEDIUM]` F6 — Missing `dirs` and `keyring` dependencies at `crates/axiathon-client/Cargo.toml`
+### `[MEDIUM]` F6 — Missing `dirs` and `keyring` dependencies at `crates/consumer-project-client/Cargo.toml`
 
-The story requires `dirs` 6 for XDG path resolution (`~/.config/axiathon/cli.toml`) and `keyring` 3 for OS keychain credential storage. Neither is in `Cargo.toml` dependencies. Config loading currently takes a path argument instead of using `dirs` to find the default location. The `ClientConfig` has no default path resolution.
+The story requires `dirs` 6 for XDG path resolution (`~/.config/consumer-project/cli.toml`) and `keyring` 3 for OS keychain credential storage. Neither is in `Cargo.toml` dependencies. Config loading currently takes a path argument instead of using `dirs` to find the default location. The `ClientConfig` has no default path resolution.
 
 ---
 

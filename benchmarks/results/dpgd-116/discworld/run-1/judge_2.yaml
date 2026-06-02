@@ -35,7 +35,7 @@ findings:
   caught_by: tea
   evidence: "TEA wrote 'CRLF header injection in tenant ID and token (AC-7)' tests.\
     \ Reviewer verified CWE-113 prevention. However, the deeper type-safety issue\
-    \ (using raw String instead of TenantId from axiathon-core) was not flagged \u2014\
+    \ (using raw String instead of TenantId from consumer-project-core) was not flagged \u2014\
     \ only the CRLF symptom was mitigated. Same CWE class caught."
 - finding_id: I3
   title: Dependencies use direct version strings instead of workspace = true

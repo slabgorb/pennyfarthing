@@ -1,6 +1,6 @@
 """Story lifecycle state machine with transition validation.
 
-Story: MSSCI-15428 - Implement story lifecycle state machine
+Story: PROJ-15428 - Implement story lifecycle state machine
 
 Provides:
 - TRANSITIONS: valid state transitions map
@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from pf.jira.client import get_client
-from pf.sprint.loader import find_epic, find_story
+from pf.sprint.loader import find_story_in_data
+from pf.sprint.status_normalize import normalize_status
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
 # Valid transitions: from_status -> set of allowed to_statuses
@@ -59,8 +60,7 @@ def transition_story(
     # Load sprint data and find story
     sprint_path = project_root / "sprint" / "current-sprint.yaml"
     data = read_sprint(sprint_path)
-    epic = find_epic(data, parts[0])
-    story = find_story(epic, story_id) if epic else None
+    _epic, story, _location = find_story_in_data(data, story_id)
 
     if not story:
         return {
@@ -70,7 +70,8 @@ def transition_story(
             "steps": [],
         }
 
-    from_status = story["status"]
+    from_status = normalize_status(story["status"])
+    target_status = normalize_status(target_status)
     jira_key = story.get("jira")
 
     # Validate transition is legal
@@ -123,24 +124,34 @@ def transition_story(
         jira_target = _JIRA_STATUS.get(target_status, target_status)
         try:
             client = get_client()
-            jira_result = client.transition_sync(jira_key, jira_target)
-            if jira_result.get("success"):
+            # Skip Jira when not configured (no token) — treat like no jira_key
+            if not client.token:
                 steps.append(
                     {
                         "step": 2,
                         "action": "jira_transition",
-                        "success": True,
+                        "skipped": True,
                     }
                 )
             else:
-                steps.append(
-                    {
-                        "step": 2,
-                        "action": "jira_transition",
-                        "success": False,
-                        "error": jira_result.get("error", "Jira transition failed"),
-                    }
-                )
+                jira_result = client.transition_sync(jira_key, jira_target)
+                if jira_result.get("success"):
+                    steps.append(
+                        {
+                            "step": 2,
+                            "action": "jira_transition",
+                            "success": True,
+                        }
+                    )
+                else:
+                    steps.append(
+                        {
+                            "step": 2,
+                            "action": "jira_transition",
+                            "success": False,
+                            "error": jira_result.get("error", "Jira transition failed"),
+                        }
+                    )
         except Exception as exc:
             steps.append(
                 {

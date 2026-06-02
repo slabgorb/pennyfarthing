@@ -36,7 +36,7 @@ findings:
   caught: true
   caught_by: reviewer
   evidence: "Reviewer LOW finding: 'tenant flag is Option<String> \u2014 should use\
-    \ TenantId newtype... axiathon-core exports TenantId. Using raw String here bypasses\
+    \ TenantId newtype... consumer-project-core exports TenantId. Using raw String here bypasses\
     \ validation at the trust boundary.' Also TEA wrote siem_client.rs tests for header\
     \ injection. Same type-safety concern about tenant_id as raw String."
 - finding_id: I3

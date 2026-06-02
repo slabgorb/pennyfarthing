@@ -301,6 +301,17 @@ def get_archived_stories(
                 continue
 
         stories.extend(data["completed_stories"])
+
+        # Also load stories from archived epic shards referenced by completed_epics
+        for epic_ref in data.get("completed_epics", []):
+            shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+            if shard_path.exists():
+                shard_data = load_yaml_config(shard_path)
+                if shard_data and "stories" in shard_data:
+                    for s in shard_data["stories"]:
+                        if s.get("status") in ("done", "completed"):
+                            stories.append(s)
+
     return stories
 
 
@@ -308,7 +319,7 @@ def get_story_by_id(story_id: str) -> dict[str, Any] | None:
     """Find a story by its ID.
 
     Args:
-        story_id: The story ID (e.g., "63-4" or "MSSCI-12398")
+        story_id: The story ID (e.g., "63-4" or "PROJ-12398")
 
     Returns:
         Story dict if found, None otherwise
@@ -371,6 +382,62 @@ def find_story(epic: dict[str, Any] | None, story_id: str) -> dict[str, Any] | N
             return story
 
     return None
+
+
+def find_story_in_data(
+    sprint_data: dict[str, Any] | None, story_id: str
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, str | None]:
+    """Locate a story anywhere in merged sprint data by id OR jira key.
+
+    Used by mutation commands that accept either format on the CLI. Handles
+    the case where ``story_id.split("-")[0]`` does not match any epic id —
+    e.g. ``PROJ-17082`` against an epic whose id is ``"151"`` — by walking
+    every epic shard and comparing both ``story.id`` and ``story.jira``.
+
+    Args:
+        sprint_data: Sprint dict (post-``read_sprint`` merge)
+        story_id: Local id (e.g. ``151-3``) or Jira key (e.g. ``PROJ-17082``)
+
+    Returns:
+        ``(epic, story, location)`` triple where:
+        - ``epic`` is the containing epic dict, or ``None`` if the story
+          lives in ``standalone_stories`` or top-level ``stories``.
+        - ``story`` is the story dict, or ``None`` if not found.
+        - ``location`` describes where it was found:
+          ``"epic <id>"``, ``"standalone_stories"``, ``"stories"``,
+          or ``None`` when not found.
+    """
+    if not sprint_data:
+        return None, None, None
+
+    # Fast path: parts[0]-based epic lookup matches the original story id format.
+    parts = story_id.split("-")
+    if len(parts) >= 2:
+        epic = find_epic(sprint_data, parts[0])
+        if epic is not None:
+            story = find_story(epic, story_id)
+            if story is not None:
+                return epic, story, f"epic {epic.get('id', parts[0])}"
+
+    # Fallback: walk every epic's stories matching either id or jira.
+    for epic in sprint_data.get("epics", []):
+        if not isinstance(epic, dict):
+            continue
+        for story in epic.get("stories", []):
+            if not isinstance(story, dict):
+                continue
+            if story.get("id") == story_id or story.get("jira") == story_id:
+                return epic, story, f"epic {epic.get('id', '')}"
+
+    # Fallback: standalone_stories and top-level stories (id or jira).
+    for section in ("standalone_stories", "stories"):
+        for story in sprint_data.get(section, []):
+            if not isinstance(story, dict):
+                continue
+            if story.get("id") == story_id or story.get("jira") == story_id:
+                return None, story, section
+
+    return None, None, None
 
 
 def get_story_field(sprint_data: dict[str, Any], story_id: str, field_name: str) -> Any | None:

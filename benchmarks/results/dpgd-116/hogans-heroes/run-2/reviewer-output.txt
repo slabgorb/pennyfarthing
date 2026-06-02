@@ -8,7 +8,7 @@
 
 ## Findings
 
-### [HIGH] F1 — Nightly `rustfmt` fails across 15+ files at `crates/axiathon-client/src/` and `tests/`
+### [HIGH] F1 — Nightly `rustfmt` fails across 15+ files at `crates/consumer-project-client/src/` and `tests/`
 
 `cargo +nightly fmt --all --check` produces extensive diffs in `cli.rs`, `client.rs`, all command modules, and most test files. Per the reviewer gotchas, nightly fmt must pass before approval. Import ordering and multi-line attribute formatting are the primary issues.
 
@@ -18,7 +18,7 @@
 
 ### [HIGH] F2 — `init` command is a no-op, story requires it functional at `commands/mod.rs:55-58`
 
-The story scope says *"axiathon init first-time setup (functional, not stub)"*. The current handler just returns `Ok(StubResult)` without creating any config file. This should at minimum create the default `~/.config/axiathon/cli.toml` with documented defaults.
+The story scope says *"consumer-project init first-time setup (functional, not stub)"*. The current handler just returns `Ok(StubResult)` without creating any config file. This should at minimum create the default `~/.config/consumer-project/cli.toml` with documented defaults.
 
 ```rust
 Commands::Init(_) => {
@@ -95,13 +95,13 @@ All exit codes (0/1/2/3/4) are correctly mapped. All `CliError` variants produce
 
 `generate_completions()` produces valid output for bash, zsh, fish, and PowerShell. Tests verify command presence in completion scripts.
 
-### [VERIFIED] V6 — `From<AxiathonError>` conversion correct
+### [VERIFIED] V6 — `From<Consumer ProjectError>` conversion correct
 
-All `AxiathonError` variants are mapped to appropriate `CliError` variants. `#[non_exhaustive]` on `AxiathonError` is handled by the catch-all `other =>` arm.
+All `Consumer ProjectError` variants are mapped to appropriate `CliError` variants. `#[non_exhaustive]` on `Consumer ProjectError` is handled by the catch-all `other =>` arm.
 
 ### [VERIFIED] V7 — Dependency isolation
 
-`axiathon-client` depends only on `axiathon-core` (no server-side crates). Binary is named `axiathon`. Workspace dependencies are declared centrally.
+`consumer-project-client` depends only on `consumer-project-core` (no server-side crates). Binary is named `consumer-project`. Workspace dependencies are declared centrally.
 
 ---
 
