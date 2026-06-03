@@ -54,6 +54,19 @@ def _cache_dir() -> Path:
     return base / "pennyfarthing" / "portraits"
 
 
+def _is_safe_theme(theme: str) -> bool:
+    """Whether ``theme`` is a safe single cache segment (CWE-22).
+
+    Theme names are slug segments (e.g. ``discworld``). Anything empty or
+    carrying a path separator (``/``, ``\\``) or traversal (``..``) could place
+    the theme dir or the temp download outside the cache root, so it is rejected
+    before any path is built or any network request is made.
+    """
+    if not theme:
+        return False
+    return "/" not in theme and "\\" not in theme and ".." not in theme
+
+
 def _read_meta(cache: Path) -> dict:
     try:
         return json.loads((cache / ".cache_meta.json").read_text(encoding="utf-8"))
@@ -131,6 +144,10 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
     raises.
     """
     cache = cache or _cache_dir()
+    # Reject traversing / malformed theme names up front, before building any
+    # path or touching the network (CWE-22).
+    if not _is_safe_theme(theme):
+        return {"success": False, "error": f"Invalid theme name: {theme!r}"}
     theme_dir = cache / theme
     sentinel = theme_dir / ".complete"
 
@@ -145,8 +162,17 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
     if theme not in themes:
         return {"success": False, "error": f"Theme '{theme}' not in manifest"}
 
+    # Guard the manifest fields instead of indexing blindly: a malformed manifest
+    # must degrade gracefully, not raise a KeyError (the "never raises" contract).
     entry = themes[theme]
-    pack_url = f"{manifest['base_url']}/themes/{theme}.tar.gz"
+    expected_sha = entry.get("pack_sha256")
+    if "base_url" not in manifest or not expected_sha:
+        return {"success": False, "error": f"Malformed manifest for '{theme}'"}
+
+    # Build the pack URL from the trusted hardcoded CDN, NOT the manifest body:
+    # a poisoned/MITM'd base_url could redirect the fetch (file://, internal
+    # host) and supply a matching SHA from the same source (CWE-918 SSRF).
+    pack_url = f"{CDN_BASE_URL}/themes/{theme}.tar.gz"
     tmp = cache / f".{theme}.tar.gz.tmp"
     cache.mkdir(parents=True, exist_ok=True)
 
@@ -158,7 +184,7 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
         tmp.unlink(missing_ok=True)
         return {"success": False, "error": f"Download failed: {e}"}
 
-    if not _verify_sha256(tmp, entry["pack_sha256"]):
+    if not _verify_sha256(tmp, expected_sha):
         tmp.unlink(missing_ok=True)
         return {"success": False, "error": f"SHA256 mismatch for {theme}"}
 
@@ -168,6 +194,9 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
             # "data" filter blocks path-traversal / absolute-path members.
             tar.extractall(path=theme_dir, filter="data")
     except tarfile.TarError as e:
+        # Clean the partially-extracted theme dir so a retry doesn't re-enter a
+        # populated-but-sentinel-less directory and skip the (failed) download.
+        shutil.rmtree(theme_dir, ignore_errors=True)
         tmp.unlink(missing_ok=True)
         return {"success": False, "error": f"Extraction failed: {e}"}
     finally:
@@ -249,6 +278,10 @@ def status(cache: Path | None = None) -> dict[str, Any]:
 def clean(theme: str, cache: Path | None = None) -> dict[str, Any]:
     """Remove a cached theme. ``{"success": False, ...}`` if not cached."""
     cache = cache or _cache_dir()
+    # Reject traversing / absolute theme names: a bare ``cache / theme`` with a
+    # ``../`` or absolute path would rmtree a directory outside the cache (CWE-22).
+    if not _is_safe_theme(theme):
+        return {"success": False, "error": f"Invalid theme name: {theme!r}"}
     d = cache / theme
     if not d.is_dir():
         return {"success": False, "error": f"'{theme}' not cached"}

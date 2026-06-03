@@ -35,7 +35,6 @@ from pathlib import Path
 
 import pytest
 
-from pf.package import portrait_cdn
 from pf.package.portrait_cdn import CDN_BASE_URL, clean, ensure_portraits
 
 ALL_SIZES = ("small", "medium", "large", "original")
