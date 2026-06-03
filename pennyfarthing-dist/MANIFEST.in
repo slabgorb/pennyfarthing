@@ -21,7 +21,11 @@ prune packages
 prune tests
 prune docs
 
-# Large binary exclusions (portraits) handled by setup.py build_py override
+# Portraits ship via the R2 CDN (pf.package.portrait_cdn) + git-LFS, NOT the
+# wheel. graft src follows the src/pf/_dist/personas symlink and would otherwise
+# pull ~190MB of portraits in; exclude them here (and in pyproject package-data).
+recursive-exclude src/pf/_dist/personas/portraits *
+global-exclude *.png *.jpg *.jpeg *.webp
 
 # Exclude test files from package
 prune src/pf/tests
