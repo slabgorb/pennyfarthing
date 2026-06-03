@@ -106,7 +106,10 @@ def test_resolver_returns_none_when_nothing_cached(isolated_env, theme_dir, monk
     from pf.tui.portrait_resolver import resolve_portrait_path
 
     assert resolve_portrait_path("discworld", "dev", preferred_size="medium") is None
-    # Hermetic: any network attempt was intercepted and aimed only at the CDN.
+    # Hermetic AND non-vacuous: the resolver must actually attempt the CDN fetch
+    # (else `all([])` would pass without observing anything — Reviewer finding R3),
+    # and every attempt must target only the CDN host.
+    assert calls, "resolver never attempted the CDN fetch — interception unverified"
     assert all(u.startswith(portrait_cdn.CDN_BASE_URL) for u in calls), (
         f"resolver attempted a non-CDN/live request: {calls}"
     )

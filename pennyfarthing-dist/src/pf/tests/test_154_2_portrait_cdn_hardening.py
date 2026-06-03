@@ -235,6 +235,109 @@ def test_ensure_portraits_rejects_empty_theme_name(cache: Path, monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
+# Rework (round 1) — blocklist gaps the Reviewer found: bare ".", null bytes,
+# URL-special chars, and symlinked theme dirs (CWE-22 / CWE-59). The fix is an
+# allowlist guard + Path.resolve() containment.
+# --------------------------------------------------------------------------- #
+
+
+def test_clean_bare_dot_does_not_wipe_cache(cache: Path, personas):
+    """B1: `clean(".")` must NOT resolve to `cache` and rmtree the whole cache.
+
+    `_is_safe_theme(".")` slipping through means `cache / "." == cache`, so
+    `shutil.rmtree` would delete every cached theme and report success.
+    """
+    _seed = cache / "discworld"
+    (_seed / "medium").mkdir(parents=True)
+    (_seed / ".complete").write_text("", encoding="utf-8")
+
+    result = clean(".", cache)
+
+    assert result["success"] is False
+    # The cache root and its existing contents must survive.
+    assert cache.is_dir()
+    assert (_seed / ".complete").exists()
+
+
+def test_ensure_portraits_rejects_bare_dot(tmp_path: Path, cache: Path, personas, monkeypatch):
+    """B1: `ensure_portraits(".")` must be rejected, not treated as the cache root
+    (which would extract the pack and write `.complete` into the cache itself)."""
+    pack_path, sha, nbytes = _make_pack(tmp_path, personas)
+    cdn = FakeCDN(_manifest(".", personas, sha, nbytes), pack_path)
+    cdn.install(monkeypatch)
+
+    result = ensure_portraits(".", cache)
+
+    assert result["success"] is False
+    assert cdn.urlopen_calls == [], "'.' theme was not rejected before fetch"
+    # No extraction/sentinel dumped into the cache root.
+    assert not (cache / ".complete").exists()
+
+
+def test_ensure_portraits_rejects_null_byte_theme(cache: Path, monkeypatch):
+    """B2: a null byte in the theme name must be rejected, not passed into a
+    filesystem syscall where it raises an uncaught ValueError (never-raises)."""
+    import urllib.request
+
+    def _boom(req, timeout=None):
+        raise AssertionError("null-byte theme reached the network")
+
+    monkeypatch.setattr(urllib.request, "urlopen", _boom)
+    try:
+        result = ensure_portraits("disc\x00world", cache)
+    except Exception as exc:  # pragma: no cover - raising IS the failure (B2)
+        pytest.fail(f"null-byte theme raised instead of degrading: {exc!r}")
+    assert result["success"] is False
+
+
+def test_clean_rejects_null_byte_theme(cache: Path):
+    """B2: clean() must also degrade (not raise) on a null-byte theme name."""
+    cache.mkdir(parents=True, exist_ok=True)
+    try:
+        result = clean("disc\x00world", cache)
+    except Exception as exc:  # pragma: no cover
+        pytest.fail(f"clean raised on null-byte theme: {exc!r}")
+    assert result["success"] is False
+
+
+def test_ensure_portraits_rejects_url_special_theme(
+    tmp_path: Path, cache: Path, personas, monkeypatch
+):
+    """A `#`/`?` in the theme name is interpreted by urllib when building the pack
+    URL (fragment/query), silently fetching a different path. Reject before fetch."""
+    pack_path, sha, nbytes = _make_pack(tmp_path, personas)
+    cdn = FakeCDN(_manifest("disc#world", personas, sha, nbytes), pack_path)
+    cdn.install(monkeypatch)
+
+    result = ensure_portraits("disc#world", cache)
+
+    assert result["success"] is False
+    assert cdn.urlopen_calls == [], "URL-special theme was not rejected before fetch"
+
+
+def test_ensure_portraits_rejects_symlinked_theme_dir_escaping_cache(
+    tmp_path: Path, cache: Path, personas, monkeypatch
+):
+    """R1 (CWE-59): a pre-planted symlink at `cache/<theme>` pointing outside the
+    cache must not let `tar.extractall(path=theme_dir)` write through it. The
+    string allowlist passes a valid name like 'discworld' — the only defense is a
+    `Path.resolve()` containment check against the cache root."""
+    cache.mkdir(parents=True)
+    external = tmp_path / "external_escape_target"
+    external.mkdir()
+    (cache / "discworld").symlink_to(external, target_is_directory=True)
+
+    pack_path, sha, nbytes = _make_pack(tmp_path, personas)
+    FakeCDN(_manifest("discworld", personas, sha, nbytes), pack_path).install(monkeypatch)
+
+    result = ensure_portraits("discworld", cache)
+
+    assert result["success"] is False
+    # Extraction must not have escaped the cache through the symlink.
+    assert not any(external.rglob("*.png")), "extraction escaped the cache via a symlinked theme dir"
+
+
+# --------------------------------------------------------------------------- #
 # C3 — unguarded manifest keys break "never raises" + leak the tmp file
 # --------------------------------------------------------------------------- #
 
@@ -254,24 +357,33 @@ def test_ensure_portraits_missing_base_url_returns_false_without_raising(
     assert result["success"] is False
 
 
-def test_ensure_portraits_missing_pack_sha256_returns_false_and_leaks_no_tmp(
+def test_ensure_portraits_missing_pack_sha256_returns_false_without_raising(
     tmp_path: Path, cache: Path, personas, monkeypatch
 ):
-    """The ``pack_sha256`` KeyError fires *after* the download — it must be guarded
-    so it neither raises nor leaves the downloaded ``.tmp`` behind (rule #7)."""
+    """A manifest entry missing ``pack_sha256`` is malformed — `ensure_portraits`
+    must return ``{success: False}`` and never raise the bare-index ``KeyError``.
+
+    (No tmp-leak assertion here: the guard fires *before* the download, so no
+    ``.tmp`` is ever created and a glob check would be vacuous — tmp-cleanup on
+    the post-download path is covered by
+    ``test_154_1_portrait_cdn.test_ensure_portraits_download_failure_is_graceful``.)
+    """
     pack_path, sha, nbytes = _make_pack(tmp_path, personas)
     manifest = _manifest("discworld", personas, sha, nbytes)
     del manifest["themes"]["discworld"]["pack_sha256"]  # entry missing the digest
-    FakeCDN(manifest, pack_path).install(monkeypatch)
+    cdn = FakeCDN(manifest, pack_path)
+    cdn.install(monkeypatch)
 
     try:
         result = ensure_portraits("discworld", cache)
     except Exception as exc:  # pragma: no cover
         pytest.fail(f"ensure_portraits raised on missing pack_sha256: {exc!r}")
     assert result["success"] is False
-    # No leaked temp download.
-    assert list(cache.glob("*.tmp")) == []
-    assert list(cache.glob(".*.tmp")) == []
+    # The malformed manifest is rejected before the pack is downloaded.
+    pack_reqs = [
+        FakeCDN._url(r) for r in cdn.urlopen_calls if not FakeCDN._url(r).endswith("manifest.json")
+    ]
+    assert pack_reqs == [], "malformed manifest should be rejected before download"
 
 
 # --------------------------------------------------------------------------- #
@@ -356,9 +468,11 @@ def test_ensure_portraits_cleans_theme_dir_on_extraction_failure(
     assert not (cache / "discworld" / ".complete").exists()
     # The traversal sibling must never appear...
     assert not (cache / "escaped.png").exists()
-    # ...and the partially-populated theme dir must be cleaned, not left for a
-    # sentinel-less retry.
+    # ...and the partially-populated theme dir must be removed outright, not left
+    # for a sentinel-less retry. Assert removal unconditionally (an `or
+    # not any(*.png)` disjunction would let a buggy impl that leaves an empty
+    # skeleton pass — Reviewer finding R2).
     theme_dir = cache / "discworld"
-    assert not theme_dir.exists() or not any(theme_dir.rglob("*.png")), (
-        "partial extraction left orphaned files in the theme dir"
+    assert not theme_dir.exists(), (
+        f"partial extraction left the theme dir behind: {list(theme_dir.rglob('*'))}"
     )
