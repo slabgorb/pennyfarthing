@@ -308,6 +308,12 @@ def _ensure_theme_portraits(project_dir: Path) -> None:
         from pf.common.themes import ensure_portrait_lfs
 
         ensure_portrait_lfs(theme, project_root=project_dir, quiet=True)
+
+        # R2 CDN (story 154-1): ensure the theme's portrait pack is cached.
+        # Lazy + graceful — instant on cache hit, no-op when offline.
+        from pf.package import portrait_cdn
+
+        portrait_cdn.ensure_portraits(theme)
     except Exception:
         pass
 

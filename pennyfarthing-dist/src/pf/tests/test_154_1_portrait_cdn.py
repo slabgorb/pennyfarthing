@@ -24,6 +24,7 @@ Coverage maps to the issue #17 acceptance criteria:
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import tarfile
 import time
@@ -95,46 +96,60 @@ def _manifest(theme: str, persona_map: dict[str, str], sha: str, nbytes: int) ->
 
 
 class _FakeResp:
-    def __init__(self, body: bytes, etag: str | None):
-        self._body = body
+    def __init__(self, body: bytes, etag: str | None = None):
+        self._buf = io.BytesIO(body)
         self.headers = {"ETag": etag}
 
-    def read(self) -> bytes:
-        return self._body
+    def read(self, *args) -> bytes:
+        return self._buf.read(*args)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
 
 
 class FakeCDN:
-    """Monkeypatchable stand-in for the public R2 CDN."""
+    """Monkeypatchable stand-in for the public R2 CDN.
+
+    Both the manifest and the theme pack are served via ``urlopen`` (the real
+    CDN requires a User-Agent on every request, so the module uses qualified
+    ``urllib.request.urlopen`` for both). ``urlopen`` dispatches on the request
+    URL: ``manifest.json`` -> manifest JSON, otherwise -> the tar.gz pack bytes.
+    """
 
     def __init__(self, manifest: dict, pack_path: Path, etag: str = "etag-v1"):
         self.manifest = manifest
         self.pack_path = pack_path
         self.etag = etag
-        self.status = 200  # or 304
+        self.status = 200  # manifest response status (200 or 304)
         self.fail_network = False
+        self.pack_fail = False
         self.urlopen_calls: list = []
-        self.urlretrieve_calls: list = []
+
+    @staticmethod
+    def _url(req) -> str:
+        return req.full_url if isinstance(req, urllib.request.Request) else req
 
     def urlopen(self, req, timeout=None):
         self.urlopen_calls.append(req)
-        if self.fail_network:
-            raise urllib.error.URLError("network down")
-        if self.status == 304:
-            raise urllib.error.HTTPError(
-                portrait_cdn.MANIFEST_URL, 304, "Not Modified", {}, None
-            )
-        return _FakeResp(json.dumps(self.manifest).encode(), self.etag)
-
-    def urlretrieve(self, url, dest):
-        self.urlretrieve_calls.append((url, Path(dest)))
-        if self.fail_network:
-            raise urllib.error.URLError("network down")
-        Path(dest).write_bytes(self.pack_path.read_bytes())
-        return (str(dest), None)
+        url = self._url(req)
+        if url.endswith("manifest.json"):
+            if self.fail_network:
+                raise urllib.error.URLError("network down")
+            if self.status == 304:
+                raise urllib.error.HTTPError(
+                    portrait_cdn.MANIFEST_URL, 304, "Not Modified", {}, None
+                )
+            return _FakeResp(json.dumps(self.manifest).encode(), self.etag)
+        # Theme pack request.
+        if self.fail_network or self.pack_fail:
+            raise urllib.error.URLError("pack unreachable")
+        return _FakeResp(self.pack_path.read_bytes())
 
     def install(self, monkeypatch):
         monkeypatch.setattr(urllib.request, "urlopen", self.urlopen)
-        monkeypatch.setattr(urllib.request, "urlretrieve", self.urlretrieve)
 
 
 @pytest.fixture
@@ -258,6 +273,15 @@ def test_ensure_portraits_downloads_and_extracts(cdn: FakeCDN, cache: Path, monk
     assert (cache / "discworld" / ".complete").exists()
 
 
+def test_requests_set_user_agent(cdn: FakeCDN, cache: Path, monkeypatch):
+    """The CDN 403s the default Python-urllib UA — every request must override it."""
+    cdn.install(monkeypatch)
+    ensure_portraits("discworld", cache)  # triggers manifest + pack fetch
+    user_agents = [r.get_header("User-agent") for r in cdn.urlopen_calls]
+    assert len(user_agents) == 2  # manifest + pack
+    assert all(ua and "python-urllib" not in ua.lower() for ua in user_agents)
+
+
 def test_ensure_portraits_verifies_sha256_before_extract(cdn: FakeCDN, cache: Path, monkeypatch):
     # Corrupt the advertised digest -> verification must fail.
     cdn.manifest["themes"]["discworld"]["pack_sha256"] = "0" * 64
@@ -281,7 +305,6 @@ def test_ensure_portraits_cache_hit_skips_network(cdn: FakeCDN, cache: Path, per
     assert result["action"] == "cached"
     # Hot path: neither the manifest nor the pack was fetched.
     assert cdn.urlopen_calls == []
-    assert cdn.urlretrieve_calls == []
 
 
 def test_ensure_portraits_merges_persona_map(cdn: FakeCDN, cache: Path, personas, monkeypatch):
@@ -308,15 +331,13 @@ def test_ensure_portraits_manifest_unavailable(cdn: FakeCDN, cache: Path, monkey
 
 def test_ensure_portraits_download_failure_is_graceful(cdn: FakeCDN, cache: Path, monkeypatch):
     # Manifest fetch succeeds, pack download fails.
+    cdn.pack_fail = True
     cdn.install(monkeypatch)
-
-    def boom(url, dest):
-        raise urllib.error.URLError("pack unreachable")
-
-    monkeypatch.setattr(urllib.request, "urlretrieve", boom)
     result = ensure_portraits("discworld", cache)
     assert result["success"] is False
     assert not (cache / "discworld" / ".complete").exists()
+    assert list(cache.glob("*.tmp")) == []
+    assert list(cache.glob(".*.tmp")) == []
 
 
 def test_ensure_portraits_extraction_failure_is_graceful(

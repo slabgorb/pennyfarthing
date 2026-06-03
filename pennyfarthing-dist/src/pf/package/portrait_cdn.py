@@ -39,6 +39,10 @@ CDN_BASE_URL = "https://portraits.darkatelier.org/v1"
 MANIFEST_URL = f"{CDN_BASE_URL}/manifest.json"
 MANIFEST_CHECK_INTERVAL = 86400  # 24h rate limit between manifest fetches
 
+# The CDN (Cloudflare) rejects the default ``Python-urllib`` User-Agent with a
+# 403. Every request MUST send an explicit UA or it will be blocked.
+_USER_AGENT = "pennyfarthing-portrait-cdn/1.0"
+
 
 def _cache_dir() -> Path:
     """Return the XDG-compliant portrait cache directory.
@@ -81,7 +85,7 @@ def fetch_manifest(cache: Path | None = None) -> dict | None:
         except (FileNotFoundError, json.JSONDecodeError):
             pass
 
-    req = urllib.request.Request(MANIFEST_URL)
+    req = urllib.request.Request(MANIFEST_URL, headers={"User-Agent": _USER_AGENT})
     if meta.get("etag"):
         req.add_header("If-None-Match", meta["etag"])
 
@@ -146,8 +150,10 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
     tmp = cache / f".{theme}.tar.gz.tmp"
     cache.mkdir(parents=True, exist_ok=True)
 
+    pack_req = urllib.request.Request(pack_url, headers={"User-Agent": _USER_AGENT})
     try:
-        urllib.request.urlretrieve(pack_url, tmp)
+        with urllib.request.urlopen(pack_req, timeout=30) as resp, open(tmp, "wb") as fh:
+            shutil.copyfileobj(resp, fh)
     except (urllib.error.URLError, OSError) as e:
         tmp.unlink(missing_ok=True)
         return {"success": False, "error": f"Download failed: {e}"}
