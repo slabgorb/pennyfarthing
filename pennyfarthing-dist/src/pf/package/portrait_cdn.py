@@ -228,6 +228,15 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
         return {"success": False, "error": f"SHA256 mismatch for {theme}"}
 
     theme_dir.mkdir(parents=True, exist_ok=True)
+    # Re-check containment AFTER mkdir (CWE-59 TOCTOU): the pre-download guard ran
+    # before theme_dir existed, so resolve() had no symlink to follow and could
+    # not catch a symlink planted into the (10-30s) download window.
+    # ``mkdir(exist_ok=True)`` is a no-op on a pre-planted symlink-to-dir, so
+    # extractall would write through it. A legitimate mkdir never yields a
+    # symlink — if it is one now, or otherwise escapes, refuse to extract.
+    if theme_dir.is_symlink() or not _within_cache(theme_dir, cache):
+        tmp.unlink(missing_ok=True)
+        return {"success": False, "error": f"Theme dir escapes cache: {theme!r}"}
     try:
         with tarfile.open(tmp, "r:gz") as tar:
             # "data" filter blocks path-traversal / absolute-path members.
@@ -269,13 +278,18 @@ def resolve_portrait(
     or no image file exists for any candidate size.
     """
     cache = cache or _cache_dir()
+    if not _is_safe_theme(theme):
+        return None
     try:
         local = json.loads((cache / "manifest.json").read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return None
 
     slug = local.get(theme, {}).get(agent)
-    if not slug:
+    # The slug comes from the local manifest, which is populated from CDN persona
+    # data — untrusted. Validate it with the same allowlist as theme names so a
+    # poisoned manifest slug (e.g. "../../secrets") can't escape the cache (CWE-22).
+    if not slug or not _is_safe_theme(slug):
         return None
 
     sizes = {
@@ -285,7 +299,7 @@ def resolve_portrait(
 
     for size in sizes:
         candidate = cache / theme / size / f"{slug}.png"
-        if candidate.is_file():
+        if candidate.is_file() and _within_cache(candidate, cache):
             return candidate
     return None
 
@@ -324,5 +338,14 @@ def clean(theme: str, cache: Path | None = None) -> dict[str, Any]:
         return error
     if not d.is_dir():
         return {"success": False, "error": f"'{theme}' not cached"}
-    shutil.rmtree(d)
+    # CWE-59 TOCTOU: a symlink planted at cache/<theme> after the containment
+    # check passes is_dir(), and rmtree would follow it (deleting the target on
+    # <=3.11, or raising NotADirectoryError on 3.12+). A real cached theme is a
+    # directory, never a symlink — refuse the symlink case.
+    if d.is_symlink():
+        return {"success": False, "error": f"Theme dir escapes cache: {theme!r}"}
+    try:
+        shutil.rmtree(d)
+    except OSError as e:  # honour the module's "never raises" contract
+        return {"success": False, "error": f"Could not remove '{theme}': {e}"}
     return {"success": True, "removed": str(d)}

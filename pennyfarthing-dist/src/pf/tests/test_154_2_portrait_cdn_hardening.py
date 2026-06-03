@@ -290,13 +290,20 @@ def test_ensure_portraits_rejects_null_byte_theme(cache: Path, monkeypatch):
 
 
 def test_clean_rejects_null_byte_theme(cache: Path):
-    """B2: clean() must also degrade (not raise) on a null-byte theme name."""
+    """B2: clean() must reject a null-byte theme via the allowlist, not raise.
+
+    Discriminating assertion (Reviewer B5): `success is False` alone is satisfied
+    by the pre-existing "not cached" branch (`Path.is_dir()` returns False on a
+    null-byte path), so it would pass even without the guard. Assert the *guard*
+    fired by checking the error message names it.
+    """
     cache.mkdir(parents=True, exist_ok=True)
     try:
         result = clean("disc\x00world", cache)
     except Exception as exc:  # pragma: no cover
         pytest.fail(f"clean raised on null-byte theme: {exc!r}")
     assert result["success"] is False
+    assert "Invalid theme name" in result["error"], result
 
 
 def test_ensure_portraits_rejects_url_special_theme(
@@ -334,6 +341,62 @@ def test_ensure_portraits_rejects_symlinked_theme_dir_escaping_cache(
     assert result["success"] is False
     # Extraction must not have escaped the cache through the symlink.
     assert not any(external.rglob("*.png")), "extraction escaped the cache via a symlinked theme dir"
+
+
+def test_ensure_portraits_rejects_symlink_planted_during_download(
+    tmp_path: Path, cache: Path, personas, monkeypatch
+):
+    """B4 (CWE-59 TOCTOU): the pre-download containment check runs before
+    ``theme_dir`` exists, so it can't see a symlink planted into the download
+    window. Simulate that plant during SHA verification (after the pre-check,
+    before mkdir/extract) and assert the post-mkdir re-check refuses it so the
+    extraction never escapes the cache."""
+    import pf.package.portrait_cdn as mod
+
+    cache.mkdir(parents=True)
+    external = tmp_path / "external_toctou_target"
+    external.mkdir()
+    pack_path, sha, nbytes = _make_pack(tmp_path, personas)
+
+    real_verify = mod._verify_sha256
+
+    def planting_verify(path: Path, expected: str) -> bool:
+        # Attacker plants the symlink mid-download, after the pre-check passed.
+        link = cache / "discworld"
+        if not link.exists():
+            link.symlink_to(external, target_is_directory=True)
+        return real_verify(path, expected)
+
+    monkeypatch.setattr(mod, "_verify_sha256", planting_verify)
+    FakeCDN(_manifest("discworld", personas, sha, nbytes), pack_path).install(monkeypatch)
+
+    result = ensure_portraits("discworld", cache)
+
+    assert result["success"] is False
+    assert not any(external.rglob("*.png")), "extraction escaped via a symlink planted mid-download"
+
+
+# --------------------------------------------------------------------------- #
+# R4 — resolve_portrait must not build an escaping path from a poisoned slug
+# --------------------------------------------------------------------------- #
+
+
+def test_resolve_portrait_rejects_traversal_slug(tmp_path: Path, cache: Path):
+    """R4 (CWE-22): the slug is read from the local manifest (populated from CDN
+    persona data — untrusted). A traversal slug must not yield a path outside the
+    cache, even if a file exists at the escape target."""
+    from pf.package.portrait_cdn import resolve_portrait
+
+    cache.mkdir(parents=True)
+    # Where `../../../secret.png` from cache/discworld/<size>/ would resolve.
+    (tmp_path / "secret.png").write_bytes(_png_bytes())
+    (cache / "manifest.json").write_text(
+        json.dumps({"discworld": {"dev": "../../../secret"}}), encoding="utf-8"
+    )
+
+    result = resolve_portrait("discworld", "dev", "medium", cache)
+
+    assert result is None
 
 
 # --------------------------------------------------------------------------- #
