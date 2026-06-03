@@ -32,7 +32,8 @@ exclude = ["pf.tests", "pf.tests.*"]
     "gates/**/*",
     "guides/**/*",
     "output-styles/**/*",
-    "personas/portraits/**/*",
+    # NOTE: portraits are intentionally NOT bundled — they ship via the R2 CDN
+    # (pf.package.portrait_cdn) + git-LFS. See MANIFEST.in recursive-exclude.
     "personas/themes/**/*",
     "personas/attributes.yaml",
     "personas/*.md",
@@ -48,6 +49,8 @@ exclude = ["pf.tests", "pf.tests.*"]
 [tool.setuptools.exclude-package-data]
 "pf._dist" = [
     "**/__pycache__/**",
+    "personas/portraits/*",
+    "personas/portraits/**/*",
 ]
 
 [tool.setuptools.dynamic]
