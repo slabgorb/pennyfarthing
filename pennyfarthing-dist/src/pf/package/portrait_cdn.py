@@ -89,6 +89,23 @@ def _within_cache(path: Path, cache: Path) -> bool:
         return False
 
 
+def _resolve_theme_dir(theme: str, cache: Path) -> tuple[Path | None, dict | None]:
+    """Validate ``theme`` and return its contained cache dir.
+
+    Returns ``(theme_dir, None)`` when ``theme`` is a safe name whose dir stays
+    inside ``cache``, or ``(None, error)`` with a ``{"success": False}`` dict to
+    return directly. Shared by :func:`ensure_portraits` and :func:`clean` so the
+    name-allowlist (CWE-22) and symlink-containment (CWE-59) guards live in one
+    place.
+    """
+    if not _is_safe_theme(theme):
+        return None, {"success": False, "error": f"Invalid theme name: {theme!r}"}
+    theme_dir = cache / theme
+    if not _within_cache(theme_dir, cache):
+        return None, {"success": False, "error": f"Theme dir escapes cache: {theme!r}"}
+    return theme_dir, None
+
+
 def _read_meta(cache: Path) -> dict:
     try:
         return json.loads((cache / ".cache_meta.json").read_text(encoding="utf-8"))
@@ -166,15 +183,11 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
     raises.
     """
     cache = cache or _cache_dir()
-    # Reject traversing / malformed theme names up front, before building any
-    # path or touching the network (CWE-22).
-    if not _is_safe_theme(theme):
-        return {"success": False, "error": f"Invalid theme name: {theme!r}"}
-    theme_dir = cache / theme
-    # Defence in depth (CWE-59): even a valid name can resolve outside the cache
-    # via a pre-planted symlink at cache/<theme>. Refuse to read/extract through it.
-    if not _within_cache(theme_dir, cache):
-        return {"success": False, "error": f"Theme dir escapes cache: {theme!r}"}
+    # Reject traversing/malformed names (CWE-22) and symlink-escaping dirs
+    # (CWE-59) up front, before building paths or touching the network.
+    theme_dir, error = _resolve_theme_dir(theme, cache)
+    if error:
+        return error
     sentinel = theme_dir / ".complete"
 
     if sentinel.exists():
@@ -304,15 +317,11 @@ def status(cache: Path | None = None) -> dict[str, Any]:
 def clean(theme: str, cache: Path | None = None) -> dict[str, Any]:
     """Remove a cached theme. ``{"success": False, ...}`` if not cached."""
     cache = cache or _cache_dir()
-    # Reject traversing / absolute theme names: a bare ``cache / theme`` with a
-    # ``../`` or absolute path would rmtree a directory outside the cache (CWE-22).
-    if not _is_safe_theme(theme):
-        return {"success": False, "error": f"Invalid theme name: {theme!r}"}
-    d = cache / theme
-    # Defence in depth (CWE-59): refuse to operate on a path that resolves
-    # outside the cache (e.g. a pre-planted symlink at cache/<theme>).
-    if not _within_cache(d, cache):
-        return {"success": False, "error": f"Theme dir escapes cache: {theme!r}"}
+    # Reject traversing/malformed names (CWE-22) and symlink-escaping dirs
+    # (CWE-59): a bare/escaping theme would otherwise rmtree outside the cache.
+    d, error = _resolve_theme_dir(theme, cache)
+    if error:
+        return error
     if not d.is_dir():
         return {"success": False, "error": f"'{theme}' not cached"}
     shutil.rmtree(d)

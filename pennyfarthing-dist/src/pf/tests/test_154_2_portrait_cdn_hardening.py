@@ -29,7 +29,6 @@ import json
 import re
 import tarfile
 import tomllib
-import urllib.error
 import urllib.request
 from pathlib import Path
 
