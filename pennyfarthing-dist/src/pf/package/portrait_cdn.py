@@ -27,6 +27,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import tarfile
 import time
@@ -43,6 +44,14 @@ MANIFEST_CHECK_INTERVAL = 86400  # 24h rate limit between manifest fetches
 # 403. Every request MUST send an explicit UA or it will be blocked.
 _USER_AGENT = "pennyfarthing-portrait-cdn/1.0"
 
+# A theme name is a single cache segment that is also interpolated into a CDN
+# URL. Allow only an alphanumeric leading char followed by alnum/dot/dash/
+# underscore. An *allowlist* (not a blocklist) closes the whole class at once:
+# it rejects empty, ``.``/``..``, path separators (``/``, ``\``), null bytes,
+# whitespace, and URL-special chars (``#``, ``?``) — all of which could escape
+# the cache (CWE-22) or redirect the pack fetch.
+_SAFE_THEME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+
 
 def _cache_dir() -> Path:
     """Return the XDG-compliant portrait cache directory.
@@ -57,14 +66,27 @@ def _cache_dir() -> Path:
 def _is_safe_theme(theme: str) -> bool:
     """Whether ``theme`` is a safe single cache segment (CWE-22).
 
-    Theme names are slug segments (e.g. ``discworld``). Anything empty or
-    carrying a path separator (``/``, ``\\``) or traversal (``..``) could place
-    the theme dir or the temp download outside the cache root, so it is rejected
-    before any path is built or any network request is made.
+    Theme names are slug segments (e.g. ``discworld``). Validated against an
+    allowlist (:data:`_SAFE_THEME_RE`) so it is rejected before any path is built
+    or any network request is made. A bare ``.`` (would resolve to the cache root
+    and rmtree/extract there), ``..``, separators, null bytes, whitespace, and
+    URL-special chars are all excluded.
     """
-    if not theme:
+    return bool(theme) and _SAFE_THEME_RE.fullmatch(theme) is not None
+
+
+def _within_cache(path: Path, cache: Path) -> bool:
+    """Whether ``path`` resolves to a location inside ``cache`` (CWE-59 guard).
+
+    String validation alone can't stop a pre-planted symlink at
+    ``cache/<valid-name>`` from redirecting an extraction outside the cache, so
+    resolve both paths and require containment. Returns ``False`` on any resolve
+    error rather than raising (the "never raises" contract).
+    """
+    try:
+        return path.resolve().is_relative_to(cache.resolve())
+    except (OSError, ValueError, RuntimeError):
         return False
-    return "/" not in theme and "\\" not in theme and ".." not in theme
 
 
 def _read_meta(cache: Path) -> dict:
@@ -149,6 +171,10 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
     if not _is_safe_theme(theme):
         return {"success": False, "error": f"Invalid theme name: {theme!r}"}
     theme_dir = cache / theme
+    # Defence in depth (CWE-59): even a valid name can resolve outside the cache
+    # via a pre-planted symlink at cache/<theme>. Refuse to read/extract through it.
+    if not _within_cache(theme_dir, cache):
+        return {"success": False, "error": f"Theme dir escapes cache: {theme!r}"}
     sentinel = theme_dir / ".complete"
 
     if sentinel.exists():
@@ -283,6 +309,10 @@ def clean(theme: str, cache: Path | None = None) -> dict[str, Any]:
     if not _is_safe_theme(theme):
         return {"success": False, "error": f"Invalid theme name: {theme!r}"}
     d = cache / theme
+    # Defence in depth (CWE-59): refuse to operate on a path that resolves
+    # outside the cache (e.g. a pre-planted symlink at cache/<theme>).
+    if not _within_cache(d, cache):
+        return {"success": False, "error": f"Theme dir escapes cache: {theme!r}"}
     if not d.is_dir():
         return {"success": False, "error": f"'{theme}' not cached"}
     shutil.rmtree(d)
