@@ -5,21 +5,33 @@ in :mod:`pf.package.portraits`. Downloads per-theme portrait packs lazily on
 first use, verifies them with SHA256, and caches them locally behind a
 ``.complete`` sentinel for instant subsequent access.
 
-The public contract below is specified in GitHub issue #17. Every function
-returns a result object or ``None`` and MUST NOT raise on failure paths
-(SOUL principle #10 — return results, don't throw): a dead or unreachable CDN
-degrades gracefully so a session continues without portraits.
+Every function returns a result object or ``None`` and never raises on failure
+paths (SOUL principle #10 — return results, don't throw): a dead or unreachable
+CDN degrades gracefully so a session continues without portraits.
 
-RED-phase stub: bodies raise ``NotImplementedError``. The Dev (GREEN) phase
-fills them in. Constants are part of the contract and should be preserved.
+Security:
+- Pack integrity is checked with SHA256 *before* extraction.
+- Extraction uses the tarfile ``"data"`` filter so a malicious/MITM'd pack
+  cannot escape the theme cache directory via ``..`` or absolute-path members
+  (CWE-22). Filter rejections surface as :class:`tarfile.TarError` and degrade
+  gracefully.
+- All text I/O is UTF-8 (CWE-838 — no locale-dependent decoding).
 
-Implementation note for Dev: keep network calls *qualified*
-(``urllib.request.urlopen``, ``urllib.request.urlretrieve``) so the test
-suite's monkeypatching of the stdlib intercepts them.
+Implementation note: network calls are kept *qualified*
+(``urllib.request.urlopen`` / ``urllib.request.urlretrieve``) so they remain
+interceptable by the test suite's stdlib monkeypatching.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
+import os
+import shutil
+import tarfile
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +46,20 @@ def _cache_dir() -> Path:
     ``$XDG_DATA_HOME/pennyfarthing/portraits`` if set, else
     ``~/.local/share/pennyfarthing/portraits``.
     """
-    raise NotImplementedError
+    base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+    return base / "pennyfarthing" / "portraits"
+
+
+def _read_meta(cache: Path) -> dict:
+    try:
+        return json.loads((cache / ".cache_meta.json").read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"etag": None, "last_checked": 0}
+
+
+def _write_meta(cache: Path, meta: dict) -> None:
+    cache.mkdir(parents=True, exist_ok=True)
+    (cache / ".cache_meta.json").write_text(json.dumps(meta), encoding="utf-8")
 
 
 def fetch_manifest(cache: Path | None = None) -> dict | None:
@@ -43,21 +68,119 @@ def fetch_manifest(cache: Path | None = None) -> dict | None:
     Returns the parsed manifest dict, or ``None`` if it cannot be obtained
     (and no usable local copy exists). Never raises on network failure.
     """
-    raise NotImplementedError
+    cache = cache or _cache_dir()
+    cache.mkdir(parents=True, exist_ok=True)
+    manifest_path = cache / ".manifest_cache.json"
+    meta = _read_meta(cache)
+    now = int(time.time())
+
+    # Rate limit: reuse the cached manifest if we checked recently.
+    if now - meta.get("last_checked", 0) < MANIFEST_CHECK_INTERVAL:
+        try:
+            return json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
+    req = urllib.request.Request(MANIFEST_URL)
+    if meta.get("etag"):
+        req.add_header("If-None-Match", meta["etag"])
+
+    try:
+        resp = urllib.request.urlopen(req, timeout=15)
+        body = resp.read().decode()
+        manifest = json.loads(body)
+        manifest_path.write_text(body, encoding="utf-8")
+        _write_meta(cache, {"etag": resp.headers.get("ETag"), "last_checked": now})
+        return manifest
+    except urllib.error.HTTPError as e:
+        if e.code == 304:
+            _write_meta(cache, {**meta, "last_checked": now})
+            try:
+                return json.loads(manifest_path.read_text(encoding="utf-8"))
+            except (FileNotFoundError, json.JSONDecodeError):
+                return None
+        return None
+    except (urllib.error.URLError, OSError):
+        try:
+            return json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError):
+            return None
+
+
+def _verify_sha256(path: Path, expected: str) -> bool:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest() == expected
 
 
 def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
     """Ensure portraits for ``theme`` are present locally, downloading if missing.
 
     Instant on cache hit (``.complete`` sentinel). On a miss: fetch manifest,
-    download the theme pack, verify SHA256 before extraction, extract, write
-    the sentinel, and merge the persona map into the local manifest.
+    download the theme pack, verify SHA256 before extraction, extract safely,
+    write the sentinel, and merge the persona map into the local manifest.
 
     Returns ``{"success": True, "cache_dir": str, "action": "cached"|"downloaded"}``
     on success, or ``{"success": False, "error": str}`` on any failure. Never
     raises.
     """
-    raise NotImplementedError
+    cache = cache or _cache_dir()
+    theme_dir = cache / theme
+    sentinel = theme_dir / ".complete"
+
+    if sentinel.exists():
+        return {"success": True, "cache_dir": str(theme_dir), "action": "cached"}
+
+    manifest = fetch_manifest(cache)
+    if not manifest:
+        return {"success": False, "error": "Could not fetch portrait manifest"}
+
+    themes = manifest.get("themes", {})
+    if theme not in themes:
+        return {"success": False, "error": f"Theme '{theme}' not in manifest"}
+
+    entry = themes[theme]
+    pack_url = f"{manifest['base_url']}/themes/{theme}.tar.gz"
+    tmp = cache / f".{theme}.tar.gz.tmp"
+    cache.mkdir(parents=True, exist_ok=True)
+
+    try:
+        urllib.request.urlretrieve(pack_url, tmp)
+    except (urllib.error.URLError, OSError) as e:
+        tmp.unlink(missing_ok=True)
+        return {"success": False, "error": f"Download failed: {e}"}
+
+    if not _verify_sha256(tmp, entry["pack_sha256"]):
+        tmp.unlink(missing_ok=True)
+        return {"success": False, "error": f"SHA256 mismatch for {theme}"}
+
+    theme_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        with tarfile.open(tmp, "r:gz") as tar:
+            # "data" filter blocks path-traversal / absolute-path members.
+            tar.extractall(path=theme_dir, filter="data")
+    except tarfile.TarError as e:
+        tmp.unlink(missing_ok=True)
+        return {"success": False, "error": f"Extraction failed: {e}"}
+    finally:
+        tmp.unlink(missing_ok=True)
+
+    sentinel.write_text("", encoding="utf-8")
+
+    # Merge the persona map (agent role -> slug) into the local manifest.
+    personas = manifest.get("personas", {}).get(theme, {})
+    if personas:
+        local_manifest = cache / "manifest.json"
+        try:
+            local = json.loads(local_manifest.read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError):
+            local = {}
+        local[theme] = personas
+        local_manifest.write_text(json.dumps(local, indent=2), encoding="utf-8")
+
+    return {"success": True, "cache_dir": str(theme_dir), "action": "downloaded"}
 
 
 def resolve_portrait(
@@ -71,19 +194,57 @@ def resolve_portrait(
     Returns ``None`` when the local manifest is missing, the agent has no slug,
     or no image file exists for any candidate size.
     """
-    raise NotImplementedError
+    cache = cache or _cache_dir()
+    try:
+        local = json.loads((cache / "manifest.json").read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+    slug = local.get(theme, {}).get(agent)
+    if not slug:
+        return None
+
+    sizes = {
+        "small": ["small", "medium", "large", "original"],
+        "large": ["large", "original", "medium", "small"],
+    }.get(preferred_size, ["medium", "large", "small", "original"])
+
+    for size in sizes:
+        candidate = cache / theme / size / f"{slug}.png"
+        if candidate.is_file():
+            return candidate
+    return None
 
 
 def list_cached(cache: Path | None = None) -> list[str]:
     """Return the sorted list of themes with a ``.complete`` sentinel."""
-    raise NotImplementedError
+    cache = cache or _cache_dir()
+    if not cache.is_dir():
+        return []
+    return sorted(
+        d.name for d in cache.iterdir() if d.is_dir() and (d / ".complete").exists()
+    )
 
 
 def status(cache: Path | None = None) -> dict[str, Any]:
     """Return cache stats: ``{"cache_dir", "themes", "images", "mb"}``."""
-    raise NotImplementedError
+    cache = cache or _cache_dir()
+    cached = list_cached(cache)
+    images = sum(1 for t in cached for _ in (cache / t).rglob("*.png"))
+    size = sum(f.stat().st_size for t in cached for f in (cache / t).rglob("*.png"))
+    return {
+        "cache_dir": str(cache),
+        "themes": len(cached),
+        "images": images,
+        "mb": round(size / 1_048_576, 1),
+    }
 
 
 def clean(theme: str, cache: Path | None = None) -> dict[str, Any]:
     """Remove a cached theme. ``{"success": False, ...}`` if not cached."""
-    raise NotImplementedError
+    cache = cache or _cache_dir()
+    d = cache / theme
+    if not d.is_dir():
+        return {"success": False, "error": f"'{theme}' not cached"}
+    shutil.rmtree(d)
+    return {"success": True, "removed": str(d)}
