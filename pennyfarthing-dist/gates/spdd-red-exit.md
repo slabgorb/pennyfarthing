@@ -1,7 +1,7 @@
-<gate name="sdd-red-exit" model="haiku">
+<gate name="spdd-red-exit" model="haiku">
 
 <purpose>
-Composite gate for TEA RED-phase handoff in the SDD workflow.
+Composite gate for TEA RED-phase handoff in the SPDD workflow.
 Extends tests-fail with a skill-attested check for the
 test-driven-development skill.
 </purpose>
@@ -16,7 +16,7 @@ If the <skills-invoked> element is absent from the session file entirely,
 treat every required skill as missing and fail — do NOT treat absence of
 the element as inability to check.
 
-The RED phase of the SDD workflow requires attestation for:
+The RED phase of the SPDD workflow requires attestation for:
   - test-driven-development
 
 For each required skill, find at least one <skill/> element whose
@@ -35,7 +35,7 @@ If ALL pass:
 ```yaml
 GATE_RESULT:
   status: pass
-  gate: sdd-red-exit
+  gate: spdd-red-exit
   message: "RED complete: {N} failing tests, TDD skill attested"
   checks:
     - name: ac-coverage
@@ -56,7 +56,7 @@ If ANY check fails, run all remaining checks (don't short-circuit) and return:
 ```yaml
 GATE_RESULT:
   status: fail
-  gate: sdd-red-exit
+  gate: spdd-red-exit
   message: "RED gate failed: {summary of failures}"
   checks:
     - name: ac-coverage
