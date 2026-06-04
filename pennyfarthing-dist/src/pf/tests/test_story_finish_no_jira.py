@@ -543,7 +543,11 @@ class TestJiraProjectsStillWork:
         from pf.sprint.story_finish import finish_story
 
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_run.return_value = MagicMock(returncode=0, stdout="")
+        # finish now verifies the PR actually merged via `gh pr view --json state`
+        # (story 155-1). The session carries PR #42, so the verify call must see
+        # a MERGED state for the clean path; a single JSON stdout satisfies both
+        # the `gh pr merge` (ignores stdout) and `gh pr view` (parsed) calls.
+        mock_run.return_value = MagicMock(returncode=0, stdout='{"state": "MERGED"}')
 
         result = finish_story(jira_project, "148-1")
 

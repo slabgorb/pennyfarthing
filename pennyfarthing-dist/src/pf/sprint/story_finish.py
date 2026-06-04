@@ -13,6 +13,7 @@ Steps:
   7. Remove session file
 """
 
+import json
 import re
 import shutil
 import subprocess
@@ -104,6 +105,23 @@ def _extract_branch(fields: dict[str, str]) -> str | None:
 def _run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
     """Run a subprocess with sane defaults."""
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+
+
+def _pr_is_merged(pr_number: str) -> bool:
+    """Return True only when ``gh`` reports the PR in the ``MERGED`` state.
+
+    A zero exit from ``gh pr merge`` is not proof the code landed — the merge can
+    silently no-op while the PR stays OPEN (gh #71 / #60). Finish must confirm
+    the actual PR state before transitioning the story to ``done``.
+    """
+    result = _run(["gh", "pr", "view", pr_number, "--json", "state"])
+    if result.returncode != 0:
+        return False
+    try:
+        state = json.loads(result.stdout).get("state", "")
+    except (json.JSONDecodeError, ValueError):
+        return False
+    return state == "MERGED"
 
 
 def _git_cleanup(
@@ -238,29 +256,71 @@ def finish_story(
     from pf.common.pr_config import get_pr_merge_mode
 
     pr_merge_mode = get_pr_merge_mode()
-    if pr_number and pr_merge_mode == "human":
-        steps.append(
-            {
-                "step": 2,
-                "action": "merge_pr",
-                "pr": pr_number,
-                "mode": "human",
-                "message": f"PR #{pr_number} ready for human review and merge",
-            }
-        )
-    elif pr_number:
-        result = _run(["gh", "pr", "merge", pr_number, "--squash", "--delete-branch"])
-        if result.returncode == 0:
-            steps.append({"step": 2, "action": "merge_pr", "pr": pr_number})
-        else:
+    if pr_merge_mode == "human":
+        # Human merge mode never auto-merges; the story is left in_review below
+        # for a human to merge. Nothing here is load-bearing.
+        if pr_number:
             steps.append(
                 {
                     "step": 2,
                     "action": "merge_pr",
                     "pr": pr_number,
-                    "warning": "Already merged or failed",
+                    "mode": "human",
+                    "message": f"PR #{pr_number} ready for human review and merge",
                 }
             )
+        else:
+            steps.append({"step": 2, "action": "merge_pr", "mode": "human", "skipped": True})
+    elif pr_number:
+        # Auto merge mode: the merge is load-bearing. A non-zero merge OR a
+        # merge that did not actually land must abort finish BEFORE the story is
+        # flipped to ``done`` — otherwise we mark a story shipped whose code
+        # never reached the base branch (gh #71 / #60). Return loud, run no
+        # irreversible cleanup (no transition, no session removal).
+        merge_result = _run(["gh", "pr", "merge", pr_number, "--squash", "--delete-branch"])
+        if merge_result.returncode != 0:
+            stderr = (merge_result.stderr or "").strip()
+            steps.append(
+                {
+                    "step": 2,
+                    "action": "merge_pr",
+                    "pr": pr_number,
+                    "success": False,
+                    "error": stderr or "gh pr merge returned non-zero",
+                }
+            )
+            return {
+                "success": False,
+                "story_id": story_id,
+                "jira_key": jira_key,
+                "error": (
+                    f"PR #{pr_number} merge failed: "
+                    f"{stderr or 'gh pr merge returned non-zero'} — "
+                    "refusing to mark the story done with unmerged code"
+                ),
+                "steps": steps,
+            }
+        if not _pr_is_merged(pr_number):
+            steps.append(
+                {
+                    "step": 2,
+                    "action": "merge_pr",
+                    "pr": pr_number,
+                    "success": False,
+                    "error": "PR is not in MERGED state after the merge step",
+                }
+            )
+            return {
+                "success": False,
+                "story_id": story_id,
+                "jira_key": jira_key,
+                "error": (
+                    f"PR #{pr_number} is not MERGED after the merge step — "
+                    "refusing to mark the story done with unmerged code"
+                ),
+                "steps": steps,
+            }
+        steps.append({"step": 2, "action": "merge_pr", "pr": pr_number, "merged": True})
     else:
         steps.append({"step": 2, "action": "merge_pr", "skipped": True})
 
