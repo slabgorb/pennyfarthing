@@ -166,15 +166,31 @@ def fetch_sprint() -> dict[str, Any]:
         except Exception:
             return None
 
+    # Capture the original index refs BEFORE merge: merge_epic_shards replaces
+    # string refs with full shard dicts and loses the original ref string. The
+    # ref (e.g. "PROJ-14298") is the TUI Jira column source when the shard has
+    # no `jira:` field of its own. Map resolved epic id -> original ref.
+    ref_by_id: dict[str, str] = {}
+    for ref in data.get("epics", []):
+        if isinstance(ref, str):
+            shard = _load_file(sprint_dir / f"epic-{ref}.yaml")
+            resolved_id = str(shard.get("id", "")) if isinstance(shard, dict) else ""
+            if resolved_id:
+                ref_by_id[resolved_id] = ref
+
     merged = merge_epic_shards(data, sprint_dir, load_file=_load_file)
 
     for epic_data in merged.get("epics", []):
         if not isinstance(epic_data, dict):
             continue
+        epic_id = str(epic_data.get("id", ""))
+        # jiraKey precedence: shard's own `jira` field -> original index ref
+        # string -> "". Inline-dict epics (no jira, no string ref) yield "".
+        jira_key = epic_data.get("jira", "") or ref_by_id.get(epic_id, "")
         epic_entry = {
             "id": epic_data.get("id", ""),
             "title": epic_data.get("title", ""),
-            "jiraKey": epic_data.get("jira", ""),
+            "jiraKey": jira_key,
             "status": epic_data.get("status", "backlog"),
             "stories": epic_data.get("stories", []),
         }
