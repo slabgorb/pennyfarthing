@@ -21,6 +21,8 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
+from pf.package import portrait_cdn
+
 # Ponder's OCEAN 5/5/2/3/4 -> slug "ponder-55234" (matches _extract_agent_slug).
 SLUG = "ponder-55234"
 THEME_YAML = {
@@ -83,11 +85,34 @@ def test_resolver_override_dir_wins_over_cdn(isolated_env, theme_dir):
     assert result == override
 
 
-def test_resolver_returns_none_when_nothing_cached(isolated_env, theme_dir):
-    # No CDN cache, no override; ensure_portraits no-ops (offline, graceful).
+def test_resolver_returns_none_when_nothing_cached(isolated_env, theme_dir, monkeypatch):
+    # No CDN cache, no override. The resolver's CDN branch calls
+    # ensure_portraits -> fetch_manifest -> urlopen; without interception this
+    # test would hit the LIVE CDN (flaky offline, non-hermetic — finding C6).
+    # Intercept urllib so the manifest fetch fails locally and assert the
+    # resolver degrades to None without ever escaping to a real host.
+    import urllib.error
+    import urllib.request
+
+    calls: list[str] = []
+
+    def _no_network(req, timeout=None):
+        url = req.full_url if isinstance(req, urllib.request.Request) else req
+        calls.append(url)
+        raise urllib.error.URLError("network disabled in test")
+
+    monkeypatch.setattr(urllib.request, "urlopen", _no_network)
+
     from pf.tui.portrait_resolver import resolve_portrait_path
 
     assert resolve_portrait_path("discworld", "dev", preferred_size="medium") is None
+    # Hermetic AND non-vacuous: the resolver must actually attempt the CDN fetch
+    # (else `all([])` would pass without observing anything — Reviewer finding R3),
+    # and every attempt must target only the CDN host.
+    assert calls, "resolver never attempted the CDN fetch — interception unverified"
+    assert all(u.startswith(portrait_cdn.CDN_BASE_URL) for u in calls), (
+        f"resolver attempted a non-CDN/live request: {calls}"
+    )
 
 
 # --------------------------------------------------------------------------- #

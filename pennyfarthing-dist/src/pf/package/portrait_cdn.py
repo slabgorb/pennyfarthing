@@ -27,6 +27,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import tarfile
 import time
@@ -43,6 +44,14 @@ MANIFEST_CHECK_INTERVAL = 86400  # 24h rate limit between manifest fetches
 # 403. Every request MUST send an explicit UA or it will be blocked.
 _USER_AGENT = "pennyfarthing-portrait-cdn/1.0"
 
+# A theme name is a single cache segment that is also interpolated into a CDN
+# URL. Allow only an alphanumeric leading char followed by alnum/dot/dash/
+# underscore. An *allowlist* (not a blocklist) closes the whole class at once:
+# it rejects empty, ``.``/``..``, path separators (``/``, ``\``), null bytes,
+# whitespace, and URL-special chars (``#``, ``?``) — all of which could escape
+# the cache (CWE-22) or redirect the pack fetch.
+_SAFE_THEME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+
 
 def _cache_dir() -> Path:
     """Return the XDG-compliant portrait cache directory.
@@ -52,6 +61,49 @@ def _cache_dir() -> Path:
     """
     base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
     return base / "pennyfarthing" / "portraits"
+
+
+def _is_safe_theme(theme: str) -> bool:
+    """Whether ``theme`` is a safe single cache segment (CWE-22).
+
+    Theme names are slug segments (e.g. ``discworld``). Validated against an
+    allowlist (:data:`_SAFE_THEME_RE`) so it is rejected before any path is built
+    or any network request is made. A bare ``.`` (would resolve to the cache root
+    and rmtree/extract there), ``..``, separators, null bytes, whitespace, and
+    URL-special chars are all excluded.
+    """
+    return bool(theme) and _SAFE_THEME_RE.fullmatch(theme) is not None
+
+
+def _within_cache(path: Path, cache: Path) -> bool:
+    """Whether ``path`` resolves to a location inside ``cache`` (CWE-59 guard).
+
+    String validation alone can't stop a pre-planted symlink at
+    ``cache/<valid-name>`` from redirecting an extraction outside the cache, so
+    resolve both paths and require containment. Returns ``False`` on any resolve
+    error rather than raising (the "never raises" contract).
+    """
+    try:
+        return path.resolve().is_relative_to(cache.resolve())
+    except (OSError, ValueError, RuntimeError):
+        return False
+
+
+def _resolve_theme_dir(theme: str, cache: Path) -> tuple[Path | None, dict | None]:
+    """Validate ``theme`` and return its contained cache dir.
+
+    Returns ``(theme_dir, None)`` when ``theme`` is a safe name whose dir stays
+    inside ``cache``, or ``(None, error)`` with a ``{"success": False}`` dict to
+    return directly. Shared by :func:`ensure_portraits` and :func:`clean` so the
+    name-allowlist (CWE-22) and symlink-containment (CWE-59) guards live in one
+    place.
+    """
+    if not _is_safe_theme(theme):
+        return None, {"success": False, "error": f"Invalid theme name: {theme!r}"}
+    theme_dir = cache / theme
+    if not _within_cache(theme_dir, cache):
+        return None, {"success": False, "error": f"Theme dir escapes cache: {theme!r}"}
+    return theme_dir, None
 
 
 def _read_meta(cache: Path) -> dict:
@@ -131,7 +183,11 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
     raises.
     """
     cache = cache or _cache_dir()
-    theme_dir = cache / theme
+    # Reject traversing/malformed names (CWE-22) and symlink-escaping dirs
+    # (CWE-59) up front, before building paths or touching the network.
+    theme_dir, error = _resolve_theme_dir(theme, cache)
+    if error:
+        return error
     sentinel = theme_dir / ".complete"
 
     if sentinel.exists():
@@ -145,8 +201,17 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
     if theme not in themes:
         return {"success": False, "error": f"Theme '{theme}' not in manifest"}
 
+    # Guard the manifest fields instead of indexing blindly: a malformed manifest
+    # must degrade gracefully, not raise a KeyError (the "never raises" contract).
     entry = themes[theme]
-    pack_url = f"{manifest['base_url']}/themes/{theme}.tar.gz"
+    expected_sha = entry.get("pack_sha256")
+    if "base_url" not in manifest or not expected_sha:
+        return {"success": False, "error": f"Malformed manifest for '{theme}'"}
+
+    # Build the pack URL from the trusted hardcoded CDN, NOT the manifest body:
+    # a poisoned/MITM'd base_url could redirect the fetch (file://, internal
+    # host) and supply a matching SHA from the same source (CWE-918 SSRF).
+    pack_url = f"{CDN_BASE_URL}/themes/{theme}.tar.gz"
     tmp = cache / f".{theme}.tar.gz.tmp"
     cache.mkdir(parents=True, exist_ok=True)
 
@@ -158,16 +223,28 @@ def ensure_portraits(theme: str, cache: Path | None = None) -> dict[str, Any]:
         tmp.unlink(missing_ok=True)
         return {"success": False, "error": f"Download failed: {e}"}
 
-    if not _verify_sha256(tmp, entry["pack_sha256"]):
+    if not _verify_sha256(tmp, expected_sha):
         tmp.unlink(missing_ok=True)
         return {"success": False, "error": f"SHA256 mismatch for {theme}"}
 
     theme_dir.mkdir(parents=True, exist_ok=True)
+    # Re-check containment AFTER mkdir (CWE-59 TOCTOU): the pre-download guard ran
+    # before theme_dir existed, so resolve() had no symlink to follow and could
+    # not catch a symlink planted into the (10-30s) download window.
+    # ``mkdir(exist_ok=True)`` is a no-op on a pre-planted symlink-to-dir, so
+    # extractall would write through it. A legitimate mkdir never yields a
+    # symlink — if it is one now, or otherwise escapes, refuse to extract.
+    if theme_dir.is_symlink() or not _within_cache(theme_dir, cache):
+        tmp.unlink(missing_ok=True)
+        return {"success": False, "error": f"Theme dir escapes cache: {theme!r}"}
     try:
         with tarfile.open(tmp, "r:gz") as tar:
             # "data" filter blocks path-traversal / absolute-path members.
             tar.extractall(path=theme_dir, filter="data")
     except tarfile.TarError as e:
+        # Clean the partially-extracted theme dir so a retry doesn't re-enter a
+        # populated-but-sentinel-less directory and skip the (failed) download.
+        shutil.rmtree(theme_dir, ignore_errors=True)
         tmp.unlink(missing_ok=True)
         return {"success": False, "error": f"Extraction failed: {e}"}
     finally:
@@ -201,13 +278,18 @@ def resolve_portrait(
     or no image file exists for any candidate size.
     """
     cache = cache or _cache_dir()
+    if not _is_safe_theme(theme):
+        return None
     try:
         local = json.loads((cache / "manifest.json").read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return None
 
     slug = local.get(theme, {}).get(agent)
-    if not slug:
+    # The slug comes from the local manifest, which is populated from CDN persona
+    # data — untrusted. Validate it with the same allowlist as theme names so a
+    # poisoned manifest slug (e.g. "../../secrets") can't escape the cache (CWE-22).
+    if not slug or not _is_safe_theme(slug):
         return None
 
     sizes = {
@@ -217,7 +299,7 @@ def resolve_portrait(
 
     for size in sizes:
         candidate = cache / theme / size / f"{slug}.png"
-        if candidate.is_file():
+        if candidate.is_file() and _within_cache(candidate, cache):
             return candidate
     return None
 
@@ -249,8 +331,21 @@ def status(cache: Path | None = None) -> dict[str, Any]:
 def clean(theme: str, cache: Path | None = None) -> dict[str, Any]:
     """Remove a cached theme. ``{"success": False, ...}`` if not cached."""
     cache = cache or _cache_dir()
-    d = cache / theme
+    # Reject traversing/malformed names (CWE-22) and symlink-escaping dirs
+    # (CWE-59): a bare/escaping theme would otherwise rmtree outside the cache.
+    d, error = _resolve_theme_dir(theme, cache)
+    if error:
+        return error
     if not d.is_dir():
         return {"success": False, "error": f"'{theme}' not cached"}
-    shutil.rmtree(d)
+    # CWE-59 TOCTOU: a symlink planted at cache/<theme> after the containment
+    # check passes is_dir(), and rmtree would follow it (deleting the target on
+    # <=3.11, or raising NotADirectoryError on 3.12+). A real cached theme is a
+    # directory, never a symlink — refuse the symlink case.
+    if d.is_symlink():
+        return {"success": False, "error": f"Theme dir escapes cache: {theme!r}"}
+    try:
+        shutil.rmtree(d)
+    except OSError as e:  # honour the module's "never raises" contract
+        return {"success": False, "error": f"Could not remove '{theme}': {e}"}
     return {"success": True, "removed": str(d)}

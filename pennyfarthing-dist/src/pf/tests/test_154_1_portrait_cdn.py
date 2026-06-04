@@ -333,9 +333,20 @@ def test_ensure_portraits_download_failure_is_graceful(cdn: FakeCDN, cache: Path
     # Manifest fetch succeeds, pack download fails.
     cdn.pack_fail = True
     cdn.install(monkeypatch)
+    # C7: pre-create the temp download so "no .tmp remains" actually exercises
+    # the cleanup path. urlopen raises *before* open(tmp) in the impl's compound
+    # `with`, so without this seed the file is never created and the assertion is
+    # vacuously true — it must prove tmp.unlink() runs on the failure path.
+    cache.mkdir(parents=True, exist_ok=True)
+    seeded_tmp = cache / ".discworld.tar.gz.tmp"
+    seeded_tmp.write_bytes(b"partial download")
+    assert seeded_tmp.exists()  # guard: the seed is really there before the call
+
     result = ensure_portraits("discworld", cache)
     assert result["success"] is False
     assert not (cache / "discworld" / ".complete").exists()
+    # The seeded temp file must be cleaned up on the download-failure path.
+    assert not seeded_tmp.exists()
     assert list(cache.glob("*.tmp")) == []
     assert list(cache.glob(".*.tmp")) == []
 
@@ -383,11 +394,15 @@ def test_ensure_portraits_rejects_path_traversal_in_pack(
     evil_cdn = FakeCDN(_manifest("discworld", personas, sha, evil.stat().st_size), evil)
     evil_cdn.install(monkeypatch)
 
-    ensure_portraits("discworld", cache)
+    result = ensure_portraits("discworld", cache)
 
-    # The traversal target (cache/escaped.png, a sibling of the theme dir) must
-    # never be created.
+    # C8: the contract is an explicit failure, not just an absent file — assert
+    # both. (The traversal target cache/escaped.png, a sibling of the theme dir,
+    # must never be created; theme-dir cleanup is covered in
+    # test_154_2_portrait_cdn_hardening.py.)
+    assert result["success"] is False
     assert not (cache / "escaped.png").exists()
+    assert not (cache / "discworld" / ".complete").exists()
 
 
 def test_ensure_portraits_dead_cdn_never_raises(cdn: FakeCDN, cache: Path, monkeypatch):
