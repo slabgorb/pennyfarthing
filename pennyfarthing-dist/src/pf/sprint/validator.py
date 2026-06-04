@@ -14,6 +14,7 @@ with success status and error messages.
 """
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -476,7 +477,12 @@ def is_epic_shard_document(data: dict[str, Any]) -> bool:
     epic shard has top-level ``id`` + ``stories`` but no ``sprint`` wrapper
     and no ``epics`` list. This is the shape produced by ``read_sprint`` when
     pointed straight at a ``sprint/epic-*.yaml`` file via ``--sprint-file``.
+
+    Guards against ``None``/non-mapping ``data`` (e.g. an empty YAML file) so
+    callers don't hit a ``TypeError`` on the membership checks below.
     """
+    if not isinstance(data, Mapping):
+        return False
     return (
         "stories" in data
         and "id" in data
