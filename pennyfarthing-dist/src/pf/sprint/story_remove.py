@@ -13,7 +13,7 @@ from typing import Any
 import click
 
 from pf.sprint.loader import find_story_in_data
-from pf.sprint.validator import validate_full_sprint
+from pf.sprint.validator import validate_sprint_document
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
 
@@ -63,7 +63,7 @@ def remove_story(
             "error": f"Internal: unexpected location '{location}' for top-level story",
         }
 
-    result = validate_full_sprint(data)
+    result = validate_sprint_document(data)
     if not result.valid:
         return {
             "success": False,

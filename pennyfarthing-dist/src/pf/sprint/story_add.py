@@ -16,7 +16,7 @@ import click
 from ruamel.yaml.comments import CommentedMap
 
 from pf.sprint.loader import find_epic
-from pf.sprint.validator import validate_full_sprint
+from pf.sprint.validator import is_epic_shard_document, validate_sprint_document
 from pf.sprint.yaml_io import (
     STORY_KEY_ORDER,
     read_sprint,
@@ -90,15 +90,28 @@ def add_story(
     """
     data = read_sprint(sprint_path)
 
-    epic = find_epic(data, epic_id)
-    if epic is None:
-        available = []
-        for e in data.get("epics", []):
-            available.append(str(e.get("id", "")))
-        return {
-            "success": False,
-            "error": f"Epic '{epic_id}' not found. Available epics: {', '.join(available)}",
-        }
+    # Raw epic shard handed in via --sprint-file sprint/epic-*.yaml: the document
+    # itself IS the epic (no `epics` wrapper), so find_epic can't locate it.
+    # Treat the shard as the target epic when its own id matches the request.
+    if is_epic_shard_document(data):
+        shard_id = str(data.get("id", "")).replace("epic-", "")
+        if shard_id == epic_id.replace("epic-", ""):
+            epic: Any = data
+        else:
+            return {
+                "success": False,
+                "error": f"Epic '{epic_id}' not found. Available epics: {shard_id}",
+            }
+    else:
+        epic = find_epic(data, epic_id)
+        if epic is None:
+            available = []
+            for e in data.get("epics", []):
+                available.append(str(e.get("id", "")))
+            return {
+                "success": False,
+                "error": f"Epic '{epic_id}' not found. Available epics: {', '.join(available)}",
+            }
 
     story_id = generate_story_id(data, epic)
 
@@ -138,8 +151,9 @@ def add_story(
         epic["stories"] = CommentedSeq()
     epic["stories"].append(story)
 
-    # Validate before writing
-    result = validate_full_sprint(data)
+    # Validate before writing (dispatcher routes raw epic shards to the
+    # epic-shard schema instead of the full-sprint schema — gh #10).
+    result = validate_sprint_document(data)
     if not result.valid:
         # Remove the story we just added to avoid corrupting data
         epic["stories"].pop()

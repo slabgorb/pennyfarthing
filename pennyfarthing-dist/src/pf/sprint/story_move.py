@@ -18,7 +18,7 @@ from ruamel.yaml.comments import CommentedSeq
 
 from pf.sprint.loader import find_epic, find_story_in_data
 from pf.sprint.story_add import generate_story_id
-from pf.sprint.validator import validate_full_sprint
+from pf.sprint.validator import validate_sprint_document
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
 
@@ -113,7 +113,7 @@ def move_story(
     details["old_id"] = old_id
     details["new_id"] = new_id
 
-    result = validate_full_sprint(data)
+    result = validate_sprint_document(data)
     if not result.valid:
         return {
             "success": False,

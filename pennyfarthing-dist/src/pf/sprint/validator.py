@@ -14,6 +14,7 @@ with success status and error messages.
 """
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -467,6 +468,42 @@ def validate_full_sprint(data: dict[str, Any]) -> ValidationResult:
         _validate_depends_on(data, all_story_ids, result)
 
     return result
+
+
+def is_epic_shard_document(data: dict[str, Any]) -> bool:
+    """Return True if ``data`` is a raw epic shard (no sprint wrapper).
+
+    Mirrors the shard-detection heuristic in ``yaml_io._canonicalize``: an
+    epic shard has top-level ``id`` + ``stories`` but no ``sprint`` wrapper
+    and no ``epics`` list. This is the shape produced by ``read_sprint`` when
+    pointed straight at a ``sprint/epic-*.yaml`` file via ``--sprint-file``.
+
+    Guards against ``None``/non-mapping ``data`` (e.g. an empty YAML file) so
+    callers don't hit a ``TypeError`` on the membership checks below.
+    """
+    if not isinstance(data, Mapping):
+        return False
+    return (
+        "stories" in data
+        and "id" in data
+        and "sprint" not in data
+        and "epics" not in data
+    )
+
+
+def validate_sprint_document(data: dict[str, Any]) -> ValidationResult:
+    """Validate a loaded sprint document, routing by document type.
+
+    Full sprint documents (with a top-level ``sprint:`` wrapper) are checked
+    with :func:`validate_full_sprint`. Raw epic shards — handed in via
+    ``--sprint-file sprint/epic-*.yaml`` and lacking that wrapper — are checked
+    with :func:`validate_epic_shard`. This is the single dispatcher mutation
+    paths should use so an epic shard isn't rejected with the spurious
+    ``Missing required 'sprint' section`` error (gh #10).
+    """
+    if is_epic_shard_document(data):
+        return validate_epic_shard(data)
+    return validate_full_sprint(data)
 
 
 def _validate_depends_on(

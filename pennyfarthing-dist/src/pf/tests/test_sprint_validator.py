@@ -22,6 +22,7 @@ from pf.sprint.validator import (
     ValidationResult,
     ValidationSeverity,
     format_validation_errors,
+    is_epic_shard_document,
     validate_archived_sprint,
     validate_epic,
     validate_epic_shard,
@@ -848,3 +849,16 @@ class TestValidationResult:
 
         assert result.valid is False
         assert len(result.errors) == 3
+
+
+class TestIsEpicShardDocument:
+    """is_epic_shard_document must not raise on None/non-mapping input (L1)."""
+
+    def test_none_is_not_a_shard(self) -> None:
+        """A None document (e.g. empty YAML) returns False, not TypeError."""
+        assert is_epic_shard_document(None) is False
+
+    def test_non_mapping_is_not_a_shard(self) -> None:
+        """A non-mapping document (list/str) returns False."""
+        assert is_epic_shard_document([]) is False
+        assert is_epic_shard_document("not a doc") is False

@@ -17,7 +17,7 @@ import click
 from pf.jira.client import get_client, is_jira_enabled, map_status_to_jira
 from pf.sprint.loader import find_story_in_data
 from pf.sprint.status_normalize import normalize_status
-from pf.sprint.validator import VALID_STORY_STATUSES, validate_full_sprint
+from pf.sprint.validator import VALID_STORY_STATUSES, validate_sprint_document
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
 
@@ -144,8 +144,10 @@ def update_story(
             except Exception:
                 pass
 
-    # Validate after mutation
-    result = validate_full_sprint(data)
+    # Validate after mutation — route by document type so a raw epic shard
+    # (no top-level `sprint:` wrapper, handed in via --sprint-file) is checked
+    # against the epic-shard schema instead of the full-sprint schema (gh #10).
+    result = validate_sprint_document(data)
     if not result.valid:
         return {
             "success": False,
