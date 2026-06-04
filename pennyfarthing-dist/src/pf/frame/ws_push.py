@@ -150,26 +150,31 @@ def fetch_sprint() -> dict[str, Any]:
 
     sprint_info = data.get("sprint", {})
 
-    # Load epic shards
-    epic_refs = data.get("epics", [])
+    # Merge epics through the canonical loader so inline-dict epics (legacy
+    # monolithic format, keyed by `id` with no `jira`) AND sharded epics
+    # (string refs + epic-{ref}.yaml) both arrive as fully-merged dicts.
+    # The bespoke shard-only path silently dropped inline epics (gh #50).
+    from pf.sprint.shard_merge import merge_epic_shards
+
     epics: list[dict[str, Any]] = []
     completed_epics: list[dict[str, Any]] = []
     sprint_dir = Path(project_dir, "sprint")
 
-    for ref in epic_refs:
-        jira_key = ref if isinstance(ref, str) else ref.get("jira", "")
-        shard_path = sprint_dir / f"epic-{jira_key}.yaml"
-        if not shard_path.is_file():
-            continue
+    def _load_file(path: Path) -> Any:
         try:
-            epic_data = yaml.safe_load(shard_path.read_text()) or {}
+            return yaml.safe_load(path.read_text()) or {}
         except Exception:
-            continue
+            return None
 
+    merged = merge_epic_shards(data, sprint_dir, load_file=_load_file)
+
+    for epic_data in merged.get("epics", []):
+        if not isinstance(epic_data, dict):
+            continue
         epic_entry = {
             "id": epic_data.get("id", ""),
             "title": epic_data.get("title", ""),
-            "jiraKey": jira_key,
+            "jiraKey": epic_data.get("jira", ""),
             "status": epic_data.get("status", "backlog"),
             "stories": epic_data.get("stories", []),
         }
