@@ -185,7 +185,7 @@ def update_story(
     jira_steps: list[dict[str, Any]] = []
     jira_key = story.get("jira")
 
-    if update_jira and jira_key:
+    if update_jira and _has_real_jira_key(story):
         client = get_client()
 
         # Status transition
