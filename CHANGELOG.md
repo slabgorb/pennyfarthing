@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.3.0] - 2026-06-04
+
+### Added
+
+- **Portrait CDN consumer (154-1)** — new `portrait_cdn` R2 module; the TUI and `pf` resolve portraits from the R2 CDN, wired into the portrait resolver, agent activation, and CLI, replacing the GitHub Contents API download path
+- **Sprint-YAML CRUD hardening (epic 156)** — sprint-YAML mutations route through epic-shard validation (156-1); story `move` rewrites dependencies and ships a story-lifecycle guide (156-3)
+
+### Fixed
+
+- **Portrait CDN hardening (154-2)** — addressed Reviewer findings C1–C8 plus blocker/regression items on the `portrait_cdn` module
+- **Portrait cache invalidation (153-10)** — the XDG portrait cache refreshes on content change, not just on version bump
+- **TUI epic rendering (156-4)** — `fetch_sprint` renders inline-dict epics through the canonical sprint loader
+- **Jira email leakage (156-2)** — jira-cli no longer leaks the work email on no-jira stories
+- **Atomic sprint write (156-5)** — create the `sprint/` parent directory before the atomic write (gh #52)
+
+### Changed
+
+- **Packaging** — portraits are excluded from the wheel; R2 + git LFS own them
+
 ## [13.2.0] - 2026-06-02
 
 ### Added

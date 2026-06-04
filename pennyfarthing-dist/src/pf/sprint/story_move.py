@@ -18,7 +18,7 @@ from ruamel.yaml.comments import CommentedSeq
 
 from pf.sprint.loader import find_epic, find_story_in_data
 from pf.sprint.story_add import generate_story_id
-from pf.sprint.validator import validate_full_sprint
+from pf.sprint.validator import validate_sprint_document
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
 
@@ -41,6 +41,29 @@ def _all_story_ids(data: dict[str, Any]) -> list[str]:
 def _all_epic_ids(data: dict[str, Any]) -> list[str]:
     """Collect every epic id in the sprint (for not-found error messages)."""
     return [str(e.get("id", "")) for e in data.get("epics", []) if isinstance(e, dict)]
+
+
+def _rewrite_dependencies(data: dict[str, Any], old_id: str, new_id: str) -> None:
+    """Rewrite every ``depends_on`` that points at ``old_id`` to ``new_id``.
+
+    ``depends_on`` is a scalar story-id string (not a list). Matching is
+    whole-value equality so that, e.g., moving ``10-1`` never disturbs a
+    dependent on ``10-10``. Walks all story containers: each epic's
+    ``stories``, ``standalone_stories``, and the top-level ``stories``.
+    """
+
+    def _walk(stories: Any) -> None:
+        if not stories:
+            return
+        for story in stories:
+            if isinstance(story, dict) and story.get("depends_on") == old_id:
+                story["depends_on"] = new_id
+
+    for epic in data.get("epics", []):
+        if isinstance(epic, dict):
+            _walk(epic.get("stories"))
+    _walk(data.get("standalone_stories"))
+    _walk(data.get("stories"))
 
 
 def move_story(
@@ -113,7 +136,11 @@ def move_story(
     details["old_id"] = old_id
     details["new_id"] = new_id
 
-    result = validate_full_sprint(data)
+    # Rewrite every dependent referencing the moved story's OLD id so no
+    # dangling reference remains (atomic: still before validate + write).
+    _rewrite_dependencies(data, str(old_id), str(new_id))
+
+    result = validate_sprint_document(data)
     if not result.valid:
         return {
             "success": False,

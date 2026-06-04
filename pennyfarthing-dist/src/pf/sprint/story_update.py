@@ -17,8 +17,26 @@ import click
 from pf.jira.client import get_client, is_jira_enabled, map_status_to_jira
 from pf.sprint.loader import find_story_in_data
 from pf.sprint.status_normalize import normalize_status
-from pf.sprint.validator import VALID_STORY_STATUSES, validate_full_sprint
+from pf.sprint.validator import VALID_STORY_STATUSES, validate_sprint_document
 from pf.sprint.yaml_io import read_sprint, write_sprint
+
+# Sentinel values that mean "no real Jira key" even though the field is present.
+_NO_JIRA_SENTINELS = {"", "none", "null", "x"}
+
+
+def _has_real_jira_key(story: dict[str, Any]) -> bool:
+    """Return True only when the story carries a real Jira key.
+
+    ``story.get("jira")`` is truthy for placeholder sentinels like the literal
+    string ``"none"``, which would let an auto-assign lookup (``jira me``) run on
+    a personal-project story that has no Jira side (gh #12). Normalize ``None``,
+    empty/whitespace, and the ``none``/``null``/``x`` sentinels (case-insensitive)
+    to "no key".
+    """
+    key = story.get("jira")
+    if not isinstance(key, str):
+        return bool(key)
+    return key.strip().lower() not in _NO_JIRA_SENTINELS
 
 
 def update_story(
@@ -135,7 +153,7 @@ def update_story(
             "assigned_to" not in story
             and assigned_to is None
             and is_jira_enabled()
-            and story.get("jira")
+            and _has_real_jira_key(story)
         ):
             try:
                 result = subprocess.run(["jira", "me"], capture_output=True, text=True)
@@ -144,8 +162,10 @@ def update_story(
             except Exception:
                 pass
 
-    # Validate after mutation
-    result = validate_full_sprint(data)
+    # Validate after mutation — route by document type so a raw epic shard
+    # (no top-level `sprint:` wrapper, handed in via --sprint-file) is checked
+    # against the epic-shard schema instead of the full-sprint schema (gh #10).
+    result = validate_sprint_document(data)
     if not result.valid:
         return {
             "success": False,
@@ -165,7 +185,7 @@ def update_story(
     jira_steps: list[dict[str, Any]] = []
     jira_key = story.get("jira")
 
-    if update_jira and jira_key:
+    if update_jira and _has_real_jira_key(story):
         client = get_client()
 
         # Status transition

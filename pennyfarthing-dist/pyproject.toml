@@ -1,7 +1,11 @@
 [project]
 name = "pennyfarthing-scripts"
 dynamic = ["version"]
-requires-python = ">=3.11"
+# Floor is 3.11.4, not 3.11.0: portrait_cdn extracts with tarfile's
+# `filter="data"` (CWE-22 guard), which only landed in 3.12 / 3.11.4. On
+# 3.11.0-3.11.3 it raises TypeError (not TarError), escaping the handler and
+# silently skipping extraction. See story 154-2 (finding C5).
+requires-python = ">=3.11.4"
 dependencies = ["pyyaml>=6.0", "ruamel.yaml>=0.18", "httpx>=0.28", "click>=8.0", "pydriller>=2.6", "textual>=1.0", "websockets>=12.0", "textual-image>=0.7.0,<0.13", "watchfiles>=1.0", "fastapi>=0.115", "uvicorn[standard]>=0.34"]
 
 [project.optional-dependencies]
@@ -32,7 +36,8 @@ exclude = ["pf.tests", "pf.tests.*"]
     "gates/**/*",
     "guides/**/*",
     "output-styles/**/*",
-    "personas/portraits/**/*",
+    # NOTE: portraits are intentionally NOT bundled — they ship via the R2 CDN
+    # (pf.package.portrait_cdn) + git-LFS. See MANIFEST.in recursive-exclude.
     "personas/themes/**/*",
     "personas/attributes.yaml",
     "personas/*.md",
@@ -48,6 +53,8 @@ exclude = ["pf.tests", "pf.tests.*"]
 [tool.setuptools.exclude-package-data]
 "pf._dist" = [
     "**/__pycache__/**",
+    "personas/portraits/*",
+    "personas/portraits/**/*",
 ]
 
 [tool.setuptools.dynamic]

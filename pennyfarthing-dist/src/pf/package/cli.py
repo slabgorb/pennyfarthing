@@ -198,3 +198,70 @@ def install_portraits(name: str | None, install_all: bool, all_sizes: bool, dry_
             click.echo(
                 f"  Downloaded: {data['downloaded']}, Skipped: {data['skipped']}, Total: {data['total']}"
             )
+
+
+@click.group()
+def portraits():
+    """R2 CDN portrait cache (story 154-1).
+
+    \b
+    Commands:
+      status  - Show local cache stats
+      list    - List cached themes
+      fetch   - Download a theme's portrait pack
+      clean   - Remove a cached theme
+    """
+    pass
+
+
+@portraits.command("status")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON.")
+def portraits_status(output_json: bool):
+    """Show portrait CDN cache statistics."""
+    from pf.package.portrait_cdn import status as cdn_status
+
+    s = cdn_status()
+    if output_json:
+        click.echo(json.dumps(s, indent=2))
+        return
+    click.echo(f"Portrait cache: {s['cache_dir']}")
+    click.echo(f"  Themes: {s['themes']}  Images: {s['images']}  Size: {s['mb']} MB")
+
+
+@portraits.command("list")
+def portraits_list():
+    """List themes present in the local portrait cache."""
+    from pf.package.portrait_cdn import list_cached
+
+    cached = list_cached()
+    if not cached:
+        click.echo("No themes cached.")
+        return
+    for theme_name in cached:
+        click.echo(f"  {theme_name}")
+
+
+@portraits.command("fetch")
+@click.argument("theme")
+def portraits_fetch(theme: str):
+    """Download THEME's portrait pack from the CDN (idempotent)."""
+    from pf.package.portrait_cdn import ensure_portraits
+
+    result = ensure_portraits(theme)
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        sys.exit(1)
+    click.echo(f"{theme}: {result['action']} -> {result['cache_dir']}")
+
+
+@portraits.command("clean")
+@click.argument("theme")
+def portraits_clean(theme: str):
+    """Remove THEME from the local portrait cache."""
+    from pf.package.portrait_cdn import clean
+
+    result = clean(theme)
+    if not result["success"]:
+        click.echo(f"Error: {result['error']}", err=True)
+        sys.exit(1)
+    click.echo(f"Removed {result['removed']}")

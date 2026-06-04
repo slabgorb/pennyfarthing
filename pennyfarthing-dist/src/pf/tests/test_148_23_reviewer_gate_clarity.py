@@ -17,8 +17,35 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
+
+# ---------------------------------------------------------------------------
+# Hermetic settings: enable every reviewer subagent so dispatch/completion
+# checks evaluate the full required set regardless of the live project's
+# config.local.yaml (which may disable some subagents). Mirrors the autouse
+# fixture in test_143_12_subagent_dispatch.py.
+# ---------------------------------------------------------------------------
+
+_ALL_SUBAGENTS_ENABLED = {
+    "preflight": True,
+    "edge_hunter": True,
+    "silent_failure_hunter": True,
+    "test_analyzer": True,
+    "comment_analyzer": True,
+    "type_design": True,
+    "security": True,
+    "simplifier": True,
+    "rule_checker": True,
+}
+
+
+@pytest.fixture(autouse=True)
+def _all_subagents_enabled():
+    with patch("pf.settings.settings.get_setting", return_value=_ALL_SUBAGENTS_ENABLED):
+        yield
+
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -37,9 +64,10 @@ REQUIRED_SUBAGENTS = [
     "reviewer-type-design",
     "reviewer-security",
     "reviewer-simplifier",
+    "reviewer-rule-checker",
 ]
 
-DISPATCH_TAGS = ["[EDGE]", "[SILENT]", "[TEST]", "[DOC]", "[TYPE]", "[SEC]", "[SIMPLE]"]
+DISPATCH_TAGS = ["[EDGE]", "[SILENT]", "[TEST]", "[DOC]", "[TYPE]", "[SEC]", "[SIMPLE]", "[RULE]"]
 
 
 # ---------------------------------------------------------------------------
@@ -86,6 +114,7 @@ def _build_reviewer_assessment() -> str:
         "- [TYPE] Types sound\n"
         "- [SEC] No security concerns\n"
         "- [SIMPLE] No unnecessary complexity\n"
+        "- [RULE] Conventions followed\n"
     )
 
 
@@ -251,7 +280,7 @@ class TestAC2ActionableErrorMessages:
 
         content = "## Reviewer Assessment\n\n**Verdict:** APPROVED\nNo tags here.\n"
         missing = _check_subagent_dispatch(content)
-        assert len(missing) == 7, f"Expected 7 missing tags, got {len(missing)}"
+        assert len(missing) == 8, f"Expected 8 missing tags, got {len(missing)}"
 
     def test_missing_assessment_error_shows_example_heading(self) -> None:
         """When assessment section is missing, error should show the exact
@@ -505,6 +534,7 @@ class TestAC4ExamplesMatchImplementation:
             "- [TYPE] Types sound\n"
             "- [SEC] No security concerns\n"
             "- [SIMPLE] No unnecessary complexity\n"
+            "- [RULE] Conventions followed\n"
         )
         missing = _check_subagent_dispatch(content)
         assert len(missing) == 0, (
@@ -553,7 +583,7 @@ class TestAC4ExamplesMatchImplementation:
                 )
 
     def test_reviewer_md_dispatch_tags_match_implementation(self) -> None:
-        """All 7 dispatch tags documented in reviewer.md must match the
+        """All dispatch tags documented in reviewer.md must match the
         SUBAGENT_DISPATCH_TAGS set in complete_phase.py exactly."""
         from pf.handoff.complete_phase import SUBAGENT_DISPATCH_TAGS as CODE_TAGS
 

@@ -13,8 +13,13 @@ import click
 @click.command()
 @click.option("--dry-run", is_flag=True, help="Show what would be done without doing it")
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation for hook changes")
+@click.option(
+    "--force-portraits",
+    is_flag=True,
+    help="Re-copy the shared portrait cache even if version and content match",
+)
 @click.argument("target", required=False, default=".")
-def init(dry_run: bool, yes: bool, target: str) -> None:
+def init(dry_run: bool, yes: bool, force_portraits: bool, target: str) -> None:
     """Initialize a Pennyfarthing project in the current directory.
 
     Creates .pennyfarthing/ and .claude/ directories, copies pf-*
@@ -74,7 +79,12 @@ def init(dry_run: bool, yes: bool, target: str) -> None:
                 click.echo("Skipping hook changes (other files will still be updated)")
                 skip_hooks = True
 
-    result = init_project(target_dir=target_dir, dist_root=dist_root, skip_hooks=skip_hooks)
+    result = init_project(
+        target_dir=target_dir,
+        dist_root=dist_root,
+        skip_hooks=skip_hooks,
+        force_portraits=force_portraits,
+    )
 
     if not result["success"]:
         click.echo(f"Error: {result['error']}", err=True)

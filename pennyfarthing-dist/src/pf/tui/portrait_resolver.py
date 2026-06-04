@@ -139,12 +139,35 @@ def resolve_portrait_path(
     if not slug:
         return None
 
+    # Highest priority: developer override directory.
+    override_dir = Path.home() / ".pennyfarthing" / "portraits" / theme
+    override_hit = _find_portrait(override_dir, slug, preferred_size=preferred_size)
+    if override_hit:
+        return override_hit
+
     # Search portrait directories (sibling of each themes dir)
     for themes_dir in theme_dirs:
         portraits_dir = themes_dir.parent / "portraits" / theme
         result = _find_portrait(portraits_dir, slug, preferred_size=preferred_size)
         if result:
             return result
+
+    # R2 CDN (story 154-1): lazily download the theme pack — instant on cache
+    # hit, graceful when offline — and resolve from the local cache. This is the
+    # primary remote source; the repo-bundled LFS/cyclist paths below are legacy
+    # fallbacks. The CDN cache uses the same {size}/{slug}.png layout, so
+    # _find_portrait needs no changes.
+    try:
+        from pf.package import portrait_cdn
+
+        portrait_cdn.ensure_portraits(theme)
+        cdn_hit = _find_portrait(
+            portrait_cdn._cache_dir() / theme, slug, preferred_size=preferred_size
+        )
+        if cdn_hit:
+            return cdn_hit
+    except Exception:
+        pass
 
     # Self-healing: if portraits exist as LFS stubs, pull them and retry
     for themes_dir in theme_dirs:
