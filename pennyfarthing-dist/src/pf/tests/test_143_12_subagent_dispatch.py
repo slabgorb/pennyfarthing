@@ -1,7 +1,8 @@
 """Test subagent-dispatch subgate in complete_phase (Story 143-12).
 
 Validates that the approval gate programmatically enforces the presence
-of all 7 specialist subagent tags in the Reviewer Assessment.
+of all 8 specialist subagent tags in the Reviewer Assessment
+([EDGE] [SILENT] [TEST] [DOC] [TYPE] [SEC] [SIMPLE] [RULE]).
 """
 
 from __future__ import annotations
@@ -45,6 +46,7 @@ MISSING_TWO = """## Reviewer Assessment
 - [DOC] ok
 - [TYPE] ok
 - [SEC] ok
+- [RULE] ok
 
 **Handoff:** To SM
 """
@@ -86,6 +88,7 @@ class TestCheckSubagentDispatch:
 5. [TYPE] types correct
 6. [SEC] secure
 7. [SIMPLE] minimal
+8. [RULE] conventions followed
 
 **Handoff:** done
 """

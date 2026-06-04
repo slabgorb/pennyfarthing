@@ -142,7 +142,7 @@ class TestCliTuiPositionPreserved:
         live_panes = _make_live_panes_cli_tui()
         registry = _make_registry("pf-test-0", live_panes)
 
-        with patch("pf.peloton.pane_orchestrator.kill_pane") as mock_kill:
+        with patch("pf.tmux.panes.kill_pane") as mock_kill:
             create_peloton_layout(
                 session="pf-test-0",
                 registry=registry,
@@ -159,7 +159,7 @@ class TestCliTuiPositionPreserved:
         live_panes = _make_live_panes_cli_tui()
         registry = _make_registry("pf-test-0", live_panes)
 
-        with patch("pf.peloton.pane_orchestrator.kill_pane") as mock_kill:
+        with patch("pf.tmux.panes.kill_pane") as mock_kill:
             create_peloton_layout(
                 session="pf-test-0",
                 registry=registry,
