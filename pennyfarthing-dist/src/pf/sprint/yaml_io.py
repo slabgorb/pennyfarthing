@@ -342,6 +342,7 @@ def _write_yaml_file(path: Path, data: Any) -> None:
 
     output = canonical_dump(data)
 
+    path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(".yaml.tmp")
     try:
         with open(tmp_path, "w") as f:
