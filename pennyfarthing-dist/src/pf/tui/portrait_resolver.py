@@ -152,17 +152,16 @@ def resolve_portrait_path(
         if result:
             return result
 
-    # R2 CDN (story 154-1): lazily download the theme pack — instant on cache
-    # hit, graceful when offline — and resolve from the local cache. This is the
-    # primary remote source; the repo-bundled LFS/cyclist paths below are legacy
-    # fallbacks. The CDN cache uses the same {size}/{slug}.png layout, so
-    # _find_portrait needs no changes.
+    # R2 CDN: lazily download the single portrait PNG straight from the bucket
+    # (``{base}/portraits/{theme}/{size}/{slug}.png``) — instant on cache hit,
+    # graceful when offline. We already computed ``slug`` locally, so no manifest
+    # is needed. This is the primary remote source; the repo-bundled LFS/cyclist
+    # paths below are legacy fallbacks.
     try:
         from pf.package import portrait_cdn
 
-        portrait_cdn.ensure_portraits(theme)
-        cdn_hit = _find_portrait(
-            portrait_cdn._cache_dir() / theme, slug, preferred_size=preferred_size
+        cdn_hit = portrait_cdn.fetch_portrait(
+            theme, slug, preferred_size=preferred_size or "medium"
         )
         if cdn_hit:
             return cdn_hit
