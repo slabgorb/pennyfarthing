@@ -195,6 +195,86 @@ def test_ac3_shard_format_epics_still_render(project_dir):
     assert epic["title"] == "Sharded active epic"
     assert [s.get("id") for s in epic["stories"]] == ["157-1"]
 
+    # Reviewer B1: jiraKey must be preserved for string-ref shards. The shard
+    # has no `jira:` field, so the index ref string is the only source — it
+    # must NOT silently blank to "". Here ref == id, so jiraKey == the ref.
+    assert epic["jiraKey"] == "157", (
+        f"jiraKey blanked for string-ref shard; expected '157', got {epic['jiraKey']!r}"
+    )
+    done_epic = next(e for e in result["completedEpics"] if e.get("id") == "151")
+    assert done_epic["jiraKey"] == "151", (
+        f"jiraKey blanked for done string-ref shard; expected '151', got {done_epic['jiraKey']!r}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Reviewer B1 — string ref != shard id: the INDEX ref must survive as jiraKey
+# ---------------------------------------------------------------------------
+
+
+def test_b1_jirakey_preserves_ref_when_ref_differs_from_id(project_dir):
+    """A Jira-keyed index ref (e.g. 'PROJ-14298') resolving to a shard with a
+    different `id` (e.g. '40') and NO `jira:` field must keep jiraKey='PROJ-14298'.
+
+    THIS IS THE RED for Dev's fix. Dev's GREEN sourced jiraKey from
+    epic_data.get("jira",""); the shard has no `jira` field, so jiraKey
+    silently became "" — blanking the TUI Jira column for real Jira projects.
+    Intended precedence: epic's own `jira` field -> original index ref -> "".
+    """
+    sprint_data = {
+        "sprint": SPRINT_HEADER,
+        "epics": ["PROJ-14298"],
+        "stories": [],
+    }
+    _write_yaml(project_dir / "sprint" / "current-sprint.yaml", sprint_data)
+
+    _write_yaml(
+        project_dir / "sprint" / "epic-PROJ-14298.yaml",
+        {
+            "id": "40",  # shard id deliberately differs from the index ref
+            "type": "epic",
+            "title": "Jira-backed epic",
+            "status": "in_progress",
+            # NB: NO `jira:` field inside the shard.
+            "stories": [{"id": "40-1", "title": "jira story", "points": 2, "status": "in_progress"}],
+        },
+    )
+
+    result = fetch_sprint()
+
+    epic = next((e for e in result["epics"] if e.get("id") == "40"), None)
+    assert epic is not None, f"Jira-ref shard dropped; epics={result['epics']!r}"
+    assert epic["jiraKey"] == "PROJ-14298", (
+        f"index ref lost; expected jiraKey='PROJ-14298', got {epic['jiraKey']!r}. "
+        "Dev must fall back to the original ref string when the shard has no `jira` field."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Reviewer B2 — pin: inline-dict epics (no jira) correctly get jiraKey == ""
+# ---------------------------------------------------------------------------
+
+
+def test_b2_inline_epic_jirakey_is_empty(project_dir):
+    """Inline-dict epics have no jira and no index ref string -> jiraKey == "".
+
+    Pins correct behavior so Dev's ref-fallback fix does not over-correct and
+    invent a jiraKey for inline epics.
+    """
+    sprint_data = {
+        "sprint": SPRINT_HEADER,
+        "epics": [_inline_active_epic()],
+        "stories": [],
+    }
+    _write_yaml(project_dir / "sprint" / "current-sprint.yaml", sprint_data)
+
+    result = fetch_sprint()
+
+    epic = next(e for e in result["epics"] if e.get("id") == "156")
+    assert epic["jiraKey"] == "", (
+        f"inline epic should have empty jiraKey, got {epic['jiraKey']!r}"
+    )
+
 
 # ---------------------------------------------------------------------------
 # AC5 — standalone_stories still surface as the standalone pseudo-epic
