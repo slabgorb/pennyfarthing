@@ -195,7 +195,7 @@ Session files track active work sessions for stories. They are the highest-frequ
 </skills-invoked>
 ```
 
-**Agent protocol:** When a workflow phase has `skills.required` in its YAML definition, the activating agent invokes each listed skill via the Skill tool, then appends a `<skill>` entry to `<skills-invoked>` in the session file. Composite exit gates (e.g., `sdd-red-exit`, `sdd-green-exit`) read this element to verify required skills have been attested.
+**Agent protocol:** When a workflow phase has `skills.required` in its YAML definition, the activating agent invokes each listed skill via the Skill tool, then appends a `<skill>` entry to `<skills-invoked>` in the session file. Composite exit gates (e.g., `spdd-red-exit`, `spdd-green-exit`) read this element to verify required skills have been attested.
 
 ---
 
