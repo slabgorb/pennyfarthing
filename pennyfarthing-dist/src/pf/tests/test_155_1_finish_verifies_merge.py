@@ -362,26 +362,42 @@ class TestFinishResolvesOutOfBandPr:
         )
         assert result["success"] is True
 
+    @patch("pf.sprint.story_finish._add_story_to_completed")
     @patch("pf.sprint.story_finish.transition_story")
     @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
-    def test_does_not_mark_done_when_no_pr_resolvable(
-        self, mock_mode: MagicMock, mock_transition: MagicMock, project_no_pr: Path
+    def test_no_pr_finish_still_succeeds_verify_does_not_overreach(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        mock_add_completed: MagicMock,
+        project_no_pr: Path,
     ) -> None:
-        """No PR in session AND none findable by branch, in auto merge mode:
-        finish must not silently flip to done — nothing was merged."""
-        mock_transition.return_value = {"success": True, "to_status": "in_review"}
-        # listed_pr="" → gh pr list resolves nothing; pr_state irrelevant (no merge).
+        """No PR in session AND none findable by branch, in auto merge mode.
+
+        Product decision (2026-06-04, Keith): the verify-merged guard applies
+        **only when a PR exists**. A story with no resolvable PR is NOT blocked
+        by this story — it keeps the prior behavior of marking done (guarded
+        separately by ``test_151_3::test_success_path_unchanged``). This test is
+        the over-reach guard: the new ``gh pr view`` verification must not abort
+        a legitimate no-PR finish. The "no PR at all" case is tracked as an open
+        question in the 155-1 Delivery Findings; both reported bugs (#71/#60)
+        involved a PR that existed but did not merge, which is covered above.
+        """
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+        # listed_pr="" → gh pr list resolves nothing → no PR → merge step skipped.
         with patch(
             "pf.sprint.story_finish._run",
             side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN", listed_pr=""),
         ):
             result = finish_story(project_no_pr, "155-1")
 
-        assert not _requested_done(mock_transition), (
-            "finish flipped to `done` in auto mode with no PR to merge — the "
-            "silent no-op described in gh #71"
+        assert result["success"] is True, (
+            "verify-merged must not block a no-PR finish (over-reach guard): "
+            f"{result}"
         )
-        assert result["success"] is False
+        assert _requested_done(mock_transition), (
+            "no-PR auto finish should still transition to done (accepted behavior)"
+        )
 
 
 # =============================================================================

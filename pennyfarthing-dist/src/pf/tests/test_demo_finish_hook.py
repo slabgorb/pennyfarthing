@@ -95,7 +95,13 @@ class TestDemoHookTriggered:
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_read_sprint.return_value = {"epics": []}
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        # Story 155-1: finish now verifies the PR merged via `gh pr view --json
+        # state`. The session carries PR #999, so the verify call must see a
+        # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
+        # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+        )
         mock_demo_generate.return_value = {"success": True, "data": {"files": []}}
 
         from pf.sprint.story_finish import finish_story
@@ -144,7 +150,13 @@ class TestDemoHookTriggered:
         _setup_finish_env(tmp_path, "99-5")
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_read_sprint.return_value = {"epics": []}
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        # Story 155-1: finish now verifies the PR merged via `gh pr view --json
+        # state`. The session carries PR #999, so the verify call must see a
+        # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
+        # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+        )
         mock_demo_generate.return_value = {"success": True, "data": {"files": []}}
 
         from pf.sprint.story_finish import finish_story
@@ -181,7 +193,13 @@ class TestDemoHookConfiguration:
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_read_sprint.return_value = {"epics": []}
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        # Story 155-1: finish now verifies the PR merged via `gh pr view --json
+        # state`. The session carries PR #999, so the verify call must see a
+        # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
+        # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+        )
         mock_demo_generate.return_value = {"success": True, "data": {"files": []}}
 
         from pf.sprint.story_finish import finish_story
@@ -271,7 +289,13 @@ class TestDemoHookErrorHandling:
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_read_sprint.return_value = {"epics": []}
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        # Story 155-1: finish now verifies the PR merged via `gh pr view --json
+        # state`. The session carries PR #999, so the verify call must see a
+        # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
+        # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+        )
         # Demo generation returns failure
         mock_demo_generate.return_value = {
             "success": False,
@@ -302,7 +326,13 @@ class TestDemoHookErrorHandling:
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_read_sprint.return_value = {"epics": []}
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        # Story 155-1: finish now verifies the PR merged via `gh pr view --json
+        # state`. The session carries PR #999, so the verify call must see a
+        # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
+        # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+        )
         # Demo generation raises an unexpected exception
         mock_demo_generate.side_effect = RuntimeError("Unexpected crash in demo pipeline")
 
@@ -330,7 +360,13 @@ class TestDemoHookErrorHandling:
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_read_sprint.return_value = {"epics": []}
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        # Story 155-1: finish now verifies the PR merged via `gh pr view --json
+        # state`. The session carries PR #999, so the verify call must see a
+        # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
+        # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+        )
         mock_demo_generate.return_value = {
             "success": False,
             "error": "No PR diff available",
@@ -366,7 +402,13 @@ class TestDemoHookErrorHandling:
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_read_sprint.return_value = {"epics": []}
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        # Story 155-1: finish now verifies the PR merged via `gh pr view --json
+        # state`. The session carries PR #999, so the verify call must see a
+        # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
+        # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+        )
         mock_demo_generate.side_effect = RuntimeError("Boom")
 
         from pf.sprint.story_finish import finish_story
@@ -399,7 +441,13 @@ class TestDemoHookErrorHandling:
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_read_sprint.return_value = {"epics": []}
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        # Story 155-1: finish now verifies the PR merged via `gh pr view --json
+        # state`. The session carries PR #999, so the verify call must see a
+        # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
+        # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+        )
         mock_demo_generate.return_value = {
             "success": True,
             "data": {
@@ -446,7 +494,13 @@ class TestDemoHookStepOrdering:
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_read_sprint.return_value = {"epics": []}
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        # Story 155-1: finish now verifies the PR merged via `gh pr view --json
+        # state`. The session carries PR #999, so the verify call must see a
+        # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
+        # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+        )
         mock_demo_generate.return_value = {"success": True, "data": {"files": []}}
 
         call_order: list[str] = []
@@ -489,7 +543,13 @@ class TestDemoHookStepOrdering:
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_read_sprint.return_value = {"epics": []}
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        # Story 155-1: finish now verifies the PR merged via `gh pr view --json
+        # state`. The session carries PR #999, so the verify call must see a
+        # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
+        # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+        )
 
         def verify_archive_exists(*args, **kwargs):
             archive_path = tmp_path / "sprint" / "archive" / "PROJ-99999-session.md"
