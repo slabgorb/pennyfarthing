@@ -620,10 +620,13 @@ class TestErrorHandling:
         assert result.action in (BranchAction.SKIPPED, BranchAction.ERROR)
 
     @pytest.mark.asyncio
-    async def test_status_all_handles_partial_failures(self) -> None:
+    async def test_status_all_handles_partial_failures(self, temp_git_repo: Path) -> None:
         """get_all_repo_status should return results even with partial failures."""
+        # Use an isolated tmp_path repo for the "good" entry — never the live
+        # cwd / current directory, which leaks side effects onto the surrounding
+        # repository (story 153-9).
         repos = [
-            ("good-repo", Path(".")),  # Current dir should work
+            ("good-repo", temp_git_repo),
             ("bad-repo", Path("/nonexistent")),
         ]
 
@@ -633,10 +636,13 @@ class TestErrorHandling:
         # One should have error, one should not
 
     @pytest.mark.asyncio
-    async def test_branches_handles_partial_failures(self) -> None:
+    async def test_branches_handles_partial_failures(self, temp_git_repo: Path) -> None:
         """create_feature_branches should return results even with partial failures."""
+        # Use an isolated tmp_path repo for the "good" entry — never the live
+        # cwd / current directory: create_feature_branches would checkout a
+        # branch on the surrounding repository (story 153-9).
         repos = [
-            ("good-repo", Path(".")),
+            ("good-repo", temp_git_repo),
             ("bad-repo", Path("/nonexistent")),
         ]
 

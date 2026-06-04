@@ -33,9 +33,7 @@ TEST_GIT_UTILS = Path(__file__).resolve().parent / "test_git_utils.py"
 
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ["git", *args], cwd=repo, capture_output=True, text=True, check=False
-    )
+    return subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True, check=False)
 
 
 def _make_repo(repo: Path) -> str:
