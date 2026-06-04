@@ -36,7 +36,9 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-CDN_BASE_URL = "https://portraits.darkatelier.org/v1"
+CDN_BASE_URL = os.environ.get(
+    "PF_PORTRAIT_CDN_BASE_URL", "https://cdn.slabgorb.com/v1"
+)
 MANIFEST_URL = f"{CDN_BASE_URL}/manifest.json"
 MANIFEST_CHECK_INTERVAL = 86400  # 24h rate limit between manifest fetches
 
