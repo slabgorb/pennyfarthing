@@ -54,7 +54,7 @@ def resolve_gate(
         return _result(status="error", error=f"Workflow '{workflow}' not found.{hint}")
 
     try:
-        data = yaml.safe_load(workflow_path.read_text())
+        data = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
         phases = data["workflow"]["phases"]
     except Exception as e:
         return _result(
@@ -93,9 +93,20 @@ def resolve_gate(
 
     session_path = project_root / ".session" / f"{story_id}-session.md"
     try:
-        session_content = session_path.read_text()
-    except OSError:
+        session_content = session_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
         session_content = ""
+    except (OSError, UnicodeDecodeError) as e:
+        # Present-but-unreadable is NOT "missing assessment" — telling the
+        # agent to add a heading that's already there sends it to corrupt
+        # the session. Surface the real problem.
+        return _result(
+            status="error",
+            error=(
+                f"Cannot read session file `.session/{story_id}-session.md`: {e}. "
+                "To fix: Check file permissions and encoding, then retry."
+            ),
+        )
     assessment_found = has_assessment(session_content)
 
     # Support explicit next: directive for non-linear phase routing

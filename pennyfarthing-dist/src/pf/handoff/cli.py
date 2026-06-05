@@ -27,6 +27,7 @@ def _infer_session_args() -> dict:
     Returns ``{"ok": True, "story_id", "workflow", "phase", "root"}`` or
     ``{"ok": False, "error": <actionable message>}``.
     """
+    import re
     from pathlib import Path
 
     from pf.prime.workflow import find_active_session, parse_session_header
@@ -35,20 +36,27 @@ def _infer_session_args() -> dict:
         from pf.common.config import get_project_root
 
         root = get_project_root()
-    except Exception:
+    except FileNotFoundError:
+        # No project root markers found — fall back to cwd detection.
         root = Path.cwd()
+    except Exception as e:
+        # A real config error must surface, not be masked as "no session".
+        return {"ok": False, "error": f"Project root detection failed: {e}"}
 
-    session = find_active_session(root)
-    if session is None:
-        return {
-            "ok": False,
-            "error": (
-                "No active session found in `.session/` — cannot infer arguments. "
-                "Pass them explicitly (see --help) or run `/pf-sm` to start a story."
-            ),
-        }
+    try:
+        session = find_active_session(root)
+        if session is None:
+            return {
+                "ok": False,
+                "error": (
+                    "No active session found in `.session/` — cannot infer arguments. "
+                    "Pass them explicitly (see --help) or run `/pf-sm` to start a story."
+                ),
+            }
+        header = parse_session_header(session)
+    except OSError as e:
+        return {"ok": False, "error": f"Cannot read session file: {e}"}
 
-    header = parse_session_header(session)
     story_id = header.get("story_id")
     workflow = header.get("workflow")
     phase = header.get("phase")
@@ -60,6 +68,21 @@ def _infer_session_args() -> dict:
                 "fields — cannot infer arguments. Pass them explicitly (see --help)."
             ),
         }
+
+    # Inferred values come from session file content and are later interpolated
+    # into filesystem paths (workflow YAML lookup, session path) — accept only
+    # plain identifiers (CWE-22).
+    ident = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+    for field, value in (("story", story_id), ("workflow", workflow), ("phase", phase)):
+        if not ident.fullmatch(value):
+            return {
+                "ok": False,
+                "error": (
+                    f"Inferred {field} value {value!r} from `{session.name}` is "
+                    "invalid — not a plain identifier. Fix the session file or "
+                    "pass arguments explicitly."
+                ),
+            }
     return {"ok": True, "story_id": story_id, "workflow": workflow, "phase": phase, "root": root}
 
 
@@ -131,7 +154,8 @@ def resolve_gate_cmd(
 
         click.echo(yaml.dump({"RESOLVE_RESULT": result}, default_flow_style=False).rstrip())
 
-    if result.get("status") == "blocked":
+    if result.get("status") in ("blocked", "error"):
+        # Fail loud: relay automation treats exit 0 as success (gh #50).
         raise SystemExit(1)
 
 
@@ -235,11 +259,21 @@ def marker_cmd(next_agent: str | None, error_msg: str | None):
                 "  pf handoff marker dev\n"
                 "  pf handoff marker --error 'Tests failing'"
             )
-        from pf.handoff.complete_phase import _get_phase_agent
+        # Explicit owner lookup — _get_phase_agent's phase-name fallback would
+        # silently emit a non-agent target (e.g. /pf-red) on a failed lookup.
+        from pf.handoff.complete_phase import _load_workflow_phases
 
-        next_agent = _get_phase_agent(
-            inferred["root"], inferred["workflow"], inferred["phase"]
+        phases = _load_workflow_phases(inferred["root"], inferred["workflow"])
+        owner = next(
+            (p.get("agent") for p in phases if p.get("name") == inferred["phase"]),
+            None,
         )
+        if not owner:
+            raise click.UsageError(
+                f"Cannot determine the owner of phase '{inferred['phase']}' in "
+                f"workflow '{inferred['workflow']}' — provide NEXT_AGENT explicitly."
+            )
+        next_agent = owner
 
     click.echo(generate_marker(next_agent, error=error_msg))
 
