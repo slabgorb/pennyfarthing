@@ -44,10 +44,7 @@ PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"real-portrait-pixels" * 64
 
 # A Git-LFS pointer — the canonical "stub poisoning" payload. Does NOT start
 # with the PNG signature, so a magic check must reject it.
-LFS_STUB = (
-    b"version https://git-lfs.github.com/spec/v1\n"
-    b"oid sha256:deadbeef\nsize 4096\n"
-)
+LFS_STUB = b"version https://git-lfs.github.com/spec/v1\noid sha256:deadbeef\nsize 4096\n"
 
 
 class _FakeResp(io.BytesIO):
@@ -201,7 +198,9 @@ def test_resolver_ignores_home_override_dir(resolver_env, monkeypatch, tmp_path:
     assert result is None, "resolver must NOT serve the ~/.pennyfarthing override"
 
 
-def test_resolver_ignores_cyclist_package_fallback(resolver_env, monkeypatch, tmp_path: Path) -> None:
+def test_resolver_ignores_cyclist_package_fallback(
+    resolver_env, monkeypatch, tmp_path: Path
+) -> None:
     from pf.tui import portrait_resolver as pr
 
     slug, _ = resolver_env
@@ -314,6 +313,7 @@ def test_self_heal_is_logged(tmp_path: Path, install_cdn, caplog) -> None:
 
     messages = [r.getMessage().lower() for r in caplog.records]
     assert any(
-        ("slug-55555" in m) or any(kw in m for kw in ("self-heal", "poison", "stub", "invalid", "magic"))
+        ("slug-55555" in m)
+        or any(kw in m for kw in ("self-heal", "poison", "stub", "invalid", "magic"))
         for m in messages
     ), "self-heal must emit a debug log record"

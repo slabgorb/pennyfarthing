@@ -13,13 +13,8 @@ import click
 @click.command()
 @click.option("--dry-run", is_flag=True, help="Show what would be done without doing it")
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation for hook changes")
-@click.option(
-    "--force-portraits",
-    is_flag=True,
-    help="Re-copy the shared portrait cache even if version and content match",
-)
 @click.argument("target", required=False, default=".")
-def init(dry_run: bool, yes: bool, force_portraits: bool, target: str) -> None:
+def init(dry_run: bool, yes: bool, target: str) -> None:
     """Initialize a Pennyfarthing project in the current directory.
 
     Creates .pennyfarthing/ and .claude/ directories, copies pf-*
@@ -83,7 +78,6 @@ def init(dry_run: bool, yes: bool, force_portraits: bool, target: str) -> None:
         target_dir=target_dir,
         dist_root=dist_root,
         skip_hooks=skip_hooks,
-        force_portraits=force_portraits,
     )
 
     if not result["success"]:
@@ -126,13 +120,6 @@ def init(dry_run: bool, yes: bool, force_portraits: bool, target: str) -> None:
             click.echo("  justfile updated (import added)")
     if jf.get("justfile_pf_written"):
         click.echo("  .pennyfarthing/justfile.pf updated (framework recipes)")
-    portraits = data.get("portraits", {})
-    if portraits.get("installed"):
-        click.echo(f"  portraits installed to {portraits['path']}")
-    elif portraits.get("skipped_reason"):
-        click.echo(f"  portraits: {portraits['skipped_reason']}")
-    if data.get("portraits_linked"):
-        click.echo("  portraits symlinked (shared cache)")
     if not data.get("dogfooding"):
         click.echo()
         click.echo("Next steps:")

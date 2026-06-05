@@ -1,9 +1,10 @@
-"""Portrait path resolution for Frame TUI TUI.
+"""Portrait path resolution for the Frame TUI.
 
-Resolves persona portrait image paths using the canonical theme discovery
-from ``pf.common.themes``.  Each theme directory that
-contains ``themes/{name}.yaml`` has a sibling ``portraits/{name}/`` with
-size-bucketed portrait images.
+Computes each persona's portrait ``slug`` (``shortName-OCEAN``) from the theme
+YAML via the canonical discovery in ``pf.common.themes``, then fetches the image
+from the R2 CDN (``pf.package.portrait_cdn``) — the single source of truth. There
+are no local install, override, theme-sibling, Git-LFS, or Cyclist-package
+fallbacks (story 153-12).
 
 Story 110-3: Portrait image header with textual-image.
 """
@@ -41,65 +42,6 @@ def _extract_agent_slug(theme_yaml: Path, agent: str) -> str | None:
     return None
 
 
-def _is_lfs_pointer(path: Path) -> bool:
-    """Check if a file is a git-lfs pointer instead of actual image data."""
-    try:
-        with open(path, "rb") as f:
-            header = f.read(44)
-        return header.startswith(b"version https://git-lfs")
-    except OSError:
-        return False
-
-
-def _has_lfs_stubs(portraits_theme_dir: Path, slug: str) -> bool:
-    """Check if a portrait directory has LFS stubs for the given slug."""
-    if not portraits_theme_dir.is_dir():
-        return False
-    for size_dir in portraits_theme_dir.iterdir():
-        if not size_dir.is_dir():
-            continue
-        for f in size_dir.iterdir():
-            if f.name.lower().startswith(slug.lower()) and f.suffix in (".png", ".jpg"):
-                if _is_lfs_pointer(f):
-                    return True
-    return False
-
-
-def _find_portrait(
-    portraits_theme_dir: Path, slug: str, preferred_size: str | None = None
-) -> Path | None:
-    """Find a portrait file matching the slug in a theme's portrait directory.
-
-    Args:
-        portraits_theme_dir: Path to the theme's portrait directory.
-        slug: Portrait slug (shortName-OCEAN).
-        preferred_size: Preferred size bucket. ``"large"`` or ``"medium"``
-            searches large first; ``"small"`` searches small first.
-            ``None`` keeps the default order (medium first).
-    """
-    if not portraits_theme_dir.is_dir():
-        return None
-    if preferred_size == "small":
-        size_order = ["small", "medium", "large", "original"]
-    elif preferred_size in ("large", "medium"):
-        size_order = ["large", "medium", "small", "original"]
-    else:
-        size_order = ["medium", "large", "small", "original"]
-    for size in size_order:
-        size_dir = portraits_theme_dir / size
-        if size_dir.is_dir():
-            for f in size_dir.iterdir():
-                if f.name.lower().startswith(slug.lower()) and f.suffix in (".png", ".jpg"):
-                    if not _is_lfs_pointer(f):
-                        return f
-    # Fallback to root of theme dir
-    for f in portraits_theme_dir.iterdir():
-        if f.is_file() and f.name.lower().startswith(slug.lower()) and f.suffix in (".png", ".jpg"):
-            if not _is_lfs_pointer(f):
-                return f
-    return None
-
-
 def resolve_portrait_path(
     theme: str,
     agent: str,
@@ -108,21 +50,18 @@ def resolve_portrait_path(
 ) -> Path | None:
     """Resolve the full path to a portrait image.
 
-    Uses ``discover_all_theme_dirs`` from ``common.themes`` to search core
-    themes, installed theme packages, monorepo workspace packages, and
-    custom themes — in canonical priority order.
-
-    For each theme directory the portrait sibling is derived:
-    - ``.pennyfarthing/personas/themes/`` → ``.pennyfarthing/personas/portraits/``
-    - ``themes-*/themes/`` → ``themes-*/portraits/``
+    Uses ``discover_all_theme_dirs`` from ``common.themes`` only to compute the
+    agent's portrait ``slug`` (``shortName-OCEAN``) from the theme YAML. The
+    image itself is fetched from the R2 CDN — the single source of truth.
 
     Args:
         theme: Theme name (e.g., 'hogans-heroes', 'monty-python')
         agent: Agent role (e.g., 'sm', 'tea', 'dev')
-        project_root: Project root for path resolution. Defaults to cwd.
+        project_root: Project root for theme-YAML discovery. Defaults to cwd.
 
     Returns:
-        Path to portrait file, or None if not found.
+        Path to the cached portrait file, or None if the slug can't be resolved
+        or the CDN has no image (e.g. offline).
     """
     from pf.common.themes import discover_all_theme_dirs
 
@@ -139,78 +78,17 @@ def resolve_portrait_path(
     if not slug:
         return None
 
-    # Highest priority: developer override directory.
-    override_dir = Path.home() / ".pennyfarthing" / "portraits" / theme
-    override_hit = _find_portrait(override_dir, slug, preferred_size=preferred_size)
-    if override_hit:
-        return override_hit
-
-    # Search portrait directories (sibling of each themes dir)
-    for themes_dir in theme_dirs:
-        portraits_dir = themes_dir.parent / "portraits" / theme
-        result = _find_portrait(portraits_dir, slug, preferred_size=preferred_size)
-        if result:
-            return result
-
-    # R2 CDN: lazily download the single portrait PNG straight from the bucket
-    # (``{base}/portraits/{theme}/{size}/{slug}.png``) — instant on cache hit,
-    # graceful when offline. We already computed ``slug`` locally, so no manifest
-    # is needed. This is the primary remote source; the repo-bundled LFS/cyclist
-    # paths below are legacy fallbacks.
+    # R2 CDN is the ONLY portrait source (story 153-12). We already computed
+    # ``slug`` locally, so we ask the bucket for exactly the file we need
+    # (``{base}/portraits/{theme}/{size}/{slug}.png``): instant on a cache hit,
+    # ``None`` when offline. No local install, ``~/.pennyfarthing`` override,
+    # theme-sibling, Git-LFS self-heal, or Cyclist-package fallback — by decree.
     try:
         from pf.package import portrait_cdn
 
-        cdn_hit = portrait_cdn.fetch_portrait(
-            theme, slug, preferred_size=preferred_size or "medium"
-        )
-        if cdn_hit:
-            return cdn_hit
+        return portrait_cdn.fetch_portrait(theme, slug, preferred_size=preferred_size or "medium")
     except Exception:
-        pass
-
-    # Self-healing: if portraits exist as LFS stubs, pull them and retry
-    for themes_dir in theme_dirs:
-        portraits_dir = themes_dir.parent / "portraits" / theme
-        if _has_lfs_stubs(portraits_dir, slug):
-            try:
-                from pf.common.themes import ensure_portrait_lfs
-
-                pull_result = ensure_portrait_lfs(theme, project_root, quiet=True)
-                if pull_result.get("pulled"):
-                    # Retry after successful LFS pull
-                    for td in theme_dirs:
-                        pd = td.parent / "portraits" / theme
-                        found = _find_portrait(pd, slug, preferred_size=preferred_size)
-                        if found:
-                            return found
-            except Exception:
-                pass
-            break  # Only attempt LFS pull once
-
-    # Fallback: search Cyclist package portrait directories
-    # Portraits are bundled in @pennyfarthing/cyclist, not alongside theme YAMLs
-    root = project_root or Path.cwd()
-    cyclist_portrait_dirs = [
-        root / "packages" / "cyclist" / "portraits" / theme,  # monorepo dev
-        root / "node_modules" / "@pennyfarthing" / "cyclist" / "portraits" / theme,  # npm
-    ]
-    # pnpm: resolve through .pennyfarthing symlink chain
-    pnpm_cyclist = root / "node_modules" / ".pnpm"
-    if pnpm_cyclist.is_dir():
-        for entry in pnpm_cyclist.iterdir():
-            if entry.name.startswith("@pennyfarthing+cyclist@"):
-                candidate = (
-                    entry / "node_modules" / "@pennyfarthing" / "cyclist" / "portraits" / theme
-                )
-                cyclist_portrait_dirs.append(candidate)
-                break
-
-    for portraits_dir in cyclist_portrait_dirs:
-        result = _find_portrait(portraits_dir, slug, preferred_size=preferred_size)
-        if result:
-            return result
-
-    return None
+        return None
 
 
 def detect_image_protocol() -> str | None:

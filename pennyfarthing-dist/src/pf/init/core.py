@@ -14,7 +14,6 @@ of portrait data per consumer.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import shutil
@@ -341,7 +340,6 @@ def init_project(
     dist_root: Path,
     dry_run: bool = False,
     skip_hooks: bool = False,
-    force_portraits: bool = False,
 ) -> dict:
     """Initialize a Pennyfarthing project.
 
@@ -354,8 +352,6 @@ def init_project(
         dist_root: Path to pennyfarthing-dist source
         dry_run: If True, show plan without executing
         skip_hooks: If True, leave settings.local.json hooks untouched
-        force_portraits: If True, re-copy the shared portrait cache even when
-            the version and content fingerprint already match
 
     Returns:
         Result dict: {success: bool, data?: dict, error?: str}
@@ -435,10 +431,6 @@ def init_project(
         # Create/repair all dogfooding symlinks
         symlinks_fixed = _ensure_dogfooding_symlinks(target_dir)
 
-        # Skip portrait symlinking — personas dir is already a symlink
-        portrait_result = _install_portraits(dist_root, force=force_portraits)
-        portraits_linked = False
-
     else:
         # --- Consumer mode: flat copies ---
 
@@ -480,10 +472,6 @@ def init_project(
             # Also copy agents to .claude/agents/ for native subagent support
             if dir_name == "agents":
                 _copy_tree(dist_root / dir_name, target_dir / ".claude" / "agents")
-
-        # --- Centralize portraits to shared XDG location ---
-        portrait_result = _install_portraits(dist_root, force=force_portraits)
-        portraits_linked = _symlink_portraits(target_dir)
 
         symlinks_fixed = 0
 
@@ -544,7 +532,9 @@ def init_project(
 
     # --- Generate command/skill files for custom agents ---
     custom_agents_result = generate_custom_agent_commands(target_dir)
-    custom_agents_data = custom_agents_result.get("data", {}) if custom_agents_result["success"] else {}
+    custom_agents_data = (
+        custom_agents_result.get("data", {}) if custom_agents_result["success"] else {}
+    )
 
     if is_dogfooding:
         return {
@@ -560,7 +550,6 @@ def init_project(
                 "shim_installed": shim_result.get("success", False),
                 "justfile": justfile_data,
                 "setup": setup_result.get("data", {}),
-                "portraits": portrait_result,
                 "custom_agents": custom_agents_data,
             },
         }
@@ -580,8 +569,6 @@ def init_project(
             "shim_installed": shim_result.get("success", False),
             "justfile": justfile_data,
             "setup": setup_result.get("data", {}),
-            "portraits": portrait_result,
-            "portraits_linked": portraits_linked,
             "custom_agents": custom_agents_data,
         },
     }
@@ -634,8 +621,6 @@ def _copy_tree(src: Path, dst: Path) -> None:
             shutil.copy2(item, dest_item)
 
 
-
-
 def generate_custom_agent_commands(project_dir: Path) -> dict:
     """Generate command and skill files for custom agents in agents-local/.
 
@@ -684,10 +669,12 @@ def generate_custom_agent_commands(project_dir: Path) -> dict:
 
         # --- Command file ---
         if cmd_file.exists():
-            preserved_commands.append({
-                "agent_name": agent_name,
-                "command_file": str(cmd_file),
-            })
+            preserved_commands.append(
+                {
+                    "agent_name": agent_name,
+                    "command_file": str(cmd_file),
+                }
+            )
         else:
             display_name = agent_name.replace("-", " ").replace("_", " ").title()
             content = (
@@ -708,10 +695,12 @@ def generate_custom_agent_commands(project_dir: Path) -> dict:
                 f"</instructions>\n"
             )
             cmd_file.write_text(content)
-            generated_commands.append({
-                "agent_name": agent_name,
-                "command_file": str(cmd_file),
-            })
+            generated_commands.append(
+                {
+                    "agent_name": agent_name,
+                    "command_file": str(cmd_file),
+                }
+            )
 
         # --- Skill directory ---
         skill_template = templates_dir / f"pf-{agent_name}.md"
@@ -721,10 +710,12 @@ def generate_custom_agent_commands(project_dir: Path) -> dict:
                 skill_dir.mkdir(parents=True, exist_ok=True)
                 # Copy template into skill directory
                 shutil.copy2(skill_template, skill_dir / skill_template.name)
-                generated_skills.append({
-                    "agent_name": agent_name,
-                    "skill_dir": str(skill_dir),
-                })
+                generated_skills.append(
+                    {
+                        "agent_name": agent_name,
+                        "skill_dir": str(skill_dir),
+                    }
+                )
 
     return {
         "success": True,
@@ -777,8 +768,7 @@ def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
     launcher_dest = target_dir / "start-session"
     if launcher_src.is_file():
         if launcher_dest.is_symlink() or (
-            launcher_dest.exists()
-            and launcher_dest.resolve() == launcher_src.resolve()
+            launcher_dest.exists() and launcher_dest.resolve() == launcher_src.resolve()
         ):
             launcher_dest.unlink()
         shutil.copy2(launcher_src, launcher_dest)
@@ -786,7 +776,12 @@ def _install_tmux_files(target_dir: Path, dist_root: Path) -> list[str]:
         installed.append("start-session")
 
     # Clean up legacy files from previous naming
-    for legacy in ("tmux-dev", "tmux.conf.vert-sample", "tmux.conf.right-sample", "tmux.conf.left-sample"):
+    for legacy in (
+        "tmux-dev",
+        "tmux.conf.vert-sample",
+        "tmux.conf.right-sample",
+        "tmux.conf.left-sample",
+    ):
         legacy_path = target_dir / legacy
         if legacy_path.exists() or legacy_path.is_symlink():
             legacy_path.unlink()
@@ -1095,208 +1090,18 @@ def _clean_old_gitignore_entries(target_dir: Path) -> None:
     if not gitignore_path.is_file():
         return
     content = gitignore_path.read_text()
-    stale = [".wheelhub-*", ".bikerack-*", "bikerack-*", "bikerack-pid", "bikerack-tui-pid", ".bikerack-port"]
+    stale = [
+        ".wheelhub-*",
+        ".bikerack-*",
+        "bikerack-*",
+        "bikerack-pid",
+        "bikerack-tui-pid",
+        ".bikerack-port",
+    ]
     lines = content.splitlines(keepends=True)
     filtered = [line for line in lines if line.strip() not in stale]
     if len(filtered) != len(lines):
         gitignore_path.write_text("".join(filtered))
-
-
-def _get_portraits_data_dir() -> Path:
-    """Return the XDG-compliant shared portraits directory.
-
-    Uses $XDG_DATA_HOME/pennyfarthing/portraits/ (defaults to
-    ~/.local/share/pennyfarthing/portraits/).
-    """
-    xdg = os.environ.get("XDG_DATA_HOME")
-    if xdg:
-        base = Path(xdg)
-    else:
-        base = Path.home() / ".local" / "share"
-    return base / "pennyfarthing" / "portraits"
-
-
-def _is_lfs_pointer(file_path: Path) -> bool:
-    """Check if a file is a Git LFS pointer (not a real image)."""
-    try:
-        if file_path.stat().st_size > 200:
-            return False
-        content = file_path.read_text(encoding="utf-8", errors="ignore")
-        return content.startswith("version https://git-lfs")
-    except (OSError, UnicodeDecodeError):
-        return False
-
-
-def _compute_portraits_fingerprint(source: Path) -> str:
-    """Cheap, stat-only fingerprint of portrait source content.
-
-    Hashes the sorted ``{relpath}\\t{size}`` line for every ``*.png`` under
-    ``source``. This detects added, removed, and resized portraits without
-    reading pixel data, so the XDG cache can be refreshed when content changes
-    within a single pf version (renders, resizes, restyles). It does NOT depend
-    on mtime, keeping the result stable across git checkouts and copies.
-    """
-    entries = []
-    for png in sorted(source.rglob("*.png")):
-        rel = png.relative_to(source).as_posix()
-        try:
-            size = png.stat().st_size
-        except OSError:
-            continue
-        entries.append(f"{rel}\t{size}")
-    blob = "\n".join(entries)
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
-
-
-def _find_portraits_source(dist_root: Path) -> Path | None:
-    """Find a source of real portrait images (not LFS pointers).
-
-    Checks dist_root first, then falls back to the pip-installed _dist
-    package which contains real images from the wheel build.
-
-    Returns:
-        Path to a portraits directory with real images, or None.
-    """
-    # Check dist_root portraits
-    dist_portraits = dist_root / "personas" / "portraits"
-    if dist_portraits.is_dir():
-        # Spot-check one PNG to see if it's real or an LFS pointer
-        sample = next(dist_portraits.rglob("*.png"), None)
-        if sample and not _is_lfs_pointer(sample):
-            return dist_portraits
-
-    # Fall back to pip-installed _dist (always has real images from wheel)
-    try:
-        from pf._dist import get_root, is_populated
-
-        if is_populated():
-            pip_portraits = get_root() / "personas" / "portraits"
-            if pip_portraits.is_dir():
-                sample = next(pip_portraits.rglob("*.png"), None)
-                if sample and not _is_lfs_pointer(sample):
-                    return pip_portraits
-    except (ImportError, ModuleNotFoundError):
-        pass
-
-    return None
-
-
-def _install_portraits(dist_root: Path, force: bool = False) -> dict:
-    """Install portraits to the shared XDG data directory.
-
-    Copies portrait images to ~/.local/share/pennyfarthing/portraits/
-    once, then consumer projects symlink to this shared cache. Re-copies
-    when EITHER the pf version OR the source content fingerprint differs
-    from the manifest — so renders, resizes, and restyles that land without
-    a version bump still propagate. Pass ``force=True`` to copy regardless.
-
-    Returns:
-        Result dict with keys: installed (bool), path (str),
-        source (str), skipped_reason (str|None).
-    """
-    from pf import __version__
-
-    target = _get_portraits_data_dir()
-    manifest_path = target / ".manifest.json"
-
-    # Read the existing manifest (if any).
-    manifest: dict = {}
-    if manifest_path.is_file():
-        try:
-            manifest = json.loads(manifest_path.read_text())
-        except (json.JSONDecodeError, OSError):
-            manifest = {}
-
-    # Find a source with real images.
-    source = _find_portraits_source(dist_root)
-    if source is None:
-        # No real source on disk. If the cache is already populated at this
-        # version, leave it alone (preserves prior behavior); otherwise report
-        # there is nothing to install.
-        if not force and manifest.get("pf_version") == __version__:
-            return {
-                "installed": False,
-                "path": str(target),
-                "source": "cached",
-                "skipped_reason": f"already at {__version__}",
-            }
-        return {
-            "installed": False,
-            "path": str(target),
-            "source": "none",
-            "skipped_reason": "no portrait source with real images found (LFS pointers only)",
-        }
-
-    fingerprint = _compute_portraits_fingerprint(source)
-
-    # Skip only when version AND content both match — and not forced.
-    if (
-        not force
-        and manifest.get("pf_version") == __version__
-        and manifest.get("source_fingerprint") == fingerprint
-    ):
-        return {
-            "installed": False,
-            "path": str(target),
-            "source": "cached",
-            "skipped_reason": f"already at {__version__} (content unchanged)",
-        }
-
-    # Copy portraits to shared location.
-    target.mkdir(parents=True, exist_ok=True)
-    _copy_tree(source, target)
-
-    # Write the manifest with version + content fingerprint.
-    manifest_path.write_text(
-        json.dumps(
-            {
-                "pf_version": __version__,
-                "source_fingerprint": fingerprint,
-                "installed_at": datetime.now(UTC).isoformat(),
-                "source": str(source),
-            },
-            indent=2,
-        )
-        + "\n"
-    )
-
-    return {
-        "installed": True,
-        "path": str(target),
-        "source": str(source),
-        "skipped_reason": None,
-    }
-
-
-def _symlink_portraits(target_dir: Path) -> bool:
-    """Replace .pennyfarthing/personas/portraits/ with a symlink to the shared cache.
-
-    Returns True if symlink was created or already exists correctly.
-    """
-    shared_portraits = _get_portraits_data_dir()
-
-    if not shared_portraits.is_dir():
-        return False
-
-    personas_dir = target_dir / ".pennyfarthing" / "personas"
-    if not personas_dir.is_dir():
-        return False
-
-    portraits_link = personas_dir / "portraits"
-
-    # Already a correct symlink
-    if portraits_link.is_symlink():
-        if portraits_link.resolve() == shared_portraits.resolve():
-            return True
-        portraits_link.unlink()
-
-    # Remove existing directory (copied portraits from previous init)
-    if portraits_link.is_dir():
-        shutil.rmtree(portraits_link)
-
-    # Create symlink
-    portraits_link.symlink_to(shared_portraits)
-    return True
 
 
 def _update_gitignore(target_dir: Path) -> None:
