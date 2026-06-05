@@ -401,3 +401,155 @@ class TestCliBareMarker:
         result = CliRunner().invoke(cli, ["handoff", "marker", "dev"])
         assert result.exit_code == 0, result.output
         assert "AGENT_COMMAND" in result.output
+
+
+# ===========================================================================
+# Rework cycle 1 — Reviewer findings (review verdict: REJECTED)
+#
+# Each test pins one confirmed finding from the 158-4 code review:
+#   RW1 [SEC]    inferred workflow name must be validated as an identifier
+#   RW2 [SILENT] config errors must not be masked as "no active session"
+#   RW3 [SILENT] unreadable session ≠ missing assessment (wrong remediation)
+#   RW4 [EDGE]   OSError at the inference boundary returns a result, not a
+#                traceback (SOUL #10)
+#   RW5 [EDGE]   resolve-gate CLI exits non-zero on status: "error"
+#   RW6 [SEC]    read_text in resolve_gate carries encoding= (CWE-838, static)
+#   RW7 [EDGE]   bare marker must not emit a phase name as an agent target
+# ===========================================================================
+
+
+class TestReworkWorkflowNameValidation:
+    def test_traversal_workflow_value_rejected_as_invalid(self, in_project: Path) -> None:
+        """RW1: `**Workflow:** ../../evil` in session content must be rejected
+        by inference as an invalid identifier — NOT interpolated into a YAML
+        path (CWE-22). The message must say the value is invalid, proving
+        validation fired rather than a failed path lookup."""
+        session_file = in_project / ".session" / f"{STORY_ID}-session.md"
+        session_file.write_text(
+            _session("setup", "Sm Assessment").replace(
+                "**Workflow:** tdd", "**Workflow:** ../../evil"
+            )
+        )
+        result = CliRunner().invoke(cli, ["handoff", "resolve-gate"])
+        assert result.exit_code != 0, (
+            f"Traversal workflow value accepted (exit 0):\n{result.output}"
+        )
+        assert "invalid" in result.output.lower(), (
+            "Error must say the inferred workflow NAME is invalid (validation), "
+            f"not merely that a file wasn't found (lookup):\n{result.output}"
+        )
+
+
+class TestReworkConfigErrorVisibility:
+    def test_config_error_not_masked_as_no_session(
+        self, in_project: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """RW2: a real config error from get_project_root must surface, not be
+        swallowed into a cwd fallback that silently 'works' (or a misleading
+        no-session message). Only FileNotFoundError (no root) may fall back."""
+        import pf.common.config as config_mod
+
+        def _boom(*a, **k):
+            raise RuntimeError("config exploded: bad config.local.yaml")
+
+        monkeypatch.setattr(config_mod, "get_project_root", _boom)
+        _write_session(in_project, assessment="Sm Assessment")
+        result = CliRunner().invoke(cli, ["handoff", "resolve-gate"])
+        assert result.exit_code != 0, (
+            "A config error was masked by the cwd fallback and the command "
+            f"succeeded:\n{result.output}"
+        )
+        assert "config exploded" in result.output, (
+            f"The original config error must be visible, got:\n{result.output}"
+        )
+
+
+class TestReworkUnreadableSession:
+    @pytest.fixture
+    def unreadable_session(self, project: Path, request: pytest.FixtureRequest) -> Path:
+        session_file = _write_session(project, assessment="Sm Assessment")
+        session_file.chmod(0o000)
+        request.addfinalizer(lambda: session_file.chmod(0o644))
+        return session_file
+
+    def test_unreadable_session_is_error_not_missing_heading(
+        self, project: Path, unreadable_session: Path
+    ) -> None:
+        """RW3: a present-but-unreadable session must yield status 'error'
+        with the OS problem — NOT 'blocked' telling the agent to add a
+        heading that is already there (an agent following that instruction
+        literally would corrupt the session)."""
+        result = resolve_gate(STORY_ID, "tdd", "setup", project)
+        assert result["status"] == "error", (
+            f"Unreadable session produced status {result['status']!r} — "
+            "must be a distinct 'error', not 'blocked'."
+        )
+        msg = result.get("error") or ""
+        assert "Add a `##" not in msg, (
+            f"Misleading remediation for a permissions problem: {msg!r}"
+        )
+
+    def test_bare_cli_handles_unreadable_session_without_traceback(
+        self, in_project: Path, unreadable_session: Path
+    ) -> None:
+        """RW4: the inference boundary must return a clean error result —
+        an escaping OSError (CliRunner records it as result.exception)
+        violates SOUL #10 at a CLI boundary."""
+        result = CliRunner().invoke(cli, ["handoff", "resolve-gate"])
+        assert result.exception is None or isinstance(result.exception, SystemExit), (
+            f"Unhandled exception escaped the CLI: {result.exception!r}"
+        )
+        assert result.exit_code != 0
+
+
+class TestReworkErrorExitCode:
+    def test_resolve_gate_exits_nonzero_on_error_status(self, in_project: Path) -> None:
+        """RW5: status 'error' (workflow not found) must exit non-zero —
+        relay automation treats exit 0 as success and marches on (fail-loud,
+        gh #50)."""
+        _write_session(in_project, assessment="Sm Assessment")
+        result = CliRunner().invoke(
+            cli, ["handoff", "resolve-gate", STORY_ID, "no-such-workflow", "setup"]
+        )
+        assert result.exit_code != 0, (
+            f"resolve-gate exited 0 on a genuine error:\n{result.output}"
+        )
+
+
+class TestReworkEncodingStaticGuard:
+    def test_resolve_gate_read_text_specifies_encoding(self) -> None:
+        """RW6 (static guard): rule #5 / CWE-838 — every read_text in
+        resolve_gate.py must pin encoding so a LANG=C environment cannot
+        turn a session read into a UnicodeDecodeError."""
+        import inspect
+
+        import pf.handoff.resolve_gate as rg
+
+        source = inspect.getsource(rg)
+        bare_reads = [
+            line.strip()
+            for line in source.splitlines()
+            if ".read_text()" in line
+        ]
+        assert not bare_reads, (
+            f"read_text() without encoding= in resolve_gate.py: {bare_reads}"
+        )
+
+
+class TestReworkMarkerUnknownPhase:
+    def test_bare_marker_does_not_emit_phase_name_as_agent(self, in_project: Path) -> None:
+        """RW7: when the session phase has no entry in the workflow YAML, the
+        phase-name fallback must not be emitted as a handoff target
+        (/pf-mystery is not an agent). Fail loud instead."""
+        session_file = in_project / ".session" / f"{STORY_ID}-session.md"
+        session_file.write_text(
+            _session("mystery", "Sm Assessment")
+        )
+        result = CliRunner().invoke(cli, ["handoff", "marker"])
+        assert "/pf-mystery" not in result.output, (
+            f"Marker emitted the raw phase name as an agent target:\n{result.output}"
+        )
+        assert result.exit_code != 0, (
+            "Failed owner inference must exit non-zero, got exit "
+            f"{result.exit_code}:\n{result.output}"
+        )
