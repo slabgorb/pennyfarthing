@@ -110,6 +110,19 @@ def complete_phase(
             ),
         }
 
+    # Subgate: setup-exit requires the epic + story context documents to exist.
+    # The sm-setup-exit gate's context checks are markdown instructions run by a
+    # subagent the script-first path never spawns, so enforce them mechanically
+    # here before any session mutation (SOUL #11, Automatic Beats Instructional).
+    if gate_type == "sm_setup_exit":
+        context_error = _check_setup_context(project_root, story_id)
+        if context_error:
+            return {
+                "status": "error",
+                "session_file": str(session_path),
+                "error": context_error,
+            }
+
     # Subgate: approval gate requires subagent completion table AND specialist tags
     if gate_type == "approval":
         completion_error = _check_subagent_completion(content)
@@ -259,6 +272,37 @@ def complete_phase(
         "session_file": f".session/{story_id}-session.md",
         "error": None,
     }
+
+
+def _check_setup_context(project_root: Path, story_id: str) -> str | None:
+    """Verify the epic + story context docs exist and are non-empty.
+
+    Enforces the sm-setup-exit gate's context requirement mechanically so the
+    setup→red transition cannot advance into a missing-context condition that
+    would later hard-block the TEA RED gate (gh #61).
+
+    Presence + non-empty mirrors the gate file's documented Fallback; it does
+    not couple the handoff path to the full context schema validator.
+
+    Returns an actionable error message if either document is missing or empty,
+    or None when both are present and non-empty.
+    """
+    epic_n = story_id.split("-")[0]
+    context_dir = project_root / "sprint" / "context"
+    required = [
+        context_dir / f"context-epic-{epic_n}.md",
+        context_dir / f"context-story-{story_id}.md",
+    ]
+    missing = [p for p in required if not p.exists() or p.stat().st_size == 0]
+    if missing:
+        names = ", ".join(f"`sprint/context/{p.name}`" for p in missing)
+        return (
+            f"Setup context missing or empty: {names}. "
+            f"To fix: Run `pf context create epic {epic_n}` and "
+            f"`pf context create story {story_id}` to generate the context "
+            "documents before completing the setup phase."
+        )
+    return None
 
 
 def _calc_duration(started_str: str, ended_str: str) -> str:
