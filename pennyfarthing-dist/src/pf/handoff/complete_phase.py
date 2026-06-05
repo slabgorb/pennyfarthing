@@ -96,18 +96,18 @@ def complete_phase(
 
     # Guard: require assessment section before allowing gated phase transitions.
     # Skip/manual transitions (e.g. setup→implement) don't need assessments.
-    if gate_type not in ("skip", "manual", "-", None, "") and not re.search(
-        r"^##\s+.*Assessment", content, re.MULTILINE
-    ):
-        agent_name = from_agent.replace("-", " ").title()
+    # Shared with resolve_gate so the two steps can never disagree (gh #49).
+    from pf.handoff.session_assessment import (
+        has_assessment,
+        missing_assessment_error,
+        requires_assessment,
+    )
+
+    if requires_assessment(gate_type) and not has_assessment(content):
         return {
             "status": "error",
             "session_file": str(session_path),
-            "error": (
-                "No assessment found in session file. "
-                f"To fix: Add a `## {agent_name} Assessment` heading "
-                "to the session file before completing the phase."
-            ),
+            "error": missing_assessment_error(from_agent),
         }
 
     # Subgate: setup-exit requires the epic + story context documents to exist.

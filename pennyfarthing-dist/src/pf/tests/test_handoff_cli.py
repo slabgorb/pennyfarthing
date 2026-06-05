@@ -285,18 +285,23 @@ class TestResolveGateReady:
 
 
 class TestResolveGateBlocked:
-    """AC1 + AC5: resolve-gate no longer blocks on missing assessment.
+    """AC1 + AC5: resolve-gate blocks on a missing assessment.
 
-    Assessment guard moved to complete_phase to prevent race conditions
-    where agents call resolve-gate before writing their assessment.
+    Since 158-4 the assessment guard is shared with complete_phase
+    (pf.handoff.session_assessment) and enforced at BOTH steps — resolve-gate
+    surfaces the failure one step earlier with the same actionable error.
+    Agents write their assessment before the exit protocol, so a missing
+    heading here is a real precondition failure, not a race.
     """
 
-    def test_missing_assessment_resolve_gate_still_ready(
+    def test_missing_assessment_resolve_gate_blocks(
         self, project: Path, session_without_assessment: Path
     ) -> None:
-        """resolve-gate returns ready regardless of assessment (guard moved to complete-phase)."""
+        """resolve-gate blocks on a missing assessment — same guard as
+        complete-phase, surfaced one step earlier (158-4 / gh #49)."""
         result = resolve_gate("105-1", "tdd", "green", project_root=project)
-        assert result["status"] == "ready"
+        assert result["status"] == "blocked"
+        assert result["assessment_found"] is False
 
     def test_missing_assessment_complete_phase_blocks(
         self, project: Path, session_without_assessment: Path
@@ -370,10 +375,12 @@ class TestResolveGateErrors:
         result = resolve_gate("105-1", "tdd", "nonexistent", project_root=project)
         assert result["status"] == "error" or result.get("error") is not None
 
-    def test_missing_session_file_resolve_gate_ready(self, project: Path) -> None:
-        """resolve-gate returns ready even without session file (guard moved to complete-phase)."""
+    def test_missing_session_file_resolve_gate_blocks(self, project: Path) -> None:
+        """resolve-gate blocks without a session file — an assessment cannot
+        exist, and complete-phase would error on the same state (158-4)."""
         result = resolve_gate("105-1", "tdd", "green", project_root=project)
-        assert result["status"] == "ready"
+        assert result["status"] == "blocked"
+        assert result["assessment_found"] is False
 
 
 class TestResolveGateOutputContract:
