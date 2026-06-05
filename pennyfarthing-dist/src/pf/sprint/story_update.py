@@ -173,6 +173,13 @@ def update_story(
         }
 
     if dry_run:
+        # Exercise the real write path against a throwaway location so
+        # serialization/IO failures surface in dry-run too (parity with the
+        # real run) — without persisting to the live sprint file.
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as _td:
+            write_sprint(Path(_td) / "current-sprint.yaml", data)
         return {
             "success": True,
             "dry_run": True,
