@@ -513,12 +513,12 @@ class TuiApp(App):
         border-bottom: solid #444444;
     }
     #portrait-row {
-        height: 5;
+        height: auto;
         width: 100%;
     }
     #portrait-img {
-        width: 10;
-        height: 5;
+        width: auto;
+        height: auto;
         margin: 0 1 0 0;
     }
     #agent-text {
