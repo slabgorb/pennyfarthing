@@ -32,6 +32,7 @@ stdlib monkeypatching.
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import shutil
@@ -39,6 +40,13 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
+
+# The 8-byte PNG signature. A cached entry that does not start with these bytes
+# is a poisoned stub (a Git-LFS pointer, a truncated/empty file) rather than a
+# real image — it must be discarded and re-fetched (story 153-12).
+_PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 # Base of our R2 bucket's public custom domain. Override with
 # ``PF_PORTRAIT_CDN_BASE_URL`` (e.g. to point at a staging bucket). No trailing
@@ -102,6 +110,20 @@ def _size_order(preferred_size: str) -> tuple[str, ...]:
     return _SIZE_ORDER.get(preferred_size, _SIZE_ORDER["medium"])
 
 
+def _is_valid_png(path: Path) -> bool:
+    """Whether ``path`` begins with the PNG signature.
+
+    Used to validate a cache hit before serving it: a poisoned stub (LFS
+    pointer text, truncated/empty file) fails this check so the caller can
+    discard it and re-fetch. Never raises (a read error is treated as invalid).
+    """
+    try:
+        with open(path, "rb") as fh:
+            return fh.read(len(_PNG_MAGIC)) == _PNG_MAGIC
+    except OSError:
+        return False
+
+
 def _download(url: str, dest: Path) -> bool:
     """GET ``url`` to ``dest`` atomically. Returns ``True`` on a 200, else
     ``False``. Never raises; a non-200, network error, or write error is a
@@ -142,11 +164,21 @@ def fetch_portrait(
 
     sizes = _size_order(preferred_size)
 
-    # Cache hit: any already-downloaded size, in preference order.
+    # Cache hit: any already-downloaded size, in preference order. An entry that
+    # fails PNG-magic validation is a poisoned stub (LFS pointer, truncated
+    # file) — discard it so the download path below self-heals (story 153-12).
     for size in sizes:
         local = cache / theme / size / f"{slug}.png"
         if local.is_file() and _within_cache(local, cache):
-            return local
+            if _is_valid_png(local):
+                return local
+            logger.debug(
+                "portrait cache stub poisoned (%s/%s/%s) — discarding and re-fetching",
+                theme,
+                size,
+                slug,
+            )
+            local.unlink(missing_ok=True)
 
     # Miss: download, preferred size first, falling back through the rest.
     for size in sizes:
