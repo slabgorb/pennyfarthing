@@ -132,11 +132,18 @@ def _build_panel_tabs() -> list[Tab]:
     return tabs
 
 
-# Portrait size configuration: setting → (image_preference, width, height, row_height)
-PORTRAIT_SIZE_CONFIG: dict[str, tuple[str, int, int, int]] = {
-    "large": ("large", 20, 10, 10),
-    "medium": ("medium", 10, 5, 5),
-    "small": ("small", 6, 3, 3),
+# Portrait size configuration: setting → (image_preference, width)
+# Only the on-screen WIDTH (in cells) is forced. Height is left to
+# textual-image's ``auto`` path, which derives the row count from the
+# terminal's measured cell pixel geometry to preserve the source image's
+# intrinsic aspect ratio (square 128×128 → square render). Hardcoding a
+# height here bakes in a cols:rows ratio that is wrong on graphics
+# terminals (e.g. Ghostty) and stretches the portrait into a landscape
+# rectangle.
+PORTRAIT_SIZE_CONFIG: dict[str, tuple[str, int]] = {
+    "large": ("large", 20),
+    "medium": ("medium", 10),
+    "small": ("small", 6),
 }
 
 PORTRAIT_SKELETON = """\
@@ -408,14 +415,20 @@ class AgentHeader(Static):
                     await row.mount(img, before=0)
                     # CSS default margin (0 1 0 0) handles left position
 
-                # Apply dynamic size from portrait_size config
+                # Apply dynamic size from portrait_size config.
+                # Force ONLY the width (cols); leave height as "auto" so
+                # textual-image derives the row count from the terminal's
+                # measured cell pixel geometry and preserves the square
+                # source aspect ratio. Forcing height here is what stretched
+                # the portrait into a landscape rectangle on graphics
+                # terminals (the inline style pre-empted the CSS "auto").
                 effective = self._resolve_effective_size()
                 size_cfg = PORTRAIT_SIZE_CONFIG.get(effective)
                 if size_cfg:
-                    _, w, h, rh = size_cfg
+                    _, w = size_cfg
                     img.styles.width = w
-                    img.styles.height = h
-                    row.styles.height = rh
+                    img.styles.height = "auto"
+                    row.styles.height = "auto"
             except Exception:
                 # Image mount failed — e.g. textual-image broken/missing, or a
                 # widget mount error. Log it (a real failure must not vanish, as
