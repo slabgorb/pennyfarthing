@@ -1,10 +1,16 @@
 """Resolve gate for current workflow phase.
 
 Reads workflow YAML, finds current phase gate, and returns gate info.
-Assessment checks are enforced in complete_phase (not here) to avoid
-race conditions where agents call resolve-gate before writing assessments.
 
-Story: 105-1 (Script-First Handoff)
+Enforces the same assessment precondition as complete_phase (via the shared
+``pf.handoff.session_assessment`` module) so the two exit-protocol steps can
+never disagree: a gated transition with no ``## … Assessment`` heading in the
+session file is ``blocked`` here, with the same actionable error
+complete_phase would raise one step later (gh #49). Agents write their
+assessment BEFORE starting the exit protocol, so a missing heading at
+resolve-gate time is a real precondition failure, not a race.
+
+Stories: 105-1 (Script-First Handoff), 158-4 (assessment agreement)
 """
 
 from __future__ import annotations
@@ -77,6 +83,21 @@ def resolve_gate(
 
     gate = current_phase.get("gate")
 
+    # Truthful assessment state: read the session file the way complete_phase
+    # will. A missing session file means an assessment cannot exist.
+    from pf.handoff.session_assessment import (
+        has_assessment,
+        missing_assessment_error,
+        requires_assessment,
+    )
+
+    session_path = project_root / ".session" / f"{story_id}-session.md"
+    try:
+        session_content = session_path.read_text()
+    except OSError:
+        session_content = ""
+    assessment_found = has_assessment(session_content)
+
     # Support explicit next: directive for non-linear phase routing
     explicit_next = current_phase.get("next")
     if explicit_next:
@@ -102,7 +123,7 @@ def resolve_gate(
             status="skip",
             next_agent=next_agent,
             next_phase=next_phase,
-            assessment_found=True,
+            assessment_found=assessment_found,
         )
 
     gate_type = gate.get("type")
@@ -114,7 +135,25 @@ def resolve_gate(
             gate_type="manual",
             next_agent=next_agent,
             next_phase=next_phase,
-            assessment_found=True,
+            assessment_found=assessment_found,
+        )
+
+    # Assessment precondition — the exact check complete_phase enforces,
+    # surfaced one step earlier with the same actionable error (gh #49).
+    if requires_assessment(gate_type) and not assessment_found:
+        error = missing_assessment_error(current_phase.get("agent", phase))
+        if not session_path.exists():
+            error = (
+                f"Session file not found at `.session/{story_id}-session.md`. " + error
+            )
+        return _result(
+            status="blocked",
+            gate_type=gate_type,
+            gate_file=gate_file,
+            next_agent=next_agent,
+            next_phase=next_phase,
+            assessment_found=False,
+            error=error,
         )
 
     # Extract recovery config if present on the gate
