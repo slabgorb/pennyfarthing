@@ -45,6 +45,7 @@ DESIGNED INTERFACE (for Dev / GREEN):
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -270,3 +271,88 @@ def test_ac5_healthy_shards_emit_no_warning(project_dir, recwarn):
         or re.search(_NON_DICT_PAT, str(w.message))
     ]
     assert not spurious, f"healthy shard emitted spurious warning(s): {spurious!r}"
+
+
+# ---------------------------------------------------------------------------
+# Rework round 1 — Reviewer findings (review 2026-06-10, verdict REJECTED)
+# ---------------------------------------------------------------------------
+
+
+def test_rework1_undecodable_shard_warns_and_survives(project_dir):
+    """A present-but-non-UTF-8 shard must warn and be skipped — NOT raise.
+
+    Reviewer HIGH finding: ``path.read_text()`` sits outside the parse-catch
+    and raises ``UnicodeDecodeError`` (a ValueError, not an OSError), which
+    escapes ``fetch_sprint`` through the ref_by_id pre-resolve loop. On
+    origin/develop this shard was silently dropped (one-shard loss); on the
+    fix branch the whole fetch crashes (blank panel) — a regression against
+    AC2 ("warn, don't crash") for an in-class input: an undecodable file IS a
+    present-but-unparseable shard.
+
+    GREEN contract: read with ``encoding="utf-8"`` and route decode failures
+    into the same warning branch as YAML parse failures — warning names the
+    shard file; sibling shards survive; fetch_sprint returns normally.
+    """
+    _write_yaml(
+        project_dir / "sprint" / "current-sprint.yaml",
+        {"sprint": SPRINT_HEADER, "epics": ["99", "88"], "stories": []},
+    )
+    # Latin-1 bytes + stray BOM fragments: structurally fine YAML, invalid UTF-8.
+    (project_dir / "sprint" / "epic-99.yaml").write_bytes(
+        b"id: 99\ntitle: caf\xe9 broken \xff\xfe\n"
+    )
+    _write_yaml(project_dir / "sprint" / "epic-88.yaml", _good_shard("88"))
+
+    with pytest.warns(UserWarning, match=_MALFORMED_PAT):
+        result = fetch_sprint()  # must NOT raise UnicodeDecodeError
+
+    active_ids = [e.get("id") for e in result["epics"]]
+    assert "88" in active_ids, (
+        f"healthy sibling dropped alongside undecodable shard; got {active_ids!r}"
+    )
+    assert "99" not in active_ids
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="chmod 000 is ineffective as root")
+def test_rework1_unreadable_shard_warns_and_survives(project_dir):
+    """A present-but-permission-denied shard must warn, not silently vanish.
+
+    Reviewer MEDIUM finding: ``except OSError: return None`` treats
+    PermissionError like a missing file, but ``shard_file.exists()`` is True
+    so merge_epic_shards' "not found" warning never fires either — the shard
+    becomes invisible with zero diagnostics (the original gh #50 bug class,
+    third flavor). Empirically proven silent on both develop and the branch.
+
+    GREEN contract: keep FileNotFoundError silent (AC4 — the "not found"
+    warning stays owned by merge_epic_shards), but surface every other
+    OSError with a warning naming the shard file. Sibling shards survive.
+    """
+    _write_yaml(
+        project_dir / "sprint" / "current-sprint.yaml",
+        {"sprint": SPRINT_HEADER, "epics": ["99", "88"], "stories": []},
+    )
+    shard = project_dir / "sprint" / "epic-99.yaml"
+    _write_yaml(shard, _good_shard("99"))
+    shard.chmod(0o000)
+    _write_yaml(project_dir / "sprint" / "epic-88.yaml", _good_shard("88"))
+
+    try:
+        with pytest.warns(UserWarning, match=_MALFORMED_PAT) as record:
+            result = fetch_sprint()
+    finally:
+        shard.chmod(0o644)  # restore so tmp_path cleanup can remove it
+
+    active_ids = [e.get("id") for e in result["epics"]]
+    assert "88" in active_ids, (
+        f"healthy sibling dropped alongside unreadable shard; got {active_ids!r}"
+    )
+    assert "99" not in active_ids
+
+    import re
+
+    msgs = [str(w.message) for w in record]
+    # The unreadable-shard warning must not masquerade as the missing-file
+    # warning — the file is present; "not found" would mislead the operator.
+    assert not any(
+        re.search(_MALFORMED_PAT, m) and re.search(_MISSING_PAT, m) for m in msgs
+    ), f"permission-denied shard misreported as missing; warnings={msgs!r}"
