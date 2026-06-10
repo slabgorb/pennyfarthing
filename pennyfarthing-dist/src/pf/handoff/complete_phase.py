@@ -305,9 +305,31 @@ def _check_setup_context(project_root: Path, story_id: str) -> str | None:
     return None
 
 
+def _parse_timestamp(value: str) -> datetime | None:
+    """Parse a phase timestamp tolerantly, or return None if unparseable.
+
+    Accepts ISO-8601 with offset, trailing `Z`, and the human-readable
+    `YYYY-MM-DD HH:MM[:SS] UTC` shape the sm-setup model sometimes emits
+    (gh #74). Never raises — callers degrade gracefully on None.
+    """
+    normalized = value.strip()
+    # Normalize a trailing ` UTC` / `Z` (case-insensitive) to an ISO offset.
+    if normalized.upper().endswith(" UTC"):
+        normalized = normalized[:-4].rstrip() + "+00:00"
+    elif normalized.endswith(("Z", "z")):
+        normalized = normalized[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+
+
 def _calc_duration(started_str: str, ended_str: str) -> str:
-    started = datetime.fromisoformat(started_str.replace("Z", "+00:00"))
-    ended = datetime.fromisoformat(ended_str.replace("Z", "+00:00"))
+    started = _parse_timestamp(started_str)
+    ended = _parse_timestamp(ended_str)
+    if started is None or ended is None:
+        # Visible sentinel — never a misleading "0s" (lang-review #1).
+        return "unknown"
     # Normalize: if one is naive and the other aware, treat naive as UTC
     if started.tzinfo is None and ended.tzinfo is not None:
         started = started.replace(tzinfo=ended.tzinfo)
