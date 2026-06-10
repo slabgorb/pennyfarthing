@@ -12,7 +12,7 @@ from typing import Any
 
 import click
 
-from pf.sprint.loader import find_story_in_data
+from pf.sprint.loader import find_story_in_data, format_story_not_found_error
 from pf.sprint.validator import validate_sprint_document
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
@@ -41,7 +41,7 @@ def remove_story(
     if story is None:
         return {
             "success": False,
-            "error": f"Story '{story_id}' not found in epics, standalone_stories, or stories",
+            "error": format_story_not_found_error(data, story_id),
         }
 
     details = {

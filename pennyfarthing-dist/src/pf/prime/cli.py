@@ -375,6 +375,7 @@ def prime(
     session_id: str | None = None,
     project_root: Path | None = None,
     tier: str | None = None,
+    brief: bool = False,
     greeting: bool = False,
 ) -> int:
     """Load and print context.
@@ -418,6 +419,10 @@ def prime(
         if json_output:
             print(json.dumps({"minimal": True}))
         return 0
+
+    # --brief is sugar for the HANDOFF tier (single code path, no drift).
+    if brief and not tier:
+        tier = "HANDOFF"
 
     root = project_root or get_project_root()
 
@@ -840,6 +845,9 @@ try:
     @click.option("--quiet", is_flag=True, help="Suppress section headers")
     @click.option("--greeting", is_flag=True, help="Emit agent greeting to stderr")
     @click.option(
+        "--brief", is_flag=True, help="Condensed activation (agent essentials only)"
+    )
+    @click.option(
         "--tier",
         type=click.Choice(["full", "refresh", "handoff", "minimal"], case_sensitive=False),
         help="Context tier level",
@@ -853,6 +861,7 @@ try:
         full: bool,
         quiet: bool,
         greeting: bool,
+        brief: bool,
         tier: str | None,
     ):
         """Load agent context (unified bootstrap).
@@ -873,6 +882,7 @@ try:
             full=full,
             quiet=quiet,
             greeting=greeting,
+            brief=brief,
             tier=tier,
         )
         raise SystemExit(exit_code)
