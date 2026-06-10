@@ -15,28 +15,19 @@ from typing import Any
 import click
 
 from pf.jira.client import get_client, is_jira_enabled, map_status_to_jira
-from pf.sprint.loader import find_story_in_data, format_story_not_found_error
+from pf.sprint.loader import (
+    NO_JIRA_SENTINELS,
+    _has_real_jira_key,
+    find_story_in_data,
+    format_story_not_found_error,
+)
 from pf.sprint.status_normalize import normalize_status
 from pf.sprint.validator import VALID_STORY_STATUSES, validate_sprint_document
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
-# Sentinel values that mean "no real Jira key" even though the field is present.
-_NO_JIRA_SENTINELS = {"", "none", "null", "x"}
-
-
-def _has_real_jira_key(story: dict[str, Any]) -> bool:
-    """Return True only when the story carries a real Jira key.
-
-    ``story.get("jira")`` is truthy for placeholder sentinels like the literal
-    string ``"none"``, which would let an auto-assign lookup (``jira me``) run on
-    a personal-project story that has no Jira side (gh #12). Normalize ``None``,
-    empty/whitespace, and the ``none``/``null``/``x`` sentinels (case-insensitive)
-    to "no key".
-    """
-    key = story.get("jira")
-    if not isinstance(key, str):
-        return bool(key)
-    return key.strip().lower() not in _NO_JIRA_SENTINELS
+# Sentinel handling consolidated into pf.sprint.loader (story 160-3).
+# Keep the private alias for any in-module/back-compat references.
+_NO_JIRA_SENTINELS = NO_JIRA_SENTINELS
 
 
 def update_story(

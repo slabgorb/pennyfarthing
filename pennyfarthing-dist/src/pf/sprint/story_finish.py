@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from pf.git.repos import RepoConfig
 
 from pf.sprint.archive_epic import _load_archive_file, _write_archive_file, ensure_archive_file
-from pf.sprint.loader import find_story_in_data
+from pf.sprint.loader import _has_real_jira_key, find_story_in_data
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import read_sprint
 
@@ -188,7 +188,10 @@ def finish_story(
         try:
             data = read_sprint(sprint_path)
             _epic, story, _location = find_story_in_data(data, story_id)
-            if story:
+            # Sentinel jira values ("none"/"null"/"x") are truthy strings but mean
+            # "no Jira"; only adopt a real key so archive name, jira step, and the
+            # reported jira_key all behave as no-Jira (story 160-3).
+            if story and _has_real_jira_key(story):
                 jira_key = story.get("jira")
         except Exception:
             pass
