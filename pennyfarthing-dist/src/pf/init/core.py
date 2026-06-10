@@ -109,6 +109,105 @@ _DOGFOODING_SYMLINKS: dict[str, str] = {
 }
 
 
+def _declared_symlinks(root: Path) -> dict[str, str]:
+    """Collect declared symlinks from repos.yaml (link-path -> target, rel to root).
+
+    Reads the per-repo ``symlinks:`` map parsed onto RepoConfig — the single
+    source of truth for the project's topology. Returns an empty dict when no
+    repos.yaml exists.
+    """
+    from pf.git.repos import load_repos_config
+
+    declared: dict[str, str] = {}
+    for repo in load_repos_config(root).values():
+        declared.update(repo.symlinks)
+    return declared
+
+
+def _collect_materialized_warnings(root: Path) -> list[str]:
+    """Name each repo whose declared symlink target is missing on disk.
+
+    For every declared symlink in repos.yaml whose target does not exist, init
+    will materialize a copy instead of linking. Returns a loud warning per such
+    repo, mapping the missing target back to the owning repo path where possible.
+    Always returns a list (empty when the topology is intact or undeclared).
+    """
+    from pf.git.repos import load_repos_config
+
+    repos = load_repos_config(root)
+    if not repos:
+        return []
+
+    # Build path -> repo-name index for attributing a missing target to a repo.
+    by_path = {repo.path: name for name, repo in repos.items()}
+
+    warnings: list[str] = []
+    for repo in repos.values():
+        for link_str, target_str in repo.symlinks.items():
+            if (root / target_str).exists():
+                continue
+            # Attribute the missing target to the repo whose path is its prefix.
+            top = target_str.split("/", 1)[0]
+            owner = by_path.get(top) or by_path.get(target_str)
+            label = owner or top
+            warnings.append(
+                f"Materialized over missing symlink target: '{link_str}' -> "
+                f"'{target_str}' (repo '{label}' not present on disk)"
+            )
+    return warnings
+
+
+def relink_topology(root: Path) -> dict:
+    """Replace materialized real-dir copies with their declared symlinks.
+
+    Drives off the per-repo ``symlinks:`` map in repos.yaml. For each declared
+    symlink whose location is a *materialized real directory* (not a symlink),
+    if the declared target exists, the copy is removed and replaced with a
+    relative symlink. Idempotent: a correct existing symlink is a no-op. Safe:
+    when the declared target is absent, the materialized copy is preserved
+    (its content is the only data we have).
+
+    Returns:
+        Result dict {success, relinked, skipped, error?}. Never throws.
+    """
+    try:
+        relinked = 0
+        skipped = 0
+        for link_str, target_str in _declared_symlinks(root).items():
+            link_path = root / link_str
+            target_path = root / target_str
+
+            # Correct symlink already? no-op.
+            if link_path.is_symlink():
+                try:
+                    if link_path.resolve() == target_path.resolve():
+                        continue
+                except OSError:
+                    pass
+
+            # Target absent — refuse to destroy the materialized copy.
+            if not target_path.exists():
+                skipped += 1
+                continue
+
+            rel_target = os.path.relpath(target_path, link_path.parent)
+
+            if link_path.is_symlink():
+                link_path.unlink()
+            elif link_path.is_dir():
+                shutil.rmtree(link_path)
+            elif link_path.exists():
+                link_path.unlink()
+
+            link_path.parent.mkdir(parents=True, exist_ok=True)
+            link_path.symlink_to(rel_target)
+            relinked += 1
+
+        return {"success": True, "relinked": relinked, "skipped": skipped}
+    except Exception as e:  # pragma: no cover - defensive
+        return {"success": False, "error": str(e), "relinked": 0, "skipped": 0}
+
+
 def _is_dogfooding_repo(target_dir: Path, dist_root: Path) -> bool:
     """Detect if this is the framework dogfooding repo.
 
@@ -374,6 +473,12 @@ def init_project(
     # --- Detect dogfooding mode ---
     is_dogfooding = _is_dogfooding_repo(target_dir, dist_root)
 
+    # --- Detect declared symlink targets missing at materialize time ---
+    # When repos.yaml declares a symlink whose target does not exist, init
+    # materializes a copy in its place. Name the offending repo loudly instead
+    # of severing the topology silently (gh#98 / AC3).
+    materialized_warnings = _collect_materialized_warnings(target_dir)
+
     # --- Gather plan ---
     commands_to_copy = _find_pf_commands(dist_root)
     skills_to_copy = _find_pf_skills(dist_root)
@@ -399,6 +504,7 @@ def init_project(
                 "gitignore_entries": _GITIGNORE_ENTRIES,
                 "justfile": justfile_data,
                 "dogfooding": is_dogfooding,
+                "materialized_warnings": materialized_warnings,
             },
         }
 
@@ -551,6 +657,7 @@ def init_project(
                 "justfile": justfile_data,
                 "setup": setup_result.get("data", {}),
                 "custom_agents": custom_agents_data,
+                "materialized_warnings": materialized_warnings,
             },
         }
 
@@ -570,6 +677,7 @@ def init_project(
             "justfile": justfile_data,
             "setup": setup_result.get("data", {}),
             "custom_agents": custom_agents_data,
+            "materialized_warnings": materialized_warnings,
         },
     }
 

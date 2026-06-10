@@ -46,6 +46,8 @@ class RepoConfig:
     pr_strategy: str = "standard"  # "standard" or "stacked"
     stack_tool: str = ""  # "graphite" when pr_strategy is stacked
     simplify: bool = False  # Enable simplify subagents during TEA verify phase
+    remote: str = ""  # Clone URL for the repo (e.g., git@github.com:org/repo.git)
+    symlinks: dict[str, str] = field(default_factory=dict)  # link-path -> target, both rel to root
 
     @property
     def is_gitflow(self) -> bool:
@@ -85,6 +87,8 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         pr_strategy=data.get("pr_strategy", "standard"),
         stack_tool=data.get("stack_tool", ""),
         simplify=data.get("simplify", False),
+        remote=data.get("remote", ""),
+        symlinks=data.get("symlinks", {}) or {},
     )
 
 
