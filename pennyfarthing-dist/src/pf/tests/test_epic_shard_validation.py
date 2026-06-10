@@ -22,6 +22,7 @@ import yaml
 from pf.sprint.validator import (
     REQUIRED_EPIC_SHARD_FIELDS,
     REQUIRED_SHARD_STORY_FIELDS,
+    VALID_STORY_STATUSES,
     ValidationResult,
     validate_epic_shard,
     validate_sprint_file,
@@ -196,6 +197,163 @@ class TestValidateEpicShardRequiredFields:
         result = validate_epic_shard(valid_epic_shard)
 
         assert result.valid is True
+
+
+# =============================================================================
+# Story 160-1: validate_epic_shard per-story VALUE checks (status enum,
+# numeric points) — parity with validate_story inline/indexed path.
+# From 156-1 review finding M2. Shard validation previously only checked
+# required-field PRESENCE, not field VALUES, so a shard story with a bogus
+# status or non-numeric points slipped through.
+# =============================================================================
+
+
+class TestShardStoryValueChecks:
+    """validate_epic_shard runs per-story value checks at parity with validate_story.
+
+    AC1: rejects shard stories with invalid status (outside the enum).
+    AC2: rejects shard stories with non-numeric points.
+    AC3: existing valid shards continue to pass.
+    AC4: error messages identify the offending story id and field.
+    """
+
+    # --- AC1: invalid status value -------------------------------------------
+
+    def test_shard_story_with_invalid_status_fails(
+        self, valid_epic_shard: dict[str, Any]
+    ) -> None:
+        """A shard story whose status is outside VALID_STORY_STATUSES must fail.
+
+        Currently PASSES (gap): shard validation never checks status membership.
+        """
+        valid_epic_shard["stories"] = [
+            {"id": "94-2", "title": "Bogus status", "points": 3, "status": "bogus"},
+        ]
+
+        result = validate_epic_shard(valid_epic_shard)
+
+        assert result.valid is False
+        assert any(
+            "status" in e.message.lower() and "bogus" in e.message.lower()
+            for e in result.errors
+        ), f"expected an invalid-status error mentioning 'bogus', got: {[e.message for e in result.errors]}"
+
+    def test_shard_story_with_valid_status_from_enum_passes(
+        self, valid_epic_shard: dict[str, Any]
+    ) -> None:
+        """Every member of the documented status enum must be accepted on a shard story."""
+        for status in sorted(VALID_STORY_STATUSES):
+            valid_epic_shard["stories"] = [
+                {"id": "94-3", "title": "Good status", "points": 3, "status": status},
+            ]
+            result = validate_epic_shard(valid_epic_shard)
+            assert result.valid is True, (
+                f"status '{status}' is in VALID_STORY_STATUSES but shard validation "
+                f"rejected it: {[e.message for e in result.errors]}"
+            )
+
+    # --- AC2: non-numeric points ---------------------------------------------
+
+    def test_shard_story_with_non_numeric_points_fails(
+        self, valid_epic_shard: dict[str, Any]
+    ) -> None:
+        """A shard story whose points is a string must fail.
+
+        Currently PASSES (gap): shard validation only checks points presence.
+        """
+        valid_epic_shard["stories"] = [
+            {"id": "94-4", "title": "String points", "points": "three", "status": "backlog"},
+        ]
+
+        result = validate_epic_shard(valid_epic_shard)
+
+        assert result.valid is False
+        assert any(
+            "points" in e.message.lower() for e in result.errors
+        ), f"expected a points error, got: {[e.message for e in result.errors]}"
+
+    def test_shard_story_with_numeric_points_passes(
+        self, valid_epic_shard: dict[str, Any]
+    ) -> None:
+        """Integer and float points must both be accepted on a shard story."""
+        for pts in (0, 1, 3, 8, 2.5):
+            valid_epic_shard["stories"] = [
+                {"id": "94-5", "title": "Numeric points", "points": pts, "status": "backlog"},
+            ]
+            result = validate_epic_shard(valid_epic_shard)
+            assert result.valid is True, (
+                f"numeric points {pts!r} rejected: {[e.message for e in result.errors]}"
+            )
+
+    # --- AC3: no regression on valid shards ----------------------------------
+
+    def test_valid_shard_with_multiple_good_stories_still_passes(
+        self, valid_epic_shard: dict[str, Any]
+    ) -> None:
+        """A shard of fully valid stories must still pass after the new checks land."""
+        valid_epic_shard["stories"] = [
+            {"id": "94-1", "title": "One", "points": 3, "status": "backlog"},
+            {"id": "94-2", "title": "Two", "points": 5, "status": "in_progress"},
+            {"id": "94-3", "title": "Three", "points": 1, "status": "done"},
+        ]
+
+        result = validate_epic_shard(valid_epic_shard)
+
+        assert result.valid is True
+        assert len(result.errors) == 0
+
+    # --- AC4: error identifies offending story id + field --------------------
+
+    def test_invalid_status_error_identifies_story_and_field(
+        self, valid_epic_shard: dict[str, Any]
+    ) -> None:
+        """The status error must name the offending story id and the 'status' field.
+
+        Consistent with the inline path: the offending story is locatable
+        (its id appears in message or path) and the field is named.
+        """
+        valid_epic_shard["stories"] = [
+            {"id": "94-1", "title": "Good", "points": 3, "status": "backlog"},
+            {"id": "94-2", "title": "Bad", "points": 3, "status": "nonsense"},
+        ]
+
+        result = validate_epic_shard(valid_epic_shard)
+
+        assert result.valid is False
+        status_errors = [
+            e
+            for e in result.errors
+            if "status" in (e.message + e.path).lower()
+            and "nonsense" in e.message.lower()
+        ]
+        assert status_errors, (
+            "expected a status error mentioning the bad value; "
+            f"got: {[(e.path, e.message) for e in result.errors]}"
+        )
+        # Offending story id must be locatable in message or path.
+        assert any(
+            "94-2" in (e.message + e.path) for e in status_errors
+        ), f"status error did not identify story 94-2: {[(e.path, e.message) for e in status_errors]}"
+
+    def test_non_numeric_points_error_identifies_story_and_field(
+        self, valid_epic_shard: dict[str, Any]
+    ) -> None:
+        """The points error must name the offending story id and the 'points' field."""
+        valid_epic_shard["stories"] = [
+            {"id": "94-1", "title": "Good", "points": 3, "status": "backlog"},
+            {"id": "94-2", "title": "Bad", "points": "lots", "status": "backlog"},
+        ]
+
+        result = validate_epic_shard(valid_epic_shard)
+
+        assert result.valid is False
+        points_errors = [e for e in result.errors if "points" in (e.message + e.path).lower()]
+        assert points_errors, (
+            f"expected a points error; got: {[(e.path, e.message) for e in result.errors]}"
+        )
+        assert any(
+            "94-2" in (e.message + e.path) for e in points_errors
+        ), f"points error did not identify story 94-2: {[(e.path, e.message) for e in points_errors]}"
 
 
 # =============================================================================
