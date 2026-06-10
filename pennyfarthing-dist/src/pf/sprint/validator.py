@@ -506,11 +506,36 @@ def validate_sprint_document(data: dict[str, Any]) -> ValidationResult:
     return validate_full_sprint(data)
 
 
+def _get_archived_story_ids() -> set[str]:
+    """Return the set of completed/archived story IDs from sprint/archive/.
+
+    A depends_on target that resolves to an archived story is satisfied, not
+    dangling (gh #90): a dependency finishing and being archived is a normal
+    lifecycle event and must not hard-fail merged-sprint validation. Resolution
+    honors get_project_root() (loader.get_archived_stories with no scoping flags,
+    so it never needs get_sprint_info). A missing archive dir is safe — it just
+    yields an empty set, so a truly dangling ref still ERRORs.
+    """
+    try:
+        from pf.sprint.loader import get_archived_stories
+
+        archived = get_archived_stories()
+    except Exception:
+        return set()
+    return {str(s["id"]) for s in archived if isinstance(s, dict) and s.get("id")}
+
+
 def _validate_depends_on(
     data: dict[str, Any], all_story_ids: set[str], result: ValidationResult
 ) -> None:
-    """Validate depends_on references: targets exist and no cycles."""
+    """Validate depends_on references: targets exist and no cycles.
+
+    A target is considered to exist if it is an active story in the merged
+    sprint OR an archived (completed) story. Only references that resolve to
+    neither are reported as non-existent.
+    """
     deps: dict[str, str] = {}  # story_id -> depends_on target
+    archived_ids: set[str] | None = None  # lazily resolved on first miss
 
     for epic in data.get("epics", []):
         if isinstance(epic, str):
@@ -521,14 +546,20 @@ def _validate_depends_on(
             if dep is None:
                 continue
             dep = str(dep)
-            if dep not in all_story_ids:
-                result.add_error(
-                    f"depends_on '{dep}' references non-existent story. "
-                    f"To fix: Use an existing story ID or remove depends_on",
-                    f"{sid}.depends_on",
-                )
-            else:
+            if dep in all_story_ids:
                 deps[sid] = dep
+                continue
+            # Active sprint miss — resolve against the archive before failing.
+            if archived_ids is None:
+                archived_ids = _get_archived_story_ids()
+            if dep in archived_ids:
+                # Satisfied by an archived/completed story — not dangling.
+                continue
+            result.add_error(
+                f"depends_on '{dep}' references non-existent story. "
+                f"To fix: Use an existing story ID or remove depends_on",
+                f"{sid}.depends_on",
+            )
 
     # Cycle detection via visited set
     for start in deps:
