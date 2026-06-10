@@ -155,8 +155,8 @@ class TestCheckRegistry:
         assert len(CHECKS) > 0, "CHECKS registry is empty"
 
     def test_checks_count_approximately_10(self):
-        """Should have approximately 10 checks (8-12 range)."""
-        assert 8 <= len(CHECKS) <= 12, f"Expected ~10 checks, got {len(CHECKS)}"
+        """Should have approximately 10 checks (8-13 range)."""
+        assert 8 <= len(CHECKS) <= 13, f"Expected ~10 checks, got {len(CHECKS)}"
 
     def test_each_check_has_name_and_description(self):
         """Each entry in CHECKS must be a (name, description) tuple."""

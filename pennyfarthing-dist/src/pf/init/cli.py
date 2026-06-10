@@ -86,6 +86,8 @@ def init(dry_run: bool, yes: bool, target: str) -> None:
 
     data = result["data"]
     click.echo(f"Initialized Pennyfarthing project in {target_dir}")
+    for warning in data.get("materialized_warnings", []):
+        click.secho(f"  WARNING: {warning}", fg="yellow", bold=True)
     if data.get("dogfooding"):
         symlinks_fixed = data.get("symlinks_fixed", 0)
         if symlinks_fixed:
