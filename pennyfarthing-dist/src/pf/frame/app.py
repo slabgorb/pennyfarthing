@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -44,6 +45,7 @@ async def _ws_handler(websocket: WebSocket, channel: str) -> None:
 
     await websocket.accept()
     _ws_clients[channel].add(websocket)
+    _touch_activity()
     try:
         # Send initial data for this channel
         await send_initial_data(websocket, channel)
@@ -54,6 +56,7 @@ async def _ws_handler(websocket: WebSocket, channel: str) -> None:
         pass
     finally:
         _ws_clients[channel].discard(websocket)
+        _touch_activity()
 
 
 async def broadcast(channel: str, data: dict) -> None:
@@ -81,9 +84,29 @@ def _resolve_project_dir() -> Path | None:
     return Path(env) if env else None
 
 
+# Time of the most recent WebSocket activity (connect/disconnect), used by the
+# lifecycle monitor's idle-timeout check. Initialised at import so a freshly
+# started server with no clients still measures idle time from launch.
+_last_activity: float = time.monotonic()
+
+
+def _touch_activity() -> None:
+    """Record WebSocket activity for the idle-timeout monitor."""
+    global _last_activity
+    _last_activity = time.monotonic()
+
+
+def _count_active_clients() -> int:
+    """Total connected WebSocket clients across all channels."""
+    return sum(len(clients) for clients in _ws_clients.values())
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    """Write .frame-port on startup, start poller, clean up on shutdown."""
+    """Write .frame-port on startup, start poller + lifecycle monitor, clean up."""
+    import signal
+
+    from .lifecycle import monitor_and_shutdown
     from .ws_push import poll_and_broadcast
 
     project_dir = _resolve_project_dir()
@@ -92,14 +115,28 @@ async def _lifespan(app: FastAPI):
         write_port_file(project_dir, port)
     # Start periodic broadcast for channels that change externally
     poll_task = asyncio.create_task(poll_and_broadcast(broadcast))
+
+    def _trigger_shutdown() -> None:
+        # SIGTERM lets uvicorn unwind gracefully (it owns the signal handler),
+        # which runs this lifespan's shutdown path and cancels the poll task.
+        os.kill(os.getpid(), signal.SIGTERM)
+
+    monitor_task = asyncio.create_task(
+        monitor_and_shutdown(
+            count_active_clients=_count_active_clients,
+            last_activity_getter=lambda: _last_activity,
+            trigger_shutdown=_trigger_shutdown,
+        )
+    )
     try:
         yield
     finally:
-        poll_task.cancel()
-        try:
-            await poll_task
-        except asyncio.CancelledError:
-            pass
+        for task in (poll_task, monitor_task):
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
         if project_dir:
             cleanup_port_file(project_dir)
 
