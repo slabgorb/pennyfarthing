@@ -66,6 +66,14 @@ def healthy_project(tmp_path: Path) -> Path:
     pf_dir.mkdir()
     (pf_dir / "config.local.yaml").write_text("theme: discworld\n")
 
+    # Project-local shim: .pennyfarthing/bin/pf (story 153-11). A healthy
+    # project has a working shim that execs `pf --version` cleanly.
+    bin_dir = pf_dir / "bin"
+    bin_dir.mkdir()
+    shim = bin_dir / "pf"
+    shim.write_text("#!/bin/sh\necho 'pf 13.3.0'\nexit 0\n")
+    shim.chmod(0o755)
+
     # Symlink targets (as real directories for testing)
     for name in (
         "agents",
@@ -155,8 +163,8 @@ class TestCheckRegistry:
         assert len(CHECKS) > 0, "CHECKS registry is empty"
 
     def test_checks_count_approximately_10(self):
-        """Should have approximately 10 checks (8-13 range)."""
-        assert 8 <= len(CHECKS) <= 13, f"Expected ~10 checks, got {len(CHECKS)}"
+        """Should have approximately 10 checks (8-14 range)."""
+        assert 8 <= len(CHECKS) <= 14, f"Expected ~10 checks, got {len(CHECKS)}"
 
     def test_each_check_has_name_and_description(self):
         """Each entry in CHECKS must be a (name, description) tuple."""
