@@ -805,6 +805,47 @@ class TestFullSprintValidation:
         # Second epic should have errors
         assert any("epic" in e.path.lower() and "1" in e.path for e in result.errors)
 
+    def test_duplicate_story_id_across_epics_fails_via_full_sprint(self) -> None:
+        """Regression (160-2): two epics sharing a story ID must fail.
+
+        ``validate_full_sprint`` must populate ``all_story_ids`` incrementally
+        inside the epic loop so each ``validate_epic`` call sees prior epics'
+        IDs and flags the cross-epic duplicate. A refactor that populated the
+        set only after the loop made this pass silently.
+        """
+        data = {
+            "sprint": {
+                "number": 12,
+                "jira_sprint_id": 276,
+                "goal": "Test",
+                "start_date": "2026-01-20",
+                "end_date": "2026-02-02",
+                "status": "active",
+            },
+            "epics": [
+                {
+                    "id": "epic-63",
+                    "title": "Epic 1",
+                    "stories": [
+                        {"id": "63-1", "title": "S1", "status": "backlog", "points": 3},
+                    ],
+                },
+                {
+                    "id": "epic-64",
+                    "title": "Epic 2",
+                    "stories": [
+                        # Same ID as epic-63's story — must be caught.
+                        {"id": "63-1", "title": "S2", "status": "backlog", "points": 3},
+                    ],
+                },
+            ],
+        }
+
+        result = validate_full_sprint(data)
+
+        assert result.valid is False
+        assert any("duplicate" in e.message.lower() for e in result.errors)
+
 
 # =============================================================================
 # ValidationResult behavior

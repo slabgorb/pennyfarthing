@@ -466,12 +466,22 @@ def validate_full_sprint(data: dict[str, Any]) -> ValidationResult:
             # Sharded format: epics are string refs, not dicts
             if isinstance(epic, str):
                 continue
+            # Populate epic-story IDs INCREMENTALLY so validate_epic for epic N
+            # sees epics 0..N-1's IDs and can flag cross-epic duplicates
+            # (L319-323). Seeding the full set up front would make each epic
+            # flag its own stories as duplicates.
             epic_result = validate_epic(epic, all_story_ids, idx)
             result.merge(epic_result)
 
-    # Known-ids set spans ALL story locations (epics + standalone + top-level)
-    # so deps pointing at a standalone/top-level story resolve (story 160-2).
-    for story in _iter_all_stories(data):
+            for story in epic.get("stories", []):
+                story_id = story.get("id")
+                if story_id:
+                    all_story_ids.add(str(story_id))
+
+    # Union in standalone + top-level IDs AFTER the epic loop so deps pointing
+    # at a standalone/top-level story resolve (story 160-2), without polluting
+    # the cross-epic duplicate check above.
+    for story in (*data.get("standalone_stories", []), *data.get("stories", [])):
         story_id = story.get("id")
         if story_id:
             all_story_ids.add(str(story_id))
