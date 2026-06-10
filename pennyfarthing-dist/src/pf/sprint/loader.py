@@ -19,6 +19,25 @@ from pf.common.config import (
 )
 from pf.core.resolver import resolve_sprint_context
 
+# Sentinel ``jira`` values that mean "no real Jira key" even though the field is
+# present. Single source of truth (story 160-3) — consumed by story_update,
+# story_transition, and story_finish. Case-insensitive, whitespace-stripped.
+NO_JIRA_SENTINELS: frozenset[str] = frozenset({"", "none", "null", "x"})
+
+
+def _has_real_jira_key(story: dict[str, Any]) -> bool:
+    """Return True only when the story carries a real Jira key.
+
+    ``story.get("jira")`` is truthy for placeholder sentinels like the literal
+    string ``"none"``, which would let Jira code paths run on a personal-project
+    story that has no Jira side (gh #12). Normalize ``None``, empty/whitespace,
+    and the ``none``/``null``/``x`` sentinels (case-insensitive) to "no key".
+    """
+    key = story.get("jira")
+    if not isinstance(key, str):
+        return bool(key)
+    return key.strip().lower() not in NO_JIRA_SENTINELS
+
 
 def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]:
     """Merge sharded epic files into the sprint data structure.
