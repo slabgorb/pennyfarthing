@@ -186,9 +186,17 @@ def fetch_sprint() -> dict[str, Any]:
 
     def _load_file(path: Path) -> Any:
         try:
-            text = path.read_text()
-        except OSError:
+            text = path.read_text(encoding="utf-8")
+        except FileNotFoundError:
             # Missing file: merge_epic_shards owns the "not found" warning.
+            return None
+        except (OSError, UnicodeDecodeError) as exc:
+            # Present but unreadable/undecodable — surface it; a silent None
+            # here is indistinguishable from a deliberately absent shard.
+            warnings.warn(
+                f"Failed to read sprint shard {path.name}: {exc}",
+                stacklevel=2,
+            )
             return None
         try:
             loaded = yaml.safe_load(text)
