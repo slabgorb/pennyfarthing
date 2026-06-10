@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -285,6 +286,55 @@ def check_repos_topology(root: Path) -> CheckResult:
     )
 
 
+def check_project_shim(root: Path) -> CheckResult:
+    """Verify .pennyfarthing/bin/pf exists, is executable, and execs cleanly.
+
+    Story 153-11: the project-local shim is gitignored, so a fresh clone or a
+    ``git clean`` that never ran ``pf init`` leaves it missing — yet every
+    ``just pf`` recipe and the statusline hook exec it. doctor must FAIL (not
+    stay green) when the shim is missing, non-executable, or execs non-zero,
+    pointing the user at ``pf init`` to regenerate it.
+    """
+    shim = root / ".pennyfarthing" / "bin" / "pf"
+    remediation = "run `pf init` to regenerate it"
+
+    if not shim.is_file():
+        return CheckResult(
+            name="project_shim",
+            status="fail",
+            detail=f"project shim {shim} missing — {remediation}",
+        )
+    if not os.access(shim, os.X_OK):
+        return CheckResult(
+            name="project_shim",
+            status="fail",
+            detail=f"project shim {shim} not executable — {remediation}",
+        )
+    try:
+        proc = subprocess.run(
+            [str(shim), "--version"],
+            capture_output=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return CheckResult(
+            name="project_shim",
+            status="fail",
+            detail=f"project shim {shim} failed to exec — {remediation}",
+        )
+    if proc.returncode != 0:
+        return CheckResult(
+            name="project_shim",
+            status="fail",
+            detail=f"project shim {shim} exited {proc.returncode} — {remediation}",
+        )
+    return CheckResult(
+        name="project_shim",
+        status="pass",
+        detail=f"project shim {shim} present and working",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fix helpers
 # ---------------------------------------------------------------------------
@@ -325,4 +375,5 @@ CHECKS: list[tuple[str, str]] = [
     ("theme", "Active theme is valid"),
     ("superpowers_plugin", "superpowers companion plugin installed"),
     ("repos_topology", "repos.yaml paths and symlinks intact"),
+    ("project_shim", "project-local .pennyfarthing/bin/pf shim present and working"),
 ]
