@@ -128,31 +128,28 @@ def _get_git_info(repo_path: str) -> dict[str, Any] | None:
     if not Path(repo_path, ".git").exists():
         return None
 
+    import subprocess
+
     def _run(args: list[str]) -> str | None:
-        r, w = os.pipe()
-        pid = os.fork()
-        if pid == 0:
-            os.close(r)
-            os.dup2(w, 1)
-            os.dup2(w, 2)
-            os.close(w)
-            os.execvp(git_bin, [git_bin, "--no-optional-locks"] + args)
-        os.close(w)
-        data = b""
-        while True:
-            chunk = os.read(r, 4096)
-            if not chunk:
-                break
-            data += chunk
-        os.close(r)
-        _, status = os.waitpid(pid, 0)
-        if os.WIFEXITED(status) and os.WEXITSTATUS(status) == 0:
-            return data.decode("utf-8", errors="replace").strip()
+        # subprocess.run (posix_spawn) instead of a raw os.fork()/execvp in a
+        # multi-threaded server process (Story 161-1, gh #97): per-call os.fork
+        # in a threaded process churns kernel-side Mach-port resources on macOS
+        # and warns of deadlock risk. posix_spawn avoids both.
+        try:
+            result = subprocess.run(
+                [git_bin, "--no-optional-locks"] + args,
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        if result.returncode == 0:
+            return result.stdout.strip()
         return None
 
-    old_cwd = os.getcwd()
     try:
-        os.chdir(repo_path)
         branch = _run(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown"
 
         dirty_files: list[dict[str, str]] = []
@@ -189,8 +186,6 @@ def _get_git_info(repo_path: str) -> dict[str, Any] | None:
         }
     except Exception:
         return None
-    finally:
-        os.chdir(old_cwd)
 
 
 def _get_repos_config(project_dir: str) -> list[dict[str, str]]:

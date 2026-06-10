@@ -8,12 +8,35 @@ from __future__ import annotations
 
 import asyncio
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
 from pf.sprint.status_normalize import normalize_status
 
 POLL_INTERVAL_S = 5.0
+
+# Single shared executor per process for all blocking fetchers (Story 161-1,
+# gh #97). Relying on the event-loop default pool let each poll/initial-data
+# call schedule blocking subprocess work without a stable, bounded pool;
+# capping concurrency here keeps per-poll kernel resource churn (Mach ports)
+# from accumulating across the life of the long-running server.
+_shared_executor: ThreadPoolExecutor | None = None
+
+
+def get_shared_executor() -> ThreadPoolExecutor:
+    """Return the process-wide shared executor (stable singleton).
+
+    All blocking fetcher work (``send_initial_data`` and ``poll_and_broadcast``)
+    runs on this one bounded pool rather than constructing a fresh pool — or
+    leaning on an unbounded default pool — per poll cycle.
+    """
+    global _shared_executor
+    if _shared_executor is None:
+        _shared_executor = ThreadPoolExecutor(
+            max_workers=4, thread_name_prefix="frame-fetch"
+        )
+    return _shared_executor
 
 
 def _get_project_dir() -> str:
@@ -586,7 +609,9 @@ async def send_initial_data(websocket: Any, channel: str) -> None:
     try:
         import json
 
-        data = await asyncio.get_event_loop().run_in_executor(None, fetcher)
+        data = await asyncio.get_event_loop().run_in_executor(
+            get_shared_executor(), fetcher
+        )
         await websocket.send_text(json.dumps(data))
     except Exception:
         pass
@@ -611,7 +636,9 @@ async def poll_and_broadcast(broadcast_fn: Any) -> None:
             if fetcher is None:
                 continue
             try:
-                data = await asyncio.get_event_loop().run_in_executor(None, fetcher)
+                data = await asyncio.get_event_loop().run_in_executor(
+                    get_shared_executor(), fetcher
+                )
                 # Rewrite "init" → "update" so panels don't clear on poll
                 if isinstance(data, dict) and data.get("type") == "init":
                     data = {**data, "type": "update"}

@@ -114,6 +114,11 @@ def start_frame(project_dir: Path) -> subprocess.Popen | dict:
     env = os.environ.copy()
     env["FRAME_PROJECT_DIR"] = str(project_dir)
     env["FRAME_PORT"] = str(port)
+    # Owning-session PID for in-process owner-liveness self-termination
+    # (Story 161-1, gh #97). The frame monitors this PID and shuts itself down
+    # if the owner dies abnormally — atexit cleanup can't catch a SIGKILLed
+    # parent, which is how orphaned servers compounded the leak.
+    env["FRAME_OWNER_PID"] = str(os.getpid())
 
     # Forward session ID so Frame resolves the correct agent persona
     session_id = os.environ.get("SESSION_ID") or os.environ.get("CLAUDE_SESSION_ID")
