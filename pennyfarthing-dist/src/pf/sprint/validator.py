@@ -423,6 +423,19 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
                             f"{epic_id}.stories[{idx}].{field_name}",
                         )
 
+                # Parity with inline path: per-story value checks (status enum,
+                # numeric points, jira format). One truth, one place — delegate to
+                # validate_story. Pass the story's own id as the path base so the
+                # offending story is locatable in error paths (AC4).
+                if isinstance(story, dict):
+                    path_base = str(story_id) if story_id else epic_id
+                    story_result = validate_story(story, path_base, idx)
+                    # Drop validate_story's own missing-field errors to avoid
+                    # duplicating the presence loop above; keep its value checks.
+                    for err in story_result.errors:
+                        if not err.message.startswith("Missing required field"):
+                            result.add_error(err.message, err.path, err.severity)
+
     return result
 
 
