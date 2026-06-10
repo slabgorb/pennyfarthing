@@ -20,7 +20,8 @@ from __future__ import annotations
 import asyncio
 import os
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 # Sane positive default: 30 minutes of no clients before an idle frame
 # self-terminates. Overridable via FRAME_IDLE_TIMEOUT_S.

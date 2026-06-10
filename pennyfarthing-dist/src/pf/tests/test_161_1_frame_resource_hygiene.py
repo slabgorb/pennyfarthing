@@ -46,13 +46,10 @@ DESIGNED INTERFACE (for Dev — currently absent, tests fail RED on this):
 
 from __future__ import annotations
 
-import os
-
 import pytest
 from starlette.testclient import TestClient
 
 from pf.frame.app import _ws_clients, create_app
-
 
 # ---------------------------------------------------------------------------
 # AC1: bounded shared poller + per-connection cleanup on disconnect
@@ -107,8 +104,6 @@ class TestSharedPollerBounded:
         import pf.frame.ws_push as ws_push
 
         call_count = {"n": 0}
-        real_poll = ws_push.poll_and_broadcast
-
         async def _counting_poll(broadcast_fn):
             call_count["n"] += 1
             # Return immediately so the lifespan task completes cleanly; we only
