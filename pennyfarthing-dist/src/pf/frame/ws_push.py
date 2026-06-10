@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
@@ -185,9 +186,28 @@ def fetch_sprint() -> dict[str, Any]:
 
     def _load_file(path: Path) -> Any:
         try:
-            return yaml.safe_load(path.read_text()) or {}
-        except Exception:
+            text = path.read_text()
+        except OSError:
+            # Missing file: merge_epic_shards owns the "not found" warning.
             return None
+        try:
+            loaded = yaml.safe_load(text)
+        except Exception as exc:
+            warnings.warn(
+                f"Failed to parse sprint shard {path.name}: {exc}",
+                stacklevel=2,
+            )
+            return None
+        if loaded is None:
+            return {}
+        if not isinstance(loaded, dict):
+            warnings.warn(
+                f"Sprint shard {path.name} is not a mapping "
+                f"(parsed to {type(loaded).__name__}) — skipping",
+                stacklevel=2,
+            )
+            return None
+        return loaded
 
     # Capture the original index refs BEFORE merge: merge_epic_shards replaces
     # string refs with full shard dicts and loses the original ref string. The
