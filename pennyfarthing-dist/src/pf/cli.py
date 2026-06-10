@@ -264,6 +264,9 @@ def agent_create(name: str, agent_type: str):
 @click.option("--quiet", is_flag=True, help="Suppress section headers")
 @click.option("--greeting", is_flag=True, help="Emit agent greeting to stderr")
 @click.option(
+    "--brief", is_flag=True, help="Condensed activation (agent essentials only)"
+)
+@click.option(
     "--tier",
     type=click.Choice(["full", "refresh", "handoff", "minimal"], case_sensitive=False),
     help="Context tier level",
@@ -277,6 +280,7 @@ def agent_start(
     full: bool,
     quiet: bool,
     greeting: bool,
+    brief: bool,
     tier: str | None,
 ):
     """Start an agent session with full context.
@@ -300,6 +304,7 @@ def agent_start(
         full=full,
         quiet=quiet,
         greeting=greeting,
+        brief=brief,
         tier=tier,
     )
     raise SystemExit(exit_code)

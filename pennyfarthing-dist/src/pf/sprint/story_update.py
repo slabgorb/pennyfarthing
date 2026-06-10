@@ -15,7 +15,7 @@ from typing import Any
 import click
 
 from pf.jira.client import get_client, is_jira_enabled, map_status_to_jira
-from pf.sprint.loader import find_story_in_data
+from pf.sprint.loader import find_story_in_data, format_story_not_found_error
 from pf.sprint.status_normalize import normalize_status
 from pf.sprint.validator import VALID_STORY_STATUSES, validate_sprint_document
 from pf.sprint.yaml_io import read_sprint, write_sprint
@@ -44,6 +44,7 @@ def update_story(
     story_id: str,
     *,
     status: str | None = None,
+    title: str | None = None,
     points: int | None = None,
     priority: str | None = None,
     assigned_to: str | None = None,
@@ -64,6 +65,7 @@ def update_story(
         sprint_path: Path to sprint YAML file
         story_id: Story ID (e.g., "76-4")
         status: New status value
+        title: New story title
         points: New points value
         priority: New priority value
         assigned_to: New assignee
@@ -95,12 +97,14 @@ def update_story(
     if story is None:
         return {
             "success": False,
-            "error": f"Story '{story_id}' not found in epics, standalone_stories, or stories",
+            "error": format_story_not_found_error(data, story_id),
         }
 
     # Apply field updates
     if status is not None:
         story["status"] = status
+    if title is not None:
+        story["title"] = title
     if points is not None:
         story["points"] = points
     if priority is not None:
@@ -267,6 +271,7 @@ def update_story(
         ]
     ),
 )
+@click.option("--title", default=None, help="New story title")
 @click.option("--completed", "completed_date", default=None)
 @click.option("--assigned-to", default=None)
 @click.option("--points", type=int, default=None)
@@ -288,6 +293,7 @@ def update_story(
 def story_update_command(
     story_id: str,
     status: str | None,
+    title: str | None,
     completed_date: str | None,
     assigned_to: str | None,
     points: int | None,
@@ -317,6 +323,7 @@ def story_update_command(
         sprint_path=path,
         story_id=story_id,
         status=status,
+        title=title,
         points=points,
         priority=priority,
         assigned_to=assigned_to,

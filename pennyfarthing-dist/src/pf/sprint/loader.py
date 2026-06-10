@@ -440,6 +440,48 @@ def find_story_in_data(
     return None, None, None
 
 
+def _collect_story_ids(sprint_data: dict[str, Any] | None) -> list[str]:
+    """Gather all story IDs from the same sections ``find_story_in_data`` searches."""
+    ids: list[str] = []
+    if not sprint_data:
+        return ids
+    for epic in sprint_data.get("epics", []):
+        if not isinstance(epic, dict):
+            continue
+        for story in epic.get("stories", []):
+            if isinstance(story, dict) and story.get("id"):
+                ids.append(str(story["id"]))
+    for section in ("standalone_stories", "stories"):
+        for story in sprint_data.get(section, []):
+            if isinstance(story, dict) and story.get("id"):
+                ids.append(str(story["id"]))
+    return ids
+
+
+def format_story_not_found_error(sprint_data: dict[str, Any] | None, story_id: str) -> str:
+    """Build a helpful not-found error that lists candidate story IDs.
+
+    Names the missing ``story_id``, then lists the available IDs (gathered from
+    epics, standalone_stories, and top-level stories) ranked by closeness to
+    the requested id so near-misses appear first.
+    """
+    import difflib
+
+    legacy = f"Story '{story_id}' not found in epics, standalone_stories, or stories"
+
+    candidates = _collect_story_ids(sprint_data)
+    if not candidates:
+        return legacy
+
+    # Rank by similarity to the requested id (near-misses first).
+    ranked = sorted(
+        candidates,
+        key=lambda cid: difflib.SequenceMatcher(None, story_id, cid).ratio(),
+        reverse=True,
+    )
+    return f"{legacy}. Available story IDs: {', '.join(ranked)}"
+
+
 def get_story_field(sprint_data: dict[str, Any], story_id: str, field_name: str) -> Any | None:
     """Get a specific field from a story in sprint data.
 
