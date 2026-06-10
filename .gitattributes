@@ -1,5 +1,0 @@
-# Git LFS — track portrait images
-pennyfarthing-dist/personas/portraits/**/*.png filter=lfs diff=lfs merge=lfs -text
-pennyfarthing-dist/personas/portraits/**/*.jpg filter=lfs diff=lfs merge=lfs -text
-pennyfarthing-dist/personas/portraits/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
-pennyfarthing-dist/personas/portraits/**/*.webp filter=lfs diff=lfs merge=lfs -text
