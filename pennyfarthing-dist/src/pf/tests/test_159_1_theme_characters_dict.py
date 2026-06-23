@@ -27,7 +27,7 @@ from unittest.mock import patch
 
 import yaml
 
-from pf.prime.persona import load_persona
+from pf.prime.persona import get_crew_manifest, load_persona
 
 THEME = "test-theme"
 
@@ -313,3 +313,42 @@ class TestNoInputMutation:
         assert persona.role == "theme role"
         # ...and the source theme dict was not mutated in place.
         assert shared_theme == original
+
+
+# ---------------------------------------------------------------------------
+# get_crew_manifest consumes the same theme_characters map and must also accept
+# dict-shaped overrides — otherwise the crew manifest renders the whole dict as
+# a character name. (Dev-added coverage; see Design Deviations / Delivery
+# Findings in the session file.)
+# ---------------------------------------------------------------------------
+
+
+class TestCrewManifestDictOverride:
+    def test_crew_manifest_extracts_character_from_dict_override(
+        self, tmp_path: Path
+    ) -> None:
+        """A dict override contributes its ``character`` name, not the dict."""
+        root = _setup_project(
+            tmp_path,
+            theme_characters={"gm": {"character": "Count Rugen", "style": "x"}},
+            agents={"dev": {"character": "Theme Dev"}},
+        )
+
+        crew = get_crew_manifest(root)
+
+        gm = [member for member in crew if member.role == "gm"]
+        assert len(gm) == 1
+        assert isinstance(gm[0].character, str)
+        assert gm[0].character == "Count Rugen"
+
+    def test_crew_manifest_string_override_unchanged(self, tmp_path: Path) -> None:
+        """A str override still yields its character name (backwards compatible)."""
+        root = _setup_project(
+            tmp_path, theme_characters={"gm": "Count Rugen"}, agents={}
+        )
+
+        crew = get_crew_manifest(root)
+
+        gm = [member for member in crew if member.role == "gm"]
+        assert len(gm) == 1
+        assert gm[0].character == "Count Rugen"
