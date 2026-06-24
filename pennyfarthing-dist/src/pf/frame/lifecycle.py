@@ -18,17 +18,30 @@ This module exposes:
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import time
 from collections.abc import Callable
 from typing import Any
 
-# Sane positive default: 30 minutes of no clients before an idle frame
-# self-terminates. Overridable via FRAME_IDLE_TIMEOUT_S.
-DEFAULT_IDLE_TIMEOUT_S: float = 1800.0
+# Default idle window before a clientless, traffic-silent frame self-terminates.
+# Overridable via FRAME_IDLE_TIMEOUT_S. Shortened from 1800s (ADR-0040 decision
+# point 3): with owner-PID gating removed, the idle window is the sole orphan
+# reaper, so it must stay prompt. A live session streams OTLP telemetry far more
+# often than this (each ingest refreshes activity), so the window only elapses
+# once a session is genuinely gone; 5 minutes of total silence is a reliable
+# "session ended" signal while keeping orphan reaping bounded.
+DEFAULT_IDLE_TIMEOUT_S: float = 300.0
 
 # How often the monitor re-evaluates the shutdown decision.
 MONITOR_INTERVAL_S: float = 30.0
+
+# uvicorn's default logging config routes this logger to stderr (and the frame
+# subprocess redirects stderr to .session/frame.log), so the self-termination
+# reason lands in the log next to uvicorn's own lifecycle lines. A bare module
+# logger's INFO record would be dropped by the frame subprocess's unconfigured
+# root logger, defeating the diagnosability the reason log exists for.
+_logger = logging.getLogger("uvicorn.error")
 
 
 def resolve_owner_pid() -> int | None:
@@ -103,14 +116,25 @@ async def monitor_and_shutdown(
 
     while True:
         await asyncio.sleep(interval_s)
+        active_clients = count_active_clients()
+        last_activity = last_activity_getter()
+        now = time.monotonic()
         owner_alive = is_process_alive(owner_pid) if owner_pid is not None else True
         if should_shutdown(
             owner_pid=owner_pid,
             owner_alive=owner_alive,
-            active_clients=count_active_clients(),
-            last_activity=last_activity_getter(),
-            now=time.monotonic(),
+            active_clients=active_clients,
+            last_activity=last_activity,
+            now=now,
             idle_timeout_s=idle_timeout_s,
         ):
+            if owner_pid is not None and not owner_alive:
+                reason = f"owner {owner_pid} dead"
+            else:
+                reason = (
+                    f"idle: {active_clients} clients, "
+                    f"no traffic {now - last_activity:.0f}s"
+                )
+            _logger.info("Frame self-terminating (%s)", reason)
             trigger_shutdown()
             return
