@@ -108,10 +108,12 @@ def load_persona(
     if not theme:
         return None, None
 
-    # Check config.local.yaml theme_characters for override or custom role
+    # Check config.local.yaml theme_characters for override or custom role.
+    # An entry may be a str (legacy: character name only) or a dict matching
+    # the theme's agents.<role> shape (rich override; merged over theme data).
     config = load_pennyfarthing_config(root)
     theme_characters = config.get("theme_characters", {}) or {}
-    character_override = theme_characters.get(agent_name)
+    override = theme_characters.get(agent_name)
 
     theme_data = load_theme(theme, root)
     if not theme_data:
@@ -119,6 +121,15 @@ def load_persona(
 
     agents_section = theme_data.get("agents", {})
     agent_data = agents_section.get(agent_name)
+
+    character_override: str | None = None
+    if isinstance(override, dict):
+        # Merge override onto theme data, override-wins, without mutating the
+        # theme dict (a new dict — never agent_data.update()).
+        agent_data = {**(agent_data or {}), **override}
+        character_override = override.get("character")
+    elif isinstance(override, str):
+        character_override = override
 
     # If no agent data in theme AND no config override, not found
     if not agent_data and not character_override:
@@ -175,9 +186,15 @@ def get_crew_manifest(project_root: Path | None = None) -> list[CrewMember]:
 
     crew = []
     for role in all_roles:
-        # Config override wins
+        # Config override wins. An override may be a str (character name) or a
+        # dict carrying a "character" field — mirror load_persona's handling.
         if role in theme_characters:
-            crew.append(CrewMember(role=role, character=theme_characters[role]))
+            override = theme_characters[role]
+            character = (
+                override.get("character") if isinstance(override, dict) else override
+            )
+            if character:
+                crew.append(CrewMember(role=role, character=character))
         else:
             agent_data = agents_section.get(role)
             if agent_data and "character" in agent_data:
