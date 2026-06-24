@@ -178,7 +178,7 @@ def fetch_sprint() -> dict[str, Any]:
     # monolithic format, keyed by `id` with no `jira`) AND sharded epics
     # (string refs + epic-{ref}.yaml) both arrive as fully-merged dicts.
     # The bespoke shard-only path silently dropped inline epics (gh #50).
-    from pf.sprint.shard_merge import merge_epic_shards
+    from pf.sprint.shard_merge import is_safe_shard_path, merge_epic_shards
 
     epics: list[dict[str, Any]] = []
     completed_epics: list[dict[str, Any]] = []
@@ -224,7 +224,12 @@ def fetch_sprint() -> dict[str, Any]:
     ref_by_id: dict[str, str] = {}
     for ref in data.get("epics", []):
         if isinstance(ref, str):
-            shard = _load_file(sprint_dir / f"epic-{ref}.yaml")
+            candidate = sprint_dir / f"epic-{ref}.yaml"
+            if not is_safe_shard_path(candidate, sprint_dir):
+                # Path traversal (CWE-22): a crafted ref escapes sprint_dir.
+                # merge_epic_shards warns + skips; here we just refuse the read.
+                continue
+            shard = _load_file(candidate)
             resolved_id = str(shard.get("id", "")) if isinstance(shard, dict) else ""
             if resolved_id:
                 ref_by_id[resolved_id] = ref
@@ -276,6 +281,10 @@ def fetch_sprint() -> dict[str, Any]:
             # Load stories from archived epic shards
             for epic_ref in archive_data.get("completed_epics", []):
                 shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+                if not is_safe_shard_path(shard_path, archive_dir):
+                    # Path traversal (CWE-22): a crafted completed-epic ref
+                    # escapes archive_dir — refuse the read.
+                    continue
                 if not shard_path.is_file():
                     continue
                 try:

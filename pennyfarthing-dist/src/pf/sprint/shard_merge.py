@@ -14,6 +14,23 @@ from pathlib import Path
 from typing import Any
 
 
+def is_safe_shard_path(candidate: Path, base_dir: Path) -> bool:
+    """Return True if ``candidate`` resolves to a path inside ``base_dir``.
+
+    Guards against path traversal (CWE-22). Epic refs read from sprint YAML are
+    interpolated into shard paths (``epic-{ref}.yaml``); a crafted ref — e.g.
+    one routed through a symlink that lives inside the sprint directory — can
+    escape ``base_dir`` and cause an out-of-bounds read. ``resolve()`` is used so
+    symlink traversal is caught (a purely lexical ``..`` check would not be).
+
+    On any resolution error the path is treated as unsafe (fail closed).
+    """
+    try:
+        return candidate.resolve().is_relative_to(base_dir.resolve())
+    except (OSError, ValueError, RuntimeError):
+        return False
+
+
 def merge_epic_shards(
     data: Any,
     sprint_dir: Path,
@@ -60,6 +77,13 @@ def merge_epic_shards(
             continue
 
         shard_file = sprint_dir / f"epic-{ref}.yaml"
+        if not is_safe_shard_path(shard_file, sprint_dir):
+            warnings.warn(
+                f"Sprint epic ref '{ref}' escapes the sprint directory "
+                f"({shard_file}) — skipping",
+                stacklevel=2,
+            )
+            continue
         if shard_file.exists():
             try:
                 epic_data = load_file(shard_file)
