@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark — Finding Hit Rate</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="benchmark.css">
+</head>
+<body>
+
+<h1>Finding Hit Rate</h1>
+<div class="subtitle">Catch rate per ground-truth finding across themes (rows sorted by mean score). Each cell shows runs-caught / runs-total.</div>
+
+<nav class="panel-nav">
+  <a href="index.html">Overview</a>
+  <a href="scatter.html">Score vs Consistency</a>
+  <a href="hit-rate.html" class="active">Finding Hit Rate</a>
+  <a href="phase-attribution.html">Phase Attribution</a>
+</nav>
+
+<div class="filter-bar" id="filters">
+  <div class="filter-group">
+    <span class="filter-label">Scenario</span>
+    <div id="scenario-chips"></div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Tier</span>
+    <div class="tier-checks" id="tier-checks"></div>
+  </div>
+</div>
+
+<div class="chart-section">
+  <div class="heatmap-wrap"><svg id="heatmap"></svg></div>
+  <div id="finding-legend" class="finding-legend"></div>
+</div>
+
+<div class="tooltip" id="tooltip" style="display:none"></div>
+
+<script src="benchmark-data.js"></script>
+<script src="benchmark-charts.js"></script>
+<script>startPanel(renderHeatmap);</script>
+</body>
+</html>
