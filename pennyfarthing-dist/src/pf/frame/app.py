@@ -154,6 +154,16 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.middleware("http")
+    async def _refresh_activity(request: Request, call_next):
+        # Inbound HTTP traffic — OTLP ingest (/v1/logs, /v1/metrics, /v1/traces)
+        # and the API routes (e.g. POST /api/subagent-event) — counts as liveness
+        # activity (ADR-0040 Defect 2). Without this, a frame serving a live CLI
+        # session that holds zero WebSocket clients freezes its activity clock at
+        # launch, and the idle monitor self-terminates it mid-session.
+        _touch_activity()
+        return await call_next(request)
+
     @app.get("/health")
     async def health() -> dict[str, str]:
         result: dict[str, str] = {"status": "ok"}
