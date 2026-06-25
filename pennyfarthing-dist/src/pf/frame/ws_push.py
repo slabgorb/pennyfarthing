@@ -494,8 +494,12 @@ def fetch_persona() -> dict[str, Any]:
             resolved = resolve_portrait_path(theme, agent_name, project_root=Path(project_dir))
             if resolved:
                 portrait_path = str(resolved)
-        except Exception:
-            pass  # AC-3: graceful degradation
+        except Exception as exc:
+            # AC-3 (160-16): warn IN PLACE then degrade — keep portrait_path=None
+            # and fall through to return the full persona. This inner try MUST
+            # stay: letting a portrait-resolver failure reach the outer catch-all
+            # would blank the entire persona panel (strictly worse than no portrait).
+            warnings.warn(f"Failed to resolve portrait for {agent_name}: {exc}", stacklevel=2)
 
         return {
             "character": persona.character,
