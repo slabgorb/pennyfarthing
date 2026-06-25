@@ -162,9 +162,9 @@ def test_ac2_malformed_archive_index_warns_and_survives(project_dir):
     zero diagnostics, archive contents silently absent.
     """
     _valid_main_sprint(project_dir)
-    (project_dir / "sprint" / "archive" / "sprint-9001-completed.yaml").write_text(
-        _MALFORMED_YAML, encoding="utf-8"
-    )
+    archive = project_dir / "sprint" / "archive"
+    archive.mkdir(parents=True, exist_ok=True)
+    (archive / "sprint-9001-completed.yaml").write_text(_MALFORMED_YAML, encoding="utf-8")
 
     with pytest.warns(UserWarning, match=r"sprint-9001-completed"):
         result = fetch_sprint()  # must NOT raise
