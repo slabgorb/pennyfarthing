@@ -13,6 +13,7 @@ import os
 import platform
 import sys
 import time
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -184,7 +185,13 @@ def _get_git_info(repo_path: str) -> dict[str, Any] | None:
             "dirtyFiles": dirty_files,
             "developBehind": develop_behind,
         }
-    except Exception:
+    except Exception as exc:
+        # AC-1 (160-16): a present-but-broken git probe (e.g. a non-numeric
+        # rev-list --count that fails int() parsing) was silently collapsing the
+        # whole repo to None -> rendered as "unknown"/clean with zero diagnostics.
+        # Warn (fail-loud) then degrade unchanged. Stays a catch-all because this
+        # feeds an async route / poll loop that must never raise.
+        warnings.warn(f"Failed to parse git info for {repo_path}: {exc}", stacklevel=2)
         return None
 
 
@@ -199,7 +206,7 @@ def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
     for p in candidates:
         if p.is_file():
             try:
-                config = yaml.safe_load(p.read_text())
+                config = yaml.safe_load(p.read_text(encoding="utf-8"))
                 if config and isinstance(config.get("repos"), dict):
                     return [
                         {
@@ -208,8 +215,14 @@ def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
                         }
                         for name, rc in config["repos"].items()
                     ]
-            except Exception:
-                pass
+            except Exception as exc:
+                # AC-2 (160-16): a present-but-broken repos.yaml (malformed YAML,
+                # non-UTF-8 bytes, or unreadable) was silently swallowed -> the
+                # panel fell back to a single "." repo, hiding the real (broken)
+                # topology. Warn (naming the file) then keep the fallback. The
+                # explicit encoding="utf-8" (CWE-838) makes the decode
+                # deterministic across platforms.
+                warnings.warn(f"Failed to load repos config {p.name}: {exc}", stacklevel=2)
 
     dir_name = Path(project_dir).name or "project"
     return [{"name": dir_name, "path": "."}]
