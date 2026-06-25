@@ -194,8 +194,14 @@ def fetch_diffs() -> dict[str, Any]:
                         file_status = "D"
             _flush(current_file, current_diff_lines, file_status, additions, deletions)
 
-        except Exception:
-            pass
+        except Exception as exc:
+            # Present-but-broken: this repo's diff subprocess/parse failed. Warn
+            # naming the repo (gh #50 fail-loud) rather than silently dropping
+            # its diffs from the panel; siblings still contribute.
+            warnings.warn(
+                f"Failed to fetch diffs for repo {repo['name']}: {exc}",
+                stacklevel=2,
+            )
         finally:
             os.chdir(old_cwd)
 
@@ -212,11 +218,19 @@ def fetch_sprint() -> dict[str, Any]:
     if not sprint_path.is_file():
         return {"sprint": {}, "epics": []}
 
+    # Split read-vs-parse so the warning names the actual failure. A
+    # present-but-undecodable file is surfaced by _read_text_file as
+    # "Failed to read {name}"; a decodable-but-malformed file is surfaced below
+    # as "Failed to parse {name}" (the prior single try always said "read").
+    text = _read_text_file(sprint_path)
+    if text is None:
+        return {"sprint": {}, "epics": []}
+
     try:
-        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+        data = yaml.safe_load(text) or {}
     except Exception as exc:
         warnings.warn(
-            f"Failed to read sprint file {sprint_path.name}: {exc}", stacklevel=2
+            f"Failed to parse sprint file {sprint_path.name}: {exc}", stacklevel=2
         )
         return {"sprint": {}, "epics": []}
 
@@ -409,11 +423,15 @@ def fetch_story() -> dict[str, Any]:
 def fetch_context() -> dict[str, Any]:
     """Fetch context window usage."""
     try:
-        from pf.context_window import ContextConfig, check_context
+        from pf.context_window import check_context
 
         project_dir = _get_project_dir()
-        config = ContextConfig(project_dir=project_dir)
-        result = check_context(config)
+        # check_context builds its own config via load_config(project_dir); its
+        # first positional is explicit_session, so project_dir is a kwarg. The
+        # old ``ContextConfig(project_dir=...)`` raised TypeError on EVERY call
+        # (no such field) and the silent swallow hid it — the panel never showed
+        # real data (gh #50 root cause, SOUL #1).
+        result = check_context(project_dir=project_dir)
         return {
             "type": "init",
             "context": {
@@ -422,7 +440,10 @@ def fetch_context() -> dict[str, Any]:
                 "status": result.status,
             },
         }
-    except Exception:
+    except Exception as exc:
+        # Genuine context probe failure (or a degraded result shape): warn, then
+        # degrade gracefully rather than blanking the panel with no diagnostic.
+        warnings.warn(f"Failed to fetch context: {exc}", stacklevel=2)
         return {"type": "init", "context": {"percent": None, "tokens": None, "status": None}}
 
 
@@ -486,7 +507,13 @@ def fetch_persona() -> dict[str, Any]:
             "isStreaming": False,
             "portraitPath": portrait_path,
         }
-    except Exception:
+    except Exception as exc:
+        # Present-but-broken: persona resolution/load raised. Warn (gh #50
+        # fail-loud) rather than silently blanking the persona panel, then
+        # degrade to {}. (A resolved-but-empty persona is an in-try early
+        # return, not an exception, so the common "no persona yet" state is
+        # unaffected.)
+        warnings.warn(f"Failed to load persona: {exc}", stacklevel=2)
         return {}
 
 
