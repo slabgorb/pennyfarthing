@@ -44,6 +44,51 @@ def _get_project_dir() -> str:
     return os.environ.get("FRAME_PROJECT_DIR", os.environ.get("PF_PROJECT_DIR", os.getcwd()))
 
 
+def _read_text_file(path: Path) -> str | None:
+    """Read a text file as UTF-8, surfacing present-but-broken reads.
+
+    Returns the file contents, or ``None`` when the file cannot be read. A
+    genuinely absent file (``FileNotFoundError``) is silent — callers gate on
+    ``exists()``/``is_file()`` and a missing file is a normal, expected state.
+    Every OTHER failure (permission denied, undecodable bytes) is a
+    present-but-unreadable file: surfaced via ``warnings.warn`` so it is not
+    swallowed (gh #50 fail-loud), then ``None`` so the caller degrades
+    gracefully rather than crashing the Frame poll loop.
+
+    ``UnicodeDecodeError`` is a ``ValueError`` (NOT an ``OSError``) — it is
+    caught explicitly so an undecodable file warns instead of escaping.
+    """
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return None
+    except (OSError, UnicodeDecodeError) as exc:
+        warnings.warn(f"Failed to read {path.name}: {exc}", stacklevel=2)
+        return None
+
+
+def _read_yaml_file(path: Path) -> Any:
+    """Read+parse a YAML file as UTF-8, surfacing present-but-broken files.
+
+    Layers a YAML parse on top of :func:`_read_text_file`: a read failure is
+    already warned there; a parse failure (malformed YAML) is warned here.
+    Returns the parsed object, or ``None`` on any read/parse failure (and for a
+    genuinely empty file, mirroring ``yaml.safe_load("")``). Callers that
+    require a mapping should ``isinstance(result, dict)``-guard the return.
+    """
+    text = _read_text_file(path)
+    if text is None:
+        return None
+
+    import yaml
+
+    try:
+        return yaml.safe_load(text)
+    except Exception as exc:
+        warnings.warn(f"Failed to parse {path.name}: {exc}", stacklevel=2)
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Channel data fetchers — each returns a dict ready to send as JSON
 # ---------------------------------------------------------------------------
@@ -168,8 +213,11 @@ def fetch_sprint() -> dict[str, Any]:
         return {"sprint": {}, "epics": []}
 
     try:
-        data = yaml.safe_load(sprint_path.read_text()) or {}
-    except Exception:
+        data = yaml.safe_load(sprint_path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:
+        warnings.warn(
+            f"Failed to read sprint file {sprint_path.name}: {exc}", stacklevel=2
+        )
         return {"sprint": {}, "epics": []}
 
     sprint_info = data.get("sprint", {})
@@ -271,9 +319,8 @@ def fetch_sprint() -> dict[str, Any]:
     if archive_dir.is_dir():
         sprint_number = sprint_info.get("number")
         for archive_path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
-            try:
-                archive_data = yaml.safe_load(archive_path.read_text()) or {}
-            except Exception:
+            archive_data = _read_yaml_file(archive_path)
+            if not isinstance(archive_data, dict):
                 continue
             # Only include current sprint's archive
             if sprint_number and archive_data.get("sprint", {}).get("number") != sprint_number:
@@ -287,9 +334,8 @@ def fetch_sprint() -> dict[str, Any]:
                     continue
                 if not shard_path.is_file():
                     continue
-                try:
-                    shard_data = yaml.safe_load(shard_path.read_text()) or {}
-                except Exception:
+                shard_data = _read_yaml_file(shard_path)
+                if not isinstance(shard_data, dict):
                     continue
                 epic_entry = {
                     "id": shard_data.get("id", ""),
@@ -404,8 +450,11 @@ def fetch_persona() -> dict[str, Any]:
             if f.is_file() and not f.name.startswith("."):
                 mt = f.stat().st_mtime
                 if mt > latest_mtime:
+                    content = _read_text_file(f)
+                    if content is None:
+                        continue
                     latest_mtime = mt
-                    agent_name = f.read_text().strip()
+                    agent_name = content.strip()
 
         if not agent_name:
             return {}
@@ -454,8 +503,6 @@ def fetch_benchmark_history() -> dict[str, Any]:
     if not results_dir.is_dir():
         return {"type": "init", "runs": []}
 
-    import yaml
-
     runs: list[dict[str, Any]] = []
 
     for scenario_dir in sorted(results_dir.iterdir()):
@@ -479,11 +526,7 @@ def fetch_benchmark_history() -> dict[str, Any]:
                 if not chosen.exists():
                     continue
 
-                try:
-                    score_data = yaml.safe_load(chosen.read_text())
-                except Exception:
-                    continue
-
+                score_data = _read_yaml_file(chosen)
                 if not isinstance(score_data, dict):
                     continue
 
@@ -500,15 +543,21 @@ def fetch_benchmark_history() -> dict[str, Any]:
                 fw = score_data.get("framework_version") or {}
                 version = fw.get("tag") or fw.get("commit") or ""
 
-                # Extract date from pipeline.yaml
-                run_date = ""
+                # Read pipeline.yaml ONCE — a broken-but-present file is
+                # surfaced by _read_yaml_file's warning and degrades to None
+                # (the prior code read it twice and left pipeline_data unbound
+                # on a parse failure, masking a NameError under except: pass).
+                pipeline_data: dict[str, Any] | None = None
                 pipeline_file = run_dir / "pipeline.yaml"
                 if pipeline_file.exists():
-                    try:
-                        pipeline_data = yaml.safe_load(pipeline_file.read_text())
-                        run_date = pipeline_data.get("completed_at", "") or pipeline_data.get("started_at", "")
-                    except Exception:
-                        pass
+                    loaded = _read_yaml_file(pipeline_file)
+                    if isinstance(loaded, dict):
+                        pipeline_data = loaded
+
+                # Extract date from pipeline.yaml
+                run_date = ""
+                if pipeline_data:
+                    run_date = pipeline_data.get("completed_at", "") or pipeline_data.get("started_at", "")
                 if not run_date:
                     # Fallback to file mtime
                     try:
@@ -520,43 +569,34 @@ def fetch_benchmark_history() -> dict[str, Any]:
 
                 # Token usage per phase from pipeline.yaml
                 token_usage = {}
-                if pipeline_file.exists():
-                    try:
-                        if not pipeline_data:
-                            pipeline_data = yaml.safe_load(pipeline_file.read_text())
-                        phases = pipeline_data.get("phases", {})
-                        if isinstance(phases, dict):
-                            for p_name, p_data in phases.items():
-                                if isinstance(p_data, dict):
-                                    token_usage[p_name] = {
-                                        "tokens": p_data.get("input_tokens", 0) + p_data.get("output_tokens", 0),
-                                        "cost": p_data.get("cost", 0),
-                                    }
-                    except Exception:
-                        pass
+                if pipeline_data:
+                    phases = pipeline_data.get("phases", {})
+                    if isinstance(phases, dict):
+                        for p_name, p_data in phases.items():
+                            if isinstance(p_data, dict):
+                                token_usage[p_name] = {
+                                    "tokens": p_data.get("input_tokens", 0) + p_data.get("output_tokens", 0),
+                                    "cost": p_data.get("cost", 0),
+                                }
 
                 # Duration
                 duration_s = None
-                if pipeline_file.exists():
-                    try:
-                        duration_s = pipeline_data.get("duration_s")
-                    except Exception:
-                        pass
+                if pipeline_data:
+                    duration_s = pipeline_data.get("duration_s")
 
                 # Narrative excerpt
                 narrative_excerpt = ""
                 narrative_file = run_dir / "narrative.md"
                 if narrative_file.exists():
-                    try:
-                        text = narrative_file.read_text()[:300]
+                    text = _read_text_file(narrative_file)
+                    if text is not None:
+                        text = text[:300]
                         # Skip frontmatter
                         if text.startswith("---"):
                             end = text.find("---", 3)
                             if end > 0:
                                 text = text[end + 3:].strip()
                         narrative_excerpt = text[:150]
-                    except Exception:
-                        pass
 
                 runs.append({
                     "scenario_id": scenario_id,
