@@ -322,14 +322,19 @@ theme_agents_router = APIRouter(prefix="/api/theme-agents", tags=["theme-agents"
 async def get_theme_agents() -> JSONResponse:
     project_dir = _get_project_dir()
     try:
-        crew = get_crew_manifest(project_dir)
-        return JSONResponse(crew if isinstance(crew, dict) else {})
+        # 160-17 round 2: pass a Path — get_crew_manifest -> get_current_theme does
+        # `root / ".pennyfarthing"`, so a str raised TypeError on EVERY call (the
+        # round-1 warn fired every request over a constant bug). get_crew_manifest
+        # returns list[CrewMember] (role, character); serialize to a {role: character}
+        # map so the panel renders real data (the old `isinstance(crew, dict)` check
+        # was always False -> {} -> panel never populated).
+        crew = get_crew_manifest(Path(project_dir))
+        return JSONResponse({member.role: member.character for member in crew})
     except Exception as exc:
         # AC-1 (160-17): a crew-manifest failure was silently swallowed -> the
         # theme-agents panel rendered empty with zero diagnostics. Warn (fail-loud)
         # then degrade to {} unchanged. Stays a catch-all because this is an async
-        # route that must never 500. The non-dict isinstance coercion above is a
-        # clean type fallback (not an error) and intentionally stays silent.
+        # route that must never 500.
         warnings.warn(f"Failed to load theme agents: {exc}", stacklevel=2)
         return JSONResponse({})
 
