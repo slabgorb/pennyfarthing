@@ -324,7 +324,13 @@ async def get_theme_agents() -> JSONResponse:
     try:
         crew = get_crew_manifest(project_dir)
         return JSONResponse(crew if isinstance(crew, dict) else {})
-    except Exception:
+    except Exception as exc:
+        # AC-1 (160-17): a crew-manifest failure was silently swallowed -> the
+        # theme-agents panel rendered empty with zero diagnostics. Warn (fail-loud)
+        # then degrade to {} unchanged. Stays a catch-all because this is an async
+        # route that must never 500. The non-dict isinstance coercion above is a
+        # clean type fallback (not an error) and intentionally stays silent.
+        warnings.warn(f"Failed to load theme agents: {exc}", stacklevel=2)
         return JSONResponse({})
 
 
@@ -380,20 +386,31 @@ def _get_identity() -> dict[str, Any]:
             import json as _json
 
             result = os.popen("jira me --raw 2>/dev/null").read()
-            data = _json.loads(result)
-            jira_email = data.get("emailAddress")
-        except Exception:
-            pass
+            # AC-2 (160-17): an installed-but-broken jira whose probe returns
+            # non-empty UNPARSEABLE output was swallowed silently. Warn (naming the
+            # probe) then degrade in place. EMPTY output (the common not-authed
+            # case, 2>/dev/null ate the error) is the normal not-configured state
+            # and stays silent.
+            if result.strip():
+                data = _json.loads(result)
+                jira_email = data.get("emailAddress")
+        except Exception as exc:
+            warnings.warn(f"Failed to parse jira identity probe: {exc}", stacklevel=2)
 
     if shutil.which("gh"):
         try:
             import json as _json
 
             result = os.popen("gh api user 2>/dev/null").read()
-            data = _json.loads(result)
-            github_username = data.get("login")
-        except Exception:
-            pass
+            # AC-2 (160-17): an installed-but-broken gh whose probe returns
+            # non-empty UNPARSEABLE output was swallowed silently. Warn (naming the
+            # probe) then degrade in place. EMPTY output (the common not-authed
+            # case) stays silent — the normal not-configured state.
+            if result.strip():
+                data = _json.loads(result)
+                github_username = data.get("login")
+        except Exception as exc:
+            warnings.warn(f"Failed to parse gh identity probe: {exc}", stacklevel=2)
 
     _identity_cache = {
         "jiraEmail": jira_email,
