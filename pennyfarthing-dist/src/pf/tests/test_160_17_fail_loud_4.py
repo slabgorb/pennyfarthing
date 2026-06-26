@@ -53,12 +53,14 @@ import json
 import os
 import re
 import shutil
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from pf.frame.routes import data_proxy
 from pf.frame.routes.data_proxy import _get_identity, get_theme_agents
+from pf.prime.persona import CrewMember
 
 # A read/probe-failure warning must name the NATURE of the failure, not be an
 # unrelated UserWarning. Used by the no-over-warning green guards.
@@ -134,38 +136,68 @@ def test_theme_agents_crew_error_warns_not_silent(monkeypatch):
     assert json.loads(response.body) == {}
 
 
-def test_theme_agents_healthy_no_warning(monkeypatch, recwarn):
-    """A healthy ``get_crew_manifest`` returns the real crew and emits no warning.
+def test_theme_agents_real_manifest_no_warn_on_valid_dir(tmp_path, monkeypatch, recwarn):
+    """Driving the REAL ``get_crew_manifest`` against a valid project dir must NOT
+    warn — the route must pass a ``Path``, not a ``str``.
 
-    GREEN regression guard (no over-warning): green-on-arrival — TEA Design
-    Deviation.
+    RED (round-2 regression for the Reviewer's blocking finding): round 1 did
+    ``get_crew_manifest(_get_project_dir())`` where ``_get_project_dir()`` returns a
+    ``str``; ``get_crew_manifest`` -> ``get_current_theme`` does
+    ``root / ".pennyfarthing"`` and raised
+    ``TypeError: unsupported operand type(s) for /: 'str' and 'str'`` on EVERY call,
+    so the round-1 warn fired on every request (warn-spam over a constant bug).
+
+    This drives the REAL manifest (NO seam patch) — exactly the path the patched
+    round-1 healthy test masked. A bare ``.pennyfarthing/`` dir resolves no theme,
+    so once a ``Path`` is passed ``get_crew_manifest`` returns ``[]`` and does NOT
+    raise -> no warn. (Verified: ``get_crew_manifest(Path(bare_dir)) == []``.)
     """
-    crew = {"sm": {"character": "Edmund Blackadder"}, "tea": {"character": "Lord Melchett"}}
-    monkeypatch.setattr(data_proxy, "get_crew_manifest", lambda *_a, **_k: crew)
+    (tmp_path / ".pennyfarthing").mkdir()
+    monkeypatch.setenv("PF_PROJECT_DIR", str(tmp_path))
+    monkeypatch.delenv("PF_THEME", raising=False)
 
-    response = _run_theme_agents()
+    response = _run_theme_agents()  # REAL get_crew_manifest; must NOT raise
 
-    assert json.loads(response.body) == crew
+    assert response.status_code == 200
     offenders = [str(w.message) for w in recwarn.list if re.search(_FAIL_PAT, str(w.message))]
-    assert not offenders, f"healthy theme-agents emitted spurious warning(s): {offenders!r}"
+    assert not offenders, (
+        "theme-agents warned on a valid project dir — the route passed a str where "
+        f"get_crew_manifest needs a Path: {offenders!r}"
+    )
 
 
-def test_theme_agents_non_dict_crew_stays_silent(monkeypatch, recwarn):
-    """A non-dict ``get_crew_manifest`` return (e.g. ``None``) coerces to ``{}``
-    WITHOUT a warning.
+def test_theme_agents_serializes_crew_members(monkeypatch):
+    """The route must SERIALIZE the ``list[CrewMember]`` ``get_crew_manifest``
+    returns into the JSON body — not coerce it to ``{}``.
 
-    GREEN scope guard: the fix must warn only on the ``except`` (exception) path,
-    never on the pre-existing ``isinstance(crew, dict)`` type-coercion fallback
-    (out of scope — a clean non-exception return, not a swallowed error).
-    Green-on-arrival — TEA Design Deviation.
+    RED (round-2 regression for the Reviewer's serialization finding): round 1 did
+    ``crew if isinstance(crew, dict) else {}`` while ``get_crew_manifest`` returns
+    ``list[CrewMember]`` (a dataclass that isn't JSON-serializable), so the
+    theme-agents panel ALWAYS returned ``{}`` and never rendered data.
+
+    The fake asserts the route hands a ``Path`` (binds the wiring fix) and returns a
+    realistic crew list; the body must carry the character names. The exact shape is
+    left to Dev (``{role: character}`` dict OR ``[{role, character}]`` list) — only
+    DATA PRESENCE is pinned, so the test is fix-agnostic on shape.
     """
-    monkeypatch.setattr(data_proxy, "get_crew_manifest", lambda *_a, **_k: None)
 
-    response = _run_theme_agents()
+    def _fake_manifest(project_root, *_a, **_k):
+        assert isinstance(project_root, Path), (
+            f"route must pass a Path to get_crew_manifest, got {type(project_root).__name__}"
+        )
+        return [
+            CrewMember(role="sm", character="Edmund Blackadder"),
+            CrewMember(role="tea", character="Lord Melchett"),
+        ]
 
-    assert json.loads(response.body) == {}
-    offenders = [str(w.message) for w in recwarn.list if re.search(_FAIL_PAT, str(w.message))]
-    assert not offenders, f"non-dict crew (in-scope coercion) emitted a warning: {offenders!r}"
+    monkeypatch.setattr(data_proxy, "get_crew_manifest", _fake_manifest)
+
+    response = _run_theme_agents()  # must NOT raise
+
+    body = json.loads(response.body)
+    serialized = json.dumps(body)
+    assert "Edmund Blackadder" in serialized, f"crew not serialized into body: {body!r}"
+    assert "Lord Melchett" in serialized, f"crew not serialized into body: {body!r}"
 
 
 # ===========================================================================
