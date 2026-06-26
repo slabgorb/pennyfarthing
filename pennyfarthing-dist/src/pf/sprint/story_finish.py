@@ -33,32 +33,90 @@ from pf.sprint.yaml_io import read_sprint
 SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
 
 
-def _add_story_to_completed(project_root: Path, story_id: str, story: dict) -> None:
+def _resolve_epic_ref(project_root: Path, story_id: str, story: dict) -> str:
+    """Resolve a story's parent epic id from *authoritative* sprint data.
+
+    The story->epic link is structural: the story lives inside its epic's
+    ``stories`` list. ``find_story_in_data`` returns that containing epic, whose
+    ``jira`` (or numeric ``id``) is the canonical reference. Falls back to an
+    explicit ``jira_epic``/``epic`` field on the story dict (e.g. standalone
+    stories that carry their own epic ref).
+
+    Returns ``""`` when no authoritative epic can be determined. The caller must
+    then fail loud rather than fabricate one from the id prefix — a naive prefix
+    parse turns ``ghost-99`` into ``ghost``, exactly the silent fabrication this
+    fix forbids (gh #16).
+    """
+    try:
+        data = read_sprint(project_root / "sprint" / "current-sprint.yaml")
+        epic, _found, _location = find_story_in_data(data, story_id)
+    except (FileNotFoundError, ValueError):
+        # Sprint index missing or malformed — fall through to the explicit
+        # field, then to the fail-loud empty result. We never silently invent
+        # an epic here.
+        epic = None
+    if isinstance(epic, dict):
+        ref = str(epic.get("jira") or epic.get("id") or "").strip()
+        if ref:
+            return ref
+
+    explicit = story.get("jira_epic") or story.get("epic") or ""
+    return str(explicit).strip()
+
+
+def _add_story_to_completed(project_root: Path, story_id: str, story: dict) -> dict[str, Any]:
     """Add a story to the sprint completed file.
 
     Called during story finish so that findings aggregation can discover
     the story even before its parent epic is fully archived.
+
+    The completed row's ``epic`` is sourced from authoritative sprint data via
+    :func:`_resolve_epic_ref` (never from the story dict's absent ``epic`` key,
+    which always resolved to ``""`` — gh #16). When the parent epic cannot be
+    resolved the write fails loud rather than emitting an empty / fabricated
+    epic or silently dropping the row.
+
+    Returns:
+        Result dict ``{"success": True, "epic": ...}`` on success, or
+        ``{"success": False, "error": ...}`` when the epic is unresolvable or
+        the archive guard rejects the write (SOUL #10 — return results, never
+        swallow).
     """
+    epic_ref = _resolve_epic_ref(project_root, story_id, story)
+    if not epic_ref:
+        return {
+            "success": False,
+            "error": (
+                f"Cannot resolve parent epic for story {story_id!r}: it is absent "
+                "from sprint data and carries no explicit epic field. Refusing to "
+                "archive a completed row with an empty epic (gh #16)."
+            ),
+        }
+
+    archive_path = ensure_archive_file(project_root)
+    archive_data = _load_archive_file(archive_path)
+
+    existing_ids = {s.get("id") for s in archive_data["completed_stories"]}
+    if story_id in existing_ids:
+        return {"success": True, "epic": epic_ref, "skipped": "already-present"}
+
+    archive_data["completed_stories"].append(
+        {
+            "id": story_id,
+            "epic": epic_ref,
+            "title": story.get("title", ""),
+            "points": story.get("points", 0),
+            "completed": story.get("completed", date.today().isoformat()),
+        }
+    )
     try:
-        archive_path = ensure_archive_file(project_root)
-        archive_data = _load_archive_file(archive_path)
-
-        existing_ids = {s.get("id") for s in archive_data["completed_stories"]}
-        if story_id in existing_ids:
-            return
-
-        archive_data["completed_stories"].append(
-            {
-                "id": story_id,
-                "epic": story.get("jira_epic", story.get("epic", "")),
-                "title": story.get("title", ""),
-                "points": story.get("points", 0),
-                "completed": story.get("completed", date.today().isoformat()),
-            }
-        )
         _write_archive_file(archive_path, archive_data)
-    except Exception:
-        pass  # Non-fatal — findings collection has fallback strategies
+    except ValueError as exc:
+        # A pre-existing row with an empty epic trips the 151-2 guard. Surface it
+        # as a result instead of crashing finish or silently dropping the row;
+        # backfill (`backfill_epic_refs`) repairs the historical entries.
+        return {"success": False, "error": str(exc)}
+    return {"success": True, "epic": epic_ref}
 
 
 def _parse_session(session_path: Path) -> dict[str, str]:
@@ -400,13 +458,26 @@ def finish_story(
         }
 
     # --- Step 4b: Add story to completed file ---
-    try:
-        data = read_sprint(sprint_path)
-        _epic, story, _location = find_story_in_data(data, story_id)
-        if story:
-            _add_story_to_completed(project_root, story_id, story)
-    except Exception:
-        pass
+    # Surface the add-result as a step rather than swallowing it: an unresolved
+    # epic must not silently drop the completed row (gh #16). This bookkeeping
+    # add is non-fatal to finish, but the failure is recorded, never hidden.
+    data = read_sprint(sprint_path)
+    _epic, completed_story, _location = find_story_in_data(data, story_id)
+    if completed_story:
+        add_result = _add_story_to_completed(project_root, story_id, completed_story)
+        if add_result.get("success"):
+            steps.append(
+                {"step": "4b", "action": "add_completed_story", "epic": add_result.get("epic")}
+            )
+        else:
+            steps.append(
+                {
+                    "step": "4b",
+                    "action": "add_completed_story",
+                    "success": False,
+                    "error": add_result.get("error"),
+                }
+            )
 
     # --- Step 4c: Generate demo artifacts (non-fatal) ---
     try:
