@@ -271,7 +271,11 @@ async def get_git_all() -> JSONResponse:
         results.append(
             {
                 "name": repo["name"],
-                "path": repo["path"],
+                # 160-22: basename only — an absolute or ``../parent`` configured
+                # path in repos.yaml must not disclose filesystem layout. The
+                # ``or repo["path"]`` fallback keeps a bare "." for the default
+                # repo, whose ``Path(".").name`` is "".
+                "path": Path(repo["path"]).name or repo["path"],
                 "branch": info["branch"] if info else "unknown",
                 "clean": info["clean"] if info else True,
                 "ahead": info.get("ahead") if info else None,
@@ -323,14 +327,16 @@ async def get_context() -> JSONResponse:
         # Warn (fail-loud) then degrade unchanged. Stays a catch-all because this
         # feeds an async route / poll loop that must never raise. Message sanitised
         # (type name only) per 160-18 — see _safe_exc. The response-body
-        # ``error: str(e)`` below is story 160-22's scope, left as-is here.
+        # ``error`` below is likewise sanitised via _safe_exc (story 160-22): a
+        # raw str(e) here was a live network info-leak (could embed absolute
+        # paths, tokens, or file fragments).
         warnings.warn(f"Failed to check context ({_safe_exc(e)})", stacklevel=2)
         return JSONResponse(
             {
                 "percent": None,
                 "tokens": None,
                 "status": None,
-                "error": str(e),
+                "error": _safe_exc(e),
                 "baseline": None,
                 "usableTokens": None,
                 "usablePercent": None,
@@ -474,7 +480,11 @@ async def get_project_info() -> JSONResponse:
     return JSONResponse(
         {
             "name": Path(project_dir).name,
-            "path": project_dir,
+            # 160-22: never expose the raw absolute project_dir (OS username +
+            # on-disk layout) in the response body. Basename only — keeps the
+            # Node.js response shape (``path`` present, story 48-2 AC5) while
+            # disclosing nothing beyond the project's own folder name.
+            "path": Path(project_dir).name,
         }
     )
 
