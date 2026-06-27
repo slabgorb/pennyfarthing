@@ -284,7 +284,18 @@ def aggregate_results(
         else:
             warnings.append(f"PR check failed: {pr.error}")
     elif not pr.merged:
-        if pr.state == "OPEN":
+        if pr.mergeable == "CONFLICTING":
+            # A conflicting PR cannot simply be merged — it needs a rebase first.
+            # Surfacing the generic "merge the PR" here is misleading and is the
+            # exact false-green that lets a CONFLICTING finish slip through (gh #113).
+            issues.append(
+                PreflightIssue(
+                    severity="critical",
+                    issue="PR has merge conflicts (not mergeable)",
+                    fix="Rebase the PR on its base branch and resolve the conflicts before finishing",
+                )
+            )
+        elif pr.state == "OPEN":
             issues.append(
                 PreflightIssue(
                     severity="critical",

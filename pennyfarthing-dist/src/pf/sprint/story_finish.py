@@ -182,6 +182,38 @@ def _pr_is_merged(pr_number: str) -> bool:
     return state == "MERGED"
 
 
+def _pr_block_reason(pr_number: str) -> str | None:
+    """Return an actionable abort message when the PR is definitively NOT cleanly
+    mergeable (``mergeable == CONFLICTING`` / ``mergeStateStatus == DIRTY``), else
+    ``None``.
+
+    ``None`` ("do not block") also covers MERGEABLE/CLEAN PRs *and* indeterminate
+    mergeability — ``UNKNOWN`` (GitHub still computing) or a ``gh`` error. Those
+    fall through to the merge attempt, which is guarded by the post-merge
+    :func:`_pr_is_merged` verification (gh #71/#60). Only a definitively
+    conflicting PR is hard-blocked here, before any irreversible finish step
+    (gh #113).
+    """
+    result = _run(
+        ["gh", "pr", "view", pr_number, "--json", "mergeable,mergeStateStatus,baseRefName"]
+    )
+    if result.returncode != 0:
+        return None
+    try:
+        data = json.loads(result.stdout)
+    except (json.JSONDecodeError, ValueError):
+        return None
+    mergeable = str(data.get("mergeable", "")).upper()
+    state_status = str(data.get("mergeStateStatus", "")).upper()
+    if mergeable == "CONFLICTING" or state_status == "DIRTY":
+        base = data.get("baseRefName") or "the base branch"
+        return (
+            f"PR #{pr_number} is CONFLICTING — rebase on {base} and resolve the "
+            "conflicts before finishing"
+        )
+    return None
+
+
 def _git_cleanup(
     project_root: Path,
     branch: str | None,
@@ -302,6 +334,35 @@ def finish_story(
         steps.append({"step": 7, "action": "Remove session file"})
         return {"success": True, "dry_run": True, "jira_key": jira_key, "steps": steps}
 
+    # --- Pre-merge gate (gh #113): a definitively non-mergeable PR aborts finish
+    # BEFORE any irreversible step. 155-1 made the merge load-bearing; this stops
+    # the ceremony even earlier — ahead of archive_session — so a CONFLICTING PR
+    # leaves the session, the YAML, and the archive untouched and reports an
+    # actionable rebase message instead of a generic merge failure. Indeterminate
+    # mergeability (UNKNOWN / gh error) is NOT blocked here: it falls through to
+    # the merge + post-merge _pr_is_merged verification.
+    from pf.common.pr_config import get_pr_merge_mode
+
+    if pr_number and get_pr_merge_mode() == "auto":
+        block_reason = _pr_block_reason(pr_number)
+        if block_reason:
+            steps.append(
+                {
+                    "step": 2,
+                    "action": "merge_pr",
+                    "pr": pr_number,
+                    "success": False,
+                    "error": block_reason,
+                }
+            )
+            return {
+                "success": False,
+                "story_id": story_id,
+                "jira_key": jira_key,
+                "error": block_reason,
+                "steps": steps,
+            }
+
     # --- Step 1: Archive session ---
     archive_dest = archive_dir / archive_name
     shutil.copy2(session_path, archive_dest)
@@ -314,8 +375,6 @@ def finish_story(
         steps.append({"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)})
 
     # --- Step 2: Merge PR ---
-    from pf.common.pr_config import get_pr_merge_mode
-
     pr_merge_mode = get_pr_merge_mode()
     if pr_merge_mode == "human":
         # Human merge mode never auto-merges; the story is left in_review below
