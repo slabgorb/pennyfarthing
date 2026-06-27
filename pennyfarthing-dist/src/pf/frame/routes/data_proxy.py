@@ -20,7 +20,7 @@ from typing import Any
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from pf.context_window import ContextConfig, check_context
+from pf.context_window import check_context
 
 # Direct imports — no shelling out
 from pf.prime.persona import get_crew_manifest, load_persona
@@ -299,8 +299,13 @@ context_router = APIRouter(prefix="/api/context", tags=["context"])
 async def get_context() -> JSONResponse:
     project_dir = _get_project_dir()
     try:
-        config = ContextConfig(project_dir=project_dir)
-        result = check_context(config)
+        # 160-19: call check_context directly. The prior
+        # ``ContextConfig(project_dir=project_dir)`` was a constant bug —
+        # ContextConfig has no project_dir field, so it raised TypeError on EVERY
+        # request and the silent except below returned an all-None shape; the
+        # /api/context panel never showed real data. check_context builds its own
+        # config via load_config(project_dir).
+        result = check_context(project_dir=project_dir)
         return JSONResponse(
             {
                 "percent": result.percent,
@@ -314,6 +319,12 @@ async def get_context() -> JSONResponse:
             }
         )
     except Exception as e:
+        # 160-19 (fail-loud sweep part 5): the LAST silent swallow in this file.
+        # Warn (fail-loud) then degrade unchanged. Stays a catch-all because this
+        # feeds an async route / poll loop that must never raise. Message sanitised
+        # (type name only) per 160-18 — see _safe_exc. The response-body
+        # ``error: str(e)`` below is story 160-22's scope, left as-is here.
+        warnings.warn(f"Failed to check context ({_safe_exc(e)})", stacklevel=2)
         return JSONResponse(
             {
                 "percent": None,
