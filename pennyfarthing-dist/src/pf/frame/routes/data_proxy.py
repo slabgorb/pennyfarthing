@@ -42,6 +42,19 @@ def _detect_pf_project(project_dir: str) -> bool:
     return Path(project_dir, ".pennyfarthing").is_dir()
 
 
+def _safe_exc(exc: Exception) -> str:
+    """Network-safe exception summary for the warnings sink (story 160-18).
+
+    The fail-loud sweep (160-4..17) added ``warnings.warn(f"...: {exc}")`` calls
+    here. A raw ``str(exc)`` can carry file-content fragments, absolute paths
+    (with usernames), or tokens — unsafe to expose if Frame ever forwards
+    warnings to a network client. Emit only the exception TYPE name, which keeps
+    the diagnostic class while leaking nothing. Likewise, ``repo_path`` is
+    dropped entirely from the git-info warning below.
+    """
+    return type(exc).__name__
+
+
 # ---------------------------------------------------------------------------
 # Persona router
 # ---------------------------------------------------------------------------
@@ -190,8 +203,9 @@ def _get_git_info(repo_path: str) -> dict[str, Any] | None:
         # rev-list --count that fails int() parsing) was silently collapsing the
         # whole repo to None -> rendered as "unknown"/clean with zero diagnostics.
         # Warn (fail-loud) then degrade unchanged. Stays a catch-all because this
-        # feeds an async route / poll loop that must never raise.
-        warnings.warn(f"Failed to parse git info for {repo_path}: {exc}", stacklevel=2)
+        # feeds an async route / poll loop that must never raise. Message is
+        # sanitised (type name only, no repo_path) per 160-18 — see _safe_exc.
+        warnings.warn(f"Failed to parse git info ({_safe_exc(exc)})", stacklevel=2)
         return None
 
 
@@ -221,8 +235,11 @@ def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
                 # panel fell back to a single "." repo, hiding the real (broken)
                 # topology. Warn (naming the file) then keep the fallback. The
                 # explicit encoding="utf-8" (CWE-838) makes the decode
-                # deterministic across platforms.
-                warnings.warn(f"Failed to load repos config {p.name}: {exc}", stacklevel=2)
+                # deterministic across platforms. Message sanitised (type name
+                # only) per 160-18; the fixed filename p.name is non-sensitive.
+                warnings.warn(
+                    f"Failed to load repos config {p.name} ({_safe_exc(exc)})", stacklevel=2
+                )
 
     dir_name = Path(project_dir).name or "project"
     return [{"name": dir_name, "path": "."}]
@@ -334,8 +351,8 @@ async def get_theme_agents() -> JSONResponse:
         # AC-1 (160-17): a crew-manifest failure was silently swallowed -> the
         # theme-agents panel rendered empty with zero diagnostics. Warn (fail-loud)
         # then degrade to {} unchanged. Stays a catch-all because this is an async
-        # route that must never 500.
-        warnings.warn(f"Failed to load theme agents: {exc}", stacklevel=2)
+        # route that must never 500. Message sanitised (type name only) per 160-18.
+        warnings.warn(f"Failed to load theme agents ({_safe_exc(exc)})", stacklevel=2)
         return JSONResponse({})
 
 
@@ -400,7 +417,7 @@ def _get_identity() -> dict[str, Any]:
                 data = _json.loads(result)
                 jira_email = data.get("emailAddress")
         except Exception as exc:
-            warnings.warn(f"Failed to parse jira identity probe: {exc}", stacklevel=2)
+            warnings.warn(f"Failed to parse jira identity probe ({_safe_exc(exc)})", stacklevel=2)
 
     if shutil.which("gh"):
         try:
@@ -415,7 +432,7 @@ def _get_identity() -> dict[str, Any]:
                 data = _json.loads(result)
                 github_username = data.get("login")
         except Exception as exc:
-            warnings.warn(f"Failed to parse gh identity probe: {exc}", stacklevel=2)
+            warnings.warn(f"Failed to parse gh identity probe ({_safe_exc(exc)})", stacklevel=2)
 
     _identity_cache = {
         "jiraEmail": jira_email,
