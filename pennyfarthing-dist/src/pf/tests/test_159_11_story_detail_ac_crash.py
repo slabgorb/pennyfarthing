@@ -41,7 +41,6 @@ from textual.widgets import Collapsible
 from pf.tui.story_detail_screen import StoryDetailScreen
 from pf.tui.story_detail_widget import StoryDetailWidget
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -69,7 +68,7 @@ def _plain(static_widget: Any) -> str:
     there is no public accessor outside an app render cycle (``.renderable`` does
     not exist in the pinned Textual version), so we read it directly.
     """
-    content = getattr(static_widget, "_Static__content")
+    content = static_widget._Static__content
     return content.plain if hasattr(content, "plain") else str(content)
 
 
@@ -87,7 +86,10 @@ class TestStringFormAcs:
         RED today: ``ac.get("done")`` raises AttributeError on the first str.
         """
         widgets = _compose(
-            {"title": "Robustify loop callbacks", "acceptance_criteria": ["do a thing", "do another"]}
+            {
+                "title": "Robustify loop callbacks",
+                "acceptance_criteria": ["do a thing", "do another"],
+            }
         )
         # Reached here => no AttributeError. Also prove compose produced output.
         assert widgets, "compose() must yield widgets for a story with string ACs"
@@ -98,9 +100,7 @@ class TestStringFormAcs:
         Pins that the fix does NOT 'recover' by silently dropping the AC section,
         and that a string AC counts as not-done.
         """
-        widgets = _compose(
-            {"title": "X", "acceptance_criteria": ["first", "second", "third"]}
-        )
+        widgets = _compose({"title": "X", "acceptance_criteria": ["first", "second", "third"]})
         ac = _ac_widget(widgets)
         assert ac is not None, "AC section must still render for string-form ACs"
         plain = _plain(ac)
@@ -221,9 +221,7 @@ class TestStoryDetailWidgetAcShapes:
 
         RED today: L43 ``ac.get("done")`` raises AttributeError on the first str.
         """
-        widgets = _compose_widget(
-            {"title": "X", "acceptance_criteria": ["alpha", "beta"]}
-        )
+        widgets = _compose_widget({"title": "X", "acceptance_criteria": ["alpha", "beta"]})
         assert widgets, "compose() must yield widgets for a story with string ACs"
 
     def test_widget_string_form_acs_render_text_and_zero_done(self) -> None:
