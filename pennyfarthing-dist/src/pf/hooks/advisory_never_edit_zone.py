@@ -27,6 +27,22 @@ from pathlib import Path
 from pf.git.repos import load_repos_config
 
 
+def _collapse_double_stars(pattern: str) -> str:
+    """Collapse runs of consecutive ``**`` path segments into a single ``**``.
+
+    In gitignore semantics ``**/**`` is equivalent to ``**`` (zero-or-more
+    segments). Collapsing prevents the translated regex from stacking multiple
+    ``(?:[^/]+/)*`` groups, which would otherwise cause polynomial-time
+    backtracking (ReDoS) on deep paths that fail to match.
+    """
+    collapsed: list[str] = []
+    for seg in pattern.split("/"):
+        if seg == "**" and collapsed and collapsed[-1] == "**":
+            continue
+        collapsed.append(seg)
+    return "/".join(collapsed)
+
+
 def _translate(pattern: str) -> str:
     """Translate a gitignore-style glob into a regex over a repo-relative path.
 
@@ -38,6 +54,7 @@ def _translate(pattern: str) -> str:
     p = pattern.strip()
     if p.startswith("/"):
         p = p[1:]
+    p = _collapse_double_stars(p)
     anchored = "/" in p
     out: list[str] = []
     i, n = 0, len(p)
@@ -89,6 +106,11 @@ def _source_for(rel_path: str, symlinks: dict[str, str]) -> str | None:
     return target.rstrip("/") + rel_path[len(best):]
 
 
+def _clip(msg: str, limit: int = 199) -> str:
+    """Keep an advisory reminder under *limit* chars (AC4: < 200)."""
+    return msg if len(msg) <= limit else msg[: limit - 1] + "…"
+
+
 def _advisory_for(rel_path: str, project_root: Path) -> str | None:
     """Return an advisory reminder if *rel_path* is in a never-edit zone, else None."""
     repos = load_repos_config(project_root)
@@ -106,11 +128,11 @@ def _advisory_for(rel_path: str, project_root: Path) -> str | None:
             if _matches(pattern, rel_to_repo):
                 source = _source_for(rel_path, repo.symlinks)
                 if source:
-                    return (
+                    return _clip(
                         f"⚠️ `{rel_path}` is a repos.yaml never-edit symlink zone — "
                         f"edit the source at `{source}` instead."
                     )
-                return (
+                return _clip(
                     f"⚠️ `{rel_path}` is in a repos.yaml never-edit zone (`{pattern}`) — "
                     f"do not edit build output / dependencies / symlinks."
                 )
@@ -133,17 +155,23 @@ def main() -> None:
         # Honor CLAUDE_PROJECT_DIR (the project Claude is editing) directly, like
         # pre_edit_check does — NOT get_project_root(), which prefers a PROJECT_ROOT
         # override that can point at a different repo.
-        project_root = Path(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()).resolve()
-        fp = Path(file_path)
-        if fp.is_absolute():
-            try:
-                rel_path = fp.resolve().relative_to(project_root).as_posix()
-            except ValueError:
+        project_root = Path(os.path.normpath(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()))
+
+        # Normalize the edited path LEXICALLY (os.path.normpath) — NOT Path.resolve(),
+        # which would follow the very .pennyfarthing/ symlinks we need to match
+        # against never-edit zones and rewrite the path to its source (missing the
+        # zone). normpath still collapses '.'/'..' so a traversal path can't leak.
+        norm = os.path.normpath(file_path)
+        if os.path.isabs(norm):
+            root_str = str(project_root)
+            if norm != root_str and not norm.startswith(root_str + os.sep):
                 sys.exit(0)  # edit is outside the project — nothing to say
+            rel_path = "" if norm == root_str else norm[len(root_str) + 1:]
+        elif norm == ".." or norm.startswith(".." + os.sep):
+            sys.exit(0)  # relative path escapes the project
         else:
-            rel_path = fp.as_posix()
-        if rel_path.startswith("./"):
-            rel_path = rel_path[2:]
+            rel_path = norm
+        rel_path = rel_path.replace(os.sep, "/")
 
         advisory = _advisory_for(rel_path, project_root)
         if advisory:

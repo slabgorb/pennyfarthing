@@ -39,6 +39,8 @@ from __future__ import annotations
 import importlib
 import io
 import json
+import os
+import time
 from pathlib import Path
 
 import pytest
@@ -502,4 +504,99 @@ def test_dispatch_injects_advisory_without_blocking(dogfood_project, monkeypatch
     assert hso.get("permissionDecision") != "deny", "advisory path must not produce a deny"
     assert "pennyfarthing/pennyfarthing-dist/agents" in hso.get("additionalContext", ""), (
         "the advisory source path must appear in the dispatched additionalContext"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Rework (159-12 round 1) — ReDoS hardening, symlink-path correctness, AC4 length
+# ---------------------------------------------------------------------------
+
+
+def test_collapse_adjacent_double_stars():
+    """Consecutive `**` segments collapse to one (the ReDoS root cause); a single
+    `**` and non-adjacent `**` are preserved."""
+    mod = importlib.import_module(HOOK_MODULE)
+    assert mod._collapse_double_stars("**/**/**/**/x") == "**/x"
+    assert mod._collapse_double_stars("**/a/**/**/b") == "**/a/**/b"
+    assert mod._collapse_double_stars("**/x") == "**/x"
+    assert mod._collapse_double_stars("a/*/dist/**") == "a/*/dist/**"
+
+
+def test_chained_double_star_pattern_is_bounded_and_correct():
+    """A pattern with many chained `**` groups must NOT blow up (ReDoS regression):
+    it matches in bounded time and preserves correct semantics after collapsing."""
+    mod = importlib.import_module(HOOK_MODULE)
+    pattern = "**/" * 8 + "nomatch"  # '**/**/.../**/nomatch'
+    deep_path = "/".join(f"seg{i}" for i in range(50)) + "/file.txt"  # 50 segments, no 'nomatch'
+    start = time.perf_counter()
+    result = mod._matches(pattern, deep_path)  # worst case = a non-match on a deep path
+    elapsed = time.perf_counter() - start
+    assert result is False, "the crafted pattern should not match this path"
+    assert elapsed < 2.0, f"matching must stay bounded (ReDoS guard); took {elapsed:.2f}s"
+    # semantics preserved: the collapsed `**/nomatch` still matches a path ending in it
+    assert mod._matches(pattern, "a/b/c/nomatch") is True
+
+
+def test_absolute_symlink_path_matches_zone(tmp_path, monkeypatch, capsys):
+    """Editing a REAL `.pennyfarthing/` symlink via an ABSOLUTE path must still match
+    the never-edit zone. The hook must NOT resolve the symlink away to its source
+    (regression: `Path.resolve()` followed the symlink and missed the zone)."""
+    root = tmp_path / "project"
+    root.mkdir()
+    src = root / "pennyfarthing" / "pennyfarthing-dist" / "agents"
+    src.mkdir(parents=True)
+    pf = root / ".pennyfarthing"
+    pf.mkdir()
+    link = pf / "agents"
+    link.symlink_to(os.path.relpath(src, pf))  # real filesystem symlink
+    _write_repos(
+        root,
+        {
+            "orchestrator": {
+                "path": ".",
+                "never_edit": [".pennyfarthing/agents/**"],
+                "symlinks": {".pennyfarthing/agents": "pennyfarthing/pennyfarthing-dist/agents"},
+            }
+        },
+    )
+    abs_edit = str(link / "dev.md")  # absolute path THROUGH the symlink
+    out, code = _run_hook(_edit(abs_edit), project_dir=root, monkeypatch=monkeypatch, capsys=capsys)
+    assert code == 0
+    hso = _hook_output(out)
+    assert hso is not None, "an absolute edit of a symlinked zone must trigger the advisory"
+    assert "pennyfarthing/pennyfarthing-dist/agents" in hso.get("additionalContext", "")
+
+
+def test_relative_path_with_dotdot_is_normalized(dogfood_project, monkeypatch, capsys):
+    """A relative path containing `..` is normalized before matching (consistency
+    with the absolute branch); one that escapes the project is silent."""
+    # `.pennyfarthing/guides/../agents/tea.md` normalizes to `.pennyfarthing/agents/tea.md`
+    out, code = _run_hook(
+        _edit(".pennyfarthing/guides/../agents/tea.md"),
+        project_dir=dogfood_project,
+        monkeypatch=monkeypatch,
+        capsys=capsys,
+    )
+    assert code == 0
+    assert _hook_output(out) is not None, "`..` must be normalized, then matched"
+    # a path that escapes the project root produces no output
+    esc, esc_code = _run_hook(
+        _edit("../../etc/passwd"),
+        project_dir=dogfood_project,
+        monkeypatch=monkeypatch,
+        capsys=capsys,
+    )
+    assert esc_code == 0
+    assert esc.strip() == ""
+
+
+def test_reminder_stays_under_200_chars_for_deep_path(dogfood_project, monkeypatch, capsys):
+    """AC4: the advisory reminder is < 200 characters, even for a deep symlinked path."""
+    deep = ".pennyfarthing/agents/" + "/".join(f"seg{i}" for i in range(30)) + "/file.md"
+    out, code = _run_hook(_edit(deep), project_dir=dogfood_project, monkeypatch=monkeypatch, capsys=capsys)
+    assert code == 0
+    hso = _hook_output(out)
+    assert hso is not None
+    assert len(hso["additionalContext"]) < 200, (
+        f"reminder must be < 200 chars (AC4); got {len(hso['additionalContext'])}"
     )
