@@ -79,6 +79,14 @@ def pre_edit_check():
     main()
 
 
+@hooks.command("advisory-never-edit-zone")
+def advisory_never_edit_zone():
+    """PreToolUse hook — advise (never block) when editing a repos.yaml never-edit zone."""
+    from pf.hooks.advisory_never_edit_zone import main
+
+    main()
+
+
 @hooks.command("context-warning")
 def context_warning():
     """PreToolUse hook — warn when context usage is high."""
