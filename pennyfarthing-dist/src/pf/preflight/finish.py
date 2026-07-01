@@ -133,6 +133,49 @@ class PreflightResult:
         return result
 
 
+async def _lookup_merged_pr_by_branch(branch: str, repo: str | None) -> dict[str, Any] | None:
+    """Find a merged PR by head branch.
+
+    Used when ``gh pr view <branch>`` reports no PR: a merged PR whose head
+    branch was deleted (the normal post-merge state) is invisible to
+    ``gh pr view`` but still discoverable via ``gh pr list --state merged``.
+    Mirrors the head-branch resolution used by story 155-1's finish flow.
+    Returns the first merged PR record, or ``None`` if none is found.
+    """
+    cmd = [
+        "gh",
+        "pr",
+        "list",
+        "--state",
+        "merged",
+        "--head",
+        branch,
+        "--json",
+        "number,state,mergedAt,url",
+    ]
+    if repo:
+        cmd.extend(["--repo", repo])
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await proc.communicate()
+        if proc.returncode != 0:
+            return None
+        data = json.loads(stdout.decode() or "[]")
+    except (OSError, json.JSONDecodeError):
+        # Fallback lookup failed — let the caller surface the original error.
+        return None
+
+    for pr in data:
+        if pr.get("state") == "MERGED" or pr.get("mergedAt"):
+            return pr
+    return None
+
+
 async def check_pr_status(branch: str, repo: str | None = None) -> PRStatus:
     """Check PR status via gh CLI."""
     result = PRStatus()
@@ -158,7 +201,19 @@ async def check_pr_status(branch: str, repo: str | None = None) -> PRStatus:
             result.mergeable = data.get("mergeable")
             result.url = data.get("url")
         else:
-            result.error = stderr.decode().strip() or "PR not found"
+            err = stderr.decode().strip()
+            # A merged PR whose head branch was deleted reads as "no pull
+            # requests found for branch". Before treating that as a blocking
+            # "No PR found", fall back to a head-branch merged-PR lookup — a
+            # merged PR must not false-block finish.
+            if "no pull requests found" in err.lower():
+                merged_pr = await _lookup_merged_pr_by_branch(branch, repo)
+                if merged_pr is not None:
+                    result.state = "MERGED"
+                    result.merged = True
+                    result.url = merged_pr.get("url")
+                    return result
+            result.error = err or "PR not found"
 
     except Exception as e:
         result.error = str(e)
@@ -166,17 +221,41 @@ async def check_pr_status(branch: str, repo: str | None = None) -> PRStatus:
     return result
 
 
+def _detect_lint_command(project_root: Path) -> list[str] | None:
+    """Choose the lint command from the project layout.
+
+    - ``package.json`` present → Node project → ``npm run lint``
+    - else ``pyproject.toml`` present → Python project → ``ruff check .``
+    - else → no lintable project at this root → ``None`` (skip, treated as clean)
+
+    Historically ``check_lint`` hardcoded ``npm run lint`` regardless of
+    language, which false-blocked finish on the Python-only orchestrator root
+    (ADR-0034): the root has no npm lint script, so the check failed. Detecting
+    the language from the layout removes that false-block without depending on
+    the (stale) ``repos.yaml`` language field.
+    """
+    if (project_root / "package.json").exists():
+        return ["npm", "run", "lint"]
+    if (project_root / "pyproject.toml").exists():
+        return ["ruff", "check", "."]
+    return None
+
+
 async def check_lint(project_root: Path | None = None) -> LintResult:
-    """Run npm run lint."""
+    """Run the project's linter (language-aware)."""
     result = LintResult()
 
     cwd = project_root or Path.cwd()
 
+    lint_cmd = _detect_lint_command(cwd)
+    if lint_cmd is None:
+        # No lintable project at this root — absence of lint is not a failure.
+        result.clean = True
+        return result
+
     try:
         proc = await asyncio.create_subprocess_exec(
-            "npm",
-            "run",
-            "lint",
+            *lint_cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=cwd,
