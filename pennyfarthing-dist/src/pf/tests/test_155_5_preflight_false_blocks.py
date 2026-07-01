@@ -167,6 +167,12 @@ class TestLintDoesNotRunNpmOnPythonProject:
             f"commands: {recorder.cmdlines}. Preflight must use Python tooling "
             "(ruff), not npm (ADR-0034)."
         )
+        # Positive proof: ruff actually ran. Without this, the test passes even
+        # if linting is silently disabled for Python (detection → None → skip).
+        assert any("ruff" in line for line in recorder.cmdlines), (
+            "check_lint did not run the Python linter (ruff) on a Python project "
+            f"— linting was silently skipped. commands: {recorder.cmdlines}"
+        )
 
     @pytest.mark.asyncio
     async def test_check_lint_reports_clean_when_python_linter_passes(
@@ -192,6 +198,15 @@ class TestLintDoesNotRunNpmOnPythonProject:
         assert not _ran_npm(recorder), (
             f"check_lint still ran npm on a Python project: {recorder.cmdlines}"
         )
+        # Positive proof: the clean result came from ruff actually running, not
+        # from lint being silently skipped.
+        assert any("ruff" in line for line in recorder.cmdlines), (
+            "check_lint reported clean without running the Python linter (ruff) "
+            f"— lint was silently skipped. commands: {recorder.cmdlines}"
+        )
+        assert result.command == "ruff check .", (
+            f"LintResult.command should record the linter actually run, got {result.command!r}"
+        )
 
 
 class TestLintOverReachGuard:
@@ -211,6 +226,57 @@ class TestLintOverReachGuard:
         assert _ran_npm(recorder), (
             "check_lint must still run npm lint on a genuine Node project — the "
             f"Python fix over-reached. commands: {recorder.cmdlines}"
+        )
+
+
+class TestLintFailureRemediationNamesRealLinter:
+    """A Python ruff failure must not tell the user to 'Run npm run lint'.
+
+    Regression guard for the incomplete-fix the reviewer caught: making
+    ``check_lint`` language-aware is pointless if ``aggregate_results`` still
+    emits npm-specific remediation text on a Python lint failure — that is the
+    story's own npm-on-Python bug, relocated into the recovery guidance.
+    """
+
+    @pytest.mark.asyncio
+    async def test_python_lint_failure_remediation_names_ruff_not_npm(
+        self, tmp_path: Path
+    ) -> None:
+        _make_python_project(tmp_path)
+        _write_session(tmp_path, "155-5")
+
+        merged = [{"number": 1, "state": "MERGED", "mergedAt": "2026-06-30T00:00:00Z"}]
+
+        def dispatch(tokens):
+            if "view" in tokens:
+                return _FakeProc(returncode=1, stderr=b"no pull requests found for branch")
+            if "list" in tokens:  # merged PR so only the lint failure blocks
+                return _FakeProc(returncode=0, stdout=json.dumps(merged).encode())
+            if tokens and "npm" in tokens:
+                return _FakeProc(returncode=1, stderr=b"npm ERR")
+            # ruff fails
+            return _FakeProc(returncode=1, stdout=b"demo.py:1:1: E501 line too long")
+
+        recorder = _Recorder(dispatch)
+        with _patched(recorder):
+            result = await run_finish_preflight(
+                story_id="155-5",
+                branch="feat/155-5",
+                repo="x/y",
+                project_root=tmp_path,
+            )
+
+        lint_issues = [i for i in result.issues if i.issue == "Lint check failed"]
+        assert lint_issues, (
+            f"expected a lint-failure issue, got {[i.issue for i in result.issues]}"
+        )
+        fix = lint_issues[0].fix or ""
+        assert "npm" not in fix, (
+            f"Python lint failure emitted npm remediation guidance: {fix!r} — the "
+            "story's npm-on-Python bug survived in the recovery text."
+        )
+        assert "ruff" in fix, (
+            f"remediation should name the real linter that ran (ruff), got {fix!r}"
         )
 
 
@@ -351,4 +417,43 @@ class TestPrStatusOverReachGuard:
         assert any("No PR found" in i.issue for i in result.issues), (
             f"Expected a 'No PR found' block for a genuinely missing PR, got: "
             f"{[i.issue for i in result.issues]}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_check_pr_status_surfaces_error_when_fallback_lookup_fails(self) -> None:
+        # gh pr view → no PR; the fallback gh pr list ITSELF fails (auth/rate-limit).
+        def dispatch(tokens):
+            if "view" in tokens:
+                return _FakeProc(returncode=1, stderr=b'no pull requests found for branch "x"')
+            if "list" in tokens:
+                return _FakeProc(returncode=1, stderr=b"gh: authentication required")
+            return _FakeProc(returncode=0)
+
+        recorder = _Recorder(dispatch)
+        with _patched(recorder):
+            result = await check_pr_status("feat/x", repo="x/y")
+
+        assert result.merged is False, "a failed fallback lookup must not report merged"
+        assert result.error is not None, (
+            "when the fallback lookup itself fails, the original 'no PR found' error "
+            "must still surface (fail safe) — not be swallowed into a pass"
+        )
+
+    @pytest.mark.asyncio
+    async def test_check_pr_status_survives_malformed_gh_list_json(self) -> None:
+        # gh pr list returns rc=0 but non-JSON garbage → must degrade, not crash.
+        def dispatch(tokens):
+            if "view" in tokens:
+                return _FakeProc(returncode=1, stderr=b"no pull requests found for branch")
+            if "list" in tokens:
+                return _FakeProc(returncode=0, stdout=b"not json <<<")
+            return _FakeProc(returncode=0)
+
+        recorder = _Recorder(dispatch)
+        with _patched(recorder):
+            result = await check_pr_status("feat/x", repo="x/y")
+
+        assert result.merged is False
+        assert result.error is not None, (
+            "malformed gh output must degrade to the original blocking error, not crash"
         )

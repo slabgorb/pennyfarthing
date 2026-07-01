@@ -40,6 +40,7 @@ class LintResult:
     clean: bool = False
     output: str = ""
     error: str | None = None
+    command: str = ""  # the linter actually run (e.g. "ruff check ."), for truthful remediation
 
 
 @dataclass
@@ -253,6 +254,8 @@ async def check_lint(project_root: Path | None = None) -> LintResult:
         result.clean = True
         return result
 
+    result.command = " ".join(lint_cmd)
+
     try:
         proc = await asyncio.create_subprocess_exec(
             *lint_cmd,
@@ -393,11 +396,16 @@ def aggregate_results(
 
     # Check lint
     if lint.error and not lint.clean:
+        lint_fix = (
+            f"Run '{lint.command}' and fix errors"
+            if lint.command
+            else "Run the project's linter and fix errors"
+        )
         issues.append(
             PreflightIssue(
                 severity="critical",
                 issue="Lint check failed",
-                fix="Run 'npm run lint' and fix errors",
+                fix=lint_fix,
             )
         )
 
