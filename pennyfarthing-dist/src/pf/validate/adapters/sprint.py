@@ -53,7 +53,7 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         if result.format_issues:
             for issue in result.format_issues:
                 if strict:
-                    report.errors += 1
+                    report.errors.append("error")
                 else:
                     report.warnings += 1
                 report.details.append(f"[FORMAT] {path.name}: {issue.message}")

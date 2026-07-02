@@ -285,13 +285,13 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     dist_root = get_dist_root(project_root=root)
     if dist_root is None:
         report.details.append("[ERROR] workflows directory not found")
-        report.errors += 1
+        report.errors.append("error")
         return report
     workflows_dir = dist_root / "workflows"
 
     if not workflows_dir.is_dir():
         report.details.append("[ERROR] workflows directory not found")
-        report.errors += 1
+        report.errors.append("error")
         return report
 
     agents_dir = dist_root / "agents"
@@ -306,19 +306,19 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
             content = path.read_text()
             raw = yaml.safe_load(content)
         except yaml.YAMLError:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] {path.name}: YAML parse error")
             continue
 
         if not isinstance(raw, dict) or "workflow" not in raw:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] {path.name}: Missing 'workflow' top-level key")
             continue
 
         data = raw["workflow"]
 
         if not isinstance(data, dict):
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] {path.name}: 'workflow' must be a mapping")
             continue
 
@@ -352,12 +352,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
             display = path.name
 
         for e in file_errors:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] {display}: {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors += 1
+                report.errors.append("error")
                 report.details.append(f"[ERROR] {display}: {w}")
             else:
                 report.warnings += 1

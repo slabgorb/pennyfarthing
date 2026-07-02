@@ -151,13 +151,13 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
 
     if dist_root is None:
         report.details.append("[ERROR] pennyfarthing-dist directory not found")
-        report.errors += 1
+        report.errors.append("error")
         return report
 
     themes_dir = dist_root / "personas" / "themes"
     if not themes_dir.is_dir():
         report.details.append("[ERROR] personas/themes/ directory not found")
-        report.errors += 1
+        report.errors.append("error")
         return report
 
     theme_files = sorted(themes_dir.glob("*.yaml"))
@@ -170,12 +170,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         file_errors, file_warnings = _validate_theme(path)
 
         for e in file_errors:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] {path.name}: {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors += 1
+                report.errors.append("error")
                 report.details.append(f"[ERROR] {path.name}: {w}")
             else:
                 report.warnings += 1

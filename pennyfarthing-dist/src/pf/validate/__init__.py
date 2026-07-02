@@ -12,10 +12,10 @@ class ValidateReport:
     validator: str
     passed: int = 0
     warnings: int = 0
-    errors: int = 0
+    errors: list[str] = field(default_factory=list)
     details: list[str] = field(default_factory=list)
     fixed: bool = False
 
     @property
     def success(self) -> bool:
-        return self.errors == 0
+        return len(self.errors) == 0

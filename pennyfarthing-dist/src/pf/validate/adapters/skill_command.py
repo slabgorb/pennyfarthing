@@ -411,12 +411,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     registry_errors, registry_warnings = validate_skill_registry(root)
 
     for e in registry_errors:
-        report.errors += 1
+        report.errors.append("error")
         report.details.append(f"[ERROR] skill-registry.yaml: {e}")
 
     for w in registry_warnings:
         if strict:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] skill-registry.yaml: {w}")
         else:
             report.warnings += 1
@@ -440,12 +440,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         file_errors, file_warnings = validate_command_file(path)
 
         for e in file_errors:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] {path.name}: {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors += 1
+                report.errors.append("error")
                 report.details.append(f"[ERROR] {path.name}: {w}")
             else:
                 report.warnings += 1
@@ -459,11 +459,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     # Prefix check
     prefix_errors, prefix_warnings = validate_prefix(commands_dir)
     for e in prefix_errors:
-        report.errors += 1
+        report.errors.append("error")
         report.details.append(f"[ERROR] prefix: {e}")
     for w in prefix_warnings:
         if strict:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] prefix: {w}")
         else:
             report.warnings += 1
@@ -472,11 +472,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     # Deprecated check
     depr_errors, depr_warnings = validate_deprecated(commands_dir)
     for e in depr_errors:
-        report.errors += 1
+        report.errors.append("error")
         report.details.append(f"[ERROR] deprecated: {e}")
     for w in depr_warnings:
         if strict:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] deprecated: {w}")
         else:
             report.warnings += 1
@@ -485,11 +485,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     # Registry cross-reference
     xref_errors, xref_warnings = validate_registry_crossref(root, commands_dir)
     for e in xref_errors:
-        report.errors += 1
+        report.errors.append("error")
         report.details.append(f"[ERROR] registry: {e}")
     for w in xref_warnings:
         if strict:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] registry: {w}")
         else:
             report.warnings += 1
@@ -498,11 +498,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     # Skill alignment
     align_errors, align_warnings = validate_skill_alignment(root)
     for e in align_errors:
-        report.errors += 1
+        report.errors.append("error")
         report.details.append(f"[ERROR] skill-align: {e}")
     for w in align_warnings:
         if strict:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(f"[ERROR] skill-align: {w}")
         else:
             report.warnings += 1

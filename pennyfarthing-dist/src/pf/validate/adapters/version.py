@@ -125,7 +125,7 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     pyproject_version = _read_pyproject_version(pyproject_file)
 
     if ver_version is None:
-        report.errors += 1
+        report.errors.append("error")
         report.details.append("[ERROR] VERSION file not found")
         return report
 
@@ -138,11 +138,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
 
     # Check __init__.py
     if init_version is None:
-        report.errors += 1
+        report.errors.append("error")
         report.details.append("[ERROR] __init__.py: __version__ not found")
         all_ok = False
     elif init_version != ver_version:
-        report.errors += 1
+        report.errors.append("error")
         report.details.append(
             f"[ERROR] __init__.py: expected '{ver_version}', got '{init_version}'"
         )
@@ -154,7 +154,7 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
 
     # Check pyproject.toml
     if pyproject_version is None:
-        report.errors += 1
+        report.errors.append("error")
         report.details.append("[ERROR] pyproject.toml: version not found")
         all_ok = False
     elif pyproject_version != expected_pep440:
@@ -163,7 +163,7 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         if pyproject_as_semver == ver_version:
             report.passed += 1
         else:
-            report.errors += 1
+            report.errors.append("error")
             report.details.append(
                 f"[ERROR] pyproject.toml: expected '{expected_pep440}' (PEP 440 for '{ver_version}'), got '{pyproject_version}'"
             )
