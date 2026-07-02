@@ -145,7 +145,16 @@ def _get_model_name(data: dict) -> str:
 
 
 def _persist_model(data: dict, project_root: Path) -> None:
-    """Persist the raw model id for the model-tier advisory hook. Fail-soft."""
+    """Persist the raw model id for the model-tier advisory hook. Fail-soft.
+
+    The file's contract is the MAIN session's current model, so subagent
+    renders (PF_SUBAGENT set) skip the write — a subagent pane must never
+    clobber it. A config-disabled statusbar display still writes (display-off
+    is not subagent). Known limitation: multiple main sessions in one project
+    dir means last-render-wins (acceptable for an advisory).
+    """
+    if os.environ.get("PF_SUBAGENT"):
+        return
     model_raw = data.get("model")
     if isinstance(model_raw, dict):
         model_id = model_raw.get("id") or model_raw.get("name")
