@@ -6,6 +6,7 @@ from pathlib import Path
 SWEPT = [
     "src/pf/benchmark/pipeline_replay.py",
     "src/pf/benchmark/cli.py",
+    "src/pf/benchmark/narrate.py",
     "src/pf/peloton/result_aggregator.py",
     "src/pf/demo/generator.py",
 ]
