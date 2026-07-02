@@ -25,6 +25,11 @@ DISPATCH_REGISTRY: dict[str, list[tuple[str, str | None, str]]] = {
             "Edit|Write|MultiEdit",
             "pf.hooks.advisory_never_edit_zone",
         ),
+        (
+            "advisory-model-tier",
+            "Edit|Write|Bash|Task",
+            "pf.hooks.advisory_model_tier",
+        ),
         ("context-warning", "Edit|Write|Bash|Task", "pf.hooks.context_warning"),
         ("context-breaker", "Edit|Write|Bash|Task", "pf.hooks.context_breaker"),
         ("schema-validation", "Write", "pf.hooks.schema_validation"),
