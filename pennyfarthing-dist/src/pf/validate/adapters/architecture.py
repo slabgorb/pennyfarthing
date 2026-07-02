@@ -104,12 +104,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         file_errors, file_warnings = _validate_architecture(path)
 
         for e in file_errors:
-            report.errors.append("error")
+            report.errors.append(f"{path.name}: {e}")
             report.details.append(f"[ERROR] {path.name}: {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors.append("error")
+                report.errors.append(f"{path.name}: {w}")
                 report.details.append(f"[ERROR] {path.name}: {w}")
             else:
                 report.warnings += 1

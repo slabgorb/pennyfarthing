@@ -470,13 +470,13 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     dist_root = get_dist_root(project_root=root)
     if dist_root is None:
         report.details.append("[ERROR] agents directory not found")
-        report.errors.append("error")
+        report.errors.append("agents directory not found")
         return report
     agents_dir = dist_root / "agents"
 
     if not agents_dir.is_dir():
         report.details.append("[ERROR] agents directory not found")
-        report.errors.append("error")
+        report.errors.append("agents directory not found")
         return report
 
     main_agents, subagents, _skipped = classify_agent_files(agents_dir)
@@ -489,12 +489,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         file_errors, file_warnings = validate_main_agent(path, agents_dir)
 
         for e in file_errors:
-            report.errors.append("error")
+            report.errors.append(f"{path.name}: {e}")
             report.details.append(f"[ERROR] {path.name}: {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors.append("error")
+                report.errors.append(f"{path.name}: {w}")
                 report.details.append(f"[ERROR] {path.name}: {w}")
             else:
                 report.warnings += 1
@@ -507,12 +507,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         file_errors, file_warnings = validate_subagent(path)
 
         for e in file_errors:
-            report.errors.append("error")
+            report.errors.append(f"{path.name}: {e}")
             report.details.append(f"[ERROR] {path.name}: {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors.append("error")
+                report.errors.append(f"{path.name}: {w}")
                 report.details.append(f"[ERROR] {path.name}: {w}")
             else:
                 report.warnings += 1
@@ -529,12 +529,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
             file_errors, file_warnings = validate_native_agent(path)
 
             for e in file_errors:
-                report.errors.append("error")
+                report.errors.append(f"native/{path.name}: {e}")
                 report.details.append(f"[ERROR] native/{path.name}: {e}")
 
             for w in file_warnings:
                 if strict:
-                    report.errors.append("error")
+                    report.errors.append(f"native/{path.name}: {w}")
                     report.details.append(f"[ERROR] native/{path.name}: {w}")
                 else:
                     report.warnings += 1

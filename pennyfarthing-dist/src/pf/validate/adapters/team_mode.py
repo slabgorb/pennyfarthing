@@ -251,7 +251,7 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     # Validate behavior guide
     dist_root = get_dist_root(project_root=root)
     if dist_root is None:
-        report.errors.append("error")
+        report.errors.append("pennyfarthing-dist not found")
         report.details.append("[ERROR] pennyfarthing-dist not found")
         return report
     guides_dir = dist_root / "guides"
@@ -259,11 +259,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     if behavior_guide.is_file():
         file_errors, file_warnings = validate_behavior_guide_team_mode(behavior_guide)
         for e in file_errors:
-            report.errors.append("error")
+            report.errors.append(f"agent-behavior.md: {e}")
             report.details.append(f"[ERROR] agent-behavior.md: {e}")
         for w in file_warnings:
             if strict:
-                report.errors.append("error")
+                report.errors.append(f"agent-behavior.md: {w}")
                 report.details.append(f"[ERROR] agent-behavior.md: {w}")
             else:
                 report.warnings += 1
@@ -275,11 +275,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         guide_content = behavior_guide.read_text()
         exit_errors, exit_warnings = validate_exit_protocol_team_branch(guide_content)
         for e in exit_errors:
-            report.errors.append("error")
+            report.errors.append(f"agent-behavior.md exit: {e}")
             report.details.append(f"[ERROR] agent-behavior.md exit: {e}")
         for w in exit_warnings:
             if strict:
-                report.errors.append("error")
+                report.errors.append(f"agent-behavior.md exit: {w}")
                 report.details.append(f"[ERROR] agent-behavior.md exit: {w}")
             else:
                 report.warnings += 1
@@ -288,17 +288,17 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         # Validate communication protocol distinction
         comm_errors, comm_warnings = validate_communication_protocols(guide_content)
         for e in comm_errors:
-            report.errors.append("error")
+            report.errors.append(f"agent-behavior.md comm: {e}")
             report.details.append(f"[ERROR] agent-behavior.md comm: {e}")
         for w in comm_warnings:
             if strict:
-                report.errors.append("error")
+                report.errors.append(f"agent-behavior.md comm: {w}")
                 report.details.append(f"[ERROR] agent-behavior.md comm: {w}")
             else:
                 report.warnings += 1
                 report.details.append(f"[WARN] agent-behavior.md comm: {w}")
     else:
-        report.errors.append("error")
+        report.errors.append("agent-behavior.md guide not found")
         report.details.append("[ERROR] agent-behavior.md guide not found")
 
     # Validate lead agents
@@ -309,11 +309,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
             if agent_path.is_file():
                 lead_errors, lead_warnings = validate_lead_agent_team_mode(agent_path)
                 for e in lead_errors:
-                    report.errors.append("error")
+                    report.errors.append(f"{agent_name}.md: {e}")
                     report.details.append(f"[ERROR] {agent_name}.md: {e}")
                 for w in lead_warnings:
                     if strict:
-                        report.errors.append("error")
+                        report.errors.append(f"{agent_name}.md: {w}")
                         report.details.append(f"[ERROR] {agent_name}.md: {w}")
                     else:
                         report.warnings += 1

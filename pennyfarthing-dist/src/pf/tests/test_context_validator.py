@@ -894,7 +894,7 @@ class TestValidatorAdapterIntegration:
         report_strict = context_adapter.run(root, fix=False, strict=True)
 
         # Strict should have >= errors than normal (warnings promoted)
-        assert report_strict.errors >= report_normal.errors
+        assert len(report_strict.errors) >= len(report_normal.errors)
 
     def test_context_registered_in_validators(self) -> None:
         """'context' should be registered in the VALIDATORS dict."""
