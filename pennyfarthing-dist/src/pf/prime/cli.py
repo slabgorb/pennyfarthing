@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from typing import Any
 
 from pf.common.config import get_project_root
+from pf.model_tiers import resolve_model
 from pf.prime.loader import (
     load_agent_definition,
     load_behavior_guide,
@@ -122,6 +123,10 @@ def _format_workflow_state_text(result: PrimeResult) -> str:
         lines.append(f"step_name: {ws.step_name}")
     if ws.backlog_count > 0:
         lines.append(f"backlog_count: {ws.backlog_count}")
+
+    resolved = resolve_model("agent", result.agent_name)
+    if resolved["success"]:
+        lines.append(f"expected_model: {resolved['data']['alias']}")
 
     return "\n".join(lines)
 
@@ -486,6 +491,31 @@ def prime(
         if not json_output:
             _print_header("Workflow State", quiet)
             print(_format_workflow_state_text(result))
+
+    # ==========================================================================
+    # Expected model advisory state (fail-soft; independent of --no-workflow so
+    # the advisory hook has data even when workflow detection is skipped)
+    # ==========================================================================
+    if agent_name:
+        resolved = resolve_model("agent", agent_name)
+        if resolved["success"]:
+            alias = resolved["data"]["alias"]
+            ws = result.workflow_status
+            try:
+                session_dir = root / ".session"
+                session_dir.mkdir(exist_ok=True)
+                (session_dir / ".expected-model").write_text(
+                    json.dumps(
+                        {
+                            "agent": agent_name,
+                            "alias": alias,
+                            "story_id": getattr(ws, "story_id", None),
+                            "phase": getattr(ws, "phase", None),
+                        }
+                    )
+                )
+            except OSError:
+                pass  # advisory plumbing must never break activation
 
     # ==========================================================================
     # PRIORITY 2: Agent definition
