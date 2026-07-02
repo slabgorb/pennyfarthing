@@ -17,6 +17,8 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from pf.common.config import get_dist_root, load_pennyfarthing_config, load_yaml_config
 
 VALID_ALIASES = {"haiku", "sonnet", "opus", "fable", "best", "inherit"}
@@ -28,9 +30,17 @@ def load_model_map(project_root: Path | None = None) -> dict[str, Any]:
     if dist_root is None:
         return {"success": False, "error": "pennyfarthing-dist root not found"}
     path = dist_root / "models.yaml"
-    base = load_yaml_config(path)
+    try:
+        base = load_yaml_config(path)
+    except yaml.YAMLError as e:
+        return {"success": False, "error": f"models.yaml is not valid YAML: {e}"}
     if base is None:
         return {"success": False, "error": f"models.yaml not found at {path}"}
+    if not isinstance(base, dict):
+        return {
+            "success": False,
+            "error": f"models.yaml must be a YAML mapping, got {type(base).__name__}",
+        }
     merged = dict(base)
     override = load_pennyfarthing_config(project_root).get("models") or {}
     for section, values in override.items():

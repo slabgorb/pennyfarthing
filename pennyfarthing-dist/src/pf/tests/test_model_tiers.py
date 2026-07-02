@@ -68,6 +68,43 @@ class TestLoadModelMap:
         assert result["data"]["tiers"]["heavyweight"] == "sonnet"
         assert result["data"]["tiers"]["judgment"] == "best"  # untouched keys survive
 
+    def test_malformed_yaml_fails_loudly(self, dist: Path) -> None:
+        (dist / "pennyfarthing-dist" / "models.yaml").write_text(
+            "tiers: [judgment: best\n  - broken\n"
+        )
+        p1, p2 = _patched(dist)
+        with p1, p2:
+            result = load_model_map(dist)
+        assert result["success"] is False
+        assert "not valid YAML" in result["error"]
+
+    def test_malformed_yaml_propagates_through_resolve_model(self, dist: Path) -> None:
+        (dist / "pennyfarthing-dist" / "models.yaml").write_text(
+            "tiers: [judgment: best\n  - broken\n"
+        )
+        p1, p2 = _patched(dist)
+        with p1, p2:
+            result = resolve_model("judge", "benchmark", dist)
+        assert result["success"] is False
+        assert "not valid YAML" in result["error"]
+
+    def test_malformed_yaml_judge_alias_falls_back_no_raise(self, dist: Path) -> None:
+        (dist / "pennyfarthing-dist" / "models.yaml").write_text(
+            "tiers: [judgment: best\n  - broken\n"
+        )
+        p1, p2 = _patched(dist)
+        with p1, p2:
+            result = judge_alias("benchmark", dist)
+        assert result == "opus"
+
+    def test_yaml_list_payload_fails_with_mapping_error(self, dist: Path) -> None:
+        (dist / "pennyfarthing-dist" / "models.yaml").write_text("- one\n- two\n- three\n")
+        p1, p2 = _patched(dist)
+        with p1, p2:
+            result = load_model_map(dist)
+        assert result["success"] is False
+        assert "must be a YAML mapping" in result["error"]
+
 
 class TestResolveTierAlias:
     def test_known_tier(self) -> None:
