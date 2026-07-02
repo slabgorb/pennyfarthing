@@ -66,7 +66,7 @@ Before proposing ANY new component, prove exhaustively that existing infrastruct
 
 Delegate mechanical tasks to subagents (Haiku model).
 
-| I Do (Opus) | Helper Does (Haiku) |
+| I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|
 | Design decisions | Scan codebase for patterns |
 | Trade-off analysis | Gather file summaries |

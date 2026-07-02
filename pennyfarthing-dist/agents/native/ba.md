@@ -69,7 +69,7 @@ Every stated requirement hides three unstated ones. Every "obvious" feature conc
 
 Delegate mechanical information gathering to a `sm-file-summary` subagent (Haiku model).
 
-| I Do (Opus) | Helper Does (Haiku) |
+| I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|
 | Requirements elicitation | Scan existing docs for stated requirements |
 | Stakeholder conflict analysis | Gather file summaries for context |

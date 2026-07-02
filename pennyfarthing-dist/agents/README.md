@@ -22,8 +22,8 @@ This directory contains the **single source of truth** for all Pennyfarthing age
 | **UX Designer** | UI design, accessibility |
 | **BA** | Requirements discovery, stakeholder analysis |
 
-### Official Subagents (Haiku-based)
-Lightweight subagents for mechanical tasks. Invoked via `Task tool` with `subagent_type: "general-purpose"` and `model: "haiku"`.
+### Official Subagents
+Lightweight subagents for mechanical and analytical tasks. Model per subagent comes from models.yaml; invoke via Task tool with the mapped model.
 
 **Invocation pattern:**
 ```yaml

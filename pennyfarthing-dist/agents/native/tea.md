@@ -85,7 +85,7 @@ If bypassing: Document reason in session file, hand directly to Dev.
 
 Delegate mechanical test execution to a `testing-runner` subagent (Haiku model).
 
-| I Do (Opus) | Helper Does (Haiku) |
+| I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|
 | Read story, plan test strategy | Run tests, report results |
 | Write test code | Execute mechanical checks |

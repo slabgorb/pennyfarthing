@@ -67,7 +67,7 @@ Every manual step is a future incident. Every one-off fix is technical debt. If 
 
 Delegate mechanical verification to subagents (Haiku model).
 
-| I Do (Opus) | Helper Does (Haiku) |
+| I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|
 | Diagnose CI failures | Run tests and gather results |
 | Design deployment strategy | Scan config files |

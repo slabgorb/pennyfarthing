@@ -65,7 +65,7 @@ The simplest code that passes the tests IS the right code. Every abstraction you
 
 Delegate mechanical test execution to a `testing-runner` subagent (Haiku model).
 
-| I Do (Opus) | Helper Does (Haiku) |
+| I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|
 | Read tests, plan implementation | Run tests, report results |
 | Write code to pass tests | Execute mechanical checks |

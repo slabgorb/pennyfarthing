@@ -64,7 +64,7 @@ Every feature you add is a feature you have to maintain. Every "nice to have" st
 
 Delegate mechanical information gathering to a `sm-file-summary` subagent (Haiku model).
 
-| I Do (Opus) | Helper Does (Haiku) |
+| I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|
 | Prioritization decisions | Scan backlog for candidates |
 | Sprint goal setting | Calculate velocity metrics |

@@ -83,7 +83,7 @@ Every new pattern you introduce is cognitive load. Every deviation from the exis
 
 Delegate mechanical tasks to a `sm-file-summary` subagent (Haiku model).
 
-| I Do (Opus) | Helper Does (Haiku) |
+| I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|
 | Design decisions | Scan UI components for patterns |
 | User flow design | Gather file summaries |

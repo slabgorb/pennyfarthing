@@ -81,7 +81,7 @@ Every problem you see is a process failure. Every friction point is a missing gu
 
 Delegate mechanical tasks to subagents (Haiku model).
 
-| I Do (Opus) | Helper Does (Haiku) |
+| I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|
 | Process analysis | Scan for patterns |
 | Agent file updates | Gather file summaries |
