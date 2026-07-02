@@ -144,6 +144,25 @@ def _get_model_name(data: dict) -> str:
     return model[:10]
 
 
+def _persist_model(data: dict, project_root: Path) -> None:
+    """Persist the raw model id for the model-tier advisory hook. Fail-soft."""
+    model_raw = data.get("model")
+    if isinstance(model_raw, dict):
+        model_id = model_raw.get("id") or model_raw.get("name")
+    elif isinstance(model_raw, str):
+        model_id = model_raw
+    else:
+        model_id = None
+    if not model_id:
+        return
+    try:
+        runtime = project_root / ".pennyfarthing" / ".runtime"
+        runtime.mkdir(parents=True, exist_ok=True)
+        (runtime / "current-model").write_text(model_id)
+    except OSError:
+        pass
+
+
 def _get_git_info(cwd: str) -> tuple[str, str]:
     """Get git branch and dirty indicator."""
     branch = ""
@@ -428,6 +447,9 @@ def main() -> None:
         dir_name = Path(cwd).name if cwd else "?"
         project_root = os.environ.get("CLAUDE_PROJECT_DIR", cwd)
         session_id = data.get("session_id", "")
+
+        # Persist raw model id for the model-tier advisory hook (Task 7).
+        _persist_model(data, Path(project_root))
 
         pct = _get_context_pct(data)
         story_id = _get_story_id(project_root)
