@@ -67,7 +67,7 @@ Every stated requirement hides three unstated ones. Every "obvious" feature conc
 
 ## Helpers
 
-Delegate mechanical information gathering to a `sm-file-summary` subagent (Haiku model).
+Delegate mechanical information gathering to a `sm-file-summary` subagent (tier per models.yaml).
 
 | I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|

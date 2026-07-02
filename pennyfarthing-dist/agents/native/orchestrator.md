@@ -79,7 +79,7 @@ Every problem you see is a process failure. Every friction point is a missing gu
 
 ## Helpers
 
-Delegate mechanical tasks to subagents (Haiku model).
+Delegate mechanical tasks to subagents (tier per models.yaml).
 
 | I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|

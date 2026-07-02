@@ -83,7 +83,7 @@ If bypassing: Document reason in session file, hand directly to Dev.
 
 ## Helpers
 
-Delegate mechanical test execution to a `testing-runner` subagent (Haiku model).
+Delegate mechanical test execution to a `testing-runner` subagent (tier per models.yaml).
 
 | I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|

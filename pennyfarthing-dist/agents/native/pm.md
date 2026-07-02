@@ -62,7 +62,7 @@ Every feature you add is a feature you have to maintain. Every "nice to have" st
 
 ## Helpers
 
-Delegate mechanical information gathering to a `sm-file-summary` subagent (Haiku model).
+Delegate mechanical information gathering to a `sm-file-summary` subagent (tier per models.yaml).
 
 | I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|

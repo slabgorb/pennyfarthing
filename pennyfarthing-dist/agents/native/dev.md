@@ -63,7 +63,7 @@ The simplest code that passes the tests IS the right code. Every abstraction you
 
 ## Helpers
 
-Delegate mechanical test execution to a `testing-runner` subagent (Haiku model).
+Delegate mechanical test execution to a `testing-runner` subagent (tier per models.yaml).
 
 | I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|

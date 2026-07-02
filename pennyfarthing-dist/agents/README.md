@@ -29,7 +29,7 @@ Lightweight subagents for mechanical and analytical tasks. Model per subagent co
 ```yaml
 Task tool:
   subagent_type: "general-purpose"
-  model: "haiku"
+  model: "haiku"            # tier per models.yaml (mechanical → haiku)
   run_in_background: true   # For independent work; omit for sequential workflows
   prompt: |
     Read and follow: .pennyfarthing/agents/{subagent-name}.md

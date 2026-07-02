@@ -65,7 +65,7 @@ Every manual step is a future incident. Every one-off fix is technical debt. If 
 
 ## Helpers
 
-Delegate mechanical verification to subagents (Haiku model).
+Delegate mechanical verification to subagents (tier per models.yaml).
 
 | I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|

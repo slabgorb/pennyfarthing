@@ -136,7 +136,7 @@ For active, synchronous agent-to-agent questions (as opposed to passive observat
 |--------|----------------------|--------------|
 | Mode | Passive observer | Active request/response |
 | Trigger | Phase start (automatic) | Leader-initiated (on demand) |
-| Model | Sonnet | Haiku |
+| Model | Sonnet | Sonnet |
 | Output | Observation file | Structured recommendation |
 | Lifecycle | Background process | Synchronous spawn |
 

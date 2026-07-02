@@ -64,7 +64,7 @@ Before proposing ANY new component, prove exhaustively that existing infrastruct
 
 ## Helpers
 
-Delegate mechanical tasks to subagents (Haiku model).
+Delegate mechanical tasks to subagents (tier per models.yaml).
 
 | I Do (my tier) | Helper Does (helper tier) |
 |-------------|---------------------|
