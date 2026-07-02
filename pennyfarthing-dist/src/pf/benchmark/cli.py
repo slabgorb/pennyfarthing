@@ -463,7 +463,10 @@ def replay():
     help="Where to store results (default: internal/results/pipeline-replay/)",
 )
 @click.option("--model", default=None, help="Claude model for pipeline agents")
-@click.option("--judge-model", default="claude-opus-4-6", help="Claude model for scoring judge")
+@click.option(
+    "--judge-model", default=None,
+    help="Claude model for scoring judge (default: models.yaml judges.benchmark)",
+)
 @click.option("--judge-count", default=3, type=int, help="Number of independent judge passes (default: 3)")
 @click.option("--skip-score", is_flag=True, help="Skip judge scoring after run")
 @click.option("--keep-worktree/--no-keep-worktree", default=True, help="Keep worktree after run for inspection (default: keep)")
@@ -512,6 +515,10 @@ def replay_run(
         save_result,
         score_with_judge,
     )
+    from pf.model_tiers import judge_alias
+
+    # score_with_judge/run_judge_pass have no fallback of their own — resolve here.
+    judge_model = judge_model or judge_alias("benchmark")
 
     project = Path(project_dir) if project_dir else Path.cwd()
     wt_base = Path(worktree_base)
@@ -1112,7 +1119,10 @@ def _print_heatmap(scenario, scores):
 @click.option("--keep-worktree/--no-keep-worktree", default=True, help="Keep worktree after run for inspection (default: keep)")
 @click.option("--rejudge", is_flag=True, help="Re-judge using the new phase output")
 @click.option("--model", default=None, help="Claude model for the phase agent")
-@click.option("--judge-model", default="claude-opus-4-6", help="Claude model for scoring judge")
+@click.option(
+    "--judge-model", default=None,
+    help="Claude model for scoring judge (default: models.yaml judges.benchmark)",
+)
 @click.option("--judge-count", default=3, type=int, help="Number of judge passes (default: 3)")
 @click.option(
     "--theme", default=None,
@@ -1212,7 +1222,7 @@ def replay_phase(
 @click.option("--yes", "skip_confirm", is_flag=True, help="Skip cost confirmation")
 @click.option("--force", is_flag=True, help="Regenerate even if cached")
 @click.option("--finding", default=None, help="Focus on a specific finding ID")
-@click.option("--model", default=None, help="Claude model (default: claude-sonnet-4-6)")
+@click.option("--model", default=None, help="Claude model (default: models.yaml judges.benchmark)")
 def replay_narrate(run_dir, skip_confirm, force, finding, model):
     """Generate an LLM-narrated trace of a pipeline run.
 

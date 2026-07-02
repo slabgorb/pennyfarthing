@@ -15,6 +15,7 @@ from pathlib import Path
 import yaml
 
 from pf.common.config import get_dist_root
+from pf.model_tiers import resolve_model
 from pf.validate import ValidateReport
 
 _SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
@@ -403,6 +404,32 @@ def validate_command_file(path: Path) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+def validate_command_model(path: Path) -> list[str]:
+    """Agent-activation commands must pin the tier-mapped model alias.
+
+    A command file pf-<name>.md whose <name> appears in the models.yaml
+    ``agents:`` map must have frontmatter ``model:`` equal to the mapped
+    alias. Non-agent commands are ignored.
+    """
+    stem = path.stem
+    if not stem.startswith("pf-"):
+        return []
+    agent_name = stem[len("pf-") :]
+    mapped = resolve_model("agent", agent_name)
+    if not mapped["success"]:
+        return []  # not an agent command — nothing to enforce
+    fm = _parse_frontmatter(path.read_text()) or {}
+    expected = mapped["data"]["alias"]
+    actual = str(fm.get("model", "")).lower()
+    if not actual:
+        return [f"{path.name}: missing frontmatter 'model: {expected}' (models.yaml agents.{agent_name})"]
+    if actual != expected:
+        return [
+            f"{path.name}: model '{actual}' does not match tier map — expected '{expected}' (models.yaml agents.{agent_name})"
+        ]
+    return []
+
+
 def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateReport:
     """Validate skill registry and command files."""
     report = ValidateReport(validator="skill-command")
@@ -411,12 +438,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     registry_errors, registry_warnings = validate_skill_registry(root)
 
     for e in registry_errors:
-        report.errors += 1
+        report.errors.append(f"skill-registry.yaml: {e}")
         report.details.append(f"[ERROR] skill-registry.yaml: {e}")
 
     for w in registry_warnings:
         if strict:
-            report.errors += 1
+            report.errors.append(f"skill-registry.yaml: {w}")
             report.details.append(f"[ERROR] skill-registry.yaml: {w}")
         else:
             report.warnings += 1
@@ -438,20 +465,25 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
 
     for path in command_files:
         file_errors, file_warnings = validate_command_file(path)
+        model_errors = validate_command_model(path)  # already prefixed with path.name
 
         for e in file_errors:
-            report.errors += 1
+            report.errors.append(f"{path.name}: {e}")
             report.details.append(f"[ERROR] {path.name}: {e}")
+
+        for e in model_errors:
+            report.errors.append(e)
+            report.details.append(f"[ERROR] {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors += 1
+                report.errors.append(f"{path.name}: {w}")
                 report.details.append(f"[ERROR] {path.name}: {w}")
             else:
                 report.warnings += 1
                 report.details.append(f"[WARN] {path.name}: {w}")
 
-        if not file_errors:
+        if not file_errors and not model_errors:
             report.passed += 1
 
     # --- New validation checks ---
@@ -459,11 +491,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     # Prefix check
     prefix_errors, prefix_warnings = validate_prefix(commands_dir)
     for e in prefix_errors:
-        report.errors += 1
+        report.errors.append(f"prefix: {e}")
         report.details.append(f"[ERROR] prefix: {e}")
     for w in prefix_warnings:
         if strict:
-            report.errors += 1
+            report.errors.append(f"prefix: {w}")
             report.details.append(f"[ERROR] prefix: {w}")
         else:
             report.warnings += 1
@@ -472,11 +504,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     # Deprecated check
     depr_errors, depr_warnings = validate_deprecated(commands_dir)
     for e in depr_errors:
-        report.errors += 1
+        report.errors.append(f"deprecated: {e}")
         report.details.append(f"[ERROR] deprecated: {e}")
     for w in depr_warnings:
         if strict:
-            report.errors += 1
+            report.errors.append(f"deprecated: {w}")
             report.details.append(f"[ERROR] deprecated: {w}")
         else:
             report.warnings += 1
@@ -485,11 +517,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     # Registry cross-reference
     xref_errors, xref_warnings = validate_registry_crossref(root, commands_dir)
     for e in xref_errors:
-        report.errors += 1
+        report.errors.append(f"registry: {e}")
         report.details.append(f"[ERROR] registry: {e}")
     for w in xref_warnings:
         if strict:
-            report.errors += 1
+            report.errors.append(f"registry: {w}")
             report.details.append(f"[ERROR] registry: {w}")
         else:
             report.warnings += 1
@@ -498,11 +530,11 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     # Skill alignment
     align_errors, align_warnings = validate_skill_alignment(root)
     for e in align_errors:
-        report.errors += 1
+        report.errors.append(f"skill-align: {e}")
         report.details.append(f"[ERROR] skill-align: {e}")
     for w in align_warnings:
         if strict:
-            report.errors += 1
+            report.errors.append(f"skill-align: {w}")
             report.details.append(f"[ERROR] skill-align: {w}")
         else:
             report.warnings += 1

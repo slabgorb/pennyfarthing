@@ -170,13 +170,13 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     dist_root = get_dist_root(project_root=root)
     if dist_root is None:
         report.details.append("[ERROR] agents directory not found")
-        report.errors += 1
+        report.errors.append("agents directory not found")
         return report
     agents_dir = dist_root / "agents"
 
     if not agents_dir.is_dir():
         report.details.append("[ERROR] agents directory not found")
-        report.errors += 1
+        report.errors.append("agents directory not found")
         return report
 
     leaders, partners = classify_tandem_roles(agents_dir)
@@ -185,12 +185,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         file_errors, file_warnings = validate_leader_tandem(path)
 
         for e in file_errors:
-            report.errors += 1
+            report.errors.append(f"{path.name}: {e}")
             report.details.append(f"[ERROR] {path.name}: {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors += 1
+                report.errors.append(f"{path.name}: {w}")
                 report.details.append(f"[ERROR] {path.name}: {w}")
             else:
                 report.warnings += 1
@@ -203,12 +203,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         file_errors, file_warnings = validate_partner_tandem(path)
 
         for e in file_errors:
-            report.errors += 1
+            report.errors.append(f"{path.name}: {e}")
             report.details.append(f"[ERROR] {path.name}: {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors += 1
+                report.errors.append(f"{path.name}: {w}")
                 report.details.append(f"[ERROR] {path.name}: {w}")
             else:
                 report.warnings += 1
@@ -224,11 +224,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         leader_names, partner_names, ADR_0012_PAIRINGS
     )
     for leader_name, partner_name in missing_pairings:
-        report.errors += 1
-        report.details.append(
-            f"[ERROR] ADR-0012 pairing {leader_name}\u2192{partner_name} not covered "
+        pairing_msg = (
+            f"ADR-0012 pairing {leader_name}\u2192{partner_name} not covered "
             f"(leader or partner missing tandem section with correct role)"
         )
+        report.errors.append(pairing_msg)
+        report.details.append(f"[ERROR] {pairing_msg}")
     if covered:
         report.passed += 1
 

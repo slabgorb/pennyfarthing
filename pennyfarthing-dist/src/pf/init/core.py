@@ -53,6 +53,8 @@ _GITIGNORE_ENTRIES: list[str] = [
     ".pennyfarthing/tmux-activity",
     "# Local tmux config (copied from sample)",
     "tmux.conf",
+    "# Statusline runtime state (current model, etc.)",
+    ".pennyfarthing/.runtime/",
 ]
 
 # Directories to create under the target project.

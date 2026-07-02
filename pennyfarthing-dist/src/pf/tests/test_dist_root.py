@@ -514,7 +514,7 @@ class TestValidateZeroFilesWarning:
 
         report = run(tmp_path, fix=False, strict=False)
         # With 0 agents, should have a warning — not a clean pass
-        assert report.warnings > 0 or report.errors > 0, (
+        assert report.warnings > 0 or len(report.errors) > 0, (
             "Validator silently passed with 0 agent files — should warn"
         )
 
@@ -530,7 +530,7 @@ class TestValidateZeroFilesWarning:
         (dist / "agents").mkdir()
 
         report = run(tmp_path, fix=False, strict=False)
-        assert report.warnings > 0 or report.errors > 0, (
+        assert report.warnings > 0 or len(report.errors) > 0, (
             "Validator silently passed with 0 workflow files — should warn"
         )
 

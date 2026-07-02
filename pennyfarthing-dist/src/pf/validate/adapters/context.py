@@ -20,12 +20,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     report.passed = result.components_checked
 
     for err in result.errors:
-        report.errors += 1
+        report.errors.append(f"{err.component}: {err.message}")
         report.details.append(f"[ERROR] {err.component}: {err.message}")
 
     for warn in result.warnings:
         if strict:
-            report.errors += 1
+            report.errors.append(f"{warn.component}: {warn.message}")
             report.details.append(f"[ERROR] {warn.component}: {warn.message}")
         else:
             report.warnings += 1
