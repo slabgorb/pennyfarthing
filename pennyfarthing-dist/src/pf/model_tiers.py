@@ -95,3 +95,19 @@ def resolve_model(kind: str, name: str, project_root: Path | None = None) -> dic
     if not alias["success"]:
         return alias
     return {"success": True, "data": {"tier": str(tier), "alias": alias["data"]}}
+
+
+def judge_alias(name: str, project_root: Path | None = None) -> str:
+    """Judge model alias from the map, falling back to 'opus'. Infallible."""
+    resolved = resolve_model("judge", name, project_root)
+    if resolved["success"]:
+        return resolved["data"]["alias"]
+    return "opus"
+
+
+def subagent_alias(name: str, project_root: Path | None = None) -> str:
+    """Subagent model alias from the map, falling back to 'sonnet'. Infallible."""
+    resolved = resolve_model("subagent", name, project_root)
+    if resolved["success"]:
+        return resolved["data"]["alias"]
+    return "sonnet"

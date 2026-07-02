@@ -9,7 +9,14 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from pf.model_tiers import VALID_ALIASES, load_model_map, resolve_model, resolve_tier_alias
+from pf.model_tiers import (
+    VALID_ALIASES,
+    judge_alias,
+    load_model_map,
+    resolve_model,
+    resolve_tier_alias,
+    subagent_alias,
+)
 
 MINIMAL_MAP = {
     "tiers": {"judgment": "best", "heavyweight": "opus", "analytical": "sonnet", "mechanical": "haiku"},
@@ -129,3 +136,31 @@ class TestResolveModel:
 
 def test_valid_aliases_constant() -> None:
     assert VALID_ALIASES == {"haiku", "sonnet", "opus", "fable", "best", "inherit"}
+
+
+class TestJudgeAlias:
+    def test_resolves_from_map(self, dist: Path) -> None:
+        p1, p2 = _patched(dist)
+        with p1, p2:
+            assert judge_alias("benchmark", dist) == "opus"
+
+    def test_judge_alias_fallback(self) -> None:
+        with patch(
+            "pf.model_tiers.resolve_model",
+            return_value={"success": False, "error": "x"},
+        ):
+            assert judge_alias("benchmark") == "opus"
+
+
+class TestSubagentAlias:
+    def test_resolves_from_map(self, dist: Path) -> None:
+        p1, p2 = _patched(dist)
+        with p1, p2:
+            assert subagent_alias("reviewer-preflight", dist) == "haiku"
+
+    def test_subagent_alias_fallback(self) -> None:
+        with patch(
+            "pf.model_tiers.resolve_model",
+            return_value={"success": False, "error": "x"},
+        ):
+            assert subagent_alias("nonexistent") == "sonnet"

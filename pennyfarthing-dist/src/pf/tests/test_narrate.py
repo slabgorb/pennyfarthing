@@ -248,9 +248,12 @@ class TestGenerateNarrative:
             )
         assert result_path == run_dir_with_events / "narrative.md"
 
-    def test_default_model_is_sonnet(self, run_dir_with_events: Path):
-        """Default model should be claude-sonnet-4-6."""
-        with patch("pf.benchmark.narrate._invoke_llm") as mock_llm:
+    def test_default_model_resolves_from_judge_map(self, run_dir_with_events: Path):
+        """Default model should come from models.yaml judges.benchmark, not a pinned ID."""
+        with (
+            patch("pf.benchmark.narrate._invoke_llm") as mock_llm,
+            patch("pf.benchmark.narrate.judge_alias", return_value="opus") as mock_alias,
+        ):
             mock_llm.return_value = "content"
             generate_narrative(
                 run_dir_with_events,
@@ -258,13 +261,13 @@ class TestGenerateNarrative:
                 ["tea", "dev"],
                 "Test Scenario",
             )
-            # Check that _invoke_llm was called with default model
+            mock_alias.assert_called_once_with("benchmark")
+            # Check that _invoke_llm was called with the mapped alias
             call_kwargs = mock_llm.call_args
             assert call_kwargs is not None
-            # Model should be sonnet by default
             args, kwargs = call_kwargs
             model_arg = kwargs.get("model") or (args[1] if len(args) > 1 else None)
-            assert model_arg == "claude-sonnet-4-6"
+            assert model_arg == "opus"
 
 
 # ===========================================================================
