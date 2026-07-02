@@ -1,7 +1,7 @@
 ---
 name: Dev
 description: Developer agent — implements features by making tests pass with minimal code. Spawned by SM during green/implement phases.
-model: opus
+model: best
 allowed-tools:
   - Read
   - Write

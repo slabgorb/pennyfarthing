@@ -1,7 +1,7 @@
 ---
 name: Orchestrator
 description: Orchestrator agent — process improvement, agent coordination, workflow refinement, batch fan-out. Spawned by SM for meta-operation phases.
-model: opus
+model: best
 allowed-tools:
   - Read
   - Write

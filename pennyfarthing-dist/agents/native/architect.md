@@ -1,7 +1,7 @@
 ---
 name: Architect
 description: System Architect agent — technical design, ADRs, pattern definition. Spawned by SM for design phases. Read-only with limited bash.
-model: opus
+model: best
 allowed-tools:
   - Read
   - Bash

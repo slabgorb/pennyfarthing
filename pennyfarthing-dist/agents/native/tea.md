@@ -1,7 +1,7 @@
 ---
 name: TEA
 description: Test Engineer agent — writes failing tests (RED phase), verifies implementation (verify phase). Spawned by SM during red/verify phases.
-model: opus
+model: best
 allowed-tools:
   - Read
   - Write

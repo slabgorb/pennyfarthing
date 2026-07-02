@@ -1,7 +1,7 @@
 ---
 name: PM
 description: Product Manager agent — sprint planning, backlog grooming, prioritization. Spawned by SM for planning phases. Read-only.
-model: opus
+model: best
 allowed-tools:
   - Read
   - Bash

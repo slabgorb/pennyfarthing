@@ -14,9 +14,10 @@ from pathlib import Path
 import yaml
 
 from pf.common.config import get_dist_root
+from pf.model_tiers import VALID_ALIASES, resolve_model
 from pf.validate import ValidateReport
 
-VALID_MODELS = {"haiku", "sonnet", "opus"}
+VALID_MODELS = set(VALID_ALIASES)
 BUILTIN_AGENTS = {"Explore", "Plan"}
 
 # Valid tools that can appear in native agent allowed-tools
@@ -55,6 +56,28 @@ _MODEL_RE = re.compile(r"\*\*Model:\*\*\s+(\S+)", re.IGNORECASE)
 
 # Regex to extract subagent names from markdown table rows: | `name` | purpose |
 _HELPER_TABLE_RE = re.compile(r"^\s*\|\s*`?([^`|]+)`?\s*\|", re.MULTILINE)
+
+# Matches a spawn block: a 'You are the <name> subagent' line followed
+# (within the same fenced block) by a model: "<value>" line. [^`]*? bars
+# the gap from containing a backtick, so a match can never cross a
+# ```...``` fence boundary into an unrelated later code block.
+_SPAWN_RE = re.compile(
+    r"You are the ([a-z0-9-]+) subagent[^`]*?model:\s*\"?([a-z0-9-]+)\"?",
+    re.DOTALL,
+)
+
+
+def validate_spawn_templates(content: str) -> list[str]:
+    """Inline Task-spawn model values must match the tier map."""
+    errors: list[str] = []
+    for name, model in _SPAWN_RE.findall(content):
+        mapped = resolve_model("subagent", name)
+        if mapped["success"] and model != mapped["data"]["alias"]:
+            errors.append(
+                f"Spawn template for '{name}' uses model '{model}', tier map "
+                f"says '{mapped['data']['alias']}' (models.yaml)"
+            )
+    return errors
 
 
 def _has_frontmatter(content: str) -> bool:
@@ -342,6 +365,9 @@ def validate_main_agent(path: Path, agents_dir: Path) -> tuple[list[str], list[s
     if "helpers" in tags and "parameters" not in tags:
         warnings.append("Has <helpers> but missing <parameters> section")
 
+    # Check 11: Inline Task-spawn templates — model must match tier map (error)
+    errors.extend(validate_spawn_templates(content))
+
     # Recommended sections (warnings)
     if "on-activation" not in tags:
         warnings.append("Missing recommended <on-activation> section")
@@ -377,13 +403,22 @@ def validate_subagent(path: Path) -> tuple[list[str], list[str]]:
         if fm["name"] != expected_name:
             errors.append(f"Name mismatch: expected '{expected_name}', got '{fm['name']}'")
 
-    # Model validation — any valid Claude model is allowed
+    # Model validation — aliases or explicit claude-* names
     if "model" in fm:
         model_val = str(fm["model"]).lower()
-        valid_models = {"haiku", "sonnet", "opus"}
-        if model_val not in valid_models:
-            errors.append(f"Subagent model must be one of {valid_models}, got '{fm['model']}'")
-
+        if model_val not in VALID_MODELS and not model_val.startswith("claude-"):
+            errors.append(
+                f"Subagent model must be one of {sorted(VALID_MODELS)} or a "
+                f"claude-* name, got '{fm['model']}'"
+            )
+        else:
+            mapped = resolve_model("subagent", path.stem)
+            if mapped["success"] and model_val != mapped["data"]["alias"]:
+                errors.append(
+                    f"Model '{model_val}' does not match tier map: "
+                    f"'{path.stem}' is {mapped['data']['tier']} → "
+                    f"'{mapped['data']['alias']}' (models.yaml)"
+                )
 
     # Required tags
     tags = _find_tags(content)
@@ -421,11 +456,15 @@ def validate_native_agent(path: Path) -> tuple[list[str], list[str]]:
         if field not in fm:
             errors.append(f"Missing required frontmatter field: {field}")
 
-    # Model must be opus for native (strategic) agents
+    # Model must match the native_agents tier from models.yaml
     if "model" in fm:
         model_val = str(fm["model"]).lower()
-        if model_val != "opus":
-            warnings.append(f"Native agent model is '{fm['model']}', expected 'opus'")
+        expected = resolve_model("native", path.stem)
+        if expected["success"] and model_val != expected["data"]["alias"]:
+            warnings.append(
+                f"Native agent model is '{fm['model']}', expected "
+                f"'{expected['data']['alias']}' (models.yaml native_agents tier)"
+            )
 
     tools = fm.get("allowed-tools")
     if tools is None:

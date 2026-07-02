@@ -1,7 +1,7 @@
 ---
 name: DevOps
 description: DevOps Engineer agent — CI/CD, infrastructure, deployment, monitoring. Spawned by SM for infrastructure phases. Can write infrastructure code.
-model: opus
+model: best
 allowed-tools:
   - Read
   - Write

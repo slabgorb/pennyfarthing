@@ -1,7 +1,7 @@
 ---
 name: UX Designer
 description: UX Designer agent — user experience design, wireframes, user flows, accessibility. Spawned by SM for design phases. Read-only.
-model: opus
+model: best
 allowed-tools:
   - Read
   - Bash

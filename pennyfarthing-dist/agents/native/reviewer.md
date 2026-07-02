@@ -1,7 +1,7 @@
 ---
 name: Reviewer
 description: Adversarial code reviewer — finds problems the pipeline missed. Spawned by SM during review phase. Read-only with bash for verification.
-model: opus
+model: best
 allowed-tools:
   - Read
   - Bash

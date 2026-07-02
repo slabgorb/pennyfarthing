@@ -1,7 +1,7 @@
 ---
 name: BA
 description: Business Analyst agent — requirements discovery, stakeholder analysis, domain modeling. Spawned by SM for discovery phases. Read-only.
-model: opus
+model: best
 allowed-tools:
   - Read
   - Bash
