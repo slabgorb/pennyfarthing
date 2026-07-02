@@ -57,26 +57,45 @@ _MODEL_RE = re.compile(r"\*\*Model:\*\*\s+(\S+)", re.IGNORECASE)
 # Regex to extract subagent names from markdown table rows: | `name` | purpose |
 _HELPER_TABLE_RE = re.compile(r"^\s*\|\s*`?([^`|]+)`?\s*\|", re.MULTILINE)
 
-# Matches a spawn block: a 'You are the <name> subagent' line followed
-# (within the same fenced block) by a model: "<value>" line. [^`]*? bars
-# the gap from containing a backtick, so a match can never cross a
-# ```...``` fence boundary into an unrelated later code block.
-_SPAWN_RE = re.compile(
-    r"You are the ([a-z0-9-]+) subagent[^`]*?model:\s*\"?([a-z0-9-]+)\"?",
-    re.DOTALL,
-)
+# Spawn-template scan: split content into fenced code blocks first, then
+# search each block independently for 'You are the <name> subagent' lines
+# and model: "<value>" lines. Pairing is per-block (never across a ```
+# fence) and order-agnostic — real stanzas put model: BEFORE the prompt's
+# "You are the ..." line, but either order pairs correctly.
+_FENCE_RE = re.compile(r"```[^\n]*\n(.*?)```", re.DOTALL)
+_SPAWN_NAME_RE = re.compile(r"You are the ([a-z0-9-]+) subagent")
+_SPAWN_MODEL_RE = re.compile(r"\bmodel:\s*\"?([a-z0-9-]+)\"?")
+
+
+def _pair_spawn_stanzas(block: str) -> list[tuple[str, str]]:
+    """Pair subagent names with model values inside one fenced block.
+
+    Multi-stanza blocks (e.g. tea.md's simplify fan-out) yield one pair
+    per name: each name is matched to the NEAREST model: line by offset,
+    which is its own stanza's regardless of before/after ordering.
+    """
+    names = [(m.start(), m.group(1)) for m in _SPAWN_NAME_RE.finditer(block)]
+    models = [(m.start(), m.group(1)) for m in _SPAWN_MODEL_RE.finditer(block)]
+    if not names or not models:
+        return []
+    pairs: list[tuple[str, str]] = []
+    for name_pos, name in names:
+        _, model = min(models, key=lambda pm: abs(pm[0] - name_pos))
+        pairs.append((name, model))
+    return pairs
 
 
 def validate_spawn_templates(content: str) -> list[str]:
     """Inline Task-spawn model values must match the tier map."""
     errors: list[str] = []
-    for name, model in _SPAWN_RE.findall(content):
-        mapped = resolve_model("subagent", name)
-        if mapped["success"] and model != mapped["data"]["alias"]:
-            errors.append(
-                f"Spawn template for '{name}' uses model '{model}', tier map "
-                f"says '{mapped['data']['alias']}' (models.yaml)"
-            )
+    for block in _FENCE_RE.findall(content):
+        for name, model in _pair_spawn_stanzas(block):
+            mapped = resolve_model("subagent", name)
+            if mapped["success"] and model != mapped["data"]["alias"]:
+                errors.append(
+                    f"Spawn template for '{name}' uses model '{model}', tier map "
+                    f"says '{mapped['data']['alias']}' (models.yaml)"
+                )
     return errors
 
 
