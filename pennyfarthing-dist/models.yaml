@@ -1,0 +1,39 @@
+# models.yaml — single source of truth for model policy (SOUL #2, #4).
+# Tiers map to Claude Code ALIASES (never pinned claude-* IDs); Claude Code
+# resolves aliases per provider. `best` = Fable 5 where available, else Opus.
+# Per-install override: `models:` section in .pennyfarthing/config.local.yaml
+# (shallow merge per section key).
+# Spec: docs/superpowers/specs/2026-07-02-model-tiering-design.md (orchestrator)
+
+tiers:
+  judgment: best      # decisions that cascade — design, adversarial review, planning
+  heavyweight: opus   # deep execution — real reasoning, not judgment
+  analytical: sonnet  # analytical middle
+  mechanical: haiku   # runners, setup, summaries
+
+agents: # main-session phase agents → /pf-* command frontmatter
+  architect: judgment
+  reviewer: judgment
+  pm: judgment
+  tea: judgment # red = test design; verify overspend is small (runners are haiku)
+  dev: heavyweight
+  sm: analytical
+  ba: analytical
+  ux-designer: analytical
+  tech-writer: analytical
+  devops: analytical
+  orchestrator: analytical
+
+subagents: # exact name beats glob; two matching globs = validation error
+  "reviewer-*": analytical
+  reviewer-preflight: mechanical # downgrade from sonnet — gathers diff stats
+  tandem-backseat: analytical
+  testing-runner: mechanical
+  "sm-*": mechanical
+  "simplify-*": mechanical
+
+judges:
+  benchmark: heavyweight # scoring consistency > peak brilliance
+  peloton: heavyweight
+
+native_agents: judgment # agents/native/*.md
