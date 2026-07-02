@@ -40,6 +40,23 @@ def test_mismatch_emits_advisory_once(tmp_path: Path) -> None:
     assert out2 is None
 
 
+def test_model_switch_rearms_advisory(tmp_path: Path) -> None:
+    """Key includes the current model — a /model switch re-arms the nudge."""
+    from pf.hooks.advisory_model_tier import check
+
+    _setup(tmp_path, "opus", "claude-fable-5")
+    out1 = check(tmp_path)
+    assert out1 is not None and "claude-fable-5" in out1
+    assert check(tmp_path) is None  # same key — already advised
+
+    # Session switches to a DIFFERENT still-mismatching model.
+    (tmp_path / ".pennyfarthing" / ".runtime" / "current-model").write_text("claude-haiku-4-5")
+    out2 = check(tmp_path)
+    assert out2 is not None
+    assert "claude-haiku-4-5" in out2  # new model named in the new advisory
+    assert check(tmp_path) is None  # and the new key sticks
+
+
 def test_match_is_silent(tmp_path: Path) -> None:
     from pf.hooks.advisory_model_tier import check
 

@@ -14,10 +14,9 @@ Spec: docs/superpowers/specs/2026-07-02-model-tiering-design.md (orchestrator).
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
-
-from pf.common.config import get_project_root
 
 # alias → substrings that satisfy it in a full model id
 _FAMILY: dict[str, tuple[str, ...]] = {
@@ -51,13 +50,16 @@ def check(project_root: Path) -> str | None:
         current = current_file.read_text().strip()
         if not alias or not current or _alias_satisfied(alias, current):
             return None
-        key = f"{expected.get('agent')}|{expected.get('story_id')}|{expected.get('phase')}|{current}"
+        # Same fallbacks as the message below, so a null/missing field never
+        # bakes a literal "None" into the once-key.
+        agent = expected.get("agent") or "agent"
+        story_id = expected.get("story_id") or "none"
+        phase = expected.get("phase") or "current"
+        key = f"{agent}|{story_id}|{phase}|{current}"
         advised_file = project_root / ".session" / ".model-advised"
         if advised_file.exists() and advised_file.read_text() == key:
             return None
         advised_file.write_text(key)
-        phase = expected.get("phase") or "current"
-        agent = expected.get("agent") or "agent"
         return (
             f"[model-tier advisory] {phase} phase ({agent}) expects `{alias}` "
             f"per models.yaml; session is on `{current}`. Consider `/model {alias}` "
@@ -75,7 +77,12 @@ def main() -> None:
         except (json.JSONDecodeError, ValueError):
             sys.exit(0)
 
-        message = check(get_project_root())
+        # Honor CLAUDE_PROJECT_DIR (the project Claude is editing) directly, like
+        # advisory_never_edit_zone does — NOT get_project_root(), which prefers a
+        # PROJECT_ROOT override that can point at a different repo.
+        project_root = Path(os.path.normpath(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()))
+
+        message = check(project_root)
         if message:
             print(
                 json.dumps(
