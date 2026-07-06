@@ -270,7 +270,11 @@ def finish_story(
 
     # --- Validate session ---
     if not session_path.exists():
-        return {"success": False, "error": f"Session file not found: {session_path}"}
+        return {
+            "success": False,
+            "story_id": story_id,
+            "error": f"Session file not found: {session_path}",
+        }
 
     # --- Validate story exists in sprint YAML (155-6) ---
     # An unknown/typo'd id must abort loudly and list candidate IDs, exactly like
@@ -279,7 +283,18 @@ def finish_story(
     # failure via transition_story, after the session was already archived, while
     # the dry-run path reported a clean plan for a story that does not exist
     # (epic 155: finish must not lie). Reuse this single read below.
-    data = read_sprint(sprint_path)
+    #
+    # read_sprint raises FileNotFoundError/ValueError on a missing or malformed
+    # sprint YAML; keep finish_story's no-throw contract (SOUL #10) by turning
+    # that into a result dict rather than letting a raw traceback escape.
+    try:
+        data = read_sprint(sprint_path)
+    except (FileNotFoundError, ValueError) as exc:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "error": f"Could not read sprint data: {exc}",
+        }
     _epic, story, _location = find_story_in_data(data, story_id)
     if story is None:
         return {

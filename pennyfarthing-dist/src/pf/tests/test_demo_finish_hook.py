@@ -507,6 +507,14 @@ class TestDemoHookErrorHandling:
         assert "warning" not in demo_step, (
             f"Successful demo step should NOT have a warning, got: {demo_step}"
         )
+        # 155-6 rework: the not-found guard makes find_story_in_data resolve the
+        # story, so _add_story_to_completed now runs for real in these tests.
+        # Assert its step ("4b") actually succeeded, so the side-effect is checked
+        # rather than merely executed (reviewer finding on incidental coupling).
+        add_steps = [s for s in steps if s.get("action") == "add_completed_story"]
+        assert len(add_steps) == 1 and "error" not in add_steps[0], (
+            f"completed-story archive step should run and succeed, got: {add_steps}"
+        )
 
 
 class TestDemoHookStepOrdering:

@@ -235,3 +235,72 @@ class TestFinishKnownStoryNotBlockedByGuard:
         assert result["success"] is True, (
             f"A known story must finish successfully. Got: {result}"
         )
+
+
+# =============================================================================
+# Guard edge cases (155-6 review rework) — read failures, zero-candidate
+# sprints, and jira-key-shaped ids (the guard sits on find_story_in_data,
+# which resolves both local ids and Jira keys).
+# =============================================================================
+
+
+class TestFinishGuardEdgeCases:
+    @patch("pf.sprint.story_finish.read_sprint")
+    def test_read_sprint_failure_returns_result_not_raise(
+        self, mock_read_sprint: MagicMock, project: Path
+    ) -> None:
+        """A missing/malformed sprint YAML must surface as {success: False}, not a
+        raw traceback — finish_story's no-throw contract (SOUL #10). read_sprint
+        is documented to raise FileNotFoundError/ValueError.
+        """
+        mock_read_sprint.side_effect = ValueError("malformed sprint YAML")
+
+        result = finish_story(project, KNOWN_ID)
+
+        assert result["success"] is False, (
+            f"read_sprint failure must return a result dict, not raise. Got: {result}"
+        )
+        assert "sprint data" in result.get("error", "").lower(), (
+            f"error should explain the read failure. Got: {result.get('error')!r}"
+        )
+        assert result.get("story_id") == KNOWN_ID, (
+            f"result should carry story_id for the read-failure branch. Got: {result}"
+        )
+
+    @patch("pf.sprint.story_finish.read_sprint")
+    def test_zero_candidate_sprint_uses_legacy_message(
+        self, mock_read_sprint: MagicMock, project: Path
+    ) -> None:
+        """When no stories exist to list, the error falls back to the legacy
+        message with no 'Available story IDs' suffix.
+        """
+        mock_read_sprint.return_value = {"epics": [{"id": "155", "stories": []}]}
+
+        result = finish_story(project, UNKNOWN_ID)
+        error = result.get("error", "")
+
+        assert result["success"] is False
+        assert UNKNOWN_ID in error, f"error must name the missing id. Got: {error!r}"
+        assert "Available story IDs" not in error, (
+            f"a zero-candidate sprint must omit the candidate list. Got: {error!r}"
+        )
+
+    def test_unknown_jira_key_hits_not_found_with_candidates(self, project: Path) -> None:
+        """The guard resolves Jira keys too — a bogus jira-key-shaped id must hit
+        the not-found path (with candidates), not slip past the guard.
+        """
+        # finish_story checks the session (named by the arg) before the guard, so
+        # a session named by the bogus jira key must exist to reach the guard.
+        bogus_key = "PROJ-00000"
+        (project / ".session" / f"{bogus_key}-session.md").write_text(
+            f"---\nstory_id: \"{bogus_key}\"\njira_key: \"{bogus_key}\"\n---\n"
+        )
+
+        result = finish_story(project, bogus_key)
+
+        assert result["success"] is False
+        error = result.get("error", "")
+        assert bogus_key in error, f"error must name the bogus key. Got: {error!r}"
+        assert "Available story IDs" in error and KNOWN_ID in error, (
+            f"guard must list local-id candidates for a bogus jira key. Got: {error!r}"
+        )
