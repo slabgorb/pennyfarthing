@@ -26,7 +26,11 @@ if TYPE_CHECKING:
     from pf.git.repos import RepoConfig
 
 from pf.sprint.archive_epic import _load_archive_file, _write_archive_file, ensure_archive_file
-from pf.sprint.loader import _has_real_jira_key, find_story_in_data
+from pf.sprint.loader import (
+    _has_real_jira_key,
+    find_story_in_data,
+    format_story_not_found_error,
+)
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import read_sprint
 
@@ -266,25 +270,50 @@ def finish_story(
 
     # --- Validate session ---
     if not session_path.exists():
-        return {"success": False, "error": f"Session file not found: {session_path}"}
+        return {
+            "success": False,
+            "story_id": story_id,
+            "error": f"Session file not found: {session_path}",
+        }
+
+    # --- Validate story exists in sprint YAML (155-6) ---
+    # An unknown/typo'd id must abort loudly and list candidate IDs, exactly like
+    # update/remove — and BEFORE any irreversible step (archive, merge, cleanup)
+    # or the dry-run preview. Previously finish only tripped a LATE yaml-update
+    # failure via transition_story, after the session was already archived, while
+    # the dry-run path reported a clean plan for a story that does not exist
+    # (epic 155: finish must not lie). Reuse this single read below.
+    #
+    # read_sprint raises FileNotFoundError/ValueError on a missing or malformed
+    # sprint YAML; keep finish_story's no-throw contract (SOUL #10) by turning
+    # that into a result dict rather than letting a raw traceback escape.
+    try:
+        data = read_sprint(sprint_path)
+    except (FileNotFoundError, ValueError) as exc:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "error": f"Could not read sprint data: {exc}",
+        }
+    _epic, story, _location = find_story_in_data(data, story_id)
+    if story is None:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "error": format_story_not_found_error(data, story_id),
+        }
 
     fields = _parse_session(session_path)
     jira_key = _extract_jira_key(fields)
     branch = _extract_branch(fields)
     pr_number = _extract_pr_number(fields)
 
-    # Fallback: resolve Jira key from sprint YAML
-    if not jira_key:
-        try:
-            data = read_sprint(sprint_path)
-            _epic, story, _location = find_story_in_data(data, story_id)
-            # Sentinel jira values ("none"/"null"/"x") are truthy strings but mean
-            # "no Jira"; only adopt a real key so archive name, jira step, and the
-            # reported jira_key all behave as no-Jira (story 160-3).
-            if story and _has_real_jira_key(story):
-                jira_key = story.get("jira")
-        except Exception:
-            pass
+    # Resolve Jira key from sprint YAML when the session omits it, reusing the
+    # story resolved above. Sentinel jira values ("none"/"null"/"x") are truthy
+    # strings but mean "no Jira"; only adopt a real key so archive name, jira
+    # step, and the reported jira_key all behave as no-Jira (story 160-3).
+    if not jira_key and _has_real_jira_key(story):
+        jira_key = story.get("jira")
 
     # Fallback: resolve PR from GitHub if not in session
     if not pr_number and branch:

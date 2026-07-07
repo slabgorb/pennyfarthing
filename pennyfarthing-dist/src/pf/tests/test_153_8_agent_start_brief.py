@@ -36,7 +36,6 @@ import pytest
 import yaml
 from click.testing import CliRunner
 
-
 # =============================================================================
 # Shared project fixture (mirrors test_tiers._setup_full_project)
 # =============================================================================

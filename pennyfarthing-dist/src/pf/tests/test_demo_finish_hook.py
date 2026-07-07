@@ -49,8 +49,15 @@ def _create_sprint_yaml(tmp_path: Path, story_id: str = "42-1") -> Path:
     epic_id = story_id.split("-")[0]
     sprint_file.write_text(
         textwrap.dedent(f"""\
-        name: "Test Sprint"
-        sprint_id: "2699"
+        sprint:
+          name: "Test Sprint"
+          jira_sprint_id: 2699
+          jira_sprint_name: "Test Sprint"
+          goal: "Test finish demo hook"
+          start_date: 2026-07-01
+          end_date: 2026-07-14
+          status: active
+          number: 1
         epics:
           - id: "{epic_id}"
             title: "Test Epic"
@@ -65,6 +72,35 @@ def _create_sprint_yaml(tmp_path: Path, story_id: str = "42-1") -> Path:
         encoding="utf-8",
     )
     return sprint_file
+
+
+def _sprint_data(story_id: str = "42-1") -> dict:
+    """Merged sprint data containing the story under finish.
+
+    The story 155-6 not-found guard in ``finish_story`` resolves the story via
+    ``read_sprint`` before any step. These tests stub ``read_sprint``, so the
+    stub must return a sprint that actually contains the story being finished —
+    an empty sprint is now (correctly) rejected as not-found.
+    """
+    epic_id = story_id.split("-")[0]
+    return {
+        "epics": [
+            {
+                "id": epic_id,
+                "title": "Test Epic",
+                "jira": "PROJ-99990",
+                "stories": [
+                    {
+                        "id": story_id,
+                        "title": "Test story",
+                        "points": 2,
+                        "status": "in_review",
+                        "jira": "PROJ-99999",
+                    }
+                ],
+            }
+        ]
+    }
 
 
 def _setup_finish_env(tmp_path: Path, story_id: str = "42-1") -> Path:
@@ -94,7 +130,7 @@ class TestDemoHookTriggered:
         """finish_story() must call demo.orchestrator.generate() on success."""
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_read_sprint.return_value = {"epics": []}
+        mock_read_sprint.return_value = _sprint_data()
         # Story 155-1: finish now verifies the PR merged via `gh pr view --json
         # state`. The session carries PR #999, so the verify call must see a
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
@@ -149,7 +185,7 @@ class TestDemoHookTriggered:
         """Demo generation must receive the correct story_id."""
         _setup_finish_env(tmp_path, "99-5")
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_read_sprint.return_value = {"epics": []}
+        mock_read_sprint.return_value = _sprint_data("99-5")
         # Story 155-1: finish now verifies the PR merged via `gh pr view --json
         # state`. The session carries PR #999, so the verify call must see a
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
@@ -192,7 +228,7 @@ class TestDemoHookConfiguration:
         """Demo generate must receive the project_root for config discovery."""
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_read_sprint.return_value = {"epics": []}
+        mock_read_sprint.return_value = _sprint_data()
         # Story 155-1: finish now verifies the PR merged via `gh pr view --json
         # state`. The session carries PR #999, so the verify call must see a
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
@@ -233,6 +269,7 @@ class TestDemoHookConfiguration:
     ) -> None:
         """Dry-run mode should NOT trigger demo generation."""
         _setup_finish_env(tmp_path)
+        mock_read_sprint.return_value = _sprint_data()
 
         from pf.sprint.story_finish import finish_story
 
@@ -255,6 +292,7 @@ class TestDemoHookConfiguration:
     ) -> None:
         """Dry-run output should mention demo generation as a planned step."""
         _setup_finish_env(tmp_path)
+        mock_read_sprint.return_value = _sprint_data()
 
         from pf.sprint.story_finish import finish_story
 
@@ -288,7 +326,7 @@ class TestDemoHookErrorHandling:
         """When demo generation fails, finish_story() must still succeed."""
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_read_sprint.return_value = {"epics": []}
+        mock_read_sprint.return_value = _sprint_data()
         # Story 155-1: finish now verifies the PR merged via `gh pr view --json
         # state`. The session carries PR #999, so the verify call must see a
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
@@ -325,7 +363,7 @@ class TestDemoHookErrorHandling:
         """When demo generation raises an exception, finish_story() must still succeed."""
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_read_sprint.return_value = {"epics": []}
+        mock_read_sprint.return_value = _sprint_data()
         # Story 155-1: finish now verifies the PR merged via `gh pr view --json
         # state`. The session carries PR #999, so the verify call must see a
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
@@ -359,7 +397,7 @@ class TestDemoHookErrorHandling:
         """Demo generation failure should be recorded as a step with a warning."""
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_read_sprint.return_value = {"epics": []}
+        mock_read_sprint.return_value = _sprint_data()
         # Story 155-1: finish now verifies the PR merged via `gh pr view --json
         # state`. The session carries PR #999, so the verify call must see a
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
@@ -401,7 +439,7 @@ class TestDemoHookErrorHandling:
         """Demo generation exception should be recorded as a step with a warning."""
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_read_sprint.return_value = {"epics": []}
+        mock_read_sprint.return_value = _sprint_data()
         # Story 155-1: finish now verifies the PR merged via `gh pr view --json
         # state`. The session carries PR #999, so the verify call must see a
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
@@ -440,7 +478,7 @@ class TestDemoHookErrorHandling:
         """Successful demo generation should be recorded as a step without warning."""
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_read_sprint.return_value = {"epics": []}
+        mock_read_sprint.return_value = _sprint_data()
         # Story 155-1: finish now verifies the PR merged via `gh pr view --json
         # state`. The session carries PR #999, so the verify call must see a
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
@@ -469,6 +507,14 @@ class TestDemoHookErrorHandling:
         assert "warning" not in demo_step, (
             f"Successful demo step should NOT have a warning, got: {demo_step}"
         )
+        # 155-6 rework: the not-found guard makes find_story_in_data resolve the
+        # story, so _add_story_to_completed now runs for real in these tests.
+        # Assert its step ("4b") actually succeeded, so the side-effect is checked
+        # rather than merely executed (reviewer finding on incidental coupling).
+        add_steps = [s for s in steps if s.get("action") == "add_completed_story"]
+        assert len(add_steps) == 1 and "error" not in add_steps[0], (
+            f"completed-story archive step should run and succeed, got: {add_steps}"
+        )
 
 
 class TestDemoHookStepOrdering:
@@ -493,7 +539,7 @@ class TestDemoHookStepOrdering:
         """
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_read_sprint.return_value = {"epics": []}
+        mock_read_sprint.return_value = _sprint_data()
         # Story 155-1: finish now verifies the PR merged via `gh pr view --json
         # state`. The session carries PR #999, so the verify call must see a
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
@@ -542,7 +588,7 @@ class TestDemoHookStepOrdering:
         """
         _setup_finish_env(tmp_path)
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        mock_read_sprint.return_value = {"epics": []}
+        mock_read_sprint.return_value = _sprint_data()
         # Story 155-1: finish now verifies the PR merged via `gh pr view --json
         # state`. The session carries PR #999, so the verify call must see a
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
