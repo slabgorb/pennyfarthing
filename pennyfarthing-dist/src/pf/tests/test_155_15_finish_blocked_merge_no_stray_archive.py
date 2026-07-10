@@ -123,8 +123,13 @@ workflow: "tdd"
 """
 
 
-def _make_project(tmp_path: Path, session_text: str) -> Path:
-    """Build a project layout (sprint/ + .session/) for finish_story tests."""
+def _make_project(tmp_path: Path, session_text: str, *, with_dialogue: bool = False) -> Path:
+    """Build a project layout (sprint/ + .session/) for finish_story tests.
+
+    When ``with_dialogue`` is True, also writes ``.session/155-15-dialogue.md`` so
+    the Step 1b (archive_dialogue) path is exercised — finish_story archives a
+    dialogue file alongside the session when one is present.
+    """
     sprint_dir = tmp_path / "sprint"
     sprint_dir.mkdir()
     (sprint_dir / "current-sprint.yaml").write_text(INDEX_YAML)
@@ -133,6 +138,8 @@ def _make_project(tmp_path: Path, session_text: str) -> Path:
     session_dir = tmp_path / ".session"
     session_dir.mkdir()
     (session_dir / "155-15-session.md").write_text(session_text)
+    if with_dialogue:
+        (session_dir / "155-15-dialogue.md").write_text("# Dialogue for 155-15\n")
     return tmp_path
 
 
@@ -144,6 +151,11 @@ def project_with_pr(tmp_path: Path) -> Path:
 @pytest.fixture
 def project_no_pr(tmp_path: Path) -> Path:
     return _make_project(tmp_path, SESSION_NO_PR)
+
+
+@pytest.fixture
+def project_with_pr_and_dialogue(tmp_path: Path) -> Path:
+    return _make_project(tmp_path, SESSION_WITH_PR, with_dialogue=True)
 
 
 def _make_fake_run(
@@ -201,12 +213,20 @@ def _archived_session_files(project_root: Path) -> list[Path]:
     return sorted((project_root / "sprint" / "archive").glob("*-session.md"))
 
 
+def _archived_dialogue_files(project_root: Path) -> list[Path]:
+    """Every ``*-dialogue.md`` copy present in ``sprint/archive/``."""
+    return sorted((project_root / "sprint" / "archive").glob("*-dialogue.md"))
+
+
 def _requested_done(mock_transition: MagicMock) -> bool:
-    """True if transition_story was ever asked to move the story to ``done``."""
+    """True if transition_story was ever asked to move the story to ``done``.
+
+    The real ``transition_story(project_root, story_id, target_status)`` takes the
+    status positionally, so a ``done`` request is always ``args[2]`` (or, more
+    loosely, ``"done"`` anywhere in the positional args).
+    """
     for call in mock_transition.call_args_list:
-        if len(call.args) >= 3 and call.args[2] == "done":
-            return True
-        if call.kwargs.get("to_status") == "done" or "done" in call.args:
+        if "done" in call.args:
             return True
     return False
 
@@ -350,6 +370,200 @@ class TestUnverifiedMergeLeavesNoStrayArchive:
         assert stray == [], (
             "Merge returned 0 but the PR is still OPEN — finish aborted but left a "
             f"stray archive: {[p.name for p in stray]}"
+        )
+
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_session_file_kept_when_merge_unverified(
+        self, mock_mode: MagicMock, mock_transition: MagicMock, project_with_pr: Path
+    ) -> None:
+        # Symmetry with the denied-merge class: the module docstring claims BOTH
+        # abort paths keep the .session file. Prove it for the unverified path too.
+        mock_transition.return_value = {"success": True, "to_status": "in_review"}
+        session_path = project_with_pr / ".session" / "155-15-session.md"
+        with patch(
+            "pf.sprint.story_finish._run",
+            side_effect=_make_fake_run(merge_rc=0, merge_state_status="CLEAN", pr_state="OPEN"),
+        ):
+            finish_story(project_with_pr, "155-15")
+
+        assert session_path.exists(), (
+            "Session removed while the merge returned 0 but the PR is still OPEN — "
+            "the story must stay active until the merge actually lands"
+        )
+
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_does_not_transition_to_done_when_merge_unverified(
+        self, mock_mode: MagicMock, mock_transition: MagicMock, project_with_pr: Path
+    ) -> None:
+        mock_transition.return_value = {"success": True, "to_status": "in_review"}
+        with patch(
+            "pf.sprint.story_finish._run",
+            side_effect=_make_fake_run(merge_rc=0, merge_state_status="CLEAN", pr_state="OPEN"),
+        ):
+            finish_story(project_with_pr, "155-15")
+
+        assert not _requested_done(mock_transition), (
+            "finish flipped the story to `done` while the merge returned 0 but the "
+            "PR was still OPEN"
+        )
+
+
+class TestArchiveCopyFailureReturnsResult:
+    """Reviewer HIGH (155-15 rework): the archive ``shutil.copy2`` now runs AFTER
+    the irreversible ``gh pr merge --delete-branch``. If the copy raises (disk
+    full, permission error, session file vanished mid-run), finish must honor its
+    no-throw contract (SOUL #10) and return ``{success: False, error, ...}`` —
+    NOT let an ``OSError`` propagate past the CLI boundary (``cli.py:468`` has no
+    try/except) into an unhandled traceback that leaves the PR merged and the
+    branch deleted while the story is stuck ``in_review`` and the session unremoved.
+    """
+
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_copy_failure_returns_result_not_exception(
+        self, mock_mode: MagicMock, mock_transition: MagicMock, project_with_pr: Path
+    ) -> None:
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+        # Clean, verified merge so we reach the archive step, then the copy fails.
+        with (
+            patch(
+                "pf.sprint.story_finish._run",
+                side_effect=_make_fake_run(
+                    merge_rc=0, merge_state_status="CLEAN", pr_state="MERGED"
+                ),
+            ),
+            patch(
+                "pf.sprint.story_finish.shutil.copy2",
+                side_effect=OSError("No space left on device"),
+            ),
+        ):
+            try:
+                result = finish_story(project_with_pr, "155-15")
+            except OSError as exc:  # pragma: no cover - this is the bug we forbid
+                pytest.fail(
+                    "finish_story let an archive-copy OSError propagate past its "
+                    f"no-throw contract (SOUL #10): {exc!r}. It must return "
+                    "{success: False, error, ...} instead."
+                )
+
+        assert result["success"] is False, (
+            f"An archive-copy failure must abort finish with a result dict: {result}"
+        )
+        assert "error" in result and result["error"], (
+            f"Failure result must carry an actionable error: {result}"
+        )
+
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_copy_failure_does_not_transition_to_done(
+        self, mock_mode: MagicMock, mock_transition: MagicMock, project_with_pr: Path
+    ) -> None:
+        # A copy failure sits before the done transition; the story must not be
+        # marked done when its session could not be archived.
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+        with (
+            patch(
+                "pf.sprint.story_finish._run",
+                side_effect=_make_fake_run(
+                    merge_rc=0, merge_state_status="CLEAN", pr_state="MERGED"
+                ),
+            ),
+            patch(
+                "pf.sprint.story_finish.shutil.copy2",
+                side_effect=OSError("Permission denied"),
+            ),
+        ):
+            try:
+                finish_story(project_with_pr, "155-15")
+            except OSError:  # pragma: no cover - forbidden path, asserted elsewhere
+                pytest.fail("finish_story raised OSError instead of returning a result")
+
+        assert not _requested_done(mock_transition), (
+            "finish transitioned the story to `done` even though archiving failed"
+        )
+
+
+class TestBlockedMergeDoesNotArchiveDialogue:
+    """Reviewer MEDIUM (155-15 rework): Step 1b (archive_dialogue) moved in
+    lockstep with Step 1 (archive_session) to after merge verification. Pin that
+    a blocked/unverified merge leaves NO stray ``*-dialogue.md`` either — and that
+    a clean merge still archives the dialogue — so a future decoupling of 1b from
+    1 can't silently leak a dialogue archive on abort.
+    """
+
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_no_dialogue_copy_left_in_archive_when_merge_denied(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        project_with_pr_and_dialogue: Path,
+    ) -> None:
+        mock_transition.return_value = {"success": True, "to_status": "in_review"}
+        with patch(
+            "pf.sprint.story_finish._run",
+            side_effect=_make_fake_run(
+                merge_rc=1,
+                merge_stderr=REVIEW_REQUIRED_STDERR,
+                merge_state_status="BLOCKED",
+                pr_state="OPEN",
+            ),
+        ):
+            finish_story(project_with_pr_and_dialogue, "155-15")
+
+        stray = _archived_dialogue_files(project_with_pr_and_dialogue)
+        assert stray == [], (
+            "Blocked merge left a stray dialogue archive: "
+            f"{[p.name for p in stray]} — Step 1b must not run on abort either"
+        )
+
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_no_dialogue_copy_left_in_archive_when_merge_unverified(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        project_with_pr_and_dialogue: Path,
+    ) -> None:
+        mock_transition.return_value = {"success": True, "to_status": "in_review"}
+        with patch(
+            "pf.sprint.story_finish._run",
+            side_effect=_make_fake_run(merge_rc=0, merge_state_status="CLEAN", pr_state="OPEN"),
+        ):
+            finish_story(project_with_pr_and_dialogue, "155-15")
+
+        stray = _archived_dialogue_files(project_with_pr_and_dialogue)
+        assert stray == [], (
+            "Unverified merge left a stray dialogue archive: "
+            f"{[p.name for p in stray]}"
+        )
+
+    @patch("pf.sprint.story_finish._add_story_to_completed")
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_clean_merge_still_archives_dialogue(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        mock_add_completed: MagicMock,
+        project_with_pr_and_dialogue: Path,
+    ) -> None:
+        # Happy-path regression: the dialogue must still be archived on a clean,
+        # verified merge (the move must not suppress the legitimate archive).
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+        with patch(
+            "pf.sprint.story_finish._run",
+            side_effect=_make_fake_run(
+                merge_rc=0, merge_state_status="CLEAN", pr_state="MERGED"
+            ),
+        ):
+            result = finish_story(project_with_pr_and_dialogue, "155-15")
+
+        assert result["success"] is True, result
+        assert _archived_dialogue_files(project_with_pr_and_dialogue), (
+            "Clean finish must still archive the dialogue file as part of the record"
         )
 
 
