@@ -392,18 +392,17 @@ def finish_story(
                 "steps": steps,
             }
 
-    # --- Step 1: Archive session ---
-    archive_dest = archive_dir / archive_name
-    shutil.copy2(session_path, archive_dest)
-    steps.append({"step": 1, "action": "archive_session", "dest": str(archive_dest)})
-
-    # --- Step 1b: Archive dialogue (if exists) ---
-    if dialogue_path.exists():
-        dialogue_dest = archive_dir / dialogue_archive_name
-        shutil.copy2(dialogue_path, dialogue_dest)
-        steps.append({"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)})
-
-    # --- Step 2: Merge PR ---
+    # --- Step 2: Merge PR (runs BEFORE archive) ---
+    # The merge is verified here, ahead of the (irreversible) session archive, so
+    # a blocked/denied or un-landed merge aborts finish leaving NO stray archive
+    # copy in sprint/archive/ (155-15). 155-1 already made the merge load-bearing
+    # for the ``done`` transition + session removal; this ordering extends the
+    # same guarantee to archiving. The pre-merge CONFLICTING gate above still
+    # short-circuits definitively-conflicting PRs even earlier. A review-required
+    # guardrail (mergeable=MERGEABLE, mergeStateStatus=BLOCKED) is not detectable
+    # as CONFLICTING; it surfaces as a non-zero ``gh pr merge`` (or a merge that
+    # never reaches MERGED) and is caught by the two abort branches below —
+    # before Step 1 archives anything.
     pr_merge_mode = get_pr_merge_mode()
     if pr_merge_mode == "human":
         # Human merge mode never auto-merges; the story is left in_review below
@@ -423,9 +422,11 @@ def finish_story(
     elif pr_number:
         # Auto merge mode: the merge is load-bearing. A non-zero merge OR a
         # merge that did not actually land must abort finish BEFORE the story is
-        # flipped to ``done`` — otherwise we mark a story shipped whose code
-        # never reached the base branch (gh #71 / #60). Return loud, run no
-        # irreversible cleanup (no transition, no session removal).
+        # flipped to ``done`` AND before the session is archived — otherwise we
+        # mark a story shipped whose code never reached the base branch
+        # (gh #71 / #60) or leave a stray archive that lies about completion
+        # (155-15). Return loud, run no irreversible step (no archive, no
+        # transition, no session removal).
         merge_result = _run(["gh", "pr", "merge", pr_number, "--squash", "--delete-branch"])
         if merge_result.returncode != 0:
             stderr = (merge_result.stderr or "").strip()
@@ -472,6 +473,49 @@ def finish_story(
         steps.append({"step": 2, "action": "merge_pr", "pr": pr_number, "merged": True})
     else:
         steps.append({"step": 2, "action": "merge_pr", "skipped": True})
+
+    # --- Step 1 / 1b: Archive session + dialogue (only after the merge is verified) ---
+    # Kept labelled "step 1"/"1b" for report stability, but executed after Step 2 so a
+    # blocked/denied merge never leaves a stray archive behind (155-15). Reached only
+    # when the merge landed, was skipped (no PR), or is a human-merge hold.
+    #
+    # The copy now sits AFTER the irreversible merge (gh pr merge --delete-branch), so
+    # an OSError here (disk full, permission, session file vanished) must NOT propagate
+    # past finish_story's no-throw contract (SOUL #10) into an unhandled traceback at
+    # the CLI boundary — that would leave a merged/branch-deleted PR with the story
+    # stuck in_review and the session unremoved. Abort loud-but-clean, exactly like the
+    # merge/verify/transition failures above: return a result dict, run no further
+    # irreversible step (no done transition, no session removal).
+    try:
+        archive_dest = archive_dir / archive_name
+        shutil.copy2(session_path, archive_dest)
+        steps.append({"step": 1, "action": "archive_session", "dest": str(archive_dest)})
+
+        if dialogue_path.exists():
+            dialogue_dest = archive_dir / dialogue_archive_name
+            shutil.copy2(dialogue_path, dialogue_dest)
+            steps.append(
+                {"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)}
+            )
+    except OSError as exc:
+        steps.append(
+            {
+                "step": 1,
+                "action": "archive_session",
+                "success": False,
+                "error": str(exc),
+            }
+        )
+        return {
+            "success": False,
+            "story_id": story_id,
+            "jira_key": jira_key,
+            "error": (
+                f"Failed to archive session for {story_id}: {exc} — refusing to "
+                "mark the story done with an un-archived session"
+            ),
+            "steps": steps,
+        }
 
     # --- Steps 3 & 4: Transition via state machine (Jira + YAML atomically) ---
     # Story should already be in_review (transitioned at review phase entry).
