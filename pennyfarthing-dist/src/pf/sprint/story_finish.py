@@ -474,19 +474,48 @@ def finish_story(
     else:
         steps.append({"step": 2, "action": "merge_pr", "skipped": True})
 
-    # --- Step 1: Archive session (only after the merge is verified) ---
-    # Kept labelled "step 1" for report stability, but executed after Step 2 so a
-    # blocked/denied merge never leaves a stray archive behind (155-15). Reached
-    # only when the merge landed, was skipped (no PR), or is a human-merge hold.
-    archive_dest = archive_dir / archive_name
-    shutil.copy2(session_path, archive_dest)
-    steps.append({"step": 1, "action": "archive_session", "dest": str(archive_dest)})
+    # --- Step 1 / 1b: Archive session + dialogue (only after the merge is verified) ---
+    # Kept labelled "step 1"/"1b" for report stability, but executed after Step 2 so a
+    # blocked/denied merge never leaves a stray archive behind (155-15). Reached only
+    # when the merge landed, was skipped (no PR), or is a human-merge hold.
+    #
+    # The copy now sits AFTER the irreversible merge (gh pr merge --delete-branch), so
+    # an OSError here (disk full, permission, session file vanished) must NOT propagate
+    # past finish_story's no-throw contract (SOUL #10) into an unhandled traceback at
+    # the CLI boundary — that would leave a merged/branch-deleted PR with the story
+    # stuck in_review and the session unremoved. Abort loud-but-clean, exactly like the
+    # merge/verify/transition failures above: return a result dict, run no further
+    # irreversible step (no done transition, no session removal).
+    try:
+        archive_dest = archive_dir / archive_name
+        shutil.copy2(session_path, archive_dest)
+        steps.append({"step": 1, "action": "archive_session", "dest": str(archive_dest)})
 
-    # --- Step 1b: Archive dialogue (if exists) ---
-    if dialogue_path.exists():
-        dialogue_dest = archive_dir / dialogue_archive_name
-        shutil.copy2(dialogue_path, dialogue_dest)
-        steps.append({"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)})
+        if dialogue_path.exists():
+            dialogue_dest = archive_dir / dialogue_archive_name
+            shutil.copy2(dialogue_path, dialogue_dest)
+            steps.append(
+                {"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)}
+            )
+    except OSError as exc:
+        steps.append(
+            {
+                "step": 1,
+                "action": "archive_session",
+                "success": False,
+                "error": str(exc),
+            }
+        )
+        return {
+            "success": False,
+            "story_id": story_id,
+            "jira_key": jira_key,
+            "error": (
+                f"Failed to archive session for {story_id}: {exc} — refusing to "
+                "mark the story done with an un-archived session"
+            ),
+            "steps": steps,
+        }
 
     # --- Steps 3 & 4: Transition via state machine (Jira + YAML atomically) ---
     # Story should already be in_review (transitioned at review phase entry).
