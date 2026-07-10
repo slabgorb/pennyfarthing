@@ -32,7 +32,7 @@ from pf.sprint.loader import (
     format_story_not_found_error,
 )
 from pf.sprint.story_transition import transition_story
-from pf.sprint.yaml_io import read_sprint
+from pf.sprint.yaml_io import _get_epic_ref, read_sprint
 
 SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
 
@@ -60,7 +60,10 @@ def _resolve_epic_ref(project_root: Path, story_id: str, story: dict) -> str:
         # an epic here.
         epic = None
     if isinstance(epic, dict):
-        ref = str(epic.get("jira") or epic.get("id") or "").strip()
+        # Delegate to the one canonical epic-ref formula (SOUL #2). This rejects
+        # truthy jira sentinels (none/null/x) and strips the ``epic-`` prefix
+        # (ADR-0022), where the old inline ``jira or id`` chain diverged (155-8).
+        ref = _get_epic_ref(epic)
         if ref:
             return ref
 
