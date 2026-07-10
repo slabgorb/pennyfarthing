@@ -41,6 +41,7 @@ class LintResult:
     output: str = ""
     error: str | None = None
     command: str = ""  # the linter actually run (e.g. "ruff check ."), for truthful remediation
+    skipped: bool = False  # True when no lintable project was found — "not checked" != "passed" (SOUL #10)
 
 
 @dataclass
@@ -91,6 +92,7 @@ class PreflightResult:
             },
             "lint": {
                 "clean": self.lint.clean,
+                "skipped": self.lint.skipped,
             },
             "acceptance_criteria": {
                 "total": self.acceptance_criteria.total,
@@ -132,6 +134,22 @@ class PreflightResult:
                     result["next_steps"].append(f"  Fix: {issue.fix}")
 
         return result
+
+
+def _reject_option_like(value: str, kind: str) -> str | None:
+    """Guard a value that is passed to a subprocess as a *positional* argument.
+
+    ``check_pr_status`` and ``check_jira_status`` pass ``branch``/``jira_key`` as
+    bare positionals to ``gh``/``jira``. A value beginning with ``-`` is parsed by
+    the CLI as an *option*, not an operand — argument injection (CWE-88). Git
+    forbids leading-dash branch names and PR refs/Jira keys never start with
+    ``-``, so an option-shaped value here is always invalid. Return a truthful
+    error string to surface (return-don't-throw, SOUL #10) rather than launching
+    the subprocess; return ``None`` when the value is safe.
+    """
+    if value.startswith("-"):
+        return f"Refusing option-like {kind}: {value!r} (possible argument injection)"
+    return None
 
 
 async def _lookup_merged_pr_by_branch(branch: str, repo: str | None) -> dict[str, Any] | None:
@@ -180,6 +198,13 @@ async def _lookup_merged_pr_by_branch(branch: str, repo: str | None) -> dict[str
 async def check_pr_status(branch: str, repo: str | None = None) -> PRStatus:
     """Check PR status via gh CLI."""
     result = PRStatus()
+
+    # Guard: branch is passed to `gh pr view` as a bare positional — an
+    # option-shaped value would be parsed as a flag (argument injection, CWE-88).
+    guard_error = _reject_option_like(branch, "branch")
+    if guard_error:
+        result.error = guard_error
+        return result
 
     # Note: 'merged' is not a valid field, use 'mergedAt' instead
     cmd = ["gh", "pr", "view", branch, "--json", "state,mergedAt,mergeable,url"]
@@ -248,10 +273,16 @@ async def check_lint(project_root: Path | None = None) -> LintResult:
 
     cwd = project_root or Path.cwd()
 
-    lint_cmd = _detect_lint_command(cwd)
+    # `_detect_lint_command` stats the filesystem (Path.exists) — blocking I/O.
+    # Offload it to a worker thread so it does not stall the event loop
+    # (no blocking stat on the async loop thread).
+    lint_cmd = await asyncio.to_thread(_detect_lint_command, cwd)
     if lint_cmd is None:
-        # No lintable project at this root — absence of lint is not a failure.
+        # No lintable project at this root — absence of lint is not a failure,
+        # but it is "not checked", not "checked and clean". Report it truthfully
+        # as skipped so it cannot masquerade as a genuine pass (SOUL #10).
         result.clean = True
+        result.skipped = True
         return result
 
     result.command = " ".join(lint_cmd)
@@ -280,6 +311,13 @@ async def check_lint(project_root: Path | None = None) -> LintResult:
 async def check_jira_status(jira_key: str) -> JiraStatus:
     """Check Jira issue status."""
     result = JiraStatus(key=jira_key)
+
+    # Guard: jira_key is passed to `jira issue view` as a bare positional — an
+    # option-shaped value would be parsed as a flag (argument injection, CWE-88).
+    guard_error = _reject_option_like(jira_key, "jira key")
+    if guard_error:
+        result.error = guard_error
+        return result
 
     try:
         # Use --raw for JSON output (much easier to parse)
