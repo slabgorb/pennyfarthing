@@ -327,7 +327,9 @@ def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
     for epic in sprint_data.get("epics") or []:
         if not isinstance(epic, dict):
             continue
-        epic_ref = str(epic.get("jira") or epic.get("id") or "").strip()
+        # Canonical epic-ref (SOUL #2) — the one formula used everywhere else in
+        # this module; rejects jira sentinels + strips ``epic-`` (155-8).
+        epic_ref = _get_epic_ref(epic)
         if not epic_ref:
             continue
         for story in epic.get("stories") or []:
