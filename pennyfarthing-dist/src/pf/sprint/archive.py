@@ -56,7 +56,7 @@ def archive_story(
         return {"success": False, "error": f"Sprint file not found: {sprint_file}"}
 
     # Load sprint data (used below for epic lookup and --apply removal).
-    with open(sprint_file) as f:
+    with open(sprint_file, encoding="utf-8") as f:
         sprint_data = yaml.safe_load(f.read())
 
     # Resolve the archive filename via the shared resolver (story 151-1):
@@ -101,7 +101,7 @@ def archive_story(
     if pr_number:
         entry_lines.append(f"    pr: {pr_number}")
 
-    with open(archive_file, "a") as f:
+    with open(archive_file, "a", encoding="utf-8") as f:
         f.write("\n".join(entry_lines) + "\n")
 
     msg = f"Archived {story_id} to {archive_file.name}"

@@ -5,6 +5,7 @@ Archives completed epics by moving their shard files to sprint/archive/.
 The sprint completed file references archived epics by ID (not inlined).
 """
 
+import re
 import shutil
 from datetime import date
 from pathlib import Path
@@ -53,7 +54,27 @@ def get_archive_path(project_root: Path | None = None) -> Path:
             )
         sprint_id = str(number)
 
-    archive_path = root / "sprint" / "archive" / f"sprint-{sprint_id}-completed.yaml"
+    # Sanitize before building the path (CWE-22, 155-7): sprint_id comes from
+    # sprint YAML metadata and is used verbatim in a filename. Restrict to a
+    # filename-safe charset; `..` passes the charset check but is a parent ref,
+    # so refuse it explicitly.
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", sprint_id) or ".." in sprint_id:
+        raise ValueError(
+            f"Invalid sprint id {sprint_id!r}: only [A-Za-z0-9._-] characters "
+            "(and no '..') are allowed in the archive filename. "
+            "Check sprint/current-sprint.yaml."
+        )
+
+    archive_dir = root / "sprint" / "archive"
+    archive_path = archive_dir / f"sprint-{sprint_id}-completed.yaml"
+
+    # Containment (defence-in-depth): the resolved path must stay directly
+    # under sprint/archive/ even if the sanitization above is ever loosened.
+    if archive_path.resolve().parent != archive_dir.resolve():
+        raise ValueError(
+            f"Archive path escapes the archive directory: {archive_path}"
+        )
+
     return archive_path
 
 
