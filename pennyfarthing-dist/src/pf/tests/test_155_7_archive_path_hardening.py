@@ -30,7 +30,8 @@ from typing import Any
 import pytest
 
 from pf.sprint.archive import archive_story
-from pf.sprint.archive_epic import get_archive_path
+from pf.sprint.archive_epic import archive_epic, get_archive_path
+from pf.sprint.story_finish import _add_story_to_completed
 from pf.sprint.yaml_io import _write_yaml_file
 
 # A whitespace-free token is what survives ``str(name).split()[-1]`` in
@@ -46,6 +47,7 @@ TRAVERSAL_TOKENS = [
     "a|b",  # pipe
     "sprint~1",  # tilde (home expansion char)
     "a%2fb",  # percent-encoded separator
+    "a..b",  # charset-valid but contains '..' — isolates the second guard branch
 ]
 
 
@@ -190,22 +192,23 @@ def test_get_archive_path_accepts_valid_sprint_id(
 def test_archive_story_rejects_unsafe_sprint_id(tmp_path: Path, monkeypatch) -> None:
     """archive_story routes through get_archive_path, so the guard must fire here too.
 
-    dry_run=True isolates the resolver: on HEAD archive_story returns
-    ``success: True`` with a "Would archive ... to <escaping path>" message
-    (RED); after the central fix get_archive_path raises ValueError which
-    archive_story surfaces as ``success: False`` (SOUL #10).
+    dry_run=True isolates the resolver: archive_story wraps the guard's
+    ValueError into ``success: False`` (SOUL #10) — a raise here is a contract
+    break, not an acceptable alternative (rework round 2: the old escape hatch
+    plus a ``message``-key assert made the leak check vacuous — the failure
+    path only sets ``error``).
     """
     monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
     _write_project(tmp_path, {"name": "../../../tmp/pwned", "status": "active"})
 
-    try:
-        result = archive_story("37-15", "477", dry_run=True)
-    except ValueError:
-        return  # fail-loud via exception is an acceptable outcome
+    result = archive_story("37-15", "477", dry_run=True)
 
     assert result["success"] is False
-    # And it must never leak an out-of-tree target into the message.
-    assert "/tmp/pwned" not in (result.get("message") or "")
+    # The guard's actionable message must be the error. Echoing the offending
+    # YAML token back to the user is fine; what must never appear is a BUILT
+    # archive target ("Would archive ... to <path>") for an unsafe id.
+    assert "Invalid sprint id" in result["error"]
+    assert "Would archive" not in (result.get("message") or "")
 
 
 # --------------------------------------------------------------------------- #
@@ -271,4 +274,105 @@ def test_archive_append_roundtrips_non_ascii(tmp_path: Path, monkeypatch) -> Non
 
     assert result["success"] is True, result.get("error")
     content = (tmp_path / "sprint" / "archive" / "sprint-7-completed.yaml").read_bytes()
-    assert "Café ☕ déjà vu".encode("utf-8") in content
+    assert "Café ☕ déjà vu".encode() in content
+
+
+# --------------------------------------------------------------------------- #
+# Rework round 2 — the guard must not crash result-object callers (SOUL #10)   #
+#                                                                              #
+# Reviewer [HIGH]: get_archive_path's new raises reach two callers that never  #
+# wrap ValueError — archive_epic() (via ensure_archive_file) and               #
+# story_finish._add_story_to_completed (whose docstring promises a result      #
+# dict). An ordinary punctuated sprint name ("Sprint (Q3)" → last token        #
+# "(Q3)") crashes `pf sprint epic archive` and `pf sprint story finish`        #
+# mid-flow with a traceback. These pin the observable contract: return         #
+# {"success": False, "error": ...}, and leave no half-done archive behind.     #
+# --------------------------------------------------------------------------- #
+
+
+def _write_epic_project(tmp_path: Path, sprint_info: dict[str, Any]) -> Path:
+    """Minimal project with one COMPLETE epic (for ``archive_epic`` tests)."""
+    sprint_dir = tmp_path / "sprint"
+    sprint_dir.mkdir()
+    (sprint_dir / "archive").mkdir()
+    index = {
+        "sprint": sprint_info,
+        "epics": [
+            {
+                "id": "37",
+                "title": "Test Epic",
+                "status": "done",
+                "stories": [
+                    {"id": "37-15", "title": "Test story", "points": 3, "status": "done"}
+                ],
+            }
+        ],
+        "stories": [],
+    }
+    _write_yaml_file(sprint_dir / "current-sprint.yaml", index)
+    return tmp_path
+
+
+def test_archive_epic_returns_result_on_unsafe_sprint_id(tmp_path: Path) -> None:
+    """archive_epic() surfaces the guard as a result dict — never a raw raise.
+
+    RED: on HEAD the ensure_archive_file call inside archive_epic() has no
+    try/except, so the charset guard's ValueError propagates uncaught through
+    the ``pf sprint epic archive`` CLI.
+    """
+    root = _write_epic_project(tmp_path, {"name": "Sprint (Q3)", "status": "active"})
+
+    try:
+        result = archive_epic("37", project_root=root)
+    except ValueError as exc:
+        pytest.fail(
+            f"archive_epic must return a result dict (SOUL #10), raised instead: {exc}"
+        )
+
+    assert result["success"] is False
+    assert "Invalid sprint id" in result["error"]
+
+
+def test_archive_epic_unsafe_sprint_id_leaves_no_stray_shard(tmp_path: Path) -> None:
+    """A failed epic-archive must not strand a half-done archive.
+
+    On HEAD the epic shard is written/moved to archive/ (step 1) BEFORE the
+    guard fires in ensure_archive_file (step 3) — the crash leaves
+    archive/epic-37.yaml behind while the sprint index still lists the epic.
+    The archive-path guard must run before any filesystem mutation
+    (155-12 precedent: validate before the first irreversible step).
+    """
+    root = _write_epic_project(tmp_path, {"name": "Sprint (Q3)", "status": "active"})
+
+    try:
+        archive_epic("37", project_root=root)
+    except ValueError:
+        pass  # contract violation pinned by the sibling test; scope here is mutation
+
+    assert not (root / "sprint" / "archive" / "epic-37.yaml").exists(), (
+        "failed archive_epic left a stray shard in sprint/archive/"
+    )
+
+
+def test_add_story_to_completed_returns_result_on_unsafe_sprint_id(tmp_path: Path) -> None:
+    """_add_story_to_completed keeps its documented result-dict promise.
+
+    Its docstring claims SOUL #10 compliance, but on HEAD only the
+    _write_archive_file step is wrapped — the ensure_archive_file call raises
+    the guard's ValueError uncaught, crashing ``pf sprint story finish`` at
+    step 4b, AFTER the merge step already ran.
+    """
+    root = _write_project(tmp_path, {"name": "Sprint (Q3)", "status": "active"})
+
+    try:
+        result = _add_story_to_completed(
+            root, "37-15", {"id": "37-15", "title": "Test story", "points": 3}
+        )
+    except ValueError as exc:
+        pytest.fail(
+            f"_add_story_to_completed must return a result dict (its own "
+            f"docstring promise, SOUL #10), raised instead: {exc}"
+        )
+
+    assert result["success"] is False
+    assert "Invalid sprint id" in result["error"]
