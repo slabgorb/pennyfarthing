@@ -100,7 +100,12 @@ def _add_story_to_completed(project_root: Path, story_id: str, story: dict) -> d
             ),
         }
 
-    archive_path = ensure_archive_file(project_root)
+    # The archive-path guard (155-7) rejects unsafe sprint ids with ValueError;
+    # surface it as a result instead of crashing finish at step 4b (SOUL #10).
+    try:
+        archive_path = ensure_archive_file(project_root)
+    except ValueError as exc:
+        return {"success": False, "error": str(exc)}
     archive_data = _load_archive_file(archive_path)
 
     existing_ids = {s.get("id") for s in archive_data["completed_stories"]}

@@ -30,6 +30,13 @@ def get_archive_path(project_root: Path | None = None) -> Path:
 
     Returns:
         Path to the sprint archive file
+
+    Raises:
+        ValueError: When sprint metadata has neither `name` nor `number` set,
+            when the derived sprint id contains characters outside
+            ``[A-Za-z0-9._-]`` or a ``..`` parent reference, or when the
+            resolved path would escape ``sprint/archive/``. Result-object
+            callers must wrap this (see ``archive_story``) — SOUL #10.
     """
     root = project_root or get_project_root()
     sprint_data = load_sprint(root)
@@ -72,7 +79,8 @@ def get_archive_path(project_root: Path | None = None) -> Path:
     # under sprint/archive/ even if the sanitization above is ever loosened.
     if archive_path.resolve().parent != archive_dir.resolve():
         raise ValueError(
-            f"Archive path escapes the archive directory: {archive_path}"
+            f"Archive path escapes the archive directory: {archive_path} "
+            f"(resolves to {archive_path.resolve()})"
         )
 
     return archive_path
@@ -519,6 +527,14 @@ def archive_epic(
             "message": "\n".join(msg_parts),
         }
 
+    # Resolve (and create if needed) the sprint archive file BEFORE any
+    # filesystem mutation — a rejected sprint id must not strand a half-moved
+    # shard (155-7 rework: validate before the first irreversible step, 155-12).
+    try:
+        archive_path = ensure_archive_file(root)
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
+
     # 1. Update epic status in the shard before moving
     if shard_file.exists():
         shard_data = _read_yaml_file(shard_file)
@@ -545,7 +561,6 @@ def archive_epic(
             break
 
     # 3. Add epic ref and completed stories to sprint completed file
-    archive_path = ensure_archive_file(root)
     archive_data = _load_archive_file(archive_path)
 
     # Add ref if not already present
