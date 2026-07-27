@@ -79,6 +79,16 @@ def test_get_phase_no_story(tmp_path: Path) -> None:
     assert _get_phase(str(tmp_path), "") == ""
 
 
+def test_get_phase_tolerates_non_utf8_bytes(tmp_path: Path) -> None:
+    """A binary-garbage session file must never break the statusline."""
+    from pf.hooks.statusline import _get_phase
+
+    session_dir = tmp_path / ".session"
+    session_dir.mkdir(parents=True)
+    (session_dir / "160-5-session.md").write_bytes(b"**Phase:** red\xff\xfe\n")
+    assert _get_phase(str(tmp_path), "160-5") == "red"
+
+
 # =============================================================================
 # Terminal title write path (tty seam mocked — tests never need a real tty)
 # =============================================================================
@@ -253,7 +263,7 @@ def test_write_title_strips_control_characters(tmp_path: Path) -> None:
         return real_open(path, *args, **kwargs)
 
     with patch("builtins.open", side_effect=fake_open):
-        statusline._write_title_to_tty("orc\x1b]52;c;evil\x07-penny")
+        statusline._write_title_to_tty("orc\x1b]52;c;evil\x07\x9b-penny")
 
     assert fake_tty.read_text() == "\x1b]2;orc]52;c;evil-penny\x07"
 
@@ -327,8 +337,9 @@ def test_render_path_title_uses_project_root_name(tmp_path: Path) -> None:
         "model": {"id": "claude-sonnet-5"},
         "context_window": {"current_usage": {"input_tokens": 1000}, "context_window_size": 200000},
     })
+    env = {k: v for k, v in os.environ.items() if k != "PF_SUBAGENT"}
     with (
-        patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}, clear=False),
+        patch.dict(os.environ, {**env, "CLAUDE_PROJECT_DIR": str(tmp_path)}, clear=True),
         patch.object(sys, "stdin", StringIO(input_data)),
         patch.object(statusline, "_write_title_to_tty") as tty,
         patch.object(statusline, "_get_git_info", return_value=("", "")),

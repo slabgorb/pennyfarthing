@@ -402,7 +402,7 @@ def _get_phase(project_root: str, story_id: str) -> str:
         return ""
     session_file = Path(project_root) / ".session" / f"{story_id}-session.md"
     try:
-        content = session_file.read_text()
+        content = session_file.read_text(errors="ignore")
     except OSError:
         return ""
     m = re.search(r"\*\*Phase:\*\* (\S+)", content)
@@ -466,7 +466,7 @@ def _write_title_to_tty(title: str) -> None:
     characters are stripped so untrusted session-file content cannot
     inject escape sequences.
     """
-    title = re.sub(r"[\x00-\x1f\x7f]", "", title)
+    title = re.sub(r"[\x00-\x1f\x7f-\x9f]", "", title)
     try:
         tty = open("/dev/tty", "w")
     except OSError:
@@ -486,7 +486,7 @@ def _set_terminal_title(project_root: Path, dir_name: str, story_id: str) -> Non
     retitle the main tab. The last-written title is cached so the tty is
     only touched when the title actually changes. The cache is written
     after the tty write succeeds, so a failed write retries next render —
-    except after a total failure (no tty found), which writes a sentinel
+    except after a failed write, which touches a sentinel
     that suppresses retries for 60s so headless environments don't pay
     the ancestor-tty walk on every render.
     """
