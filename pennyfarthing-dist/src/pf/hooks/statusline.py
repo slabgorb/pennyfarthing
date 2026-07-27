@@ -422,6 +422,43 @@ def _compose_tab_title(dir_name: str, story_id: str, phase: str) -> str:
     return " ".join(parts)
 
 
+def _write_title_to_tty(title: str) -> None:
+    """Write an OSC 2 title escape to the controlling terminal.
+
+    Statusline stdout belongs to Claude Code's status bar; only the tty
+    reaches the terminal emulator (Ghostty tab title).
+    """
+    with open("/dev/tty", "w") as tty:
+        tty.write(f"\x1b]2;{title}\x07")
+        tty.flush()
+
+
+def _set_terminal_title(project_root: Path, dir_name: str, story_id: str) -> None:
+    """Sync the terminal tab title to `<dir> <story> <phase>`. Fail-soft.
+
+    Subagent renders (PF_SUBAGENT set) skip — a worker pane must never
+    retitle the main tab. The last-written title is cached so the tty is
+    only touched when the title actually changes. The cache is written
+    after the tty write succeeds, so a failed write retries next render.
+    """
+    if os.environ.get("PF_SUBAGENT"):
+        return
+    try:
+        phase = _get_phase(str(project_root), story_id)
+        title = _compose_tab_title(dir_name, story_id, phase)
+        cache = project_root / ".pennyfarthing" / ".runtime" / "tab-title"
+        try:
+            if cache.read_text() == title:
+                return
+        except OSError:
+            pass
+        _write_title_to_tty(title)
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_text(title)
+    except OSError:
+        pass
+
+
 def _tmux_context_bar(pct: str | int) -> str:
     """Build a tmux-formatted context bar using tmux style tags."""
     bar_width = 10
@@ -492,6 +529,9 @@ def main() -> None:
 
         # Always write tmux cache (side-channel for tmux status line)
         _write_tmux_cache(project_root, pct, story_id, dir_name)
+
+        # Sync terminal tab title (side-channel via /dev/tty)
+        _set_terminal_title(Path(project_root), dir_name, story_id)
 
         # Suppress statusline for subagent panes (teammates in tmux)
         if os.environ.get("PF_SUBAGENT"):
