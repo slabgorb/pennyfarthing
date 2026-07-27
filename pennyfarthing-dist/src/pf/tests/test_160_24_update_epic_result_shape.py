@@ -46,7 +46,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from pf.sprint.story_move import move_story
+from pf.sprint.story_move import move_story, story_move_command
 from pf.sprint.story_update import story_update_command, update_story
 from pf.sprint.yaml_io import read_sprint
 
@@ -112,9 +112,9 @@ stories:
 def sprint_dir(tmp_path: Path) -> Path:
     sprint_dir = tmp_path / "sprint"
     sprint_dir.mkdir()
-    (sprint_dir / "current-sprint.yaml").write_text(SHARDED_INDEX_YAML)
-    (sprint_dir / "epic-PROJ-17079.yaml").write_text(SHARD_SOURCE_YAML)
-    (sprint_dir / "epic-152.yaml").write_text(SHARD_TARGET_YAML)
+    (sprint_dir / "current-sprint.yaml").write_text(SHARDED_INDEX_YAML, encoding="utf-8")
+    (sprint_dir / "epic-PROJ-17079.yaml").write_text(SHARD_SOURCE_YAML, encoding="utf-8")
+    (sprint_dir / "epic-152.yaml").write_text(SHARD_TARGET_YAML, encoding="utf-8")
     (sprint_dir / "archive").mkdir()
     return sprint_dir
 
@@ -304,6 +304,108 @@ class TestSameEpicMove:
 
 
 # =============================================================================
+# Rework round 2 (Reviewer findings) — the same-epic REPORT contract.
+#
+# The Reviewer's mutation testing proved the round-1 suite pinned only the
+# ABSENCE of renumbering: the `no_op` key and both CLI branches were deletable
+# with all tests green, and same-epic × dry-run was unspecified (the no-op
+# branch silently dropped the `dry_run` key). These tests close those holes:
+# the no_op pins and CLI-message pins are GREEN-on-arrival mutation guards
+# (the implementation already ships them — intentional, logged as Design
+# Deviations); the two dry-run-carry tests are genuinely RED until Dev
+# threads `"dry_run": dry_run` through the no-op branch.
+# =============================================================================
+
+
+class TestSameEpicReportContract:
+    def test_move_story_same_epic_reports_no_op(
+        self, sprint_dir: Path, sprint_file: Path
+    ) -> None:
+        """GREEN-on-arrival mutation guard [Reviewer HIGH]: AC5's "reports"
+        deliverable IS the `no_op` key — both CLIs dispatch on it. Deleting it
+        from the return must fail a test."""
+        result = move_story(sprint_file, "151-3", to_epic="151")
+        assert result["success"] is True, result
+        assert result.get("no_op") is True, (
+            f"same-epic success must report no_op: True; got {result!r}"
+        )
+        assert result.get("story", {}).get("id") == "151-3", result
+        _assert_source_untouched(sprint_dir)
+
+    def test_update_epic_same_epic_reports_no_op(
+        self, sprint_dir: Path, sprint_file: Path
+    ) -> None:
+        """GREEN-on-arrival mutation guard [Reviewer HIGH]: the update --epic
+        path must surface the same no_op report plus AC1's uniform story_id."""
+        result = update_story(sprint_path=sprint_file, story_id="151-3", epic="151")
+        assert result["success"] is True, result
+        assert result.get("no_op") is True, result
+        assert result.get("story_id") == "151-3", result
+        _assert_source_untouched(sprint_dir)
+
+    def test_move_story_same_epic_dry_run_carries_flag(
+        self, sprint_dir: Path, sprint_file: Path
+    ) -> None:
+        """RED [Reviewer MEDIUM]: the no-op branch precedes the dry-run branch
+        and silently drops the caller's dry_run signal. Contract: a same-epic
+        dry-run reports BOTH — `no_op: True` (nothing to move) and
+        `dry_run: True` (the caller asked for a preview) — so scripts keying
+        on result["dry_run"] never read a lie."""
+        result = move_story(sprint_file, "151-3", to_epic="151", dry_run=True)
+        assert result["success"] is True, result
+        assert result.get("no_op") is True, result
+        assert result.get("dry_run") is True, (
+            f"same-epic dry-run must carry the dry_run flag through; got {result!r}"
+        )
+        _assert_source_untouched(sprint_dir)
+
+    def test_update_epic_same_epic_dry_run_shape(
+        self, sprint_dir: Path, sprint_file: Path
+    ) -> None:
+        """RED [Reviewer MEDIUM]: same contract through the update --epic path,
+        plus AC1's story_id (unchanged id — nothing was renumbered)."""
+        result = update_story(
+            sprint_path=sprint_file, story_id="151-3", epic="151", dry_run=True
+        )
+        assert result["success"] is True, result
+        assert result.get("no_op") is True, result
+        assert result.get("dry_run") is True, result
+        assert result.get("story_id") == "151-3", result
+        _assert_source_untouched(sprint_dir)
+
+    def test_cli_move_same_epic_says_nothing_to_move(
+        self, runner: CliRunner, sprint_dir: Path, sprint_file: Path
+    ) -> None:
+        """GREEN-on-arrival mutation guard [Reviewer MEDIUM]: the story move
+        CLI's no-op branch was deletable with zero failures. Pin exit 0, the
+        message, and the anti-`None` invariant."""
+        result = runner.invoke(
+            story_move_command,
+            ["151-3", "--to-epic", "151", "--sprint-file", str(sprint_file)],
+        )
+        assert result.exit_code == 0, result.output
+        assert "already in epic" in result.output, result.output
+        assert "151-3" in result.output, result.output
+        assert "None" not in result.output, result.output
+        _assert_source_untouched(sprint_dir)
+
+    def test_cli_update_same_epic_says_nothing_to_move(
+        self, runner: CliRunner, sprint_dir: Path, sprint_file: Path
+    ) -> None:
+        """GREEN-on-arrival mutation guard [Reviewer MEDIUM]: same pin for the
+        update --epic CLI branch."""
+        result = runner.invoke(
+            story_update_command,
+            ["151-3", "--epic", "151", "--sprint-file", str(sprint_file)],
+        )
+        assert result.exit_code == 0, result.output
+        assert "already in epic" in result.output, result.output
+        assert "151-3" in result.output, result.output
+        assert "None" not in result.output, result.output
+        _assert_source_untouched(sprint_dir)
+
+
+# =============================================================================
 # AC4 — edge guards: --epic + --dry-run + field flag; --epic '' (empty string)
 # =============================================================================
 
@@ -330,8 +432,9 @@ class TestUpdateEpicEdgeGuards:
     def test_update_epic_empty_string_fails_loud(
         self, sprint_dir: Path, sprint_file: Path
     ) -> None:
-        """``epic=''`` is not 'no epic' — it enters the move path and must fail
-        loudly (no epic has id '') without mutating any shard."""
+        """GREEN-on-arrival guard: ``epic=''`` is not 'no epic' — it enters the
+        move path and must fail loudly (no epic has id '') without mutating any
+        shard. Passes on HEAD; pins the boundary against regression."""
         result = update_story(sprint_path=sprint_file, story_id="151-3", epic="")
         assert result["success"] is False, result
         assert result.get("error"), result
@@ -340,6 +443,8 @@ class TestUpdateEpicEdgeGuards:
     def test_cli_update_epic_empty_string_exits_nonzero(
         self, runner: CliRunner, sprint_dir: Path, sprint_file: Path
     ) -> None:
+        """GREEN-on-arrival guard: CLI mirror of the empty-string fail-loud
+        boundary (ClickException → nonzero exit, shards untouched)."""
         result = runner.invoke(
             story_update_command,
             ["151-3", "--epic", "", "--sprint-file", str(sprint_file)],
