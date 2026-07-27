@@ -1,6 +1,6 @@
 [project]
 name = "pennyfarthing-scripts"
-version = "13.1.0"
+dynamic = ["version"]
 description = "Python utilities for Pennyfarthing agent orchestration"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -43,6 +43,9 @@ pf = "pf.cli:main"
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "pf.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["pennyfarthing-dist/src"]
