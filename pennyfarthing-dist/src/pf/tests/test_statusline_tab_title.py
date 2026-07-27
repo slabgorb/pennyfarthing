@@ -309,3 +309,33 @@ def test_resolve_ancestor_tty_linux_format() -> None:
         patch.object(statusline.subprocess, "run", side_effect=results),
     ):
         assert statusline._resolve_ancestor_tty() == "/dev/pts/1"
+
+
+def test_render_path_title_uses_project_root_name(tmp_path: Path) -> None:
+    """Title shows the project folder, not whatever subdir the shell is in."""
+    import json
+    import sys
+    from io import StringIO
+
+    from pf.hooks import statusline
+
+    subdir = tmp_path / "subdir"
+    subdir.mkdir()
+    input_data = json.dumps({
+        "workspace": {"current_dir": str(subdir)},
+        "session_id": "s1",
+        "model": {"id": "claude-sonnet-5"},
+        "context_window": {"current_usage": {"input_tokens": 1000}, "context_window_size": 200000},
+    })
+    with (
+        patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}, clear=False),
+        patch.object(sys, "stdin", StringIO(input_data)),
+        patch.object(statusline, "_write_title_to_tty") as tty,
+        patch.object(statusline, "_get_git_info", return_value=("", "")),
+    ):
+        try:
+            statusline.main()
+        except SystemExit:
+            pass
+
+    tty.assert_called_once_with(tmp_path.name)

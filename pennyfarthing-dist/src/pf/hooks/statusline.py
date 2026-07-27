@@ -592,7 +592,8 @@ def main() -> None:
         _write_tmux_cache(project_root, pct, story_id, dir_name)
 
         # Sync terminal tab title (side-channel via /dev/tty or ancestor tty)
-        _set_terminal_title(Path(project_root), dir_name, story_id)
+        root_name = Path(project_root).name if project_root else dir_name
+        _set_terminal_title(Path(project_root), root_name, story_id)
 
         # Suppress statusline for subagent panes (teammates in tmux)
         if os.environ.get("PF_SUBAGENT"):
