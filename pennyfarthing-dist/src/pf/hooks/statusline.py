@@ -395,6 +395,33 @@ def _get_story_id(project_root: str) -> str:
     return ""
 
 
+def _get_phase(project_root: str, story_id: str) -> str:
+    """Read the current phase from the story's session file. Fail-soft."""
+    if not story_id:
+        return ""
+    session_file = Path(project_root) / ".session" / f"{story_id}-session.md"
+    try:
+        content = session_file.read_text()
+    except OSError:
+        return ""
+    m = re.search(r"\*\*Phase:\*\* (\S+)", content)
+    return m.group(1) if m else ""
+
+
+def _compose_tab_title(dir_name: str, story_id: str, phase: str) -> str:
+    """Compose the terminal tab title: `<dir> <story> <phase>`.
+
+    Degrades left-to-right: no phase drops the phase, no story drops both
+    (a phase without a story is stale data and is never shown).
+    """
+    parts = [dir_name]
+    if story_id:
+        parts.append(story_id)
+        if phase:
+            parts.append(phase)
+    return " ".join(parts)
+
+
 def _tmux_context_bar(pct: str | int) -> str:
     """Build a tmux-formatted context bar using tmux style tags."""
     bar_width = 10
