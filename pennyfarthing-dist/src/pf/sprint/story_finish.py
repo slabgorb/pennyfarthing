@@ -601,8 +601,29 @@ def finish_story(
     # Surface the add-result as a step rather than swallowing it: an unresolved
     # epic must not silently drop the completed row (gh #16). This bookkeeping
     # add is non-fatal to finish, but the failure is recorded, never hidden.
-    data = read_sprint(sprint_path)
-    _epic, completed_story, _location = find_story_in_data(data, story_id)
+    #
+    # The re-read is guarded (155-9): it runs AFTER the irreversible merge and
+    # done-transition, so an unexpected I/O/parse error here must degrade to a
+    # RECORDED 4b failure and let steps 4c-7 run — never escape finish_story's
+    # no-throw contract and strand a merged story with its session in place
+    # (SOUL #10). Broad catch is deliberate: any exception at this point is
+    # strictly bookkeeping, and the failure is surfaced in the step entry.
+    try:
+        data = read_sprint(sprint_path)
+        _epic, completed_story, _location = find_story_in_data(data, story_id)
+    except Exception as exc:
+        completed_story = None
+        steps.append(
+            {
+                "step": "4b",
+                "action": "add_completed_story",
+                "success": False,
+                "error": (
+                    f"Could not re-read sprint data for completed-row "
+                    f"bookkeeping: {exc}"
+                ),
+            }
+        )
     if completed_story:
         add_result = _add_story_to_completed(project_root, story_id, completed_story)
         if add_result.get("success"):

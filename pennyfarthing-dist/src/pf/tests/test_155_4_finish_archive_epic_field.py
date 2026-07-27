@@ -174,6 +174,10 @@ def test_finish_archive_fails_loud_when_epic_undeterminable(sprint_tree: Path) -
         )
     rows = _completed_rows(archive_path)
     ghost = next((r for r in rows if r.get("id") == "ghost-99"), None)
-    assert ghost is None or str(ghost.get("epic") or "").strip(), (
-        "unresolvable story 'ghost-99' was archived with a blank/fabricated epic"
+    # Tightened (155-9): the old `ghost is None or ...strip()` accepted a row
+    # with any non-empty FABRICATED epic on the raise-path — vacuous for the
+    # fabrication half of the contract. An unresolvable story must not be
+    # archived at all.
+    assert ghost is None, (
+        f"unresolvable story 'ghost-99' must not be archived at all, got {ghost!r}"
     )
