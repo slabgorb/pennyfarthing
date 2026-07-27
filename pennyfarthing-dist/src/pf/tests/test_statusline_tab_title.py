@@ -232,3 +232,80 @@ def test_resolve_ancestor_tty_gives_up_cleanly() -> None:
         patch.object(statusline.subprocess, "run", side_effect=OSError("no ps")),
     ):
         assert statusline._resolve_ancestor_tty() == ""
+
+
+# =============================================================================
+# Final-review hardening: sanitization, no-tty backoff, Linux tty format
+# =============================================================================
+
+
+def test_write_title_strips_control_characters(tmp_path: Path) -> None:
+    """Untrusted session-file content must not inject escape sequences."""
+    from pf.hooks import statusline
+
+    fake_tty = tmp_path / "tty"
+    fake_tty.write_text("")
+    real_open = open
+
+    def fake_open(path, *args, **kwargs):
+        if path == "/dev/tty":
+            return real_open(fake_tty, *args, **kwargs)
+        return real_open(path, *args, **kwargs)
+
+    with patch("builtins.open", side_effect=fake_open):
+        statusline._write_title_to_tty("orc\x1b]52;c;evil\x07-penny")
+
+    assert fake_tty.read_text() == "\x1b]2;orc]52;c;evil-penny\x07"
+
+
+def test_set_title_backs_off_after_total_failure(tmp_path: Path) -> None:
+    """A failed write touches the sentinel; the next render skips the retry."""
+    from pf.hooks import statusline
+
+    _write_session(tmp_path, "160-5", "**Phase:** red\n")
+    with patch.object(
+        statusline, "_write_title_to_tty", side_effect=OSError("no tty")
+    ) as tty:
+        statusline._set_terminal_title(tmp_path, "orc-penny", "160-5")
+        statusline._set_terminal_title(tmp_path, "orc-penny", "160-5")
+
+    assert tty.call_count == 1
+    assert (tmp_path / ".pennyfarthing" / ".runtime" / "tab-title-no-tty").exists()
+
+
+def test_set_title_retries_after_backoff_expires_and_clears_sentinel(
+    tmp_path: Path,
+) -> None:
+    import time
+
+    from pf.hooks import statusline
+
+    _write_session(tmp_path, "160-5", "**Phase:** red\n")
+    sentinel = tmp_path / ".pennyfarthing" / ".runtime" / "tab-title-no-tty"
+    sentinel.parent.mkdir(parents=True, exist_ok=True)
+    sentinel.touch()
+    aged = time.time() - 120
+    os.utime(sentinel, (aged, aged))
+
+    with patch.object(statusline, "_write_title_to_tty") as tty:
+        statusline._set_terminal_title(tmp_path, "orc-penny", "160-5")
+
+    tty.assert_called_once_with("orc-penny 160-5 red")
+    assert not sentinel.exists()
+
+
+def test_resolve_ancestor_tty_linux_format() -> None:
+    """Linux ps prints `?` (not `??`) and pts/N device names."""
+    from unittest.mock import MagicMock
+
+    from pf.hooks import statusline
+
+    results = [
+        MagicMock(stdout="  1234 ?\n"),
+        MagicMock(stdout="  1 pts/1\n"),
+    ]
+    with (
+        patch.object(statusline.os, "getppid", return_value=5678),
+        patch.object(statusline.subprocess, "run", side_effect=results),
+    ):
+        assert statusline._resolve_ancestor_tty() == "/dev/pts/1"

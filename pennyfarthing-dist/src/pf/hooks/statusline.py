@@ -14,6 +14,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from pf.hooks import load_settings
@@ -461,8 +462,11 @@ def _write_title_to_tty(title: str) -> None:
     Statusline stdout belongs to Claude Code's status bar; only a tty
     device reaches the terminal emulator (Ghostty tab title). Tries the
     controlling terminal first, then falls back to the nearest ancestor's
-    tty (hooks are spawned without a controlling terminal).
+    tty (hooks are spawned without a controlling terminal). Control
+    characters are stripped so untrusted session-file content cannot
+    inject escape sequences.
     """
+    title = re.sub(r"[\x00-\x1f\x7f]", "", title)
     try:
         tty = open("/dev/tty", "w")
     except OSError:
@@ -481,7 +485,10 @@ def _set_terminal_title(project_root: Path, dir_name: str, story_id: str) -> Non
     Subagent renders (PF_SUBAGENT set) skip — a worker pane must never
     retitle the main tab. The last-written title is cached so the tty is
     only touched when the title actually changes. The cache is written
-    after the tty write succeeds, so a failed write retries next render.
+    after the tty write succeeds, so a failed write retries next render —
+    except after a total failure (no tty found), which writes a sentinel
+    that suppresses retries for 60s so headless environments don't pay
+    the ancestor-tty walk on every render.
     """
     if os.environ.get("PF_SUBAGENT"):
         return
@@ -494,7 +501,19 @@ def _set_terminal_title(project_root: Path, dir_name: str, story_id: str) -> Non
                 return
         except OSError:
             pass
-        _write_title_to_tty(title)
+        sentinel = cache.with_name("tab-title-no-tty")
+        try:
+            if time.time() - sentinel.stat().st_mtime < 60:
+                return
+        except OSError:
+            pass
+        try:
+            _write_title_to_tty(title)
+        except OSError:
+            sentinel.parent.mkdir(parents=True, exist_ok=True)
+            sentinel.touch()
+            return
+        sentinel.unlink(missing_ok=True)
         cache.parent.mkdir(parents=True, exist_ok=True)
         cache.write_text(title)
     except OSError:
@@ -572,7 +591,7 @@ def main() -> None:
         # Always write tmux cache (side-channel for tmux status line)
         _write_tmux_cache(project_root, pct, story_id, dir_name)
 
-        # Sync terminal tab title (side-channel via /dev/tty)
+        # Sync terminal tab title (side-channel via /dev/tty or ancestor tty)
         _set_terminal_title(Path(project_root), dir_name, story_id)
 
         # Suppress statusline for subagent panes (teammates in tmux)
