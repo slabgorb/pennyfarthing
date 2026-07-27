@@ -13,13 +13,14 @@ import os
 import platform
 import sys
 import time
+import warnings
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from pf.context_window import ContextConfig, check_context
+from pf.context_window import check_context
 
 # Direct imports — no shelling out
 from pf.prime.persona import get_crew_manifest, load_persona
@@ -39,6 +40,19 @@ def _get_project_dir() -> str:
 def _detect_pf_project(project_dir: str) -> bool:
     """Check if directory is a Pennyfarthing project."""
     return Path(project_dir, ".pennyfarthing").is_dir()
+
+
+def _safe_exc(exc: Exception) -> str:
+    """Network-safe exception summary for the warnings sink (story 160-18).
+
+    The fail-loud sweep (160-4..17) added ``warnings.warn(f"...: {exc}")`` calls
+    here. A raw ``str(exc)`` can carry file-content fragments, absolute paths
+    (with usernames), or tokens — unsafe to expose if Frame ever forwards
+    warnings to a network client. Emit only the exception TYPE name, which keeps
+    the diagnostic class while leaking nothing. Likewise, ``repo_path`` is
+    dropped entirely from the git-info warning below.
+    """
+    return type(exc).__name__
 
 
 # ---------------------------------------------------------------------------
@@ -128,31 +142,28 @@ def _get_git_info(repo_path: str) -> dict[str, Any] | None:
     if not Path(repo_path, ".git").exists():
         return None
 
+    import subprocess
+
     def _run(args: list[str]) -> str | None:
-        r, w = os.pipe()
-        pid = os.fork()
-        if pid == 0:
-            os.close(r)
-            os.dup2(w, 1)
-            os.dup2(w, 2)
-            os.close(w)
-            os.execvp(git_bin, [git_bin, "--no-optional-locks"] + args)
-        os.close(w)
-        data = b""
-        while True:
-            chunk = os.read(r, 4096)
-            if not chunk:
-                break
-            data += chunk
-        os.close(r)
-        _, status = os.waitpid(pid, 0)
-        if os.WIFEXITED(status) and os.WEXITSTATUS(status) == 0:
-            return data.decode("utf-8", errors="replace").strip()
+        # subprocess.run (posix_spawn) instead of a raw os.fork()/execvp in a
+        # multi-threaded server process (Story 161-1, gh #97): per-call os.fork
+        # in a threaded process churns kernel-side Mach-port resources on macOS
+        # and warns of deadlock risk. posix_spawn avoids both.
+        try:
+            result = subprocess.run(
+                [git_bin, "--no-optional-locks"] + args,
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        if result.returncode == 0:
+            return result.stdout.strip()
         return None
 
-    old_cwd = os.getcwd()
     try:
-        os.chdir(repo_path)
         branch = _run(["rev-parse", "--abbrev-ref", "HEAD"]) or "unknown"
 
         dirty_files: list[dict[str, str]] = []
@@ -187,10 +198,15 @@ def _get_git_info(repo_path: str) -> dict[str, Any] | None:
             "dirtyFiles": dirty_files,
             "developBehind": develop_behind,
         }
-    except Exception:
+    except Exception as exc:
+        # AC-1 (160-16): a present-but-broken git probe (e.g. a non-numeric
+        # rev-list --count that fails int() parsing) was silently collapsing the
+        # whole repo to None -> rendered as "unknown"/clean with zero diagnostics.
+        # Warn (fail-loud) then degrade unchanged. Stays a catch-all because this
+        # feeds an async route / poll loop that must never raise. Message is
+        # sanitised (type name only, no repo_path) per 160-18 — see _safe_exc.
+        warnings.warn(f"Failed to parse git info ({_safe_exc(exc)})", stacklevel=2)
         return None
-    finally:
-        os.chdir(old_cwd)
 
 
 def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
@@ -204,7 +220,7 @@ def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
     for p in candidates:
         if p.is_file():
             try:
-                config = yaml.safe_load(p.read_text())
+                config = yaml.safe_load(p.read_text(encoding="utf-8"))
                 if config and isinstance(config.get("repos"), dict):
                     return [
                         {
@@ -213,8 +229,17 @@ def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
                         }
                         for name, rc in config["repos"].items()
                     ]
-            except Exception:
-                pass
+            except Exception as exc:
+                # AC-2 (160-16): a present-but-broken repos.yaml (malformed YAML,
+                # non-UTF-8 bytes, or unreadable) was silently swallowed -> the
+                # panel fell back to a single "." repo, hiding the real (broken)
+                # topology. Warn (naming the file) then keep the fallback. The
+                # explicit encoding="utf-8" (CWE-838) makes the decode
+                # deterministic across platforms. Message sanitised (type name
+                # only) per 160-18; the fixed filename p.name is non-sensitive.
+                warnings.warn(
+                    f"Failed to load repos config {p.name} ({_safe_exc(exc)})", stacklevel=2
+                )
 
     dir_name = Path(project_dir).name or "project"
     return [{"name": dir_name, "path": "."}]
@@ -246,7 +271,11 @@ async def get_git_all() -> JSONResponse:
         results.append(
             {
                 "name": repo["name"],
-                "path": repo["path"],
+                # 160-22: basename only — an absolute or ``../parent`` configured
+                # path in repos.yaml must not disclose filesystem layout. The
+                # ``or repo["path"]`` fallback keeps a bare "." for the default
+                # repo, whose ``Path(".").name`` is "".
+                "path": Path(repo["path"]).name or repo["path"],
                 "branch": info["branch"] if info else "unknown",
                 "clean": info["clean"] if info else True,
                 "ahead": info.get("ahead") if info else None,
@@ -274,8 +303,13 @@ context_router = APIRouter(prefix="/api/context", tags=["context"])
 async def get_context() -> JSONResponse:
     project_dir = _get_project_dir()
     try:
-        config = ContextConfig(project_dir=project_dir)
-        result = check_context(config)
+        # 160-19: call check_context directly. The prior
+        # ``ContextConfig(project_dir=project_dir)`` was a constant bug —
+        # ContextConfig has no project_dir field, so it raised TypeError on EVERY
+        # request and the silent except below returned an all-None shape; the
+        # /api/context panel never showed real data. check_context builds its own
+        # config via load_config(project_dir).
+        result = check_context(project_dir=project_dir)
         return JSONResponse(
             {
                 "percent": result.percent,
@@ -289,12 +323,20 @@ async def get_context() -> JSONResponse:
             }
         )
     except Exception as e:
+        # 160-19 (fail-loud sweep part 5): the LAST silent swallow in this file.
+        # Warn (fail-loud) then degrade unchanged. Stays a catch-all because this
+        # feeds an async route / poll loop that must never raise. Message sanitised
+        # (type name only) per 160-18 — see _safe_exc. The response-body
+        # ``error`` below is likewise sanitised via _safe_exc (story 160-22): a
+        # raw str(e) here was a live network info-leak (could embed absolute
+        # paths, tokens, or file fragments).
+        warnings.warn(f"Failed to check context ({_safe_exc(e)})", stacklevel=2)
         return JSONResponse(
             {
                 "percent": None,
                 "tokens": None,
                 "status": None,
-                "error": str(e),
+                "error": _safe_exc(e),
                 "baseline": None,
                 "usableTokens": None,
                 "usablePercent": None,
@@ -314,9 +356,20 @@ theme_agents_router = APIRouter(prefix="/api/theme-agents", tags=["theme-agents"
 async def get_theme_agents() -> JSONResponse:
     project_dir = _get_project_dir()
     try:
-        crew = get_crew_manifest(project_dir)
-        return JSONResponse(crew if isinstance(crew, dict) else {})
-    except Exception:
+        # 160-17 round 2: pass a Path — get_crew_manifest -> get_current_theme does
+        # `root / ".pennyfarthing"`, so a str raised TypeError on EVERY call (the
+        # round-1 warn fired every request over a constant bug). get_crew_manifest
+        # returns list[CrewMember] (role, character); serialize to a {role: character}
+        # map so the panel renders real data (the old `isinstance(crew, dict)` check
+        # was always False -> {} -> panel never populated).
+        crew = get_crew_manifest(Path(project_dir))
+        return JSONResponse({member.role: member.character for member in crew})
+    except Exception as exc:
+        # AC-1 (160-17): a crew-manifest failure was silently swallowed -> the
+        # theme-agents panel rendered empty with zero diagnostics. Warn (fail-loud)
+        # then degrade to {} unchanged. Stays a catch-all because this is an async
+        # route that must never 500. Message sanitised (type name only) per 160-18.
+        warnings.warn(f"Failed to load theme agents ({_safe_exc(exc)})", stacklevel=2)
         return JSONResponse({})
 
 
@@ -372,20 +425,31 @@ def _get_identity() -> dict[str, Any]:
             import json as _json
 
             result = os.popen("jira me --raw 2>/dev/null").read()
-            data = _json.loads(result)
-            jira_email = data.get("emailAddress")
-        except Exception:
-            pass
+            # AC-2 (160-17): an installed-but-broken jira whose probe returns
+            # non-empty UNPARSEABLE output was swallowed silently. Warn (naming the
+            # probe) then degrade in place. EMPTY output (the common not-authed
+            # case, 2>/dev/null ate the error) is the normal not-configured state
+            # and stays silent.
+            if result.strip():
+                data = _json.loads(result)
+                jira_email = data.get("emailAddress")
+        except Exception as exc:
+            warnings.warn(f"Failed to parse jira identity probe ({_safe_exc(exc)})", stacklevel=2)
 
     if shutil.which("gh"):
         try:
             import json as _json
 
             result = os.popen("gh api user 2>/dev/null").read()
-            data = _json.loads(result)
-            github_username = data.get("login")
-        except Exception:
-            pass
+            # AC-2 (160-17): an installed-but-broken gh whose probe returns
+            # non-empty UNPARSEABLE output was swallowed silently. Warn (naming the
+            # probe) then degrade in place. EMPTY output (the common not-authed
+            # case) stays silent — the normal not-configured state.
+            if result.strip():
+                data = _json.loads(result)
+                github_username = data.get("login")
+        except Exception as exc:
+            warnings.warn(f"Failed to parse gh identity probe ({_safe_exc(exc)})", stacklevel=2)
 
     _identity_cache = {
         "jiraEmail": jira_email,
@@ -416,7 +480,11 @@ async def get_project_info() -> JSONResponse:
     return JSONResponse(
         {
             "name": Path(project_dir).name,
-            "path": project_dir,
+            # 160-22: never expose the raw absolute project_dir (OS username +
+            # on-disk layout) in the response body. Basename only — keeps the
+            # Node.js response shape (``path`` present, story 48-2 AC5) while
+            # disclosing nothing beyond the project's own folder name.
+            "path": Path(project_dir).name,
         }
     )
 

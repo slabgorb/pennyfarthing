@@ -14,6 +14,7 @@ tool restrictions matching each role's intended capabilities:
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -109,17 +110,31 @@ class TestRequiredFields:
 
 
 class TestModelValidation:
-    """Native agents should use opus model."""
+    """Native agents should use the model matching the models.yaml native_agents tier."""
 
     def test_opus_model_no_warning(self, tmp_path: Path) -> None:
-        path = _write_native(tmp_path, "dev", _minimal_native(model="opus"))
-        _, warnings = validate_native_agent(path)
+        path = _write_native(tmp_path, "dev", _minimal_native(model="best"))
+        with patch(
+            "pf.validate.adapters.agent.resolve_model",
+            return_value={
+                "success": True,
+                "data": {"tier": "judgment", "alias": "best"},
+            },
+        ):
+            _, warnings = validate_native_agent(path)
         assert not any("model" in w.lower() for w in warnings)
 
     def test_non_opus_model_warns(self, tmp_path: Path) -> None:
         path = _write_native(tmp_path, "dev", _minimal_native(model="haiku"))
-        _, warnings = validate_native_agent(path)
-        assert any("opus" in w for w in warnings)
+        with patch(
+            "pf.validate.adapters.agent.resolve_model",
+            return_value={
+                "success": True,
+                "data": {"tier": "judgment", "alias": "best"},
+            },
+        ):
+            _, warnings = validate_native_agent(path)
+        assert any("best" in w for w in warnings)
 
 
 # ---------------------------------------------------------------------------

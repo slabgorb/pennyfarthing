@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v13.1.2** | *The outer loop goes once, the inner loop goes many times.*
+**v13.4.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -15,7 +15,7 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
 - **11 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator, BA
-- **11 BikeLane Workflows** - TDD, BDD, Trivial, 2-Party TDD, TDD-Team, BDD-Team, Patch, Agent-Docs, Architecture, Release, Git Cleanup
+- **13 BikeLane Workflows** - TDD (default), SDD, SPDD, BDD, Trivial, 2-Party TDD, TDD-Team, BDD-Team, Patch, Agent-Docs, Architecture, Release, Git Cleanup
 - **38 Slash Commands** - Entry points for agent activation and workflows
 - **25 Skills** - Reusable knowledge domains (testing, code-review, jira, settings, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
@@ -260,7 +260,11 @@ For active questions (not passive observation), agents use the **Consultation Pr
 
 ## Benchmarking & Personality Research
 
-Pennyfarthing includes a scientific benchmarking system for evaluating how personality affects agent performance:
+Pennyfarthing measures how personality affects agent performance with two complementary benchmark systems.
+
+### JobFair — single-agent evaluation
+
+Tests one role in isolation against a rubric, to discover which characters excel at which job.
 
 ```bash
 # Run a single agent on a scenario
@@ -273,11 +277,43 @@ Pennyfarthing includes a scientific benchmarking system for evaluating how perso
 /benchmark breaking-bad reviewer --scenario order-service
 ```
 
-**Key Findings:**
-- Cohen's d effect sizes measure performance differences
-- Multivariate OCEAN patterns predict better than individual traits
-- Character expertise often trumps abstract personality scores
-- The "Stoic Analyst" profile (Low O + High C + Low E + Low N) excels at code review
+### Peloton — full-pipeline replay
+
+Replays the entire **TEA → Dev → Reviewer** pipeline against real code, scored on *ground truth*: findings that **external** reviewers flagged on PRs the pipeline had already approved. Nothing is synthetic — every finding is a real defect the pipeline shipped and a human later caught.
+
+```bash
+# Replay one pipeline with the control theme (no persona)
+pf benchmark replay run scenarios/dpgd-116.yaml --model sonnet --n 1
+
+# Replay with a persona theme — 4 runs, then 3-judge majority vote
+pf benchmark replay run scenarios/dpgd-116.yaml --theme firefly --n 4
+pf benchmark replay judge scenarios/dpgd-116.yaml --target-judges 3
+
+# Detection heatmap across themes
+pf benchmark replay compare scenarios/dpgd-116.yaml
+```
+
+See the [Peloton guide](pennyfarthing-dist/guides/peloton.md) for scenario authoring and methodology.
+
+### Benchmark dashboard
+
+Interactive D3 charts of the pipeline-replay results, published via **GitHub Pages** so they open rendered in the browser — no build, no clone:
+
+[![Mean weighted score vs consistency](docs/benchmarks/preview-scatter.png)](https://slabgorb.github.io/pennyfarthing/benchmarks/scatter.html)
+
+| Chart | What it shows |
+|-------|---------------|
+| [Score vs Consistency](https://slabgorb.github.io/pennyfarthing/benchmarks/scatter.html) | Each theme's mean weighted catch rate vs run-to-run consistency, with quadrants at the control baseline. Color by OCEAN trait. |
+| [Finding Hit Rate](https://slabgorb.github.io/pennyfarthing/benchmarks/hit-rate.html) | Heatmap of how reliably each ground-truth finding is caught, per theme. |
+| [Phase Attribution](https://slabgorb.github.io/pennyfarthing/benchmarks/phase-attribution.html) | Which phase — TEA, Dev, or Reviewer — actually catches the defects. |
+
+The pages are static and share a data snapshot (`docs/benchmarks/benchmark-data.js`) extracted from the full dashboard that `pf benchmark viz` generates. Source lives in [`docs/benchmarks/`](docs/benchmarks/).
+
+**Key findings:**
+- Persona themes move detection rates by less than ±10% vs control — the ceiling is set by agent definitions and prompts, not character voice.
+- The **TEA phase is the most impactful**: a finding caught by a failing test is caught reliably; findings that depend on the Reviewer noticing them are caught less consistently.
+- Security / CWE-class issues are well caught; build-config and self-authored test-quality issues are nearly invisible.
+- Multivariate OCEAN patterns predict better than individual traits — the "Stoic Analyst" profile (Low O + High C + Low E + Low N) excels at code review.
 
 See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 
@@ -324,7 +360,7 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 
 ## Available Themes (45)
 
-All 45 themes are bundled with `pf init` — no separate packages required. Themes span sci-fi, prestige TV, literature, mythology, comedy, history, and more:
+All 46 themes are bundled with `pf init` — no separate packages required. Themes span sci-fi, prestige TV, literature, mythology, comedy, history, and more:
 
 `the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `fifth-element`, `succession`, `the-wire`, `mad-men`, `shakespeare`, `jane-austen`, `dune`, `game-of-thrones`, `the-office`, `monty-python`, `greek-mythology`, `blade-runner`, `doctor-who`, `harry-potter`, `foundation`, `ted-lasso`, `alice-in-wonderland`, `firefly`, and more.
 

@@ -7,6 +7,7 @@ Provides functions for archiving completed stories.
 from typing import Any
 
 from pf.common.config import get_project_root
+from pf.sprint.archive_epic import get_archive_path
 from pf.sprint.loader import get_story_by_id
 
 
@@ -28,7 +29,6 @@ def archive_story(
     Returns:
         Dict with success status and details
     """
-    import re
     from datetime import date
 
     import yaml
@@ -55,14 +55,17 @@ def archive_story(
     if not sprint_file.exists():
         return {"success": False, "error": f"Sprint file not found: {sprint_file}"}
 
-    # Get sprint name for archive file
-    with open(sprint_file) as f:
+    # Load sprint data (used below for epic lookup and --apply removal).
+    with open(sprint_file, encoding="utf-8") as f:
         sprint_data = yaml.safe_load(f.read())
 
-    sprint_name = sprint_data.get("sprint", {}).get("jira_sprint_name", "")
-    match = re.search(r"(\d{4})", sprint_name)
-    sprint_num = match.group(1) if match else "unknown"
-    archive_file = root / "sprint" / "archive" / f"sprint-{sprint_num}-completed.yaml"
+    # Resolve the archive filename via the shared resolver (story 151-1):
+    # prefer name/jira_sprint_name, fall back to sprint.number, and fail loud
+    # if neither is set — never silently write sprint-unknown-completed.yaml (gh #28).
+    try:
+        archive_file = get_archive_path(project_root=root)
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
 
     # Find parent epic
     epic_id = ""
@@ -98,7 +101,7 @@ def archive_story(
     if pr_number:
         entry_lines.append(f"    pr: {pr_number}")
 
-    with open(archive_file, "a") as f:
+    with open(archive_file, "a", encoding="utf-8") as f:
         f.write("\n".join(entry_lines) + "\n")
 
     msg = f"Archived {story_id} to {archive_file.name}"

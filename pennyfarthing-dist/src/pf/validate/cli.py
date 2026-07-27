@@ -28,6 +28,7 @@ VALIDATORS = {
     "sprint": "pf.validate.adapters.sprint",
     "schema": "pf.validate.adapters.schema",
     "agent": "pf.validate.adapters.agent",
+    "models": "pf.validate.adapters.models",
     "workflow": "pf.validate.adapters.workflow",
     "skill-command": "pf.validate.adapters.skill_command",
     "tandem-awareness": "pf.validate.adapters.tandem_awareness",
@@ -67,7 +68,7 @@ def _print_reports(reports: list[ValidateReport]) -> None:
         if report.warnings:
             parts.append(f"{report.warnings} warnings")
         if report.errors:
-            parts.append(f"{report.errors} errors")
+            parts.append(f"{len(report.errors)} errors")
         if report.fixed:
             parts.append("(fixed)")
 
@@ -78,7 +79,7 @@ def _print_reports(reports: list[ValidateReport]) -> None:
             error(f"{report.validator}: {summary_line}")
 
     click.echo("", err=True)
-    total_errors = sum(r.errors for r in reports)
+    total_errors = sum(len(r.errors) for r in reports)
     total_warnings = sum(r.warnings for r in reports)
     total_passed = sum(r.passed for r in reports)
 

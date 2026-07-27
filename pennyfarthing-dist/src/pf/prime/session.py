@@ -69,8 +69,14 @@ def register_session(
     root = project_root or get_project_root()
     agents_dir = get_agents_dir(root)
 
-    # Create agents directory if needed
-    agents_dir.mkdir(parents=True, exist_ok=True)
+    # Create agents directory if needed.
+    # Resolve the path first so a dangling `.session` symlink (its target dir
+    # not yet created, e.g. on a fresh clone/worktree) creates the real target
+    # instead of crashing. mkdir(parents=True) on the unresolved path would try
+    # to mkdir the existing-but-dangling `.session` symlink and raise
+    # FileExistsError [Errno 17] (gh #63); resolve() follows the link to
+    # sprint/.session/agents, leaving the symlink intact.
+    agents_dir.resolve().mkdir(parents=True, exist_ok=True)
 
     # Purge stale agent files (older than 1 hour) to prevent mtime pollution
     _purge_stale_agents(agents_dir, max_age_seconds=3600)

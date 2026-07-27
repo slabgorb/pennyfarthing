@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark — Mean Weighted Score vs Consistency</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="benchmark.css">
+</head>
+<body>
+
+<h1>Mean Weighted Score vs Consistency</h1>
+<div class="subtitle">Persona theme performance on seeded-defect scenarios &mdash; each dot is one theme. Size = &radic;n. Quadrant lines drawn at the control baseline.</div>
+
+<nav class="panel-nav">
+  <a href="index.html">Overview</a>
+  <a href="scatter.html" class="active">Score vs Consistency</a>
+  <a href="hit-rate.html">Finding Hit Rate</a>
+  <a href="phase-attribution.html">Phase Attribution</a>
+</nav>
+
+<div class="filter-bar" id="filters">
+  <div class="filter-group">
+    <span class="filter-label">Scenario</span>
+    <div id="scenario-chips"></div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Tier</span>
+    <div class="tier-checks" id="tier-checks"></div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Color by</span>
+    <select id="ocean-color">
+      <option value="none">None</option>
+      <option value="O">Openness</option>
+      <option value="C">Conscientiousness</option>
+      <option value="E">Extraversion</option>
+      <option value="A">Agreeableness</option>
+      <option value="N">Neuroticism</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Role</span>
+    <select id="ocean-role">
+      <option value="avg">Team Avg</option>
+      <option value="tea">TEA</option>
+      <option value="dev">Dev</option>
+      <option value="reviewer">Reviewer</option>
+    </select>
+  </div>
+</div>
+
+<div class="chart-section">
+  <svg id="scatter"></svg>
+</div>
+
+<div class="page-foot">Color-by maps each theme's Big Five (OCEAN) score for the selected role onto a red&ndash;yellow&ndash;blue scale. Hover a dot for per-run detail; click to show the run strip.</div>
+
+<div class="tooltip" id="tooltip" style="display:none"></div>
+
+<script src="benchmark-data.js"></script>
+<script src="benchmark-charts.js"></script>
+<script>startPanel(renderScatter);</script>
+</body>
+</html>

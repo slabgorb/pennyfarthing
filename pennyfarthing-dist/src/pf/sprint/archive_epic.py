@@ -5,6 +5,7 @@ Archives completed epics by moving their shard files to sprint/archive/.
 The sprint completed file references archived epics by ID (not inlined).
 """
 
+import re
 import shutil
 from datetime import date
 from pathlib import Path
@@ -29,6 +30,13 @@ def get_archive_path(project_root: Path | None = None) -> Path:
 
     Returns:
         Path to the sprint archive file
+
+    Raises:
+        ValueError: When sprint metadata has neither `name` nor `number` set,
+            when the derived sprint id contains characters outside
+            ``[A-Za-z0-9._-]`` or a ``..`` parent reference, or when the
+            resolved path would escape ``sprint/archive/``. Result-object
+            callers must wrap this (see ``archive_story``) — SOUL #10.
     """
     root = project_root or get_project_root()
     sprint_data = load_sprint(root)
@@ -53,7 +61,28 @@ def get_archive_path(project_root: Path | None = None) -> Path:
             )
         sprint_id = str(number)
 
-    archive_path = root / "sprint" / "archive" / f"sprint-{sprint_id}-completed.yaml"
+    # Sanitize before building the path (CWE-22, 155-7): sprint_id comes from
+    # sprint YAML metadata and is used verbatim in a filename. Restrict to a
+    # filename-safe charset; `..` passes the charset check but is a parent ref,
+    # so refuse it explicitly.
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", sprint_id) or ".." in sprint_id:
+        raise ValueError(
+            f"Invalid sprint id {sprint_id!r}: only [A-Za-z0-9._-] characters "
+            "(and no '..') are allowed in the archive filename. "
+            "Check sprint/current-sprint.yaml."
+        )
+
+    archive_dir = root / "sprint" / "archive"
+    archive_path = archive_dir / f"sprint-{sprint_id}-completed.yaml"
+
+    # Containment (defence-in-depth): the resolved path must stay directly
+    # under sprint/archive/ even if the sanitization above is ever loosened.
+    if archive_path.resolve().parent != archive_dir.resolve():
+        raise ValueError(
+            f"Archive path escapes the archive directory: {archive_path} "
+            f"(resolves to {archive_path.resolve()})"
+        )
+
     return archive_path
 
 
@@ -327,7 +356,9 @@ def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
     for epic in sprint_data.get("epics") or []:
         if not isinstance(epic, dict):
             continue
-        epic_ref = str(epic.get("jira") or epic.get("id") or "").strip()
+        # Canonical epic-ref (SOUL #2) — the one formula used everywhere else in
+        # this module; rejects jira sentinels + strips ``epic-`` (155-8).
+        epic_ref = _get_epic_ref(epic)
         if not epic_ref:
             continue
         for story in epic.get("stories") or []:
@@ -496,6 +527,14 @@ def archive_epic(
             "message": "\n".join(msg_parts),
         }
 
+    # Resolve (and create if needed) the sprint archive file BEFORE any
+    # filesystem mutation — a rejected sprint id must not strand a half-moved
+    # shard (155-7 rework: validate before the first irreversible step, 155-12).
+    try:
+        archive_path = ensure_archive_file(root)
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
+
     # 1. Update epic status in the shard before moving
     if shard_file.exists():
         shard_data = _read_yaml_file(shard_file)
@@ -522,7 +561,6 @@ def archive_epic(
             break
 
     # 3. Add epic ref and completed stories to sprint completed file
-    archive_path = ensure_archive_file(root)
     archive_data = _load_archive_file(archive_path)
 
     # Add ref if not already present

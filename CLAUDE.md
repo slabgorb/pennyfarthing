@@ -1,6 +1,6 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 13.3.0. Python-first architecture.
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 13.4.0. Python-first architecture.
 
 <critical>
 ## Implementation Rules
@@ -71,8 +71,10 @@ pf validate                                          # Framework validation
 
 BikeLane workflow types: **Phased** (agent-driven handoffs) and **Stepped** (progressive gates). Workflow definitions live in `pennyfarthing-dist/workflows/*.yaml` — read the YAML for phase order, agents, tandem/team pairings, and gates. Use `pf workflow list` and `pf workflow show <name>` to inspect.
 
-**Experimental workflows:**
-- `sdd` (Superpower Driven Development): Parallels `tdd.yaml` with per-phase `skills.required` lists that agents invoke and attest to in the session file. Composite gates (`sdd-red-exit`, `sdd-green-exit`) verify both artifacts and skill attestation. Opt-in via `workflow: sdd` on a story.
+**Workflows of note:**
+- `tdd` (default): lightweight Test-Driven Development — SM → TEA → Dev → Reviewer → SM. No architect spec phases.
+- `sdd` (Spec-Driven Development): heavyweight feature flow adding architect spec-check, TEA verify, and architect spec-reconcile phases. Opt-in via `workflow: sdd` on a story.
+- `spdd` (Superpower Driven Development): parallels `tdd.yaml` with per-phase `skills.required` lists that agents invoke and attest to in the session file. Composite gates (`spdd-red-exit`, `spdd-green-exit`) verify both artifacts and skill attestation. Opt-in via `workflow: spdd` on a story.
 
 | Agent | Role | Agent | Role |
 |-------|------|-------|------|

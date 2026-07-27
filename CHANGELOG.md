@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.4.0] - 2026-07-27
+
+### Added
+
+- **Model tiering for the Claude 5 era (epic: model-tiering)** — central tier map in `models.yaml` with loader (`pf.model_tiers`); tier-mapped model frontmatter on agent commands, validated by `pf validate`; advisory model-tier PreToolUse nudge hook; `pf agent start` emits `expected_model` (+ `.session/.expected-model`); statusline persists the current model id; benchmark model pins converted to tier-map aliases; `models.yaml` bundled in `pf._dist` for consumer repos
+- **Lightweight `tdd` default workflow** — new lean TEA→Dev→Reviewer default; the heavyweight spec-driven flow is renamed `sdd`, the superpowers-attestation flow `spdd`
+- **Portrait pipeline: R2 is the only source (153-12)** — direct-PNG fetch from the CDN (pennyfarthing.slabgorb.com), LFS portrait images untracked, PNG-magic cache-hit self-heal; no managed local copies
+- **Never-edit-zone advisory hook (159-12, ADR-0041 Phase 1)** — PreToolUse hook warns on edits inside protected zones; hardened against ReDoS and symlink-path tricks
+- **Sprint DX bundle (153-8)** — `pf sprint story update --title`, candidate-ID suggestions on not-found errors, `pf agent start --brief`, pre-push/PR docs
+- **`pf sprint story update --epic` (160-6, 160-24)** — epic moves delegate to `move_story` with a uniform result shape and same-epic no-op
+- **Doctor/setup hardening (153-11, 157-6)** — `project_shim` check for `.pennyfarthing/bin/pf`; repos.yaml topology verified on disk with loud init warnings and relink
+- **Dict-shaped `theme_characters` overrides (159-1)** — persona loader accepts both list and dict forms
+- **Blackadder persona theme**
+
+### Fixed
+
+- **Finish-flow hardening (epic 155)** — verify the PR actually merged before marking a story done; hard-gate finish on non-mergeable PRs; never archive on a blocked/denied merge; archive filenames resolved via `get_archive_path` with sprint-id sanitization and path containment; authoritative epic id written to archive rows (fail-loud); story-not-found errors list candidates; preflight gains language-aware lint, merged-but-deleted PR detection, an arg-injection guard, and async stat; epic-ref resolution delegated to a single canonical helper
+- **Sprint validation (epic 160)** — `validate_epic_shard` runs per-story value checks (parity with inline validation); `depends_on` validated across all story locations with archived dependencies treated as satisfied; sentinel Jira values gated everywhere via `_has_real_jira_key`; malformed/non-dict/unreadable epic shards surface warnings instead of silently dropping; dry-run exercises the real write path; shard-ref paths contained within `sprint/archive` (CWE-22)
+- **Frame server (epics 159/160/161)** — fail-loud read-hygiene sweep across all `ws_push` fetchers and `data_proxy`; response-body and warnings-sink info-leaks sanitized before network exposure; traffic-based liveness replaces owner-PID gating; Mach-message leak plugged and orphaned servers self-terminate with a bounded poll executor; async helpers properly awaited in brownfield routes; `get_context` fails loud and `ContextConfig` constant bug fixed
+- **TUI (159-11 + portrait rendering)** — string-form acceptance criteria no longer crash the TUI; portraits render square via auto-height from real cell geometry
+- **Handoff & session (epic 158, 159-4)** — context files enforced before the setup→red handoff; exit protocol infers bare invocations and validates inferred identifiers with fail-loud exit codes; dangling `.session` symlink crash fixed; testing-runner cache isolated from the live session; `pf sprint story claim` works on Jira-less projects; non-ISO phase timestamps tolerated (ISO-8601 now mandated in sm-setup)
+- **Hooks (153-7)** — sprint-YAML PostToolUse hook validates in-process with PyYAML, dropping the broken Node subprocess
+- **Tests (153-9)** — `git_utils` tests no longer leak a `feature/test` checkout onto the live repo
+- **Validation (`pf validate`)** — `ValidateReport.errors` completed int→list conversion with real messages everywhere; spawn-template scan is order-agnostic; malformed `models.yaml` survived gracefully
+
+### Changed
+
+- **Packaging** — the repo-root pyproject derives its version from `pf.__version__` (no more stale-version skew between the editable install and the package)
+- **Benchmarks** — pipeline-replay dashboard published via GitHub Pages; replay baselines reset for the model-tiering era (reviewer fanout opus→sonnet)
+
 ## [13.3.0] - 2026-06-04
 
 ### Added
@@ -666,7 +696,10 @@ For detailed history of these releases, see the git log.
 
 ---
 
-[Unreleased]: https://github.com/slabgorb/pennyfarthing/compare/v13.1.2...HEAD
+[Unreleased]: https://github.com/slabgorb/pennyfarthing/compare/v13.4.0...HEAD
+[13.4.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.3.0...v13.4.0
+[13.3.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.2.0...v13.3.0
+[13.2.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.1.2...v13.2.0
 [13.1.2]: https://github.com/slabgorb/pennyfarthing/compare/v13.1.1...v13.1.2
 [13.1.1]: https://github.com/slabgorb/pennyfarthing/compare/v13.1.0...v13.1.1
 [13.1.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.0.0...v13.1.0

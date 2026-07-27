@@ -235,13 +235,93 @@ def main(args: list[str] | None = None) -> int:
 def claim_issue(issue_key: str) -> dict[str, Any]:
     """Claim wrapper expected by sprint CLI.
 
-    Resolves story ID to Jira key if needed, then delegates to claim_story.
+    On Jira-less projects (``is_jira_enabled()`` is False) the claim runs
+    entirely against the local sprint YAML — no Jira call — because there is no
+    Jira instance to query for availability. Otherwise the story ID is resolved
+    to a Jira key and the Jira-backed ``claim_story`` flow runs unchanged.
     """
+    from pf.jira.client import is_jira_enabled
+
+    if not is_jira_enabled():
+        return _claim_local(issue_key)
+
     jira_key = _resolve_jira_key(issue_key)
     result = claim_story(jira_key)
     if result.get("success"):
         result["message"] = f"Claimed {issue_key}"
     return result
+
+
+def _claim_local(story_id: str) -> dict[str, Any]:
+    """Claim a story using only the local sprint YAML (no Jira).
+
+    Used on projects with no Jira configuration. Blocks if the story is already
+    claimed by another user (the message names them — never "unknown"), then
+    transitions the story to ``in_progress`` and records the current user in
+    ``assigned_to``. Returns a result dict and never raises.
+
+    Args:
+        story_id: Local story ID (e.g. ``22-1``)
+
+    Returns:
+        Result dict with ``success`` and, on failure, an ``error`` message.
+    """
+    from pf.common.config import get_project_root
+    from pf.jira.client import get_current_user_email
+    from pf.sprint.loader import find_story_in_data
+    from pf.sprint.story_transition import transition_story
+    from pf.sprint.yaml_io import read_sprint, write_sprint
+
+    root = get_project_root()
+    sprint_path = root / "sprint" / "current-sprint.yaml"
+    if not sprint_path.exists():
+        return {
+            "success": False,
+            "error": f"Sprint file not found: {sprint_path}",
+            "exit_code": 2,
+        }
+
+    data = read_sprint(sprint_path)
+    _epic, story, _loc = find_story_in_data(data, story_id)
+    if not story:
+        return {
+            "success": False,
+            "error": f"Story {story_id} not found in sprint YAML",
+            "exit_code": 2,
+        }
+
+    current_user = get_current_user_email()
+    assigned_to = story.get("assigned_to")
+    if assigned_to and assigned_to != current_user:
+        return {
+            "success": False,
+            "error": f"Story already claimed by {assigned_to}",
+            "exit_code": 1,
+        }
+
+    # transition_story re-reads and writes the YAML itself, so set assigned_to
+    # afterwards on a fresh read to avoid clobbering its changes. It skips Jira
+    # for stories without a jira key, so no Jira call happens here.
+    t_result = transition_story(root, story_id, "in_progress")
+    if not t_result.get("success"):
+        return {
+            "success": False,
+            "error": t_result.get("error", "Status transition failed"),
+            "exit_code": 3,
+        }
+
+    data = read_sprint(sprint_path)
+    _epic, story, _loc = find_story_in_data(data, story_id)
+    if story is not None:
+        story["assigned_to"] = current_user
+        write_sprint(sprint_path, data)
+
+    return {
+        "success": True,
+        "message": f"Claimed {story_id}",
+        "actions": [f"Assigned to {current_user}", "Moved to In Progress"],
+        "exit_code": 0,
+    }
 
 
 def unclaim_issue(issue_key: str) -> dict[str, Any]:

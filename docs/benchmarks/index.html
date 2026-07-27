@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pennyfarthing — Pipeline Replay Benchmark</title>
+<link rel="stylesheet" href="benchmark.css">
+<style>
+  .panel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 8px; }
+  .panel-card { display: block; text-decoration: none; color: inherit; }
+  .panel-card .chart-title { color: var(--accent); }
+  .panel-card:hover { border-color: var(--accent); }
+  .hero { width: 100%; max-width: 760px; border: 1px solid var(--border); border-radius: 6px; margin: 8px 0 4px; }
+</style>
+</head>
+<body>
+
+<h1>Pipeline Replay Benchmark</h1>
+<div class="subtitle">How the Pennyfarthing agent pipeline (TEA &rarr; Dev &rarr; Reviewer) performs on seeded-defect scenarios, across persona themes &mdash; weighted catch rate, per-finding hit rate, and phase attribution.</div>
+
+<a href="scatter.html"><img class="hero" src="preview-scatter.png" alt="Mean weighted score vs consistency scatter"></a>
+
+<div class="panel-grid">
+  <a class="panel-card chart-section" href="scatter.html">
+    <div class="chart-title">Score vs Consistency &rsaquo;</div>
+    <div class="chart-subtitle">Each theme plotted by mean weighted catch rate against run-to-run consistency, with quadrants at the control baseline. Color by OCEAN trait.</div>
+  </a>
+  <a class="panel-card chart-section" href="hit-rate.html">
+    <div class="chart-title">Finding Hit Rate &rsaquo;</div>
+    <div class="chart-subtitle">A heatmap of how reliably each individual ground-truth finding is caught, per theme.</div>
+  </a>
+  <a class="panel-card chart-section" href="phase-attribution.html">
+    <div class="chart-title">Phase Attribution &rsaquo;</div>
+    <div class="chart-subtitle">Which phase &mdash; TEA, Dev, or Reviewer &mdash; actually catches the defects, on average per run.</div>
+  </a>
+</div>
+
+<div class="page-foot">
+  Ground truth = real findings external reviewers flagged on PRs the pipeline had already approved. See the
+  <a href="https://github.com/slabgorb/pennyfarthing/blob/develop/pennyfarthing-dist/guides/peloton.md">Peloton guide</a>
+  for methodology. Data is a snapshot; regenerate with <code>pf benchmark viz</code>.
+</div>
+
+</body>
+</html>

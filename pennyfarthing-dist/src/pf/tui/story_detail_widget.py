@@ -13,6 +13,8 @@ from rich.text import Text
 from textual.widget import Widget
 from textual.widgets import Collapsible, Rule, Static
 
+from pf.tui.ac_shapes import ac_done_count, ac_is_done, ac_label
+
 
 class StoryDetailWidget(Widget):
     """Reusable story detail view with native Textual widgets.
@@ -40,7 +42,7 @@ class StoryDetailWidget(Widget):
         if acs:
             if sections_yielded > 0:
                 yield Rule()
-            done_count = sum(1 for ac in acs if ac.get("done"))
+            done_count = ac_done_count(acs)
             yield self._build_ac_section(acs, done_count)
             sections_yielded += 1
 
@@ -112,9 +114,10 @@ class StoryDetailWidget(Widget):
         """Build the Acceptance Criteria collapsible section."""
         ac_text = Text()
         for ac in acs:
-            check = "\u2713" if ac.get("done") else "\u25cb"
-            style = "green" if ac.get("done") else ""
-            ac_text.append(f"  {check} {ac.get('text', '')}\n", style=style)
+            done = ac_is_done(ac)
+            check = "\u2713" if done else "\u25cb"
+            style = "green" if done else ""
+            ac_text.append(f"  {check} {ac_label(ac)}\n", style=style)
 
         return Collapsible(
             Static(ac_text),

@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import asyncio
 import os
+import warnings
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -15,9 +17,76 @@ from pf.sprint.status_normalize import normalize_status
 
 POLL_INTERVAL_S = 5.0
 
+# Single shared executor per process for all blocking fetchers (Story 161-1,
+# gh #97). Relying on the event-loop default pool let each poll/initial-data
+# call schedule blocking subprocess work without a stable, bounded pool;
+# capping concurrency here keeps per-poll kernel resource churn (Mach ports)
+# from accumulating across the life of the long-running server.
+_shared_executor: ThreadPoolExecutor | None = None
+
+
+def get_shared_executor() -> ThreadPoolExecutor:
+    """Return the process-wide shared executor (stable singleton).
+
+    All blocking fetcher work (``send_initial_data`` and ``poll_and_broadcast``)
+    runs on this one bounded pool rather than constructing a fresh pool — or
+    leaning on an unbounded default pool — per poll cycle.
+    """
+    global _shared_executor
+    if _shared_executor is None:
+        _shared_executor = ThreadPoolExecutor(
+            max_workers=4, thread_name_prefix="frame-fetch"
+        )
+    return _shared_executor
+
 
 def _get_project_dir() -> str:
     return os.environ.get("FRAME_PROJECT_DIR", os.environ.get("PF_PROJECT_DIR", os.getcwd()))
+
+
+def _read_text_file(path: Path) -> str | None:
+    """Read a text file as UTF-8, surfacing present-but-broken reads.
+
+    Returns the file contents, or ``None`` when the file cannot be read. A
+    genuinely absent file (``FileNotFoundError``) is silent — callers gate on
+    ``exists()``/``is_file()`` and a missing file is a normal, expected state.
+    Every OTHER failure (permission denied, undecodable bytes) is a
+    present-but-unreadable file: surfaced via ``warnings.warn`` so it is not
+    swallowed (gh #50 fail-loud), then ``None`` so the caller degrades
+    gracefully rather than crashing the Frame poll loop.
+
+    ``UnicodeDecodeError`` is a ``ValueError`` (NOT an ``OSError``) — it is
+    caught explicitly so an undecodable file warns instead of escaping.
+    """
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return None
+    except (OSError, UnicodeDecodeError) as exc:
+        warnings.warn(f"Failed to read {path.name}: {exc}", stacklevel=2)
+        return None
+
+
+def _read_yaml_file(path: Path) -> Any:
+    """Read+parse a YAML file as UTF-8, surfacing present-but-broken files.
+
+    Layers a YAML parse on top of :func:`_read_text_file`: a read failure is
+    already warned there; a parse failure (malformed YAML) is warned here.
+    Returns the parsed object, or ``None`` on any read/parse failure (and for a
+    genuinely empty file, mirroring ``yaml.safe_load("")``). Callers that
+    require a mapping should ``isinstance(result, dict)``-guard the return.
+    """
+    text = _read_text_file(path)
+    if text is None:
+        return None
+
+    import yaml
+
+    try:
+        return yaml.safe_load(text)
+    except Exception as exc:
+        warnings.warn(f"Failed to parse {path.name}: {exc}", stacklevel=2)
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -125,8 +194,14 @@ def fetch_diffs() -> dict[str, Any]:
                         file_status = "D"
             _flush(current_file, current_diff_lines, file_status, additions, deletions)
 
-        except Exception:
-            pass
+        except Exception as exc:
+            # Present-but-broken: this repo's diff subprocess/parse failed. Warn
+            # naming the repo (gh #50 fail-loud) rather than silently dropping
+            # its diffs from the panel; siblings still contribute.
+            warnings.warn(
+                f"Failed to fetch diffs for repo {repo['name']}: {exc}",
+                stacklevel=2,
+            )
         finally:
             os.chdir(old_cwd)
 
@@ -143,9 +218,20 @@ def fetch_sprint() -> dict[str, Any]:
     if not sprint_path.is_file():
         return {"sprint": {}, "epics": []}
 
+    # Split read-vs-parse so the warning names the actual failure. A
+    # present-but-undecodable file is surfaced by _read_text_file as
+    # "Failed to read {name}"; a decodable-but-malformed file is surfaced below
+    # as "Failed to parse {name}" (the prior single try always said "read").
+    text = _read_text_file(sprint_path)
+    if text is None:
+        return {"sprint": {}, "epics": []}
+
     try:
-        data = yaml.safe_load(sprint_path.read_text()) or {}
-    except Exception:
+        data = yaml.safe_load(text) or {}
+    except Exception as exc:
+        warnings.warn(
+            f"Failed to parse sprint file {sprint_path.name}: {exc}", stacklevel=2
+        )
         return {"sprint": {}, "epics": []}
 
     sprint_info = data.get("sprint", {})
@@ -154,7 +240,7 @@ def fetch_sprint() -> dict[str, Any]:
     # monolithic format, keyed by `id` with no `jira`) AND sharded epics
     # (string refs + epic-{ref}.yaml) both arrive as fully-merged dicts.
     # The bespoke shard-only path silently dropped inline epics (gh #50).
-    from pf.sprint.shard_merge import merge_epic_shards
+    from pf.sprint.shard_merge import is_safe_shard_path, merge_epic_shards
 
     epics: list[dict[str, Any]] = []
     completed_epics: list[dict[str, Any]] = []
@@ -162,9 +248,36 @@ def fetch_sprint() -> dict[str, Any]:
 
     def _load_file(path: Path) -> Any:
         try:
-            return yaml.safe_load(path.read_text()) or {}
-        except Exception:
+            text = path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            # Missing file: merge_epic_shards owns the "not found" warning.
             return None
+        except (OSError, UnicodeDecodeError) as exc:
+            # Present but unreadable/undecodable — surface it; a silent None
+            # here is indistinguishable from a deliberately absent shard.
+            warnings.warn(
+                f"Failed to read sprint shard {path.name}: {exc}",
+                stacklevel=2,
+            )
+            return None
+        try:
+            loaded = yaml.safe_load(text)
+        except Exception as exc:
+            warnings.warn(
+                f"Failed to parse sprint shard {path.name}: {exc}",
+                stacklevel=2,
+            )
+            return None
+        if loaded is None:
+            return {}
+        if not isinstance(loaded, dict):
+            warnings.warn(
+                f"Sprint shard {path.name} is not a mapping "
+                f"(parsed to {type(loaded).__name__}) — skipping",
+                stacklevel=2,
+            )
+            return None
+        return loaded
 
     # Capture the original index refs BEFORE merge: merge_epic_shards replaces
     # string refs with full shard dicts and loses the original ref string. The
@@ -173,7 +286,12 @@ def fetch_sprint() -> dict[str, Any]:
     ref_by_id: dict[str, str] = {}
     for ref in data.get("epics", []):
         if isinstance(ref, str):
-            shard = _load_file(sprint_dir / f"epic-{ref}.yaml")
+            candidate = sprint_dir / f"epic-{ref}.yaml"
+            if not is_safe_shard_path(candidate, sprint_dir):
+                # Path traversal (CWE-22): a crafted ref escapes sprint_dir.
+                # merge_epic_shards warns + skips; here we just refuse the read.
+                continue
+            shard = _load_file(candidate)
             resolved_id = str(shard.get("id", "")) if isinstance(shard, dict) else ""
             if resolved_id:
                 ref_by_id[resolved_id] = ref
@@ -215,9 +333,8 @@ def fetch_sprint() -> dict[str, Any]:
     if archive_dir.is_dir():
         sprint_number = sprint_info.get("number")
         for archive_path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
-            try:
-                archive_data = yaml.safe_load(archive_path.read_text()) or {}
-            except Exception:
+            archive_data = _read_yaml_file(archive_path)
+            if not isinstance(archive_data, dict):
                 continue
             # Only include current sprint's archive
             if sprint_number and archive_data.get("sprint", {}).get("number") != sprint_number:
@@ -225,11 +342,14 @@ def fetch_sprint() -> dict[str, Any]:
             # Load stories from archived epic shards
             for epic_ref in archive_data.get("completed_epics", []):
                 shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+                if not is_safe_shard_path(shard_path, archive_dir):
+                    # Path traversal (CWE-22): a crafted completed-epic ref
+                    # escapes archive_dir — refuse the read.
+                    continue
                 if not shard_path.is_file():
                     continue
-                try:
-                    shard_data = yaml.safe_load(shard_path.read_text()) or {}
-                except Exception:
+                shard_data = _read_yaml_file(shard_path)
+                if not isinstance(shard_data, dict):
                     continue
                 epic_entry = {
                     "id": shard_data.get("id", ""),
@@ -303,11 +423,15 @@ def fetch_story() -> dict[str, Any]:
 def fetch_context() -> dict[str, Any]:
     """Fetch context window usage."""
     try:
-        from pf.context_window import ContextConfig, check_context
+        from pf.context_window import check_context
 
         project_dir = _get_project_dir()
-        config = ContextConfig(project_dir=project_dir)
-        result = check_context(config)
+        # check_context builds its own config via load_config(project_dir); its
+        # first positional is explicit_session, so project_dir is a kwarg. The
+        # old ``ContextConfig(project_dir=...)`` raised TypeError on EVERY call
+        # (no such field) and the silent swallow hid it — the panel never showed
+        # real data (gh #50 root cause, SOUL #1).
+        result = check_context(project_dir=project_dir)
         return {
             "type": "init",
             "context": {
@@ -316,7 +440,10 @@ def fetch_context() -> dict[str, Any]:
                 "status": result.status,
             },
         }
-    except Exception:
+    except Exception as exc:
+        # Genuine context probe failure (or a degraded result shape): warn, then
+        # degrade gracefully rather than blanking the panel with no diagnostic.
+        warnings.warn(f"Failed to fetch context: {exc}", stacklevel=2)
         return {"type": "init", "context": {"percent": None, "tokens": None, "status": None}}
 
 
@@ -344,8 +471,11 @@ def fetch_persona() -> dict[str, Any]:
             if f.is_file() and not f.name.startswith("."):
                 mt = f.stat().st_mtime
                 if mt > latest_mtime:
+                    content = _read_text_file(f)
+                    if content is None:
+                        continue
                     latest_mtime = mt
-                    agent_name = f.read_text().strip()
+                    agent_name = content.strip()
 
         if not agent_name:
             return {}
@@ -364,8 +494,12 @@ def fetch_persona() -> dict[str, Any]:
             resolved = resolve_portrait_path(theme, agent_name, project_root=Path(project_dir))
             if resolved:
                 portrait_path = str(resolved)
-        except Exception:
-            pass  # AC-3: graceful degradation
+        except Exception as exc:
+            # AC-3 (160-16): warn IN PLACE then degrade — keep portrait_path=None
+            # and fall through to return the full persona. This inner try MUST
+            # stay: letting a portrait-resolver failure reach the outer catch-all
+            # would blank the entire persona panel (strictly worse than no portrait).
+            warnings.warn(f"Failed to resolve portrait for {agent_name}: {exc}", stacklevel=2)
 
         return {
             "character": persona.character,
@@ -377,7 +511,13 @@ def fetch_persona() -> dict[str, Any]:
             "isStreaming": False,
             "portraitPath": portrait_path,
         }
-    except Exception:
+    except Exception as exc:
+        # Present-but-broken: persona resolution/load raised. Warn (gh #50
+        # fail-loud) rather than silently blanking the persona panel, then
+        # degrade to {}. (A resolved-but-empty persona is an in-try early
+        # return, not an exception, so the common "no persona yet" state is
+        # unaffected.)
+        warnings.warn(f"Failed to load persona: {exc}", stacklevel=2)
         return {}
 
 
@@ -393,8 +533,6 @@ def fetch_benchmark_history() -> dict[str, Any]:
 
     if not results_dir.is_dir():
         return {"type": "init", "runs": []}
-
-    import yaml
 
     runs: list[dict[str, Any]] = []
 
@@ -419,11 +557,7 @@ def fetch_benchmark_history() -> dict[str, Any]:
                 if not chosen.exists():
                     continue
 
-                try:
-                    score_data = yaml.safe_load(chosen.read_text())
-                except Exception:
-                    continue
-
+                score_data = _read_yaml_file(chosen)
                 if not isinstance(score_data, dict):
                     continue
 
@@ -440,15 +574,21 @@ def fetch_benchmark_history() -> dict[str, Any]:
                 fw = score_data.get("framework_version") or {}
                 version = fw.get("tag") or fw.get("commit") or ""
 
-                # Extract date from pipeline.yaml
-                run_date = ""
+                # Read pipeline.yaml ONCE — a broken-but-present file is
+                # surfaced by _read_yaml_file's warning and degrades to None
+                # (the prior code read it twice and left pipeline_data unbound
+                # on a parse failure, masking a NameError under except: pass).
+                pipeline_data: dict[str, Any] | None = None
                 pipeline_file = run_dir / "pipeline.yaml"
                 if pipeline_file.exists():
-                    try:
-                        pipeline_data = yaml.safe_load(pipeline_file.read_text())
-                        run_date = pipeline_data.get("completed_at", "") or pipeline_data.get("started_at", "")
-                    except Exception:
-                        pass
+                    loaded = _read_yaml_file(pipeline_file)
+                    if isinstance(loaded, dict):
+                        pipeline_data = loaded
+
+                # Extract date from pipeline.yaml
+                run_date = ""
+                if pipeline_data:
+                    run_date = pipeline_data.get("completed_at", "") or pipeline_data.get("started_at", "")
                 if not run_date:
                     # Fallback to file mtime
                     try:
@@ -460,43 +600,34 @@ def fetch_benchmark_history() -> dict[str, Any]:
 
                 # Token usage per phase from pipeline.yaml
                 token_usage = {}
-                if pipeline_file.exists():
-                    try:
-                        if not pipeline_data:
-                            pipeline_data = yaml.safe_load(pipeline_file.read_text())
-                        phases = pipeline_data.get("phases", {})
-                        if isinstance(phases, dict):
-                            for p_name, p_data in phases.items():
-                                if isinstance(p_data, dict):
-                                    token_usage[p_name] = {
-                                        "tokens": p_data.get("input_tokens", 0) + p_data.get("output_tokens", 0),
-                                        "cost": p_data.get("cost", 0),
-                                    }
-                    except Exception:
-                        pass
+                if pipeline_data:
+                    phases = pipeline_data.get("phases", {})
+                    if isinstance(phases, dict):
+                        for p_name, p_data in phases.items():
+                            if isinstance(p_data, dict):
+                                token_usage[p_name] = {
+                                    "tokens": p_data.get("input_tokens", 0) + p_data.get("output_tokens", 0),
+                                    "cost": p_data.get("cost", 0),
+                                }
 
                 # Duration
                 duration_s = None
-                if pipeline_file.exists():
-                    try:
-                        duration_s = pipeline_data.get("duration_s")
-                    except Exception:
-                        pass
+                if pipeline_data:
+                    duration_s = pipeline_data.get("duration_s")
 
                 # Narrative excerpt
                 narrative_excerpt = ""
                 narrative_file = run_dir / "narrative.md"
                 if narrative_file.exists():
-                    try:
-                        text = narrative_file.read_text()[:300]
+                    text = _read_text_file(narrative_file)
+                    if text is not None:
+                        text = text[:300]
                         # Skip frontmatter
                         if text.startswith("---"):
                             end = text.find("---", 3)
                             if end > 0:
                                 text = text[end + 3:].strip()
                         narrative_excerpt = text[:150]
-                    except Exception:
-                        pass
 
                 runs.append({
                     "scenario_id": scenario_id,
@@ -586,7 +717,9 @@ async def send_initial_data(websocket: Any, channel: str) -> None:
     try:
         import json
 
-        data = await asyncio.get_event_loop().run_in_executor(None, fetcher)
+        data = await asyncio.get_event_loop().run_in_executor(
+            get_shared_executor(), fetcher
+        )
         await websocket.send_text(json.dumps(data))
     except Exception:
         pass
@@ -611,7 +744,9 @@ async def poll_and_broadcast(broadcast_fn: Any) -> None:
             if fetcher is None:
                 continue
             try:
-                data = await asyncio.get_event_loop().run_in_executor(None, fetcher)
+                data = await asyncio.get_event_loop().run_in_executor(
+                    get_shared_executor(), fetcher
+                )
                 # Rewrite "init" → "update" so panels don't clear on poll
                 if isinstance(data, dict) and data.get("type") == "init":
                     data = {**data, "type": "update"}

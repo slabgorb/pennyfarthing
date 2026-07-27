@@ -76,7 +76,9 @@ def move_story(
     """Move a story from its current epic to ``to_epic``.
 
     The story is renumbered to the target epic's next sequential id so the id
-    prefix stays consistent with epic membership.
+    prefix stays consistent with epic membership. Moving a story to the epic
+    it already belongs to is a no-op: the result reports ``no_op: True`` and
+    nothing is renumbered or rewritten (160-24).
 
     Args:
         sprint_path: Path to sprint YAML file
@@ -85,7 +87,10 @@ def move_story(
         dry_run: If True, report the planned move without writing
 
     Returns:
-        Result dict with ``success`` and either ``story`` details or ``error``.
+        Result dict with ``success`` and either ``story`` details or
+        ``error``. A same-epic move additionally carries ``no_op: True`` with
+        the story's unchanged details, plus the caller's ``dry_run`` flag
+        carried through verbatim.
     """
     data = read_sprint(sprint_path)
 
@@ -103,6 +108,26 @@ def move_story(
         return {
             "success": False,
             "error": f"Target epic '{to_epic}' not found. Available epics: {available}",
+        }
+
+    # Same-epic move: no-op and report instead of silently renumbering the
+    # story to the epic's next free id (160-24). Compare the RESOLVED epic
+    # dicts by identity — find_epic normalizes forms like "epic-151", so a raw
+    # to_epic string compare would miss them and still renumber.
+    if target_epic is source_epic:
+        return {
+            "success": True,
+            "no_op": True,
+            # The caller's dry_run signal is carried through so scripts keying
+            # on result["dry_run"] stay truthful even when the answer is
+            # "nothing to do" (160-24 rework).
+            "dry_run": dry_run,
+            "story": {
+                "id": story.get("id"),
+                "title": story.get("title"),
+                "from": location,
+                "to_epic": str(target_epic.get("id", to_epic)),
+            },
         }
 
     details: dict[str, Any] = {
@@ -185,7 +210,12 @@ def story_move_command(
 
     if result["success"]:
         story = result.get("story", {})
-        if result.get("dry_run"):
+        if result.get("no_op"):
+            click.echo(
+                f"Story {story.get('id')} is already in epic "
+                f"{story.get('to_epic')} — nothing to move"
+            )
+        elif result.get("dry_run"):
             click.echo(
                 f"[DRY-RUN] Would move story {story.get('id')} to epic {story.get('to_epic')}"
             )

@@ -17,7 +17,6 @@ from unittest.mock import patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -453,10 +452,8 @@ class TestLogGenerationResults:
         from pf.init.core import init_project
 
         with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "1.0.0", "install_method": "pipx", "path": "/usr/bin/pf"}):
-            with patch("pf.init.core._install_portraits", return_value={"success": True}):
-                with patch("pf.init.core._symlink_portraits", return_value=True):
-                    with patch("pf.init.setup.run_setup", return_value={"success": True, "data": {}}):
-                        result = init_project(project_with_custom_agents, dist_root)
+            with patch("pf.init.setup.run_setup", return_value={"success": True, "data": {}}):
+                result = init_project(project_with_custom_agents, dist_root)
 
         assert result["success"] is True
         data = result["data"]
@@ -480,10 +477,8 @@ class TestInitIntegration:
         from pf.init.core import init_project
 
         with patch("pf.init.core.verify_pf_cli", return_value={"success": True, "version": "1.0.0", "install_method": "pipx", "path": "/usr/bin/pf"}):
-            with patch("pf.init.core._install_portraits", return_value={"success": True}):
-                with patch("pf.init.core._symlink_portraits", return_value=True):
-                    with patch("pf.init.setup.run_setup", return_value={"success": True, "data": {}}):
-                        result = init_project(project_with_custom_agents, dist_root)
+            with patch("pf.init.setup.run_setup", return_value={"success": True, "data": {}}):
+                result = init_project(project_with_custom_agents, dist_root)
 
         assert result["success"] is True
         cmd_dir = project_with_custom_agents / ".claude" / "commands"
@@ -503,10 +498,8 @@ class TestInitIntegration:
 
         def run_init():
             with patch("pf.init.core.verify_pf_cli", return_value=mock_ctx["pf_cli"]):
-                with patch("pf.init.core._install_portraits", return_value={"success": True}):
-                    with patch("pf.init.core._symlink_portraits", return_value=True):
-                        with patch("pf.init.setup.run_setup", return_value={"success": True, "data": {}}):
-                            return init_project(project_with_custom_agents, dist_root)
+                with patch("pf.init.setup.run_setup", return_value={"success": True, "data": {}}):
+                    return init_project(project_with_custom_agents, dist_root)
 
         # First run — generates command files
         result1 = run_init()

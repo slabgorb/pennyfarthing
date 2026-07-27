@@ -16,7 +16,9 @@ from pf.doctor.checks import (
     check_git_hooks,
     check_node_packages,
     check_pennyfarthing_dir,
+    check_project_shim,
     check_python_install,
+    check_repos_topology,
     check_settings_hooks,
     check_skills,
     check_superpowers_plugin,
@@ -38,6 +40,8 @@ _CHECK_FNS = {
     "git_hooks": check_git_hooks,
     "theme": check_theme,
     "superpowers_plugin": check_superpowers_plugin,
+    "repos_topology": check_repos_topology,
+    "project_shim": check_project_shim,
 }
 
 

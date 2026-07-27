@@ -32,6 +32,8 @@ from typing import Any
 
 import yaml
 
+from pf.model_tiers import judge_alias, subagent_alias
+
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
@@ -1213,11 +1215,8 @@ def _run_reviewer_fanout(
             f"{rules_section}"
         )
 
-        # Rule-checker uses sonnet (analytical); others use opus
-        subagent_model = (
-            "claude-sonnet-4-6" if name == _RULE_CHECKER_SUBAGENT
-            else "claude-opus-4-6"
-        )
+        # Subagent models come from models.yaml (reviewer fleet = analytical)
+        subagent_model = subagent_alias(name)
         cmd = ["claude", "-p", task, "--output-format", "json", "--model",
                subagent_model]
 
@@ -1584,7 +1583,7 @@ def run_pipeline(
         print(f"  [{tag}-SCAN] Running pre-phase scan...")
         scan_result = subprocess.run(
             ["claude", "-p", scan_task, "--output-format", "json",
-             "--model", "claude-opus-4-6"],
+             "--model", subagent_alias(agent_name)],
             cwd=str(wt_path), capture_output=True, text=True,
             timeout=300, env={**os.environ},
         )
@@ -2836,7 +2835,7 @@ def run_phase_replay(
 
                 scores = []
                 for j in range(judge_count):
-                    jmodel = judge_model or "claude-opus-4-6"
+                    jmodel = judge_model or judge_alias("benchmark")
                     print(f"  [JUDGE {j + 1}/{judge_count}] Scoring retry output ({jmodel})...")
                     score = score_with_judge(
                         scenario, pipeline_result, model=jmodel, project_dir=project_dir,
@@ -2921,7 +2920,7 @@ def _run_scout_standalone(
     print(f"  [{tag}-SCAN] Running pre-phase scan...")
     scan_result = subprocess.run(
         ["claude", "-p", scan_task, "--output-format", "json",
-         "--model", "claude-opus-4-6"],
+         "--model", subagent_alias(agent_name)],
         cwd=str(wt_path), capture_output=True, text=True,
         timeout=300, env={**os.environ},
     )

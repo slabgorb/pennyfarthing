@@ -15,28 +15,20 @@ from typing import Any
 import click
 
 from pf.jira.client import get_client, is_jira_enabled, map_status_to_jira
-from pf.sprint.loader import find_story_in_data
+from pf.sprint.loader import (
+    NO_JIRA_SENTINELS,
+    _has_real_jira_key,
+    find_story_in_data,
+    format_story_not_found_error,
+)
 from pf.sprint.status_normalize import normalize_status
+from pf.sprint.story_move import move_story
 from pf.sprint.validator import VALID_STORY_STATUSES, validate_sprint_document
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
-# Sentinel values that mean "no real Jira key" even though the field is present.
-_NO_JIRA_SENTINELS = {"", "none", "null", "x"}
-
-
-def _has_real_jira_key(story: dict[str, Any]) -> bool:
-    """Return True only when the story carries a real Jira key.
-
-    ``story.get("jira")`` is truthy for placeholder sentinels like the literal
-    string ``"none"``, which would let an auto-assign lookup (``jira me``) run on
-    a personal-project story that has no Jira side (gh #12). Normalize ``None``,
-    empty/whitespace, and the ``none``/``null``/``x`` sentinels (case-insensitive)
-    to "no key".
-    """
-    key = story.get("jira")
-    if not isinstance(key, str):
-        return bool(key)
-    return key.strip().lower() not in _NO_JIRA_SENTINELS
+# Sentinel handling consolidated into pf.sprint.loader (story 160-3).
+# Keep the private alias for any in-module/back-compat references.
+_NO_JIRA_SENTINELS = NO_JIRA_SENTINELS
 
 
 def update_story(
@@ -44,6 +36,7 @@ def update_story(
     story_id: str,
     *,
     status: str | None = None,
+    title: str | None = None,
     points: int | None = None,
     priority: str | None = None,
     assigned_to: str | None = None,
@@ -57,13 +50,19 @@ def update_story(
     clear_ac: bool = False,
     dry_run: bool = False,
     update_jira: bool = False,
+    epic: str | None = None,
 ) -> dict[str, Any]:
     """Update fields on a story in the sprint YAML.
 
     Args:
         sprint_path: Path to sprint YAML file
         story_id: Story ID (e.g., "76-4")
+        epic: Target epic to move the story into. Delegates to
+            ``move_story`` (gh #13) — the story is renumbered to the target
+            epic's next sequential id and dependents are rewritten. Cannot be
+            combined with field updates (fail-loud, no silent drop).
         status: New status value
+        title: New story title
         points: New points value
         priority: New priority value
         assigned_to: New assignee
@@ -79,8 +78,62 @@ def update_story(
         update_jira: If True, sync changed fields to Jira after YAML update
 
     Returns:
-        Dict with success status and optional error
+        Result dict; both paths carry a top-level ``story_id`` on success.
+
+        Field-update path: ``{"success": True, "story_id": <id>}`` plus
+        ``dry_run: True`` under dry-run and optional ``jira``/``jira_errors``
+        keys after a Jira sync.
+
+        --epic path (delegates to ``move_story``): the move result with
+        ``story_id`` added — ``{"success": True, "story": {...move
+        details...}, "story_id": <post-move id>}``. After a real move
+        ``story_id`` is the renumbered (new) id; under dry-run or a same-epic
+        no-op it is the story's unchanged id.
+
+        On any failure: ``{"success": False, "error": <message>}``.
     """
+    # --epic delegates to move_story (gh #13). It owns the atomic
+    # remove/insert/renumber/dependency-rewrite + shard-aware IO (SOUL #2), so
+    # we don't reimplement any of it here. Reject the combination with field
+    # updates so a co-passed flag is never silently dropped (epic-160 charter).
+    if epic is not None:
+        field_flags = {
+            "--status": status is not None,
+            "--title": title is not None,
+            "--points": points is not None,
+            "--priority": priority is not None,
+            "--assigned-to": assigned_to is not None,
+            "--completed": completed_date is not None,
+            "--started": started_date is not None,
+            "--workflow": workflow is not None,
+            "--description": description is not None,
+            "--review-findings": review_findings is not None,
+            "--review-verdict": review_verdict is not None,
+            "--add-ac": bool(add_ac),
+            "--clear-ac": clear_ac,
+        }
+        conflicting = [flag for flag, present in field_flags.items() if present]
+        if conflicting:
+            return {
+                "success": False,
+                "error": (
+                    f"--epic cannot be combined with field updates "
+                    f"({', '.join(conflicting)}). Move the story first, then "
+                    f"update its fields."
+                ),
+            }
+        move_result = move_story(sprint_path, story_id, to_epic=epic, dry_run=dry_run)
+        # Uniform result shape (160-24): every success from update_story
+        # carries a top-level story_id. After a real move that's the
+        # renumbered id; dry-run and same-epic no-op results have no new_id,
+        # so the story's unchanged id is reported.
+        if move_result.get("success"):
+            details = move_result.get("story") or {}
+            move_result["story_id"] = (
+                details.get("new_id") or details.get("id") or story_id
+            )
+        return move_result
+
     # Validate status before reading file
     if status is not None and status not in VALID_STORY_STATUSES:
         return {
@@ -95,12 +148,14 @@ def update_story(
     if story is None:
         return {
             "success": False,
-            "error": f"Story '{story_id}' not found in epics, standalone_stories, or stories",
+            "error": format_story_not_found_error(data, story_id),
         }
 
     # Apply field updates
     if status is not None:
         story["status"] = status
+    if title is not None:
+        story["title"] = title
     if points is not None:
         story["points"] = points
     if priority is not None:
@@ -173,6 +228,13 @@ def update_story(
         }
 
     if dry_run:
+        # Exercise the real write path against a throwaway location so
+        # serialization/IO failures surface in dry-run too (parity with the
+        # real run) — without persisting to the live sprint file.
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as _td:
+            write_sprint(Path(_td) / "current-sprint.yaml", data)
         return {
             "success": True,
             "dry_run": True,
@@ -260,6 +322,7 @@ def update_story(
         ]
     ),
 )
+@click.option("--title", default=None, help="New story title")
 @click.option("--completed", "completed_date", default=None)
 @click.option("--assigned-to", default=None)
 @click.option("--points", type=int, default=None)
@@ -275,12 +338,22 @@ def update_story(
 @click.option(
     "--clear-ac", is_flag=True, help="Clear all acceptance criteria (use with --add-ac to replace)"
 )
+@click.option(
+    "--epic",
+    default=None,
+    help=(
+        "Move the story to another epic (delegates to `story move`): "
+        "renumbers to the target epic's next id and rewrites dependents. "
+        "Cannot be combined with the field flags above."
+    ),
+)
 @click.option("--dry-run", is_flag=True)
 @click.option("--jira", "update_jira", is_flag=True, help="Sync changed fields to Jira after YAML update")
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 def story_update_command(
     story_id: str,
     status: str | None,
+    title: str | None,
     completed_date: str | None,
     assigned_to: str | None,
     points: int | None,
@@ -294,9 +367,24 @@ def story_update_command(
     clear_ac: bool,
     dry_run: bool,
     update_jira: bool,
+    epic: str | None,
     sprint_file: str | None,
 ) -> None:
-    """Update a story's fields by ID."""
+    """Update a story's fields by ID.
+
+    \b
+    Field updates (all optional, combinable):
+      --status --title --points --priority --assigned-to
+      --completed --started --workflow --description
+      --review-findings --review-verdict --add-ac --clear-ac
+
+    \b
+    Move between epics (mutually exclusive with the field flags):
+      --epic TARGET   Delegates to `pf sprint story move`.
+
+    \b
+    Modifiers: --dry-run, --jira, --sprint-file
+    """
     if status:
         status = normalize_status(status)
     if sprint_file is None:
@@ -310,6 +398,7 @@ def story_update_command(
         sprint_path=path,
         story_id=story_id,
         status=status,
+        title=title,
         points=points,
         priority=priority,
         assigned_to=assigned_to,
@@ -323,10 +412,29 @@ def story_update_command(
         clear_ac=clear_ac,
         dry_run=dry_run,
         update_jira=update_jira,
+        epic=epic,
     )
 
     if result["success"]:
-        if result.get("dry_run"):
+        # --epic delegated to move_story, which returns a move-shaped result.
+        if epic is not None:
+            story = result.get("story", {})
+            if result.get("no_op"):
+                click.echo(
+                    f"Story {story.get('id')} is already in epic "
+                    f"{story.get('to_epic')} — nothing to move"
+                )
+            elif result.get("dry_run"):
+                click.echo(
+                    f"[DRY-RUN] Would move story {story.get('id')} "
+                    f"to epic {story.get('to_epic')}"
+                )
+            else:
+                click.echo(
+                    f"Moved story {story.get('old_id')} to epic "
+                    f"{story.get('to_epic')} as {story.get('new_id')}"
+                )
+        elif result.get("dry_run"):
             click.echo(f"[DRY-RUN] Would update story {result['story_id']}")
         else:
             click.echo(f"Updated story {result['story_id']}")

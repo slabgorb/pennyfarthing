@@ -818,15 +818,22 @@ class TestRouteRegistration:
             assert matched, f"Route prefix {prefix} not registered on app"
 
     def test_no_subprocess_in_data_proxy_routes(self):
-        """AC1: Data proxy routes use direct imports, not subprocess."""
-        # Import the route modules and verify they don't shell out to pf CLI
+        """AC1: Data proxy routes don't re-invoke the pf CLI as a subprocess.
+
+        The layering rule is that route modules use direct Python imports rather
+        than shelling out to the ``pf`` binary. Invoking ``git`` directly is
+        permitted (and necessary for git status); story 161-1 (gh #97) replaced a
+        raw ``os.fork()``/``execvp`` git call with ``subprocess.run`` to stop
+        per-call Mach-port churn on macOS, so this guard targets ``pf`` CLI
+        re-entry specifically, not the ``subprocess`` module wholesale.
+        """
         import inspect
 
         from pf.frame.routes import data_proxy
 
         source = inspect.getsource(data_proxy)
-        assert "subprocess" not in source, (
-            "Data proxy routes should use direct imports, not subprocess"
+        assert '"pf"' not in source and "'pf'" not in source, (
+            "Data proxy routes should use direct imports, not shell out to the pf CLI"
         )
         assert "execSync" not in source
         assert "exec(" not in source

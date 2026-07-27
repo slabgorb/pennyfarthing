@@ -83,7 +83,7 @@ def generate_content(
     prompt = build_prompt(classified, corrections)
     try:
         proc = subprocess.run(
-            ["claude", "-p", "--model", "claude-sonnet-4-6"],
+            ["claude", "-p", "--model", "sonnet"],  # alias, resolved by claude CLI
             input=prompt,
             capture_output=True,
             text=True,

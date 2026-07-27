@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark — Phase Attribution</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="benchmark.css">
+</head>
+<body>
+
+<h1>Phase Attribution</h1>
+<div class="subtitle">Average findings caught per run, split by pipeline phase (bar width = volume). Which phase &mdash; TEA, Dev, or Reviewer &mdash; actually catches the defects?</div>
+
+<nav class="panel-nav">
+  <a href="index.html">Overview</a>
+  <a href="scatter.html">Score vs Consistency</a>
+  <a href="hit-rate.html">Finding Hit Rate</a>
+  <a href="phase-attribution.html" class="active">Phase Attribution</a>
+</nav>
+
+<div class="filter-bar" id="filters">
+  <div class="filter-group">
+    <span class="filter-label">Scenario</span>
+    <div id="scenario-chips"></div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Tier</span>
+    <div class="tier-checks" id="tier-checks"></div>
+  </div>
+</div>
+
+<div class="chart-section">
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--tea-color)"></div>TEA</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--dev-color)"></div>Dev</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--rev-color)"></div>Reviewer</div>
+  </div>
+  <svg id="phase-attr"></svg>
+</div>
+
+<div class="tooltip" id="tooltip" style="display:none"></div>
+
+<script src="benchmark-data.js"></script>
+<script src="benchmark-charts.js"></script>
+<script>startPanel(renderPhaseAttr);</script>
+</body>
+</html>

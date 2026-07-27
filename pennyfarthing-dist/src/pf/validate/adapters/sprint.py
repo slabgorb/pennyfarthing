@@ -43,20 +43,20 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         result = validate_sprint_yaml(path, fix=fix)
 
         if result.errors:
-            report.errors += len(result.errors)
             for err in result.errors:
                 line_info = f" (line {err.line})" if err.line else ""
-                report.details.append(
-                    f"[{err.category.upper()}] {path.name}: {err.message}{line_info}"
-                )
+                msg = f"[{err.category.upper()}] {path.name}: {err.message}{line_info}"
+                report.errors.append(msg)
+                report.details.append(msg)
 
         if result.format_issues:
             for issue in result.format_issues:
+                fmt_msg = f"[FORMAT] {path.name}: {issue.message}"
                 if strict:
-                    report.errors += 1
+                    report.errors.append(fmt_msg)
                 else:
                     report.warnings += 1
-                report.details.append(f"[FORMAT] {path.name}: {issue.message}")
+                report.details.append(fmt_msg)
 
         if result.valid and not result.errors:
             report.passed += 1

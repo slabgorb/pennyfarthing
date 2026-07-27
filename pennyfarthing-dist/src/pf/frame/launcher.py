@@ -104,6 +104,19 @@ def _frame_log_path(project_dir: Path) -> Path:
 def start_frame(project_dir: Path) -> subprocess.Popen | dict:
     """Start Frame server (Python/uvicorn) in background.
 
+    Frame self-termination is governed by the reuse-proof traffic/client liveness
+    signal (ADR-0040): inbound OTLP telemetry + HTTP API requests and held-open
+    WebSocket clients keep the frame alive; it goes idle only after the window
+    elapses with none of those. No ``FRAME_OWNER_PID`` is stamped — doing so
+    unconditionally was Defect 1 (gh #97 / ADR-0040): on the ephemeral auto-start
+    paths (the SessionStart hook that ``just claude`` relies on, and
+    ``pf launch``) the launching process exits within seconds, so the owner PID
+    is dead/recycled almost immediately and the monitor self-terminated the live
+    session it was meant to serve. Owner-PID gating is removed in favor of the
+    traffic signal (ADR-0040 AC4); the env-driven owner machinery in
+    ``lifecycle.py`` is retained for a future hardened fast-path but no start
+    path stamps a recyclable PID.
+
     Logs stdout/stderr to .session/frame.log for diagnostics.
     Returns a result dict with {success: False, error: ...} on failure.
     """

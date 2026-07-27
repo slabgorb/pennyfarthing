@@ -19,6 +19,25 @@ from pf.common.config import (
 )
 from pf.core.resolver import resolve_sprint_context
 
+# Sentinel ``jira`` values that mean "no real Jira key" even though the field is
+# present. Single source of truth (story 160-3) — consumed by story_update,
+# story_transition, and story_finish. Case-insensitive, whitespace-stripped.
+NO_JIRA_SENTINELS: frozenset[str] = frozenset({"", "none", "null", "x"})
+
+
+def _has_real_jira_key(story: dict[str, Any]) -> bool:
+    """Return True only when the story carries a real Jira key.
+
+    ``story.get("jira")`` is truthy for placeholder sentinels like the literal
+    string ``"none"``, which would let Jira code paths run on a personal-project
+    story that has no Jira side (gh #12). Normalize ``None``, empty/whitespace,
+    and the ``none``/``null``/``x`` sentinels (case-insensitive) to "no key".
+    """
+    key = story.get("jira")
+    if not isinstance(key, str):
+        return bool(key)
+    return key.strip().lower() not in NO_JIRA_SENTINELS
+
 
 def _merge_epic_shards(data: dict[str, Any], sprint_dir: Path) -> dict[str, Any]:
     """Merge sharded epic files into the sprint data structure.
@@ -438,6 +457,48 @@ def find_story_in_data(
                 return None, story, section
 
     return None, None, None
+
+
+def _collect_story_ids(sprint_data: dict[str, Any] | None) -> list[str]:
+    """Gather all story IDs from the same sections ``find_story_in_data`` searches."""
+    ids: list[str] = []
+    if not sprint_data:
+        return ids
+    for epic in sprint_data.get("epics", []):
+        if not isinstance(epic, dict):
+            continue
+        for story in epic.get("stories", []):
+            if isinstance(story, dict) and story.get("id"):
+                ids.append(str(story["id"]))
+    for section in ("standalone_stories", "stories"):
+        for story in sprint_data.get(section, []):
+            if isinstance(story, dict) and story.get("id"):
+                ids.append(str(story["id"]))
+    return ids
+
+
+def format_story_not_found_error(sprint_data: dict[str, Any] | None, story_id: str) -> str:
+    """Build a helpful not-found error that lists candidate story IDs.
+
+    Names the missing ``story_id``, then lists the available IDs (gathered from
+    epics, standalone_stories, and top-level stories) ranked by closeness to
+    the requested id so near-misses appear first.
+    """
+    import difflib
+
+    legacy = f"Story '{story_id}' not found in epics, standalone_stories, or stories"
+
+    candidates = _collect_story_ids(sprint_data)
+    if not candidates:
+        return legacy
+
+    # Rank by similarity to the requested id (near-misses first).
+    ranked = sorted(
+        candidates,
+        key=lambda cid: difflib.SequenceMatcher(None, story_id, cid).ratio(),
+        reverse=True,
+    )
+    return f"{legacy}. Available story IDs: {', '.join(ranked)}"
 
 
 def get_story_field(sprint_data: dict[str, Any], story_id: str, field_name: str) -> Any | None:

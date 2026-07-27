@@ -19,11 +19,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     report = ValidateReport(validator="schema")
     report.passed = summary.passed
     report.warnings = summary.warnings
-    report.errors = summary.errors
 
     for result in summary.results:
         for e in result.errors:
-            report.details.append(f"[ERROR] {result.file_path.name}: {e}")
+            msg = f"{result.file_path.name}: {e}"
+            report.errors.append(msg)
+            report.details.append(f"[ERROR] {msg}")
         for w in result.warnings:
             report.details.append(f"[WARN] {result.file_path.name}: {w}")
 

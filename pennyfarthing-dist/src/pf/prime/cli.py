@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from typing import Any
 
 from pf.common.config import get_project_root
+from pf.model_tiers import resolve_model
 from pf.prime.loader import (
     load_agent_definition,
     load_behavior_guide,
@@ -40,7 +41,7 @@ from pf.prime.loader import (
     load_sprint_context,
     load_team_mode_guide,
 )
-from pf.prime.models import PrimeComponent, PrimeResult, WorkflowState
+from pf.prime.models import PrimeComponent, PrimeResult, WorkflowState, WorkflowStatus
 from pf.prime.persona import (
     format_persona_compressed,
     format_persona_output,
@@ -123,7 +124,47 @@ def _format_workflow_state_text(result: PrimeResult) -> str:
     if ws.backlog_count > 0:
         lines.append(f"backlog_count: {ws.backlog_count}")
 
+    resolved = resolve_model("agent", result.agent_name)
+    if resolved["success"]:
+        lines.append(f"expected_model: {resolved['data']['alias']}")
+
     return "\n".join(lines)
+
+
+def _write_expected_model_state(
+    agent_name: str, ws: WorkflowStatus | None, root: Path
+) -> None:
+    """Write .session/.expected-model advisory state (fail-soft).
+
+    Consumed by the advisory model-check hook. Runs on every activation
+    path (FULL and tiered) — phase handoffs activate via --tier, and the
+    state must refresh there or the hook advises from a stale phase.
+    Resolution failure leaves no trace; write errors never break activation.
+
+    Args:
+        agent_name: Agent role name (e.g. "dev")
+        ws: Detected workflow status, or None (story_id/phase written as null)
+        root: Project root path
+    """
+    resolved = resolve_model("agent", agent_name)
+    if not resolved["success"]:
+        return
+    alias = resolved["data"]["alias"]
+    try:
+        session_dir = root / ".session"
+        session_dir.mkdir(exist_ok=True)
+        (session_dir / ".expected-model").write_text(
+            json.dumps(
+                {
+                    "agent": agent_name,
+                    "alias": alias,
+                    "story_id": getattr(ws, "story_id", None),
+                    "phase": getattr(ws, "phase", None),
+                }
+            )
+        )
+    except OSError:
+        pass  # advisory plumbing must never break activation
 
 
 def _component_header(name: str, agent_name: str | None) -> str:
@@ -272,6 +313,11 @@ def _prime_tiered(
             _print_header("Workflow State", quiet)
             print(_format_workflow_state_text(result))
 
+    # Expected model advisory state — tiered activations happen at phase
+    # handoffs, exactly when the advisory hook's state must refresh.
+    if agent_name:
+        _write_expected_model_state(agent_name, result.workflow_status, root)
+
     # MINIMAL tier: Just workflow state + note
     if tier == ContextTier.MINIMAL:
         if not json_output:
@@ -375,6 +421,7 @@ def prime(
     session_id: str | None = None,
     project_root: Path | None = None,
     tier: str | None = None,
+    brief: bool = False,
     greeting: bool = False,
 ) -> int:
     """Load and print context.
@@ -418,6 +465,10 @@ def prime(
         if json_output:
             print(json.dumps({"minimal": True}))
         return 0
+
+    # --brief is sugar for the HANDOFF tier (single code path, no drift).
+    if brief and not tier:
+        tier = "HANDOFF"
 
     root = project_root or get_project_root()
 
@@ -481,6 +532,13 @@ def prime(
         if not json_output:
             _print_header("Workflow State", quiet)
             print(_format_workflow_state_text(result))
+
+    # ==========================================================================
+    # Expected model advisory state (fail-soft; independent of --no-workflow so
+    # the advisory hook has data even when workflow detection is skipped)
+    # ==========================================================================
+    if agent_name:
+        _write_expected_model_state(agent_name, result.workflow_status, root)
 
     # ==========================================================================
     # PRIORITY 2: Agent definition
@@ -840,6 +898,9 @@ try:
     @click.option("--quiet", is_flag=True, help="Suppress section headers")
     @click.option("--greeting", is_flag=True, help="Emit agent greeting to stderr")
     @click.option(
+        "--brief", is_flag=True, help="Condensed activation (agent essentials only)"
+    )
+    @click.option(
         "--tier",
         type=click.Choice(["full", "refresh", "handoff", "minimal"], case_sensitive=False),
         help="Context tier level",
@@ -853,6 +914,7 @@ try:
         full: bool,
         quiet: bool,
         greeting: bool,
+        brief: bool,
         tier: str | None,
     ):
         """Load agent context (unified bootstrap).
@@ -873,6 +935,7 @@ try:
             full=full,
             quiet=quiet,
             greeting=greeting,
+            brief=brief,
             tier=tier,
         )
         raise SystemExit(exit_code)

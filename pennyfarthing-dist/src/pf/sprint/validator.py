@@ -423,6 +423,19 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
                             f"{epic_id}.stories[{idx}].{field_name}",
                         )
 
+                # Parity with inline path: per-story value checks (status enum,
+                # numeric points, jira format). One truth, one place — delegate to
+                # validate_story. Pass the story's own id as the path base so the
+                # offending story is locatable in error paths (AC4).
+                if isinstance(story, dict):
+                    path_base = str(story_id) if story_id else epic_id
+                    story_result = validate_story(story, path_base, idx)
+                    # Drop validate_story's own missing-field errors to avoid
+                    # duplicating the presence loop above; keep its value checks.
+                    for err in story_result.errors:
+                        if not err.message.startswith("Missing required field"):
+                            result.add_error(err.message, err.path, err.severity)
+
     return result
 
 
@@ -453,21 +466,48 @@ def validate_full_sprint(data: dict[str, Any]) -> ValidationResult:
             # Sharded format: epics are string refs, not dicts
             if isinstance(epic, str):
                 continue
+            # Populate epic-story IDs INCREMENTALLY so validate_epic for epic N
+            # sees epics 0..N-1's IDs and can flag cross-epic duplicates
+            # (L319-323). Seeding the full set up front would make each epic
+            # flag its own stories as duplicates.
             epic_result = validate_epic(epic, all_story_ids, idx)
             result.merge(epic_result)
 
-            # Collect story IDs for cross-epic duplicate detection
-            if "stories" in epic:
-                for story in epic["stories"]:
-                    story_id = story.get("id")
-                    if story_id:
-                        all_story_ids.add(story_id)
+            for story in epic.get("stories", []):
+                story_id = story.get("id")
+                if story_id:
+                    all_story_ids.add(str(story_id))
 
-    # Validate depends_on references and detect cycles
-    if all_story_ids:
-        _validate_depends_on(data, all_story_ids, result)
+    # Union in standalone + top-level IDs AFTER the epic loop so deps pointing
+    # at a standalone/top-level story resolve (story 160-2), without polluting
+    # the cross-epic duplicate check above.
+    for story in (*data.get("standalone_stories", []), *data.get("stories", [])):
+        story_id = story.get("id")
+        if story_id:
+            all_story_ids.add(str(story_id))
+
+    # Validate depends_on references and detect cycles. Runs even with no epic
+    # stories so standalone-only / top-level-only sprints are still walked.
+    _validate_depends_on(data, all_story_ids, result)
 
     return result
+
+
+def _iter_all_stories(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Flatten stories across all three locations in an in-memory sprint dict.
+
+    Pure ``data -> stories`` iterator (no disk reads) covering
+    ``epics[].stories`` (dict epics only — string shard refs skipped),
+    ``standalone_stories``, and top-level ``stories``. One truth for both the
+    known-ids resolution set and the depends_on walk (story 160-2).
+    """
+    stories: list[dict[str, Any]] = []
+    for epic in data.get("epics", []):
+        if isinstance(epic, dict):
+            stories.extend(epic.get("stories", []))
+    stories.extend(data.get("standalone_stories", []))
+    stories.extend(data.get("stories", []))
+    return stories
 
 
 def is_epic_shard_document(data: dict[str, Any]) -> bool:
@@ -506,29 +546,59 @@ def validate_sprint_document(data: dict[str, Any]) -> ValidationResult:
     return validate_full_sprint(data)
 
 
+def _get_archived_story_ids() -> set[str]:
+    """Return the set of completed/archived story IDs from sprint/archive/.
+
+    A depends_on target that resolves to an archived story is satisfied, not
+    dangling (gh #90): a dependency finishing and being archived is a normal
+    lifecycle event and must not hard-fail merged-sprint validation. Resolution
+    honors get_project_root() (loader.get_archived_stories with no scoping flags,
+    so it never needs get_sprint_info). A missing archive dir is safe — it just
+    yields an empty set, so a truly dangling ref still ERRORs.
+    """
+    try:
+        from pf.sprint.loader import get_archived_stories
+
+        archived = get_archived_stories()
+    except Exception:
+        return set()
+    return {str(s["id"]) for s in archived if isinstance(s, dict) and s.get("id")}
+
+
 def _validate_depends_on(
     data: dict[str, Any], all_story_ids: set[str], result: ValidationResult
 ) -> None:
-    """Validate depends_on references: targets exist and no cycles."""
-    deps: dict[str, str] = {}  # story_id -> depends_on target
+    """Validate depends_on references: targets exist and no cycles.
 
-    for epic in data.get("epics", []):
-        if isinstance(epic, str):
+    A target is considered to exist if it is an active story in the merged
+    sprint OR an archived (completed) story. Only references that resolve to
+    neither are reported as non-existent.
+    """
+    deps: dict[str, str] = {}  # story_id -> depends_on target
+    archived_ids: set[str] | None = None  # lazily resolved on first miss
+
+    # Walk stories from ALL locations (epics + standalone + top-level) so a
+    # dangling depends_on anywhere is caught, not just on epic stories (160-2).
+    for story in _iter_all_stories(data):
+        sid = str(story.get("id", ""))
+        dep = story.get("depends_on")
+        if dep is None:
             continue
-        for story in epic.get("stories", []):
-            sid = str(story.get("id", ""))
-            dep = story.get("depends_on")
-            if dep is None:
-                continue
-            dep = str(dep)
-            if dep not in all_story_ids:
-                result.add_error(
-                    f"depends_on '{dep}' references non-existent story. "
-                    f"To fix: Use an existing story ID or remove depends_on",
-                    f"{sid}.depends_on",
-                )
-            else:
-                deps[sid] = dep
+        dep = str(dep)
+        if dep in all_story_ids:
+            deps[sid] = dep
+            continue
+        # Active sprint miss — resolve against the archive before failing.
+        if archived_ids is None:
+            archived_ids = _get_archived_story_ids()
+        if dep in archived_ids:
+            # Satisfied by an archived/completed story — not dangling.
+            continue
+        result.add_error(
+            f"depends_on '{dep}' references non-existent story. "
+            f"To fix: Use an existing story ID or remove depends_on",
+            f"{sid}.depends_on",
+        )
 
     # Cycle detection via visited set
     for start in deps:

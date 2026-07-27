@@ -40,6 +40,8 @@ class LintResult:
     clean: bool = False
     output: str = ""
     error: str | None = None
+    command: str = ""  # the linter actually run (e.g. "ruff check ."), for truthful remediation
+    skipped: bool = False  # True when no lintable project was found — "not checked" != "passed" (SOUL #10)
 
 
 @dataclass
@@ -90,6 +92,7 @@ class PreflightResult:
             },
             "lint": {
                 "clean": self.lint.clean,
+                "skipped": self.lint.skipped,
             },
             "acceptance_criteria": {
                 "total": self.acceptance_criteria.total,
@@ -133,9 +136,75 @@ class PreflightResult:
         return result
 
 
+def _reject_option_like(value: str, kind: str) -> str | None:
+    """Guard a value that is passed to a subprocess as a *positional* argument.
+
+    ``check_pr_status`` and ``check_jira_status`` pass ``branch``/``jira_key`` as
+    bare positionals to ``gh``/``jira``. A value beginning with ``-`` is parsed by
+    the CLI as an *option*, not an operand — argument injection (CWE-88). Git
+    forbids leading-dash branch names and PR refs/Jira keys never start with
+    ``-``, so an option-shaped value here is always invalid. Return a truthful
+    error string to surface (return-don't-throw, SOUL #10) rather than launching
+    the subprocess; return ``None`` when the value is safe.
+    """
+    if value.startswith("-"):
+        return f"Refusing option-like {kind}: {value!r} (possible argument injection)"
+    return None
+
+
+async def _lookup_merged_pr_by_branch(branch: str, repo: str | None) -> dict[str, Any] | None:
+    """Find a merged PR by head branch.
+
+    Used when ``gh pr view <branch>`` reports no PR: a merged PR whose head
+    branch was deleted (the normal post-merge state) is invisible to
+    ``gh pr view`` but still discoverable via ``gh pr list --state merged``.
+    Mirrors the head-branch resolution used by story 155-1's finish flow.
+    Returns the first merged PR record, or ``None`` if none is found.
+    """
+    cmd = [
+        "gh",
+        "pr",
+        "list",
+        "--state",
+        "merged",
+        "--head",
+        branch,
+        "--json",
+        "number,state,mergedAt,url",
+    ]
+    if repo:
+        cmd.extend(["--repo", repo])
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await proc.communicate()
+        if proc.returncode != 0:
+            return None
+        data = json.loads(stdout.decode() or "[]")
+    except (OSError, json.JSONDecodeError):
+        # Fallback lookup failed — let the caller surface the original error.
+        return None
+
+    for pr in data:
+        if pr.get("state") == "MERGED" or pr.get("mergedAt"):
+            return pr
+    return None
+
+
 async def check_pr_status(branch: str, repo: str | None = None) -> PRStatus:
     """Check PR status via gh CLI."""
     result = PRStatus()
+
+    # Guard: branch is passed to `gh pr view` as a bare positional — an
+    # option-shaped value would be parsed as a flag (argument injection, CWE-88).
+    guard_error = _reject_option_like(branch, "branch")
+    if guard_error:
+        result.error = guard_error
+        return result
 
     # Note: 'merged' is not a valid field, use 'mergedAt' instead
     cmd = ["gh", "pr", "view", branch, "--json", "state,mergedAt,mergeable,url"]
@@ -158,7 +227,19 @@ async def check_pr_status(branch: str, repo: str | None = None) -> PRStatus:
             result.mergeable = data.get("mergeable")
             result.url = data.get("url")
         else:
-            result.error = stderr.decode().strip() or "PR not found"
+            err = stderr.decode().strip()
+            # A merged PR whose head branch was deleted reads as "no pull
+            # requests found for branch". Before treating that as a blocking
+            # "No PR found", fall back to a head-branch merged-PR lookup — a
+            # merged PR must not false-block finish.
+            if "no pull requests found" in err.lower():
+                merged_pr = await _lookup_merged_pr_by_branch(branch, repo)
+                if merged_pr is not None:
+                    result.state = "MERGED"
+                    result.merged = True
+                    result.url = merged_pr.get("url")
+                    return result
+            result.error = err or "PR not found"
 
     except Exception as e:
         result.error = str(e)
@@ -166,17 +247,49 @@ async def check_pr_status(branch: str, repo: str | None = None) -> PRStatus:
     return result
 
 
+def _detect_lint_command(project_root: Path) -> list[str] | None:
+    """Choose the lint command from the project layout.
+
+    - ``package.json`` present → Node project → ``npm run lint``
+    - else ``pyproject.toml`` present → Python project → ``ruff check .``
+    - else → no lintable project at this root → ``None`` (skip, treated as clean)
+
+    Historically ``check_lint`` hardcoded ``npm run lint`` regardless of
+    language, which false-blocked finish on the Python-only orchestrator root
+    (ADR-0034): the root has no npm lint script, so the check failed. Detecting
+    the language from the layout removes that false-block without depending on
+    the (stale) ``repos.yaml`` language field.
+    """
+    if (project_root / "package.json").exists():
+        return ["npm", "run", "lint"]
+    if (project_root / "pyproject.toml").exists():
+        return ["ruff", "check", "."]
+    return None
+
+
 async def check_lint(project_root: Path | None = None) -> LintResult:
-    """Run npm run lint."""
+    """Run the project's linter (language-aware)."""
     result = LintResult()
 
     cwd = project_root or Path.cwd()
 
+    # `_detect_lint_command` stats the filesystem (Path.exists) — blocking I/O.
+    # Offload it to a worker thread so it does not stall the event loop
+    # (no blocking stat on the async loop thread).
+    lint_cmd = await asyncio.to_thread(_detect_lint_command, cwd)
+    if lint_cmd is None:
+        # No lintable project at this root — absence of lint is not a failure,
+        # but it is "not checked", not "checked and clean". Report it truthfully
+        # as skipped so it cannot masquerade as a genuine pass (SOUL #10).
+        result.clean = True
+        result.skipped = True
+        return result
+
+    result.command = " ".join(lint_cmd)
+
     try:
         proc = await asyncio.create_subprocess_exec(
-            "npm",
-            "run",
-            "lint",
+            *lint_cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=cwd,
@@ -198,6 +311,13 @@ async def check_lint(project_root: Path | None = None) -> LintResult:
 async def check_jira_status(jira_key: str) -> JiraStatus:
     """Check Jira issue status."""
     result = JiraStatus(key=jira_key)
+
+    # Guard: jira_key is passed to `jira issue view` as a bare positional — an
+    # option-shaped value would be parsed as a flag (argument injection, CWE-88).
+    guard_error = _reject_option_like(jira_key, "jira key")
+    if guard_error:
+        result.error = guard_error
+        return result
 
     try:
         # Use --raw for JSON output (much easier to parse)
@@ -284,7 +404,18 @@ def aggregate_results(
         else:
             warnings.append(f"PR check failed: {pr.error}")
     elif not pr.merged:
-        if pr.state == "OPEN":
+        if pr.mergeable == "CONFLICTING":
+            # A conflicting PR cannot simply be merged — it needs a rebase first.
+            # Surfacing the generic "merge the PR" here is misleading and is the
+            # exact false-green that lets a CONFLICTING finish slip through (gh #113).
+            issues.append(
+                PreflightIssue(
+                    severity="critical",
+                    issue="PR has merge conflicts (not mergeable)",
+                    fix="Rebase the PR on its base branch and resolve the conflicts before finishing",
+                )
+            )
+        elif pr.state == "OPEN":
             issues.append(
                 PreflightIssue(
                     severity="critical",
@@ -303,11 +434,16 @@ def aggregate_results(
 
     # Check lint
     if lint.error and not lint.clean:
+        lint_fix = (
+            f"Run '{lint.command}' and fix errors"
+            if lint.command
+            else "Run the project's linter and fix errors"
+        )
         issues.append(
             PreflightIssue(
                 severity="critical",
                 issue="Lint check failed",
-                fix="Run 'npm run lint' and fix errors",
+                fix=lint_fix,
             )
         )
 

@@ -2219,14 +2219,7 @@ def new_sprint(
                 click.echo("Aborted.")
                 return
 
-    if dry_run:
-        click.echo(f"[DRY-RUN] Would initialize sprint TO Sprint {sprint_yyww}")
-        click.echo(f"  Jira ID: {jira_id}")
-        click.echo(f"  Dates: {start_date} to {end_date}")
-        click.echo(f"  Goal: {goal}")
-        return
-
-    # Create sprint file using write_sprint for consistency
+    # Build the payload up-front so dry-run can exercise the same write path.
     from pf.sprint.yaml_io import write_sprint
 
     sprint_data = {
@@ -2242,6 +2235,23 @@ def new_sprint(
         },
         "epics": [],
     }
+
+    if dry_run:
+        # Exercise the real write path against a throwaway location so
+        # serialization/IO failures surface here just as they would on a real
+        # run — without persisting to the live sprint file.
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as _td:
+            write_sprint(Path(_td) / "current-sprint.yaml", sprint_data)
+        click.echo(f"[DRY-RUN] Would initialize sprint TO Sprint {sprint_yyww}")
+        click.echo(f"  Jira ID: {jira_id}")
+        click.echo(f"  Dates: {start_date} to {end_date}")
+        click.echo(f"  Goal: {goal}")
+        return
+
+    # Create sprint file using write_sprint for consistency
     write_sprint(sprint_file, sprint_data)
     click.echo(f"Created {sprint_file}")
 

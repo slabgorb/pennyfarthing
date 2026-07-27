@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -221,9 +222,128 @@ def check_superpowers_plugin(root: Path) -> CheckResult:
     )
 
 
+def check_repos_topology(root: Path) -> CheckResult:
+    """Verify repos.yaml-declared paths exist and declared symlinks resolve.
+
+    Story 157-6 / gh#98: doctor previously validated only the runtime (content
+    dirs present) and stayed green even when every declared symlink had been
+    materialized over a missing repo. This check makes broken topology a loud
+    FAILURE, not silence:
+
+    - every ``repos.yaml`` repo ``path`` must exist on disk;
+    - every declared ``symlinks:`` entry must resolve to its declared target.
+
+    Missing repos.yaml is a no-op pass (not every project declares a topology).
+    The ``fix_fn`` relinks materialized copies via ``relink_topology``.
+    """
+    repos_path = root / ".pennyfarthing" / "repos.yaml"
+    if not repos_path.exists():
+        return CheckResult(
+            name="repos_topology",
+            status="pass",
+            detail="No repos.yaml — no topology to verify",
+        )
+
+    from pf.git.repos import load_repos_config
+
+    repos = load_repos_config(root)
+    problems: list[str] = []
+
+    for name, repo in repos.items():
+        if not (root / repo.path).exists():
+            problems.append(f"declared repo '{name}' path missing: {repo.path}")
+
+    for repo in repos.values():
+        for link_str, target_str in repo.symlinks.items():
+            link_path = root / link_str
+            target_path = root / target_str
+            if not link_path.is_symlink():
+                problems.append(
+                    f"declared symlink '{link_str}' is not a symlink "
+                    f"(expected -> {target_str})"
+                )
+                continue
+            try:
+                resolved_ok = link_path.resolve() == target_path.resolve()
+            except OSError:
+                resolved_ok = False
+            if not resolved_ok:
+                problems.append(
+                    f"declared symlink '{link_str}' does not resolve to {target_str}"
+                )
+
+    if problems:
+        return CheckResult(
+            name="repos_topology",
+            status="fail",
+            detail="; ".join(problems),
+            fix_fn=lambda: _fix_relink_topology(root),
+        )
+    return CheckResult(
+        name="repos_topology",
+        status="pass",
+        detail="All declared repo paths and symlinks intact",
+    )
+
+
+def check_project_shim(root: Path) -> CheckResult:
+    """Verify .pennyfarthing/bin/pf exists, is executable, and execs cleanly.
+
+    Story 153-11: the project-local shim is gitignored, so a fresh clone or a
+    ``git clean`` that never ran ``pf init`` leaves it missing — yet every
+    ``just pf`` recipe and the statusline hook exec it. doctor must FAIL (not
+    stay green) when the shim is missing, non-executable, or execs non-zero,
+    pointing the user at ``pf init`` to regenerate it.
+    """
+    shim = root / ".pennyfarthing" / "bin" / "pf"
+    remediation = "run `pf init` to regenerate it"
+
+    if not shim.is_file():
+        return CheckResult(
+            name="project_shim",
+            status="fail",
+            detail=f"project shim {shim} missing — {remediation}",
+        )
+    if not os.access(shim, os.X_OK):
+        return CheckResult(
+            name="project_shim",
+            status="fail",
+            detail=f"project shim {shim} not executable — {remediation}",
+        )
+    try:
+        proc = subprocess.run(
+            [str(shim), "--version"],
+            capture_output=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return CheckResult(
+            name="project_shim",
+            status="fail",
+            detail=f"project shim {shim} failed to exec — {remediation}",
+        )
+    if proc.returncode != 0:
+        return CheckResult(
+            name="project_shim",
+            status="fail",
+            detail=f"project shim {shim} exited {proc.returncode} — {remediation}",
+        )
+    return CheckResult(
+        name="project_shim",
+        status="pass",
+        detail=f"project shim {shim} present and working",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fix helpers
 # ---------------------------------------------------------------------------
+
+
+def _fix_relink_topology(root: Path) -> bool:
+    from pf.init.core import relink_topology
+
+    return relink_topology(root)["success"]
 
 
 def _fix_mkdir(path: Path) -> bool:
@@ -254,4 +374,6 @@ CHECKS: list[tuple[str, str]] = [
     ("git_hooks", "Git hooks dispatcher installed"),
     ("theme", "Active theme is valid"),
     ("superpowers_plugin", "superpowers companion plugin installed"),
+    ("repos_topology", "repos.yaml paths and symlinks intact"),
+    ("project_shim", "project-local .pennyfarthing/bin/pf shim present and working"),
 ]

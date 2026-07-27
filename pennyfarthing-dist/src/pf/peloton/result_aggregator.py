@@ -13,6 +13,7 @@ from typing import Any
 
 import yaml
 
+from pf.model_tiers import judge_alias
 from pf.peloton.workflow_driver import PhaseExecution
 
 
@@ -116,7 +117,7 @@ class ResultAggregator:
         self,
         output: PipelineOutput,
         ground_truth_path: Path,
-        judge_model: str = "claude-sonnet-4-20250514",
+        judge_model: str | None = None,
     ) -> dict[str, Any]:
         """Score pipeline output against ground truth.
 
@@ -126,6 +127,7 @@ class ResultAggregator:
         Returns:
             {success: True, data: ScoreResult} or {success: False, error: ...}
         """
+        judge_model = judge_model or judge_alias("peloton")
         if not ground_truth_path.exists():
             return {"success": False, "error": f"Ground truth file not found: {ground_truth_path}"}
 

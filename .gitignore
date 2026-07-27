@@ -66,6 +66,14 @@ __pycache__/
 *.vsix
 packages/vscode-extension/resources/portraits/
 
+# Portrait images are R2-only (ADR-0014, story 153-12). This dir is local
+# staging for the generation → r2_sync_portraits.py pipeline; .gitkeep files
+# preserve the theme dir structure.
+pennyfarthing-dist/personas/portraits/**/*.png
+pennyfarthing-dist/personas/portraits/**/*.jpg
+pennyfarthing-dist/personas/portraits/**/*.jpeg
+pennyfarthing-dist/personas/portraits/**/*.webp
+
 # Git worktrees
 worktrees/
 

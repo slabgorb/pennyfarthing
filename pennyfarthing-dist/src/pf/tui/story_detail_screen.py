@@ -15,6 +15,7 @@ from textual.containers import VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Markdown, Static
 
+from pf.tui.ac_shapes import ac_done_count
 from pf.tui.base_panel import render_progress_bar
 
 # Phase maps for known workflows
@@ -184,7 +185,7 @@ class StoryDetailScreen(Screen):
         # AC section — progress bar
         acs = data.get("acceptance_criteria", [])
         if acs:
-            done_count = sum(1 for ac in acs if ac.get("done"))
+            done_count = ac_done_count(acs)
             total = len(acs)
             pct = int(done_count / total * 100) if total > 0 else 0
             ac_line = Text()

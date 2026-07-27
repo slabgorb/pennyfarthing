@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from pf.jira.client import get_client
-from pf.sprint.loader import find_story_in_data
+from pf.sprint.loader import _has_real_jira_key, find_story_in_data
 from pf.sprint.status_normalize import normalize_status
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
@@ -72,7 +72,9 @@ def transition_story(
 
     from_status = normalize_status(story["status"])
     target_status = normalize_status(target_status)
-    jira_key = story.get("jira")
+    # Sentinel jira values (e.g. "none") are truthy strings but mean "no Jira";
+    # normalize to None so they behave exactly like a missing key (story 160-3).
+    jira_key = story.get("jira") if _has_real_jira_key(story) else None
 
     # Validate transition is legal
     valid_targets = TRANSITIONS.get(from_status, set())

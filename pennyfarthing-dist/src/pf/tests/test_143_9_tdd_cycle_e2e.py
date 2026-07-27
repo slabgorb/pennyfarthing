@@ -183,6 +183,15 @@ def project(tmp_path: Path) -> Path:
         )
     )
 
+    # Context docs — the sm_setup_exit transition (setup→red) requires the
+    # epic + story context documents to exist (Story 158-3). Both story IDs
+    # exercised below (e2e-full-1, e2e-fm-1) share epic "e2e".
+    context_dir = sprint_dir / "context"
+    context_dir.mkdir()
+    (context_dir / "context-epic-e2e.md").write_text("# Epic e2e Context\n")
+    (context_dir / "context-story-e2e-full-1.md").write_text("# Story e2e-full-1 Context\n")
+    (context_dir / "context-story-e2e-fm-1.md").write_text("# Story e2e-fm-1 Context\n")
+
     (tmp_path / ".session").mkdir()
     return tmp_path
 

@@ -14,9 +14,10 @@ from pathlib import Path
 import yaml
 
 from pf.common.config import get_dist_root
+from pf.model_tiers import VALID_ALIASES, resolve_model
 from pf.validate import ValidateReport
 
-VALID_MODELS = {"haiku", "sonnet", "opus"}
+VALID_MODELS = set(VALID_ALIASES)
 BUILTIN_AGENTS = {"Explore", "Plan"}
 
 # Valid tools that can appear in native agent allowed-tools
@@ -55,6 +56,47 @@ _MODEL_RE = re.compile(r"\*\*Model:\*\*\s+(\S+)", re.IGNORECASE)
 
 # Regex to extract subagent names from markdown table rows: | `name` | purpose |
 _HELPER_TABLE_RE = re.compile(r"^\s*\|\s*`?([^`|]+)`?\s*\|", re.MULTILINE)
+
+# Spawn-template scan: split content into fenced code blocks first, then
+# search each block independently for 'You are the <name> subagent' lines
+# and model: "<value>" lines. Pairing is per-block (never across a ```
+# fence) and order-agnostic — real stanzas put model: BEFORE the prompt's
+# "You are the ..." line, but either order pairs correctly.
+_FENCE_RE = re.compile(r"```[^\n]*\n(.*?)```", re.DOTALL)
+_SPAWN_NAME_RE = re.compile(r"You are the ([a-z0-9-]+) subagent")
+_SPAWN_MODEL_RE = re.compile(r"\bmodel:\s*\"?([a-z0-9-]+)\"?")
+
+
+def _pair_spawn_stanzas(block: str) -> list[tuple[str, str]]:
+    """Pair subagent names with model values inside one fenced block.
+
+    Multi-stanza blocks (e.g. tea.md's simplify fan-out) yield one pair
+    per name: each name is matched to the NEAREST model: line by offset,
+    which is its own stanza's regardless of before/after ordering.
+    """
+    names = [(m.start(), m.group(1)) for m in _SPAWN_NAME_RE.finditer(block)]
+    models = [(m.start(), m.group(1)) for m in _SPAWN_MODEL_RE.finditer(block)]
+    if not names or not models:
+        return []
+    pairs: list[tuple[str, str]] = []
+    for name_pos, name in names:
+        _, model = min(models, key=lambda pm: abs(pm[0] - name_pos))
+        pairs.append((name, model))
+    return pairs
+
+
+def validate_spawn_templates(content: str) -> list[str]:
+    """Inline Task-spawn model values must match the tier map."""
+    errors: list[str] = []
+    for block in _FENCE_RE.findall(content):
+        for name, model in _pair_spawn_stanzas(block):
+            mapped = resolve_model("subagent", name)
+            if mapped["success"] and model != mapped["data"]["alias"]:
+                errors.append(
+                    f"Spawn template for '{name}' uses model '{model}', tier map "
+                    f"says '{mapped['data']['alias']}' (models.yaml)"
+                )
+    return errors
 
 
 def _has_frontmatter(content: str) -> bool:
@@ -342,6 +384,9 @@ def validate_main_agent(path: Path, agents_dir: Path) -> tuple[list[str], list[s
     if "helpers" in tags and "parameters" not in tags:
         warnings.append("Has <helpers> but missing <parameters> section")
 
+    # Check 11: Inline Task-spawn templates — model must match tier map (error)
+    errors.extend(validate_spawn_templates(content))
+
     # Recommended sections (warnings)
     if "on-activation" not in tags:
         warnings.append("Missing recommended <on-activation> section")
@@ -377,13 +422,22 @@ def validate_subagent(path: Path) -> tuple[list[str], list[str]]:
         if fm["name"] != expected_name:
             errors.append(f"Name mismatch: expected '{expected_name}', got '{fm['name']}'")
 
-    # Model validation — any valid Claude model is allowed
+    # Model validation — aliases or explicit claude-* names
     if "model" in fm:
         model_val = str(fm["model"]).lower()
-        valid_models = {"haiku", "sonnet", "opus"}
-        if model_val not in valid_models:
-            errors.append(f"Subagent model must be one of {valid_models}, got '{fm['model']}'")
-
+        if model_val not in VALID_MODELS and not model_val.startswith("claude-"):
+            errors.append(
+                f"Subagent model must be one of {sorted(VALID_MODELS)} or a "
+                f"claude-* name, got '{fm['model']}'"
+            )
+        else:
+            mapped = resolve_model("subagent", path.stem)
+            if mapped["success"] and model_val != mapped["data"]["alias"]:
+                errors.append(
+                    f"Model '{model_val}' does not match tier map: "
+                    f"'{path.stem}' is {mapped['data']['tier']} → "
+                    f"'{mapped['data']['alias']}' (models.yaml)"
+                )
 
     # Required tags
     tags = _find_tags(content)
@@ -421,11 +475,15 @@ def validate_native_agent(path: Path) -> tuple[list[str], list[str]]:
         if field not in fm:
             errors.append(f"Missing required frontmatter field: {field}")
 
-    # Model must be opus for native (strategic) agents
+    # Model must match the native_agents tier from models.yaml
     if "model" in fm:
         model_val = str(fm["model"]).lower()
-        if model_val != "opus":
-            warnings.append(f"Native agent model is '{fm['model']}', expected 'opus'")
+        expected = resolve_model("native", path.stem)
+        if expected["success"] and model_val != expected["data"]["alias"]:
+            warnings.append(
+                f"Native agent model is '{fm['model']}', expected "
+                f"'{expected['data']['alias']}' (models.yaml native_agents tier)"
+            )
 
     tools = fm.get("allowed-tools")
     if tools is None:
@@ -470,13 +528,13 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
     dist_root = get_dist_root(project_root=root)
     if dist_root is None:
         report.details.append("[ERROR] agents directory not found")
-        report.errors += 1
+        report.errors.append("agents directory not found")
         return report
     agents_dir = dist_root / "agents"
 
     if not agents_dir.is_dir():
         report.details.append("[ERROR] agents directory not found")
-        report.errors += 1
+        report.errors.append("agents directory not found")
         return report
 
     main_agents, subagents, _skipped = classify_agent_files(agents_dir)
@@ -489,12 +547,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         file_errors, file_warnings = validate_main_agent(path, agents_dir)
 
         for e in file_errors:
-            report.errors += 1
+            report.errors.append(f"{path.name}: {e}")
             report.details.append(f"[ERROR] {path.name}: {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors += 1
+                report.errors.append(f"{path.name}: {w}")
                 report.details.append(f"[ERROR] {path.name}: {w}")
             else:
                 report.warnings += 1
@@ -507,12 +565,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
         file_errors, file_warnings = validate_subagent(path)
 
         for e in file_errors:
-            report.errors += 1
+            report.errors.append(f"{path.name}: {e}")
             report.details.append(f"[ERROR] {path.name}: {e}")
 
         for w in file_warnings:
             if strict:
-                report.errors += 1
+                report.errors.append(f"{path.name}: {w}")
                 report.details.append(f"[ERROR] {path.name}: {w}")
             else:
                 report.warnings += 1
@@ -529,12 +587,12 @@ def run(root: Path, *, fix: bool = False, strict: bool = False) -> ValidateRepor
             file_errors, file_warnings = validate_native_agent(path)
 
             for e in file_errors:
-                report.errors += 1
+                report.errors.append(f"native/{path.name}: {e}")
                 report.details.append(f"[ERROR] native/{path.name}: {e}")
 
             for w in file_warnings:
                 if strict:
-                    report.errors += 1
+                    report.errors.append(f"native/{path.name}: {w}")
                     report.details.append(f"[ERROR] native/{path.name}: {w}")
                 else:
                     report.warnings += 1

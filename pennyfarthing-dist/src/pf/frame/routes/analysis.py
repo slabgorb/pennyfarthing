@@ -77,8 +77,10 @@ dead_code_router = APIRouter(prefix="/api/dead-code", tags=["dead-code"])
 async def get_dead_code(request: Request) -> JSONResponse:
     project_dir = _get_project_dir()
     try:
-        result = await asyncio.to_thread(find_stale_files, project_dir)
-        return JSONResponse({"files": _safe_to_dict(result), "total": len(result)})
+        result = await find_stale_files(Path(project_dir))
+        return JSONResponse(
+            {"files": _safe_to_dict(result.stale_files), "total": len(result.stale_files)}
+        )
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
@@ -94,7 +96,7 @@ complexity_router = APIRouter(prefix="/api/complexity", tags=["complexity"])
 async def get_complexity(request: Request) -> JSONResponse:
     project_dir = _get_project_dir()
     try:
-        result = await asyncio.to_thread(analyze_complexity, project_dir)
+        result = await analyze_complexity(Path(project_dir))
         return JSONResponse(_safe_to_dict(result))
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
@@ -111,7 +113,7 @@ dependencies_router = APIRouter(prefix="/api/dependencies", tags=["dependencies"
 async def get_dependencies(request: Request) -> JSONResponse:
     project_dir = _get_project_dir()
     try:
-        result = await asyncio.to_thread(analyze_dependencies, project_dir)
+        result = await analyze_dependencies(Path(project_dir))
         return JSONResponse(_safe_to_dict(result))
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)

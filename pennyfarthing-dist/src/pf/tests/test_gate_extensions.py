@@ -216,6 +216,14 @@ class TestResolveGateWithExtensions:
     """resolve_gate() includes gate_extensions when configured."""
 
     def _make_workflow(self, project: Path) -> None:
+        # resolve_gate enforces the assessment precondition on gated phases
+        # (158-4) — seed a session so these extension tests stay focused.
+        session_dir = project / ".session"
+        session_dir.mkdir(exist_ok=True)
+        (session_dir / "test-1-session.md").write_text(
+            "# Story test-1\n\n**Workflow:** test-wf\n**Phase:** implement\n\n"
+            "## Dev Assessment\n\nFixture assessment.\n"
+        )
         wf_dir = project / ".pennyfarthing" / "workflows"
         wf_dir.mkdir(parents=True, exist_ok=True)
         wf = {

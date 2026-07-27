@@ -244,14 +244,17 @@ def portraits_list():
 @portraits.command("fetch")
 @click.argument("theme")
 def portraits_fetch(theme: str):
-    """Download THEME's portrait pack from the CDN (idempotent)."""
+    """Download THEME's portraits from the CDN (idempotent)."""
     from pf.package.portrait_cdn import ensure_portraits
 
     result = ensure_portraits(theme)
     if not result["success"]:
         click.echo(f"Error: {result['error']}", err=True)
         sys.exit(1)
-    click.echo(f"{theme}: {result['action']} -> {result['cache_dir']}")
+    click.echo(
+        f"{theme}: downloaded {result['downloaded']}, cached {result['cached']}, "
+        f"missing {result['missing']} -> {result['cache_dir']}"
+    )
 
 
 @portraits.command("clean")

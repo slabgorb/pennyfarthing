@@ -13,6 +13,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from pf.model_tiers import judge_alias
+
 _CHARS_PER_TOKEN = 4
 
 
@@ -217,7 +219,7 @@ def generate_narrative(
         scenario_id: Scenario identifier.
         phases: Phase names for the scenario.
         title: Scenario title.
-        model: Claude model to use (default: claude-sonnet-4-6).
+        model: Claude model to use (default: models.yaml judges.benchmark).
         finding_id: Optional finding ID to focus narrative on.
         force: If True, regenerate even if cached narrative exists.
         project_dir: Project directory for claude CLI context.
@@ -235,7 +237,7 @@ def generate_narrative(
     if narrative_path.exists() and not force:
         return narrative_path
 
-    use_model = model or "claude-sonnet-4-6"
+    use_model = model or judge_alias("benchmark")
 
     prompt = build_narrate_prompt(
         run_dir,
