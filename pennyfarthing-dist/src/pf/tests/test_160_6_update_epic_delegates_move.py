@@ -196,8 +196,13 @@ class TestCliUpdateEpicRelocates:
         assert "--epic" in result.output, (
             f"`--epic` must appear in `story update --help`; help was:\n{result.output}"
         )
-        # The help text must actually explain what it does (not a bare flag).
-        assert "epic" in result.output.lower()
+        # Tightened per 160-24: the help text must carry the DISTINGUISHING
+        # explanation (the flag delegates to `story move`), not merely repeat
+        # the word "epic" — which the flag name itself already satisfied.
+        assert "delegates" in result.output.lower(), (
+            f"`--epic` help must explain the delegation to `story move`; "
+            f"help was:\n{result.output}"
+        )
 
 
 # =============================================================================
@@ -249,15 +254,30 @@ class TestUpdateEpicDelegatesToMoveStory:
         assert moved["workflow"] == "tdd"
 
     def test_update_delegates_not_reimplemented(self) -> None:
-        """Source-scan one-truth enforcer (mirrors 153-3's shard-aware-io scan):
-        ``story_update.py`` must reference ``move_story`` rather than growing its
-        own epic-move/renumber/dep-rewrite logic."""
+        """One-truth enforcer, tightened per 160-24 to an AST call-site check:
+        ``update_story`` must actually CALL ``move_story`` (the old substring
+        scan passed on a mere import or comment). The behavioral delegation
+        tests above prove the semantics; this pins the mechanism (SOUL #2)."""
+        import ast
+
         from pf.sprint import story_update
 
-        src = Path(story_update.__file__).read_text(encoding="utf-8")
-        assert "move_story" in src, (
-            "story_update must delegate the --epic move to move_story (SOUL #2), "
-            "not reimplement remove/insert/renumber/dep-rewrite"
+        tree = ast.parse(Path(story_update.__file__).read_text(encoding="utf-8"))
+        update_fn = next(
+            n
+            for n in ast.walk(tree)
+            if isinstance(n, ast.FunctionDef) and n.name == "update_story"
+        )
+        calls = [
+            node.func.id if isinstance(node.func, ast.Name) else node.func.attr
+            for node in ast.walk(update_fn)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, (ast.Name, ast.Attribute))
+        ]
+        assert "move_story" in calls, (
+            "update_story must contain a call site delegating the --epic move "
+            "to move_story (SOUL #2), not reimplement "
+            "remove/insert/renumber/dep-rewrite; calls found: " + repr(calls)
         )
 
 

@@ -78,7 +78,19 @@ def update_story(
         update_jira: If True, sync changed fields to Jira after YAML update
 
     Returns:
-        Dict with success status and optional error
+        Result dict; both paths carry a top-level ``story_id`` on success.
+
+        Field-update path: ``{"success": True, "story_id": <id>}`` plus
+        ``dry_run: True`` under dry-run and optional ``jira``/``jira_errors``
+        keys after a Jira sync.
+
+        --epic path (delegates to ``move_story``): the move result with
+        ``story_id`` added — ``{"success": True, "story": {...move
+        details...}, "story_id": <post-move id>}``. After a real move
+        ``story_id`` is the renumbered (new) id; under dry-run or a same-epic
+        no-op it is the story's unchanged id.
+
+        On any failure: ``{"success": False, "error": <message>}``.
     """
     # --epic delegates to move_story (gh #13). It owns the atomic
     # remove/insert/renumber/dependency-rewrite + shard-aware IO (SOUL #2), so
@@ -110,7 +122,17 @@ def update_story(
                     f"update its fields."
                 ),
             }
-        return move_story(sprint_path, story_id, to_epic=epic, dry_run=dry_run)
+        move_result = move_story(sprint_path, story_id, to_epic=epic, dry_run=dry_run)
+        # Uniform result shape (160-24): every success from update_story
+        # carries a top-level story_id. After a real move that's the
+        # renumbered id; dry-run and same-epic no-op results have no new_id,
+        # so the story's unchanged id is reported.
+        if move_result.get("success"):
+            details = move_result.get("story") or {}
+            move_result["story_id"] = (
+                details.get("new_id") or details.get("id") or story_id
+            )
+        return move_result
 
     # Validate status before reading file
     if status is not None and status not in VALID_STORY_STATUSES:
@@ -397,7 +419,12 @@ def story_update_command(
         # --epic delegated to move_story, which returns a move-shaped result.
         if epic is not None:
             story = result.get("story", {})
-            if result.get("dry_run"):
+            if result.get("no_op"):
+                click.echo(
+                    f"Story {story.get('id')} is already in epic "
+                    f"{story.get('to_epic')} — nothing to move"
+                )
+            elif result.get("dry_run"):
                 click.echo(
                     f"[DRY-RUN] Would move story {story.get('id')} "
                     f"to epic {story.get('to_epic')}"
