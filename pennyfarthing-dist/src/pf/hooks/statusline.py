@@ -422,13 +422,55 @@ def _compose_tab_title(dir_name: str, story_id: str, phase: str) -> str:
     return " ".join(parts)
 
 
-def _write_title_to_tty(title: str) -> None:
-    """Write an OSC 2 title escape to the controlling terminal.
+def _resolve_ancestor_tty() -> str:
+    """Find the tty device of the nearest ancestor process that has one.
 
-    Statusline stdout belongs to Claude Code's status bar; only the tty
-    reaches the terminal emulator (Ghostty tab title).
+    Claude Code spawns hooks without a controlling terminal, so /dev/tty is
+    unavailable; the parent claude process still owns the real terminal.
+    Returns a device path like /dev/ttys000 (macOS) or /dev/pts/1 (Linux),
+    or "" if no ancestor has a tty.
     """
-    with open("/dev/tty", "w") as tty:
+    pid = os.getppid()
+    for _ in range(5):
+        if pid <= 1:
+            break
+        try:
+            out = subprocess.run(
+                ["ps", "-o", "ppid=,tty=", "-p", str(pid)],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            ).stdout.split()
+        except (OSError, subprocess.SubprocessError):
+            return ""
+        if len(out) < 2:
+            return ""
+        ppid_str, tty = out[0], out[1]
+        if tty and not tty.startswith("?"):
+            return f"/dev/{tty}"
+        try:
+            pid = int(ppid_str)
+        except ValueError:
+            return ""
+    return ""
+
+
+def _write_title_to_tty(title: str) -> None:
+    """Write an OSC 2 title escape to the terminal.
+
+    Statusline stdout belongs to Claude Code's status bar; only a tty
+    device reaches the terminal emulator (Ghostty tab title). Tries the
+    controlling terminal first, then falls back to the nearest ancestor's
+    tty (hooks are spawned without a controlling terminal).
+    """
+    try:
+        tty = open("/dev/tty", "w")
+    except OSError:
+        tty_path = _resolve_ancestor_tty()
+        if not tty_path:
+            raise OSError("no tty available")
+        tty = open(tty_path, "w")
+    with tty:
         tty.write(f"\x1b]2;{title}\x07")
         tty.flush()
 

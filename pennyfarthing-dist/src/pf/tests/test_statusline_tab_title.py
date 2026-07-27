@@ -160,3 +160,75 @@ def test_set_title_idle_is_folder_only(tmp_path: Path) -> None:
         statusline._set_terminal_title(tmp_path, "orc-penny", "")
 
     tty.assert_called_once_with("orc-penny")
+
+
+# =============================================================================
+# Ancestor-tty fallback (hooks are spawned without a controlling terminal)
+# =============================================================================
+
+
+def test_write_title_falls_back_to_ancestor_tty(tmp_path: Path) -> None:
+    """/dev/tty unavailable → resolve ancestor tty and write there."""
+    from pf.hooks import statusline
+
+    fake_tty = tmp_path / "ttys000"
+    fake_tty.write_text("")
+    real_open = open
+
+    def fake_open(path, *args, **kwargs):
+        if path == "/dev/tty":
+            raise OSError(6, "Device not configured")
+        return real_open(path, *args, **kwargs)
+
+    with (
+        patch("builtins.open", side_effect=fake_open),
+        patch.object(statusline, "_resolve_ancestor_tty", return_value=str(fake_tty)),
+    ):
+        statusline._write_title_to_tty("orc-penny 160-5 red")
+
+    assert fake_tty.read_text() == "\x1b]2;orc-penny 160-5 red\x07"
+
+
+def test_write_title_raises_when_no_tty_anywhere() -> None:
+    """No controlling tty and no ancestor tty → OSError (caller is fail-soft)."""
+    import pytest
+
+    from pf.hooks import statusline
+
+    def fake_open(path, *args, **kwargs):
+        raise OSError(6, "Device not configured")
+
+    with (
+        patch("builtins.open", side_effect=fake_open),
+        patch.object(statusline, "_resolve_ancestor_tty", return_value=""),
+    ):
+        with pytest.raises(OSError):
+            statusline._write_title_to_tty("orc-penny")
+
+
+def test_resolve_ancestor_tty_finds_first_tty() -> None:
+    """Walks ppid chain past tty-less ancestors to the first real tty."""
+    from unittest.mock import MagicMock
+
+    from pf.hooks import statusline
+
+    results = [
+        MagicMock(stdout="  54075 ??\n"),      # immediate parent: no tty
+        MagicMock(stdout="  54018 ttys000\n"), # grandparent: has tty
+    ]
+    with (
+        patch.object(statusline.os, "getppid", return_value=98589),
+        patch.object(statusline.subprocess, "run", side_effect=results),
+    ):
+        assert statusline._resolve_ancestor_tty() == "/dev/ttys000"
+
+
+def test_resolve_ancestor_tty_gives_up_cleanly() -> None:
+    """ps failure → empty string, never an exception."""
+    from pf.hooks import statusline
+
+    with (
+        patch.object(statusline.os, "getppid", return_value=98589),
+        patch.object(statusline.subprocess, "run", side_effect=OSError("no ps")),
+    ):
+        assert statusline._resolve_ancestor_tty() == ""
