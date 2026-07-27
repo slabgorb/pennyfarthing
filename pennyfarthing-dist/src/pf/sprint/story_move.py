@@ -89,7 +89,8 @@ def move_story(
     Returns:
         Result dict with ``success`` and either ``story`` details or
         ``error``. A same-epic move additionally carries ``no_op: True`` with
-        the story's unchanged details.
+        the story's unchanged details, plus the caller's ``dry_run`` flag
+        carried through verbatim.
     """
     data = read_sprint(sprint_path)
 
@@ -117,6 +118,10 @@ def move_story(
         return {
             "success": True,
             "no_op": True,
+            # The caller's dry_run signal is carried through so scripts keying
+            # on result["dry_run"] stay truthful even when the answer is
+            # "nothing to do" (160-24 rework).
+            "dry_run": dry_run,
             "story": {
                 "id": story.get("id"),
                 "title": story.get("title"),
