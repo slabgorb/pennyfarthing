@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v13.1.2** | *The outer loop goes once, the inner loop goes many times.*
+**v13.4.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -15,7 +15,7 @@ A Claude Code agent orchestration framework built around three pillars: a flexib
 A multi-agent system with customizable BikeLane workflows for structured software development:
 
 - **11 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, Tech Writer, UX Designer, DevOps, Orchestrator, BA
-- **11 BikeLane Workflows** - TDD, BDD, Trivial, 2-Party TDD, TDD-Team, BDD-Team, Patch, Agent-Docs, Architecture, Release, Git Cleanup
+- **13 BikeLane Workflows** - TDD (default), SDD, SPDD, BDD, Trivial, 2-Party TDD, TDD-Team, BDD-Team, Patch, Agent-Docs, Architecture, Release, Git Cleanup
 - **38 Slash Commands** - Entry points for agent activation and workflows
 - **25 Skills** - Reusable knowledge domains (testing, code-review, jira, settings, mermaid, etc.)
 - **Prime Context System** - Tiered context injection assembles agent definition, persona, session state, and sidecar memory
@@ -360,7 +360,7 @@ See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 
 ## Available Themes (45)
 
-All 45 themes are bundled with `pf init` — no separate packages required. Themes span sci-fi, prestige TV, literature, mythology, comedy, history, and more:
+All 46 themes are bundled with `pf init` — no separate packages required. Themes span sci-fi, prestige TV, literature, mythology, comedy, history, and more:
 
 `the-expanse`, `star-trek-tng`, `breaking-bad`, `discworld`, `fifth-element`, `succession`, `the-wire`, `mad-men`, `shakespeare`, `jane-austen`, `dune`, `game-of-thrones`, `the-office`, `monty-python`, `greek-mythology`, `blade-runner`, `doctor-who`, `harry-potter`, `foundation`, `ted-lasso`, `alice-in-wonderland`, `firefly`, and more.
 
