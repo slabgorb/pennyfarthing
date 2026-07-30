@@ -20,9 +20,13 @@ model: haiku
 Before running preflight, check if a PR exists for the branch. If not, create one.
 
 ```bash
+# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
+# .venv — derive the interpreter from the launcher shebang, never activate .venv.
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+
 # Read pr_mode and pr_strategy
-PR_MODE=$(source .venv/bin/activate && python -m pf.common.pr_config)
-PR_STRATEGY=$(python3 -c "
+PR_MODE=$("$PF_PY" -m pf.common.pr_config)
+PR_STRATEGY=$("$PF_PY" -c "
 from pf.git.repos import get_repo_config
 rc = get_repo_config('{REPOS}')
 print(rc.pr_strategy if rc else 'standard')
@@ -31,7 +35,8 @@ print(rc.pr_strategy if rc else 'standard')
 
 Format the PR title using the project's `pr_title_format` from `.pennyfarthing/repos.yaml`:
 ```bash
-PR_TITLE=$(python3 -c "
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+PR_TITLE=$("$PF_PY" -c "
 from pf.git.repos import format_pr_title
 print(format_pr_title(jira_key='${JIRA_KEY:-$STORY_ID}', title='${title}', scope='${scope}'))
 ")
@@ -91,7 +96,8 @@ session, parses R1-format findings via `pf.findings.capture.parse_delivery_findi
 and writes the `## Impact Summary` section between Delivery Findings and agent assessments.
 
 ```bash
-source .venv/bin/activate && python -c "
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"$PF_PY" -c "
 from pathlib import Path
 from pf.findings.summary import write_impact_summary_to_session
 import json
@@ -103,12 +109,13 @@ print(json.dumps(result))
 - If `success: true`: Impact Summary compiled. Log `finding_count` and `blocking_count`.
 - If `success: false`: Log the error but continue with preflight — Impact Summary is non-blocking.
 
-## 3. Run Preflight Script
+## 4. Run Preflight Script
 
 The preflight script runs all checks in parallel using asyncio:
 
 ```bash
-source .venv/bin/activate && python -m pf.preflight finish {STORY_ID} --branch {BRANCH} --jira {JIRA_KEY}
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"$PF_PY" -m pf.preflight finish {STORY_ID} --branch {BRANCH} --jira {JIRA_KEY}
 ```
 
 If no JIRA_KEY, omit the `--jira` flag.

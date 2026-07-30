@@ -84,19 +84,43 @@ def _preview(fence: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _make_fake_env(tmp_path: Path) -> tuple[Path, Path]:
+def _pf_capable_interpreter() -> str | None:
+    """An interpreter whose environment can import pf, to play the role of the
+    uv-tool venv python behind the fake launcher's shebang.
+
+    ``sys.executable`` is NOT guaranteed to qualify: under ``uv run pytest``
+    the pytest tool runs on a uv-managed interpreter where pf is importable
+    in-process but not from a bare subprocess. Prefer the dist dev venv (a
+    real venv with pf installed), fall back to sys.executable if it happens
+    to qualify.
+    """
+    candidates = [DIST_DIR / ".venv" / "bin" / "python3", Path(sys.executable)]
+    for cand in candidates:
+        if not cand.exists():
+            continue
+        probe = subprocess.run(
+            [str(cand), "-c", f"import {TEMPLATE_MODULES}"],
+            capture_output=True,
+            check=False,
+        )
+        if probe.returncode == 0:
+            return str(cand)
+    return None
+
+
+def _make_fake_env(tmp_path: Path, interpreter: str) -> tuple[Path, Path]:
     """Return (bin_dir, project_dir).
 
-    bin_dir holds a fake ``pf`` launcher whose shebang is this test run's real
-    interpreter (uv-tool style: absolute path into the tool's own venv). The
-    directory name contains a space so an unquoted ``$(command -v pf)`` breaks
+    bin_dir holds a fake ``pf`` launcher whose shebang is ``interpreter``
+    (uv-tool style: absolute path into the tool's own venv). The directory
+    name contains a space so an unquoted ``$(command -v pf)`` breaks
     (lang-review #5). project_dir has a decoy ``.venv`` whose python always
     fails with ModuleNotFoundError — the SideQuest scenario from gh #112.
     """
     bin_dir = tmp_path / "tool bin"
     bin_dir.mkdir()
     launcher = bin_dir / "pf"
-    launcher.write_text(f"#!{sys.executable}\n# fake uv-tool pf launcher\n", encoding="utf-8")
+    launcher.write_text(f"#!{interpreter}\n# fake uv-tool pf launcher\n", encoding="utf-8")
     launcher.chmod(0o755)
 
     proj = tmp_path / "proj"
@@ -221,7 +245,7 @@ class TestPfPyDerivation:
             "sm-finish.md defines no PF_PY derivation — pf.* is still invoked "
             "via the project .venv (gh #112)"
         )
-        bin_dir, proj = _make_fake_env(tmp_path)
+        bin_dir, proj = _make_fake_env(tmp_path, sys.executable)
         for assignment in assignments:
             derived = _derive_pf_py(assignment, bin_dir, proj)
             assert derived == sys.executable, (
@@ -240,16 +264,15 @@ class TestPfPyDerivation:
             "sm-finish.md defines no PF_PY derivation — pf.* is still invoked "
             "via the project .venv (gh #112)"
         )
-        baseline = subprocess.run(
-            [sys.executable, "-c", "import pf"], capture_output=True, check=False
-        )
-        if baseline.returncode != 0:
+        interpreter = _pf_capable_interpreter()
+        if interpreter is None:
             pytest.skip(
-                "test runner's own interpreter cannot import pf — the fake "
-                "launcher fixture cannot host the AC4 check in this environment"
+                "no interpreter with pf installed found — the fake launcher "
+                "fixture cannot host the AC4 check in this environment"
             )
-        bin_dir, proj = _make_fake_env(tmp_path)
+        bin_dir, proj = _make_fake_env(tmp_path, interpreter)
         derived = _derive_pf_py(assignments[0], bin_dir, proj)
+        assert derived == interpreter
         result = subprocess.run(
             [derived, "-c", f"import {TEMPLATE_MODULES}"],
             capture_output=True,
