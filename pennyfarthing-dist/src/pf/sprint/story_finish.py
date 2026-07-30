@@ -609,8 +609,8 @@ def finish_story(
     # (SOUL #10). Broad catch is deliberate: any exception at this point is
     # strictly bookkeeping, and the failure is surfaced in the step entry.
     try:
-        data = read_sprint(sprint_path)
-        _epic, completed_story, _location = find_story_in_data(data, story_id)
+        data_step4b = read_sprint(sprint_path)
+        _epic, completed_story, _location = find_story_in_data(data_step4b, story_id)
     except Exception as exc:
         completed_story = None
         steps.append(
@@ -624,6 +624,19 @@ def finish_story(
                 ),
             }
         )
+    else:
+        if not completed_story:
+            steps.append(
+                {
+                    "step": "4b",
+                    "action": "add_completed_story",
+                    "success": False,
+                    "error": (
+                        f"Story {story_id} not found in re-read sprint data; "
+                        "completed row not recorded"
+                    ),
+                }
+            )
     if completed_story:
         add_result = _add_story_to_completed(project_root, story_id, completed_story)
         if add_result.get("success"):
