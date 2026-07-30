@@ -325,7 +325,9 @@ def _write_archive_file(archive_path: Path, data: dict[str, Any]) -> None:
     archive_path.write_text(result)
 
 
-def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
+def backfill_epic_refs(
+    project_root: Path | None = None, *, prefix_parse: bool = False
+) -> dict[str, Any]:
     """Repair archive entries whose `epic` field is missing or empty.
 
     Walks every ``sprint/archive/sprint-*-completed.yaml`` under ``project_root``
@@ -340,6 +342,13 @@ def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
 
     Args:
         project_root: Project root path (defaults to auto-detect).
+        prefix_parse: Opt-in one-time migration mode for historical archives
+            (155-10). For rows still unresolved after the live-sprint lookup
+            (live data always wins), derive the epic from the story id iff it
+            is an unambiguous numeric ``{epic}-{seq}`` (``144-5`` → ``'144'``).
+            Off by default: the live finish path's no-prefix-parse rule (155-4)
+            must not gain a silent fallback — anything not matching stays
+            irrecoverable.
 
     Returns:
         {"success": True, "backfilled": [{"id", "epic"}, ...],
@@ -379,6 +388,12 @@ def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
                 continue
             sid = str(story.get("id") or "").strip()
             resolved = id_to_epic.get(sid) if sid else None
+            if not resolved and prefix_parse and sid:
+                # Historical-archive migration only (155-10): unambiguous
+                # numeric {epic}-{seq} ids may fall back to their prefix.
+                match = re.fullmatch(r"(\d+)-\d+", sid)
+                if match:
+                    resolved = match.group(1)
             if resolved:
                 story["epic"] = resolved
                 backfilled.append({"id": sid, "epic": resolved})
