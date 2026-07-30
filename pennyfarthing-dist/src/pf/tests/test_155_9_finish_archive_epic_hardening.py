@@ -62,6 +62,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pf.sprint.archive_epic import _load_archive_file
+from pf.sprint.loader import find_story_in_data as real_find_story_in_data
 from pf.sprint.story_finish import _add_story_to_completed, finish_story
 from pf.sprint.yaml_io import _write_yaml_file
 from pf.sprint.yaml_io import read_sprint as real_read_sprint
@@ -495,6 +496,54 @@ class TestFinishStep4bWiring:
             "a row must not be archived for an unresolvable epic"
         )
 
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_finish_records_step4b_when_story_vanishes_from_reread(
+        self, mock_mode: MagicMock, mock_transition: MagicMock, tmp_path: Path
+    ) -> None:
+        """When the step-4b re-read succeeds but the story is gone from the
+        sprint data, the skip must be RECORDED as a failed 4b step — the same
+        no-silent-skip contract as the exception path (155-24 AC1; previously
+        the ``if completed_story:`` block skipped with no 4b entry at all)."""
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+        project, story_id = _make_finish_project(tmp_path)
+
+        calls = {"n": 0}
+
+        def vanish_after_first(data: dict[str, Any], sid: str):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return real_find_story_in_data(data, sid)
+            return None, None, None
+
+        with (
+            patch("pf.sprint.story_finish._run", side_effect=_clean_merge_run),
+            patch(
+                "pf.sprint.story_finish.find_story_in_data",
+                side_effect=vanish_after_first,
+            ),
+        ):
+            result = finish_story(project, story_id)
+
+        assert result["success"] is True, (
+            f"a vanished completed-row source is non-fatal bookkeeping: {result}"
+        )
+        entries = _step4b_entries(result)
+        assert entries and entries[0].get("success") is False, (
+            "the completed_story-None skip must be RECORDED as a failed 4b "
+            f"step, not silently dropped: {result.get('steps')}"
+        )
+        assert "not found" in str(entries[0].get("error", "")), (
+            f"the recorded 4b error must explain the vanished story: {entries[0]!r}"
+        )
+        actions = _step_actions(result)
+        assert "remove_session" in actions, "step 7 must run after the recorded 4b skip"
+        assert not (project / ".session" / f"{story_id}-session.md").exists()
+        rows = _completed_rows(project / "sprint" / "archive" / FINISH_ARCHIVE_NAME)
+        assert not any(r.get("id") == story_id for r in rows), (
+            "no completed row must be archived when the story vanished mid-finish"
+        )
+
 
 # =============================================================================
 # Gap 6 — step-4b read_sprint guard (GENUINELY RED: the story's code change)
@@ -566,8 +615,9 @@ class TestStep4bReadSprintGuard:
             "the 4b read failure must be RECORDED as a failed step, not "
             f"silently skipped: {result.get('steps')}"
         )
-        assert str(entries[0].get("error", "")).strip(), (
-            f"the recorded 4b failure must carry an error message: {entries[0]!r}"
+        assert str(exc) in str(entries[0].get("error", "")), (
+            f"the recorded 4b failure must carry the injected exception text "
+            f"{str(exc)!r}, not a placeholder: {entries[0]!r}"
         )
         actions = _step_actions(result)
         assert "remove_session" in actions, "step 7 must run after the degraded 4b"
