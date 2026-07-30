@@ -312,7 +312,17 @@ def archive(story_id: str, pr_number: str | None, apply: bool, dry_run: bool):
 
 @sprint.command("backfill-epics")
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
-def backfill_epics(output_json: bool):
+@click.option(
+    "--prefix-parse",
+    "prefix_parse",
+    is_flag=True,
+    help=(
+        "One-time historical migration: resolve rows the live sprint can't "
+        "(long-archived epics) from the numeric {epic}-{seq} id prefix "
+        "(144-5 → epic '144'). Non-conforming ids stay irrecoverable."
+    ),
+)
+def backfill_epics(output_json: bool, prefix_parse: bool):
     """Repair archive entries whose `epic` field is missing or empty.
 
     Walks sprint/archive/sprint-*-completed.yaml, looks each epic-less
@@ -324,7 +334,7 @@ def backfill_epics(output_json: bool):
     """
     from pf.sprint.archive_epic import backfill_epic_refs
 
-    result = backfill_epic_refs()
+    result = backfill_epic_refs(prefix_parse=prefix_parse)
     backfilled = result.get("backfilled") or []
     irrecoverable = result.get("irrecoverable") or []
 
