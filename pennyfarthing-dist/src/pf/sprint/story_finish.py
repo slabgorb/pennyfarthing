@@ -528,12 +528,40 @@ def finish_story(
     # --- Steps 3 & 4: Transition via state machine (Jira + YAML atomically) ---
     # Story should already be in_review (transitioned at review phase entry).
     # If still in_progress (legacy/edge case), do the two-step.
+    #
+    # read_sprint raises FileNotFoundError/ValueError on a missing or malformed
+    # sprint YAML (155-16, same taxonomy as the primary-read guard above). A
+    # sprint index that became unreadable since that first read must abort the
+    # ceremony loudly HERE — before any status transition — not proceed on a
+    # silently assumed in_progress and surface later as a generic yaml-update
+    # failure (or, worse, complete the full done ceremony against a broken
+    # index). The merge has already landed at this point, so this abort leaves
+    # the same merged-but-not-done state as the transition-failure abort below:
+    # session kept, no done transition, no irreversible cleanup.
+    #
+    # The trailing broad fallback is the PRE-EXISTING behavior for exotic
+    # exceptions, deliberately retained (155-16): this read runs after the
+    # irreversible merge, so an unexpected exception type escaping
+    # finish_story's no-throw contract (SOUL #10) would strand a merged story
+    # with a raw traceback — strictly worse than degrading to the transition
+    # path, which fails loudly on a genuinely broken index anyway.
     try:
         data = read_sprint(sprint_path)
         _epic, current_story, _location = find_story_in_data(data, story_id)
         current_status = (
             current_story.get("status", "in_progress") if current_story else "in_progress"
         )
+    except (FileNotFoundError, ValueError) as exc:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "jira_key": jira_key,
+            "error": (
+                f"Could not read sprint data for the status transition: {exc} — "
+                "refusing to transition against an unreadable sprint index"
+            ),
+            "steps": steps,
+        }
     except Exception:
         current_status = "in_progress"
 
