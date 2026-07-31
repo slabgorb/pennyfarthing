@@ -40,10 +40,15 @@ merge verification, or clean up the copy on abort):
   removes the ``.session`` file.
 
 Mocking mirrors sibling 155-1: ``_run`` is patched with a command-dispatching
-fake. Unlike 155-1, the fake distinguishes the two ``gh pr view`` shapes — the
-pre-merge gate view (``--json mergeable,mergeStateStatus,baseRefName``) vs the
-post-merge state view (``--json state``) — so a review-required BLOCKED state can
-be modelled independently of the final PR state.
+fake. Every ``gh pr view`` returns one payload carrying all four fields this
+module reads (``state``, ``mergeable``, ``mergeStateStatus``, ``baseRefName``),
+so a review-required BLOCKED state is modelled independently of the final PR
+state via the ``mergeable``/``merge_state_status`` and ``pr_state`` knobs.
+
+(Before 155-32 the fake branched on the ``--json`` field list to model two
+separate probes. Those probes are now a single shared call plus one fresh
+post-merge verification — see ``_make_fake_run`` for why the branching had to
+go.)
 """
 
 import json
@@ -169,15 +174,25 @@ def _make_fake_run(
 ):
     """Build a command-dispatching fake for ``story_finish._run``.
 
-    Distinguishes the two ``gh pr view`` shapes by the ``--json`` field list:
-
-    - ``gh pr view <n> --json mergeable,mergeStateStatus,baseRefName``
-      → pre-merge gate view: ``{mergeable, mergeStateStatus, baseRefName}``
-    - ``gh pr view <n> --json state``
-      → post-merge state view: ``{state}``
+    - ``gh pr view <n> --json ...`` → every field this module reads, in one
+      payload: ``{state, mergeable, mergeStateStatus, baseRefName}``
     - ``gh pr merge ...`` → returncode=merge_rc, stderr=merge_stderr
     - ``gh pr list ...``  → stdout=listed_pr (resolved PR number)
     - anything else (git checkout/pull/branch, epic archive) → returncode=0
+
+    155-32 note: this fake used to branch on the ``--json`` field list and
+    return ``{mergeable, mergeStateStatus, baseRefName}`` (no ``state``) for the
+    conflict-gate call and ``{state}`` for the post-merge call — modelling the
+    two separate probes that existed then. Those probes are now one shared call
+    whose field list contains *both* ``state`` and ``mergeable``, so the old
+    branching answered the post-merge verification with a payload that had no
+    ``state`` and read as "not merged", failing clean-merge tests for a reason
+    that has nothing to do with what they assert.
+
+    Returning the union unconditionally is also simply honest: real ``gh``
+    returns every field named in ``--json``, so a response shape that depends on
+    which fields were requested was always a fiction the old split happened to
+    hide.
     """
 
     def _fake_run(cmd, **kwargs):
@@ -185,22 +200,18 @@ def _make_fake_run(
         if "merge" in parts:
             return MagicMock(returncode=merge_rc, stdout="", stderr=merge_stderr)
         if "view" in parts:
-            json_fields = ""
-            if "--json" in parts:
-                json_fields = parts[parts.index("--json") + 1]
-            if "mergeable" in json_fields or "mergeStateStatus" in json_fields:
-                return MagicMock(
-                    returncode=0,
-                    stdout=json.dumps(
-                        {
-                            "mergeable": mergeable,
-                            "mergeStateStatus": merge_state_status,
-                            "baseRefName": "develop",
-                        }
-                    ),
-                    stderr="",
-                )
-            return MagicMock(returncode=0, stdout=json.dumps({"state": pr_state}), stderr="")
+            return MagicMock(
+                returncode=0,
+                stdout=json.dumps(
+                    {
+                        "state": pr_state,
+                        "mergeable": mergeable,
+                        "mergeStateStatus": merge_state_status,
+                        "baseRefName": "develop",
+                    }
+                ),
+                stderr="",
+            )
         if "list" in parts:
             return MagicMock(returncode=0, stdout=listed_pr, stderr="")
         return MagicMock(returncode=0, stdout="", stderr="")
