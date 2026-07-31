@@ -18,19 +18,17 @@ import re
 from pathlib import Path
 from typing import Any
 
+from pf.findings.aggregate import _parse_frontmatter
 from pf.findings.capture import parse_delivery_findings
 from pf.findings.summary import _parse_session_deviations
 
 # Non-blocking findings whose description carries one of these phrases imply
 # consciously deferred work even when the finding type alone doesn't (gh #114).
-TAG_PHRASES: tuple[str, ...] = (
-    "follow-up",
-    "follow up",
-    "later",
-    "future",
-    "defer",
-    "out of scope",
-    "tracked",
+# Word-boundary matched: "untracked" must not hit "tracked", "relater" must
+# not hit "later".
+TAG_RE = re.compile(
+    r"(?<![\w-])(follow[- ]?ups?|later|future|defer\w*|out of scope|tracked)(?![\w-])",
+    re.IGNORECASE,
 )
 
 # Types whose non-blocking findings are deferral candidates on their own.
@@ -73,7 +71,7 @@ def detect_deferred_followups(content: str) -> list[dict[str, Any]]:
         if finding.get("urgency") != "non-blocking":
             continue
         description = finding.get("description", "")
-        tagged = any(phrase in description.lower() for phrase in TAG_PHRASES)
+        tagged = bool(TAG_RE.search(description))
         if finding.get("type") in CANDIDATE_TYPES or tagged:
             candidates.append(
                 {
@@ -97,14 +95,27 @@ def detect_deferred_followups(content: str) -> list[dict[str, Any]]:
     return candidates
 
 
-def _session_epic(content: str) -> str:
+# Epic ids safe to splice into a shell command unquoted (mirrors the 155-7
+# archive-filename guard). Anything else suppresses the pre-filled command.
+_SAFE_EPIC_RE = re.compile(r"[A-Za-z0-9._-]+")
+
+
+def _session_epic(content: str) -> str | None:
     """Read the epic id from session frontmatter.
 
     The epic comes from the session's own `epic:` field — never from
-    prefix-parsing the story id (155-4 rule).
+    prefix-parsing the story id (155-4 rule). Delegates to the package's
+    frontmatter parser (SOUL #2). Returns None when the field is missing
+    or not shell-safe — the caller then suppresses the pre-filled command
+    rather than emitting an unsafe or placeholder epic.
     """
-    match = re.search(r'^epic:\s*["\']?([^"\'\n]+)["\']?\s*$', content, re.MULTILINE)
-    return match.group(1).strip() if match else "<epic>"
+    frontmatter = _parse_frontmatter(content)
+    if not isinstance(frontmatter, dict):
+        return None
+    epic = str(frontmatter.get("epic") or "").strip()
+    if not epic or ".." in epic or not _SAFE_EPIC_RE.fullmatch(epic):
+        return None
+    return epic
 
 
 def _open_stories(project_root: Path) -> list[tuple[str, str]]:
@@ -114,6 +125,7 @@ def _open_stories(project_root: Path) -> list[tuple[str, str]]:
     (nothing to dedup against must not suppress the report).
     """
     from pf.sprint.loader import load_sprint
+    from pf.sprint.status_normalize import normalize_status
 
     data = load_sprint(project_root)
     if not data:
@@ -126,7 +138,7 @@ def _open_stories(project_root: Path) -> list[tuple[str, str]]:
         for story in epic.get("stories", []) or []:
             if not isinstance(story, dict):
                 continue
-            if story.get("status") in OPEN_STATUSES:
+            if normalize_status(story.get("status")) in OPEN_STATUSES:
                 stories.append((str(story.get("id", "")), str(story.get("title", ""))))
     return stories
 
@@ -167,23 +179,43 @@ def suggest_followups(
 
     Returns:
         {success: True, error: None, data: {candidates, suggestions,
-         skipped, markdown}} or {success: False, error: str}.
-        Always success=True when the session is readable — this is a
-        report, never a finish gate.
+         skipped, markdown}} or {success: False, error: str} — never raises.
+        success=False only when the session itself is missing/unreadable;
+        an unresolvable project root fails OPEN (dedup skipped, suggestions
+        kept) — this is a report, never a finish gate. A suggestion's
+        `command` is None when the session epic is missing or not
+        shell-safe; the candidate stays listed in the markdown either way.
     """
     session_path = Path(session_path)
     if not session_path.exists():
         return {"success": False, "error": f"Session file not found: {session_path}"}
 
-    content = session_path.read_text(encoding="utf-8")
+    try:
+        content = session_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        # An unreadable session means there is nothing to report from —
+        # a truthful error result, never a raise (SOUL #10).
+        return {
+            "success": False,
+            "error": (
+                f"Failed to read session file {session_path.name} "
+                f"({type(exc).__name__})"
+            ),
+        }
     candidates = detect_deferred_followups(content)
     epic = _session_epic(content)
 
     if project_root is None:
-        from pf.common.config import get_project_root
+        try:
+            from pf.common.config import get_project_root
 
-        project_root = get_project_root()
-    open_stories = _open_stories(Path(project_root))
+            project_root = get_project_root()
+        except (FileNotFoundError, OSError):
+            # The root only feeds dedup. Fail OPEN like missing sprint data:
+            # losing the report to a dedup-only failure would drop the
+            # deferral — the exact failure this feature exists to prevent.
+            project_root = None
+    open_stories = _open_stories(Path(project_root)) if project_root else []
 
     suggestions: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
@@ -201,13 +233,18 @@ def suggest_followups(
             continue
         provenance = f"from {story_id} review"
         # The command is meant to be copy-pasted into a shell: inside the
-        # double-quoted title, `"`, backticks, `$`, and `\` would break the
-        # quoting or expand/substitute (CWE-78 class). Neutralize them —
+        # double-quoted title, `"`, backticks, `$`, `\` would break the
+        # quoting or expand/substitute (CWE-78 class), `!` triggers history
+        # expansion in interactive shells, and a leading `-` makes the
+        # positional option-shaped (CWE-88). Neutralize all of them —
         # titles are prose, so a quote-character swap loses nothing.
-        title = re.sub(r'["`$\\]', "'", description)
-        command = (
-            f'pf sprint story add {epic} "{title} ({provenance})" {DEFAULT_POINTS}'
-        )
+        title = re.sub(r'["`$\\\n!]', "'", description).lstrip("-' ").strip()
+        command = None
+        if epic and title:
+            command = (
+                f'pf sprint story add {epic} "{title} ({provenance})" '
+                f"{DEFAULT_POINTS}"
+            )
         suggestions.append(
             {
                 "description": description,
@@ -228,7 +265,13 @@ def suggest_followups(
         lines.append("")
         for suggestion in suggestions:
             lines.append(f"- {suggestion['description']} ({suggestion['source']})")
-            lines.append(f"  `{suggestion['command']}`")
+            if suggestion["command"]:
+                lines.append(f"  `{suggestion['command']}`")
+            else:
+                lines.append(
+                    "  (epic unresolved in session frontmatter — "
+                    "mint manually with pf sprint story add)"
+                )
     else:
         lines.append("No deferred follow-ups detected.")
     if skipped:
