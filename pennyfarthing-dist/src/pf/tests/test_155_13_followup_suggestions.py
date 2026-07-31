@@ -217,7 +217,7 @@ def _write_session(root: Path, content: str, story_id: str = STORY_ID) -> Path:
 # ---------------------------------------------------------------------------
 
 
-def test_improvement_nonblocking_is_candidate():
+def test_improvement_nonblocking_is_candidate() -> None:
     fu = _followups()
     content = _session_md([_finding("Improvement", "non-blocking", OTEL_DESC)])
     candidates = fu.detect_deferred_followups(content)
@@ -226,7 +226,7 @@ def test_improvement_nonblocking_is_candidate():
     assert OTEL_DESC in candidates[0]["description"]
 
 
-def test_question_nonblocking_is_candidate():
+def test_question_nonblocking_is_candidate() -> None:
     fu = _followups()
     content = _session_md(
         [_finding("Question", "non-blocking", "Should the tier rename cascade")]
@@ -236,7 +236,7 @@ def test_question_nonblocking_is_candidate():
     assert "tier rename cascade" in candidates[0]["description"]
 
 
-def test_blocking_finding_is_never_candidate():
+def test_blocking_finding_is_never_candidate() -> None:
     # Even when the text mentions a follow-up, blocking work is resolved
     # in-story — it must not be minted into the backlog as a deferral.
     fu = _followups()
@@ -246,7 +246,7 @@ def test_blocking_finding_is_never_candidate():
     assert fu.detect_deferred_followups(content) == []
 
 
-def test_plain_nonblocking_gap_is_not_candidate():
+def test_plain_nonblocking_gap_is_not_candidate() -> None:
     fu = _followups()
     content = _session_md(
         [_finding("Gap", "non-blocking", "Docstring missing on the helper")]
@@ -265,14 +265,14 @@ def test_plain_nonblocking_gap_is_not_candidate():
         "Rename pass should be tracked somewhere durable",
     ],
 )
-def test_tag_phrase_makes_nonblocking_gap_a_candidate(desc: str):
+def test_tag_phrase_makes_nonblocking_gap_a_candidate(desc: str) -> None:
     fu = _followups()
     content = _session_md([_finding("Gap", "non-blocking", desc)])
     candidates = fu.detect_deferred_followups(content)
     assert len(candidates) == 1, (desc, candidates)
 
 
-def test_deviation_with_future_forward_impact_is_candidate():
+def test_deviation_with_future_forward_impact_is_candidate() -> None:
     fu = _followups()
     content = _session_md(
         deviation_lines=[
@@ -291,13 +291,13 @@ def test_deviation_with_future_forward_impact_is_candidate():
 @pytest.mark.parametrize("impact", ["none", "None", "NONE", None])
 def test_deviation_without_future_forward_impact_is_not_candidate(
     impact: str | None,
-):
+) -> None:
     fu = _followups()
     content = _session_md(deviation_lines=[_deviation(GUARD_DESC, impact)])
     assert fu.detect_deferred_followups(content) == []
 
 
-def test_clean_session_yields_no_candidates():
+def test_clean_session_yields_no_candidates() -> None:
     fu = _followups()
     assert fu.detect_deferred_followups(_session_md()) == []
 
@@ -307,7 +307,7 @@ def test_clean_session_yields_no_candidates():
 # ---------------------------------------------------------------------------
 
 
-def test_suggestion_has_prefilled_story_add_command(project: Path):
+def test_suggestion_has_prefilled_story_add_command(project: Path) -> None:
     fu = _followups()
     session = _write_session(
         project,
@@ -328,7 +328,7 @@ def test_suggestion_has_prefilled_story_add_command(project: Path):
     assert command in markdown, markdown
 
 
-def test_suggestion_carries_provenance_in_command_and_field(project: Path):
+def test_suggestion_carries_provenance_in_command_and_field(project: Path) -> None:
     fu = _followups()
     session = _write_session(
         project,
@@ -351,7 +351,7 @@ def test_suggestion_carries_provenance_in_command_and_field(project: Path):
 # ---------------------------------------------------------------------------
 
 
-def test_dedup_skips_candidate_covered_by_backlog_story(project: Path):
+def test_dedup_skips_candidate_covered_by_backlog_story(project: Path) -> None:
     fu = _followups()
     session = _write_session(
         project,
@@ -389,7 +389,7 @@ def test_dedup_skips_candidate_covered_by_backlog_story(project: Path):
 
 def test_dedup_fails_open_without_sprint_data(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+) -> None:
     # No sprint/ dir at all: nothing to dedup against must not suppress the
     # report (an empty project still deserves the suggestion block).
     fu = _followups()
@@ -411,7 +411,7 @@ def test_dedup_fails_open_without_sprint_data(
 # ---------------------------------------------------------------------------
 
 
-def test_clean_session_reports_success_with_no_suggestions(project: Path):
+def test_clean_session_reports_success_with_no_suggestions(project: Path) -> None:
     fu = _followups()
     session = _write_session(project, _session_md())
     result = fu.suggest_followups(
@@ -422,14 +422,14 @@ def test_clean_session_reports_success_with_no_suggestions(project: Path):
     assert "story add" not in result["data"]["markdown"].lower()
 
 
-def test_missing_session_returns_error_result(project: Path):
+def test_missing_session_returns_error_result(project: Path) -> None:
     fu = _followups()
     missing = project / ".session" / "999-1-session.md"
     result = fu.suggest_followups(
         missing, story_id="999-1", project_root=project
     )
     assert result["success"] is False
-    assert result.get("error"), result
+    assert "not found" in (result.get("error") or "").lower(), result
 
 
 # ---------------------------------------------------------------------------
@@ -437,7 +437,7 @@ def test_missing_session_returns_error_result(project: Path):
 # ---------------------------------------------------------------------------
 
 
-def test_sm_finish_template_wires_followups_scan():
+def test_sm_finish_template_wires_followups_scan() -> None:
     """The scan must run at sm-finish preflight — a module nobody invokes is
     a feature nobody gets. Mirrors the Impact Summary wiring shape."""
     text = SM_FINISH_TEMPLATE.read_text(encoding="utf-8")
@@ -458,7 +458,7 @@ def test_sm_finish_template_wires_followups_scan():
         )
 
 
-def test_followups_module_hygiene():
+def test_followups_module_hygiene() -> None:
     """Rule #5: read_text/open need encoding=. Rule #2: no mutable defaults."""
     fu = _followups()
     tree = ast.parse(Path(fu.__file__).read_text(encoding="utf-8"))
