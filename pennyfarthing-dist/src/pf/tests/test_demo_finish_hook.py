@@ -515,6 +515,12 @@ class TestDemoHookErrorHandling:
         assert len(add_steps) == 1 and "error" not in add_steps[0], (
             f"completed-story archive step should run and succeed, got: {add_steps}"
         )
+        # 155-16 (155-6 LOW deferral): pin the resolved epic VALUE, not just
+        # error-absence — the fixture epic carries the real jira key
+        # PROJ-99990, which wins the 155-9 priority (jira > numeric id).
+        assert add_steps[0].get("epic") == "PROJ-99990", (
+            f"the 4b step must carry the resolved jira-keyed epic, got: {add_steps[0]!r}"
+        )
 
 
 class TestDemoHookStepOrdering:

@@ -551,15 +551,17 @@ class TestFinishStep4bWiring:
 
 
 def _read_sprint_then_boom(exc: Exception):
-    """First call passes through to the real ``read_sprint`` (the early
-    validation read); every later call raises ``exc``. The step-4b re-read is
-    always a later call, so this simulates the sprint index becoming unreadable
-    mid-finish — after the merge and done-transition already happened."""
+    """Calls 1-2 pass through to the real ``read_sprint`` (call 1 is the
+    primary validation read, call 2 the status-transition read — guarded by
+    155-16, where a failure now aborts finish loudly and would never reach
+    step 4b); calls 3+ raise ``exc``. Call 3 is the step-4b re-read, so this
+    simulates the sprint index becoming unreadable exactly there — after the
+    merge and done-transition already happened."""
     calls = {"n": 0}
 
     def fake(path):
         calls["n"] += 1
-        if calls["n"] == 1:
+        if calls["n"] <= 2:
             return real_read_sprint(path)
         raise exc
 
