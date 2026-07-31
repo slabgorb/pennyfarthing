@@ -109,7 +109,36 @@ print(json.dumps(result))
 - If `success: true`: Impact Summary compiled. Log `finding_count` and `blocking_count`.
 - If `success: false`: Log the error but continue with preflight — Impact Summary is non-blocking.
 
-## 4. Run Preflight Script
+## 4. Scan for Deferred Follow-ups
+
+Scan the session's Delivery Findings and Design Deviations for deferrals that
+imply future work (gh #114). This runs while the session is still live —
+after finish archives and removes it, the deferrals are archive-only. Uses
+`pf.findings.followups.suggest_followups()`, which dedups candidates against
+open stories in the current sprint and pre-fills a `pf sprint story add`
+command (with a "from {STORY_ID} review" provenance back-reference) per
+unsuggested candidate.
+
+```bash
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"$PF_PY" -c "
+from pathlib import Path
+from pf.findings.followups import suggest_followups
+import json
+result = suggest_followups(Path('.session/{STORY_ID}-session.md'), story_id='{STORY_ID}')
+print(json.dumps(result))
+"
+```
+
+- If `success: true` and `data.suggestions` is non-empty: include the
+  `data.markdown` block verbatim in your output so the operator can run or
+  skip each pre-filled command. Do NOT run the commands yourself.
+- If `success: true` and `data.suggestions` is empty: log "No deferred
+  follow-ups detected."
+- If `success: false`: Log the error but continue with preflight — the
+  follow-up scan is a report, never a finish gate (suggest posture).
+
+## 5. Run Preflight Script
 
 The preflight script runs all checks in parallel using asyncio:
 
@@ -174,4 +203,9 @@ FINISH_PREFLIGHT_RESULT:
 
 ### Jira Skipped
 If `jira_skipped: true` in JSON, note this in output.
+
+### Deferred Follow-ups
+If Step 4 produced suggestions, append the `data.markdown` block (the
+"Deferred follow-ups detected" list with its pre-filled commands) after the
+`FINISH_PREFLIGHT_RESULT` block so the SM can surface it to the operator.
 </output>
