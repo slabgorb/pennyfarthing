@@ -95,9 +95,29 @@ def detect_deferred_followups(content: str) -> list[dict[str, Any]]:
     return candidates
 
 
-# Epic ids safe to splice into a shell command unquoted (mirrors the 155-7
-# archive-filename guard). Anything else suppresses the pre-filled command.
-_SAFE_EPIC_RE = re.compile(r"[A-Za-z0-9._-]+")
+# Epic ids safe to splice into a shell command UNQUOTED. The epic is the first
+# positional to the Click command `pf sprint story add`, which has value-taking
+# options (--sprint-file, --jira, ...), so an option-shaped epic would let Click
+# consume the title as an option value (CWE-88). Anchor the first char to a
+# non-dash (mirrors the 155-7 archive-filename guard + _reject_option_like).
+_SAFE_EPIC_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+
+# Characters that would break out of, or expand inside, the double-quoted title
+# segment of the generated command (CWE-78: quote/backtick/dollar/backslash/
+# newline; `!` triggers history expansion in interactive shells).
+_UNSAFE_TITLE_CHARS = re.compile(r'["`$\\\n!]')
+
+
+def _shell_safe_segment(value: str) -> str:
+    """Neutralize a value spliced into the double-quoted title of the command.
+
+    Every prose segment that reaches the command sink — the finding
+    description AND the provenance's story id — must pass through this, or
+    the sanitization is "validation on one path" (lang-review #13). Swaps
+    unsafe chars for `'` (titles are prose, nothing is lost) and strips a
+    leading dash/quote/space so the value can't be option-shaped (CWE-88).
+    """
+    return _UNSAFE_TITLE_CHARS.sub("'", value).lstrip("-' ").strip()
 
 
 def _session_epic(content: str) -> str | None:
@@ -231,16 +251,16 @@ def suggest_followups(
                 }
             )
             continue
-        provenance = f"from {story_id} review"
-        # The command is meant to be copy-pasted into a shell: inside the
-        # double-quoted title, `"`, backticks, `$`, `\` would break the
-        # quoting or expand/substitute (CWE-78 class), `!` triggers history
-        # expansion in interactive shells, and a leading `-` makes the
-        # positional option-shaped (CWE-88). Neutralize all of them —
-        # titles are prose, so a quote-character swap loses nothing.
-        title = re.sub(r'["`$\\\n!]', "'", description).lstrip("-' ").strip()
+        # The command is meant to be copy-pasted into a shell. BOTH prose
+        # segments that reach the double-quoted title — the description and
+        # the story-id-derived provenance — go through the same neutralization
+        # (CWE-78/88); sanitizing only one is the "validation on one path"
+        # trap (lang-review #13). The provenance keyword stays literal.
+        safe_story_id = _shell_safe_segment(story_id)
+        provenance = f"from {safe_story_id} review"
+        title = _shell_safe_segment(description)
         command = None
-        if epic and title:
+        if epic and title and safe_story_id:
             command = (
                 f'pf sprint story add {epic} "{title} ({provenance})" '
                 f"{DEFAULT_POINTS}"
