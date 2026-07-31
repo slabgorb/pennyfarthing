@@ -427,6 +427,25 @@ def finish_story(
             )
         else:
             steps.append({"step": 2, "action": "merge_pr", "mode": "human", "skipped": True})
+    elif pr_number and _pr_is_merged(pr_number):
+        # Already-merged short-circuit (155-29): a prior finish run landed the
+        # merge and then aborted on a later step (archive OSError, status-read
+        # guard, transition failure) — all of which keep the session so finish
+        # can be retried. The retry must NOT re-attempt ``gh pr merge``: gh
+        # exits non-zero on a merged PR ("already merged"), which would trip
+        # the rc!=0 abort below and wedge every retry. ``_pr_is_merged`` is the
+        # same load-bearing verification 155-1 runs post-merge, and it returns
+        # False on any probe error — an unverifiable PR state falls through to
+        # the real merge attempt, never silently skips it.
+        steps.append(
+            {
+                "step": 2,
+                "action": "merge_pr",
+                "pr": pr_number,
+                "merged": True,
+                "already_merged": True,
+            }
+        )
     elif pr_number:
         # Auto merge mode: the merge is load-bearing. A non-zero merge OR a
         # merge that did not actually land must abort finish BEFORE the story is
