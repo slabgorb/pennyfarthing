@@ -66,6 +66,12 @@ world that the 155-29 pre-check legitimately turns into a short-circuit
 success. They now pin ``pr_state="OPEN"`` (green on HEAD and post-fix), and
 ``test_merges_pr_resolved_by_branch`` uses a stateful fake for the same
 reason. See the 155-29 session Design Deviations.
+
+155-30 polish (from the 155-29 review): the truthful-record test now pins
+``merged`` and ``already_merged`` with INDEPENDENT assertions (the OR-form
+let a delete-key mutation on either survive), and
+``test_branch_resolved_pr_already_merged_short_circuits`` covers the
+branch-resolved-PR x already-merged combo.
 """
 
 import json
@@ -129,8 +135,26 @@ workflow: "tdd"
 - **PR:** #999 - short-circuit already-merged PR
 """
 
+# 155-30 combo-test session: no ``**PR:**`` line — finish must resolve the PR
+# number from the branch via ``gh pr list --head`` (the story_finish fallback).
+SESSION_BRANCH_ONLY = """\
+---
+story_id: "155-29"
+jira_key: ""
+epic: "155"
+workflow: "tdd"
+---
 
-def _make_project(tmp_path: Path) -> Path:
+# Story 155-29: finish short-circuits the merge for an already-merged PR
+
+## Story Details
+- **ID:** 155-29
+- **Workflow:** tdd
+- **Branch:** feat/155-29-post-merge-abort-retryable
+"""
+
+
+def _make_project(tmp_path: Path, *, session_body: str = SESSION_WITH_PR) -> Path:
     sprint_dir = tmp_path / "sprint"
     sprint_dir.mkdir()
     (sprint_dir / "current-sprint.yaml").write_text(INDEX_YAML)
@@ -138,7 +162,7 @@ def _make_project(tmp_path: Path) -> Path:
     (sprint_dir / "archive").mkdir()
     session_dir = tmp_path / ".session"
     session_dir.mkdir()
-    (session_dir / "155-29-session.md").write_text(SESSION_WITH_PR)
+    (session_dir / "155-29-session.md").write_text(session_body)
     return tmp_path
 
 
@@ -152,7 +176,7 @@ def project(tmp_path: Path) -> Path:
 # =============================================================================
 
 
-def _make_already_merged_run(*, merge_rc: int = 1):
+def _make_already_merged_run(*, merge_rc: int = 1, list_stdout: str = ""):
     """World: the PR is ALREADY MERGED (a prior finish run landed it).
 
     - ``gh pr view`` → MERGED (mergeable UNKNOWN — GitHub stops computing
@@ -161,6 +185,9 @@ def _make_already_merged_run(*, merge_rc: int = 1):
       does on a merged PR, and exactly what wedges every retry today. A
       ``merge_rc=0`` variant lets tests pin that the merge is not even
       attempted when gh would happen to tolerate it.
+    - ``gh pr list`` → ``list_stdout`` (default empty). The 155-30 combo test
+      sets ``"999"`` so a session with no ``**PR:**`` line resolves the PR
+      from the branch, exactly like the story_finish fallback in production.
     """
 
     def _fake_run(cmd, **kwargs):
@@ -187,7 +214,7 @@ def _make_already_merged_run(*, merge_rc: int = 1):
                 stderr="",
             )
         if "list" in parts:
-            return MagicMock(returncode=0, stdout="", stderr="")
+            return MagicMock(returncode=0, stdout=list_stdout, stderr="")
         return MagicMock(returncode=0, stdout="", stderr="")
 
     return _fake_run
@@ -413,15 +440,77 @@ class TestAlreadyMergedShortCircuit:
             f"step-2 entry reports failure for an already-merged PR: {entry!r}"
         )
         assert entry.get("pr") == "999", f"step-2 entry must name the PR: {entry!r}"
-        assert (
-            entry.get("merged") is True or entry.get("already_merged") is True
-        ), (
-            "step-2 entry must record the PR as merged (merged/already_merged "
-            f"truthy), got: {entry!r}"
+        # 155-30 pin: each key gets its OWN assertion — the original OR-form
+        # (`merged is True or already_merged is True`) let a mutant that
+        # deletes either key from the step record survive (lang-review #6).
+        # Production writes both: ``merged`` says the code landed,
+        # ``already_merged`` distinguishes the short-circuit from a fresh
+        # merge in the report.
+        assert entry.get("merged") is True, (
+            f"step-2 entry must record merged=True for a landed merge: {entry!r}"
+        )
+        assert entry.get("already_merged") is True, (
+            "step-2 entry must record already_merged=True — the short-circuit "
+            f"must be distinguishable from a fresh merge: {entry!r}"
         )
         assert not entry.get("skipped"), (
             "'skipped' is the no-PR wording — an already-merged PR is MERGED, "
             f"not skipped: {entry!r}"
+        )
+
+    @patch("pf.sprint.story_finish._add_story_to_completed")
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_branch_resolved_pr_already_merged_short_circuits(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        mock_add_completed: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """155-30 combo: the session names NO PR — finish resolves #999 from
+        the branch via ``gh pr list --head`` — and the resolved PR is already
+        MERGED. The short-circuit must key off the RESOLVED number exactly as
+        it does off a session-recorded one: no merge attempt, the ceremony
+        completes, and the step-2 record names the resolved PR truthfully.
+        The retry-reality behind it: a post-merge abort can strand a session
+        whose ``**PR:**`` line was never written, so the retry enters through
+        the branch-resolution fallback.
+        """
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+        mock_add_completed.return_value = {"success": True, "epic": "155"}
+        project = _make_project(tmp_path, session_body=SESSION_BRANCH_ONLY)
+        session_path = project / ".session" / "155-29-session.md"
+        fake = MagicMock(
+            side_effect=_make_already_merged_run(merge_rc=1, list_stdout="999\n")
+        )
+        with patch("pf.sprint.story_finish._run", fake):
+            result = finish_story(project, "155-29")
+
+        assert not _merge_invoked(fake), (
+            "a branch-resolved already-merged PR must short-circuit the merge "
+            "attempt exactly like a session-recorded one"
+        )
+        assert result["success"] is True, (
+            f"branch-resolved already-merged retry must complete: {result}"
+        )
+        assert _requested_done(mock_transition), (
+            "branch-resolved already-merged retry must still reach done"
+        )
+        assert not session_path.exists(), (
+            "branch-resolved already-merged retry must finish cleanup"
+        )
+        entries = _step2_entries(result)
+        assert entries, f"no step-2 merge_pr entry: {result.get('steps')}"
+        entry = entries[0]
+        assert entry.get("pr") == "999", (
+            f"step-2 entry must carry the branch-RESOLVED PR number: {entry!r}"
+        )
+        assert entry.get("merged") is True, (
+            f"step-2 entry must record merged=True: {entry!r}"
+        )
+        assert entry.get("already_merged") is True, (
+            f"step-2 entry must record already_merged=True: {entry!r}"
         )
 
 

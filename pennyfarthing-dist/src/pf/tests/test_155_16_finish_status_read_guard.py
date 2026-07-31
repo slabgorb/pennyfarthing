@@ -62,6 +62,11 @@ Rule coverage (lang-review python.md):
      class: the swallowed status read must fail loud on unreadable input.
   #6 test quality — the AC-4 polish items exist because prior asserts were
      error-absence-only; every assert here checks a concrete value.
+
+155-30 polish: ``test_status_read_failure_returns_loud_result`` now pins the
+``jira_key`` and ``steps`` keys outright in the guard's failure dict — the
+original assertions probed via ``result.get("steps", [])`` only, so a
+delete-key mutation on the return dict survived.
 """
 
 import ast
@@ -280,6 +285,26 @@ class TestStatusReadGuard:
         assert str(exc) in str(result.get("error", "")), (
             f"the error must surface the underlying read failure "
             f"{str(exc)!r}, got {result.get('error')!r}"
+        )
+        # 155-30 pins: the guard's failure dict must carry ``jira_key`` and
+        # ``steps`` OUTRIGHT. The earlier probes here went through
+        # ``result.get("steps", [])`` only, so a mutant that deletes either
+        # key from the return dict survived (lang-review #6 — the report is
+        # this epic's product; a failure result that silently drops its keys
+        # lies by omission).
+        assert "jira_key" in result, (
+            f"the failure result must carry the jira_key key outright: {result!r}"
+        )
+        assert result["jira_key"] is None, (
+            "no-Jira world: the carried jira_key must be None, got "
+            f"{result['jira_key']!r}"
+        )
+        assert "steps" in result, (
+            f"the failure result must carry the steps list outright: {result!r}"
+        )
+        assert "merge_pr" in _step_actions(result), (
+            "the pre-abort step history (the landed step-2 merge) must survive "
+            f"into the failure report: {result.get('steps')}"
         )
         # The guard fires BEFORE any status transition: a broken sprint index
         # must not be transitioned against, and the story must never be
