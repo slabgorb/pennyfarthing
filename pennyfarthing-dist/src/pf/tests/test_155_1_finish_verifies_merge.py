@@ -193,6 +193,14 @@ def _requested_done(mock_transition: MagicMock) -> bool:
 class TestFinishAbortsWhenMergeFails:
     """When ``gh pr merge`` returns non-zero, finish must NOT mark the story
     done. Today it only appends a ``warning`` step and continues.
+
+    ``pr_state="OPEN"`` is pinned explicitly (155-29 pre-adjustment): these
+    tests previously relied on the fake's default ``pr_state="MERGED"``, an
+    inconsistent world (merge fails but the PR reports MERGED) that the
+    155-29 pre-merge ``_pr_is_merged`` short-circuit legitimately turns into
+    an already-merged success. A *genuinely failed* merge is one where the PR
+    is still OPEN — which is what these tests always meant to simulate.
+    Green on HEAD (the rc!=0 abort fires before any state read) and post-fix.
     """
 
     @patch("pf.sprint.story_finish.transition_story")
@@ -202,7 +210,8 @@ class TestFinishAbortsWhenMergeFails:
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
-            "pf.sprint.story_finish._run", side_effect=_make_fake_run(merge_rc=1)
+            "pf.sprint.story_finish._run",
+            side_effect=_make_fake_run(merge_rc=1, pr_state="OPEN"),
         ):
             result = finish_story(project_with_pr, "155-1")
 
@@ -218,7 +227,8 @@ class TestFinishAbortsWhenMergeFails:
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
-            "pf.sprint.story_finish._run", side_effect=_make_fake_run(merge_rc=1)
+            "pf.sprint.story_finish._run",
+            side_effect=_make_fake_run(merge_rc=1, pr_state="OPEN"),
         ):
             result = finish_story(project_with_pr, "155-1")
 
@@ -238,7 +248,8 @@ class TestFinishAbortsWhenMergeFails:
         assert session_path.exists()  # precondition
 
         with patch(
-            "pf.sprint.story_finish._run", side_effect=_make_fake_run(merge_rc=1)
+            "pf.sprint.story_finish._run",
+            side_effect=_make_fake_run(merge_rc=1, pr_state="OPEN"),
         ):
             finish_story(project_with_pr, "155-1")
 
@@ -254,7 +265,8 @@ class TestFinishAbortsWhenMergeFails:
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
-            "pf.sprint.story_finish._run", side_effect=_make_fake_run(merge_rc=1)
+            "pf.sprint.story_finish._run",
+            side_effect=_make_fake_run(merge_rc=1, pr_state="OPEN"),
         ):
             finish_story(project_with_pr, "155-1")
 
@@ -344,7 +356,31 @@ class TestFinishResolvesOutOfBandPr:
         self, mock_mode: MagicMock, mock_transition: MagicMock, project_no_pr: Path
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        fake = MagicMock(side_effect=_make_fake_run(merge_rc=0, pr_state="MERGED", listed_pr="288"))
+
+        # Stateful world (155-29 pre-adjustment): the resolved PR starts OPEN
+        # and flips to MERGED only after `gh pr merge` runs. The previous
+        # always-MERGED fake would take the 155-29 pre-merge short-circuit and
+        # never exercise the merge this test exists to assert. Green on HEAD
+        # (merge runs, verify reads MERGED) and post-fix (pre-check reads OPEN,
+        # merge runs, verify reads MERGED).
+        state = {"merged": False}
+        base = _make_fake_run(merge_rc=0, pr_state="OPEN", listed_pr="288")
+
+        def _stateful_run(cmd, **kwargs):
+            parts = [str(c) for c in cmd]
+            if "merge" in parts:
+                state["merged"] = True
+            if "view" in parts and state["merged"]:
+                return MagicMock(
+                    returncode=0,
+                    stdout=json.dumps(
+                        {"state": "MERGED", "mergedAt": "2026-06-04T00:00:00Z"}
+                    ),
+                    stderr="",
+                )
+            return base(cmd, **kwargs)
+
+        fake = MagicMock(side_effect=_stateful_run)
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project_no_pr, "155-1")
 
