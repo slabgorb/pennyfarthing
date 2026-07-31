@@ -50,11 +50,15 @@ EPIC_ID = "200"
 
 GUARD_DESC = "Widen the archive guard sweep to cover sibling shards"
 
-# Safe grammar for every emitted command: charset-limited epic, double-quoted
-# title free of quote/backtick/dollar/backslash/newline/histexpand chars and
-# not option-shaped, digit points.
+# Safe grammar for every emitted command: epic that CANNOT be option-shaped
+# (non-dash first char — CWE-88, since epic is the unquoted first positional to
+# a Click command with value-taking options), double-quoted title free of
+# quote/backtick/dollar/backslash/newline/histexpand chars and not option-shaped,
+# digit points. NB: the epic segment is anchored to a non-dash first char — a
+# grammar that mirrored the buggy `[A-Za-z0-9._-]+` allowlist could not catch a
+# leading-dash epic (155-13 r2 review finding [HIGH-B]).
 SAFE_COMMAND = re.compile(
-    r'^pf sprint story add [A-Za-z0-9._-]+ "[^"`$\\\n!][^"`$\\\n!]*" \d+$'
+    r'^pf sprint story add [A-Za-z0-9][A-Za-z0-9._-]* "[^"`$\\\n!][^"`$\\\n!]*" \d+$'
 )
 
 
@@ -207,6 +211,71 @@ def test_dash_leading_description_is_not_option_shaped(project: Path) -> None:
             title_match = re.search(r'"([^"]*)"', command)
             assert title_match, command
             assert not title_match.group(1).startswith("-"), command
+
+
+@pytest.mark.parametrize(
+    "malicious_story_id",
+    [
+        '9" ; touch /tmp/PWNED ; echo "',
+        "9$(id)",
+        "9`whoami`",
+        "9\\bad",
+    ],
+    ids=["quote-break", "cmdsub-dollar", "cmdsub-backtick", "backslash"],
+)
+def test_story_id_cannot_inject_into_command(
+    project: Path, malicious_story_id: str
+) -> None:
+    """[HIGH-A] story_id lands in `provenance`, spliced into the SAME
+    double-quoted title as the sanitized description. It must be neutralized
+    too — every emitted command must still match the safe grammar."""
+    fu = _followups()
+    session = _write_session(
+        project, _session_md([_finding("Improvement", "non-blocking", GUARD_DESC)])
+    )
+    result = fu.suggest_followups(
+        session, story_id=malicious_story_id, project_root=project
+    )
+    assert result["success"] is True
+    for suggestion in result["data"]["suggestions"]:
+        command = suggestion.get("command")
+        if command:
+            assert SAFE_COMMAND.fullmatch(command), (
+                f"story_id injection reached command: {command!r}"
+            )
+            # The specific break sequences must not survive into the command.
+            for danger in ('" ;', "$(", "`", "\\"):
+                assert danger not in command, command
+
+
+@pytest.mark.parametrize(
+    "dash_epic",
+    ['epic: "--sprint-file"', 'epic: "--dry-run"', 'epic: "-rf"'],
+    ids=["sprint-file", "dry-run", "rf"],
+)
+def test_leading_dash_epic_never_reaches_a_command(
+    project: Path, dash_epic: str
+) -> None:
+    """[HIGH-B] CWE-88: epic is the unquoted first positional to a Click
+    command with value-taking options (--sprint-file, --jira, ...). An
+    option-shaped epic must be rejected (command suppressed), never emitted
+    unquoted where Click would consume the title as its option value."""
+    fu = _followups()
+    session = _write_session(
+        project,
+        _session_md(
+            [_finding("Improvement", "non-blocking", GUARD_DESC)], epic_line=dash_epic
+        ),
+    )
+    result = fu.suggest_followups(session, story_id=STORY_ID, project_root=project)
+    assert result["success"] is True
+    for suggestion in result["data"]["suggestions"]:
+        command = suggestion.get("command")
+        assert command is None, (
+            f"option-shaped epic reached a command: {command!r}"
+        )
+    # Deferral still visible for manual minting.
+    assert GUARD_DESC in result["data"]["markdown"]
 
 
 def test_sanitized_title_text_present_in_command(project: Path) -> None:
