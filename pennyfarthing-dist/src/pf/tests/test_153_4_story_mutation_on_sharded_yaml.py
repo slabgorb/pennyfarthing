@@ -144,8 +144,11 @@ workflow: "tdd"
 - **ID:** 151-3
 - **Jira:** PROJ-17082
 - **Workflow:** tdd
-- **Branch:** feat/151-3-stub
+- **Branch:** none
 """
+# Branch is the none-sentinel (155-34 pre-adjustment): these worlds pin shard
+# mutation during finish, not branch verification — the sentinel stays on the
+# accepted no-PR arm before and after the 155-34 unmerged-branch guard.
 
 
 @pytest.fixture
