@@ -124,8 +124,13 @@ workflow: "tdd"
 ## Story Details
 - **ID:** 155-15
 - **Workflow:** tdd
-- **Branch:** feat/155-15
+- **Branch:** none
 """
+# Branch is the none-sentinel (155-34 pre-adjustment): this world pins that
+# no-PR is NOT a blocked merge (over-reach guard), not branch verification.
+# The affirmed-no-branch sentinel stays on the accepted no-PR arm before and
+# after the 155-34 unmerged-branch guard; the real-branch-no-PR world now
+# belongs to test_155_34_finish_no_pr_unmerged_branch.py with a real repo.
 
 
 def _make_project(tmp_path: Path, session_text: str, *, with_dialogue: bool = False) -> Path:

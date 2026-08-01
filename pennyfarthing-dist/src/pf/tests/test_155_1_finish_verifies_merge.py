@@ -119,6 +119,28 @@ workflow: "tdd"
 - **Branch:** feat/155-1-finish-flow-merge-pr-noop
 """
 
+# Session with the none-sentinel branch (155-34 pre-adjustment): the affirmed
+# no-branch world, which stays on the accepted no-PR arm before and after the
+# 155-34 unmerged-branch guard. The over-reach guard below uses this shape;
+# the real-branch-with-no-resolvable-PR world it previously occupied is now
+# owned (and aborted) by test_155_34_finish_no_pr_unmerged_branch.py, closing
+# the "no PR at all" open question this file's Delivery Findings recorded.
+SESSION_NO_PR_SENTINEL = """\
+---
+story_id: "155-1"
+jira_key: ""
+epic: "155"
+workflow: "tdd"
+---
+
+# Story 155-1: finish must verify the PR merged before marking done
+
+## Story Details
+- **ID:** 155-1
+- **Workflow:** tdd
+- **Branch:** none
+"""
+
 
 def _make_project(tmp_path: Path, session_text: str) -> Path:
     """Build a project layout (sprint/ + .session/) for finish_story tests."""
@@ -406,26 +428,28 @@ class TestFinishResolvesOutOfBandPr:
         mock_mode: MagicMock,
         mock_transition: MagicMock,
         mock_add_completed: MagicMock,
-        project_no_pr: Path,
+        tmp_path: Path,
     ) -> None:
-        """No PR in session AND none findable by branch, in auto merge mode.
+        """Affirmed-no-branch world (sentinel), in auto merge mode.
 
         Product decision (2026-06-04, Keith): the verify-merged guard applies
-        **only when a PR exists**. A story with no resolvable PR is NOT blocked
-        by this story — it keeps the prior behavior of marking done (guarded
-        separately by ``test_151_3::test_success_path_unchanged``). This test is
-        the over-reach guard: the new ``gh pr view`` verification must not abort
-        a legitimate no-PR finish. The "no PR at all" case is tracked as an open
-        question in the 155-1 Delivery Findings; both reported bugs (#71/#60)
-        involved a PR that existed but did not merge, which is covered above.
+        **only when a PR exists**. This test is the over-reach guard: the
+        ``gh pr view`` verification must not abort a legitimate no-PR finish.
+        155-34 reinterpretation: the original real-branch-with-no-resolvable-PR
+        world (the "no PR at all" open question in this file's Delivery
+        Findings) is now owned by test_155_34_finish_no_pr_unmerged_branch.py,
+        which ABORTS it when the branch holds unmerged commits. The accepted
+        no-PR done path survives for worlds finish can trust without a PR —
+        here, the agent's affirmative ``Branch: none`` sentinel.
         """
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        # listed_pr="" → gh pr list resolves nothing → no PR → merge step skipped.
+        project_sentinel = _make_project(tmp_path, SESSION_NO_PR_SENTINEL)
+        # Sentinel branch → no gh pr list probe → no PR → merge step skipped.
         with patch(
             "pf.sprint.story_finish._run",
             side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN", listed_pr=""),
         ):
-            result = finish_story(project_no_pr, "155-1")
+            result = finish_story(project_sentinel, "155-1")
 
         assert result["success"] is True, (
             "verify-merged must not block a no-PR finish (over-reach guard): "

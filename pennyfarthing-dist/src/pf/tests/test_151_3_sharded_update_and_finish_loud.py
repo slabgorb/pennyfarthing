@@ -129,8 +129,11 @@ workflow: "tdd"
 - **ID:** 151-3
 - **Jira:** [PROJ-17082](https://jira.example.com/browse/PROJ-17082)
 - **Workflow:** tdd
-- **Branch:** feat/151-3-sharded-update-finish-loud
+- **Branch:** none
 """
+# Branch is the none-sentinel (155-34 pre-adjustment): these worlds pin the
+# sharded-YAML ceremony, not branch verification — the sentinel stays on the
+# accepted no-PR arm before and after the 155-34 unmerged-branch guard.
 
 
 @pytest.fixture

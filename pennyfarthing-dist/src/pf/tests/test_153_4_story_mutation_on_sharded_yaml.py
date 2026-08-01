@@ -144,8 +144,11 @@ workflow: "tdd"
 - **ID:** 151-3
 - **Jira:** PROJ-17082
 - **Workflow:** tdd
-- **Branch:** feat/151-3-stub
+- **Branch:** none
 """
+# Branch is the none-sentinel (155-34 pre-adjustment): these worlds pin shard
+# mutation during finish, not branch verification — the sentinel stays on the
+# accepted no-PR arm before and after the 155-34 unmerged-branch guard.
 
 
 @pytest.fixture
@@ -649,7 +652,11 @@ class TestFinishStorySuccessOnShardedYaml:
             'jira_key: "PROJ-17083"\n'
             'epic: "PROJ-17079"\n'
             'workflow: "tdd"\n'
-            "---\n\n# Story 151-4\n"
+            "---\n\n# Story 151-4\n\n"
+            # Sentinel branch (155-34 pre-adjustment): this test pins the
+            # Jira-key backlog bridge; a fieldless session would now trip the
+            # 155-34 unresolvable-world abort.
+            "## Story Details\n- **Branch:** none\n"
         )
 
         result = finish_story(sharded_project, "PROJ-17083")
