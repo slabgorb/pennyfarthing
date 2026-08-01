@@ -34,7 +34,14 @@ from pf.sprint.loader import (
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import _get_epic_ref, read_sprint
 
-SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
+#: Anchored to line start (155-40). The old unanchored ``search`` let ANY
+#: mid-prose mention of a field token parse as the field: the archived 155-33
+#: session's deviation prose ("...updating the ``**Branch:**`` field like the
+#: gitflow arm") became branch='field like the gitflow arm', finish probed a
+#: garbage head, took the silent no-PR arm, and marked the story done while
+#: its PR stayed OPEN. The optional list-bullet prefix keeps the sm-setup
+#: template's ``- **Branch:** ...`` Story Details shape parsing.
+SESSION_FIELD_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*(\w[\w\s]*):\*\*\s*(.*)")
 
 
 def _resolve_epic_ref(project_root: Path, story_id: str, story: dict) -> str:
@@ -135,17 +142,43 @@ def _parse_session(session_path: Path) -> dict[str, str]:
     """Extract metadata fields from a session markdown file.
 
     Parses lines like ``**Jira:** PROJ-14467`` and
-    ``**PR:** #748 - title`` into a dict.
+    ``**PR:** #748 - title`` into a dict. Only line-start field lines match
+    (``SESSION_FIELD_RE`` is anchored) — prose that merely mentions a token
+    is never a field (155-40).
+
+    Resolution order (155-40): the ``## Story Details`` section is
+    authoritative for ``branch``/``pr`` — the 155-33 template contract puts
+    the real fields there, and a hand-written field line in a later section
+    (an agent assessment) must not override them. When Story Details lacks
+    the field, the first anchored occurrence elsewhere still resolves: that
+    fallback is the shipped 155-33 contract for sessions whose only Branch
+    field is Dev's hand-written assessment line (the live 155-32 recovery
+    shape).
     """
     fields: dict[str, str] = {}
+    detail_fields: dict[str, str] = {}
     if not session_path.exists():
         return fields
-    for line in session_path.read_text().splitlines():
+    section = None
+    for line in session_path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("## "):
+            section = line[3:].strip().lower()
+            continue
         m = SESSION_FIELD_RE.search(line)
-        if m:
-            key = m.group(1).strip().lower()
-            value = m.group(2).strip()
-            fields[key] = value
+        if not m:
+            continue
+        key = m.group(1).strip().lower()
+        value = m.group(2).strip()
+        # First-wins: with anchored matching, a later duplicate field line is
+        # a stray record, not a correction — last-wins is what let later
+        # sections silently override Story Details (155-33).
+        fields.setdefault(key, value)
+        if section == "story details":
+            detail_fields.setdefault(key, value)
+    # Story Details authority for the merge-target fields (155-40).
+    for key in ("branch", "pr"):
+        if key in detail_fields:
+            fields[key] = detail_fields[key]
     return fields
 
 
