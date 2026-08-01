@@ -66,8 +66,8 @@ difficulty, and verify the scenario produces meaningful score discrimination.
 
 <actions>
 - Run: `pf validate scenario {scenario_file}` (schema check)
-- Run: `/solo` for smoke test
-- Run: `/benchmark-control` for baseline (optional)
+- Run: `/pf-solo` for smoke test
+- Run: `/pf-benchmark-control` for baseline (optional)
 </actions>
 
 <output>

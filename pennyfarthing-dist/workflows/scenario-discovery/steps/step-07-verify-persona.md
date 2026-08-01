@@ -24,7 +24,7 @@ persona traits influence Expected Action, not just Linguistic Habits.
 </prerequisites>
 
 <instructions>
-1. **Run the scenario with 2-3 contrasting personas** using `/solo`:
+1. **Run the scenario with 2-3 contrasting personas** using `/pf-solo`:
    - Pick personas with opposing traits (e.g., high-C vs low-C, high-O vs low-O)
    - Use `--as {theme}:{role}` to test specific theme personas
    ```
@@ -90,8 +90,8 @@ Persona verification report with:
 ## Success
 
 When this step passes, the scenario is ready for:
-- `/benchmark-control` to create a formal baseline (10 runs)
-- `/benchmark {theme}:{role}` to compare personas with Cohen's d effect size
+- `/pf-benchmark-control` to create a formal baseline (10 runs)
+- `/pf-benchmark {theme}:{role}` to compare personas with Cohen's d effect size
 - Addition to the JobFair corpus for ongoing persona evaluation
 
 ## Failure Modes

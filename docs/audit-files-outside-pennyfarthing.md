@@ -144,7 +144,7 @@ Pennyfarthing `init` and `update` create files in **5 distinct locations** outsi
 
 | Attribute | Value |
 |-----------|-------|
-| **Created by** | `/setup` workflow (not init directly) |
+| **Created by** | `/pf-setup` workflow (not init directly) |
 | **Content** | Repository definitions for multi-repo orchestrators |
 | **Claude Code reads it** | No |
 | **Migration plan** | **Done** — moved to `.pennyfarthing/repos.yaml` |

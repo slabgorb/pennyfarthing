@@ -74,8 +74,8 @@ Examples:
 ## Post-Creation
 
 After successful creation, suggest:
-- "Run `/benchmark` with this scenario to test it"
-- "Create another scenario with `/workflow start scenario-builder`"
+- "Run `/pf-benchmark` with this scenario to test it"
+- "Create another scenario with `/pf-workflow start scenario-builder`"
 
 <output>
 - Validation result (pass/fail with details)

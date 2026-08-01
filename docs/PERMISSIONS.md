@@ -200,7 +200,7 @@ Add permissions when:
 
 ## Benchmarking Permissions (Parallel Runs)
 
-The benchmarking system (`/benchmark`, `/solo`, `/benchmark-control`) can run evaluations **sequentially** (one at a time) or in **parallel** using subagents via the Task tool.
+The benchmarking system (`/pf-benchmark`, `/pf-solo`, `/pf-benchmark-control`) can run evaluations **sequentially** (one at a time) or in **parallel** using subagents via the Task tool.
 
 **Sequential runs** work with standard interactive prompts - Claude Code will ask for permission when needed.
 
