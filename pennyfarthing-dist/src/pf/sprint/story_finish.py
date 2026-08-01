@@ -166,10 +166,22 @@ def _extract_pr_number(fields: dict[str, str]) -> str | None:
     return m.group(1) if m else None
 
 
+#: No-branch sentinels agents write into the ``**Branch:**`` field. They must
+#: resolve to None — a truthy sentinel reaches ``gh pr list --head none``,
+#: whose empty answer silently skips the merge (155-33).
+_BRANCH_SENTINELS = {"none", "n/a", "na", "null", "-", "—"}
+
+
 def _extract_branch(fields: dict[str, str]) -> str | None:
-    """Get branch name, stripping trailing annotations like ``(pushed)``."""
+    """Get branch name from the shapes agents actually write: trailing
+    annotations like ``(pushed)`` and markdown backticks are stripped, and
+    no-branch sentinels resolve to None (155-33)."""
     raw = fields.get("branch", "")
-    return re.sub(r"\s*\(.*\)\s*$", "", raw).strip() or None
+    raw = re.sub(r"\s*\(.*\)\s*$", "", raw).strip()
+    raw = raw.strip("`").strip()
+    if raw.lower() in _BRANCH_SENTINELS:
+        return None
+    return raw or None
 
 
 def _run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:

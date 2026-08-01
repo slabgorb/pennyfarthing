@@ -206,6 +206,8 @@ workflow: "{WORKFLOW}"
 - **Jira Key:** {JIRA_KEY}
 - **Workflow:** {WORKFLOW}
 - **Stack Parent:** {DEPENDS_ON or "none"}
+- **Branch:** (created in Step 5)
+- **PR:** (none yet — recorded when the PR is created)
 
 ## Workflow Tracking
 **Workflow:** {WORKFLOW}
@@ -290,6 +292,16 @@ Do NOT run `git checkout -b`. Record the decision in the session file instead:
 **Branch Strategy:** trunk-based (branching skipped — work happens on the default branch)
 ```
 
+Leave the Story Details `**Branch:**` field as a fully parenthesized note:
+
+```markdown
+- **Branch:** (trunk-based — work happens on the default branch)
+```
+
+Parenthesized values are how `pf sprint story finish` reads "no branch";
+a bare word like `none` would be probed against GitHub as a literal branch
+name (story 155-33).
+
 The single source of truth for this decision is
 `pf.git.repos.should_create_branch(rc)` (returns `False` for trunk-based).
 
@@ -300,6 +312,18 @@ git checkout -b feat/{STORY_ID}-{SLUG}
 ```
 
 Record: `**Branch Strategy:** gitflow (feat/{STORY_ID}-{SLUG})`
+
+Then update the session's Story Details `**Branch:**` field to the real
+branch name, as plain text — no backticks, no quotes:
+
+```markdown
+- **Branch:** feat/{STORY_ID}-{SLUG}
+```
+
+Do not proceed to Step 6 until the `**Branch:**` field holds the branch name.
+`pf sprint story finish` reads this exact field to resolve the PR to merge;
+a missing, backticked, or placeholder value makes finish silently skip the
+merge and mark the story done while the PR stays open (story 155-33).
 
 **Stacked repos (`pr_strategy: stacked`):**
 
@@ -325,6 +349,13 @@ Add stack metadata to session file:
 **Stack Parent:** {DEPENDS_ON} ({PARENT_BRANCH})
 ```
 Or if stack root: `**Stack Parent:** none (stack root)`
+
+Stacked repos create a branch too — update the Story Details `**Branch:**`
+field the same way as the gitflow arm (plain text, no backticks):
+
+```markdown
+- **Branch:** feat/{STORY_ID}-{SLUG}
+```
 
 <workflow-type-detection>
 ## Step 6: Determine Workflow Type
