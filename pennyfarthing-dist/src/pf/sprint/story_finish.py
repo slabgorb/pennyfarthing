@@ -177,48 +177,89 @@ def _run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
 
 
-def _pr_is_merged(pr_number: str) -> bool:
-    """Return True only when ``gh`` reports the PR in the ``MERGED`` state.
+#: The union of the fields the PR probes read: ``state`` for the merged checks,
+#: ``mergeable``/``mergeStateStatus``/``baseRefName`` for the conflict gate. One
+#: field list means the two pre-merge questions share one round trip (155-32).
+_PR_VIEW_FIELDS = "state,mergeable,mergeStateStatus,baseRefName"
 
-    A zero exit from ``gh pr merge`` is not proof the code landed — the merge can
-    silently no-op while the PR stays OPEN (gh #71 / #60). Finish must confirm
-    the actual PR state before transitioning the story to ``done``.
+
+def _pr_view(pr_number: str) -> dict[str, Any] | None:
+    """Fetch one snapshot of the PR, or ``None`` when its state cannot be
+    established (``gh`` error, unparseable output, or a payload that is not a
+    JSON object).
+
+    ``None`` is the single "unknown" answer both readers below degrade to, and
+    both degrade *permissively*: an unknown PR neither blocks the finish nor
+    counts as merged, so the flow falls through to the real merge attempt —
+    which is itself guarded by the post-merge verification (gh #71/#60).
+
+    The ``isinstance`` check is load-bearing, not defensive padding. ``null``,
+    ``[]`` and bare scalars are all valid JSON that ``json.loads`` accepts
+    happily and that then raise ``AttributeError`` on ``.get`` — an exception
+    escaping ``finish_story`` instead of the ``{success, error}`` result object
+    the caller contracts for.
     """
-    result = _run(["gh", "pr", "view", pr_number, "--json", "state"])
-    if result.returncode != 0:
-        return False
-    try:
-        state = json.loads(result.stdout).get("state", "")
-    except (json.JSONDecodeError, ValueError):
-        return False
-    return state == "MERGED"
-
-
-def _pr_block_reason(pr_number: str) -> str | None:
-    """Return an actionable abort message when the PR is definitively NOT cleanly
-    mergeable (``mergeable == CONFLICTING`` / ``mergeStateStatus == DIRTY``), else
-    ``None``.
-
-    ``None`` ("do not block") also covers MERGEABLE/CLEAN PRs *and* indeterminate
-    mergeability — ``UNKNOWN`` (GitHub still computing) or a ``gh`` error. Those
-    fall through to the merge attempt, which is guarded by the post-merge
-    :func:`_pr_is_merged` verification (gh #71/#60). Only a definitively
-    conflicting PR is hard-blocked here, before any irreversible finish step
-    (gh #113).
-    """
-    result = _run(
-        ["gh", "pr", "view", pr_number, "--json", "mergeable,mergeStateStatus,baseRefName"]
-    )
+    result = _run(["gh", "pr", "view", pr_number, "--json", _PR_VIEW_FIELDS])
     if result.returncode != 0:
         return None
     try:
         data = json.loads(result.stdout)
     except (json.JSONDecodeError, ValueError):
         return None
-    mergeable = str(data.get("mergeable", "")).upper()
-    state_status = str(data.get("mergeStateStatus", "")).upper()
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def _view_is_merged(view: dict[str, Any] | None) -> bool:
+    """Read "did this land?" off an already-fetched snapshot.
+
+    Callers decide *which* snapshot, and that choice is load-bearing: the
+    post-merge verification must pass a FRESH one (see :func:`_pr_is_merged`),
+    while the pre-merge short-circuit reuses the gate's.
+    """
+    if view is None:
+        return False
+    return str(view.get("state", "")).upper() == "MERGED"
+
+
+def _pr_is_merged(pr_number: str) -> bool:
+    """Return True only when ``gh`` reports the PR in the ``MERGED`` state,
+    reading a snapshot taken NOW.
+
+    A zero exit from ``gh pr merge`` is not proof the code landed — the merge can
+    silently no-op while the PR stays OPEN (gh #71 / #60). Finish must confirm
+    the actual PR state before transitioning the story to ``done``.
+
+    This deliberately re-fetches rather than accepting a snapshot argument. It
+    runs *after* the merge, and the whole point is to observe the world the
+    merge produced; answering it from the pre-merge snapshot would report the
+    state finish already knew and verify nothing.
+    """
+    return _view_is_merged(_pr_view(pr_number))
+
+
+def _pr_block_reason(pr_number: str, view: dict[str, Any] | None) -> str | None:
+    """Return an actionable abort message when the PR is definitively NOT cleanly
+    mergeable (``mergeable == CONFLICTING`` / ``mergeStateStatus == DIRTY``), else
+    ``None``.
+
+    ``None`` ("do not block") also covers MERGEABLE/CLEAN PRs *and* indeterminate
+    mergeability — ``UNKNOWN`` (GitHub still computing) or an unreadable probe.
+    Those fall through to the merge attempt, which is guarded by the post-merge
+    :func:`_pr_is_merged` verification (gh #71/#60). Only a definitively
+    conflicting PR is hard-blocked here, before any irreversible finish step
+    (gh #113).
+
+    Takes the snapshot rather than fetching one so the conflict gate and the
+    already-merged short-circuit share a single ``gh pr view`` (155-32).
+    """
+    if view is None:
+        return None
+    mergeable = str(view.get("mergeable", "")).upper()
+    state_status = str(view.get("mergeStateStatus", "")).upper()
     if mergeable == "CONFLICTING" or state_status == "DIRTY":
-        base = data.get("baseRefName") or "the base branch"
+        base = view.get("baseRefName") or "the base branch"
         return (
             f"PR #{pr_number} is CONFLICTING — rebase on {base} and resolve the "
             "conflicts before finishing"
@@ -380,8 +421,20 @@ def finish_story(
     # the merge + post-merge _pr_is_merged verification.
     from pf.common.pr_config import get_pr_merge_mode
 
-    if pr_number and get_pr_merge_mode() == "auto":
-        block_reason = _pr_block_reason(pr_number)
+    pr_merge_mode = get_pr_merge_mode()
+
+    # The ONE pre-merge probe (155-32). Both pre-merge questions — "is it
+    # conflicting?" and "did it already land?" — are questions about the same
+    # snapshot of the same PR, so they share one ``gh pr view``.
+    #
+    # It stays inside the auto-mode branch on purpose. Human merge mode never
+    # auto-merges, so it needs neither answer; hoisting the fetch above this
+    # guard would add an API round trip to every human-mode finish and put the
+    # hard-blocking conflict gate on a path that is deliberately advisory.
+    pr_view: dict[str, Any] | None = None
+    if pr_number and pr_merge_mode == "auto":
+        pr_view = _pr_view(pr_number)
+        block_reason = _pr_block_reason(pr_number, pr_view)
         if block_reason:
             steps.append(
                 {
@@ -411,7 +464,6 @@ def finish_story(
     # as CONFLICTING; it surfaces as a non-zero ``gh pr merge`` (or a merge that
     # never reaches MERGED) and is caught by the two abort branches below —
     # before Step 1 archives anything.
-    pr_merge_mode = get_pr_merge_mode()
     if pr_merge_mode == "human":
         # Human merge mode never auto-merges; the story is left in_review below
         # for a human to merge. Nothing here is load-bearing.
@@ -427,16 +479,20 @@ def finish_story(
             )
         else:
             steps.append({"step": 2, "action": "merge_pr", "mode": "human", "skipped": True})
-    elif pr_number and _pr_is_merged(pr_number):
+    elif pr_number and _view_is_merged(pr_view):
         # Already-merged short-circuit (155-29): a prior finish run landed the
         # merge and then aborted on a later step (archive OSError, status-read
         # guard, transition failure) — all of which keep the session so finish
         # can be retried. The retry must NOT re-attempt ``gh pr merge``: gh
         # exits non-zero on a merged PR ("already merged"), which would trip
-        # the rc!=0 abort below and wedge every retry. ``_pr_is_merged`` is the
-        # same load-bearing verification 155-1 runs post-merge, and it returns
-        # False on any probe error — an unverifiable PR state falls through to
-        # the real merge attempt, never silently skips it.
+        # the rc!=0 abort below and wedge every retry.
+        #
+        # This reads the pre-merge snapshot taken by the conflict gate above —
+        # correct here precisely because nothing has happened since: no merge
+        # was attempted, so the snapshot still describes the current PR. The
+        # post-merge verification below must NOT do this. An unreadable probe
+        # leaves ``pr_view`` None, which reads as NOT merged and falls through
+        # to the real merge attempt — never silently skips it.
         steps.append(
             {
                 "step": 2,
