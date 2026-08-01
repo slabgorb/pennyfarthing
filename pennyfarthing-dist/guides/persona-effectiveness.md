@@ -8,8 +8,8 @@
 > - [`personas/ZEITGEIST-ANALYSIS.md`](../personas/ZEITGEIST-ANALYSIS.md) — Persona articulation depth scoring rubric
 > - [`personas/TRAIL-OCEAN-MAPPING.md`](../personas/TRAIL-OCEAN-MAPPING.md) — OCEAN personality × error-detection hypotheses
 > - [`personas/attributes.yaml`](../personas/attributes.yaml) — Personality attribute definitions (verbosity, formality, humor, emoji)
-> - `/benchmark` command — Automated A/B comparison with Cohen's d effect sizes
-> - `/job-fair` command — Cross-role persona discovery across themes
+> - `/pf-benchmark` command — Automated A/B comparison with Cohen's d effect sizes
+> - `/pf-job-fair` command — Cross-role persona discovery across themes
 
 ## Executive Summary
 
@@ -141,11 +141,11 @@ Pennyfarthing has built measurement tools that operationalize many of the recomm
 
 | Research Recommendation | Pennyfarthing Implementation | Status |
 |-------------------------|------------------------------|--------|
-| "Compare persona vs no-persona" [31] | `control` theme (minimal zeitgeist) as zero-persona baseline | **Implemented** — `/benchmark control:{role}` |
+| "Compare persona vs no-persona" [31] | `control` theme (minimal zeitgeist) as zero-persona baseline | **Implemented** — `/pf-benchmark control:{role}` |
 | "Use formal personality frameworks" [13][16] | 630 OCEAN profiles across themes, mapped to error-detection hypotheses | **Implemented** — `TRAIL-OCEAN-MAPPING.md` |
 | "Measure persona articulation depth" [15][18] | Zeitgeist Score: 5-dimension rubric across 102 themes | **Implemented** — `ZEITGEIST-ANALYSIS.md` |
-| "Test personas across task types" [36] | Cross-role testing (`--as` flag in `/benchmark`) | **Implemented** — `/benchmark {theme} {char} --as {role}` |
-| "Use effect sizes, not just accuracy" [15] | Cohen's d with 95% CI in all benchmark comparisons | **Implemented** — `/benchmark` Step 6 |
+| "Test personas across task types" [36] | Cross-role testing (`--as` flag in `/pf-benchmark`) | **Implemented** — `/pf-benchmark {theme} {char} --as {role}` |
+| "Use effect sizes, not just accuracy" [15] | Cohen's d with 95% CI in all benchmark comparisons | **Implemented** — `/pf-benchmark` Step 6 |
 | "Measure inter-rater reliability" | Multi-judge validation planned | **Planned** — Epic 44 |
 | "Audit for bias amplification" [3][44] | Not yet implemented | **Gap** |
 | "Track persona adherence vs difficulty" [48] | Not yet implemented | **Gap** |
@@ -171,7 +171,7 @@ The research finds that persona fidelity (Desideratum 3) is weak and inconsisten
 **Testing this requires:**
 - JobFair runs across zeitgeist tiers (exceptional/rich/moderate/thin/minimal)
 - Controlled for OCEAN profile (use baseline themes: control=minimal, mash=rich+neutral-OCEAN, discworld=exceptional)
-- Statistical comparison via `/benchmark` with Cohen's d > 0.5 threshold
+- Statistical comparison via `/pf-benchmark` with Cohen's d > 0.5 threshold
 
 ### Pennyfarthing-Specific Validation: OCEAN × Error Detection
 
@@ -195,8 +195,8 @@ The literature's finding that Conscientiousness appears broadly beneficial [13] 
 | Irrelevant character details affecting judgment | 14-59% of tasks affected by irrelevant attributes [15] | Design ablation experiments: strip catchphrases, helpers, quirks individually from theme YAML |
 | Bias amplification through role-play | 80% of personas showed bias in ChatGPT-3.5 [44]; -29 pts on StereoSet [3] | Add bias-detection scenarios to benchmark suite; audit reviewer outputs |
 | Context collapse on hard problems | Persona maintenance fails under cognitive load [48] | Track persona adherence score (judge dimension) stratified by scenario difficulty |
-| Assuming personas improve quality | Expert personas showed no consistent benefit on GPQA/MMLU-Pro [15][31] | Always compare against `control` baseline; never ship theme changes without `/benchmark` |
-| Instance-level variability hiding in aggregates | 15.75% helped, 13.78% hurt on same persona [36] | Add per-instance analysis to `/benchmark` output; track variance not just mean |
+| Assuming personas improve quality | Expert personas showed no consistent benefit on GPQA/MMLU-Pro [15][31] | Always compare against `control` baseline; never ship theme changes without `/pf-benchmark` |
+| Instance-level variability hiding in aggregates | 15.75% helped, 13.78% hurt on same persona [36] | Add per-instance analysis to `/pf-benchmark` output; track variance not just mean |
 
 ### Recommended Measurements for Pennyfarthing
 
@@ -211,16 +211,16 @@ The literature's finding that Conscientiousness appears broadly beneficial [13] 
 
 **Experiments already runnable with existing infrastructure:**
 
-1. **Expertise advantage test** (`/benchmark`): Same agent definition, with and without persona block. Does West Wing Toby Ziegler write better code than `control` Dev agent? *Use existing `control` baseline.*
-2. **Theme comparison** (`/job-fair`): Same agent role across themes. Does the character matter, or just the role structure? *Cross-reference with zeitgeist tier.*
-3. **OCEAN × error detection** (`/benchmark` + TRAIL scenarios): Run predictions from `TRAIL-OCEAN-MAPPING.md`. *Requires TRAIL-tagged scenarios (Epic 14).*
+1. **Expertise advantage test** (`/pf-benchmark`): Same agent definition, with and without persona block. Does West Wing Toby Ziegler write better code than `control` Dev agent? *Use existing `control` baseline.*
+2. **Theme comparison** (`/pf-job-fair`): Same agent role across themes. Does the character matter, or just the role structure? *Cross-reference with zeitgeist tier.*
+3. **OCEAN × error detection** (`/pf-benchmark` + TRAIL scenarios): Run predictions from `TRAIL-OCEAN-MAPPING.md`. *Requires TRAIL-tagged scenarios (Epic 14).*
 
 **New experiments requiring infrastructure additions:**
 
-4. **Irrelevant detail ablation:** Create variant theme YAMLs with catchphrases removed, helpers anonymized, quirks stripped. Run `/benchmark` on each variant. Measures Desideratum 2 (robustness to irrelevant attributes).
+4. **Irrelevant detail ablation:** Create variant theme YAMLs with catchphrases removed, helpers anonymized, quirks stripped. Run `/pf-benchmark` on each variant. Measures Desideratum 2 (robustness to irrelevant attributes).
 5. **Bias audit:** Add StereoSet/CrowS-Pairs-inspired scenarios to benchmark suite. Run themed agents and compare bias rates against `control`. Measures the role-play paradox [3].
 6. **Context collapse tracking:** Add difficulty tiers (easy/medium/hard/extreme) to scenarios. Track persona adherence judge dimension across tiers. Measures whether agents drop character under cognitive load [48].
-7. **Per-instance variance analysis:** Extend `/benchmark` to report not just mean scores but per-scenario instance-level deltas (persona helped vs hurt). Measures the instance-level problem [36].
+7. **Per-instance variance analysis:** Extend `/pf-benchmark` to report not just mean scores but per-scenario instance-level deltas (persona helped vs hurt). Measures the instance-level problem [36].
 
 ## Interaction with Other Techniques
 
@@ -247,8 +247,8 @@ HEXACO personality dimensions can systematically control behavior [13][16]:
 | Zero-persona control baseline | `control` theme (Jan 2026) | "Always compare persona vs no-persona" [31] (Nov 2023, republished 2025) |
 | Persona articulation depth rubric | Zeitgeist Score (Jan 2026) | "Persona fidelity is hard to measure" — no equivalent instrument in literature [15] |
 | Personality-to-task-performance mapping | OCEAN × TRAIL hypotheses (Jan 2026) | HEXACO toxicity findings [13][16] (2025) — our mapping is more task-specific |
-| Automated A/B with effect sizes | `/benchmark` with Cohen's d | Recommended by [15][18] but rarely implemented in persona research |
-| Cross-role character testing | `/benchmark --as` flag | Literature discusses instance-level variability [36] but lacks tooling |
+| Automated A/B with effect sizes | `/pf-benchmark` with Cohen's d | Recommended by [15][18] but rarely implemented in persona research |
+| Cross-role character testing | `/pf-benchmark --as` flag | Literature discusses instance-level variability [36] but lacks tooling |
 | 102-theme diversity for large-N studies | Theme packages (ongoing) | Literature warns about small sample bias; our scale addresses this |
 
 ### What the Research Adds That We're Missing
@@ -258,7 +258,7 @@ HEXACO personality dimensions can systematically control behavior [13][16]:
 | **Bias auditing** | Role-play paradox [3], implicit bias [44][47] | High — safety-critical for reviewer/assessment agents | Medium — needs new scenario type |
 | **Context collapse tracking** | Persona drops under cognitive load [48] | Medium — explains known behavioral variance | Low — add judge dimension + difficulty stratification |
 | **Irrelevant detail ablation** | 14-59% task variance from irrelevant attributes [15] | Medium — validates zeitgeist design choices | Medium — needs variant theme YAMLs |
-| **Per-instance variance** | Same persona helps 15.75%, hurts 13.78% [36] | Low — improves reporting fidelity | Low — extend `/benchmark` output |
+| **Per-instance variance** | Same persona helps 15.75%, hurts 13.78% [36] | Low — improves reporting fidelity | Low — extend `/pf-benchmark` output |
 | **Architectural justification doc** | Multi-persona > static [43]; dynamic selection > fixed [43] | Low — this guide fills the gap | Done |
 
 ## References

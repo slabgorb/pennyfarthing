@@ -52,7 +52,7 @@ Complete reference for all 46 Pennyfarthing slash commands.
 
 **Entry point for:** The entire TDD flow
 
-### `/check`
+### `/pf-check`
 
 **Purpose:** Run quality gates (lint, type check, tests) before handoff
 
@@ -281,7 +281,7 @@ Complete reference for all 46 Pennyfarthing slash commands.
 4. Optionally transitions Jira epic to Done
 5. Optionally archives epic context file
 
-### `/pf-brainstorming` (alias: `/brainstorming`)
+### `/pf-brainstorming` (alias: `/pf-brainstorming`)
 
 **Purpose:** Structured problem-solving brainstorm session
 
@@ -312,7 +312,7 @@ Complete reference for all 46 Pennyfarthing slash commands.
 3. Creative problem solving
 4. Less structured than `/pf-brainstorming`
 
-### `/job-fair`
+### `/pf-job-fair`
 
 **Purpose:** Discover which characters in a theme excel at each role
 
@@ -439,7 +439,7 @@ Complete reference for all 46 Pennyfarthing slash commands.
 3. Creates appropriate branches
 4. Structures clean commits
 
-### `/chore`
+### `/pf-chore`
 
 **Purpose:** Quick commit for small changes without full git-cleanup ceremony
 
@@ -458,7 +458,7 @@ Complete reference for all 46 Pennyfarthing slash commands.
 4. Pushes develop
 5. Fast path for maintenance, config, docs, or styling tweaks
 
-### `/standalone`
+### `/pf-standalone`
 
 **Purpose:** Wrap current changes into a standalone Jira story, branch, PR, and merge
 
@@ -756,7 +756,7 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 4. Resumes appropriate agent based on workflow phase
 5. Recovery command for context overflow situations
 
-### `/prime`
+### `/pf-prime`
 
 **Purpose:** Load essential project context at agent activation
 
@@ -851,7 +851,7 @@ pf doctor --fix
 3. Reproduces CI environment for debugging
 4. Verifies CI will pass before pushing
 
-### `/help`
+### `/pf-help`
 
 **Purpose:** Context-aware help for Pennyfarthing commands, agents, and workflows
 
@@ -875,7 +875,7 @@ pf doctor --fix
 |---------|---------|----------|
 | `/pf-work` | Resume or start work | TDD |
 | `/pf-session new` | Start work session | TDD |
-| `/check` | Run quality gates | TDD |
+| `/pf-check` | Run quality gates | TDD |
 | `/pf-sm` | Scrum Master | Agent |
 | `/pf-tea` | Test Engineer | Agent |
 | `/pf-dev` | Developer | Agent |
@@ -893,14 +893,14 @@ pf doctor --fix
 | `/close-epic` | Close an epic | Planning |
 | `/pf-brainstorming` | Problem solving | Planning |
 | `/pf-party-mode` | Creative brainstorm | Planning |
-| `/job-fair` | Character benchmarking | Planning |
+| `/pf-job-fair` | Character benchmarking | Planning |
 | `/pf-solo` | Single agent evaluation | Benchmarking |
 | `/pf-benchmark-control` | Create baseline | Benchmarking |
 | `/pf-benchmark` | Compare vs baseline | Benchmarking |
 | `/pf-git status` | Check git status | Operations |
 | `/git-cleanup` | Organize commits | Operations |
-| `/chore` | Quick commit | Operations |
-| `/standalone` | Jira story+PR+merge | Operations |
+| `/pf-chore` | Quick commit | Operations |
+| `/pf-standalone` | Jira story+PR+merge | Operations |
 | `/pf-git release` | Merge to main | Operations |
 | `/pf-parallel-work` | Create worktree | Operations |
 | `/create-branches-from-story` | Create branches | Operations |
@@ -913,12 +913,12 @@ pf doctor --fix
 | `/pf-theme show` | View theme details | Theme |
 | `/pf-theme list` | List available themes | Theme |
 | `/pf-session continue` | Resume checkpoint | Utility |
-| `/prime` | Load project context | Utility |
+| `/pf-prime` | Load project context | Utility |
 | `/permissions` | Manage permissions | Utility |
 | `/pf-workflow` | Workflow management | Utility |
 | `/pf-health-check` | Check installation | System |
 | `/run-ci` | Run CI locally | System |
-| `/help` | Get help | System |
+| `/pf-help` | Get help | System |
 
 ---
 

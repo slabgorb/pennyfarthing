@@ -29,7 +29,7 @@ A scientific study of how strong personalities affect AI agent behavior:
 
 - **OCEAN Profiling** - Big Five personality scores for every character
 - **TRAIL Framework** - Categorizing errors (reasoning, planning, execution) and correlating with personality
-- **Benchmarking System** - `/solo`, `/benchmark-control`, `/benchmark` for statistical evaluation
+- **Benchmarking System** - `/pf-solo`, `/pf-benchmark-control`, `/pf-benchmark` for statistical evaluation
 - **JobFair** - Discovering which characters excel at roles beyond their native specialization
 
 The 45 persona themes (Discworld, Star Trek, Breaking Bad, Alice in Wonderland, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
@@ -234,7 +234,7 @@ BikeLane is the umbrella workflow system supporting two types:
 | **Dev** | Developer | Make tests pass (GREEN) |
 | **Reviewer** | Code Reviewer | Quality validation, approve/reject |
 
-Use `/workflow list` to see all workflows. Use `/workflow start <name>` to begin any stepped workflow.
+Use `/pf-workflow list` to see all workflows. Use `/pf-workflow start <name>` to begin any stepped workflow.
 
 ### Workflow Gates
 

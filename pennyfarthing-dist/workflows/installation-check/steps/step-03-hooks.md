@@ -25,7 +25,7 @@ Verify all 9 hook configurations in settings.local.json. Hooks are the runtime i
    **SessionStart hooks:**
    - **session-start-hook**: Exports `PROJECT_ROOT` env var. Without it, agents can't find project files. The most critical hook.
    - **otel-auto-start**: Starts Frame server and configures 5 OTEL env vars for telemetry. Legacy `.sh` version only sets 2 of 5 vars.
-   - **auto-load-sm**: Auto-invokes `/sm` agent on new sessions. Without it, users must manually run `/sm` every time.
+   - **auto-load-sm**: Auto-invokes `/pf-sm` agent on new sessions. Without it, users must manually run `/pf-sm` every time.
 
    **Stop hooks:**
    - **stop-hook**: Runs reflector-check to enforce UI markers at turn end. Without it, Frame GUI QuickActions won't render.

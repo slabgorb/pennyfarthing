@@ -59,6 +59,6 @@ Continue to the commit step. Any retro notes are captured separately — they do
     Continue to commit (skip retro)
   </case>
   <case value="run-retro-first" next="LOOP">
-    Run `/retro` first
+    Run `/pf-retro` first
   </case>
 </switch>

@@ -82,10 +82,10 @@ This file provides guidance to Claude Code when working on this project.
 ## Development Workflow
 
 {if has_sprint}
-- `/sm` - Scrum Master (story management)
-- `/tea` - Test Engineer/Architect
-- `/dev` - Developer
-- `/reviewer` - Code Reviewer
+- `/pf-sm` - Scrum Master (story management)
+- `/pf-tea` - Test Engineer/Architect
+- `/pf-dev` - Developer
+- `/pf-reviewer` - Code Reviewer
 {/if}
 
 ## Git Workflow
@@ -112,10 +112,10 @@ This file provides guidance to Claude Code when working on this project.
 
 ### Daily Workflow
 
-1. `/sm` — Start or resume a story (Scrum Master handles setup)
+1. `/pf-sm` — Start or resume a story (Scrum Master handles setup)
 2. Agent handoffs guide you through the workflow automatically
-3. `/reviewer` — Code review when implementation is complete
-4. `/sm` — Finish the story (archive, merge, Jira update)
+3. `/pf-reviewer` — Code review when implementation is complete
+4. `/pf-sm` — Finish the story (archive, merge, Jira update)
 
 ### Key Commands
 
@@ -176,10 +176,10 @@ If `.pennyfarthing/` exists (Pennyfarthing is initialized):
 
 ### Daily Workflow
 
-1. `/sm` — Start or resume a story (Scrum Master handles setup)
+1. `/pf-sm` — Start or resume a story (Scrum Master handles setup)
 2. Agent handoffs guide you through the workflow automatically
-3. `/reviewer` — Code review when implementation is complete
-4. `/sm` — Finish the story (archive, merge, Jira update)
+3. `/pf-reviewer` — Code review when implementation is complete
+4. `/pf-sm` — Finish the story (archive, merge, Jira update)
 
 ### Key Commands
 

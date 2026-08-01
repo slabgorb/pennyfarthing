@@ -7,7 +7,7 @@ gate: false
 </step-meta>
 
 <purpose>
-Roll up all fixes into a single chore commit using the `/chore` skill.
+Roll up all fixes into a single chore commit using the `/pf-chore` skill.
 </purpose>
 
 <instructions>
@@ -15,7 +15,7 @@ Roll up all fixes into a single chore commit using the `/chore` skill.
 2. Present summary of all changes (issues fixed, files changed)
 3. Show git status output to verify no unintended changes
 4. Ask user to confirm ready to commit
-5. USE `/chore` skill to execute the commit
+5. USE `/pf-chore` skill to execute the commit
 6. VERIFY no unintended changes are staged
 7. Confirm commit succeeded with hash and message
 8. Offer options to push, debug more, or exit
@@ -34,12 +34,12 @@ Provide:
 
 ## Purpose
 
-Roll up all fixes into a single chore commit using the `/chore` skill.
+Roll up all fixes into a single chore commit using the `/pf-chore` skill.
 
 ## Mandatory Execution Rules
 
 - REVIEW all changes before committing
-- USE `/chore` skill for the commit
+- USE `/pf-chore` skill for the commit
 - VERIFY no unintended changes are staged
 
 ## Pre-Commit Review
@@ -70,7 +70,7 @@ Ask user to confirm:
 
 ## Commit Execution
 
-**Use the `/chore` skill to create the commit.**
+**Use the `/pf-chore` skill to create the commit.**
 
 The chore skill will:
 1. Stage the relevant files
