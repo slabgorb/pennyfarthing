@@ -78,8 +78,11 @@ epic: "155"
 workflow: "tdd"
 ---
 # Story 155-6
-**Branch:** feat/155-6
+**Branch:** none
 """
+# Branch is the none-sentinel (155-34 pre-adjustment): this file pins the
+# unknown-story guard, not branch verification — the sentinel stays on the
+# accepted no-PR arm before and after the 155-34 unmerged-branch guard.
 
 # Session for an UNKNOWN story id — the session exists (so the session gate at
 # the top of finish_story passes) but 155-99 is absent from the sprint YAML.

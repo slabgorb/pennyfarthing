@@ -652,7 +652,11 @@ class TestFinishStorySuccessOnShardedYaml:
             'jira_key: "PROJ-17083"\n'
             'epic: "PROJ-17079"\n'
             'workflow: "tdd"\n'
-            "---\n\n# Story 151-4\n"
+            "---\n\n# Story 151-4\n\n"
+            # Sentinel branch (155-34 pre-adjustment): this test pins the
+            # Jira-key backlog bridge; a fieldless session would now trip the
+            # 155-34 unresolvable-world abort.
+            "## Story Details\n- **Branch:** none\n"
         )
 
         result = finish_story(sharded_project, "PROJ-17083")

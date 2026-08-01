@@ -312,6 +312,109 @@ def _pr_block_reason(pr_number: str, view: dict[str, Any] | None) -> str | None:
     return None
 
 
+def _field_is_sentinel(raw: str | None) -> bool:
+    """True when a raw session field value is an AFFIRMATIVE no-value sentinel
+    (``none``/``n/a``/...), as opposed to empty, a template placeholder, or an
+    absent key (155-34).
+
+    ``_extract_branch`` collapses all of those to ``None``, but the no-PR gate
+    must tell them apart: a sentinel is an agent's deliberate record that no
+    branch exists (the accepted 155-1 world), while an empty or placeholder
+    value means the field was never filled in — an unverifiable world that
+    must not silently finish. Reuses ``_extract_branch``'s own normalization
+    (annotation strip, backticks) so ``none (no branch)`` still reads as the
+    sentinel it is.
+    """
+    if raw is None:
+        return False
+    value = re.sub(r"\s*\(.*\)\s*$", "", raw).strip().strip("`").strip()
+    return value.lower() in _BRANCH_SENTINELS
+
+
+def _resolve_base_branch(project_root: Path) -> str:
+    """The integration branch the no-PR gate verifies against: the root
+    repo's configured ``default_branch``, falling back to ``develop`` (the
+    gitflow base this finish flow serves) when no repos.yaml resolves.
+
+    Local import for the same reason as Step 6's: pf.git.repos must not be a
+    top-level dependency of pf.sprint (circular layering).
+    """
+    from pf.git.repos import load_repos_config
+
+    root_repo = next(
+        (rc for rc in load_repos_config(project_root).values() if rc.path in (".", "")),
+        None,
+    )
+    return root_repo.default_branch if root_repo else "develop"
+
+
+def _branch_merge_state(project_root: Path, branch: str) -> dict[str, Any]:
+    """Classify a session branch against the base branch: did its work land?
+
+    Returns ``{"state": "merged" | "unmerged" | "unknown", ...}`` with
+    ``count``/``base`` on a definitive answer and ``reason`` on an unknown
+    one. All probes route through ``_run`` with an explicit
+    ``cwd=project_root`` — the finish family's test suites fake ``_run`` as
+    THE hermetic seam, and a cwd-less git call would interrogate whatever
+    repo the process happens to sit in (155-34).
+
+    Ref resolution tries the local branch first (the ref Step 6 would
+    delete), then ``origin/<branch>``; the base prefers ``origin/<base>``
+    over the possibly-stale local base so a merge that landed upstream is
+    not misread as unmerged. ``unknown`` is deliberately NOT permissive
+    here: unlike the PR probes above (which fall through to a merge attempt
+    that is itself verified), the no-PR arm has no later verification —
+    unknown must abort, never silently finish (rule #1: unknown is not
+    merged).
+    """
+    cwd = str(project_root)
+    base = _resolve_base_branch(project_root)
+
+    branch_ref = None
+    for candidate in (branch, f"origin/{branch}"):
+        probe = _run(["git", "rev-parse", "--verify", "--quiet", candidate], cwd=cwd)
+        if probe.returncode == 0:
+            branch_ref = candidate
+            break
+    if branch_ref is None:
+        return {
+            "state": "unknown",
+            "base": base,
+            "reason": "branch not found locally or on origin",
+        }
+
+    base_ref = None
+    for candidate in (f"origin/{base}", base):
+        probe = _run(["git", "rev-parse", "--verify", "--quiet", candidate], cwd=cwd)
+        if probe.returncode == 0:
+            base_ref = candidate
+            break
+    if base_ref is None:
+        return {
+            "state": "unknown",
+            "base": base,
+            "reason": f"base branch {base!r} not found locally or on origin",
+        }
+
+    result = _run(["git", "rev-list", "--count", f"{base_ref}..{branch_ref}"], cwd=cwd)
+    if result.returncode != 0:
+        reason = (result.stderr or "").strip() or "git rev-list failed"
+        return {"state": "unknown", "base": base_ref, "reason": reason}
+    try:
+        count = int(result.stdout.strip())
+    except ValueError:
+        return {
+            "state": "unknown",
+            "base": base_ref,
+            "reason": "unparseable rev-list output",
+        }
+    return {
+        "state": "unmerged" if count else "merged",
+        "count": count,
+        "base": base_ref,
+    }
+
+
 def _git_cleanup(
     project_root: Path,
     branch: str | None,
@@ -618,7 +721,88 @@ def finish_story(
             }
         steps.append({"step": 2, "action": "merge_pr", "pr": pr_number, "merged": True})
     else:
-        steps.append({"step": 2, "action": "merge_pr", "skipped": True})
+        # --- No-PR verification gate (155-34) ---
+        # The last unguarded arm: 155-1 made the merge load-bearing when a PR
+        # exists, but a story whose PR resolution comes up empty used to glide
+        # through this skip into the full done ceremony — even with real
+        # unmerged commits on its branch, and even for a session whose
+        # merge-target fields are unfilled placeholders (which 155-40's
+        # Story Details authority now correctly refuses to backfill from
+        # later sections). The skip is only accepted for worlds finish can
+        # affirmatively trust: a branch verified fully merged into the base,
+        # or an agent's explicit no-branch sentinel. Everything else —
+        # unmerged commits, an unverifiable/missing branch, empty or
+        # placeholder fields, or fields absent entirely (the uniform-abort
+        # answer to TEA's legacy-shape question: unresolvable is
+        # unverifiable, regardless of why) — aborts loudly BEFORE any
+        # irreversible step, with the session kept so finish can be retried
+        # once the operator records the real Branch/PR (or affirms absence).
+        if branch:
+            merge_state = _branch_merge_state(project_root, branch)
+            if merge_state["state"] == "merged":
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "skipped": True,
+                        "branch_verified_merged_into": merge_state["base"],
+                    }
+                )
+            else:
+                if merge_state["state"] == "unmerged":
+                    error = (
+                        f"No PR resolves, and branch {branch!r} has "
+                        f"{merge_state['count']} unmerged commit(s) not in "
+                        f"{merge_state['base']} — refusing to mark the story done "
+                        "with unlanded code. Record the real PR in Story Details "
+                        "(or merge the branch), then re-run finish."
+                    )
+                else:
+                    error = (
+                        f"No PR resolves, and branch {branch!r} cannot be verified "
+                        f"({merge_state['reason']}) — refusing to mark the story "
+                        "done with unverifiable work. Record the real PR in Story "
+                        "Details, or set the Branch field to 'none' if there is "
+                        "genuinely no branch, then re-run finish."
+                    )
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "branch": branch,
+                        "success": False,
+                        "error": error,
+                    }
+                )
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": error,
+                    "steps": steps,
+                }
+        elif _field_is_sentinel(fields.get("branch")):
+            # An agent affirmatively recorded "no branch" — the accepted
+            # 155-1 no-PR world. Nothing exists to verify, by declaration.
+            steps.append({"step": 2, "action": "merge_pr", "skipped": True})
+        else:
+            error = (
+                "No PR and no branch resolve from the session — the Branch/PR "
+                "fields are empty, placeholders, or absent, so finish cannot "
+                "verify anything landed. Record the real values in Story "
+                "Details (or set them to 'none' to affirm absence), then "
+                "re-run finish."
+            )
+            steps.append(
+                {"step": 2, "action": "merge_pr", "success": False, "error": error}
+            )
+            return {
+                "success": False,
+                "story_id": story_id,
+                "jira_key": jira_key,
+                "error": error,
+                "steps": steps,
+            }
 
     # --- Step 1 / 1b: Archive session + dialogue (only after the merge is verified) ---
     # Kept labelled "step 1"/"1b" for report stability, but executed after Step 2 so a
