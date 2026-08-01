@@ -600,7 +600,17 @@ def finish_story(
     pr_view: dict[str, Any] | None = None
     if pr_number and pr_merge_mode == "auto":
         pr_view = _pr_view(pr_number)
-        block_reason = _pr_block_reason(pr_number, pr_view)
+        # "Did it already land?" is answered FIRST (155-35): ``state == MERGED``
+        # is ground truth, while GitHub serves STALE mergeability on
+        # freshly-merged PRs — cached CONFLICTING/DIRTY readings linger after
+        # the merge lands. Evaluating the conflict gate first turned the exact
+        # retry world the 155-29 short-circuit exists for into a hard abort
+        # with rebase advice about a PR already in the base branch —
+        # un-actionable by definition. A merged snapshot therefore never
+        # blocks; the ``elif`` below routes it to the already-merged
+        # short-circuit. An unreadable probe (``pr_view`` None) reads as
+        # neither merged nor blocked and falls through to the real merge.
+        block_reason = None if _view_is_merged(pr_view) else _pr_block_reason(pr_number, pr_view)
         if block_reason:
             steps.append(
                 {
@@ -793,9 +803,7 @@ def finish_story(
                 "Details (or set them to 'none' to affirm absence), then "
                 "re-run finish."
             )
-            steps.append(
-                {"step": 2, "action": "merge_pr", "success": False, "error": error}
-            )
+            steps.append({"step": 2, "action": "merge_pr", "success": False, "error": error})
             return {
                 "success": False,
                 "story_id": story_id,
@@ -824,9 +832,7 @@ def finish_story(
         if dialogue_path.exists():
             dialogue_dest = archive_dir / dialogue_archive_name
             shutil.copy2(dialogue_path, dialogue_dest)
-            steps.append(
-                {"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)}
-            )
+            steps.append({"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)})
     except OSError as exc:
         steps.append(
             {
@@ -968,10 +974,7 @@ def finish_story(
                 "step": "4b",
                 "action": "add_completed_story",
                 "success": False,
-                "error": (
-                    f"Could not re-read sprint data for completed-row "
-                    f"bookkeeping: {exc}"
-                ),
+                "error": (f"Could not re-read sprint data for completed-row bookkeeping: {exc}"),
             }
         )
     else:
@@ -1007,9 +1010,7 @@ def finish_story(
     try:
         from pf.demo import orchestrator as demo_orchestrator
 
-        demo_result = demo_orchestrator.generate(
-            story_id, project_root=project_root
-        )
+        demo_result = demo_orchestrator.generate(story_id, project_root=project_root)
         if demo_result.get("success"):
             steps.append({"step": "4c", "action": "demo_generate"})
         else:
