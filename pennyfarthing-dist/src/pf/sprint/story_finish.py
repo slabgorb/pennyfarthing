@@ -396,7 +396,25 @@ def finish_story(
                 {"step": 2, "action": f"PR #{pr_number} — waiting for human review and merge"}
             )
         elif pr_number:
-            steps.append({"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"})
+            # Preview/reality parity (155-31): the real Step 2 short-circuits
+            # an already-merged PR (155-29), so the plan must not promise a
+            # merge the run will skip. The ONE consolidated probe (155-32)
+            # answers it; an unreadable state (``_pr_view`` → None) reads as
+            # NOT merged and previews the merge, mirroring the real run's
+            # permissive fall-through. Human mode and the no-PR arm stay
+            # probe-free for the same reason the real pre-merge probe lives
+            # inside the auto branch: they need no answer.
+            if _view_is_merged(_pr_view(pr_number)):
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": f"PR #{pr_number} already merged — will skip merge",
+                    }
+                )
+            else:
+                steps.append(
+                    {"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"}
+                )
         else:
             steps.append({"step": 2, "action": "No PR to merge"})
         if jira_key:
