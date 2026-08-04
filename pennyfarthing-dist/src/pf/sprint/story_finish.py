@@ -262,10 +262,17 @@ def _view_is_merged(view: dict[str, Any] | None) -> bool:
     Callers decide *which* snapshot, and that choice is load-bearing: the
     post-merge verification must pass a FRESH one (see :func:`_pr_is_merged`),
     while the pre-merge short-circuit reuses the gate's.
+
+    The comparison is deliberately strict — no case folding, no stripping, no
+    aliases (162-3). ``gh pr view --json state`` emits an uppercase enum, so
+    there is no lowercase producer to accommodate, and this boolean authorises
+    the story's transition to ``done``. Any spelling other than ``MERGED``
+    (including a missing key or an unreadable probe) reads as "not merged",
+    which is the safe answer at all four call sites.
     """
     if view is None:
         return False
-    return str(view.get("state", "")).upper() == "MERGED"
+    return view.get("state") == "MERGED"
 
 
 def _pr_is_merged(pr_number: str) -> bool:
