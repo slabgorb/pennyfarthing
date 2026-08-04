@@ -49,10 +49,23 @@ state via the ``mergeable``/``merge_state_status`` and ``pr_state`` knobs.
 separate probes. Those probes are now a single shared call plus one fresh
 post-merge verification — see ``_make_fake_run`` for why the branching had to
 go.)
+
+162-2 — the fake is stateful
+----------------------------
+``_make_fake_run`` models the PR's ``state`` as a function of history: OPEN
+until it observes a ``gh pr merge`` that returned 0, MERGED (or whatever
+``pr_state`` names) afterwards. Before 162-2 it answered every probe with a
+fixed ``state``, so the clean-merge worlds reported MERGED on the *pre-merge*
+probe and ``finish_story`` took the 155-29 already-merged short-circuit —
+meaning none of the "clean, verified merge" tests below ever reached
+``gh pr merge``. Every clean-path test now asserts the merge ledger
+(``_merge_calls``) as well as the outcome, and ``TestFakeIsStateful`` pins the
+fake's own contract so it cannot quietly regress to a stateless MERGED.
 """
 
 import json
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -173,19 +186,48 @@ def _make_fake_run(
     merge_rc: int = 0,
     merge_stderr: str = "",
     pr_state: str = "MERGED",
+    pre_merge_pr_state: str = "OPEN",
     mergeable: str = "MERGEABLE",
     merge_state_status: str = "CLEAN",
     listed_pr: str = "",
 ):
-    """Build a command-dispatching fake for ``story_finish._run``.
+    """Build a **stateful** command-dispatching fake for ``story_finish._run``.
 
     - ``gh pr view <n> --json ...`` → every field this module reads, in one
-      payload: ``{state, mergeable, mergeStateStatus, baseRefName}``
-    - ``gh pr merge ...`` → returncode=merge_rc, stderr=merge_stderr
+      payload: ``{state, mergeable, mergeStateStatus, baseRefName}``. The
+      ``state`` field is a function of the PR's *history*: it reports
+      ``pre_merge_pr_state`` (default OPEN) until this fake has observed a
+      ``gh pr merge`` that returned 0, and ``pr_state`` afterwards.
+    - ``gh pr merge ...`` → returncode=merge_rc, stderr=merge_stderr. Every
+      invocation is recorded on ``_fake_run.merge_calls`` (the ledger) so tests
+      can assert the merge was actually attempted, and attempted exactly once.
+      A non-zero merge does NOT advance the state: a denied merge does not land.
     - ``gh pr list ...``  → stdout=listed_pr (resolved PR number)
     - anything else (git checkout/pull/branch, epic archive) → returncode=0
 
-    155-32 note: this fake used to branch on the ``--json`` field list and
+    162-2 — why the state has to be stateful
+    ----------------------------------------
+    This fake used to answer every ``gh pr view`` with a fixed ``pr_state``, so
+    the clean-merge worlds (which need the PR to end up MERGED for the
+    post-merge verification) reported ``state=MERGED`` on the *pre-merge* probe
+    too. A PR that gh calls MERGED before anything happened is exactly the input
+    the 155-29 already-merged short-circuit exists to catch, so ``finish_story``
+    took that branch and **never ran ``gh pr merge`` at all**: the tests named
+    "clean, verified merge" were silently exercising the retry path, and their
+    step-2 record read ``already_merged: True``. The tests asserting that a
+    clean merge archives / marks done / archives the dialogue / survives a copy
+    failure "after the irreversible merge" were all passing on a world where no
+    merge was ever attempted — so a regression that skipped the load-bearing
+    merge on the clean path could not fail them.
+
+    Modelling ``state`` as OPEN-until-merged closes the hole: the pre-merge
+    snapshot is the honest one (an unmerged PR, which the short-circuit must not
+    claim), the merge is reached, and only the post-merge verification sees
+    MERGED. ``pr_state`` remains the knob for what the merge *achieved* —
+    ``pr_state="OPEN"`` with ``merge_rc=0`` still models the guardrail no-op
+    (merge returns 0, PR never lands).
+
+    155-32 note: this fake also used to branch on the ``--json`` field list and
     return ``{mergeable, mergeStateStatus, baseRefName}`` (no ``state``) for the
     conflict-gate call and ``{state}`` for the post-merge call — modelling the
     two separate probes that existed then. Those probes are now one shared call
@@ -199,17 +241,22 @@ def _make_fake_run(
     which fields were requested was always a fiction the old split happened to
     hide.
     """
+    landed = False
 
     def _fake_run(cmd, **kwargs):
+        nonlocal landed
         parts = [str(c) for c in cmd]
         if "merge" in parts:
+            _fake_run.merge_calls.append(parts)
+            if merge_rc == 0:
+                landed = True
             return MagicMock(returncode=merge_rc, stdout="", stderr=merge_stderr)
         if "view" in parts:
             return MagicMock(
                 returncode=0,
                 stdout=json.dumps(
                     {
-                        "state": pr_state,
+                        "state": pr_state if landed else pre_merge_pr_state,
                         "mergeable": mergeable,
                         "mergeStateStatus": merge_state_status,
                         "baseRefName": "develop",
@@ -221,7 +268,14 @@ def _make_fake_run(
             return MagicMock(returncode=0, stdout=listed_pr, stderr="")
         return MagicMock(returncode=0, stdout="", stderr="")
 
+    #: Ledger of every ``gh pr merge`` argv the fake was asked to run, in order.
+    _fake_run.merge_calls = []  # type: ignore[attr-defined]
     return _fake_run
+
+
+def _merge_calls(fake: Any) -> list[list[str]]:
+    """The ``gh pr merge`` invocations a ``_make_fake_run`` fake observed."""
+    return fake.merge_calls  # type: ignore[no-any-return]
 
 
 def _archived_session_files(project_root: Path) -> list[Path]:
@@ -256,6 +310,79 @@ REVIEW_REQUIRED_STDERR = (
 
 
 # =============================================================================
+# Harness contract (162-2) — the fake itself must be stateful
+# =============================================================================
+
+
+def _view_state(fake: Any) -> str:
+    """Ask the fake for the PR's current ``state``, the way the module does."""
+    result = fake(["gh", "pr", "view", "315", "--json", "state,mergeable"])
+    return str(json.loads(result.stdout)["state"])
+
+
+class TestFakeIsStateful:
+    """These tests have no production code under them: they pin ``_make_fake_run``
+    itself. The 162-2 finding was a *harness* defect — a fake that reported
+    ``state=MERGED`` before any merge happened, which routed every clean-merge
+    test into the 155-29 already-merged short-circuit and left the load-bearing
+    ``gh pr merge`` uncovered. Reverting the fake to a fixed ``state`` (or
+    dropping the ledger) must fail loudly here rather than silently hollow out
+    the six clean-path tests below.
+    """
+
+    def test_view_reports_open_before_any_merge(self) -> None:
+        fake = _make_fake_run(merge_rc=0, pr_state="MERGED")
+        assert _view_state(fake) == "OPEN", (
+            "the pre-merge probe must see an UNMERGED PR — a fake that reports "
+            "MERGED up front trips the 155-29 short-circuit and the clean-merge "
+            "tests never exercise `gh pr merge`"
+        )
+        assert _merge_calls(fake) == [], "no merge has been attempted yet"
+
+    def test_view_reports_merged_only_after_a_successful_merge(self) -> None:
+        fake = _make_fake_run(merge_rc=0, pr_state="MERGED")
+        fake(["gh", "pr", "merge", "315", "--squash", "--delete-branch"])
+        assert _view_state(fake) == "MERGED", (
+            "after a successful `gh pr merge` the post-merge verification must "
+            "see the PR landed"
+        )
+
+    def test_denied_merge_does_not_advance_state(self) -> None:
+        fake = _make_fake_run(merge_rc=1, merge_stderr=REVIEW_REQUIRED_STDERR, pr_state="MERGED")
+        fake(["gh", "pr", "merge", "315", "--squash", "--delete-branch"])
+        assert _view_state(fake) == "OPEN", (
+            "a merge that gh refused did not land — the PR must still read OPEN"
+        )
+
+    def test_unverified_merge_world_keeps_the_pr_open(self) -> None:
+        # merge_rc=0 with pr_state="OPEN" is the guardrail no-op: gh accepted the
+        # request, the PR never landed. The knob must survive the state machine.
+        fake = _make_fake_run(merge_rc=0, pr_state="OPEN")
+        fake(["gh", "pr", "merge", "315", "--squash", "--delete-branch"])
+        assert _view_state(fake) == "OPEN"
+
+    def test_ledger_records_every_merge_invocation_in_order(self) -> None:
+        fake = _make_fake_run(merge_rc=0)
+        fake(["gh", "pr", "view", "315", "--json", "state"])
+        fake(["gh", "pr", "merge", "315", "--squash", "--delete-branch"])
+        calls = _merge_calls(fake)
+        assert len(calls) == 1, f"the ledger must record the one merge: {calls!r}"
+        assert calls[0][:4] == ["gh", "pr", "merge", "315"], calls[0]
+        assert "--squash" in calls[0] and "--delete-branch" in calls[0], (
+            f"the ledger must capture the full argv so the merge flags stay pinned: {calls[0]!r}"
+        )
+
+    def test_ledger_is_per_fake_not_shared(self) -> None:
+        # A ledger living on the factory (rather than the instance) would leak
+        # counts between tests and make "exactly once" meaningless.
+        first = _make_fake_run(merge_rc=0)
+        second = _make_fake_run(merge_rc=0)
+        first(["gh", "pr", "merge", "315", "--squash", "--delete-branch"])
+        assert len(_merge_calls(first)) == 1
+        assert _merge_calls(second) == [], "each fake must own its own ledger"
+
+
+# =============================================================================
 # Core coverage — a blocked/denied merge must NOT leave a stray archive
 # =============================================================================
 
@@ -272,18 +399,24 @@ class TestBlockedMergeLeavesNoStrayArchive:
         self, mock_mode: MagicMock, mock_transition: MagicMock, project_with_pr: Path
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
-        with patch(
-            "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(
-                merge_rc=1,
-                merge_stderr=REVIEW_REQUIRED_STDERR,
-                mergeable="MERGEABLE",
-                merge_state_status="BLOCKED",
-                pr_state="OPEN",
-            ),
-        ):
+        fake = _make_fake_run(
+            merge_rc=1,
+            merge_stderr=REVIEW_REQUIRED_STDERR,
+            mergeable="MERGEABLE",
+            merge_state_status="BLOCKED",
+            pr_state="OPEN",
+        )
+        with patch("pf.sprint.story_finish._run", side_effect=fake):
             finish_story(project_with_pr, "155-15")
 
+        # The abort this test pins must come from the MERGE step, not from the
+        # pre-merge conflict gate and not from the already-merged short-circuit:
+        # a BLOCKED-but-mergeable PR is undetectable before the attempt, so the
+        # attempt has to happen for the scenario to be the one described.
+        assert len(_merge_calls(fake)) == 1, (
+            "a review-required guardrail is only discoverable by attempting the "
+            f"merge — finish must have run `gh pr merge` exactly once: {_merge_calls(fake)!r}"
+        )
         stray = _archived_session_files(project_with_pr)
         assert stray == [], (
             "Blocked merge left a stray session archive: "
@@ -370,18 +503,20 @@ class TestUnverifiedMergeLeavesNoStrayArchive:
         self, mock_mode: MagicMock, mock_transition: MagicMock, project_with_pr: Path
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
-        with patch(
-            "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(
-                merge_rc=0,
-                mergeable="MERGEABLE",
-                merge_state_status="CLEAN",
-                pr_state="OPEN",  # merge "succeeded" but PR still open
-            ),
-        ):
+        fake = _make_fake_run(
+            merge_rc=0,
+            mergeable="MERGEABLE",
+            merge_state_status="CLEAN",
+            pr_state="OPEN",  # merge "succeeded" but PR still open
+        )
+        with patch("pf.sprint.story_finish._run", side_effect=fake):
             result = finish_story(project_with_pr, "155-15")
 
         assert result["success"] is False, result
+        assert len(_merge_calls(fake)) == 1, (
+            "the guardrail no-op is only observable after the merge returns 0 — "
+            f"finish must have attempted it exactly once: {_merge_calls(fake)!r}"
+        )
         stray = _archived_session_files(project_with_pr)
         assert stray == [], (
             "Merge returned 0 but the PR is still OPEN — finish aborted but left a "
@@ -443,13 +578,9 @@ class TestArchiveCopyFailureReturnsResult:
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "done"}
         # Clean, verified merge so we reach the archive step, then the copy fails.
+        fake = _make_fake_run(merge_rc=0, merge_state_status="CLEAN", pr_state="MERGED")
         with (
-            patch(
-                "pf.sprint.story_finish._run",
-                side_effect=_make_fake_run(
-                    merge_rc=0, merge_state_status="CLEAN", pr_state="MERGED"
-                ),
-            ),
+            patch("pf.sprint.story_finish._run", side_effect=fake),
             patch(
                 "pf.sprint.story_finish.shutil.copy2",
                 side_effect=OSError("No space left on device"),
@@ -464,6 +595,14 @@ class TestArchiveCopyFailureReturnsResult:
                     "{success: False, error, ...} instead."
                 )
 
+        # The whole premise of this class is that the copy now runs AFTER the
+        # irreversible merge. Assert the irreversible step actually happened —
+        # otherwise this is just "copy fails on a retry" and says nothing about
+        # the ordering it claims to protect (162-2).
+        assert len(_merge_calls(fake)) == 1, (
+            "this scenario requires the merge to have landed before the copy "
+            f"failed: {_merge_calls(fake)!r}"
+        )
         assert result["success"] is False, (
             f"An archive-copy failure must abort finish with a result dict: {result}"
         )
@@ -479,13 +618,9 @@ class TestArchiveCopyFailureReturnsResult:
         # A copy failure sits before the done transition; the story must not be
         # marked done when its session could not be archived.
         mock_transition.return_value = {"success": True, "to_status": "done"}
+        fake = _make_fake_run(merge_rc=0, merge_state_status="CLEAN", pr_state="MERGED")
         with (
-            patch(
-                "pf.sprint.story_finish._run",
-                side_effect=_make_fake_run(
-                    merge_rc=0, merge_state_status="CLEAN", pr_state="MERGED"
-                ),
-            ),
+            patch("pf.sprint.story_finish._run", side_effect=fake),
             patch(
                 "pf.sprint.story_finish.shutil.copy2",
                 side_effect=OSError("Permission denied"),
@@ -496,6 +631,10 @@ class TestArchiveCopyFailureReturnsResult:
             except OSError:  # pragma: no cover - forbidden path, asserted elsewhere
                 pytest.fail("finish_story raised OSError instead of returning a result")
 
+        assert len(_merge_calls(fake)) == 1, (
+            "precondition: the copy failure must sit after a real merge, not "
+            f"after an already-merged short-circuit: {_merge_calls(fake)!r}"
+        )
         assert not _requested_done(mock_transition), (
             "finish transitioned the story to `done` even though archiving failed"
         )
@@ -569,15 +708,15 @@ class TestBlockedMergeDoesNotArchiveDialogue:
         # Happy-path regression: the dialogue must still be archived on a clean,
         # verified merge (the move must not suppress the legitimate archive).
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        with patch(
-            "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(
-                merge_rc=0, merge_state_status="CLEAN", pr_state="MERGED"
-            ),
-        ):
+        fake = _make_fake_run(merge_rc=0, merge_state_status="CLEAN", pr_state="MERGED")
+        with patch("pf.sprint.story_finish._run", side_effect=fake):
             result = finish_story(project_with_pr_and_dialogue, "155-15")
 
         assert result["success"] is True, result
+        assert len(_merge_calls(fake)) == 1, (
+            "the clean path must archive the dialogue *because a merge landed*, "
+            f"not because the run short-circuited as already-merged: {_merge_calls(fake)!r}"
+        )
         assert _archived_dialogue_files(project_with_pr_and_dialogue), (
             "Clean finish must still archive the dialogue file as part of the record"
         )
@@ -606,14 +745,16 @@ class TestBlockedDistinctFromNoPr:
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "done"}
         session_path = project_no_pr / ".session" / "155-15-session.md"
-        with patch(
-            "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN", listed_pr=""),
-        ):
+        fake = _make_fake_run(merge_rc=0, pr_state="OPEN", listed_pr="")
+        with patch("pf.sprint.story_finish._run", side_effect=fake):
             result = finish_story(project_no_pr, "155-15")
 
         assert result["success"] is True, (
             f"no-PR finish must not be treated as a blocked merge: {result}"
+        )
+        assert _merge_calls(fake) == [], (
+            "with no resolvable PR there is nothing to merge — finish must not "
+            f"invoke `gh pr merge` at all: {_merge_calls(fake)!r}"
         )
         assert _requested_done(mock_transition), (
             "no-PR auto finish should still transition to done (accepted behavior)"
@@ -637,6 +778,11 @@ class TestCleanMergeArchivesAndCompletes:
     still archive the session, mark the story done, and remove the ``.session``
     file. Stops the "don't archive on abort" change from suppressing the
     legitimate archive on the happy path.
+
+    162-2: this world is now an OPEN/CLEAN PR that becomes MERGED *because*
+    finish merged it, so "clean merge" means what it says. The ledger assertions
+    below are the point — a regression that skipped the merge and completed the
+    ceremony anyway used to satisfy every other assertion in this class.
     """
 
     @patch("pf.sprint.story_finish._add_story_to_completed")
@@ -651,12 +797,10 @@ class TestCleanMergeArchivesAndCompletes:
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "done"}
         session_path = project_with_pr / ".session" / "155-15-session.md"
-        with patch(
-            "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(
-                merge_rc=0, mergeable="MERGEABLE", merge_state_status="CLEAN", pr_state="MERGED"
-            ),
-        ):
+        fake = _make_fake_run(
+            merge_rc=0, mergeable="MERGEABLE", merge_state_status="CLEAN", pr_state="MERGED"
+        )
+        with patch("pf.sprint.story_finish._run", side_effect=fake):
             result = finish_story(project_with_pr, "155-15")
 
         assert result["success"] is True, result
@@ -669,3 +813,71 @@ class TestCleanMergeArchivesAndCompletes:
         assert not session_path.exists(), (
             "Clean finish must still remove the .session file"
         )
+
+    @patch("pf.sprint.story_finish._add_story_to_completed")
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_clean_merge_invokes_gh_pr_merge_exactly_once(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        mock_add_completed: MagicMock,
+        project_with_pr: Path,
+    ) -> None:
+        """162-2 core: an OPEN/CLEAN PR gets a real ``gh pr merge`` — once.
+
+        Exactly once matters in both directions. Zero means the story was
+        completed without landing its code (the failure the stateless fake hid).
+        Twice means a retry against a PR finish just merged, which real gh
+        rejects with "already merged" and which the 155-29 short-circuit exists
+        to prevent.
+        """
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+        fake = _make_fake_run(
+            merge_rc=0, mergeable="MERGEABLE", merge_state_status="CLEAN", pr_state="MERGED"
+        )
+        with patch("pf.sprint.story_finish._run", side_effect=fake):
+            result = finish_story(project_with_pr, "155-15")
+
+        calls = _merge_calls(fake)
+        assert len(calls) == 1, (
+            "a clean OPEN PR must be merged exactly once by finish — got "
+            f"{len(calls)} `gh pr merge` invocation(s): {calls!r}"
+        )
+        assert calls[0][:4] == ["gh", "pr", "merge", "315"], (
+            f"the merge must target the story's PR: {calls[0]!r}"
+        )
+        assert result["success"] is True, result
+
+    @patch("pf.sprint.story_finish._add_story_to_completed")
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_clean_merge_step2_is_a_real_merge_not_the_short_circuit(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        mock_add_completed: MagicMock,
+        project_with_pr: Path,
+    ) -> None:
+        """The step-2 record must describe what happened. On the clean path that
+        is a merge finish performed (``merged`` true, no ``already_merged``) —
+        the marker that distinguishes this path from the 155-29 retry in the
+        run report an operator reads.
+        """
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+        fake = _make_fake_run(
+            merge_rc=0, mergeable="MERGEABLE", merge_state_status="CLEAN", pr_state="MERGED"
+        )
+        with patch("pf.sprint.story_finish._run", side_effect=fake):
+            result = finish_story(project_with_pr, "155-15")
+
+        entries = [s for s in result.get("steps", []) if s.get("step") == 2]
+        assert len(entries) == 1, f"expected exactly one step-2 entry: {entries!r}"
+        entry = entries[0]
+        assert entry.get("merged") is True, f"step-2 must record the merge: {entry!r}"
+        assert entry.get("pr") == "315", f"step-2 must name the PR: {entry!r}"
+        assert not entry.get("already_merged"), (
+            "the clean path merged the PR itself — reporting already_merged here "
+            f"means the run took the 155-29 short-circuit: {entry!r}"
+        )
+        assert not entry.get("skipped"), f"the merge was not skipped: {entry!r}"
