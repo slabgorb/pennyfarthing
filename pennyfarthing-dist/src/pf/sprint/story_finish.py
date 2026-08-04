@@ -298,8 +298,18 @@ def _pr_block_reason(pr_number: str, view: dict[str, Any] | None) -> str | None:
 
     Takes the snapshot rather than fetching one so the conflict gate and the
     already-merged short-circuit share a single ``gh pr view`` (155-32).
+
+    "Did it already land?" is asked FIRST (162-1). GitHub stops recomputing
+    mergeability once a PR merges, so a ``state == MERGED`` snapshot can still
+    carry stale ``CONFLICTING``/``DIRTY`` fields. Blocking on those would abort
+    finish with rebase advice for a branch that is already in the base — so a
+    MERGED PR is never blocked, and the caller's already-merged short-circuit
+    handles it. Only ``MERGED`` is exempt: a CLOSED-without-merging PR did NOT
+    land, so it must still hard-block.
     """
     if view is None:
+        return None
+    if _view_is_merged(view):
         return None
     mergeable = str(view.get("mergeable", "")).upper()
     state_status = str(view.get("mergeStateStatus", "")).upper()
