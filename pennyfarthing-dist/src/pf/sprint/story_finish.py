@@ -375,8 +375,19 @@ def _branch_merge_state(project_root: Path, branch: str) -> dict[str, Any]:
     THE hermetic seam, and a cwd-less git call would interrogate whatever
     repo the process happens to sit in (155-34).
 
+    Every candidate is a FULL ref path — ``refs/heads/<name>`` or
+    ``refs/remotes/origin/<name>`` — never a bare name (162-4). A bare name
+    is an argv position git may flag-parse (a dash-leading branch reaches
+    here intact: ``rev-parse --verify --quiet --local-env-vars`` executes
+    the option and prints git's environment) and a rev name git may DWIM to
+    the wrong ref (a TAG, or the ``git checkout -b origin/x`` typo branch,
+    shadows the intended one and answers ``merged`` for unlanded work). The
+    ``--`` separator is NOT the fix: ``rev-parse --verify --quiet -- <ref>``
+    returns rc=1. The winning candidate is also the rev-list range endpoint,
+    so the counting step cannot fall back into either shadow.
+
     Ref resolution tries the local branch first (the ref Step 6 would
-    delete), then ``origin/<branch>``; the base prefers ``origin/<base>``
+    delete), then the remote-tracking ref; the base prefers origin's ref
     over the possibly-stale local base so a merge that landed upstream is
     not misread as unmerged. ``unknown`` is deliberately NOT permissive
     here: unlike the PR probes above (which fall through to a merge attempt
@@ -388,7 +399,7 @@ def _branch_merge_state(project_root: Path, branch: str) -> dict[str, Any]:
     base = _resolve_base_branch(project_root)
 
     branch_ref = None
-    for candidate in (branch, f"origin/{branch}"):
+    for candidate in (f"refs/heads/{branch}", f"refs/remotes/origin/{branch}"):
         probe = _run(["git", "rev-parse", "--verify", "--quiet", candidate], cwd=cwd)
         if probe.returncode == 0:
             branch_ref = candidate
@@ -401,7 +412,7 @@ def _branch_merge_state(project_root: Path, branch: str) -> dict[str, Any]:
         }
 
     base_ref = None
-    for candidate in (f"origin/{base}", base):
+    for candidate in (f"refs/remotes/origin/{base}", f"refs/heads/{base}"):
         probe = _run(["git", "rev-parse", "--verify", "--quiet", candidate], cwd=cwd)
         if probe.returncode == 0:
             base_ref = candidate
