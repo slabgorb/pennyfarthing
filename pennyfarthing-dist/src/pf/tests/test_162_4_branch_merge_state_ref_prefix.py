@@ -98,8 +98,9 @@ Green-on-arrival guards (regression pins, intentional):
 """
 
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
