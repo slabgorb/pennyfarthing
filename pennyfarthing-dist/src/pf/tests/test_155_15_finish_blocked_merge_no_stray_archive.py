@@ -58,9 +58,17 @@ until it observes a ``gh pr merge`` that returned 0, MERGED (or whatever
 fixed ``state``, so the clean-merge worlds reported MERGED on the *pre-merge*
 probe and ``finish_story`` took the 155-29 already-merged short-circuit —
 meaning none of the "clean, verified merge" tests below ever reached
-``gh pr merge``. Every clean-path test now asserts the merge ledger
-(``_merge_calls``) as well as the outcome, and ``TestFakeIsStateful`` pins the
-fake's own contract so it cannot quietly regress to a stateless MERGED.
+``gh pr merge``. Every clean-path test now asserts that the merge actually
+happened as well as asserting the outcome — three of them via the merge ledger
+(``_merge_calls``), and ``test_clean_merge_step2_is_a_real_merge_not_the_short_circuit``
+via the step-2 record (``merged`` true, ``already_merged`` absent), which is the
+same claim read off the run report instead of off the fake. ``TestFakeIsStateful``
+pins the fake's own contract so it cannot quietly regress to a stateless MERGED.
+
+The abort-world tests do not all assert the ledger: for each abort world one test
+pins the invocation count and its siblings pin the distinct consequences (result
+shape, session kept, no ``done`` transition). The ledger claim is per-world, not
+per-assertion, so repeating it in every sibling would add no coverage.
 """
 
 import json
@@ -355,11 +363,44 @@ class TestFakeIsStateful:
         )
 
     def test_unverified_merge_world_keeps_the_pr_open(self) -> None:
-        # merge_rc=0 with pr_state="OPEN" is the guardrail no-op: gh accepted the
-        # request, the PR never landed. The knob must survive the state machine.
+        """The guardrail no-op: ``merge_rc=0`` with ``pr_state="OPEN"`` — gh
+        accepted the request and the PR never landed. ``pr_state`` must govern
+        the post-merge read, so a successful merge does not imply MERGED.
+        """
         fake = _make_fake_run(merge_rc=0, pr_state="OPEN")
+        before = _view_state(fake)
         fake(["gh", "pr", "merge", "315", "--squash", "--delete-branch"])
-        assert _view_state(fake) == "OPEN"
+        after = _view_state(fake)
+        assert (before, after) == ("OPEN", "OPEN"), (
+            "the guardrail no-op reads OPEN on both sides of the merge: gh "
+            f"returned 0 but nothing landed — got {before!r} then {after!r}"
+        )
+
+    def test_state_reads_pre_merge_knob_before_and_pr_state_after(self) -> None:
+        """Both knobs are observed, with values chosen so the two are
+        distinguishable.
+
+        This is the sensitivity that
+        ``test_unverified_merge_world_keeps_the_pr_open`` structurally cannot
+        provide: in the no-op world ``pre_merge_pr_state`` and ``pr_state`` are
+        BOTH "OPEN", so a stateless fake pinned at ``pr_state`` returns the
+        expected answer on both probes and the test passes either way. No
+        assertion about that world can distinguish the two implementations,
+        because their observable behaviour there is genuinely identical.
+
+        Using two distinct values separates them: a fake that ignores history
+        answers the pre-merge probe with the post-merge value and fails here.
+        """
+        fake = _make_fake_run(merge_rc=0, pre_merge_pr_state="OPEN", pr_state="MERGED")
+        before = _view_state(fake)
+        fake(["gh", "pr", "merge", "315", "--squash", "--delete-branch"])
+        after = _view_state(fake)
+        assert (before, after) == ("OPEN", "MERGED"), (
+            "`state` must be a function of history — pre_merge_pr_state until a "
+            "successful `gh pr merge` is observed, pr_state after. Getting "
+            f"{before!r} on the pre-merge probe means the fake went stateless "
+            "again and the clean-merge tests are back on the 155-29 short-circuit"
+        )
 
     def test_ledger_records_every_merge_invocation_in_order(self) -> None:
         fake = _make_fake_run(merge_rc=0)
@@ -804,6 +845,12 @@ class TestCleanMergeArchivesAndCompletes:
             result = finish_story(project_with_pr, "155-15")
 
         assert result["success"] is True, result
+        assert len(_merge_calls(fake)) == 1, (
+            "this test's whole premise is a CLEAN VERIFIED MERGE, so the merge "
+            "must actually have been attempted — without this, `done` + archived "
+            "+ session removed are all satisfied by a run that completed the "
+            f"ceremony without landing the code: {_merge_calls(fake)!r}"
+        )
         assert _requested_done(mock_transition), (
             "Clean verified merge must still transition the story to `done`"
         )
