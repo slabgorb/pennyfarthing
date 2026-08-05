@@ -23,6 +23,35 @@ from pf.hooks import (
 # =============================================================================
 
 SKILL_REQUIRED_TAGS = ["run", "output"]
+
+#: Anchored session field line, deliberately looser in the label than
+#: ``story_finish.SESSION_FIELD_RE``: it also admits a trailing repo qualifier
+#: (``PR (pennyfarthing)``, ``PR [ui]``) so the per-repo shape 162-33 will
+#: design does not require redesigning this hook. Anchoring is the load-bearing
+#: part — a mid-prose mention of a field token is not a field (155-40).
+_FIELD_LINE_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*([^*:]+):\*\*\s*(.*)$")
+
+#: Trailing parenthesized/bracketed repo qualifier on a field label.
+_QUALIFIER_RE = re.compile(r"\s*[([][^)\]]*[)\]]\s*$")
+
+#: Merge-target fields the 155-33 template contract puts in Story Details, and
+#: which ``story_finish`` reads. Missing lines here are how 155-32 went done
+#: with an open PR, so the hook refuses the write instead of trusting the
+#: template (SOUL #11).
+STORY_DETAILS_SECTION = "story details"
+SESSION_REQUIRED_FIELDS: dict[str, str] = {
+    "branch": (
+        "Missing the Branch field line in the Story Details section. "
+        "To fix: add `- **Branch:** feat/162-11-my-feature` with a non-blank "
+        "value (a placeholder note is fine) to Story Details."
+    ),
+    "pr": (
+        "Missing the PR field line in the Story Details section. "
+        "To fix: add `- **PR:** (none yet - recorded when the PR is created)` "
+        "with a non-blank value to Story Details. A per-repo qualifier such as "
+        "**PR (repo-name):** also counts."
+    ),
+}
 STEP_REQUIRED_TAGS = ["purpose", "instructions", "output"]
 STEP_META_FIELDS = ["step", "workflow", "agent", "next"]
 
@@ -61,10 +90,44 @@ def _has_tag(content: str, tag: str) -> bool:
     return f"<{tag}>" in content or f"<{tag} " in content
 
 
+def _story_details_field_labels(content: str) -> set[str]:
+    """Normalized labels of the anchored field lines inside Story Details.
+
+    Story Details is the section ``story_finish._parse_session`` treats as
+    authoritative for branch/PR (155-40), so the hook checks exactly there: a
+    session that passes is by construction one finish can read. Labels are
+    lowercased (finish lowercases too) and stripped of a trailing repo
+    qualifier. Blank values are dropped — an empty field line and an absent one
+    both extract to ``None`` at finish time.
+    """
+    labels: set[str] = set()
+    in_details = False
+    for line in content.splitlines():
+        if line.startswith("## "):
+            in_details = line[3:].strip().lower() == STORY_DETAILS_SECTION
+            continue
+        if not in_details:
+            continue
+        match = _FIELD_LINE_RE.match(line)
+        if not match or not match.group(2).strip():
+            continue
+        label = _QUALIFIER_RE.sub("", match.group(1).strip()).strip().lower()
+        labels.add(label)
+    return labels
+
+
+def _validate_session_fields(content: str) -> list[str]:
+    """Require the merge-target field lines in the Story Details block."""
+    present = _story_details_field_labels(content)
+    return [msg for field, msg in SESSION_REQUIRED_FIELDS.items() if field not in present]
+
+
 def _validate_session(content: str) -> list[str]:
     errors = []
     if "<session" not in content:
-        return []  # Old markdown format — warn but don't block
+        # Markdown session: only the Story Details field contract applies (the
+        # XML tag requirements below describe a shape it does not have).
+        return _validate_session_fields(content)
     if not re.search(r'<session\s+story="[^"]+"', content):
         errors.append(
             "Missing story attribute on <session>. "
