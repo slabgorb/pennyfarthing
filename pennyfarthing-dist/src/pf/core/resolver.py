@@ -33,13 +33,33 @@ def _load_yaml(path: Path) -> dict:
     return data
 
 
+def _normalize_repos(repos) -> list[str]:
+    """Normalize epic repos field to a list of repo names.
+
+    Sprint YAML may store ``repos`` as a list or as a comma-separated
+    string (e.g. ``repos: joust`` or ``repos: a, b``). Iterating a
+    string would yield characters, so normalize at the boundary.
+    """
+    if repos is None:
+        return []
+    if isinstance(repos, str):
+        return [part.strip() for part in repos.split(",") if part.strip()]
+    if isinstance(repos, list):
+        out: list[str] = []
+        for item in repos:
+            if isinstance(item, str) and item.strip():
+                out.append(item.strip())
+        return out
+    return []
+
+
 def _collect_repos(sprint_data: dict) -> list[str]:
     """Collect unique repo names from all epics in sprint data."""
     repos: list[str] = []
     seen: set[str] = set()
     for epic in sprint_data.get("epics", []):
         if isinstance(epic, dict):
-            for repo in epic.get("repos", []):
+            for repo in _normalize_repos(epic.get("repos", [])):
                 if repo not in seen:
                     repos.append(repo)
                     seen.add(repo)
