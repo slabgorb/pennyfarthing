@@ -61,43 +61,62 @@ def assign_issue(
 ) -> dict[str, Any]:
     """Assign a Jira issue to a user.
 
-    Accepts email address or GitHub username (will be mapped).
-    Checks current assignee to avoid redundant assignments.
+    Accepts a Jira account email or a GitHub username mapped through
+    jira.user_map. The identifier is resolved against Jira BEFORE the dry_run
+    branch, so a dry run can fail for an identifier the real call would reject.
+    Only the real path writes.
 
     Args:
         issue_key: Jira issue key
-        assignee: Email, GitHub username, or None to unassign
-        dry_run: If True, preview without applying
+        assignee: Jira account email, mapped GitHub username, or None to unassign
+        dry_run: If True, resolve and preview without applying
 
     Returns:
-        {success, error?, already_assigned?}
+        {success, data?, error?, already_assigned?, dry_run?} where data holds
+        the resolved account: {account_id, email, display_name}
     """
-    if not assignee or assignee in ("null", "x", "none"):
-        assignee_email = None
-    elif "@" in assignee:
-        assignee_email = assignee
-    else:
-        # Try GitHub username mapping
-        assignee_email = map_github_to_jira(assignee)
-
     client = get_client()
 
+    if not client.token:
+        return {"success": False, "error": "Cannot validate user: no Jira credentials"}
+
+    if not assignee or assignee in ("null", "x", "none"):
+        # Callers own the output; printing here duplicated (and contradicted)
+        # the CLI's line.
+        if dry_run:
+            return {"success": True, "dry_run": True, "unassign": True}
+        return {**client.assign_issue_sync(issue_key, None), "unassign": True}
+
+    # jira.user_map wins; otherwise ask Jira about the identifier as typed.
+    query = assignee if "@" in assignee else (map_github_to_jira(assignee) or assignee)
+
+    account = client.find_user_sync(query)
+    if not account:
+        # Name what the user typed, not a substituted email.
+        return {"success": False, "error": f"User not found: {assignee}"}
+
+    resolved = {
+        "account_id": account.get("accountId"),
+        # Jira may withhold emailAddress; fall back to the resolved query so we
+        # never pass None down to assign_issue_sync (which would unassign).
+        "email": account.get("emailAddress") or query,
+        "display_name": account.get("displayName") or query,
+    }
+
     # Check current assignee
-    if assignee_email:
-        issue = client.get_issue_sync(issue_key)
-        if issue:
-            current_email = get_jira_field(issue, "fields.assignee.emailAddress", "")
-            if current_email == assignee_email:
-                return {"success": True, "already_assigned": True}
+    issue = client.get_issue_sync(issue_key)
+    if issue:
+        current_email = get_jira_field(issue, "fields.assignee.emailAddress", "")
+        if current_email and current_email == resolved["email"]:
+            return {"success": True, "already_assigned": True, "data": resolved}
 
     if dry_run:
-        action = (
-            f"assign {issue_key} to {assignee_email}" if assignee_email else f"unassign {issue_key}"
-        )
-        print(f"[DRY RUN] Would {action}")
-        return {"success": True, "dry_run": True}
+        return {"success": True, "data": resolved, "dry_run": True}
 
-    return client.assign_issue_sync(issue_key, assignee_email)
+    result = client.assign_issue_sync(issue_key, resolved["email"])
+    if result.get("success"):
+        return {**result, "data": resolved}
+    return result
 
 
 def link_issues(
@@ -118,9 +137,14 @@ def link_issues(
     Returns:
         {success, error?}
     """
+    client = get_client()
+
     if dry_run:
-        print(f"[DRY RUN] Would link {inward_key} -> {outward_key} ({link_type})")
+        # Verify both endpoints exist — a typo in either key used to preview
+        # as a successful link.
+        for key in (inward_key, outward_key):
+            if not client.get_issue_sync(key):
+                return {"success": False, "error": f"Issue not found: {key}"}
         return {"success": True, "dry_run": True}
 
-    client = get_client()
     return client.link_issues_sync(inward_key, outward_key, link_type)

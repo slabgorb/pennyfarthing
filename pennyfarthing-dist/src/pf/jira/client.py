@@ -92,6 +92,7 @@ def is_jira_enabled() -> bool:
         and bool(url.strip())
     )
 
+
 # Status mappings: Pennyfarthing -> Jira
 STATUS_TO_JIRA = {
     "backlog": "To Do",
@@ -305,24 +306,22 @@ def _load_user_map() -> dict[str, str]:
 def map_github_to_jira(github_user: str | None) -> str | None:
     """Map GitHub username to Jira email.
 
-    Checks jira.user_map in config.local.yaml, then falls back to
-    the git user email.
+    Checks jira.user_map in config.local.yaml only. There is deliberately NO
+    fallback to the operator's own email: an unmapped username used to resolve
+    to whoever ran the command, so assigning to a teammate silently targeted
+    the operator (gh #146). An unmapped username returns None so callers can
+    fail loudly or query Jira with the raw identifier.
 
     Args:
         github_user: GitHub username
 
     Returns:
-        Jira email address, or None if input is None
+        Jira email address, or None if input is None or unmapped
     """
     if github_user is None:
         return None
 
-    user_map = _load_user_map()
-    if github_user in user_map:
-        return user_map[github_user]
-
-    # Fallback: try git config email
-    return get_current_user_email()
+    return _load_user_map().get(github_user)
 
 
 def get_current_user_email() -> str:
@@ -545,6 +544,26 @@ class JiraClient:
         # _call_api_sync returns None on empty response, which is OK here
         return {"success": True}
 
+    def find_user_sync(self, query: str) -> dict[str, Any] | None:
+        """Look up a Jira user, read-only.
+
+        The single resolution rule shared by dry-run previews and real
+        assignments. GET only — it never mutates.
+
+        Args:
+            query: Email address, display name, or account id to search for
+
+        Returns:
+            The first matching account dict (accountId, emailAddress,
+            displayName), or None when nothing matches and None when the
+            call fails (no credentials, transport error). Never raises.
+        """
+        users = self._call_api_sync("GET", f"/rest/api/3/user/search?query={query}")
+        if not users or not isinstance(users, list):
+            return None
+        first = users[0]
+        return first if isinstance(first, dict) else None
+
     def assign_issue_sync(self, issue_key: str, assignee_email: str | None) -> dict[str, Any]:
         """Assign issue to a user synchronously via REST API.
 
@@ -557,17 +576,13 @@ class JiraClient:
         """
         # Jira Cloud REST API uses accountId, but we can search by email
         if assignee_email:
-            # Search for user by email
-            users = self._call_api_sync(
-                "GET",
-                f"/rest/api/3/user/search?query={assignee_email}",
-            )
-            if not users or not isinstance(users, list) or len(users) == 0:
+            account = self.find_user_sync(assignee_email)
+            if not account:
                 return {
                     "success": False,
                     "error": f"User not found: {assignee_email}",
                 }
-            account_id = users[0].get("accountId")
+            account_id = account.get("accountId")
         else:
             account_id = None
 
