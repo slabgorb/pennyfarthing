@@ -52,14 +52,19 @@ probed a garbage head).
 Two deliberate scope boundaries, pinned by tests below so nobody "fixes" them
 by accident:
 
-1. **PR is at-least-one, qualifier-tolerant.** 162-6 opened multi-repo
-   stories; 162-33 designs per-repo PR recording. A rule of "exactly one PR
-   line named exactly PR" would have to be redesigned then, so this hook
-   accepts ``- **PR (pennyfarthing):** #1`` / ``- **PR [ui]:** #2`` with or
-   without a bare PR line. It still rejects a *different* field whose label
-   merely starts with those letters (``PR Status``) — 155-33 established that
-   a lookalike label does not parse as the session field, so it must not
-   satisfy the requirement either.
+1. **PR is at-least-one and must be a label the CONSUMER can parse.** 162-6
+   opened multi-repo stories; 162-33 designs per-repo PR recording. This suite
+   originally accepted ``- **PR (pennyfarthing):** #1`` as the required line
+   for forward compat; review caught that ``SESSION_FIELD_RE``'s label class
+   is word-and-space only, so that line parses to NOTHING and a session whose
+   only PR line is qualified reproduces 155-32 while passing the backstop.
+   Corrected boundary: a bare PR line is required, qualified lines are
+   tolerated as extras beside it, and the hook reuses the consumer's exact
+   pattern so acceptance can never outrun resolvability
+   (``test_consumer_parses_every_shape_the_hook_accepts``). It also rejects a
+   *different* field whose label merely starts with those letters
+   (``PR Status``) — 155-33 established that a lookalike label does not parse
+   as the session field, so it must not satisfy the requirement either.
 2. **XML-format sessions keep their existing (XML) validation only.** The
    ``## Story Details`` contract is a markdown-session contract; an XML
    session has no such block and its own required tags are already checked.
@@ -72,7 +77,7 @@ RED on HEAD (all fail on assertions, for the right reason — today
   (1), TestErrorMessageQuality (3), TestHookDenies (2).
 Green-on-arrival guards (regression pins, intentional):
   TestAllowedWrites (8), TestPlaceholdersAccepted (4),
-  TestForwardCompatPrShape (3, partially red), TestScopeBoundaries (3).
+  TestForwardCompatPrShape (partially red), TestScopeBoundaries (3).
 """
 
 from __future__ import annotations
@@ -383,7 +388,12 @@ class TestErrorMessageQuality:
         that produces an unparseable line is worse than none."""
         errors = _validate_session(MISSING_BOTH)
         joined = "\n".join(errors)
-        samples = re.findall(r"`([^`]*\*\*\w[\w\s]*:\*\*[^`]*)`", joined)
+        # Extraction must NOT presuppose the consumer's label class, or a
+        # suggestion the consumer cannot parse (a qualified per-repo label) is
+        # invisible to this guard by construction — which is how the first cut
+        # of this story shipped a message telling agents to write an
+        # unresolvable line. Match any backticked span holding a bold field.
+        samples = re.findall(r"`([^`]*\*\*[^*`]+:\*\*[^`]*)`", joined)
         assert samples, (
             f"no backtick-quoted example field line in the errors: {errors!r}"
         )
@@ -461,27 +471,64 @@ class TestPlaceholdersAccepted:
 
 class TestForwardCompatPrShape:
     """162-6 opened multi-repo stories; 162-33 designs per-repo PR recording.
-    The hook must not have to be redesigned then — hence at-least-one PR line
-    with an optional repo qualifier."""
 
-    def test_per_repo_pr_lines_without_a_bare_pr_line_pass(self) -> None:
-        content = _session(
-            COMMON_DETAILS
-            + BRANCH_LINE
-            + "- **PR (pennyfarthing):** #182\n"
-            + "- **PR (orchestrator):** #63\n"
-        )
-        assert _validate_session(content) == [], (
-            "the per-repo PR shape 162-33 will introduce was refused — the "
-            "hook would have to be redesigned to ship that story"
+    The hook must not BLOCK that future shape, but it must not COUNT it either:
+    the consumer's label class is word-and-space only, so a qualified label
+    parses to nothing and a session whose only PR line is qualified contributes
+    nothing to finish's resolution — the 155-32 failure class. So: qualified
+    lines are tolerated as extras alongside a bare line, and refused as a
+    substitute for it. When 162-33 teaches finish to read them, the hook follows
+    by mirroring the consumer's pattern (one edit, in one place).
+    """
+
+    @pytest.mark.parametrize(
+        "pr_lines",
+        [
+            "- **PR (pennyfarthing):** #182\n- **PR (orchestrator):** #63\n",
+            "- **PR [ui]:** #7\n",
+            "- **PR (status):** open\n",
+        ],
+    )
+    def test_qualified_only_pr_line_is_error(self, pr_lines: str) -> None:
+        """A qualified label is not yet a field finish can read, so accepting it
+        as the required line would green-light exactly the session shape the
+        hook exists to refuse."""
+        errors = _validate_session(_session(COMMON_DETAILS + BRANCH_LINE + pr_lines))
+        assert "pr" in _flagged(errors), (
+            f"a session whose only PR line is qualified ({pr_lines!r}) was "
+            "accepted, but the consumer's regex cannot parse that label — the "
+            f"backstop passes a session finish resolves nothing from: {errors!r}"
         )
 
-    def test_bracketed_repo_qualifier_passes(self) -> None:
-        content = _session(
-            COMMON_DETAILS + BRANCH_LINE + "- **PR [ui]:** #7\n"
-        )
+    @pytest.mark.parametrize(
+        "pr_lines",
+        [
+            "- **PR (pennyfarthing):** #182\n- **PR (orchestrator):** #63\n",
+            "- **PR [ui]:** #7\n",
+        ],
+    )
+    def test_qualified_lines_are_tolerated_beside_a_bare_line(
+        self, pr_lines: str
+    ) -> None:
+        """Not blocking the future shape: with a bare PR line present, per-repo
+        lines are extras and must not trip a duplicate-field or unknown-field
+        complaint."""
+        content = _session(COMMON_DETAILS + BRANCH_LINE + PR_LINE + pr_lines)
         assert _validate_session(content) == [], (
-            "bracketed per-repo PR qualifier refused"
+            f"per-repo PR lines beside a bare PR line were refused ({pr_lines!r}) "
+            "— 162-33 would have to redesign the hook to ship"
+        )
+
+    def test_consumer_parses_every_shape_the_hook_accepts(self) -> None:
+        """The invariant behind both cases above, stated directly: the hook's
+        line pattern IS the consumer's, so acceptance can never outrun what
+        finish can read. Drift in either direction fails here."""
+        assert (
+            schema_validation._FIELD_LINE_RE.pattern == SESSION_FIELD_RE.pattern
+        ), (
+            "the hook's field-line pattern has diverged from the consumer's "
+            "(story_finish.SESSION_FIELD_RE). A looser hook pattern accepts "
+            "sessions finish cannot resolve; a stricter one blocks legal ones."
         )
 
     def test_bare_plus_per_repo_pr_lines_pass(self) -> None:

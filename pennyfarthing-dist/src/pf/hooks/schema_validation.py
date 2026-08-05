@@ -24,15 +24,18 @@ from pf.hooks import (
 
 SKILL_REQUIRED_TAGS = ["run", "output"]
 
-#: Anchored session field line, deliberately looser in the label than
-#: ``story_finish.SESSION_FIELD_RE``: it also admits a trailing repo qualifier
-#: (``PR (pennyfarthing)``, ``PR [ui]``) so the per-repo shape 162-33 will
-#: design does not require redesigning this hook. Anchoring is the load-bearing
-#: part — a mid-prose mention of a field token is not a field (155-40).
-_FIELD_LINE_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*([^*:]+):\*\*\s*(.*)$")
-
-#: Trailing parenthesized/bracketed repo qualifier on a field label.
-_QUALIFIER_RE = re.compile(r"\s*[([][^)\]]*[)\]]\s*$")
+#: Session field line — mirrors ``story_finish.SESSION_FIELD_RE`` EXACTLY, label
+#: class included, and is pinned equal to it by the 162-11 test suite. The hook
+#: may only accept a line the consumer can actually parse. An earlier cut of
+#: this story used a looser label class that admitted a trailing repo qualifier
+#: (``PR (pennyfarthing)``, ``PR [ui]``) for 162-33 forward compat; that let a
+#: session pass whose only PR line finish resolves to nothing — the 155-32
+#: failure class this hook exists to prevent. Qualified lines are still
+#: tolerated as EXTRAS (an unparsed line is simply not a field here); they just
+#: do not count as the required line until finish can read them.
+#: Anchoring is the other load-bearing part — a mid-prose mention of a field
+#: token is not a field (155-40).
+_FIELD_LINE_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*(\w[\w\s]*):\*\*\s*(.*)")
 
 #: Merge-target fields the 155-33 template contract puts in Story Details, and
 #: which ``story_finish`` reads. Missing lines here are how 155-32 went done
@@ -48,8 +51,10 @@ SESSION_REQUIRED_FIELDS: dict[str, str] = {
     "pr": (
         "Missing the PR field line in the Story Details section. "
         "To fix: add `- **PR:** (none yet - recorded when the PR is created)` "
-        "with a non-blank value to Story Details. A per-repo qualifier such as "
-        "**PR (repo-name):** also counts."
+        "with a non-blank value to Story Details. The label must be bare: a "
+        "per-repo qualifier such as PR (repo-name) is not resolvable yet "
+        "(162-33), so such a line may appear in addition but does not satisfy "
+        "this requirement."
     ),
 }
 STEP_REQUIRED_TAGS = ["purpose", "instructions", "output"]
@@ -91,14 +96,16 @@ def _has_tag(content: str, tag: str) -> bool:
 
 
 def _story_details_field_labels(content: str) -> set[str]:
-    """Normalized labels of the anchored field lines inside Story Details.
+    """Labels of the parseable field lines inside Story Details, lowercased.
 
     Story Details is the section ``story_finish._parse_session`` treats as
-    authoritative for branch/PR (155-40), so the hook checks exactly there: a
-    session that passes is by construction one finish can read. Labels are
-    lowercased (finish lowercases too) and stripped of a trailing repo
-    qualifier. Blank values are dropped — an empty field line and an absent one
-    both extract to ``None`` at finish time.
+    authoritative for branch/PR (155-40), and the line pattern here is the
+    consumer's own — so a session that passes is by construction one finish can
+    read. Labels are lowercased because finish lowercases before keying. Blank
+    values are dropped: an empty field line and an absent one both extract to
+    ``None`` at finish time. A line the consumer's pattern cannot parse (a
+    qualified per-repo label, for now) contributes no label — it is tolerated,
+    not counted.
     """
     labels: set[str] = set()
     in_details = False
@@ -108,11 +115,10 @@ def _story_details_field_labels(content: str) -> set[str]:
             continue
         if not in_details:
             continue
-        match = _FIELD_LINE_RE.match(line)
+        match = _FIELD_LINE_RE.search(line)
         if not match or not match.group(2).strip():
             continue
-        label = _QUALIFIER_RE.sub("", match.group(1).strip()).strip().lower()
-        labels.add(label)
+        labels.add(match.group(1).strip().lower())
     return labels
 
 
