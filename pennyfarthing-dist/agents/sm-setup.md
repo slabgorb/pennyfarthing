@@ -102,8 +102,12 @@ the first place.
 </critical>
 
 ```bash
+# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
+# .venv - derive the interpreter from the launcher shebang, never activate .venv.
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+
 # Detect whether the project has Jira configured.
-JIRA_ENABLED=$(python3 -c "from pf.jira.client import is_jira_enabled; print('1' if is_jira_enabled() else '0')")
+JIRA_ENABLED=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "from pf.jira.client import is_jira_enabled; print('1' if is_jira_enabled() else '0')")
 
 # Treat empty/null JIRA_KEY as no-jira-story.
 case "{JIRA_KEY}" in
@@ -270,7 +274,11 @@ First check whether the target repo even uses a feature-branch workflow, then
 # interpolated into the Python source string, to avoid code injection via a
 # crafted repo name (CWE-78). The heredoc body is single-quoted so the shell
 # performs no expansion inside it.
-STRATEGIES=$(python3 - "{REPOS}" <<'PYEOF'
+#
+# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
+# .venv - derive the interpreter from the launcher shebang, never activate .venv.
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+STRATEGIES=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" - "{REPOS}" <<'PYEOF'
 import sys
 from pf.git.repos import get_repo_config
 rc = get_repo_config(sys.argv[1])

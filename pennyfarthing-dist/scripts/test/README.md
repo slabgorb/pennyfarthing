@@ -9,7 +9,10 @@ subagent writes each run's summary to an isolated, RUN_ID-keyed file — never
 the live workflow session file (gh #53):
 
 ```bash
-printf '%s\n' "$RESULT_SUMMARY" | python -m pf.session.test_cache "$RUN_ID"
+# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
+# .venv - derive the interpreter from the launcher shebang.
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+printf '%s\n' "$RESULT_SUMMARY" | "${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -m pf.session.test_cache "$RUN_ID"
 # → .session/test-runs/${RUN_ID}.md
 ```
 

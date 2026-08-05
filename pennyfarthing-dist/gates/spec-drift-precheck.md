@@ -24,7 +24,10 @@ Checks:
 Run the Python validation function:
 
 ```bash
-python3 -c "
+# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
+# .venv - derive the interpreter from the launcher shebang, never activate .venv.
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
 from pf.gates.spec_drift_precheck import run_spec_drift_precheck
 import json, sys
 result = run_spec_drift_precheck('${SESSION_FILE}', '${CONTEXT_FILE}')

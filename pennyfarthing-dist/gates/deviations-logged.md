@@ -22,7 +22,10 @@ Used by: tea-exit (after red phase), dev-exit (after green phase).
 Run the Python validation function to check the session file:
 
 ```bash
-python3 -c "
+# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
+# .venv - derive the interpreter from the launcher shebang, never activate .venv.
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
 from pf.gates.deviations import validate_deviations
 import json, sys
 result = validate_deviations('${SESSION_FILE}', '${AGENT}')
