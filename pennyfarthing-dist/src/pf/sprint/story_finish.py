@@ -217,9 +217,71 @@ def _extract_branch(fields: dict[str, str]) -> str | None:
     return raw or None
 
 
-def _run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-    """Run a subprocess with sane defaults."""
-    return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+#: Bounded-subprocess envelope for the whole finish ceremony (162-9). The
+#: ceremony is not a read-only report: it wedges MID-SEQUENCE, and an unbounded
+#: child blocks it forever for entirely ordinary reasons (a stalled TLS
+#: handshake, a credential helper prompting on a non-tty, an ssh host-key
+#: prompt, a proxy that blackholes instead of resetting). The tiering lives in
+#: one reviewable block so the trade-off is visible: every bound must be loose
+#: enough that a working-but-slow command is not killed — a tight bound on the
+#: irreversible merge trades a rare hang for a routine mid-merge kill.
+DEFAULT_TIMEOUT_S = 120.0
+#: Network-facing gh calls, including the irreversible merge.
+GH_TIMEOUT_S = 120.0
+#: Purely local git plumbing: ref existence, commit counting, branch delete.
+GIT_LOCAL_TIMEOUT_S = 30.0
+#: git that reaches origin.
+GIT_NETWORK_TIMEOUT_S = 120.0
+#: The step-5 re-entrant pf.cli invocation.
+SUBCOMMAND_TIMEOUT_S = 120.0
+
+#: timeout(1)'s conventional exit status, so a timed-out result reads as a
+#: failure to every existing ``returncode != 0`` check.
+_TIMEOUT_RETURNCODE = 124
+
+
+class _TimedOutProcess(subprocess.CompletedProcess):
+    """A :func:`_run` result standing in for a child that blew its timeout.
+
+    A distinct TYPE rather than a marker attribute or a magic returncode:
+    ``_timed_out`` must answer False for every other result shape, including
+    the mocks the finish test suites hand back (a ``getattr`` probe on a
+    ``MagicMock`` invents a truthy attribute, which would read every faked call
+    as timed out).
+    """
+
+
+def _timed_out(result: Any) -> bool:
+    """True when *result* came from a child that hit its timeout."""
+    return isinstance(result, _TimedOutProcess)
+
+
+def _run(
+    cmd: list[str],
+    *,
+    timeout: float = DEFAULT_TIMEOUT_S,
+    **kwargs: Any,
+) -> subprocess.CompletedProcess[str]:
+    """Run a subprocess with sane defaults, always BOUNDED (162-9).
+
+    The bound is a default on the helper rather than a kwarg repeated at every
+    call site, so "every finish subprocess is bounded" is a property of this
+    function instead of an audit of its callers — and the next call site added
+    inherits it. An explicitly passed ``timeout`` wins; that is how the
+    per-site tiering above is expressed.
+
+    A blown timeout is returned as a :class:`_TimedOutProcess`, never raised:
+    ``TimeoutExpired`` escaping ``finish_story`` violates the no-throw contract
+    (SOUL #10) exactly as badly as the hang it replaced, and after the
+    irreversible merge it strands the story with a traceback instead of a
+    report. ``stderr`` carries the exception's own text, which names the
+    program, its subcommand and the bound that expired — the callers below
+    surface it verbatim so "something timed out" is never the whole story.
+    """
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, **kwargs)
+    except subprocess.TimeoutExpired as exc:
+        return _TimedOutProcess(list(cmd), _TIMEOUT_RETURNCODE, "", str(exc))
 
 
 def _cwd_kwargs(cwd: Path | None) -> dict[str, str]:
@@ -236,6 +298,40 @@ def _cwd_kwargs(cwd: Path | None) -> dict[str, str]:
 #: ``mergeable``/``mergeStateStatus``/``baseRefName`` for the conflict gate. One
 #: field list means the two pre-merge questions share one round trip (155-32).
 _PR_VIEW_FIELDS = "state,mergeable,mergeStateStatus,baseRefName"
+
+
+def _pr_view_probe(
+    pr_number: str,
+    cwd: Path | None = None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """:func:`_pr_view`, plus the one answer it cannot express: ``(view,
+    timeout_message)``.
+
+    A timed-out probe is NOT the permissive "unknown" ``_pr_view`` degrades a gh
+    error to (162-9). An error is a fact about one call; a timeout predicts the
+    next call hangs too. Degrading a hung branch-to-PR or gate probe drops
+    finish into an arm that can silently finish a merged-LOOKING branch, and
+    degrading a hung post-merge verification reaches an abort message that
+    flatly denies a merge which in fact landed. Callers on the finish path take
+    the second element and abort on it; the permissive wrapper stays for the
+    dry-run preview, which has no side effects to protect.
+    """
+    result = _run(
+        ["gh", "pr", "view", pr_number, "--json", _PR_VIEW_FIELDS],
+        timeout=GH_TIMEOUT_S,
+        **_cwd_kwargs(cwd),
+    )
+    if _timed_out(result):
+        return None, (result.stderr or "").strip()
+    if result.returncode != 0:
+        return None, None
+    try:
+        data = json.loads(result.stdout)
+    except (json.JSONDecodeError, ValueError):
+        return None, None
+    if not isinstance(data, dict):
+        return None, None
+    return data, None
 
 
 def _pr_view(pr_number: str, cwd: Path | None = None) -> dict[str, Any] | None:
@@ -260,20 +356,13 @@ def _pr_view(pr_number: str, cwd: Path | None = None) -> dict[str, Any] | None:
     happily and that then raise ``AttributeError`` on ``.get`` — an exception
     escaping ``finish_story`` instead of the ``{success, error}`` result object
     the caller contracts for.
+
+    A timed-out probe also reads as "unknown" here, which is why the finish path
+    calls :func:`_pr_view_probe` instead — this wrapper cannot tell its caller to
+    abort (162-9). Its remaining caller is the dry-run preview, which has no
+    side effects to protect.
     """
-    result = _run(
-        ["gh", "pr", "view", pr_number, "--json", _PR_VIEW_FIELDS],
-        **_cwd_kwargs(cwd),
-    )
-    if result.returncode != 0:
-        return None
-    try:
-        data = json.loads(result.stdout)
-    except (json.JSONDecodeError, ValueError):
-        return None
-    if not isinstance(data, dict):
-        return None
-    return data
+    return _pr_view_probe(pr_number, cwd=cwd)[0]
 
 
 def _view_is_merged(view: dict[str, Any] | None) -> bool:
@@ -313,6 +402,17 @@ def _pr_is_merged(pr_number: str, cwd: Path | None = None) -> bool:
     that was just merged.
     """
     return _view_is_merged(_pr_view(pr_number, cwd=cwd))
+
+
+def _pr_merge_verification(pr_number: str, cwd: Path | None = None) -> tuple[bool, str | None]:
+    """:func:`_pr_is_merged`, plus whether the verification itself timed out.
+
+    ``(merged, timeout_message)``. The second element is what keeps the
+    post-merge report truthful (162-9): "could not verify" is a different fact
+    from "did not merge", and only the caller can tell them apart.
+    """
+    view, timeout_message = _pr_view_probe(pr_number, cwd=cwd)
+    return _view_is_merged(view), timeout_message
 
 
 def _pr_block_reason(pr_number: str, view: dict[str, Any] | None) -> str | None:
@@ -445,9 +545,13 @@ def _branch_merge_state(
     own integration branch; when omitted it falls back to
     :func:`_resolve_base_branch`, which answers for the root repo.
 
-    Returns ``{"state": "merged" | "unmerged" | "unknown", ...}`` with
-    ``count``/``base`` on a definitive answer and ``reason`` on an unknown
-    one. All probes route through ``_run`` with an explicit
+    Returns ``{"state": "merged" | "unmerged" | "unknown" | "timeout", ...}``
+    with ``count``/``base`` on a definitive answer and ``reason`` on an unknown
+    or timed-out one. ``timeout`` is kept distinct from ``unknown`` (162-9)
+    because the two say different things to the operator: unknown is a fact
+    about this repo's refs, while a timed-out probe says the git call itself
+    never came back and the next one probably will not either. All probes route
+    through ``_run`` with an explicit
     ``cwd=repo_path`` — the finish family's test suites fake ``_run`` as
     THE hermetic seam, and a cwd-less git call would interrogate whatever
     repo the process happens to sit in (155-34).
@@ -477,7 +581,13 @@ def _branch_merge_state(
 
     branch_ref = None
     for candidate in (f"refs/heads/{branch}", f"refs/remotes/origin/{branch}"):
-        probe = _run(["git", "rev-parse", "--verify", "--quiet", candidate], cwd=cwd)
+        probe = _run(
+            ["git", "rev-parse", "--verify", "--quiet", candidate],
+            cwd=cwd,
+            timeout=GIT_LOCAL_TIMEOUT_S,
+        )
+        if _timed_out(probe):
+            return {"state": "timeout", "base": base, "reason": (probe.stderr or "").strip()}
         if probe.returncode == 0:
             branch_ref = candidate
             break
@@ -490,7 +600,13 @@ def _branch_merge_state(
 
     base_ref = None
     for candidate in (f"refs/remotes/origin/{base}", f"refs/heads/{base}"):
-        probe = _run(["git", "rev-parse", "--verify", "--quiet", candidate], cwd=cwd)
+        probe = _run(
+            ["git", "rev-parse", "--verify", "--quiet", candidate],
+            cwd=cwd,
+            timeout=GIT_LOCAL_TIMEOUT_S,
+        )
+        if _timed_out(probe):
+            return {"state": "timeout", "base": base, "reason": (probe.stderr or "").strip()}
         if probe.returncode == 0:
             base_ref = candidate
             break
@@ -501,7 +617,13 @@ def _branch_merge_state(
             "reason": f"base branch {base!r} not found locally or on origin",
         }
 
-    result = _run(["git", "rev-list", "--count", f"{base_ref}..{branch_ref}"], cwd=cwd)
+    result = _run(
+        ["git", "rev-list", "--count", f"{base_ref}..{branch_ref}"],
+        cwd=cwd,
+        timeout=GIT_LOCAL_TIMEOUT_S,
+    )
+    if _timed_out(result):
+        return {"state": "timeout", "base": base_ref, "reason": (result.stderr or "").strip()}
     if result.returncode != 0:
         reason = (result.stderr or "").strip() or "git rev-list failed"
         return {"state": "unknown", "base": base_ref, "reason": reason}
@@ -547,12 +669,31 @@ def _git_cleanup(
         return [{"step": 6, "action": "git_cleanup", "skipped": reason, "branch": branch}]
 
     base = repo_config.default_branch
-    _run(["git", "checkout", base], cwd=str(repo_path))
-    _run(["git", "pull", "origin", base], cwd=str(repo_path))
+    cleanup: list[tuple[list[str], float]] = [
+        (["git", "checkout", base], GIT_LOCAL_TIMEOUT_S),
+        (["git", "pull", "origin", base], GIT_NETWORK_TIMEOUT_S),
+    ]
     if branch:
         # `--` guards against a branch value that looks like a git flag.
-        _run(["git", "branch", "-d", "--", branch], cwd=str(repo_path))
-    return [{"step": 6, "action": "git_cleanup", "branch": branch}]
+        cleanup.append((["git", "branch", "-d", "--", branch], GIT_LOCAL_TIMEOUT_S))
+
+    entry: dict[str, Any] = {"step": 6, "action": "git_cleanup", "branch": branch}
+    for cmd, timeout in cleanup:
+        result = _run(cmd, cwd=str(repo_path), timeout=timeout)
+        if _timed_out(result):
+            # Step 6 runs AFTER the story is done and the YAML is written, so a
+            # hung cleanup command is bookkeeping, not a finish failure (162-9):
+            # un-reporting a story that genuinely shipped is the same lie as
+            # reporting one that did not. Record it and stop the chain — the
+            # later commands assume the earlier one landed (a delete aimed at
+            # the branch we are still standing on fails anyway), and step 7
+            # still removes the session.
+            entry["warning"] = (
+                f"git cleanup stopped in {repo_path}: {(result.stderr or '').strip()} — "
+                "the story is done; finish the branch cleanup by hand"
+            )
+            break
+    return [entry]
 
 
 def finish_story(
@@ -656,7 +797,24 @@ def finish_story(
                     ".[0].number",
                 ],
                 cwd=str(repo_path),
+                timeout=GH_TIMEOUT_S,
             )
+            if _timed_out(probe):
+                # A timed-out probe must NOT degrade to "no PR resolves" (162-9):
+                # that drops finish into the no-PR arm, where a branch that
+                # merely LOOKS merged finishes silently. Abort before any
+                # irreversible step, naming the command that hung.
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": (
+                        f"Timed out resolving the PR for branch {branch!r} in "
+                        f"{repo_path}: {(probe.stderr or '').strip()} — refusing to "
+                        "treat a hung probe as 'no PR exists'. Re-run finish, or "
+                        "record the real PR in Story Details."
+                    ),
+                }
             if probe.returncode == 0 and probe.stdout.strip():
                 resolved_pr = probe.stdout.strip()
         repo_prs.append((repo_path, repo_config, resolved_pr))
@@ -751,7 +909,34 @@ def finish_story(
         for repo_path, _repo_config, repo_pr in repo_prs:
             if not repo_pr:
                 continue
-            view = _pr_view(repo_pr, cwd=repo_path)
+            view, gate_timeout = _pr_view_probe(repo_pr, cwd=repo_path)
+            if gate_timeout:
+                # Unlike a gh ERROR, a hung gate probe is not permissively
+                # indeterminate (162-9): the process that just hung will hang on
+                # the merge call too, and falling through would attempt the
+                # irreversible step with no idea whether the PR conflicts or
+                # already landed. Abort before anything irreversible runs.
+                gate_error = (
+                    f"Timed out reading the state of PR #{repo_pr} in {repo_path}: "
+                    f"{gate_timeout} — refusing to attempt the merge without knowing "
+                    "whether the PR conflicts or already landed. Re-run finish."
+                )
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "success": False,
+                        "error": gate_error,
+                    }
+                )
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": gate_error,
+                    "steps": steps,
+                }
             pr_views[repo_path] = view
             block_reason = _pr_block_reason(repo_pr, view)
             if block_reason:
@@ -846,7 +1031,37 @@ def finish_story(
             merge_result = _run(
                 ["gh", "pr", "merge", repo_pr, "--squash", "--delete-branch"],
                 cwd=str(repo_path),
+                timeout=GH_TIMEOUT_S,
             )
+            if _timed_out(merge_result):
+                # The irreversible step hung. Whether it landed server-side is
+                # genuinely unknown, so the report says exactly that and nothing
+                # more (162-9) — it must not blame unmerged code, which would
+                # send an operator to re-merge or revert a PR that may be fine.
+                # 155-29's already-merged short-circuit makes the re-run safe.
+                merge_timeout_error = (
+                    f"Timed out merging PR #{repo_pr}: "
+                    f"{(merge_result.stderr or '').strip()} — whether the merge "
+                    "landed on GitHub is unknown, so the story is not being marked "
+                    "done. Check the PR and re-run finish; an already-landed merge "
+                    "is skipped on the retry."
+                )
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "success": False,
+                        "error": merge_timeout_error,
+                    }
+                )
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": merge_timeout_error,
+                    "steps": steps,
+                }
             if merge_result.returncode != 0:
                 stderr = (merge_result.stderr or "").strip()
                 steps.append(
@@ -869,7 +1084,40 @@ def finish_story(
                     ),
                     "steps": steps,
                 }
-            if not _pr_is_merged(repo_pr, cwd=repo_path):
+            verified_merged, verify_timeout = _pr_merge_verification(repo_pr, cwd=repo_path)
+            if verify_timeout:
+                # The merge command completed; the VERIFICATION hung. Finish
+                # still cannot mark the story done — it has no confirmation —
+                # but the report must say "could not verify", never "the PR did
+                # not land" (162-9). That state is un-observed, and in the case
+                # this guards it is false: routing this into the abort below
+                # would tell an operator to chase unmerged code for a merge that
+                # went through. The step record keeps the merge attempt visible
+                # so a retry (and 155-29's short-circuit) can reason about it.
+                verify_error = (
+                    f"PR #{repo_pr}: the merge command completed, but confirming the "
+                    f"result timed out: {verify_timeout} — refusing to mark the story "
+                    "done without confirmation. Check the PR's state and re-run "
+                    "finish; an already-landed merge is skipped on the retry."
+                )
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "merge_command_completed": True,
+                        "success": False,
+                        "error": verify_error,
+                    }
+                )
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": verify_error,
+                    "steps": steps,
+                }
+            if not verified_merged:
                 steps.append(
                     {
                         "step": 2,
@@ -928,7 +1176,17 @@ def finish_story(
                     }
                 )
                 continue
-            if merge_state["state"] == "unmerged":
+            if merge_state["state"] == "timeout":
+                # A hung git probe is not the permissive unknown either (162-9):
+                # the no-PR arm has no later verification, so an unbounded-turned
+                # -degraded probe is exactly how unlanded work finishes silently.
+                error = (
+                    f"No PR resolves, and verifying branch {branch!r} timed out: "
+                    f"{merge_state['reason']} — refusing to mark the story done on "
+                    "the strength of a probe that never came back. Re-run finish "
+                    "once git responds."
+                )
+            elif merge_state["state"] == "unmerged":
                 error = (
                     f"No PR resolves, and branch {branch!r} has "
                     f"{merge_state['count']} unmerged commit(s) not in "
@@ -1063,7 +1321,28 @@ def finish_story(
             ),
             "steps": steps,
         }
-    except Exception:
+    except Exception as exc:
+        # The broad fallback is deliberately kept (155-16, above) but must not be
+        # SILENT (162-9/AC1). It fires after the irreversible merge and rewrites
+        # the story's real status to an ASSUMED in_progress, which then drives two
+        # bridge transitions against a sprint index we have just proven
+        # unreadable — and the operator saw a clean finish. Name the error on
+        # stderr and in the report; degrading loudly is the point, so this still
+        # must not raise.
+        status_read_warning = (
+            f"Could not read sprint data for the status transition: {exc!r} — "
+            "assuming status 'in_progress' and continuing after the merge. The "
+            "sprint index may be broken; verify this story's status by hand."
+        )
+        print(f"WARNING: {status_read_warning}", file=sys.stderr)
+        steps.append(
+            {
+                "step": "3a",
+                "action": "status_read",
+                "success": False,
+                "warning": status_read_warning,
+            }
+        )
         current_status = "in_progress"
 
     # Bridge through intermediate states to reach in_review (or done).
@@ -1212,11 +1491,26 @@ def finish_story(
     # Deliberately NOT routed into the story's code repo (162-6 over-reach
     # guard): this reads the ORCHESTRATOR's ``sprint/`` tree, which no code repo
     # has — re-routing it would make the epic archive a silent no-op.
-    _run(
+    archive_result = _run(
         [sys.executable, "-m", "pf.cli", "sprint", "epic", "archive"],
         cwd=str(project_root),
+        timeout=SUBCOMMAND_TIMEOUT_S,
     )
-    steps.append({"step": 5, "action": "archive_epics", "ran": True})
+    if _timed_out(archive_result):
+        # Post-done bookkeeping: recorded, not fatal (162-9). The story shipped.
+        steps.append(
+            {
+                "step": 5,
+                "action": "archive_epics",
+                "ran": False,
+                "warning": (
+                    f"Timed out: {(archive_result.stderr or '').strip()} — the story "
+                    "is done; re-run the epic archive by hand"
+                ),
+            }
+        )
+    else:
+        steps.append({"step": 5, "action": "archive_epics", "ran": True})
 
     # --- Step 6: Git cleanup ---
     # Cleanup runs in each of the story's code repos — those are where the
