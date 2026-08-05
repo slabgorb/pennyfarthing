@@ -129,18 +129,24 @@ def assign(key, user, dry_run):
     from pf.jira.operations import assign_issue
 
     result = assign_issue(key, user, dry_run=dry_run)
-    data = result.get("data") or {}
-    who = f"{data.get('display_name')} <{data.get('email')}>" if data.get("email") else "nobody"
-    if result.get("already_assigned"):
-        click.echo(f"{key} already assigned to {who}")
-    elif result.get("success"):
-        if dry_run:
-            click.echo(f"[DRY RUN] Would assign {key} to {who}")
-        else:
-            click.echo(f"Assigned {key} to {who}")
-    else:
+
+    if not result.get("success"):
         click.echo(f"Failed: {result.get('error', 'unknown')}", err=True)
         raise SystemExit(1)
+
+    if result.get("unassign"):
+        # No account to name — say only what happens, and say it once.
+        click.echo(f"[DRY RUN] Would unassign {key}" if dry_run else f"Unassigned {key}")
+        return
+
+    data = result.get("data") or {}
+    who = f"{data.get('display_name')} <{data.get('email')}>"
+    if result.get("already_assigned"):
+        click.echo(f"{key} already assigned to {who}")
+    elif dry_run:
+        click.echo(f"[DRY RUN] Would assign {key} to {who}")
+    else:
+        click.echo(f"Assigned {key} to {who}")
 
 
 @jira.command()

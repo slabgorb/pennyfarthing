@@ -340,6 +340,50 @@ class TestNoSilentFallbackToOperator:
         )
 
 
+class TestUnassignDryRunOutput:
+    """The unassign preview has no account to resolve, so it must simply say it
+    would unassign — once. Review found it printing two contradictory lines,
+    '[DRY RUN] Would unassign KEY' followed by '... Would assign KEY to nobody',
+    because both operations.assign_issue and the CLI were writing output.
+    """
+
+    @pytest.mark.parametrize("sentinel", ["none", "null", "x"])
+    def test_dry_run_prints_exactly_one_line(
+        self, runner: CliRunner, jira_config, stub: _StubJiraClient, sentinel: str
+    ) -> None:
+        result = _invoke(runner, ["assign", ISSUE_KEY, sentinel, "--dry-run"])
+        assert result.exit_code == 0, _text(result)
+        lines = [ln for ln in _text(result).splitlines() if ln.strip()]
+        assert lines == [f"[DRY RUN] Would unassign {ISSUE_KEY}"], (
+            f"unassign preview must be one truthful line; got: {lines!r}"
+        )
+
+    def test_dry_run_does_not_claim_an_assignment(
+        self, runner: CliRunner, jira_config, stub: _StubJiraClient
+    ) -> None:
+        text = _text(_invoke(runner, ["assign", ISSUE_KEY, "none", "--dry-run"]))
+        assert "assign" in text.lower(), text
+        assert "Would assign" not in text, (
+            f"unassign preview contradicts itself by also claiming an assignment: {text!r}"
+        )
+
+    def test_dry_run_does_not_mutate(
+        self, runner: CliRunner, jira_config, stub: _StubJiraClient
+    ) -> None:
+        _invoke(runner, ["assign", ISSUE_KEY, "none", "--dry-run"])
+        assert stub.writes == [], f"unassign dry-run wrote to Jira: {stub.writes}"
+
+    def test_real_unassign_still_unassigns(
+        self, runner: CliRunner, jira_config, stub: _StubJiraClient
+    ) -> None:
+        """Regression guard: the mutating unassign path keeps working, and passes
+        None rather than a resolved email."""
+        result = _invoke(runner, ["assign", ISSUE_KEY, "none"])
+        assert result.exit_code == 0, _text(result)
+        assert stub.assign_calls == [(ISSUE_KEY, None)], stub.assign_calls
+        assert f"Unassigned {ISSUE_KEY}" in _text(result), _text(result)
+
+
 # =============================================================================
 # AC2 — dry-run and real output print the resolved account
 # =============================================================================

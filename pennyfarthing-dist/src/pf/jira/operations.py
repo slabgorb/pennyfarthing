@@ -81,10 +81,11 @@ def assign_issue(
         return {"success": False, "error": "Cannot validate user: no Jira credentials"}
 
     if not assignee or assignee in ("null", "x", "none"):
+        # Callers own the output; printing here duplicated (and contradicted)
+        # the CLI's line.
         if dry_run:
-            print(f"[DRY RUN] Would unassign {issue_key}")
-            return {"success": True, "dry_run": True}
-        return client.assign_issue_sync(issue_key, None)
+            return {"success": True, "dry_run": True, "unassign": True}
+        return {**client.assign_issue_sync(issue_key, None), "unassign": True}
 
     # jira.user_map wins; otherwise ask Jira about the identifier as typed.
     query = assignee if "@" in assignee else (map_github_to_jira(assignee) or assignee)
