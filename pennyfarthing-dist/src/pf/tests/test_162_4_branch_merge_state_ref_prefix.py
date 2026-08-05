@@ -74,9 +74,11 @@ throwaway repo and do NOT patch ``_run``, so a probe that drops ``cwd`` reads
 the test runner's own repo and fails these tests outright.
 
 Deliberately unpinned (Delivery Findings, not tests): the multi-remote question
-(the candidates hardcode ``origin``, as the current code does); whether
-``_extract_branch`` should reject dash-leading branch values at the door
-(defense in depth, a different function's contract).
+(the candidates hardcode ``origin``, as the current code does). The other
+deferred item — whether ``_extract_branch`` should reject dash-leading values at
+the door — was taken up by story 162-10, which pins it there; see
+``TestThreatModelReachability`` below for how that changed this file's threat
+model without weakening the probe hardening.
 
 RED on HEAD — 9 failures, all on assertions (verified against git 2.54.0):
   - TestProbeCandidatesAreRefPrefixed (4): candidates are bare in both arms,
@@ -722,11 +724,25 @@ class TestCanonicalClassificationUnchanged:
 
 
 class TestThreatModelReachability:
-    def test_dash_leading_branch_value_survives_session_extraction(self) -> None:
-        """Green guard: ``_extract_branch`` sentinels only a LONE ``-``, so a
-        session field ``**Branch:** -evil`` (or a fetched/plumbing-written ref)
-        arrives at ``_branch_merge_state`` with its dash intact. This is why
-        the probe, not the extractor, has to be safe.
+    def test_dash_leading_branch_value_is_refused_at_the_extractor(self) -> None:
+        """Layer boundary, restated for 162-10.
+
+        WAS: this pinned that the session extractor lets a dash-leading value
+        through (it sentinels only a LONE dash), which is what made the probe's
+        own argv safety load-bearing. 162-10 closes that door upstream — a
+        session declaring a branch that cannot BE a branch now aborts loudly at
+        extraction rather than reaching this classifier.
+
+        The probe hardening this file exists for is UNCHANGED and still
+        load-bearing: ``_branch_merge_state`` is also called with values that
+        never passed through the extractor (a repo-config default, a caller's
+        argument, a plumbing-written ref), so its candidates must stay
+        ref-prefixed regardless. The real-git tests above pin that directly and
+        do not depend on this reachability path.
         """
-        assert _extract_branch({"branch": DASH_BRANCH}) == DASH_BRANCH
-        assert _extract_branch({"branch": f"`{DASH_BRANCH}` (pushed)"}) == DASH_BRANCH
+        from pf.sprint.story_finish import InvalidBranchValue
+
+        with pytest.raises(InvalidBranchValue):
+            _extract_branch({"branch": DASH_BRANCH})
+        with pytest.raises(InvalidBranchValue):
+            _extract_branch({"branch": f"`{DASH_BRANCH}` (pushed)"})
