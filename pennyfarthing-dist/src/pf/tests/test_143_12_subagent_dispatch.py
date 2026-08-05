@@ -106,3 +106,120 @@ class TestCheckSubagentDispatch:
         missing = _check_subagent_dispatch(content)
         assert "[SILENT]" in missing
         assert "[SIMPLE]" in missing
+
+
+# ===========================================================================
+# Duplicate-heading gate bypass (story 162-5 triage finding)
+# ===========================================================================
+
+
+class TestDuplicateHeadingGateBypass:
+    """The approval subgates must read the CURRENT assessment, not the first one.
+
+    A rework session accumulates sections by appending, so it legitimately holds
+    several `## Reviewer Assessment` and `## Subagent Results` headings. Every
+    subgate locates its section with a bare ``re.search`` (first match) and then
+    truncates at the next ``## ``, so it inspects the OLDEST section and ignores
+    everything the reviewer wrote for the current cycle.
+
+    This fails OPEN: cycle 1's complete tables keep satisfying the gate even
+    when the current cycle dispatched no specialists at all. The rework-freshness
+    check does not save it — see `TestReworkFreshnessFieldIsNeverWritten`.
+
+    Quarantined as xfail so the defect stays visible in the suite rather than
+    living only in a story description. Tracking: "162-5 follow-up".
+    """
+
+    @pytest.mark.xfail(
+        reason=(
+            "162-5 follow-up: _check_subagent_dispatch matches the FIRST "
+            "'## Reviewer Assessment' heading, so a stale approved section from "
+            "an earlier rework cycle satisfies the gate (fails OPEN)"
+        ),
+        strict=False,
+    )
+    def test_stale_first_assessment_must_not_satisfy_gate(self) -> None:
+        """Cycle 2 dispatched nothing, yet cycle 1's tags let the gate pass."""
+        content = f"""## Reviewer Assessment
+
+CYCLE 1 — APPROVED
+- {ALL_TAGS}
+
+## Dev Rework Assessment
+
+Fixes applied.
+
+## Reviewer Assessment
+
+CYCLE 2 — no specialists were dispatched at all.
+"""
+        missing = _check_subagent_dispatch(content)
+
+        assert missing == SUBAGENT_DISPATCH_TAGS, (
+            "the gate must judge the LAST Reviewer Assessment; the current "
+            f"cycle has no tags so all should be missing, got: {missing}"
+        )
+
+    def test_documents_the_current_first_match_behavior(self) -> None:
+        """Companion to the xfail above: pin what the code does do TODAY.
+
+        Keeping this passing test alongside the xfail means the bug is measured
+        from both sides — if someone fixes the precedence, this test fails and
+        forces the xfail above to be un-quarantined in the same change.
+        """
+        content = f"""## Reviewer Assessment
+
+CYCLE 1 — APPROVED
+- {ALL_TAGS}
+
+## Reviewer Assessment
+
+CYCLE 2 — nothing dispatched.
+"""
+        assert _check_subagent_dispatch(content) == set(), (
+            "current behavior: the first (stale) section satisfies the gate"
+        )
+
+
+class TestReworkFreshnessFieldIsNeverWritten:
+    """The rework-freshness guard reads a field nothing ever writes (162-5).
+
+    ``_check_rework_freshness`` gates on ``**Rework Cycle:** N``, but the only
+    rework counter ``complete_phase`` writes is ``**Round-Trip Count:** N``. No
+    module in the framework writes ``Rework Cycle`` — grep finds only the reader.
+    So ``_parse_rework_cycle`` returns 0 on every real session, the function
+    short-circuits to "No rework cycle — initial review", and the staleness
+    check it exists to perform never runs.
+
+    Tracking: "162-5 follow-up".
+    """
+
+    @pytest.mark.xfail(
+        reason=(
+            "162-5 follow-up: _check_rework_freshness reads '**Rework Cycle:**' "
+            "but complete_phase writes '**Round-Trip Count:**', so the "
+            "freshness guard is unreachable on real sessions"
+        ),
+        strict=False,
+    )
+    def test_freshness_guard_sees_the_counter_complete_phase_writes(self) -> None:
+        """A session carrying the real counter must be treated as in-rework."""
+        from pf.handoff.complete_phase import _check_rework_freshness
+
+        session = """**Round-Trip Count:** 2
+
+## Subagent Results
+
+Cycle: 1
+(stale — not re-run for the current round trip)
+
+All received: Yes
+"""
+        result = _check_rework_freshness(session)
+
+        assert result["current_cycle"] == 2, (
+            f"guard must read the counter that is actually written: {result}"
+        )
+        assert result["pass"] is False, (
+            f"cycle-1 results are stale for round trip 2: {result}"
+        )

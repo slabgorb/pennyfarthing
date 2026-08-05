@@ -186,6 +186,60 @@ def runner() -> CliRunner:
 
 
 # =============================================================================
+# Jira boundary stub (story 162-5)
+# =============================================================================
+#
+# These tests are about *shard YAML lookup*, not Jira. But every mutation path
+# runs through ``transition_story``, which calls the real Jira client. That made
+# the outcome depend on the developer's environment:
+#
+#   * no Jira token  -> the client's ``not client.token`` branch skips Jira and
+#     the tests pass (this is what CI sees);
+#   * a Jira token   -> a live API call is made for the *fictional* fixture keys
+#     (PROJ-17082/17083), which fails with "No transition to 'In Review'
+#     available" and the whole ceremony reports success=False.
+#
+# So the module was permanently red on any machine with credentials, and that
+# permanent redness hid real finish regressions. Stubbing the boundary makes the
+# module hermetic and deterministic *and* keeps the Jira-success branch of
+# ``transition_story`` under test (which the token-less CI path never reached).
+
+
+class _StubJiraClient:
+    """Deterministic stand-in for ``pf.jira.client``'s client.
+
+    Presents a token so ``transition_story`` takes its real Jira branch, and
+    records every requested transition so tests can assert on them.
+    """
+
+    def __init__(self, *, succeed: bool = True) -> None:
+        self.token = "stub-token"
+        self.succeed = succeed
+        self.transitions: list[tuple[str, str]] = []
+
+    def transition_sync(self, key: str, target: str) -> dict:
+        self.transitions.append((key, target))
+        if self.succeed:
+            return {"success": True}
+        return {"success": False, "error": "stubbed Jira failure"}
+
+
+@pytest.fixture(autouse=True)
+def stub_jira(monkeypatch: pytest.MonkeyPatch) -> _StubJiraClient:
+    """Replace the Jira client for every test in this module.
+
+    Autouse so no mutation test can accidentally reach the network. Patched at
+    ``pf.sprint.story_transition.get_client`` — the single boundary both
+    ``transition_story`` and ``finish_story`` funnel their Jira calls through.
+    """
+    client = _StubJiraClient()
+    monkeypatch.setattr(
+        "pf.sprint.story_transition.get_client", lambda *a, **kw: client
+    )
+    return client
+
+
+# =============================================================================
 # Helpers
 # =============================================================================
 
@@ -718,3 +772,68 @@ class TestReadSprintMergesShards:
         epic_151 = find_epic(data, "151")
         assert epic_151 is not None
         assert find_story(epic_151, "151-3") is not None
+
+
+# =============================================================================
+# Jira-stub integrity (story 162-5)
+# =============================================================================
+
+
+class TestJiraStubIntegrity:
+    """Guards on the autouse Jira stub itself.
+
+    A stub that silently stops being reached would turn every test above into a
+    vacuous pass. A stub that swallows failures would hide the drift reporting
+    that ``transition_story`` exists to provide. Both are pinned here.
+    """
+
+    def test_stub_is_actually_reached(
+        self, sharded_project: Path, stub_jira: _StubJiraClient
+    ) -> None:
+        """The stub must record the transition — proving the Jira branch ran.
+
+        If ``transition_story`` ever stops routing through
+        ``pf.sprint.story_transition.get_client``, this fails loudly rather than
+        letting the suite fall back to live network calls.
+        """
+        result = transition_story(sharded_project, "PROJ-17082", "in_review")
+
+        assert result["success"] is True, result
+        assert stub_jira.transitions == [("PROJ-17082", "In Review")], (
+            f"expected one stubbed Jira transition, got: {stub_jira.transitions}"
+        )
+
+    def test_no_jira_key_does_not_call_jira(
+        self, sharded_project: Path, stub_jira: _StubJiraClient
+    ) -> None:
+        """A story with no real Jira key must skip the Jira call entirely."""
+        result = transition_story(sharded_project, "152-1", "in_review")
+
+        assert result["success"] is True, result
+        assert stub_jira.transitions == [], (
+            f"no-Jira story must not transition Jira; got: {stub_jira.transitions}"
+        )
+
+    def test_jira_failure_still_reports_drift(
+        self, sharded_project: Path, stub_jira: _StubJiraClient
+    ) -> None:
+        """Stubbing must not mask failure handling.
+
+        With the stub set to fail, the YAML write still lands but the result
+        must report ``success=False`` plus ``drift`` and a remediation hint —
+        the exact behavior the credential-dependent failure used to produce.
+        """
+        stub_jira.succeed = False
+
+        result = transition_story(sharded_project, "PROJ-17082", "in_review")
+
+        assert result["success"] is False
+        assert result["drift"] is True
+        assert "pf jira move" in result["remediation"]
+
+        # The YAML half of the transaction still committed — that asymmetry is
+        # precisely why `drift` is reported.
+        story = _read_shard_story(
+            sharded_project / "sprint", "epic-PROJ-17079.yaml", "151-3"
+        )
+        assert story["status"] == "in_review"
