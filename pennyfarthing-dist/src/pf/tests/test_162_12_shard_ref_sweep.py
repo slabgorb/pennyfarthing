@@ -356,7 +356,10 @@ def test_backfill_epic_refs_rejects_escaping_archive_symlink(tmp_path, opened):
     result = backfill_epic_refs(project_root=tmp_path)
 
     assert secret.resolve() not in opened, f"read out-of-archive index {secret}"
-    assert_contained(opened, archive_dir, "backfill_epic_refs glob")
+    # Base is the sprint tree, not archive_dir: backfill legitimately reads
+    # sprint/current-sprint.yaml for the id->epic lookup. ``outside/`` still sits
+    # outside this base, so an escaping archive read is still caught.
+    assert_contained(opened, tmp_path / "sprint", "backfill_epic_refs glob")
     touched = [e.get("id") for e in result["backfilled"] + result["irrecoverable"]]
     assert "PWNED-1" not in touched, f"out-of-archive rows processed: {touched}"
 
