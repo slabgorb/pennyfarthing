@@ -81,9 +81,12 @@ destroys unrecoverable, gitignored state (gh #53).
 Write the cache after running (skip when `SKIP_CACHE_WRITE` is `true`):
 ```bash
 if [ "${SKIP_CACHE_WRITE:-false}" != "true" ]; then
+    # pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the
+    # project .venv - derive the interpreter from the launcher shebang.
+    PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
     # Writes .session/test-runs/${RUN_ID}.md and prints the path.
     # The helper validates RUN_ID and refuses to touch any live session file.
-    printf '%s\n' "$RESULT_SUMMARY" | python -m pf.session.test_cache "$RUN_ID"
+    printf '%s\n' "$RESULT_SUMMARY" | "${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -m pf.session.test_cache "$RUN_ID"
 fi
 ```
 

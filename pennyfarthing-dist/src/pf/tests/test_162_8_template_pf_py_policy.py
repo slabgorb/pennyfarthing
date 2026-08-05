@@ -129,10 +129,17 @@ def _executes_pf(fence: str) -> bool:
     Either a module run (``-m pf.x``), or an interpreter invocation whose
     payload imports pf (``-c "from pf.x import y"``, or a ``python3 -`` heredoc
     containing ``from pf.x``).
+
+    The interpreter reference counts whether it is spelled as a literal
+    ``python``/``python3`` or as a PF_PY expansion. Both are required: once a
+    fence is rewritten to ``"${PF_PY:?..}" -c "from pf.x import y"`` the word
+    "python" is gone from it, so a literal-only check would stop recognising
+    exactly the fences this policy governs — the guard-shape and
+    local-derivation assertions would go dark on them.
     """
     if PF_MODULE_RUN_RE.search(fence):
         return True
-    if not ANY_PYTHON_EXEC_RE.search(fence):
+    if not (ANY_PYTHON_EXEC_RE.search(fence) or PF_PY_EXPANSION_RE.search(fence)):
         return False
     # \b (not \s) on purpose: the payload is usually quote-adjacent, as in
     # `python3 -c "from pf.jira.client import ..."`.

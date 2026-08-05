@@ -25,8 +25,8 @@ Before running preflight, check if a PR exists for the branch. If not, create on
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
 
 # Read pr_mode and pr_strategy
-PR_MODE=$("$PF_PY" -m pf.common.pr_config)
-PR_STRATEGY=$("$PF_PY" -c "
+PR_MODE=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -m pf.common.pr_config)
+PR_STRATEGY=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
 from pf.git.repos import get_repo_config
 rc = get_repo_config('{REPOS}')
 print(rc.pr_strategy if rc else 'standard')
@@ -36,7 +36,7 @@ print(rc.pr_strategy if rc else 'standard')
 Format the PR title using the project's `pr_title_format` from `.pennyfarthing/repos.yaml`:
 ```bash
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-PR_TITLE=$("$PF_PY" -c "
+PR_TITLE=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
 from pf.git.repos import format_pr_title
 print(format_pr_title(jira_key='${JIRA_KEY:-$STORY_ID}', title='${title}', scope='${scope}'))
 ")
@@ -97,7 +97,7 @@ and writes the `## Impact Summary` section between Delivery Findings and agent a
 
 ```bash
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-"$PF_PY" -c "
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
 from pathlib import Path
 from pf.findings.summary import write_impact_summary_to_session
 import json
@@ -121,7 +121,7 @@ unsuggested candidate.
 
 ```bash
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-"$PF_PY" -c "
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
 from pathlib import Path
 from pf.findings.followups import suggest_followups
 import json
@@ -144,7 +144,7 @@ The preflight script runs all checks in parallel using asyncio:
 
 ```bash
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-"$PF_PY" -m pf.preflight finish {STORY_ID} --branch {BRANCH} --jira {JIRA_KEY}
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -m pf.preflight finish {STORY_ID} --branch {BRANCH} --jira {JIRA_KEY}
 ```
 
 If no JIRA_KEY, omit the `--jira` flag.
