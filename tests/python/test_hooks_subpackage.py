@@ -650,10 +650,19 @@ class TestSchemaValidation:
         errors = _validate_session(content)
         assert errors == []
 
-    def test_validate_session_old_format_not_blocked(self):
+    def test_validate_session_old_format_no_xml_errors(self):
+        """Markdown-format sessions are exempt from the XML-shape checks.
+
+        Narrowed for 162-11: markdown sessions are NOT wholly exempt any more —
+        their Story Details block must carry the branch/PR field lines that
+        finish reads (see test_162_11_schema_hook_session_fields.py). This test
+        keeps its original intent: no XML tag/attribute complaints.
+        """
         from pf.hooks.schema_validation import _validate_session
         errors = _validate_session("# Session 86-3\n- Phase: green\n")
-        assert errors == []  # Old markdown format not blocked
+        assert not any(
+            tok in e for e in errors for tok in ("<session", "<meta>", "<status>", "<jira>")
+        ), f"markdown session picked up XML-shape errors: {errors!r}"
 
     def test_validate_skill_missing_frontmatter(self):
         from pf.hooks.schema_validation import _validate_skill
