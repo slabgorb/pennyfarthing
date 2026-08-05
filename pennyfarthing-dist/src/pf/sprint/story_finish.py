@@ -222,16 +222,33 @@ def _run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
 
 
+def _cwd_kwargs(cwd: Path | None) -> dict[str, str]:
+    """``{"cwd": str(cwd)}`` when a repo is known, else no kwarg at all.
+
+    Keeps the pre-162-6 "no cwd" behavior for the direct helper callers that
+    pass nothing, while every finish-path call site now supplies the story's
+    code repo.
+    """
+    return {"cwd": str(cwd)} if cwd is not None else {}
+
+
 #: The union of the fields the PR probes read: ``state`` for the merged checks,
 #: ``mergeable``/``mergeStateStatus``/``baseRefName`` for the conflict gate. One
 #: field list means the two pre-merge questions share one round trip (155-32).
 _PR_VIEW_FIELDS = "state,mergeable,mergeStateStatus,baseRefName"
 
 
-def _pr_view(pr_number: str) -> dict[str, Any] | None:
+def _pr_view(pr_number: str, cwd: Path | None = None) -> dict[str, Any] | None:
     """Fetch one snapshot of the PR, or ``None`` when its state cannot be
     established (``gh`` error, unparseable output, or a payload that is not a
     JSON object).
+
+    ``cwd`` is the repo the PR lives in (162-6). ``gh`` resolves the PR number
+    against whatever GitHub remote its working directory points at, so an
+    omitted ``cwd`` asks the repo the operator happened to invoke ``pf`` from —
+    the orchestrator root, which in an inlined-sub-repo workspace is the wrong
+    repository entirely. ``None`` keeps the process cwd, for the direct callers
+    that predate repo routing.
 
     ``None`` is the single "unknown" answer both readers below degrade to, and
     both degrade *permissively*: an unknown PR neither blocks the finish nor
@@ -244,7 +261,10 @@ def _pr_view(pr_number: str) -> dict[str, Any] | None:
     escaping ``finish_story`` instead of the ``{success, error}`` result object
     the caller contracts for.
     """
-    result = _run(["gh", "pr", "view", pr_number, "--json", _PR_VIEW_FIELDS])
+    result = _run(
+        ["gh", "pr", "view", pr_number, "--json", _PR_VIEW_FIELDS],
+        **_cwd_kwargs(cwd),
+    )
     if result.returncode != 0:
         return None
     try:
@@ -275,7 +295,7 @@ def _view_is_merged(view: dict[str, Any] | None) -> bool:
     return view.get("state") == "MERGED"
 
 
-def _pr_is_merged(pr_number: str) -> bool:
+def _pr_is_merged(pr_number: str, cwd: Path | None = None) -> bool:
     """Return True only when ``gh`` reports the PR in the ``MERGED`` state,
     reading a snapshot taken NOW.
 
@@ -287,8 +307,12 @@ def _pr_is_merged(pr_number: str) -> bool:
     runs *after* the merge, and the whole point is to observe the world the
     merge produced; answering it from the pre-merge snapshot would report the
     state finish already knew and verify nothing.
+
+    ``cwd`` is the story's code repo, for the same reason as :func:`_pr_view`'s
+    (162-6): a verification aimed at the wrong repo proves nothing about the PR
+    that was just merged.
     """
-    return _view_is_merged(_pr_view(pr_number))
+    return _view_is_merged(_pr_view(pr_number, cwd=cwd))
 
 
 def _pr_block_reason(pr_number: str, view: dict[str, Any] | None) -> str | None:
@@ -349,9 +373,17 @@ def _field_is_sentinel(raw: str | None) -> bool:
 
 
 def _resolve_base_branch(project_root: Path) -> str:
-    """The integration branch the no-PR gate verifies against: the root
-    repo's configured ``default_branch``, falling back to ``develop`` (the
-    gitflow base this finish flow serves) when no repos.yaml resolves.
+    """The integration branch the no-PR gate verifies against when the caller
+    knows of no repo config: the root repo's ``default_branch``, falling back to
+    ``develop`` (the gitflow base this finish flow serves) when no repos.yaml
+    resolves.
+
+    Root-scoped BY CONSTRUCTION — which is why the finish path passes
+    ``_branch_merge_state``'s ``base`` explicitly from the story repo's own
+    config (162-6). A code repo's base is its own ``default_branch``, and the
+    dogfood topology has a trunk-based ``main`` orchestrator wrapping a gitflow
+    ``develop`` framework repo, so borrowing the root's answer looks for a base
+    ref the code repo does not have.
 
     Local import for the same reason as Step 6's: pf.git.repos must not be a
     top-level dependency of pf.sprint (circular layering).
@@ -365,13 +397,58 @@ def _resolve_base_branch(project_root: Path) -> str:
     return root_repo.default_branch if root_repo else "develop"
 
 
-def _branch_merge_state(project_root: Path, branch: str) -> dict[str, Any]:
+def _resolve_story_repos(
+    project_root: Path,
+    story: dict,
+) -> list[tuple[Path, "RepoConfig | None"]]:
+    """Every code repo the story's work lives in, as ``(abs_path, config)``.
+
+    The story's ``repos:`` field names them; ``.pennyfarthing/repos.yaml`` gives
+    each one its path and its own ``default_branch``/``branch_strategy``. All
+    three shapes seen in the wild parse: a bare name, a comma-separated string,
+    and a YAML list (same parse as ``staleness._resolve_repo_path``).
+
+    A ``repos:`` value that is absent, empty, or names nothing in repos.yaml
+    degrades to the project root paired with the root repo's config — the
+    pre-162-6 behavior, so an operator typo cannot silently skip verification.
+
+    Local import for the same circular-layering reason as
+    :func:`_resolve_base_branch`.
+    """
+    from pf.git.repos import load_repos_config
+
+    configs = load_repos_config(project_root)
+    raw = story.get("repos")
+    if isinstance(raw, list):
+        names = [str(n).strip() for n in raw if str(n).strip()]
+    elif raw:
+        names = [n.strip() for n in str(raw).split(",") if n.strip()]
+    else:
+        names = []
+
+    resolved = [configs[name] for name in names if name in configs]
+    if not resolved:
+        root_repo = next((rc for rc in configs.values() if rc.path in (".", "")), None)
+        return [(project_root, root_repo)]
+    return [((project_root / rc.path).resolve(), rc) for rc in resolved]
+
+
+def _branch_merge_state(
+    repo_path: Path,
+    branch: str,
+    base: str | None = None,
+) -> dict[str, Any]:
     """Classify a session branch against the base branch: did its work land?
+
+    ``repo_path`` is the repo that OWNS the branch — the story's code repo, not
+    necessarily the orchestrator project root (162-6). ``base`` is that repo's
+    own integration branch; when omitted it falls back to
+    :func:`_resolve_base_branch`, which answers for the root repo.
 
     Returns ``{"state": "merged" | "unmerged" | "unknown", ...}`` with
     ``count``/``base`` on a definitive answer and ``reason`` on an unknown
     one. All probes route through ``_run`` with an explicit
-    ``cwd=project_root`` — the finish family's test suites fake ``_run`` as
+    ``cwd=repo_path`` — the finish family's test suites fake ``_run`` as
     THE hermetic seam, and a cwd-less git call would interrogate whatever
     repo the process happens to sit in (155-34).
 
@@ -395,8 +472,8 @@ def _branch_merge_state(project_root: Path, branch: str) -> dict[str, Any]:
     unknown must abort, never silently finish (rule #1: unknown is not
     merged).
     """
-    cwd = str(project_root)
-    base = _resolve_base_branch(project_root)
+    cwd = str(repo_path)
+    base = base or _resolve_base_branch(repo_path)
 
     branch_ref = None
     for candidate in (f"refs/heads/{branch}", f"refs/remotes/origin/{branch}"):
@@ -444,12 +521,18 @@ def _branch_merge_state(project_root: Path, branch: str) -> dict[str, Any]:
 
 
 def _git_cleanup(
-    project_root: Path,
+    repo_path: Path,
     branch: str | None,
     repo_config: "RepoConfig | None",
 ) -> list[dict[str, Any]]:
     """Step 6: for gitflow repos, return to the base branch and delete the
     merged feature branch; for trunk-based or unidentified repos, record a skip.
+
+    ``repo_path``/``repo_config`` describe the repo that OWNS the feature branch
+    — the story's code repo (162-6). Keying the gitflow decision off the root
+    repo instead strands every merged branch in an inlined sub-repo (the root is
+    trunk-based, so cleanup "skipped") and, in a gitflow-root workspace, runs
+    ``git checkout`` against a repo that has nothing to do with the story.
 
     Cleanup runs only for a *known gitflow* repo. Trunk-based repos have no
     feature-branch workflow, and an unresolved repo (``repo_config is None``)
@@ -464,11 +547,11 @@ def _git_cleanup(
         return [{"step": 6, "action": "git_cleanup", "skipped": reason, "branch": branch}]
 
     base = repo_config.default_branch
-    _run(["git", "checkout", base], cwd=str(project_root))
-    _run(["git", "pull", "origin", base], cwd=str(project_root))
+    _run(["git", "checkout", base], cwd=str(repo_path))
+    _run(["git", "pull", "origin", base], cwd=str(repo_path))
     if branch:
         # `--` guards against a branch value that looks like a git flag.
-        _run(["git", "branch", "-d", "--", branch], cwd=str(project_root))
+        _run(["git", "branch", "-d", "--", branch], cwd=str(repo_path))
     return [{"step": 6, "action": "git_cleanup", "branch": branch}]
 
 
@@ -540,13 +623,47 @@ def finish_story(
     if not jira_key and _has_real_jira_key(story):
         jira_key = story.get("jira")
 
-    # Fallback: resolve PR from GitHub if not in session
-    if not pr_number and branch:
-        result = _run(
-            ["gh", "pr", "list", "--head", branch, "--json", "number", "--jq", ".[0].number"]
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            pr_number = result.stdout.strip()
+    # --- Resolve the story's code repo(s) (162-6) ---
+    # Every gh/git probe below runs in the repo the story's work actually lives
+    # in. ``gh`` answers a PR number against its working directory's remote, so
+    # a probe left at the orchestrator root reads a DIFFERENT repository: a
+    # number collision merges an unrelated PR, and a miss aborts a finish whose
+    # work landed. Step 5 (the epic archive) is the one deliberate exception —
+    # it reads the orchestrator's own ``sprint/`` tree.
+    story_repos = _resolve_story_repos(project_root, story)
+
+    # PR-field semantics for a multi-repo story: the session carries a single
+    # ``**PR:** #N`` line, which can only describe ONE repo, so it is honored
+    # only when the story resolves to exactly one repo. A multi-repo story
+    # resolves each repo's PR from the shared feature branch, in that repo.
+    # (Recorded as a Delivery Finding: a per-repo session syntax belongs in the
+    # session schema before multi-repo stories rely on a recorded PR number.)
+    session_pr = pr_number if len(story_repos) == 1 else None
+    repo_prs: list[tuple[Path, RepoConfig | None, str | None]] = []
+    for repo_path, repo_config in story_repos:
+        resolved_pr = session_pr
+        if not resolved_pr and branch:
+            probe = _run(
+                [
+                    "gh",
+                    "pr",
+                    "list",
+                    "--head",
+                    branch,
+                    "--json",
+                    "number",
+                    "--jq",
+                    ".[0].number",
+                ],
+                cwd=str(repo_path),
+            )
+            if probe.returncode == 0 and probe.stdout.strip():
+                resolved_pr = probe.stdout.strip()
+        repo_prs.append((repo_path, repo_config, resolved_pr))
+
+    # The reported/previewed PR: the single repo's, or the first one resolved.
+    pr_number = next((rp for _p, _c, rp in repo_prs if rp), None)
+    primary_repo_path = repo_prs[0][0]
 
     today = date.today().isoformat()
     steps: list[dict[str, Any]] = []
@@ -580,7 +697,7 @@ def finish_story(
             # permissive fall-through. Human mode and the no-PR arm stay
             # probe-free for the same reason the real pre-merge probe lives
             # inside the auto branch: they need no answer.
-            if _view_is_merged(_pr_view(pr_number)):
+            if _view_is_merged(_pr_view(pr_number, cwd=primary_repo_path)):
                 steps.append(
                     {
                         "step": 2,
@@ -625,27 +742,35 @@ def finish_story(
     # auto-merges, so it needs neither answer; hoisting the fetch above this
     # guard would add an API round trip to every human-mode finish and put the
     # hard-blocking conflict gate on a path that is deliberately advisory.
-    pr_view: dict[str, Any] | None = None
-    if pr_number and pr_merge_mode == "auto":
-        pr_view = _pr_view(pr_number)
-        block_reason = _pr_block_reason(pr_number, pr_view)
-        if block_reason:
-            steps.append(
-                {
-                    "step": 2,
-                    "action": "merge_pr",
-                    "pr": pr_number,
+    #
+    # Every repo is gated BEFORE any repo is merged (162-6): a multi-repo finish
+    # cannot be atomic, so the least it can do is not land repo A's PR and then
+    # discover repo B's is conflicting.
+    pr_views: dict[Path, dict[str, Any] | None] = {}
+    if pr_merge_mode == "auto":
+        for repo_path, _repo_config, repo_pr in repo_prs:
+            if not repo_pr:
+                continue
+            view = _pr_view(repo_pr, cwd=repo_path)
+            pr_views[repo_path] = view
+            block_reason = _pr_block_reason(repo_pr, view)
+            if block_reason:
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "success": False,
+                        "error": block_reason,
+                    }
+                )
+                return {
                     "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
                     "error": block_reason,
+                    "steps": steps,
                 }
-            )
-            return {
-                "success": False,
-                "story_id": story_id,
-                "jira_key": jira_key,
-                "error": block_reason,
-                "steps": steps,
-            }
 
     # --- Step 2: Merge PR (runs BEFORE archive) ---
     # The merge is verified here, ahead of the (irreversible) session archive, so
@@ -658,97 +783,115 @@ def finish_story(
     # as CONFLICTING; it surfaces as a non-zero ``gh pr merge`` (or a merge that
     # never reaches MERGED) and is caught by the two abort branches below —
     # before Step 1 archives anything.
-    if pr_merge_mode == "human":
-        # Human merge mode never auto-merges; the story is left in_review below
-        # for a human to merge. Nothing here is load-bearing.
-        if pr_number:
+    #
+    # EVERY repo the story touches must clear this gate before the story can go
+    # done (162-6/AC2): one repo merged and another still open is half-shipped
+    # work, and the abort names the PR that did not land so the operator knows
+    # which repo to chase.
+    for repo_path, repo_config, repo_pr in repo_prs:
+        if pr_merge_mode == "human":
+            # Human merge mode never auto-merges; the story is left in_review
+            # below for a human to merge. Nothing here is load-bearing.
+            if repo_pr:
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "mode": "human",
+                        "message": f"PR #{repo_pr} ready for human review and merge",
+                    }
+                )
+            else:
+                steps.append(
+                    {"step": 2, "action": "merge_pr", "mode": "human", "skipped": True}
+                )
+            continue
+
+        if repo_pr and _view_is_merged(pr_views.get(repo_path)):
+            # Already-merged short-circuit (155-29): a prior finish run landed
+            # the merge and then aborted on a later step (archive OSError,
+            # status-read guard, transition failure) — all of which keep the
+            # session so finish can be retried. The retry must NOT re-attempt
+            # ``gh pr merge``: gh exits non-zero on a merged PR ("already
+            # merged"), which would trip the rc!=0 abort below and wedge every
+            # retry.
+            #
+            # This reads the pre-merge snapshot taken by the conflict gate above
+            # — correct here precisely because nothing has happened since: no
+            # merge was attempted, so the snapshot still describes the current
+            # PR. The post-merge verification below must NOT do this. An
+            # unreadable probe leaves the snapshot None, which reads as NOT
+            # merged and falls through to the real merge attempt — never
+            # silently skips it.
             steps.append(
                 {
                     "step": 2,
                     "action": "merge_pr",
-                    "pr": pr_number,
-                    "mode": "human",
-                    "message": f"PR #{pr_number} ready for human review and merge",
+                    "pr": repo_pr,
+                    "merged": True,
+                    "already_merged": True,
                 }
             )
-        else:
-            steps.append({"step": 2, "action": "merge_pr", "mode": "human", "skipped": True})
-    elif pr_number and _view_is_merged(pr_view):
-        # Already-merged short-circuit (155-29): a prior finish run landed the
-        # merge and then aborted on a later step (archive OSError, status-read
-        # guard, transition failure) — all of which keep the session so finish
-        # can be retried. The retry must NOT re-attempt ``gh pr merge``: gh
-        # exits non-zero on a merged PR ("already merged"), which would trip
-        # the rc!=0 abort below and wedge every retry.
-        #
-        # This reads the pre-merge snapshot taken by the conflict gate above —
-        # correct here precisely because nothing has happened since: no merge
-        # was attempted, so the snapshot still describes the current PR. The
-        # post-merge verification below must NOT do this. An unreadable probe
-        # leaves ``pr_view`` None, which reads as NOT merged and falls through
-        # to the real merge attempt — never silently skips it.
-        steps.append(
-            {
-                "step": 2,
-                "action": "merge_pr",
-                "pr": pr_number,
-                "merged": True,
-                "already_merged": True,
-            }
-        )
-    elif pr_number:
-        # Auto merge mode: the merge is load-bearing. A non-zero merge OR a
-        # merge that did not actually land must abort finish BEFORE the story is
-        # flipped to ``done`` AND before the session is archived — otherwise we
-        # mark a story shipped whose code never reached the base branch
-        # (gh #71 / #60) or leave a stray archive that lies about completion
-        # (155-15). Return loud, run no irreversible step (no archive, no
-        # transition, no session removal).
-        merge_result = _run(["gh", "pr", "merge", pr_number, "--squash", "--delete-branch"])
-        if merge_result.returncode != 0:
-            stderr = (merge_result.stderr or "").strip()
-            steps.append(
-                {
-                    "step": 2,
-                    "action": "merge_pr",
-                    "pr": pr_number,
+            continue
+
+        if repo_pr:
+            # Auto merge mode: the merge is load-bearing. A non-zero merge OR a
+            # merge that did not actually land must abort finish BEFORE the story
+            # is flipped to ``done`` AND before the session is archived —
+            # otherwise we mark a story shipped whose code never reached the base
+            # branch (gh #71 / #60) or leave a stray archive that lies about
+            # completion (155-15). Return loud, run no irreversible step (no
+            # archive, no transition, no session removal).
+            merge_result = _run(
+                ["gh", "pr", "merge", repo_pr, "--squash", "--delete-branch"],
+                cwd=str(repo_path),
+            )
+            if merge_result.returncode != 0:
+                stderr = (merge_result.stderr or "").strip()
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "success": False,
+                        "error": stderr or "gh pr merge returned non-zero",
+                    }
+                )
+                return {
                     "success": False,
-                    "error": stderr or "gh pr merge returned non-zero",
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": (
+                        f"PR #{repo_pr} merge failed: "
+                        f"{stderr or 'gh pr merge returned non-zero'} — "
+                        "refusing to mark the story done with unmerged code"
+                    ),
+                    "steps": steps,
                 }
-            )
-            return {
-                "success": False,
-                "story_id": story_id,
-                "jira_key": jira_key,
-                "error": (
-                    f"PR #{pr_number} merge failed: "
-                    f"{stderr or 'gh pr merge returned non-zero'} — "
-                    "refusing to mark the story done with unmerged code"
-                ),
-                "steps": steps,
-            }
-        if not _pr_is_merged(pr_number):
-            steps.append(
-                {
-                    "step": 2,
-                    "action": "merge_pr",
-                    "pr": pr_number,
+            if not _pr_is_merged(repo_pr, cwd=repo_path):
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "success": False,
+                        "error": "PR is not in MERGED state after the merge step",
+                    }
+                )
+                return {
                     "success": False,
-                    "error": "PR is not in MERGED state after the merge step",
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": (
+                        f"PR #{repo_pr} is not MERGED after the merge step — "
+                        "refusing to mark the story done with unmerged code"
+                    ),
+                    "steps": steps,
                 }
-            )
-            return {
-                "success": False,
-                "story_id": story_id,
-                "jira_key": jira_key,
-                "error": (
-                    f"PR #{pr_number} is not MERGED after the merge step — "
-                    "refusing to mark the story done with unmerged code"
-                ),
-                "steps": steps,
-            }
-        steps.append({"step": 2, "action": "merge_pr", "pr": pr_number, "merged": True})
-    else:
+            steps.append({"step": 2, "action": "merge_pr", "pr": repo_pr, "merged": True})
+            continue
+
         # --- No-PR verification gate (155-34) ---
         # The last unguarded arm: 155-1 made the merge load-bearing when a PR
         # exists, but a story whose PR resolution comes up empty used to glide
@@ -766,49 +909,57 @@ def finish_story(
         # irreversible step, with the session kept so finish can be retried
         # once the operator records the real Branch/PR (or affirms absence).
         if branch:
-            merge_state = _branch_merge_state(project_root, branch)
+            merge_state = _branch_merge_state(
+                repo_path,
+                branch,
+                base=repo_config.default_branch if repo_config else None,
+            )
             if merge_state["state"] == "merged":
+                # NOT ``skipped: True``: an all-repos abort keeps the already
+                # verified repos' step records in the report, and a bare
+                # ``skipped`` there reads as the silent skip this epic exists to
+                # kill (155-34). The value says what was verified.
                 steps.append(
                     {
                         "step": 2,
                         "action": "merge_pr",
-                        "skipped": True,
+                        "skipped": "branch-verified-merged",
                         "branch_verified_merged_into": merge_state["base"],
                     }
                 )
-            else:
-                if merge_state["state"] == "unmerged":
-                    error = (
-                        f"No PR resolves, and branch {branch!r} has "
-                        f"{merge_state['count']} unmerged commit(s) not in "
-                        f"{merge_state['base']} — refusing to mark the story done "
-                        "with unlanded code. Record the real PR in Story Details "
-                        "(or merge the branch), then re-run finish."
-                    )
-                else:
-                    error = (
-                        f"No PR resolves, and branch {branch!r} cannot be verified "
-                        f"({merge_state['reason']}) — refusing to mark the story "
-                        "done with unverifiable work. Record the real PR in Story "
-                        "Details, or set the Branch field to 'none' if there is "
-                        "genuinely no branch, then re-run finish."
-                    )
-                steps.append(
-                    {
-                        "step": 2,
-                        "action": "merge_pr",
-                        "branch": branch,
-                        "success": False,
-                        "error": error,
-                    }
+                continue
+            if merge_state["state"] == "unmerged":
+                error = (
+                    f"No PR resolves, and branch {branch!r} has "
+                    f"{merge_state['count']} unmerged commit(s) not in "
+                    f"{merge_state['base']} — refusing to mark the story done "
+                    "with unlanded code. Record the real PR in Story Details "
+                    "(or merge the branch), then re-run finish."
                 )
-                return {
+            else:
+                error = (
+                    f"No PR resolves, and branch {branch!r} cannot be verified "
+                    f"({merge_state['reason']}) — refusing to mark the story "
+                    "done with unverifiable work. Record the real PR in Story "
+                    "Details, or set the Branch field to 'none' if there is "
+                    "genuinely no branch, then re-run finish."
+                )
+            steps.append(
+                {
+                    "step": 2,
+                    "action": "merge_pr",
+                    "branch": branch,
                     "success": False,
-                    "story_id": story_id,
-                    "jira_key": jira_key,
                     "error": error,
-                    "steps": steps,
                 }
+            )
+            return {
+                "success": False,
+                "story_id": story_id,
+                "jira_key": jira_key,
+                "error": error,
+                "steps": steps,
+            }
         elif _field_is_sentinel(fields.get("branch")):
             # An agent affirmatively recorded "no branch" — the accepted
             # 155-1 no-PR world. Nothing exists to verify, by declaration.
@@ -1058,25 +1209,21 @@ def finish_story(
         )
 
     # --- Step 5: Archive completed epics ---
-    result = _run(
+    # Deliberately NOT routed into the story's code repo (162-6 over-reach
+    # guard): this reads the ORCHESTRATOR's ``sprint/`` tree, which no code repo
+    # has — re-routing it would make the epic archive a silent no-op.
+    _run(
         [sys.executable, "-m", "pf.cli", "sprint", "epic", "archive"],
         cwd=str(project_root),
     )
     steps.append({"step": 5, "action": "archive_epics", "ran": True})
 
     # --- Step 6: Git cleanup ---
-    # Resolve the config for the repo at the project root (cwd of cleanup).
-    # Only a known gitflow root repo gets branch cleanup; trunk-based or an
-    # unresolved root (root_repo is None) is skipped by _git_cleanup.
-    # Local import: avoids a circular dependency (pf.git.repos imports nothing
-    # from pf.sprint, but the reverse top-level import would couple the layers).
-    from pf.git.repos import load_repos_config
-
-    root_repo = next(
-        (rc for rc in load_repos_config(project_root).values() if rc.path in (".", "")),
-        None,
-    )
-    steps.extend(_git_cleanup(project_root, branch, root_repo))
+    # Cleanup runs in each of the story's code repos — those are where the
+    # feature branch exists (162-6). Only a known gitflow repo gets branch
+    # cleanup; trunk-based or an unresolved repo is skipped by _git_cleanup.
+    for repo_path, repo_config in story_repos:
+        steps.extend(_git_cleanup(repo_path, branch, repo_config))
 
     # --- Step 7: Remove session file ---
     if session_path.exists():
