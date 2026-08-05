@@ -72,7 +72,15 @@ from pf.tests.test_155_11_sm_finish_pf_py import (
 DIST_DIR = Path(__file__).resolve().parents[3]
 
 # Roots whose markdown is executed by an agent (or copy-pasted by an operator).
-TEMPLATE_ROOTS = ("agents", "commands", "skills", "workflows", "templates", "scripts")
+TEMPLATE_ROOTS = (
+    "agents",
+    "commands",
+    "gates",
+    "skills",
+    "workflows",
+    "templates",
+    "scripts",
+)
 
 # Templates known to execute pf.* code. If the sweep stops seeing these, the
 # discovery logic broke (or the files moved) and every other assertion in this

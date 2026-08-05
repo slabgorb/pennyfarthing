@@ -22,7 +22,10 @@ Used by: dev-exit (after green phase), or any phase that requires AC accountabil
 Run the Python validation function to check AC completion:
 
 ```bash
-python3 -c "
+# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
+# .venv - derive the interpreter from the launcher shebang, never activate .venv.
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
 from pf.gates.ac_completion import validate_ac_completion
 import json, sys
 result = validate_ac_completion('${CONTEXT_FILE}', '${SESSION_FILE}')

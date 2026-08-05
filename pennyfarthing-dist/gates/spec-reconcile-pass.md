@@ -21,7 +21,10 @@ Used by: spec-reconcile phase (after review, before SM finish) in TDD workflow.
 Run the Python validation function to check for the reconcile section:
 
 ```bash
-python3 -c "
+# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
+# .venv - derive the interpreter from the launcher shebang, never activate .venv.
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
 from pf.gates.spec_reconcile import validate_spec_reconcile
 import json, sys
 result = validate_spec_reconcile('${SESSION_FILE}')
