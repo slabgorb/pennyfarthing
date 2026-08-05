@@ -565,16 +565,103 @@ def _get_archived_story_ids() -> set[str]:
     return {str(s["id"]) for s in archived if isinstance(s, dict) and s.get("id")}
 
 
+def _normalize_depends_on(
+    dep: Any, sid: str, result: ValidationResult
+) -> list[str]:
+    """Expand a scalar or list depends_on value into a list of story-id refs.
+
+    Both forms are valid (gh #116): a scalar declares one dependency, a list
+    declares several. Degenerate forms (empty list, blank entry, blank scalar,
+    a nested container where a story id belongs) are reported as ERRORs rather
+    than silently skipped, and never appear in a message as a stringified
+    container.
+    """
+    entries = list(dep) if isinstance(dep, (list, tuple)) else [dep]
+    if isinstance(dep, (list, tuple)) and not entries:
+        result.add_error(
+            "depends_on is an empty list — it declares a dependency on nothing. "
+            "To fix: List at least one story ID or remove depends_on",
+            f"{sid}.depends_on",
+        )
+        return []
+
+    refs: list[str] = []
+    for position, entry in enumerate(entries, start=1):
+        if isinstance(entry, (list, tuple, dict, set)):
+            result.add_error(
+                f"depends_on entry {position} is a "
+                f"{type(entry).__name__}, not a story ID. "
+                "To fix: Use a flat list of story IDs",
+                f"{sid}.depends_on",
+            )
+            continue
+        ref = str(entry).strip() if entry is not None else ""
+        if not ref:
+            result.add_error(
+                f"depends_on entry {position} is blank. "
+                "To fix: Use an existing story ID or remove depends_on",
+                f"{sid}.depends_on",
+            )
+            continue
+        refs.append(ref)
+    return refs
+
+
+def _report_dependency_cycles(
+    adjacency: dict[str, list[str]], result: ValidationResult
+) -> None:
+    """Report every dependency cycle in the expanded edge set.
+
+    DFS with recursion-stack colouring, not one shared visited set: a diamond
+    (A depends on B and C, both depending on D) reaches D twice by distinct
+    paths and is perfectly acyclic, so only a node still on the current
+    recursion stack counts as a cycle.
+    """
+    WHITE, GREY, BLACK = 0, 1, 2
+    color: dict[str, int] = {}
+    reported: set[frozenset[str]] = set()
+
+    def visit(node: str, stack: list[str]) -> None:
+        color[node] = GREY
+        for nxt in adjacency.get(node, []):
+            state = color.get(nxt, WHITE)
+            if state == GREY:
+                cycle_nodes = stack[stack.index(nxt) :]
+                key = frozenset(cycle_nodes)
+                if key in reported:
+                    continue
+                reported.add(key)
+                cycle = " -> ".join([*cycle_nodes, nxt])
+                result.add_error(
+                    f"Circular dependency detected: {cycle}. "
+                    "To fix: Remove one depends_on to break the cycle",
+                    f"{cycle_nodes[0]}.depends_on",
+                )
+            elif state == WHITE:
+                stack.append(nxt)
+                visit(nxt, stack)
+                stack.pop()
+        color[node] = BLACK
+
+    for start in adjacency:
+        if color.get(start, WHITE) == WHITE:
+            visit(start, [start])
+
+
 def _validate_depends_on(
     data: dict[str, Any], all_story_ids: set[str], result: ValidationResult
 ) -> None:
     """Validate depends_on references: targets exist and no cycles.
 
+    ``depends_on`` may be a scalar story id or a list of them; the value is
+    normalized to a list and every reference is checked individually, so an
+    unresolved reference is named by itself (gh #116).
+
     A target is considered to exist if it is an active story in the merged
     sprint OR an archived (completed) story. Only references that resolve to
     neither are reported as non-existent.
     """
-    deps: dict[str, str] = {}  # story_id -> depends_on target
+    adjacency: dict[str, list[str]] = {}  # story_id -> active depends_on targets
     archived_ids: set[str] | None = None  # lazily resolved on first miss
 
     # Walk stories from ALL locations (epics + standalone + top-level) so a
@@ -584,37 +671,23 @@ def _validate_depends_on(
         dep = story.get("depends_on")
         if dep is None:
             continue
-        dep = str(dep)
-        if dep in all_story_ids:
-            deps[sid] = dep
-            continue
-        # Active sprint miss — resolve against the archive before failing.
-        if archived_ids is None:
-            archived_ids = _get_archived_story_ids()
-        if dep in archived_ids:
-            # Satisfied by an archived/completed story — not dangling.
-            continue
-        result.add_error(
-            f"depends_on '{dep}' references non-existent story. "
-            f"To fix: Use an existing story ID or remove depends_on",
-            f"{sid}.depends_on",
-        )
+        for ref in _normalize_depends_on(dep, sid, result):
+            if ref in all_story_ids:
+                adjacency.setdefault(sid, []).append(ref)
+                continue
+            # Active sprint miss — resolve against the archive before failing.
+            if archived_ids is None:
+                archived_ids = _get_archived_story_ids()
+            if ref in archived_ids:
+                # Satisfied by an archived/completed story — not dangling.
+                continue
+            result.add_error(
+                f"depends_on '{ref}' references non-existent story. "
+                f"To fix: Use an existing story ID or remove depends_on",
+                f"{sid}.depends_on",
+            )
 
-    # Cycle detection via visited set
-    for start in deps:
-        visited: set[str] = set()
-        current = start
-        while current in deps:
-            if current in visited:
-                cycle = " -> ".join(list(visited) + [current])
-                result.add_error(
-                    f"Circular dependency detected: {cycle}. "
-                    "To fix: Remove one depends_on to break the cycle",
-                    f"{start}.depends_on",
-                )
-                break
-            visited.add(current)
-            current = deps[current]
+    _report_dependency_cycles(adjacency, result)
 
 
 def validate_archived_sprint(data: dict[str, Any]) -> ValidationResult:
