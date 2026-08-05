@@ -333,6 +333,10 @@ def fetch_sprint() -> dict[str, Any]:
     if archive_dir.is_dir():
         sprint_number = sprint_info.get("number")
         for archive_path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
+            # Path traversal (CWE-22): a glob match is a *name* match, so a
+            # symlink inside archive_dir pointing outside it is yielded happily.
+            if not is_safe_shard_path(archive_path, archive_dir):
+                continue
             archive_data = _read_yaml_file(archive_path)
             if not isinstance(archive_data, dict):
                 continue

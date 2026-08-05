@@ -7,12 +7,14 @@ The sprint completed file references archived epics by ID (not inlined).
 
 import re
 import shutil
+import warnings
 from datetime import date
 from pathlib import Path
 from typing import Any
 
 from pf.common.config import get_project_root
 from pf.sprint.loader import load_sprint
+from pf.sprint.shard_merge import is_safe_shard_path
 from pf.sprint.yaml_io import (
     _get_epic_ref,
     _make_yaml,
@@ -171,6 +173,15 @@ def migrate_completed_archive(archive_path: Path) -> dict[str, Any]:
     stories_migrated = 0
     for epic_ref, stories in epic_stories.items():
         shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+        # Path traversal (CWE-22): this site both reads and rewrites the shard,
+        # so an escaping ref would be an out-of-bounds write. Fail closed.
+        if not is_safe_shard_path(shard_path, archive_dir):
+            warnings.warn(
+                f"Archived epic ref '{epic_ref}' escapes the archive directory "
+                f"({shard_path}) — skipping",
+                stacklevel=2,
+            )
+            continue
         if shard_path.exists():
             existing = _read_yaml_file(shard_path)
             existing_ids = {s["id"] for s in existing.get("stories", [])}
@@ -220,6 +231,13 @@ def load_archive(archive_path: Path) -> dict[str, Any]:
     all_stories: list[dict[str, Any]] = []
     for epic_ref in data["completed_epics"]:
         shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+        if not is_safe_shard_path(shard_path, archive_dir):
+            warnings.warn(
+                f"Archived epic ref '{epic_ref}' escapes the archive directory "
+                f"({shard_path}) — skipping",
+                stacklevel=2,
+            )
+            continue
         if shard_path.exists():
             shard = _read_yaml_file(shard_path)
             all_stories.extend(shard.get("stories", []))
@@ -379,6 +397,15 @@ def backfill_epic_refs(
         return {"success": True, "backfilled": backfilled, "irrecoverable": irrecoverable}
 
     for archive_path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
+        # Path traversal (CWE-22): a glob match is a *name* match, so a symlink
+        # inside the archive dir pointing outside it is yielded happily.
+        if not is_safe_shard_path(archive_path, archive_dir):
+            warnings.warn(
+                f"Archive index {archive_path.name} escapes the archive directory "
+                f"({archive_path}) — skipping",
+                stacklevel=2,
+            )
+            continue
         data = _load_archive_file(archive_path)
         stories = data.get("completed_stories") or []
         file_changed = False
