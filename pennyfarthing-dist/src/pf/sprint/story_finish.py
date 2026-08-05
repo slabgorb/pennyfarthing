@@ -202,19 +202,98 @@ def _extract_pr_number(fields: dict[str, str]) -> str | None:
 #: No-branch sentinels agents write into the ``**Branch:**`` field. They must
 #: resolve to None — a truthy sentinel reaches ``gh pr list --head none``,
 #: whose empty answer silently skips the merge (155-33).
+#:
+#: The set is the contract, and both of its edges are SILENT failures: a value
+#: added here turns a real branch into a no-PR finish, and one removed sends a
+#: placeholder to gh. Matching is whole-value (after normalization) and
+#: case-insensitive, never a prefix or substring — ``feat/none`` is a branch.
+#: The lone dash earns its place as an affirmative "no branch" mark, which is
+#: also why dash-LEADING values are refused instead (see below): the sentinel
+#: covering only the lone dash is what let ``-evil`` reach git's argv (162-4).
 _BRANCH_SENTINELS = {"none", "n/a", "na", "null", "-", "—"}
+
+#: Ceiling on the normalization loop below. The strips shrink the value
+#: monotonically, so real sessions converge in two or three passes and this
+#: bound is never reached — it is a belt against a pathological value, kept as a
+#: reviewable module constant rather than a magic number inside the loop. Read
+#: at call time so tests can starve it.
+_MAX_BRANCH_STRIP_PASSES = 8
+
+#: Characters that cannot appear in an extracted branch name: markdown/annotation
+#: residue the strips exist to remove, plus whitespace, which git's own ref
+#: grammar forbids outright.
+_BRANCH_RESIDUE_CHARS = ("`", "(", ")")
+
+
+class InvalidBranchValue(ValueError):
+    """A session declares a branch value that cannot BE a git branch (162-10).
+
+    Raising beats returning None: None means "this session records no branch",
+    which routes finish into the no-PR arm — a silent, SUCCESSFUL finish off a
+    value that was never a ref. A declared-but-impossible branch is the
+    unverifiable world, not the no-branch world, and epic 155's rule is that
+    finish must not lie. ``ValueError`` subclass so existing broad handlers see
+    a bad value rather than an unhandled traceback.
+    """
+
+
+def _normalize_branch_field(raw: str) -> str:
+    """Strip trailing annotations and markdown backticks to a FIXED POINT.
+
+    Applying the two strips once, in a fixed order, only handles the annotation
+    OUTSIDE the backticks. Agents write the other nesting too, and then the
+    annotation regex never matches (the value ends with a backtick), leaving the
+    annotation glued to the branch name for every downstream git/gh call. So
+    both strips run in a loop until the value stops changing.
+
+    Raises:
+        InvalidBranchValue: the value had not stabilized when the pass bound was
+            spent. A half-reduced value is exactly what must never reach git, so
+            the belt fails loud rather than returning residue.
+    """
+    value = raw
+    for _ in range(_MAX_BRANCH_STRIP_PASSES):
+        stripped = re.sub(r"\s*\(.*\)\s*$", "", value).strip()
+        stripped = stripped.strip("`").strip()
+        if stripped == value:
+            return value
+        value = stripped
+    raise InvalidBranchValue(
+        f"branch value {raw!r} did not reduce to a branch name within "
+        f"{_MAX_BRANCH_STRIP_PASSES} strip passes"
+    )
 
 
 def _extract_branch(fields: dict[str, str]) -> str | None:
     """Get branch name from the shapes agents actually write: trailing
-    annotations like ``(pushed)`` and markdown backticks are stripped, and
-    no-branch sentinels resolve to None (155-33)."""
+    annotations like ``(pushed)`` and markdown backticks are stripped to a fixed
+    point (162-10), and no-branch sentinels resolve to None (155-33).
+
+    Raises:
+        InvalidBranchValue: the session declares a value that cannot be a
+            branch — dash-leading (an option in git's argv, 162-4), interior
+            whitespace, or residue no strip pass can remove.
+    """
     raw = fields.get("branch", "")
-    raw = re.sub(r"\s*\(.*\)\s*$", "", raw).strip()
-    raw = raw.strip("`").strip()
-    if raw.lower() in _BRANCH_SENTINELS:
+    value = _normalize_branch_field(raw)
+    # Sentinels are tested against the FIXED POINT, so a nested sentinel like a
+    # backtick-quoted "none (no branch)" still means no branch — and the lone
+    # dash keeps its sentinel meaning ahead of the dash-leading refusal below.
+    if value.lower() in _BRANCH_SENTINELS:
         return None
-    return raw or None
+    if not value:
+        return None
+    if value.startswith("-"):
+        raise InvalidBranchValue(
+            f"branch value {raw!r} starts with a dash — git reads it as an "
+            f"option, not a ref; fix the session's Branch field"
+        )
+    if any(char.isspace() for char in value) or any(c in value for c in _BRANCH_RESIDUE_CHARS):
+        raise InvalidBranchValue(
+            f"branch value {raw!r} is not a usable branch name "
+            f"(reduced to {value!r}); fix the session's Branch field"
+        )
+    return value
 
 
 #: Bounded-subprocess envelope for the whole finish ceremony (162-9). The
@@ -462,13 +541,19 @@ def _field_is_sentinel(raw: str | None) -> bool:
     must tell them apart: a sentinel is an agent's deliberate record that no
     branch exists (the accepted 155-1 world), while an empty or placeholder
     value means the field was never filled in — an unverifiable world that
-    must not silently finish. Reuses ``_extract_branch``'s own normalization
-    (annotation strip, backticks) so ``none (no branch)`` still reads as the
-    sentinel it is.
+    must not silently finish. Calls ``_extract_branch``'s own normalization
+    (annotation strip, backticks, to a fixed point) so ``none (no branch)`` and
+    a backtick-quoted form of it still read as the sentinel they are — one
+    helper, so the gate and the extractor cannot drift (162-10).
     """
     if raw is None:
         return False
-    value = re.sub(r"\s*\(.*\)\s*$", "", raw).strip().strip("`").strip()
+    try:
+        value = _normalize_branch_field(raw)
+    except InvalidBranchValue:
+        # Not a sentinel, and not this gate's error to raise: the extractor has
+        # already refused such a value before finish reaches the gate.
+        return False
     return value.lower() in _BRANCH_SENTINELS
 
 
@@ -754,7 +839,18 @@ def finish_story(
 
     fields = _parse_session(session_path)
     jira_key = _extract_jira_key(fields)
-    branch = _extract_branch(fields)
+    # A declared-but-impossible branch aborts here: before any subprocess, any
+    # transition, and any archive, in dry run too (155-31 preview/reality
+    # parity). Converted to a result rather than propagated, per the no-throw
+    # contract (SOUL #10).
+    try:
+        branch = _extract_branch(fields)
+    except InvalidBranchValue as exc:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "error": f"Cannot finish {story_id}: {exc}",
+        }
     pr_number = _extract_pr_number(fields)
 
     # Resolve Jira key from sprint YAML when the session omits it, reusing the
