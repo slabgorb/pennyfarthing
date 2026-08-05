@@ -3,6 +3,7 @@
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -162,8 +163,43 @@ class TestParseUnitsFromJson:
             parse_units_from_json(json.dumps({"not_units": []}))
 
 
+def _subprocess_env() -> dict[str, str]:
+    """Env for the CLI subprocess with `pf` importable (story 162-5).
+
+    These tests shell out to ``{sys.executable} -m pf.preflight``. Inside
+    pytest, ``pf`` imports because pytest puts ``pennyfarthing-dist/src`` on
+    ``sys.path``; a bare subprocess inherits no such path and died with
+    ``ModuleNotFoundError: No module named 'pf'`` on any checkout where the
+    package is not pip-installed. Propagating the location of the *already
+    imported* ``pf`` keeps the subprocess testing the same code as the parent.
+    """
+    import os
+
+    import pf
+
+    src_root = str(Path(pf.__file__).resolve().parent.parent)
+    env = os.environ.copy()
+    existing = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = f"{src_root}{os.pathsep}{existing}" if existing else src_root
+    return env
+
+
 class TestCli:
     """CLI integration smoke test."""
+
+    def test_cli_subprocess_can_import_pf(self):
+        """Guard the guard: if `pf` is unimportable the assertions below on
+        returncode 1 would pass for the wrong reason (import failure also
+        exits non-zero), so pin importability separately (162-5).
+        """
+        result = subprocess.run(
+            [sys.executable, "-c", "import pf; print(pf.__name__)"],
+            capture_output=True,
+            text=True,
+            env=_subprocess_env(),
+        )
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == "pf"
 
     def test_cli_with_independent_units(self):
         units_json = json.dumps(
@@ -178,8 +214,9 @@ class TestCli:
             [sys.executable, "-m", "pf.preflight", "independence", "--units", units_json],
             capture_output=True,
             text=True,
+            env=_subprocess_env(),
         )
-        assert result.returncode == 0
+        assert result.returncode == 0, result.stderr
         output = json.loads(result.stdout)
         assert output["independent"] is True
 
@@ -196,8 +233,9 @@ class TestCli:
             [sys.executable, "-m", "pf.preflight", "independence", "--units", units_json],
             capture_output=True,
             text=True,
+            env=_subprocess_env(),
         )
-        assert result.returncode == 1
+        assert result.returncode == 1, result.stderr
         output = json.loads(result.stdout)
         assert output["independent"] is False
         assert len(output["overlaps"]) == 1

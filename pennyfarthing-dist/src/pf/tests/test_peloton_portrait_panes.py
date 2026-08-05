@@ -18,12 +18,11 @@ All tmux interactions are mocked — no real tmux sessions opened.
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import patch
 
 import pytest
 
-from pf.peloton.pane_orchestrator import ManagedPane, PaneOrchestrator
-
+from pf.peloton.pane_orchestrator import PaneOrchestrator
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -108,6 +107,86 @@ def project_no_theme(tmp_path: Path) -> Path:
     (pf_dir / "config.local.yaml").write_text("theme: null\n")
 
     return tmp_path
+
+
+# ---------------------------------------------------------------------------
+# Portrait-fetch boundary stub (story 162-5)
+# ---------------------------------------------------------------------------
+#
+# This module's docstring promises "no real tmux sessions opened", but story
+# 153-12 made `resolve_portrait_path` CDN-only: it computes the persona slug from
+# the theme YAML and then fetches the image from R2, with every local fallback
+# removed. So these tests silently acquired a *network* dependency — the local
+# fixture PNGs under `.pennyfarthing/personas/portraits/` stopped being consulted
+# and the resolver returned None, making `_try_create_portrait` bail out and all
+# portrait assertions fail.
+#
+# The stub below restores local-file resolution for tests only. It deliberately
+# reuses the production slug computation (`_extract_agent_slug`) so the part this
+# module actually cares about — role -> character mapping via the theme YAML —
+# stays under test. Only the network fetch is replaced.
+
+
+@pytest.fixture(autouse=True)
+def stub_portrait_fetch(monkeypatch: pytest.MonkeyPatch):
+    """Resolve portraits from the fixture's local files instead of the CDN."""
+    from pf.tui.portrait_resolver import _extract_agent_slug
+
+    def _local_resolve(
+        theme: str,
+        agent: str,
+        project_root: Path | None = None,
+        preferred_size: str | None = None,
+    ) -> Path | None:
+        if project_root is None:
+            return None
+        theme_yaml = (
+            project_root / ".pennyfarthing" / "personas" / "themes" / f"{theme}.yaml"
+        )
+        slug = _extract_agent_slug(theme_yaml, agent)
+        if not slug:
+            return None
+        size = preferred_size or "small"
+        candidate = (
+            project_root
+            / ".pennyfarthing"
+            / "personas"
+            / "portraits"
+            / theme
+            / size
+            / f"{slug}.png"
+        )
+        return candidate if candidate.exists() else None
+
+    monkeypatch.setattr(
+        "pf.tui.portrait_resolver.resolve_portrait_path", _local_resolve
+    )
+    return _local_resolve
+
+
+def test_stub_resolves_from_theme_yaml_not_a_hardcoded_map(project: Path) -> None:
+    """Guard the stub (162-5).
+
+    If the stub returned a canned path per role, every AC2 assertion below
+    would be vacuous. Pin that it goes through the real slug computation: a
+    theme YAML edit must change the resolved filename, and an agent absent
+    from the YAML must resolve to None.
+    """
+    from pf.tui.portrait_resolver import resolve_portrait_path
+
+    resolved = resolve_portrait_path(
+        theme="firefly", agent="tea", project_root=project, preferred_size="small"
+    )
+    assert resolved is not None
+    assert resolved.name == "river-42335.png"
+
+    # An agent with no entry in the theme YAML resolves to nothing.
+    assert (
+        resolve_portrait_path(
+            theme="firefly", agent="sm", project_root=project, preferred_size="small"
+        )
+        is None
+    )
 
 
 def _make_orchestrator(
@@ -315,12 +394,17 @@ class TestPortraitPaneSize:
                 theme="firefly",
             )
 
-            if mock_resolve.called:
-                kwargs = mock_resolve.call_args[1] if mock_resolve.call_args[1] else {}
-                args = mock_resolve.call_args[0] if mock_resolve.call_args[0] else ()
-                preferred_size = kwargs.get("preferred_size")
-                assert preferred_size == "small", \
-                    f"Peloton portraits should use 'small' size, got: {preferred_size}"
+            # Previously the assertion sat behind `if mock_resolve.called:`, so
+            # it passed vacuously whenever resolution was skipped entirely —
+            # which is exactly what happened once the resolver went CDN-only
+            # (162-5). Assert the call happened, then assert its arguments.
+            assert mock_resolve.called, (
+                "portrait resolution must be attempted for a themed agent"
+            )
+            kwargs = mock_resolve.call_args[1] or {}
+            preferred_size = kwargs.get("preferred_size")
+            assert preferred_size == "small", \
+                f"Peloton portraits should use 'small' size, got: {preferred_size}"
 
 
 # ===========================================================================

@@ -223,7 +223,8 @@ def _add_assessment(session_file: Path, agent: str, phase: str) -> None:
             "| reviewer-comment-analyzer | Yes | PASS |\n"
             "| reviewer-type-design | Yes | PASS |\n"
             "| reviewer-security | Yes | PASS |\n"
-            "| reviewer-simplifier | Yes | PASS |\n\n"
+            "| reviewer-simplifier | Yes | PASS |\n"
+            "| reviewer-rule-checker | Yes | PASS |\n\n"
             "All received: Yes\n\n"
             "## Reviewer Assessment\n\n"
             f"**Phase:** {phase}\n"
@@ -231,7 +232,7 @@ def _add_assessment(session_file: Path, agent: str, phase: str) -> None:
             f"**Handoff:** To next agent\n\n"
             "[EDGE] No edge cases. [SILENT] No silent failures. "
             "[TEST] Tests pass. [DOC] Docs ok. "
-            "[TYPE] Types ok. [SEC] No issues. [SIMPLE] Clean.\n"
+            "[TYPE] Types ok. [SEC] No issues. [SIMPLE] Clean. [RULE] Rules ok.\n"
         )
     else:
         assessment = (
@@ -643,6 +644,29 @@ class TestPhaseOwnershipValidation:
         result = phase_check_start("dev", project_root=project)
         assert result["action"] == "start"
 
+    # QUARANTINED (story 162-5) — two upstream causes, both needing a
+    # production decision this triage story is not allowed to make:
+    #
+    # 1. The shipped `tdd.yaml` has FIVE phases (setup, red, green, review,
+    #    finish) — there is no `verify` phase. This module's TDD_WORKFLOW
+    #    fixture invents a six-phase workflow with TEA owning `verify`.
+    # 2. Even with that fixture, `prime.workflow.get_phase_owner` resolves the
+    #    workflow YAML from the *installed dist root* first and only falls back
+    #    to `{project_root}/.pennyfarthing/workflows/`. Since the packaged dist
+    #    always ships `tdd.yaml`, the fixture's YAML is unreachable and
+    #    `phase_owner` comes back None — so no redirect is ever computed. That
+    #    precedence also disagrees with `handoff.complete_phase._get_phase_agent`,
+    #    which reads the project path only.
+    #
+    # See "162-5 follow-up" in the session's TEA Assessment.
+    @pytest.mark.xfail(
+        reason=(
+            "162-5 follow-up: tdd.yaml has no `verify` phase, and "
+            "get_phase_owner reads the installed dist workflows instead of "
+            "the project's .pennyfarthing/workflows/ — phase_owner is None"
+        ),
+        strict=False,
+    )
     def test_dev_redirected_during_verify(
         self, project: Path, session_at_setup: Path
     ) -> None:
@@ -656,6 +680,29 @@ class TestPhaseOwnershipValidation:
         assert result["action"] == "redirect"
         assert result["agent"] == "tea"
 
+    # QUARANTINED (story 162-5) — two upstream causes, both needing a
+    # production decision this triage story is not allowed to make:
+    #
+    # 1. The shipped `tdd.yaml` has FIVE phases (setup, red, green, review,
+    #    finish) — there is no `verify` phase. This module's TDD_WORKFLOW
+    #    fixture invents a six-phase workflow with TEA owning `verify`.
+    # 2. Even with that fixture, `prime.workflow.get_phase_owner` resolves the
+    #    workflow YAML from the *installed dist root* first and only falls back
+    #    to `{project_root}/.pennyfarthing/workflows/`. Since the packaged dist
+    #    always ships `tdd.yaml`, the fixture's YAML is unreachable and
+    #    `phase_owner` comes back None — so no redirect is ever computed. That
+    #    precedence also disagrees with `handoff.complete_phase._get_phase_agent`,
+    #    which reads the project path only.
+    #
+    # See "162-5 follow-up" in the session's TEA Assessment.
+    @pytest.mark.xfail(
+        reason=(
+            "162-5 follow-up: tdd.yaml has no `verify` phase, and "
+            "get_phase_owner reads the installed dist workflows instead of "
+            "the project's .pennyfarthing/workflows/ — phase_owner is None"
+        ),
+        strict=False,
+    )
     def test_reviewer_redirected_during_verify(
         self, project: Path, session_at_setup: Path
     ) -> None:
@@ -841,6 +888,29 @@ class TestWorkflowStateDetection:
         assert status.phase == "green"
         assert status.phase_owner == "dev"
 
+    # QUARANTINED (story 162-5) — two upstream causes, both needing a
+    # production decision this triage story is not allowed to make:
+    #
+    # 1. The shipped `tdd.yaml` has FIVE phases (setup, red, green, review,
+    #    finish) — there is no `verify` phase. This module's TDD_WORKFLOW
+    #    fixture invents a six-phase workflow with TEA owning `verify`.
+    # 2. Even with that fixture, `prime.workflow.get_phase_owner` resolves the
+    #    workflow YAML from the *installed dist root* first and only falls back
+    #    to `{project_root}/.pennyfarthing/workflows/`. Since the packaged dist
+    #    always ships `tdd.yaml`, the fixture's YAML is unreachable and
+    #    `phase_owner` comes back None — so no redirect is ever computed. That
+    #    precedence also disagrees with `handoff.complete_phase._get_phase_agent`,
+    #    which reads the project path only.
+    #
+    # See "162-5 follow-up" in the session's TEA Assessment.
+    @pytest.mark.xfail(
+        reason=(
+            "162-5 follow-up: tdd.yaml has no `verify` phase, and "
+            "get_phase_owner reads the installed dist workflows instead of "
+            "the project's .pennyfarthing/workflows/ — phase_owner is None"
+        ),
+        strict=False,
+    )
     def test_in_progress_during_verify(
         self, project: Path, session_at_setup: Path
     ) -> None:
@@ -968,6 +1038,29 @@ class TestTEADualPhaseOwnership:
         assert status.phase_owner == "tea"
         assert status.phase == "red"
 
+    # QUARANTINED (story 162-5) — two upstream causes, both needing a
+    # production decision this triage story is not allowed to make:
+    #
+    # 1. The shipped `tdd.yaml` has FIVE phases (setup, red, green, review,
+    #    finish) — there is no `verify` phase. This module's TDD_WORKFLOW
+    #    fixture invents a six-phase workflow with TEA owning `verify`.
+    # 2. Even with that fixture, `prime.workflow.get_phase_owner` resolves the
+    #    workflow YAML from the *installed dist root* first and only falls back
+    #    to `{project_root}/.pennyfarthing/workflows/`. Since the packaged dist
+    #    always ships `tdd.yaml`, the fixture's YAML is unreachable and
+    #    `phase_owner` comes back None — so no redirect is ever computed. That
+    #    precedence also disagrees with `handoff.complete_phase._get_phase_agent`,
+    #    which reads the project path only.
+    #
+    # See "162-5 follow-up" in the session's TEA Assessment.
+    @pytest.mark.xfail(
+        reason=(
+            "162-5 follow-up: tdd.yaml has no `verify` phase, and "
+            "get_phase_owner reads the installed dist workflows instead of "
+            "the project's .pennyfarthing/workflows/ — phase_owner is None"
+        ),
+        strict=False,
+    )
     def test_tea_owns_verify_phase(
         self, project: Path, session_at_setup: Path
     ) -> None:
