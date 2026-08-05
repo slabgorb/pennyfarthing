@@ -195,6 +195,38 @@ async def _lookup_merged_pr_by_branch(branch: str, repo: str | None) -> dict[str
     return None
 
 
+
+def _repo_branch_strategy(project_root: Path, repo: str | None = None) -> str:
+    """Return branch_strategy for the repo from .pennyfarthing/repos.yaml.
+
+    Defaults to ``trunk-based`` when the file or repo entry is missing, matching
+    ``pf.hooks.branch_protection`` and init defaults. Only the literal
+    ``trunk-based`` skips the PR requirement; other values use the gitflow path.
+    """
+    import yaml
+
+    repos_yaml = project_root / ".pennyfarthing" / "repos.yaml"
+    if not repos_yaml.exists():
+        return "trunk-based"
+    try:
+        data = yaml.safe_load(repos_yaml.read_text()) or {}
+    except Exception:
+        return "trunk-based"
+    repos = data.get("repos") or {}
+    if not repos:
+        return "trunk-based"
+    if repo and repo in repos:
+        return str(repos[repo].get("branch_strategy") or "trunk-based")
+    if len(repos) == 1:
+        only = next(iter(repos.values()))
+        return str(only.get("branch_strategy") or "trunk-based")
+    for cfg in repos.values():
+        if cfg.get("branch_strategy") == "trunk-based":
+            return "trunk-based"
+    first = next(iter(repos.values()))
+    return str(first.get("branch_strategy") or "trunk-based")
+
+
 async def check_pr_status(branch: str, repo: str | None = None) -> PRStatus:
     """Check PR status via gh CLI."""
     result = PRStatus()
@@ -505,12 +537,20 @@ async def run_finish_preflight(
     """
     root = Path(project_root) if project_root else Path.cwd()
 
+    # Trunk-based repos do not use per-branch PRs — skip the gh pr view gate.
+    strategy = _repo_branch_strategy(root, repo)
+    skip_pr = strategy == "trunk-based"
+
     # Build list of checks to run
-    checks = [
-        check_pr_status(branch, repo),
-        check_lint(root),
-        check_acceptance_criteria(story_id, root),
-    ]
+    checks = []
+    if not skip_pr:
+        checks.append(check_pr_status(branch, repo))
+    checks.extend(
+        [
+            check_lint(root),
+            check_acceptance_criteria(story_id, root),
+        ]
+    )
 
     # Conditionally add Jira check
     if jira_key:
@@ -519,25 +559,34 @@ async def run_finish_preflight(
     # Run all checks in parallel
     results = await asyncio.gather(*checks, return_exceptions=True)
 
-    # Unpack results
-    pr_result = (
-        results[0] if not isinstance(results[0], Exception) else PRStatus(error=str(results[0]))
-    )
+    # Unpack results (PR check is optional for trunk-based repos)
+    i = 0
+    if skip_pr:
+        pr_result = PRStatus()  # no PR expected
+    else:
+        pr_result = (
+            results[i]
+            if not isinstance(results[i], Exception)
+            else PRStatus(error=str(results[i]))
+        )
+        i += 1
     lint_result = (
-        results[1] if not isinstance(results[1], Exception) else LintResult(error=str(results[1]))
+        results[i] if not isinstance(results[i], Exception) else LintResult(error=str(results[i]))
     )
+    i += 1
     acceptance_result = (
-        results[2]
-        if not isinstance(results[2], Exception)
-        else AcceptanceCriteria(error=str(results[2]))
+        results[i]
+        if not isinstance(results[i], Exception)
+        else AcceptanceCriteria(error=str(results[i]))
     )
+    i += 1
 
     # Handle Jira result
     if jira_key:
         jira_result = (
-            results[3]
-            if not isinstance(results[3], Exception)
-            else JiraStatus(error=str(results[3]))
+            results[i]
+            if not isinstance(results[i], Exception)
+            else JiraStatus(error=str(results[i]))
         )
     else:
         jira_result = JiraStatus(skipped=True)
