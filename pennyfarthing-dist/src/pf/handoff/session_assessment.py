@@ -32,11 +32,23 @@ def has_assessment(content: str) -> bool:
     return bool(_ASSESSMENT_RE.search(content))
 
 
+def assessment_heading(agent: str) -> str:
+    """The heading text an agent writes its assessment under.
+
+    One formula, one place. This module already owns ``_ASSESSMENT_RE``, so it
+    owns the writer/reader contract for the heading too: ``resolve_gate`` reads
+    the verdict out of the section this names, and
+    ``missing_assessment_error`` tells the agent to write it. If the two ever
+    disagreed, the verdict parser would search for a heading agents are no
+    longer told to write and every verdict would silently read as absent.
+    """
+    return f"{agent.replace('-', ' ').title()} Assessment"
+
+
 def missing_assessment_error(agent: str) -> str:
     """Actionable error naming the heading the agent must add."""
-    agent_name = agent.replace("-", " ").title()
     return (
         "No assessment found in session file. "
-        f"To fix: Add a `## {agent_name} Assessment` heading "
+        f"To fix: Add a `## {assessment_heading(agent)}` heading "
         "to the session file before completing the phase."
     )

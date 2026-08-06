@@ -351,6 +351,28 @@ Append your audit under `### Reviewer (audit)` in the Design Deviations section.
 **Handoff:** Back to Dev for fixes
 ```
 
+**Verdict vocabulary is parsed, not just read.** `resolve-gate` classifies the
+`**Verdict:**` line mechanically and routes a non-approval to the review gate's
+`recovery.target_phase` — you do not choose the target phase, the workflow YAML
+does. Write `APPROVED` or `REJECTED` as the FIRST token; trailing prose is free
+(`APPROVED (re-review; supersedes the round-1 REJECTED verdict)` is an approval).
+A near-miss like `APPROVE` or `looks good` is not a verdict and will block the
+handoff.
+
+Three rules keep the parse unambiguous. Break one and the handoff blocks with a
+message naming the problem — it will never guess:
+
+1. **Exactly one unindented `**Verdict:**` line per assessment section.** Not two.
+   If you need to quote a previous cycle's verdict, put it inside a code fence —
+   fenced and indented text is excluded from the scan.
+2. **Use the heading `## Reviewer Assessment` verbatim, every cycle.** Repeat it
+   for a re-review; position identifies the cycle. Do NOT annotate it
+   (`(Cycle 2)`, `— Rollup`, `of Remaining Concerns`) — the parser cannot tell a
+   cycle marker from a section title, so a suffixed heading blocks instead of
+   being guessed at. Use a normal sub-heading (`###`) for supplementary notes.
+3. **Put the verdict word first.** `REJECTED — 3 blocking findings`, not
+   `After review, REJECTED`.
+
 ### Delivery Findings Capture
 
 After writing your assessment, append any upstream findings to the `## Delivery Findings` section

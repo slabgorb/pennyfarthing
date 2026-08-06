@@ -41,6 +41,56 @@ RESOLVE_RESULT:
 
 The `next:` directive in workflow YAML supports non-linear phase routing. When a phase declares `next: <phase-name>`, resolve-gate follows it instead of advancing sequentially.
 
+#### Verdict-driven rework routing
+
+When a phase gate declares a `recovery:` block with `action: rework` (the review
+phase of `tdd`, `sdd` and `spdd`), resolve-gate does **not** route on workflow
+position alone. It reads the `**Verdict:**` line from the LAST
+`## <Agent> Assessment` section in the session file — last, because a rework
+session accumulates one section per cycle — and routes on it:
+
+| Verdict | Result |
+|---------|--------|
+| `APPROVED …` | Normal forward routing (`next_phase: finish`) |
+| `REJECTED` / `CHANGES REQUESTED` / `REQUEST-CHANGES` / `NOT APPROVED` / `BLOCKED` | `next_phase: recovery.target_phase`, and `gate_type` gains a `_rework` suffix (`approval` → `approval_rework`) |
+| absent, empty, or unrecognized prose | `blocked` — never advances |
+
+Which line is read matters as much as how it is classified, and the parser
+**never picks a winner among candidates** — anything ambiguous blocks:
+
+| Rule | Detail |
+|------|--------|
+| Section identity is the EXACT heading | Each cycle repeats `## Reviewer Assessment` verbatim; the last one is current. Position identifies the cycle. |
+| A suffixed heading after the last exact one blocks | `## Reviewer Assessment (Cycle 2)` is neither read nor ignored: it might be the current cycle, so the gate blocks and names it. No character class can distinguish a cycle marker `(Cycle 2)` from a section title `(Summary)`. |
+| Exactly one verdict line per section | Zero blocks as absent; two or more blocks as *ambiguous*. There is no first-wins or last-wins rule to exploit. |
+| Verdict lines must be at column 0 | An indented `**Verdict:**` is an example. |
+| Code regions are ignored | Text inside ``` / ~~~ fences is masked before both scans, so quoting the verdict format is safe. Fence types are tracked separately — a ``` line does not close a `~~~` block. |
+
+The refusal-over-resolution stance is deliberate. Every selection rule tried in
+review had a mirror failure: first-line-wins let an illustrative example above the
+real verdict govern; last-line-wins let a prose citation of a superseded verdict
+govern; any accepted heading suffix let a supplementary section shadow the real
+one. Blocking with an actionable message is the only outcome that cannot archive a
+rejected story.
+
+The verdict is taken from the **leading token**; trailing prose may name the
+opposite outcome without changing the classification, so
+`APPROVED (supersedes the round-1 REJECTED verdict above)` is an approval.
+Rejection vocabulary is intentionally wider than approval vocabulary: an
+unrecognized near-approval such as `APPROVE` blocks and asks for `APPROVED`,
+because widening approvals is how a story gets archived unreviewed.
+
+The `_rework` suffix is load-bearing — `complete-phase` keys its
+`**Round-Trip Count:**` tracking (and its skipping of the approval subgates) off
+`"rework" in gate_type`, which is what makes `recovery.max_attempts` enforceable.
+Reaching `max_attempts` returns `blocked`, naming the exhausted limit. A
+`target_phase` that is missing or names no phase in the workflow returns `error`
+rather than falling through to `finish`.
+
+Additional `RESOLVE_RESULT` keys: `gate_extensions` (consumer gate extensions
+from `repos.yaml`) and `recovery_config` (present only when the gate declares
+`recovery:`).
+
 ### complete-phase
 
 Atomically update the session file to record a phase transition.

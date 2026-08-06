@@ -206,6 +206,80 @@ def resolve_gate(
         if all_extensions:
             gate_extensions = all_extensions
 
+    # Verdict-aware rework routing (Story 162-21).
+    #
+    # A gate that declares `action: rework` must route on the CURRENT cycle's
+    # verdict, not on workflow position alone. Without this, a REJECTED review
+    # returned the byte-identical result to an APPROVED one and complete_phase
+    # archived the story (observed live in 162-2). The resolved gate_type gains
+    # a `_rework` suffix because complete_phase keys round-trip tracking — and
+    # therefore the max_attempts ceiling — off `"rework" in gate_type`.
+    from pf.handoff import gate_recovery as gr
+    from pf.handoff.session_assessment import assessment_heading
+
+    if gr.has_rework_action(recovery_config):
+        gate_agent = current_phase.get("agent", phase)
+        heading = assessment_heading(gate_agent)
+        reading = gr.read_agent_verdict(session_content, gate_agent)
+        verdict = gr.classify_verdict(reading["verdict"])
+
+        def _stop(status: str, error: str) -> dict:
+            return _result(
+                status=status,
+                gate_type=gate_type,
+                gate_file=gate_file,
+                gate_extensions=gate_extensions,
+                recovery_config=recovery_config,
+                next_agent=None,
+                next_phase=None,
+                assessment_found=assessment_found,
+                error=error,
+            )
+
+        if verdict is None:
+            # Fail closed in every unclear case — silence, prose, or more than
+            # one candidate. Ambiguity is reported, never resolved (gh #50).
+            return _stop(
+                "blocked",
+                f"No single unambiguous verdict for the `## {heading}` section of "
+                f"`.session/{story_id}-session.md`: {reading['detail'] or 'unrecognized verdict'}. "
+                "To fix: the section must contain exactly one unindented "
+                "`**Verdict:** APPROVED` or `**Verdict:** REJECTED` line, and each "
+                f"review cycle repeats the exact `## {heading}` heading. Quote "
+                "examples inside a code fence — fenced text is ignored. "
+                "'looks good' is not a verdict.",
+            )
+
+        if verdict == "rework":
+            recovery = (
+                gr.get_rework_recovery(
+                    recovery_config, gr.parse_round_trip_count(session_content)
+                )
+                or {}
+            )
+            if recovery.get("status") == "blocked":
+                return _stop(
+                    "blocked",
+                    f"{recovery['reason']}. To fix: the rework loop is exhausted — "
+                    "escalate to a human, split the remaining findings into a new "
+                    "story, or raise max_attempts in the workflow YAML.",
+                )
+
+            target_name = recovery.get("target_phase")
+            target = next((p for p in phases if p["name"] == target_name), None)
+            if target is None:
+                valid = ", ".join(p["name"] for p in phases)
+                return _stop(
+                    "error",
+                    f"Gate recovery declares target_phase {target_name!r}, which is not "
+                    f"a phase of workflow '{workflow}'. To fix: set `target_phase` on the "
+                    f"'{phase}' gate's recovery block in `{workflow_path}` to one of: {valid}",
+                )
+
+            gate_type = f"{gate_type}_rework" if gate_type else "rework"
+            next_phase = target["name"]
+            next_agent = target["agent"]
+
     # Emit gate_check event to Frame TUI (Story 143-16)
     try:
         from pf.frame.subagent_events import emit_subagent_event

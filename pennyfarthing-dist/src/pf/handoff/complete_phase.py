@@ -125,6 +125,23 @@ def complete_phase(
 
     # Subgate: approval gate requires subagent completion table AND specialist tags
     if gate_type == "approval":
+        # Which assessment is current must be unambiguous before anything is
+        # judged against it — otherwise the tag check reports every tag missing
+        # when the real problem is a suffixed heading (story 162-21).
+        from pf.handoff.gate_recovery import select_last_section
+
+        selected_assessment = select_last_section(content, "Reviewer Assessment")
+        if selected_assessment["status"] == "ambiguous":
+            return {
+                "status": "error",
+                "session_file": str(session_path),
+                "error": (
+                    f"Cannot determine the current '## Reviewer Assessment' section: "
+                    f"{selected_assessment['detail']}. To fix: repeat the exact "
+                    "`## Reviewer Assessment` heading for each review cycle."
+                ),
+            }
+
         completion_error = _check_subagent_completion(content)
         if completion_error:
             return {
@@ -459,9 +476,20 @@ def _check_subagent_completion(content: str) -> str | None:
     """
     enabled_names, _ = _get_enabled_subagents()
 
-    # Look for ## Subagent Results section
-    match = re.search(r"^## Subagent Results\b.*", content, re.MULTILINE)
-    if not match:
+    # The CURRENT cycle's table — LAST section, same selection as resolve_gate
+    # (story 162-21). First-match was the more dangerous half of the 162-5
+    # defect: a stale cycle-1 "All received: Yes" silently certified that
+    # specialists ran for a cycle whose table was never completed.
+    from pf.handoff.gate_recovery import select_last_section
+
+    selected = select_last_section(content, "Subagent Results")
+    if selected["status"] == "ambiguous":
+        return (
+            f"Cannot determine the current '## Subagent Results' section: "
+            f"{selected['detail']}. To fix: repeat the exact "
+            "`## Subagent Results` heading for each review cycle."
+        )
+    if selected["status"] != "found":
         count = len(enabled_names)
         return (
             "Missing '## Subagent Results' section in session file. "
@@ -473,10 +501,7 @@ def _check_subagent_completion(content: str) -> str | None:
             "| 1 | reviewer-preflight | Yes | clean | none | N/A |"
         )
 
-    section = content[match.start():]
-    next_heading = re.search(r"^## (?!Subagent Results)", section, re.MULTILINE)
-    if next_heading:
-        section = section[:next_heading.start()]
+    section = selected["section"]
 
     # Check for "All received: Yes" (tolerates bold markdown: **All received:** **Yes**)
     if not re.search(r"\*{0,2}All received:\*{0,2}\s*\*{0,2}Yes\*{0,2}", section, re.IGNORECASE):
@@ -509,15 +534,16 @@ def _check_subagent_dispatch(content: str) -> set[str]:
     _, enabled_tags = _get_enabled_subagents()
     required_tags = SUBAGENT_DISPATCH_TAGS & enabled_tags
 
-    # Extract content after "## Reviewer Assessment"
-    match = re.search(r"^## Reviewer Assessment\b.*", content, re.MULTILINE)
-    if not match:
+    # The CURRENT cycle's assessment — the LAST section, selected by the same
+    # rule resolve_gate uses (story 162-21). Matching the first heading judged a
+    # rework session on its oldest section, so cycle 1's tags satisfied the gate
+    # even when the current cycle dispatched no specialists (fail-open, 162-5).
+    from pf.handoff.gate_recovery import select_last_section
+
+    selected = select_last_section(content, "Reviewer Assessment")
+    if selected["status"] != "found":
         return required_tags
-    assessment = content[match.start():]
-    # Truncate at next ## heading
-    next_heading = re.search(r"^## (?!Reviewer Assessment)", assessment, re.MULTILINE)
-    if next_heading:
-        assessment = assessment[:next_heading.start()]
+    assessment = selected["section"]
     return {tag for tag in required_tags if tag not in assessment}
 
 

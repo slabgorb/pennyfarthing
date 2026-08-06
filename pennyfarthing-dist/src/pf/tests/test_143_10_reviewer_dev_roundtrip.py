@@ -240,13 +240,17 @@ def _setup_project(tmp_path: Path, workflow: dict) -> Path:
     session_dir.mkdir()
 
     # resolve_gate enforces the assessment precondition on gated phases
-    # (158-4) — seed a session with an assessment heading so these routing/
-    # recovery tests exercise their own concern, not the assessment guard.
+    # (158-4) and, since story 162-21, fails closed on a review gate whose
+    # reviewer assessment carries no verdict — seed both so these routing/
+    # recovery tests exercise their own concern, not the guards. The verdict
+    # is APPROVED because these tests assert the forward (approval) routing;
+    # the rework routing is covered in test_162_21_*.
     (session_dir / "143-10-session.md").write_text(
         "# Story 143-10: roundtrip fixture\n\n"
         "**Workflow:** tdd\n"
         "**Phase:** review\n\n"
-        "## Dev Assessment\n\nFixture assessment.\n"
+        "## Dev Assessment\n\nFixture assessment.\n\n"
+        "## Reviewer Assessment\n\n**Verdict:** APPROVED\n"
     )
 
     return project
@@ -524,30 +528,17 @@ class TestDevFixesToReview:
         header = parse_session_header(session)
         assert header.get("phase") == "review"
 
-    # QUARANTINED (story 162-5) — blocked on a real production bug, not a
-    # stale assertion. `complete_phase._check_subagent_dispatch` (and
-    # `_check_subagent_completion`) locate their section with a plain
-    # `re.search`, which matches the FIRST `## Reviewer Assessment` /
-    # `## Subagent Results` heading and truncates at the next `## `. A rework
-    # session legitimately contains several of each, appended in order, so the
-    # gate reads the OLDEST one. Here that means the empty template assessment
-    # written by `_make_session` is checked instead of the approved one this
-    # test appends, and `[RULE]` is reported missing though it is present.
-    #
-    # The same defect fails OPEN in production: after a rework cycle the gate
-    # re-reads cycle 1's complete tables and approves even when the current
-    # cycle dispatched no specialists at all. See "162-5 follow-up" in the
-    # session's TEA Assessment; the false-pass direction is pinned by
-    # `TestDuplicateHeadingGateBypass` in test_143_12_subagent_dispatch.py.
-    @pytest.mark.xfail(
-        reason=(
-            "162-5 follow-up: approval-gate subchecks match the FIRST "
-            "'## Reviewer Assessment'/'## Subagent Results' heading, so a "
-            "rework session's stale earlier section is checked instead of the "
-            "current one"
-        ),
-        strict=False,
-    )
+    # UN-QUARANTINED by story 162-21. The approval subchecks used to locate
+    # their section with a plain `re.search` (FIRST match) and truncate at the
+    # next `## `, so a rework session — which legitimately holds several
+    # `## Reviewer Assessment` / `## Subagent Results` headings appended in
+    # order — was judged on its OLDEST section. Here that meant the empty
+    # template assessment was checked instead of the approved one this test
+    # appends. Both checks now select the LAST section through
+    # `gate_recovery.select_last_section`, the same selection `resolve_gate`
+    # uses, so the two halves of the exit protocol agree (gh #49). The
+    # fail-open direction stays pinned by `TestDuplicateHeadingGateBypass` in
+    # test_143_12_subagent_dispatch.py.
     def test_full_rework_then_approval(self, tmp_path):
         """After rework cycle completes, Reviewer approves and finishes normally."""
         project = _setup_project(tmp_path, TDD_WORKFLOW_WITH_RECOVERY)

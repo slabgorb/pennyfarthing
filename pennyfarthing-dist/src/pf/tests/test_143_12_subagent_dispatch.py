@@ -11,7 +11,11 @@ from unittest.mock import patch
 
 import pytest
 
-from pf.handoff.complete_phase import SUBAGENT_DISPATCH_TAGS, _check_subagent_dispatch
+from pf.handoff.complete_phase import (
+    SUBAGENT_DISPATCH_TAGS,
+    _check_subagent_completion,
+    _check_subagent_dispatch,
+)
 
 ALL_TAGS = "[EDGE] [SILENT] [TEST] [DOC] [TYPE] [SEC] [SIMPLE] [RULE]"
 
@@ -126,18 +130,12 @@ class TestDuplicateHeadingGateBypass:
     when the current cycle dispatched no specialists at all. The rework-freshness
     check does not save it — see `TestReworkFreshnessFieldIsNeverWritten`.
 
-    Quarantined as xfail so the defect stays visible in the suite rather than
-    living only in a story description. Tracking: "162-5 follow-up".
+    **Un-quarantined by story 162-21.** Both checks now select the LAST section
+    via `gate_recovery.select_last_section`, the same selection `resolve_gate`
+    uses — so the two halves of the exit protocol can no longer disagree about
+    which assessment is current (gh #49).
     """
 
-    @pytest.mark.xfail(
-        reason=(
-            "162-5 follow-up: _check_subagent_dispatch matches the FIRST "
-            "'## Reviewer Assessment' heading, so a stale approved section from "
-            "an earlier rework cycle satisfies the gate (fails OPEN)"
-        ),
-        strict=False,
-    )
     def test_stale_first_assessment_must_not_satisfy_gate(self) -> None:
         """Cycle 2 dispatched nothing, yet cycle 1's tags let the gate pass."""
         content = f"""## Reviewer Assessment
@@ -160,12 +158,15 @@ CYCLE 2 — no specialists were dispatched at all.
             f"cycle has no tags so all should be missing, got: {missing}"
         )
 
-    def test_documents_the_current_first_match_behavior(self) -> None:
-        """Companion to the xfail above: pin what the code does do TODAY.
+    def test_consecutive_sections_are_not_merged(self) -> None:
+        """Companion to the test above — inverted by 162-21, as it was designed to be.
 
-        Keeping this passing test alongside the xfail means the bug is measured
-        from both sides — if someone fixes the precedence, this test fails and
-        forces the xfail above to be un-quarantined in the same change.
+        This previously pinned the first-match behavior so that fixing the
+        precedence would fail here and force the xfail above to be
+        un-quarantined in the same change. That is what happened. The sections
+        must not be merged either: truncating at the next `## ` of a DIFFERENT
+        name used to concatenate consecutive same-name sections, which let
+        cycle 1's tags satisfy a tagless cycle 2.
         """
         content = f"""## Reviewer Assessment
 
@@ -176,9 +177,40 @@ CYCLE 1 — APPROVED
 
 CYCLE 2 — nothing dispatched.
 """
-        assert _check_subagent_dispatch(content) == set(), (
-            "current behavior: the first (stale) section satisfies the gate"
+        assert _check_subagent_dispatch(content) == SUBAGENT_DISPATCH_TAGS, (
+            "the LAST section has no tags, so all required tags are missing"
         )
+
+    def test_stale_complete_results_table_does_not_satisfy_the_gate(self) -> None:
+        """The same fail-open direction for `## Subagent Results`.
+
+        Cycle 1's "All received: Yes" must not vouch for a cycle-2 table that
+        never completed. This is the more dangerous half: the dispatch check at
+        least needs tags present somewhere, whereas a stale completion table
+        silently certifies that specialists ran when none did.
+        """
+        content = """## Subagent Results
+
+| # | Specialist | Received | Status |
+| 1 | reviewer-preflight | Yes | clean |
+
+All received: Yes
+
+## Reviewer Assessment
+
+CYCLE 1
+
+## Subagent Results
+
+| # | Specialist | Received | Status |
+| 1 | reviewer-preflight | No | pending |
+"""
+        error = _check_subagent_completion(content)
+
+        assert error is not None, (
+            "a stale cycle-1 results table certified an incomplete current cycle"
+        )
+        assert "All received" in error
 
 
 class TestReworkFreshnessFieldIsNeverWritten:
