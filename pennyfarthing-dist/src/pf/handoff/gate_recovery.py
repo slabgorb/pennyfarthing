@@ -18,6 +18,12 @@ from __future__ import annotations
 
 import re
 
+# Verdict vocabulary — one place. `gates/approval.md` and the reviewer
+# template cite the same words (APPROVED / CHANGES_REQUESTED / REJECTED).
+_VERDICT_RE = re.compile(r"^[ \t]*\*\*Verdict:\*\*[ \t]*(.*)$", re.MULTILINE)
+_REJECTION_RE = re.compile(r"\b(REJECTED|CHANGES REQUESTED|NOT APPROVED|BLOCKED)\b")
+_APPROVAL_RE = re.compile(r"\bAPPROVED\b")
+
 
 def get_recovery_actions(
     gate_result: dict,
@@ -142,6 +148,88 @@ def parse_story_id(story_id: str) -> tuple[str, str]:
         raise ValueError(f"Invalid story ID format: {story_id!r}")
 
     return match.group(1), story_id
+
+
+def has_rework_action(recovery_config: dict | None) -> bool:
+    """Whether ``recovery_config`` declares a ``rework`` action at all.
+
+    Checked separately from :func:`get_rework_recovery` because the attempt
+    ceiling must only be consulted once the verdict says rework — an APPROVED
+    verdict finishes even after max_attempts round-trips.
+    """
+    if not recovery_config:
+        return False
+    return any(
+        isinstance(entry, dict) and entry.get("action") == "rework"
+        for entry in recovery_config.values()
+    )
+
+
+def assessment_heading(agent: str) -> str:
+    """The session heading an agent writes its assessment under.
+
+    Mirrors ``session_assessment.missing_assessment_error`` so the heading
+    resolve_gate reads is the heading agents are told to write (SOUL #2).
+    """
+    return f"{agent.replace('-', ' ').title()} Assessment"
+
+
+def extract_agent_verdict(session_content: str, agent: str) -> str | None:
+    """Raw verdict text from the LAST ``## <Agent> Assessment`` section.
+
+    A rework session accumulates one assessment section per cycle; the current
+    cycle is the LAST one. Matching the first heading reads a stale verdict —
+    the defect class story 162-5 documented.
+
+    Returns:
+        The text after ``**Verdict:**``, or None if the section or the verdict
+        line is absent.
+    """
+    heading = assessment_heading(agent)
+    pattern = re.compile(rf"^##\s+{re.escape(heading)}\s*$", re.MULTILINE | re.IGNORECASE)
+    matches = list(pattern.finditer(session_content))
+    if not matches:
+        return None
+
+    section = session_content[matches[-1].end() :]
+    next_heading = re.search(r"^##\s+", section, re.MULTILINE)
+    if next_heading:
+        section = section[: next_heading.start()]
+
+    verdict = _VERDICT_RE.search(section)
+    return verdict.group(1) if verdict else None
+
+
+def classify_verdict(raw: str | None) -> str | None:
+    """Classify a raw verdict string.
+
+    Returns:
+        "approved" | "rework" | None (absent or unrecognized — fail closed).
+    """
+    if raw is None:
+        return None
+
+    # Markdown, punctuation, emoji and underscores are noise: `**APPROVED**`,
+    # `changes_requested` and `APPROVED ✅` all normalize to bare words.
+    normalized = re.sub(r"[^A-Za-z0-9]+", " ", raw).upper().strip()
+    if not normalized:
+        return None
+
+    # Rejections are checked FIRST: `NOT APPROVED` contains `APPROVED`.
+    if _REJECTION_RE.search(normalized):
+        return "rework"
+    if _APPROVAL_RE.search(normalized):
+        return "approved"
+    return None
+
+
+def parse_round_trip_count(session_content: str) -> int:
+    """Round-trips already recorded in the session. Unparseable → 0.
+
+    Same pattern complete_phase writes with, so the two agree.
+    """
+    match = re.search(r"\*\*Round-Trip Count:\*\*\s*(\d+)", session_content)
+    return int(match.group(1)) if match else 0
 
 
 def get_rework_recovery(

@@ -129,8 +129,16 @@ def resolve_gate_cmd(
         "next_agent": string | null,
         "next_phase": string | null,
         "assessment_found": boolean,
-        "error": string | null
+        "error": string | null,
+        "gate_extensions": [string] | null,
+        "recovery_config": object    // only when the gate declares recovery
       }
+
+    \b
+    Gates declaring `recovery: {action: rework}` route on the phase agent's
+    verdict (story 162-21): a non-APPROVED verdict yields next_phase =
+    recovery.target_phase and a `<type>_rework` gate_type; a missing or
+    ambiguous verdict, or an exhausted max_attempts, yields "blocked".
     """
     from pf.handoff.resolve_gate import resolve_gate
 

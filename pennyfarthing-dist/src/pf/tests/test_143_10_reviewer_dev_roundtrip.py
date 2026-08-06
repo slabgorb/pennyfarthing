@@ -240,13 +240,17 @@ def _setup_project(tmp_path: Path, workflow: dict) -> Path:
     session_dir.mkdir()
 
     # resolve_gate enforces the assessment precondition on gated phases
-    # (158-4) — seed a session with an assessment heading so these routing/
-    # recovery tests exercise their own concern, not the assessment guard.
+    # (158-4) and, since story 162-21, fails closed on a review gate whose
+    # reviewer assessment carries no verdict — seed both so these routing/
+    # recovery tests exercise their own concern, not the guards. The verdict
+    # is APPROVED because these tests assert the forward (approval) routing;
+    # the rework routing is covered in test_162_21_*.
     (session_dir / "143-10-session.md").write_text(
         "# Story 143-10: roundtrip fixture\n\n"
         "**Workflow:** tdd\n"
         "**Phase:** review\n\n"
-        "## Dev Assessment\n\nFixture assessment.\n"
+        "## Dev Assessment\n\nFixture assessment.\n\n"
+        "## Reviewer Assessment\n\n**Verdict:** APPROVED\n"
     )
 
     return project
