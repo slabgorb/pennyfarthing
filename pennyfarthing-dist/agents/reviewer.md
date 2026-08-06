@@ -204,6 +204,25 @@ Do not skip subagents because "the code looks clean."
 **Total findings:** {N} confirmed, {N} dismissed (with rationale), {N} deferred
 ```
 
+### Rework re-reviews: tag the cycle — BLOCKING
+
+**On a re-review after rework (the session already carries `**Round-Trip Count:** N`), the approval gate checks that your results are from the CURRENT cycle.** Two rules, both enforced programmatically:
+
+1. **Append a NEW section with the EXACT heading `## Subagent Results`** — do not edit the previous cycle's table in place, and do not suffix the heading (`## Subagent Results (Cycle 2)` blocks the gate as ambiguous). Cycles are identified by repeating the exact heading; the last one is the current cycle.
+2. **Tag the new table with the cycle number:** put `**Cycle: N**` in the section body, where N is the session's `**Round-Trip Count:**`. A tag inside a code fence does not count. Missing or mismatched tag → the gate rejects the approval as stale subagent results.
+
+```markdown
+## Subagent Results
+
+**Cycle: 2**
+
+| # | Specialist | Received | Status | Findings | Decision |
+...
+**All received:** Yes
+```
+
+Re-run **all** enabled subagents against the full diff for the new cycle — the cycle tag asserts that you did.
+
 ### Accepted "All received" formats
 
 The gate accepts these formats (case-insensitive):

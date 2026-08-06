@@ -579,6 +579,8 @@ class TestDevFixesToReview:
 
             ## Subagent Results
 
+            **Cycle: 1**
+
             | Subagent | Received | Result |
             |----------|----------|--------|
             | reviewer-preflight | Yes | PASS |

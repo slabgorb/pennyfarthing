@@ -547,19 +547,36 @@ def _check_subagent_dispatch(content: str) -> set[str]:
     return {tag for tag in required_tags if tag not in assessment}
 
 
-def _parse_rework_cycle(session_content: str) -> int:
-    """Parse rework cycle number from session content.
+_REWORK_COUNTER_RE = re.compile(r"\*\*(?:Round-Trip Count|Rework Cycle):\*\*[ \t]*(\S+)")
 
-    Looks for ``**Rework Cycle:** N`` and returns N.
-    Returns 0 if the field is absent or the value is not a valid integer.
+
+def _parse_rework_cycle(session_content: str) -> int:
+    """Parse the current rework cycle number from session content.
+
+    Reads ``**Round-Trip Count:** N`` — the counter ``complete_phase`` actually
+    writes on every rework transition — and ``**Rework Cycle:** N``, the field
+    the original guard read but nothing ever wrote (story 162-28, B4). Honouring
+    both is deliberate: the legacy field appears in hand-written sessions and in
+    story 150-8's fixtures, and dropping it would silently disarm the guard again.
+
+    Illustrative regions are masked first, so a counter quoted in a code fence
+    cannot put a session into a rework cycle it is not in. With the guard now
+    live, a fabricated cycle hard-blocks a legitimate approval.
+
+    The HIGHEST value wins when several are present — the higher cycle is the
+    stricter reading, and staleness is the direction that must not fail open.
+
+    Returns 0 when no counter is present or none parses as an integer.
     """
-    match = re.search(r"\*\*Rework Cycle:\*\*\s*(\S+)", session_content)
-    if not match:
-        return 0
-    try:
-        return int(match.group(1))
-    except ValueError:
-        return 0
+    from pf.handoff.gate_recovery import mask_illustrative_regions
+
+    cycles: list[int] = []
+    for match in _REWORK_COUNTER_RE.finditer(mask_illustrative_regions(session_content)):
+        try:
+            cycles.append(int(match.group(1)))
+        except ValueError:
+            continue
+    return max(cycles) if cycles else 0
 
 
 def _check_rework_freshness(session_content: str) -> dict:
@@ -579,9 +596,16 @@ def _check_rework_freshness(session_content: str) -> dict:
             "current_cycle": 0,
         }
 
-    # Look for "Cycle: N" in the Subagent Results section
-    results_match = re.search(r"^## Subagent Results\b.*", session_content, re.MULTILINE)
-    if not results_match:
+    # The CURRENT cycle's results — the LAST exact section, selected by the same
+    # rule the sibling subchecks and resolve_gate use (stories 162-21, 162-28).
+    # The old reader took the FIRST match and truncated on
+    # `^## (?!Subagent Results)`, a lookahead that skipped same-named headings and
+    # so concatenated consecutive cycles: an older cycle's tag vouched for a
+    # current section that was never re-run. That is B1's fail-open.
+    from pf.handoff.gate_recovery import select_last_section
+
+    selected = select_last_section(session_content, "Subagent Results")
+    if selected["status"] == "absent":
         return {
             "pass": False,
             "message": (
@@ -590,21 +614,31 @@ def _check_rework_freshness(session_content: str) -> dict:
             ),
             "current_cycle": cycle,
         }
+    if selected["status"] == "ambiguous":
+        return {
+            "pass": False,
+            "message": (
+                f"Rework cycle {cycle} is active but the current '## Subagent Results' "
+                f"section cannot be determined: {selected['detail']}. To fix: repeat the "
+                "exact `## Subagent Results` heading for each review cycle."
+            ),
+            "current_cycle": cycle,
+        }
 
-    section = session_content[results_match.start():]
-    next_heading = re.search(r"^## (?!Subagent Results)", section, re.MULTILINE)
-    if next_heading:
-        section = section[:next_heading.start()]
+    section = selected["section"]
 
-    # Check for "Cycle: N" matching the current cycle
+    # Check for "Cycle: N" matching the current cycle. Illustrative regions are
+    # already masked by select_last_section, so a fenced example tag cannot vouch
+    # for an untagged table.
     cycle_tag = re.search(r"\*{0,2}Cycle:\s*(\d+)\*{0,2}", section)
     if not cycle_tag:
         return {
             "pass": False,
             "message": (
                 f"Rework cycle {cycle} is active but Subagent Results has no cycle tag. "
-                "To fix: Add '**Cycle: {cycle}**' to the Subagent Results section after "
-                "re-running all enabled subagents."
+                f"To fix: Add '**Cycle: {cycle}**' to the Subagent Results section after "
+                "re-running all enabled subagents. A tag inside a code fence does not "
+                "count — it must be in the section body."
             ),
             "current_cycle": cycle,
         }

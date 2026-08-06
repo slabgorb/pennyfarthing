@@ -134,6 +134,10 @@ Search the session file for a `## Subagent Results` section containing:
 2. **Every row shows `Yes` in the Received column** (or explicit error/timeout notation)
 3. **Every row has a Decision** — `confirmed N, dismissed N, deferred N` or `N/A` for clean results
 4. **An `All received: Yes` line** after the table
+5. **On a rework session** (one carrying `**Round-Trip Count:** N`), a `**Cycle: N**` tag in the
+   section body matching that count — proof the subagents were re-run for the CURRENT cycle.
+   The current section is the LAST one introduced by the exact heading `## Subagent Results`;
+   a suffixed heading (`## Subagent Results (Cycle 2)`) after it is ambiguous and fails.
 
 **Required subagents (9):**
 - `reviewer-preflight`
