@@ -618,6 +618,43 @@ def _resolve_story_repos(
     return [((project_root / rc.path).resolve(), rc) for rc in resolved]
 
 
+def _valid_branch_name(value: str, cwd: str) -> subprocess.CompletedProcess:
+    """Ask git whether *value* is a branch NAME, before anything resolves it.
+
+    A full ref path closes flag parsing and bare-name DWIM (162-4), but
+    ``refs/heads/<value>`` is still parsed as a REVISION, so every
+    ``gitrevisions(7)`` suffix operator survives the prefixing: ``feat~3``,
+    ``feat^^^``, ``feat@{3}`` and ``feat:`` all resolve rc=0 to an ANCESTOR of
+    the real tip (or a tree), the reused rev-list endpoint counts 0, and
+    unlanded work reads ``merged`` (162-25).
+
+    The check is ``check-ref-format`` on the PREFIXED refname, not
+    ``--branch`` on the bare value. Both refuse every operator form — the
+    refname grammar bans ``~ ^ : ? * [``, ``@{`` and control characters — but
+    they differ on two values that matter:
+
+    - ``--branch`` refuses a dash-leading name, while ``refs/heads/-evil`` is a
+      legal refname that plumbing really does create. 162-4 pins that such a
+      ref must still be classified rather than reported missing.
+    - ``--branch`` is not a pure validator: it EXPANDS ``@{-N}`` to the
+      previously-checked-out branch and answers rc=0, so a caller must be
+      careful never to trust its stdout. Refname mode has no DWIM at all.
+
+    Legal-but-awkward names (``release-1.2.3``, ``feat/v1.0``, ``a/b/c``) pass
+    both, which is the point of asking git instead of writing a regex. The
+    prefix also keeps the value out of argv's flag position.
+
+    Returns the raw ``_run`` result: rc=0 means valid, and a
+    :class:`_TimedOutProcess` must be routed to the timeout arm rather than
+    read as either answer.
+    """
+    return _run(
+        ["git", "check-ref-format", f"refs/heads/{value}"],
+        cwd=cwd,
+        timeout=GIT_LOCAL_TIMEOUT_S,
+    )
+
+
 def _branch_merge_state(
     repo_path: Path,
     branch: str,
@@ -641,6 +678,12 @@ def _branch_merge_state(
     THE hermetic seam, and a cwd-less git call would interrogate whatever
     repo the process happens to sit in (155-34).
 
+    Both ``branch`` and ``base`` are validated as branch NAMES before anything
+    resolves them (:func:`_valid_branch_name`); a refused value returns
+    ``unknown`` with a reason that quotes it verbatim and calls it invalid, and
+    carries no ``count`` — there is no merged/unmerged claim to make about a
+    value that is not a branch (162-25).
+
     Every candidate is a FULL ref path — ``refs/heads/<name>`` or
     ``refs/remotes/origin/<name>`` — never a bare name (162-4). A bare name
     is an argv position git may flag-parse (a dash-leading branch reaches
@@ -663,6 +706,20 @@ def _branch_merge_state(
     """
     cwd = str(repo_path)
     base = base or _resolve_base_branch(repo_path)
+
+    for label, value in (("branch value", branch), ("base branch", base)):
+        check = _valid_branch_name(value, cwd)
+        if _timed_out(check):
+            return {"state": "timeout", "base": base, "reason": (check.stderr or "").strip()}
+        if check.returncode != 0:
+            return {
+                "state": "unknown",
+                "base": base,
+                "reason": (
+                    f"{label} '{value}' is not a valid branch name "
+                    f"(git check-ref-format rejected it)"
+                ),
+            }
 
     branch_ref = None
     for candidate in (f"refs/heads/{branch}", f"refs/remotes/origin/{branch}"):
