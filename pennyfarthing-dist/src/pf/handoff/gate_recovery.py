@@ -21,7 +21,26 @@ import re
 # Verdict vocabulary — one place. `gates/approval.md` and the reviewer
 # template cite the same words (APPROVED / CHANGES_REQUESTED / REJECTED).
 _VERDICT_RE = re.compile(r"^[ \t]*\*\*Verdict:\*\*[ \t]*(.*)$", re.MULTILINE)
-_REJECTION_RE = re.compile(r"\b(REJECTED|CHANGES REQUESTED|NOT APPROVED|BLOCKED)\b")
+# Rejection vocabulary is deliberately WIDER than the approval vocabulary: every
+# spelling reviewers actually use (`REJECT`, `⛔ REJECT — return to Dev`,
+# `REQUEST-CHANGES`, `CHANGES-REQUESTED` all appear in this repo's history) must
+# reach the rework loop, whereas an unrecognized near-approval (`APPROVE`,
+# `APPROVE WITH FINDINGS`) must block and be told to write `APPROVED`. The
+# asymmetry is the point — widening rejections is fail-safe, widening approvals
+# is how a story gets archived unreviewed. `REJECT(?:ED)?\b` refuses `REJECTION`,
+# which post-rework approvals mention ("initial rejection resolved").
+_REJECTION_WORDS = (
+    r"REJECT(?:ED)?|CHANGES REQUESTED|REQUEST(?:ED)? CHANGES|NOT APPROVED|BLOCKED"
+)
+# Leading-token forms decide first. A post-rework approval routinely cites the
+# round it supersedes — "APPROVED (round-trip 1 — Round 1 REJECTED, rework
+# verified closed)" is real verdict text from this repo's history — so a
+# whole-line rejection search would send a genuine approval back to Dev until
+# max_attempts blocked it. `NOT APPROVED` stays in the rejection alternation so
+# it wins over the bare `APPROVED` prefix.
+_LEADING_REJECTION_RE = re.compile(rf"^({_REJECTION_WORDS})\b")
+_LEADING_APPROVAL_RE = re.compile(r"^APPROVED\b")
+_REJECTION_RE = re.compile(rf"\b({_REJECTION_WORDS})\b")
 _APPROVAL_RE = re.compile(r"\bAPPROVED\b")
 
 
@@ -181,12 +200,20 @@ def extract_agent_verdict(session_content: str, agent: str) -> str | None:
     cycle is the LAST one. Matching the first heading reads a stale verdict —
     the defect class story 162-5 documented.
 
+    The heading match is deliberately as permissive as every other reader of
+    the same heading — ``session_assessment.has_assessment`` and
+    ``complete_phase._check_subagent_dispatch`` both accept a suffixed
+    ``## Reviewer Assessment (Cycle 2)``. A stricter pattern here would skip
+    the suffixed CURRENT section and read the stale prior one (gh #49). The
+    trailing ``\\b`` still refuses a different word: ``## Reviewer Assessments``
+    is not this heading.
+
     Returns:
         The text after ``**Verdict:**``, or None if the section or the verdict
         line is absent.
     """
     heading = assessment_heading(agent)
-    pattern = re.compile(rf"^##\s+{re.escape(heading)}\s*$", re.MULTILINE | re.IGNORECASE)
+    pattern = re.compile(rf"^##\s+{re.escape(heading)}\b.*$", re.MULTILINE | re.IGNORECASE)
     matches = list(pattern.finditer(session_content))
     if not matches:
         return None
@@ -203,6 +230,12 @@ def extract_agent_verdict(session_content: str, agent: str) -> str | None:
 def classify_verdict(raw: str | None) -> str | None:
     """Classify a raw verdict string.
 
+    The verdict is the LEADING token; everything after it is the reviewer's
+    prose, which frequently names the opposite outcome ("APPROVED (supersedes
+    the round-1 REJECTED verdict above)"). Only when the line opens with
+    neither vocabulary word do we fall back to searching the whole line, so
+    free-form text still fails closed rather than reading as approval.
+
     Returns:
         "approved" | "rework" | None (absent or unrecognized — fail closed).
     """
@@ -215,7 +248,15 @@ def classify_verdict(raw: str | None) -> str | None:
     if not normalized:
         return None
 
-    # Rejections are checked FIRST: `NOT APPROVED` contains `APPROVED`.
+    # Leading token wins. Rejections are tested first so `NOT APPROVED` beats
+    # the bare `APPROVED` prefix.
+    if _LEADING_REJECTION_RE.match(normalized):
+        return "rework"
+    if _LEADING_APPROVAL_RE.match(normalized):
+        return "approved"
+
+    # No recognized opening token — fall back to a whole-line search, still
+    # rejection-first, so anything ambiguous errs toward another Dev cycle.
     if _REJECTION_RE.search(normalized):
         return "rework"
     if _APPROVAL_RE.search(normalized):

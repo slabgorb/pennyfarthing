@@ -351,6 +351,14 @@ Append your audit under `### Reviewer (audit)` in the Design Deviations section.
 **Handoff:** Back to Dev for fixes
 ```
 
+**Verdict vocabulary is parsed, not just read.** `resolve-gate` classifies the
+`**Verdict:**` line mechanically and routes a non-approval to the review gate's
+`recovery.target_phase` — you do not choose the target phase, the workflow YAML
+does. Write `APPROVED` or `REJECTED` as the FIRST token; trailing prose is free
+(`APPROVED (re-review; supersedes the round-1 REJECTED verdict)` is an approval).
+A near-miss like `APPROVE` or `looks good` is not a verdict and will block the
+handoff.
+
 ### Delivery Findings Capture
 
 After writing your assessment, append any upstream findings to the `## Delivery Findings` section

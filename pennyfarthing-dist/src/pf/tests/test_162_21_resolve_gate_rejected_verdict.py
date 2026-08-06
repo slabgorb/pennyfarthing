@@ -224,6 +224,38 @@ class TestRejectedVerdictRoutesToRework:
             f"verdict {verdict!r} was treated as approval — result: {result}"
         )
 
+    @pytest.mark.parametrize(
+        "verdict",
+        [
+            "⛔ REJECT — return to Dev",
+            "REJECT",
+            "REQUEST-CHANGES",
+            "CHANGES-REQUESTED",
+        ],
+    )
+    def test_real_world_rejection_spellings_rework(self, tmp_path, verdict):
+        """Rejection spellings that actually occur must route, not block.
+
+        Ground truth from this repo's verdict history (same grep as the
+        approval corpus). `REJECT` and `REQUEST-CHANGES` are non-APPROVED
+        verdicts, so AC1 applies: they belong in the rework loop. Blocking
+        them is fail-safe but leaves the story's own defect unfixed for a
+        spelling reviewers demonstrably use.
+        """
+        result = _resolve_review(tmp_path, verdict=verdict)
+
+        assert result["next_phase"] == "green", (
+            f"verdict {verdict!r} neither reworked nor was recognized — result: {result}"
+        )
+
+    def test_rejection_prose_does_not_match_the_word_rejection(self, tmp_path):
+        """`REJECT` must not match inside `rejection` — an approval says it often."""
+        result = _resolve_review(
+            tmp_path, verdict="APPROVED (2nd review — initial rejection resolved)"
+        )
+
+        assert result["next_phase"] == "finish"
+
     def test_approved_substring_inside_not_approved_is_not_approval(self, tmp_path):
         """`NOT APPROVED` contains `APPROVED` — a naive substring check passes it."""
         result = _resolve_review(tmp_path, verdict="NOT APPROVED")
@@ -352,6 +384,71 @@ class TestApprovedVerdictStillFinishes:
         result = _resolve_review(tmp_path, verdict=verdict)
 
         assert result["next_phase"] == "finish", f"verdict {verdict!r} — result: {result}"
+
+    @pytest.mark.parametrize(
+        "verdict",
+        [
+            "APPROVED (round-trip 1 — Round 1 REJECTED, rework verified closed in Round 2)",
+            "APPROVED (rework cycle 1 — initial verdict REJECTED, all 8 confirmed findings"
+            " fixed in `919733546` and verified by fresh subagent dispatch)",
+            "APPROVED (re-review r2; supersedes the round-1 REJECTED verdict above)",
+            "APPROVED (2nd review — initial rejection resolved)",
+        ],
+    )
+    def test_approval_citing_the_superseded_rejection_still_finishes(self, tmp_path, verdict):
+        """An approval that names the round it supersedes is still an approval.
+
+        Ground truth, not invented fixtures: the first three strings are real
+        verdict lines from this repo's own session/archive history
+        (``grep '^\\*\\*Verdict:\\*\\* APPROVED' .session/ sprint/ docs/``).
+        Citing the prior rejection is the NORMAL way to write a post-rework
+        approval — and it happens precisely inside the rework loop, where the
+        Round-Trip Count is already ≥ 1. A parser that searches the whole line
+        for rejection words converts this story's false-advance bug into a
+        false-block bug: the approval routes back to Dev until max_attempts
+        blocks, wedging a correctly-approved story.
+        """
+        result = _resolve_review(tmp_path, verdict=verdict)
+
+        assert result["next_phase"] == "finish", (
+            f"an APPROVED verdict citing the superseded rejection was sent back "
+            f"to Dev — verdict {verdict!r}, result: {result}"
+        )
+        assert result["next_agent"] == "sm"
+        assert "rework" not in (result.get("gate_type") or "")
+
+    def test_approval_citing_a_rejection_finishes_even_mid_rework_loop(self, tmp_path):
+        """The full wedge scenario: the misclassification fires at count ≥ 1.
+
+        cycle 1 REJECTED (count→1), Dev fixes, reviewer approves while naming
+        round 1. If that reads as rework the count climbs to max_attempts and
+        the story blocks with "Max_attempts reached" despite being approved.
+        """
+        result = _resolve_review(
+            tmp_path,
+            verdict="APPROVED (round 1 REJECTED, now fixed)",
+            round_trip_count=2,
+        )
+
+        assert result["status"] == "ready", (
+            f"an approval was blocked by the rework ceiling — result: {result}"
+        )
+        assert result["next_phase"] == "finish"
+
+    @pytest.mark.parametrize(
+        "verdict",
+        [
+            "REJECTED (supersedes the round-1 APPROVED verdict above)",
+            "NOT APPROVED — the earlier APPROVED no longer stands",
+        ],
+    )
+    def test_rejection_citing_an_earlier_approval_still_reworks(self, tmp_path, verdict):
+        """The mirror case must not regress while fixing the leading-token bug."""
+        result = _resolve_review(tmp_path, verdict=verdict)
+
+        assert result["next_phase"] == "green", (
+            f"verdict {verdict!r} was treated as approval — result: {result}"
+        )
 
 
 # ===========================================================================
@@ -510,6 +607,65 @@ class TestReworkScope:
 
         assert result["next_phase"] == "green", (
             f"a stale earlier APPROVED verdict overrode the current rejection — {result}"
+        )
+
+    @pytest.mark.parametrize(
+        "suffix",
+        [" (Cycle 2)", " — Cycle 2", " (re-review)"],
+    )
+    def test_suffixed_current_cycle_heading_is_still_read(self, tmp_path, suffix):
+        """A suffixed heading must not hide the current cycle's verdict.
+
+        ``session_assessment.has_assessment`` (``^##\\s+.*Assessment``) and
+        ``complete_phase._check_subagent_dispatch`` (unanchored search) both
+        accept ``## Reviewer Assessment (Cycle 2)``. A verdict parser anchored
+        with ``$`` is stricter than every other reader of the same heading, so
+        the suffixed current section is invisible and the STALE prior section is
+        read instead — re-splitting the truth `pf.handoff.session_assessment`
+        exists to hold in one place (gh #49).
+        """
+        session = _make_session(verdict="REJECTED") + _reviewer_assessment(
+            "APPROVED"
+        ).replace("## Reviewer Assessment", f"## Reviewer Assessment{suffix}")
+        project = _setup_project(tmp_path, _load_real_tdd(), session)
+
+        result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
+
+        assert result["next_phase"] == "finish", (
+            f"heading suffix {suffix!r} hid the current cycle's APPROVED verdict, "
+            f"so the stale REJECTED was read — result: {result}"
+        )
+
+    def test_suffixed_heading_rejection_is_read_over_stale_approval(self, tmp_path):
+        """The dangerous direction of the same defect: suffixed cycle-2 rejection."""
+        session = _make_session(verdict="APPROVED") + _reviewer_assessment(
+            "REJECTED"
+        ).replace("## Reviewer Assessment", "## Reviewer Assessment (Cycle 2)")
+        project = _setup_project(tmp_path, _load_real_tdd(), session)
+
+        result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
+
+        assert result["next_phase"] == "green", (
+            f"a suffixed current-cycle rejection was skipped for a stale "
+            f"APPROVED — result: {result}"
+        )
+
+    def test_heading_matching_does_not_swallow_a_different_section(self, tmp_path):
+        """Relaxing the anchor must not make `## Reviewer Assessments` match.
+
+        A plural/extended word is a DIFFERENT heading; only a word boundary
+        after `Assessment` counts.
+        """
+        session = _make_session(verdict="APPROVED") + _reviewer_assessment(
+            "REJECTED"
+        ).replace("## Reviewer Assessment", "## Reviewer Assessmentz")
+        project = _setup_project(tmp_path, _load_real_tdd(), session)
+
+        result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
+
+        assert result["next_phase"] == "finish", (
+            f"`## Reviewer Assessmentz` was treated as a reviewer assessment "
+            f"heading — result: {result}"
         )
 
     def test_current_cycle_approval_wins_over_earlier_rejection(self, tmp_path):
