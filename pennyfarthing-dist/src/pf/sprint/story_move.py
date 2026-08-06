@@ -46,17 +46,27 @@ def _all_epic_ids(data: dict[str, Any]) -> list[str]:
 def _rewrite_dependencies(data: dict[str, Any], old_id: str, new_id: str) -> None:
     """Rewrite every ``depends_on`` that points at ``old_id`` to ``new_id``.
 
-    ``depends_on`` is a scalar story-id string (not a list). Matching is
-    whole-value equality so that, e.g., moving ``10-1`` never disturbs a
-    dependent on ``10-10``. Walks all story containers: each epic's
-    ``stories``, ``standalone_stories``, and the top-level ``stories``.
+    ``depends_on`` is either a scalar story-id string or a list of them, so
+    list entries are matched one by one and the order is preserved (gh #116) —
+    skipping list form would leave a dangling reference behind that the
+    list-aware validator then hard-fails the move on. Matching is whole-value
+    equality so that, e.g., moving ``10-1`` never disturbs a dependent on
+    ``10-10``. Walks all story containers: each epic's ``stories``,
+    ``standalone_stories``, and the top-level ``stories``.
     """
 
     def _walk(stories: Any) -> None:
         if not stories:
             return
         for story in stories:
-            if isinstance(story, dict) and story.get("depends_on") == old_id:
+            if not isinstance(story, dict):
+                continue
+            dep = story.get("depends_on")
+            if isinstance(dep, list):
+                story["depends_on"] = [
+                    new_id if entry == old_id else entry for entry in dep
+                ]
+            elif dep == old_id:
                 story["depends_on"] = new_id
 
     for epic in data.get("epics", []):
