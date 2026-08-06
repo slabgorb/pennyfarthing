@@ -229,6 +229,65 @@ def mask_illustrative_regions(content: str) -> str:
     return "\n".join(masked)
 
 
+def select_last_section(content: str, heading: str) -> dict:
+    """Slice the LAST section introduced by an exact ``## <heading>`` line.
+
+    The single selection rule for every reader of a session file. Both halves of
+    the exit protocol use it — ``resolve_gate`` to find the verdict and
+    ``complete_phase`` to find the specialist tags and results table — so they
+    cannot disagree about which cycle is current (gh #49). A session accumulates
+    one section per rework cycle by appending, so the current cycle is the last.
+
+    Illustrative regions are masked first, so a heading quoted inside a code
+    fence neither becomes the section nor moves its boundary.
+
+    Args:
+        content: Full session file text.
+        heading: Heading text without the leading ``##`` (e.g. "Subagent Results").
+
+    Returns:
+        dict with:
+            status: "found" | "absent" | "ambiguous"
+            section: the section body when status is "found", else ""
+            detail: human-readable reason for "absent"/"ambiguous"
+    """
+    exact = re.compile(rf"^##[ \t]+{re.escape(heading)}[ \t]*$", re.MULTILINE | re.IGNORECASE)
+    near_miss = re.compile(rf"^##[ \t]+{re.escape(heading)}\b.*$", re.MULTILINE | re.IGNORECASE)
+
+    masked = mask_illustrative_regions(content)
+    matches = list(exact.finditer(masked))
+    if not matches:
+        return {"status": "absent", "section": "", "detail": f"no `## {heading}` section"}
+
+    last = matches[-1]
+
+    # A heading that merely STARTS with the phrase may be a newer cycle whose
+    # content would be silently skipped, so it is neither read nor ignored. No
+    # character class can tell a cycle marker `(Cycle 2)` from a section title
+    # `(Summary)`, so the ambiguity is reported instead of guessed at.
+    stragglers = [
+        m.group(0).strip() for m in near_miss.finditer(masked) if m.start() > last.start()
+    ]
+    if stragglers:
+        return {
+            "status": "ambiguous",
+            "section": "",
+            "detail": (
+                f"the heading {stragglers[-1]!r} follows the last exact "
+                f"`## {heading}` heading. Cycles are identified by repeating the "
+                f"EXACT heading, so a suffixed one is not read — and it cannot be "
+                f"ignored either, since it may be the current cycle"
+            ),
+        }
+
+    section = masked[last.end() :]
+    next_heading = re.search(r"^##[ \t]+", section, re.MULTILINE)
+    if next_heading:
+        section = section[: next_heading.start()]
+
+    return {"status": "found", "section": section, "detail": ""}
+
+
 def read_agent_verdict(session_content: str, agent: str) -> dict:
     """Read the operative verdict from an agent's assessment section.
 
@@ -261,41 +320,11 @@ def read_agent_verdict(session_content: str, agent: str) -> dict:
             verdict: raw verdict text when status is "found", else None
             detail: human-readable reason for "absent"/"ambiguous"
     """
-    heading = assessment_heading(agent)
-    exact = re.compile(rf"^##[ \t]+{re.escape(heading)}[ \t]*$", re.MULTILINE | re.IGNORECASE)
-    near_miss = re.compile(rf"^##[ \t]+{re.escape(heading)}\b.*$", re.MULTILINE | re.IGNORECASE)
+    selected = select_last_section(session_content, assessment_heading(agent))
+    if selected["status"] != "found":
+        return {"status": selected["status"], "verdict": None, "detail": selected["detail"]}
 
-    content = mask_illustrative_regions(session_content)
-    matches = list(exact.finditer(content))
-    if not matches:
-        return {
-            "status": "absent",
-            "verdict": None,
-            "detail": f"no `## {heading}` section",
-        }
-
-    last = matches[-1]
-
-    stragglers = [
-        m.group(0).strip() for m in near_miss.finditer(content) if m.start() > last.start()
-    ]
-    if stragglers:
-        return {
-            "status": "ambiguous",
-            "verdict": None,
-            "detail": (
-                f"the heading {stragglers[-1]!r} follows the last exact "
-                f"`## {heading}` heading. Cycles are identified by repeating the "
-                f"EXACT heading, so a suffixed one is not read — and it cannot be "
-                f"ignored either, since it may be the current cycle"
-            ),
-        }
-
-    section = content[last.end() :]
-    next_heading = re.search(r"^##[ \t]+", section, re.MULTILINE)
-    if next_heading:
-        section = section[: next_heading.start()]
-
+    section = selected["section"]
     verdicts = [m.group(1) for m in _VERDICT_RE.finditer(section)]
     if not verdicts:
         return {"status": "absent", "verdict": None, "detail": "no `**Verdict:**` line"}
