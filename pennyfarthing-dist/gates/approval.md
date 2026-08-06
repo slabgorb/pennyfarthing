@@ -140,8 +140,10 @@ Search the session file for a `## Subagent Results` section containing:
    column 0; prose ending in `Cycle: N`, a table cell, and any quoted example (code fence,
    4-space-indented block, backtick span, HTML comment) are not tags. EVERY tag in the section
    must match the current cycle. The current section is the LAST one introduced by the exact
-   heading `## Subagent Results` and it ends at the next heading of any level, so a tag under a
-   trailing `### …` subsection does not count; a suffixed heading
+   heading `## Subagent Results`, and it runs to the next `##` — subsections belong to it, because
+   the reviewer template files content under `### …` headings. The cycle tag is read from the
+   section's PREAMBLE only (the part before its first `###`), so a tag under a `### …` subsection
+   does not count even though that subsection is part of the section. A suffixed heading
    (`## Subagent Results (Cycle 2)`) after the last exact one is ambiguous and fails.
 
 **Required subagents (9):**

@@ -17,9 +17,17 @@ The rigour applied to SELECTING the section is applied here to READING the tag:
   is read from the section's preamble, so one under an appended ``### Reviewer
   Notes`` does not vouch for the table above it.
 
-Vector 6 from the review (deleting the counter disarms the guard) is
-architectural — a self-attesting control — and is filed as a Delivery Finding
-rather than pinned here.
+Honest note on RED-ness: of the eight cases in the first cycle-1 class, six were
+RED before the fix. ``test_a_stale_tag_alongside_a_fresh_one_still_blocks`` and
+``test_a_tag_ahead_of_the_counter_blocks`` were already green — the old
+first-match regex blocked them by coincidence, not by rule. The case that
+actually distinguishes first-match-wins from "every tag must match" is a stale
+tag placed AFTER a matching one, pinned in
+``TestTheAllTagsRuleIsPinnedByTheCaseThatDistinguishesIt`` (review cycle 2).
+
+Deleting the counter outright still disarms the guard — a self-attesting control,
+filed as a Delivery Finding. HIDING it does not: see
+``TestAnUnreadableCounterBlocks``.
 """
 
 from __future__ import annotations
@@ -367,3 +375,174 @@ class TestSubsectionsBelongToTheSectionButDoNotSpeakForIt:
                 {"[EDGE]", "[SEC]"},
             )
             assert _check_subagent_dispatch(template) == set()
+
+
+class TestAnUnreadableCounterBlocks:
+    """Hiding the counter must not read as "never reworked" (review cycle 2).
+
+    The cycle-0 short-circuit equated "no counter" with "counter I cannot see",
+    so wrapping the operative ``**Round-Trip Count:**`` line in an HTML comment,
+    a fence or backticks disarmed the guard completely. The comment form is worse
+    than deleting the line: the document still renders intact, so a human reading
+    the session sees nothing missing. Widening the masker widened this hole, so it
+    is this commit's to close — found raw but not found masked means hidden, and
+    hidden fails closed exactly as an unterminated fence already does.
+    """
+
+    @pytest.mark.parametrize(
+        ("shape", "counter"),
+        [
+            ("html-comment", "<!-- **Round-Trip Count:** 2 -->"),
+            ("fence", "```\n**Round-Trip Count:** 2\n```"),
+            ("backticks", "`**Round-Trip Count:** 2`"),
+            ("indented", "    **Round-Trip Count:** 2"),
+        ],
+    )
+    def test_a_hidden_counter_blocks(self, shape: str, counter: str) -> None:
+        result = _check_rework_freshness(_session(STALE_TABLE, counter=counter))
+
+        assert result["pass"] is False, (
+            f"shape {shape!r}: the counter is present in the file but hidden from "
+            f"every reader, and the guard silently stood down: {result}"
+        )
+        assert "Round-Trip Count" in result["message"], (
+            f"the message must name the line the agent has to un-hide: {result}"
+        )
+
+    def test_an_unparseable_counter_value_blocks(self) -> None:
+        """An annotated counter is live practice — this session was hand-edited."""
+        result = _check_rework_freshness(
+            _session(STALE_TABLE, counter="**Round-Trip Count:** 2 (restored by hand)")
+        )
+
+        assert result["pass"] is False, (
+            f"a counter line whose value will not parse must block, not read 0: {result}"
+        )
+
+    def test_a_genuinely_absent_counter_is_still_an_initial_review(self) -> None:
+        """The tri-state must not turn every non-rework session into a blocker."""
+        result = _check_rework_freshness("# Story\n\n## Subagent Results\n\n" + STALE_TABLE)
+
+        assert result["pass"] is True
+        assert result["current_cycle"] == 0
+
+    def test_the_counter_reader_reports_the_three_states(self) -> None:
+        from pf.handoff.gate_recovery import read_round_trip_count
+
+        assert read_round_trip_count("**Round-Trip Count:** 3")["status"] == "found"
+        assert read_round_trip_count("no counter here")["status"] == "absent"
+        assert read_round_trip_count("<!-- **Round-Trip Count:** 3 -->")["status"] == (
+            "unreadable"
+        )
+
+
+class TestDispatchTagsAreNotEatenByTheMasker:
+    """The masker the freshness search needs is too aggressive for this one.
+
+    Opposite failure directions: an illustrative freshness tag that is READ
+    approves a stale review (fail-open), while a legitimate dispatch tag that is
+    MASKED blocks a valid approval (fail-closed) with a message saying tags are
+    missing while they sit plainly in the file. One masker cannot serve both, so
+    the two searches no longer share one.
+    """
+
+    def _assessment(self, findings: str) -> str:
+        return f"## Reviewer Assessment\n\n**Verdict:** APPROVED\n\n{findings}\n"
+
+    @pytest.fixture
+    def _enabled(self):
+        with patch("pf.handoff.complete_phase._get_enabled_subagents") as enabled:
+            enabled.return_value = ({"reviewer-security"}, {"[SEC]"})
+            yield enabled
+
+    def test_backticked_tags_are_found(self, _enabled) -> None:
+        """`reviewer.md` and `approval.md` both MODEL the backticked form."""
+        from pf.handoff.complete_phase import _check_subagent_dispatch
+
+        content = self._assessment("- `[SEC]` no security findings")
+
+        assert _check_subagent_dispatch(content) == set(), (
+            "the docs render dispatch tags in backticks, so masking inline spans "
+            "reports the documented form missing"
+        )
+
+    def test_tags_indented_under_a_subsection_are_found(self, _enabled) -> None:
+        """A heading opens prose context; the list/table guard cannot see that."""
+        from pf.handoff.complete_phase import _check_subagent_dispatch
+
+        content = self._assessment("### Specialist Findings\n\n    [SEC] none found")
+
+        assert _check_subagent_dispatch(content) == set(), (
+            "an indented line under a `###` heading was masked as a code block"
+        )
+
+    def test_a_fenced_tag_still_does_not_count(self, _enabled) -> None:
+        """Splitting the maskers must not undo 162-21's protection."""
+        from pf.handoff.complete_phase import _check_subagent_dispatch
+
+        content = self._assessment("Example of a tagged finding:\n\n```\n[SEC] example\n```")
+
+        assert _check_subagent_dispatch(content) == {"[SEC]"}, (
+            "a fenced example tag is not a dispatched specialist"
+        )
+
+    def test_completion_rows_in_backticks_are_found(self) -> None:
+        """The completion table check is a presence check too — same direction."""
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        content = (
+            "## Subagent Results\n\n"
+            "| # | Specialist | Received |\n"
+            "| 1 | `reviewer-security` | Yes |\n\n"
+            "**All received:** Yes\n"
+        )
+
+        with patch("pf.handoff.complete_phase._get_enabled_subagents") as enabled:
+            enabled.return_value = ({"reviewer-security"}, {"[SEC]"})
+            assert _check_subagent_completion(content) is None
+
+
+class TestTheAllTagsRuleIsPinnedByTheCaseThatDistinguishesIt:
+    """A stale tag AFTER a matching one — the case first-match-wins let through.
+
+    The cycle-1 commit claimed all six vectors were RED first; two were already
+    green because the old first-match regex blocked them by coincidence. This is
+    the case that actually separates the rules, so removing "every tag must
+    match" now fails a test.
+    """
+
+    def test_a_stale_tag_after_a_matching_one_blocks(self) -> None:
+        body = "**Cycle: 2**\n\n" + STALE_TABLE + "\n**Cycle: 1**\n"
+
+        result = _check_rework_freshness(_session(body))
+
+        assert result["pass"] is False, (
+            f"a cycle-1 tag below the matching one is still an untrue claim about "
+            f"the current section: {result}"
+        )
+
+
+class TestMaskerBranchesArePinned:
+    """Branches that behave correctly today but nothing would notice losing."""
+
+    def test_indentation_without_a_preceding_blank_line_is_not_code(self) -> None:
+        content = "A wrapped paragraph\n    continues here [SEC]\n"
+
+        assert "[SEC]" in mask_illustrative_regions(content)
+
+    def test_indented_table_continuations_are_not_code(self) -> None:
+        content = "| a | b |\n\n    | c | d [SEC] |\n"
+
+        assert "[SEC]" in mask_illustrative_regions(content)
+
+    def test_two_bare_counter_lines_resolve_to_the_last(self) -> None:
+        assert parse_round_trip_count("**Round-Trip Count:** 1\n**Round-Trip Count:** 4\n") == 4
+
+    def test_the_writer_inserts_a_line_when_the_only_counter_is_fenced(self, tmp_path) -> None:
+        """The exact shape that lost this session's counter."""
+        content = TestTheCounterWriterCannotBeSteeredByProse()._write_rework(
+            tmp_path, "```\n**Round-Trip Count:** 9\n```\n"
+        )
+
+        assert parse_round_trip_count(content) == 1
+        assert "**Round-Trip Count:** 9" in content, "the fenced example was rewritten"

@@ -128,9 +128,11 @@ def complete_phase(
         # Which assessment is current must be unambiguous before anything is
         # judged against it — otherwise the tag check reports every tag missing
         # when the real problem is a suffixed heading (story 162-21).
-        from pf.handoff.gate_recovery import select_last_section
+        from pf.handoff.gate_recovery import mask_quoted_blocks, select_last_section
 
-        selected_assessment = select_last_section(content, "Reviewer Assessment")
+        selected_assessment = select_last_section(
+            content, "Reviewer Assessment", mask_quoted_blocks
+        )
         if selected_assessment["status"] == "ambiguous":
             return {
                 "status": "error",
@@ -494,9 +496,10 @@ def _check_subagent_completion(content: str) -> str | None:
     # (story 162-21). First-match was the more dangerous half of the 162-5
     # defect: a stale cycle-1 "All received: Yes" silently certified that
     # specialists ran for a cycle whose table was never completed.
-    from pf.handoff.gate_recovery import select_last_section
+    # Presence search (row names, "All received") — lenient masker, as above.
+    from pf.handoff.gate_recovery import mask_quoted_blocks, select_last_section
 
-    selected = select_last_section(content, "Subagent Results")
+    selected = select_last_section(content, "Subagent Results", mask_quoted_blocks)
     if selected["status"] == "ambiguous":
         return (
             f"Cannot determine the current '## Subagent Results' section: "
@@ -552,9 +555,15 @@ def _check_subagent_dispatch(content: str) -> set[str]:
     # rule resolve_gate uses (story 162-21). Matching the first heading judged a
     # rework session on its oldest section, so cycle 1's tags satisfied the gate
     # even when the current cycle dispatched no specialists (fail-open, 162-5).
-    from pf.handoff.gate_recovery import select_last_section
+    # PRESENCE search, so the lenient masker: a tag in backticks is exactly how
+    # `agents/reviewer.md` and `gates/approval.md` render these, and an indented
+    # line under a `###` heading is prose. Masking either reported tags missing
+    # while they sat plainly in the file — a fail-CLOSED that is close to
+    # undiagnosable from the message (story 162-28, cycle 2). Fenced examples are
+    # still masked, so 162-21's fail-open stays closed.
+    from pf.handoff.gate_recovery import mask_quoted_blocks, select_last_section
 
-    selected = select_last_section(content, "Reviewer Assessment")
+    selected = select_last_section(content, "Reviewer Assessment", mask_quoted_blocks)
     if selected["status"] != "found":
         return required_tags
     assessment = selected["section"]
@@ -562,8 +571,9 @@ def _check_subagent_dispatch(content: str) -> set[str]:
 
 
 _LEGACY_REWORK_COUNTER_RE = re.compile(
-    r"\*\*Rework Cycle:\*\*[ \t]*(\d+)[ \t]*$", re.MULTILINE
+    r"^\*\*Rework Cycle:\*\*[ \t]*(\d+)[ \t]*$", re.MULTILINE
 )
+_LEGACY_COUNTER_LINE_RE = re.compile(r"^.*\*\*Rework Cycle:\*\*.*$", re.MULTILINE)
 # The freshness tag, and nothing that merely resembles one. A standalone column-0
 # `**Cycle: N**` line — the form `agents/reviewer.md` documents. The unanchored,
 # asterisk-optional predicate this replaces was satisfied by any prose ending in
@@ -594,15 +604,47 @@ def _parse_rework_cycle(session_content: str) -> int:
     session permanently unapprovable.
 
     Returns 0 when no counter is present or none parses as a non-negative integer.
+    A counter that is present but HIDDEN or unparseable is not 0 — see
+    :func:`_read_rework_cycle`, which the guard uses so it can block on that state.
     """
-    from pf.handoff.gate_recovery import mask_illustrative_regions, parse_round_trip_count
+    return _read_rework_cycle(session_content)["count"]
 
-    count = parse_round_trip_count(session_content)
-    if count:
-        return count
+
+def _read_rework_cycle(session_content: str) -> dict:
+    """Tri-state rework-cycle read: ``absent``, ``found`` or ``unreadable``.
+
+    Delegates the real counter to ``gate_recovery.read_round_trip_count`` and falls
+    back to the legacy ``**Rework Cycle:**`` field only when the real one is
+    genuinely absent — an unreadable real counter must not be papered over by a
+    legacy line, and a hidden legacy line is unreadable for the same reason
+    (story 162-28, review cycle 2).
+    """
+    from pf.handoff.gate_recovery import (
+        mask_illustrative_regions,
+        read_round_trip_count,
+    )
+
+    reading = read_round_trip_count(session_content)
+    if reading["status"] != "absent":
+        return reading
 
     legacy = _LEGACY_REWORK_COUNTER_RE.findall(mask_illustrative_regions(session_content))
-    return int(legacy[-1]) if legacy else 0
+    if legacy:
+        return {"status": "found", "count": int(legacy[-1]), "detail": ""}
+
+    if _LEGACY_COUNTER_LINE_RE.search(session_content):
+        return {
+            "status": "unreadable",
+            "count": 0,
+            "detail": (
+                "a '**Rework Cycle:**' line is present but cannot be read as "
+                "operative — its value does not parse as a plain integer ending "
+                "the line, or it sits inside a code fence, HTML comment, indented "
+                "block or backticks"
+            ),
+        }
+
+    return {"status": "absent", "count": 0, "detail": ""}
 
 
 def _check_rework_freshness(session_content: str) -> dict:
@@ -613,7 +655,24 @@ def _check_rework_freshness(session_content: str) -> dict:
         message: str — human-readable explanation
         current_cycle: int — the parsed rework cycle number
     """
-    cycle = _parse_rework_cycle(session_content)
+    reading = _read_rework_cycle(session_content)
+
+    # "I cannot read the counter" is not "there was no rework". Treating them the
+    # same let the guard be disarmed by hiding the operative line — in an HTML
+    # comment it does not even leave a visible hole (story 162-28, cycle 2).
+    if reading["status"] == "unreadable":
+        return {
+            "pass": False,
+            "message": (
+                f"Cannot determine the rework cycle: {reading['detail']}. "
+                "To fix: put the counter back on its own line as "
+                "'**Round-Trip Count:** N', outside any code fence, HTML comment or "
+                "backticks, with nothing after the number."
+            ),
+            "current_cycle": 0,
+        }
+
+    cycle = reading["count"]
 
     if cycle == 0:
         return {
@@ -669,7 +728,7 @@ def _check_rework_freshness(session_content: str) -> dict:
                 "section after re-running all enabled subagents. It must be a line of its "
                 "own, starting at column 0 — a tag quoted in a code fence, an indented "
                 "example, backticks, an HTML comment, a table cell or prose does not count, "
-                "and neither does one under a later `###` subsection."
+                "and neither does one under a `###` subsection of this section."
             ),
             "current_cycle": cycle,
         }
@@ -684,8 +743,8 @@ def _check_rework_freshness(session_content: str) -> dict:
                 f"Stale subagent results: results are from cycle {stale[0]} "
                 f"but current rework cycle is {cycle}. "
                 "To fix: Re-run ALL enabled subagents against the full diff for the "
-                "current rework cycle before approving, and leave exactly one "
-                f"'**Cycle: {cycle}**' tag in the current section."
+                f"current rework cycle before approving, and leave no tag other than "
+                f"'**Cycle: {cycle}**' in the current section."
             ),
             "current_cycle": cycle,
         }

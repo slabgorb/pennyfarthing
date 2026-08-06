@@ -17,6 +17,7 @@ Key constraints:
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 
 from pf.handoff.session_assessment import assessment_heading
 
@@ -240,6 +241,27 @@ def _mask_inline_code(line: str) -> str:
     return _INLINE_CODE_RE.sub(lambda m: " " * len(m.group(0)), line)
 
 
+def mask_quoted_blocks(content: str) -> str:
+    """Blank only unambiguously quoted BLOCKS — fences and HTML comments.
+
+    The masker for PRESENCE searches, whose failure direction is the opposite of
+    the freshness tag's. ``_check_subagent_dispatch`` asks "did the reviewer
+    incorporate the security specialist's findings?" and answers by looking for
+    ``[SEC]`` in the assessment; masking a legitimate mention blocks a valid
+    approval with a message claiming a tag is missing while it sits plainly in the
+    file. Inline backticks are exactly how ``agents/reviewer.md`` and
+    ``gates/approval.md`` render those tags, and an indented line under a ``###``
+    heading is ordinary prose, so neither may be masked here.
+
+    A fence or an HTML comment is still masked: those genuinely quote a whole
+    block, and reading a fenced example tag as a dispatched specialist was the
+    fail-open 162-21 closed. Story 162-28 split this from
+    :func:`mask_illustrative_regions` after one shared masker was found serving
+    two searches with opposite failure directions.
+    """
+    return _mask(content, code_blocks=False, inline=False)
+
+
 def mask_illustrative_regions(content: str) -> str:
     """Blank out illustrative regions, preserving offsets and line structure.
 
@@ -265,7 +287,15 @@ def mask_illustrative_regions(content: str) -> str:
     so downstream match offsets still index into a string of identical shape. An
     unterminated fence or comment masks everything after it — a verdict that
     cannot be read blocks, which is the safe direction.
+
+    Use :func:`mask_quoted_blocks` for presence searches, which fail in the
+    opposite direction and cannot afford this much masking.
     """
+    return _mask(content, code_blocks=True, inline=True)
+
+
+def _mask(content: str, *, code_blocks: bool, inline: bool) -> str:
+    """Shared masking engine. See the two public wrappers for the policies."""
     masked: list[str] = []
     open_delim: str | None = None
     in_indented_code = False
@@ -301,11 +331,11 @@ def mask_illustrative_regions(content: str) -> str:
             prev_blank = True
             continue
 
-        if in_indented_code and indented:
+        if code_blocks and in_indented_code and indented:
             masked.append(" " * len(line))
             continue
 
-        in_indented_code = indented and prev_blank and not list_context
+        in_indented_code = code_blocks and indented and prev_blank and not list_context
         if in_indented_code:
             masked.append(" " * len(line))
             prev_blank = False
@@ -313,13 +343,17 @@ def mask_illustrative_regions(content: str) -> str:
 
         if not indented:
             list_context = bool(_LIST_OR_TABLE_RE.match(line))
-        masked.append(_mask_inline_code(line))
+        masked.append(_mask_inline_code(line) if inline else line)
         prev_blank = False
 
     return "\n".join(masked)
 
 
-def select_last_section(content: str, heading: str) -> dict:
+def select_last_section(
+    content: str,
+    heading: str,
+    masker: Callable[[str], str] = mask_illustrative_regions,
+) -> dict:
     """Slice the LAST section introduced by an exact ``## <heading>`` line.
 
     The single selection rule for every reader of a session file. Both halves of
@@ -332,6 +366,11 @@ def select_last_section(content: str, heading: str) -> dict:
     fence neither becomes the section nor moves its boundary.
 
     Args:
+        masker: how much of the body counts as quoted. Defaults to the aggressive
+            :func:`mask_illustrative_regions`, which is right for readers whose
+            fail-open direction is reading an example as operative. Presence
+            searches pass :func:`mask_quoted_blocks` instead — they fail the other
+            way, so over-masking blocks a valid approval (story 162-28).
         content: Full session file text.
         heading: Heading text without the leading ``##`` (e.g. "Subagent Results").
 
@@ -344,7 +383,7 @@ def select_last_section(content: str, heading: str) -> dict:
     exact = re.compile(rf"^##[ \t]+{re.escape(heading)}[ \t]*$", re.MULTILINE | re.IGNORECASE)
     near_miss = re.compile(rf"^##[ \t]+{re.escape(heading)}\b.*$", re.MULTILINE | re.IGNORECASE)
 
-    masked = mask_illustrative_regions(content)
+    masked = masker(content)
     matches = list(exact.finditer(masked))
     if not matches:
         return {"status": "absent", "section": "", "detail": f"no `## {heading}` section"}
@@ -487,10 +526,71 @@ def classify_verdict(raw: str | None) -> str | None:
     return None
 
 
-# The value is the WHOLE remainder of the line. A bare `(\d+)` took the leading
-# digits of anything — `2.0` read as 2, `1_000` as 1 — so a malformed counter
-# quietly became a plausible cycle number (story 162-28 review).
-ROUND_TRIP_COUNT_RE = re.compile(r"\*\*Round-Trip Count:\*\*[ \t]*(\d+)[ \t]*$", re.MULTILINE)
+# Column 0, and the value is the WHOLE remainder of the line — the same doctrine
+# as the verdict and cycle-tag lines. A bare `(\d+)` took the leading digits of
+# anything (`2.0` read as 2, `1_000` as 1), and an unanchored pattern made an
+# indented mention operative, which is a hiding place rather than a counter
+# (story 162-28 review).
+ROUND_TRIP_COUNT_RE = re.compile(
+    r"^\*\*Round-Trip Count:\*\*[ \t]*(\d+)[ \t]*$", re.MULTILINE
+)
+# The LINE, whatever its value — how :func:`read_round_trip_count` tells "no
+# counter" from "a counter I cannot parse or cannot see".
+COUNTER_LINE_RE = re.compile(r"^.*\*\*Round-Trip Count:\*\*.*$", re.MULTILINE)
+
+
+def read_round_trip_count(session_content: str) -> dict:
+    """Tri-state read of the round-trip counter: absent, found, or unreadable.
+
+    "I cannot read the counter" is not "there was no rework". Equating the two let
+    the freshness guard be disarmed by HIDING the operative line instead of
+    forging a tag — wrap it in an HTML comment, a fence or backticks and the guard
+    reported "No rework cycle — initial review" on a stale table (story 162-28,
+    review cycle 2). The comment form is worse than deleting the line: the
+    document still renders intact, so nothing looks missing to a human.
+
+    Hidden is detected by comparing the raw text against the masked text: a
+    counter line that exists before masking and not after is quoted, and a quoted
+    operative counter is unreadable, not absent. A line whose value will not parse
+    (an annotation after the number, say) is unreadable too — hand-editing this
+    line is live practice, so silently reading 0 is the same trap.
+
+    Returns:
+        dict with:
+            status: "found" | "absent" | "unreadable"
+            count: the parsed value when found, else 0
+            detail: human-readable reason when unreadable
+    """
+    masked = mask_illustrative_regions(session_content)
+
+    values = ROUND_TRIP_COUNT_RE.findall(masked)
+    if values:
+        # The counter is written once and quoted freely; the operative line is the
+        # last one the workflow appended.
+        return {"status": "found", "count": int(values[-1]), "detail": ""}
+
+    if COUNTER_LINE_RE.search(masked):
+        return {
+            "status": "unreadable",
+            "count": 0,
+            "detail": (
+                "a '**Round-Trip Count:**' line is present but its value does not "
+                "parse as a plain integer ending the line"
+            ),
+        }
+
+    if COUNTER_LINE_RE.search(session_content):
+        return {
+            "status": "unreadable",
+            "count": 0,
+            "detail": (
+                "the '**Round-Trip Count:**' line is inside an illustrative region "
+                "(code fence, HTML comment, indented block or backticks), so no "
+                "reader can treat it as operative"
+            ),
+        }
+
+    return {"status": "absent", "count": 0, "detail": ""}
 
 
 def parse_round_trip_count(session_content: str) -> int:
@@ -511,8 +611,7 @@ def parse_round_trip_count(session_content: str) -> int:
     The LAST occurrence wins: the counter is written once but quoted freely, and
     the operative line is appended by the workflow, not by prose.
     """
-    matches = ROUND_TRIP_COUNT_RE.findall(mask_illustrative_regions(session_content))
-    return int(matches[-1]) if matches else 0
+    return read_round_trip_count(session_content)["count"]
 
 
 def get_rework_recovery(
