@@ -134,10 +134,15 @@ Search the session file for a `## Subagent Results` section containing:
 2. **Every row shows `Yes` in the Received column** (or explicit error/timeout notation)
 3. **Every row has a Decision** — `confirmed N, dismissed N, deferred N` or `N/A` for clean results
 4. **An `All received: Yes` line** after the table
-5. **On a rework session** (one carrying `**Round-Trip Count:** N`), a `**Cycle: N**` tag in the
-   section body matching that count — proof the subagents were re-run for the CURRENT cycle.
-   The current section is the LAST one introduced by the exact heading `## Subagent Results`;
-   a suffixed heading (`## Subagent Results (Cycle 2)`) after it is ambiguous and fails.
+5. **On a rework session** (one carrying `**Round-Trip Count:** N` — or, on a legacy hand-written
+   session with no such line, `**Rework Cycle:** N`), a `**Cycle: N**` tag matching that count —
+   proof the subagents were re-run for the CURRENT cycle. The tag is a standalone line at
+   column 0; prose ending in `Cycle: N`, a table cell, and any quoted example (code fence,
+   4-space-indented block, backtick span, HTML comment) are not tags. EVERY tag in the section
+   must match the current cycle. The current section is the LAST one introduced by the exact
+   heading `## Subagent Results` and it ends at the next heading of any level, so a tag under a
+   trailing `### …` subsection does not count; a suffixed heading
+   (`## Subagent Results (Cycle 2)`) after the last exact one is ambiguous and fails.
 
 **Required subagents (9):**
 - `reviewer-preflight`
