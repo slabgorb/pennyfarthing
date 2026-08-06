@@ -688,27 +688,100 @@ class TestFencedContentIsNotTheVerdict:
             f"an indented example verdict was read as the operative one — {result}"
         )
 
-    def test_last_verdict_line_in_the_section_wins(self, tmp_path):
-        """Line-level selection must agree with section-level "last wins".
+    def test_two_visible_verdicts_block_as_ambiguous(self, tmp_path):
+        """Two operative verdicts is ambiguity, and ambiguity must not be resolved.
 
-        "Last section wins, first line wins" is internally inconsistent, and the
-        inconsistency is what lets a leading example beat the real verdict.
+        Picking a winner has a mirror failure whichever end you pick: first-wins
+        lets a leading example govern, last-wins lets a trailing citation govern.
+        Both were reproduced in review. The only rule with no fail-open mirror is
+        to refuse.
         """
         body = "**Verdict:** APPROVED\n\nOn reflection, correcting myself:\n\n**Verdict:** REJECTED\n"
 
         result = _resolve_with_reviewer_body(tmp_path, body)
 
-        assert result["next_phase"] == "green", (
-            f"an earlier verdict line beat the later one — {result}"
+        assert result["status"] == "blocked", (
+            f"two operative verdicts were silently resolved — {result}"
         )
+        assert result["next_phase"] != "finish"
 
-    def test_last_verdict_line_wins_in_the_approval_direction_too(self, tmp_path):
-        """The mirror: a corrected verdict that lands on APPROVED still finishes."""
-        body = "**Verdict:** REJECTED\n\nCorrection after re-checking:\n\n**Verdict:** APPROVED\n"
+    def test_quoted_prior_verdict_after_the_real_one_blocks(self, tmp_path):
+        """The last-wins mirror bug, verbatim from review.
+
+        A reviewer reversing an earlier approval naturally quotes it, and a prose
+        citation is neither fenced nor indented. Under last-wins the citation
+        became operative and archived a rejected story.
+        """
+        body = (
+            "**Verdict:** REJECTED — 3 blocking findings\n\n"
+            "Cycle 1 verdict for reference:\n\n"
+            "**Verdict:** APPROVED (cycle 1, subsequently reversed)\n"
+        )
 
         result = _resolve_with_reviewer_body(tmp_path, body)
 
-        assert result["next_phase"] == "finish", result
+        assert result["status"] == "blocked", (
+            f"a quoted prior approval became the operative verdict — {result}"
+        )
+        assert result["next_phase"] != "finish"
+
+    def test_ambiguity_error_tells_the_agent_what_to_do(self, tmp_path):
+        body = "**Verdict:** REJECTED\n\n**Verdict:** APPROVED\n"
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        error = (result.get("error") or "").lower()
+        assert "verdict" in error
+        assert "one" in error or "single" in error or "ambiguous" in error, (
+            f"block reason does not explain the ambiguity: {result.get('error')!r}"
+        )
+
+    def test_one_verdict_plus_fenced_examples_still_resolves(self, tmp_path):
+        """Masking must still leave exactly one verdict — examples do not count."""
+        body = (
+            f"Format:\n\n{FENCE}\n**Verdict:** APPROVED\n{FENCE}\n\n"
+            "**Verdict:** REJECTED — real\n\n"
+            f"Counter-example:\n\n{FENCE}\n**Verdict:** APPROVED\n{FENCE}\n"
+        )
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["status"] == "ready", result
+        assert result["next_phase"] == "green"
+
+    def test_mixed_fence_delimiters_do_not_unmask_an_example(self, tmp_path):
+        """A ``` line must not close a ~~~ fence (CommonMark: types differ).
+
+        Toggling one boolean on either delimiter closes the block early and
+        exposes the example verdict inside it.
+        """
+        body = (
+            "Explanation:\n\n"
+            "~~~\n"
+            "some sample output\n"
+            f"{FENCE}\n"
+            "**Verdict:** APPROVED\n"
+            "~~~\n\n"
+            "**Verdict:** REJECTED — real verdict\n"
+        )
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["next_phase"] == "green", (
+            f"a ``` line closed a ~~~ fence and exposed an example verdict — {result}"
+        )
+        assert result["status"] == "ready"
+
+    def test_backtick_fence_not_closed_by_tilde_line(self, tmp_path):
+        """The mirror delimiter case."""
+        body = (
+            f"Explanation:\n\n{FENCE}\nsample\n~~~\n**Verdict:** APPROVED\n{FENCE}\n\n"
+            "**Verdict:** REJECTED — real verdict\n"
+        )
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["next_phase"] == "green", result
 
     def test_fenced_verdict_with_no_real_verdict_blocks(self, tmp_path):
         """Only an example and no operative verdict is silence — fail closed."""
@@ -719,13 +792,35 @@ class TestFencedContentIsNotTheVerdict:
         assert result["status"] == "blocked", result
         assert result["next_phase"] != "finish"
 
-    def test_unterminated_fence_does_not_advance_to_finish(self, tmp_path):
-        """An unclosed fence must degrade closed, never into an approval."""
-        body = f"**Verdict:** REJECTED\n\n{FENCE}\n**Verdict:** APPROVED\n"
+    def test_unterminated_fence_masks_the_rest_and_leaves_one_verdict(self, tmp_path):
+        """An unclosed fence masks everything after it — pinned, not just "not finish".
+
+        The previous version of this test put the real verdict BEFORE the unclosed
+        fence, so first-wins and last-wins both read it: it passed against the
+        pre-fix baseline and discriminated nothing. Here the masked region is what
+        makes the outcome unambiguous, and the assertions pin the outcome.
+        """
+        body = f"**Verdict:** REJECTED — real\n\n{FENCE}\n**Verdict:** APPROVED\n"
 
         result = _resolve_with_reviewer_body(tmp_path, body)
 
-        assert result["next_phase"] != "finish", result
+        assert result["status"] == "ready", result
+        assert result["next_phase"] == "green"
+        assert result["next_agent"] == "dev"
+        assert result["gate_type"] == "approval_rework"
+
+    def test_unterminated_fence_before_the_real_verdict_blocks(self, tmp_path):
+        """The discriminating direction: the real verdict is swallowed by the mask.
+
+        Fail-closed — an unreadable verdict blocks rather than resolving to
+        anything. This is the case the old fixture could not detect.
+        """
+        body = f"Example:\n\n{FENCE}\n**Verdict:** APPROVED\n\n**Verdict:** REJECTED — real\n"
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["status"] == "blocked", result
+        assert result["next_phase"] != "finish"
 
 
 # ===========================================================================
@@ -779,18 +874,31 @@ class TestReworkScope:
 
     @pytest.mark.parametrize(
         "suffix",
-        [" (Cycle 2)", " — Cycle 2", " (re-review)", ": Cycle 2", " - round 2"],
+        [
+            " (Cycle 2)",
+            " — Cycle 2",
+            " (re-review)",
+            ": Cycle 2",
+            " - round 2",
+            " [Supplementary Notes]",
+            " (Summary)",
+            " — Rollup",
+            " of Remaining Concerns",
+        ],
     )
-    def test_suffixed_current_cycle_heading_is_still_read(self, tmp_path, suffix):
-        """A suffixed heading must not hide the current cycle's verdict.
+    def test_a_suffixed_heading_never_governs_the_verdict(self, tmp_path, suffix):
+        """No heading suffix is accepted as a verdict section — it blocks instead.
 
-        ``session_assessment.has_assessment`` (``^##\\s+.*Assessment``) and
-        ``complete_phase._check_subagent_dispatch`` (unanchored search) both
-        accept ``## Reviewer Assessment (Cycle 2)``. A verdict parser anchored
-        with ``$`` is stricter than every other reader of the same heading, so
-        the suffixed current section is invisible and the STALE prior section is
-        read instead — re-splitting the truth `pf.handoff.session_assessment`
-        exists to hold in one place (gh #49).
+        Cycle 2 accepted annotation suffixes so a suffixed CURRENT section would
+        not be skipped. Review then showed that any accepted suffix is equally
+        usable as a *supplementary* section title, and via last-section-wins it
+        shadows the real verdict: `(Summary)` and `— Rollup` are indistinguishable
+        from sanctioned cycle markers. No character class can tell a cycle marker
+        from a section title, so the parser stops trying.
+
+        Section identity comes from the EXACT heading; a near-miss after the last
+        exact one is ambiguous — the newer section may be the real one — so the
+        gate blocks and names the problem rather than silently reading either.
         """
         session = _make_session(verdict="REJECTED") + _reviewer_assessment(
             "APPROVED"
@@ -799,13 +907,26 @@ class TestReworkScope:
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
 
-        assert result["next_phase"] == "finish", (
-            f"heading suffix {suffix!r} hid the current cycle's APPROVED verdict, "
-            f"so the stale REJECTED was read — result: {result}"
+        assert result["next_phase"] != "finish", (
+            f"heading suffix {suffix!r} let a supplementary section override the "
+            f"real rejection — result: {result}"
         )
+        assert result["status"] == "blocked", (
+            f"suffix {suffix!r} was silently resolved instead of blocked — {result}"
+        )
+        assert "heading" in (result.get("error") or "").lower()
 
-    def test_suffixed_heading_rejection_is_read_over_stale_approval(self, tmp_path):
-        """The dangerous direction of the same defect: suffixed cycle-2 rejection."""
+    def test_near_miss_heading_blocks_instead_of_reading_a_stale_verdict(self, tmp_path):
+        """The reachable ordering, and why a stale read is not good enough.
+
+        Reviewers demonstrably DO write `## Reviewer Assessment (Cycle 3)` — this
+        story's own session file has three such headings and one exact one. Under
+        exact-match-only selection the newer sections are invisible, so the FIRST
+        cycle's verdict governs forever: a later approval can never be seen and
+        the story becomes unapprovable, hard-blocking at max_attempts. Blocking
+        with an actionable message is the only outcome that is neither fail-open
+        nor a wedge.
+        """
         session = _make_session(verdict="APPROVED") + _reviewer_assessment(
             "REJECTED"
         ).replace("## Reviewer Assessment", "## Reviewer Assessment (Cycle 2)")
@@ -813,10 +934,42 @@ class TestReworkScope:
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
 
-        assert result["next_phase"] == "green", (
-            f"a suffixed current-cycle rejection was skipped for a stale "
-            f"APPROVED — result: {result}"
+        assert result["status"] == "blocked", (
+            f"a suffixed current-cycle section was ignored and a stale verdict "
+            f"read instead — result: {result}"
         )
+        assert result["next_phase"] != "finish"
+
+    def test_exact_heading_repeated_per_cycle_selects_the_last(self, tmp_path):
+        """The supported multi-cycle shape: repeat the EXACT heading.
+
+        Position distinguishes cycles, not suffix prose.
+        """
+        session = _make_session(verdict="APPROVED") + _reviewer_assessment("REJECTED")
+        project = _setup_project(tmp_path, _load_real_tdd(), session)
+
+        result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
+
+        assert result["status"] == "ready", result
+        assert result["next_phase"] == "green"
+
+    def test_near_miss_heading_before_the_last_exact_one_is_harmless(self, tmp_path):
+        """A stale suffixed section followed by an exact current one is fine.
+
+        Only a near-miss AFTER the last exact heading is ambiguous.
+        """
+        session = (
+            _make_session(verdict="APPROVED").replace(
+                "## Reviewer Assessment", "## Reviewer Assessment (Cycle 1)"
+            )
+            + _reviewer_assessment("REJECTED")
+        )
+        project = _setup_project(tmp_path, _load_real_tdd(), session)
+
+        result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
+
+        assert result["status"] == "ready", result
+        assert result["next_phase"] == "green"
 
     def test_heading_matching_does_not_swallow_a_different_section(self, tmp_path):
         """Relaxing the anchor must not make `## Reviewer Assessments` match.
@@ -837,35 +990,32 @@ class TestReworkScope:
         )
 
     @pytest.mark.parametrize(
-        "prose_heading",
+        "unrelated_heading",
         [
-            "## Reviewer Assessment of Remaining Concerns",
-            "## Reviewer Assessment and Follow-Up Notes",
-            "## Reviewer Assessment Addendum",
+            "## Reviewer Assessments",
+            "## Reviewer Assessmentz",
+            "## Dev Assessment",
         ],
     )
-    def test_prose_continuation_heading_is_not_a_new_verdict_section(
-        self, tmp_path, prose_heading
+    def test_a_genuinely_different_heading_is_simply_not_a_candidate(
+        self, tmp_path, unrelated_heading
     ):
-        """A heading that merely STARTS with the phrase is a different section.
+        """Headings that are not the phrase at all are neither section nor near-miss.
 
-        Combined with "last section wins", accepting `## Reviewer Assessment of
-        Remaining Concerns` lets a supplementary section carrying an APPROVED
-        line silently convert an earlier REJECTED into an approval — fail-open.
-        The suffix must be an annotation (`(Cycle 2)`, `— Cycle 2`, `: round 2`),
-        not a continuation of the sentence.
+        These must not block — they are unrelated sections, so the last exact
+        reviewer section still governs cleanly.
         """
         session = _make_session(verdict="REJECTED") + _reviewer_assessment(
             "APPROVED"
-        ).replace("## Reviewer Assessment", prose_heading)
+        ).replace("## Reviewer Assessment", unrelated_heading)
         project = _setup_project(tmp_path, _load_real_tdd(), session)
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
 
-        assert result["next_phase"] == "green", (
-            f"{prose_heading!r} was treated as the current verdict section and "
-            f"overrode the real rejection — result: {result}"
+        assert result["status"] == "ready", (
+            f"{unrelated_heading!r} was treated as a reviewer assessment — {result}"
         )
+        assert result["next_phase"] == "green"
 
     def test_current_cycle_approval_wins_over_earlier_rejection(self, tmp_path):
         """The benign direction: rejected then fixed then approved → finish."""

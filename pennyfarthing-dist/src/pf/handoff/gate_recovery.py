@@ -25,14 +25,10 @@ from pf.handoff.session_assessment import assessment_heading
 # Column 0 only: every verdict line in this repo's history is unindented, so an
 # indented one is an illustration inside a list or code block, not the verdict.
 _VERDICT_RE = re.compile(r"^\*\*Verdict:\*\*[ \t]*(.*)$", re.MULTILINE)
-# Fence toggles. Indented (4-space) code blocks need no separate handling: the
-# heading pattern requires `##` at column 0 and the verdict pattern likewise.
-_FENCE_RE = re.compile(r"^[ \t]*(?:```|~~~)")
-# An assessment heading may carry an ANNOTATION suffix — `(Cycle 2)`,
-# `— Cycle 2`, `: round 2`, `- round 2` — but not a prose continuation such as
-# `of Remaining Concerns`, which is a different section and must not become the
-# authoritative one via "last section wins".
-_HEADING_SUFFIX = r"(?:[ \t]*[-—–(:\[].*)?[ \t]*"
+# Fence opener/closer, capturing the delimiter so a ``` line cannot close a ~~~
+# block. CommonMark treats the two types as non-interchangeable, and mixing them
+# inside one explanation is ordinary agent output.
+_FENCE_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})")
 # Rejection vocabulary is deliberately WIDER than the approval vocabulary: every
 # spelling reviewers actually use (`REJECT`, `⛔ REJECT — return to Dev`,
 # `REQUEST-CHANGES`, `CHANGES-REQUESTED` all appear in this repo's history) must
@@ -212,61 +208,108 @@ def mask_illustrative_regions(content: str) -> str:
     the safe direction.
     """
     masked: list[str] = []
-    in_fence = False
+    open_delim: str | None = None
     for line in content.split("\n"):
-        if _FENCE_RE.match(line):
-            in_fence = not in_fence
+        fence = _FENCE_RE.match(line)
+        if fence:
+            delim = fence.group(1)[0]
+            if open_delim is None:
+                open_delim = delim
+                masked.append(" " * len(line))
+                continue
+            if delim == open_delim:
+                open_delim = None
+                masked.append(" " * len(line))
+                continue
+            # A fence of the OTHER type inside an open block is content, not a
+            # closer — closing on it would expose the rest of the block.
             masked.append(" " * len(line))
             continue
-        masked.append(" " * len(line) if in_fence else line)
+        masked.append(" " * len(line) if open_delim is not None else line)
     return "\n".join(masked)
 
 
-def extract_agent_verdict(session_content: str, agent: str) -> str | None:
-    """Raw verdict text from the LAST ``## <Agent> Assessment`` section.
+def read_agent_verdict(session_content: str, agent: str) -> dict:
+    """Read the operative verdict from an agent's assessment section.
 
-    A rework session accumulates one assessment section per cycle, so the
-    current cycle is the LAST one — at BOTH levels. The last matching section
-    wins, and within it the last ``**Verdict:**`` line wins; "last section,
-    first line" would be internally inconsistent, and that inconsistency is
-    what lets a leading example beat the real verdict.
+    **This function never picks a winner.** Three review cycles established that
+    every selection rule has a mirror failure: first-line-wins lets an
+    illustrative example above the real verdict govern, last-line-wins lets a
+    prose citation of a superseded verdict govern, and any accepted heading
+    suffix lets a supplementary section shadow the real one. Each patch closed
+    one direction and opened the other. So instead of resolving ambiguity, this
+    reports it, and the caller blocks — the only outcome that cannot archive a
+    rejected story.
 
-    Two shapes are refused as verdict sources:
+    The rules:
 
-    - Anything inside a code fence or indented code block
-      (see :func:`mask_illustrative_regions`) — it is an illustration.
-    - A verdict line that is not at column 0. Every verdict line in this
-      repo's history sits at column 0; indented ones are examples.
-
-    The heading suffix must be an ANNOTATION (``(Cycle 2)``, ``— Cycle 2``,
-    ``: round 2``), not a continuation of the sentence: accepting
-    ``## Reviewer Assessment of Remaining Concerns`` would let a supplementary
-    section carrying an approval override an earlier rejection. Still
-    permissive enough for the suffixed headings ``has_assessment`` and
-    ``complete_phase._check_subagent_dispatch`` accept (gh #49).
+    - **Section identity is the EXACT heading.** Cycles are distinguished by
+      POSITION (the last exact match), never by parsing suffix prose — no
+      character class can tell a cycle marker (``(Cycle 2)``) from a section
+      title (``(Summary)``).
+    - **A near-miss heading after the last exact one is ambiguous.** It may be a
+      newer cycle whose verdict would be silently ignored, so it blocks with an
+      actionable message instead of reading the older section.
+    - **Exactly one column-0 verdict line** in the selected section. Zero is
+      absent; two or more is ambiguous. Illustrations are excluded first (see
+      :func:`mask_illustrative_regions`), and an indented verdict line is an
+      example, not a verdict.
 
     Returns:
-        The text after ``**Verdict:**``, or None if the section or the verdict
-        line is absent.
+        dict with:
+            status: "found" | "absent" | "ambiguous"
+            verdict: raw verdict text when status is "found", else None
+            detail: human-readable reason for "absent"/"ambiguous"
     """
     heading = assessment_heading(agent)
-    pattern = re.compile(
-        rf"^##[ \t]+{re.escape(heading)}{_HEADING_SUFFIX}$",
-        re.MULTILINE | re.IGNORECASE,
-    )
+    exact = re.compile(rf"^##[ \t]+{re.escape(heading)}[ \t]*$", re.MULTILINE | re.IGNORECASE)
+    near_miss = re.compile(rf"^##[ \t]+{re.escape(heading)}\b.*$", re.MULTILINE | re.IGNORECASE)
 
     content = mask_illustrative_regions(session_content)
-    matches = list(pattern.finditer(content))
+    matches = list(exact.finditer(content))
     if not matches:
-        return None
+        return {
+            "status": "absent",
+            "verdict": None,
+            "detail": f"no `## {heading}` section",
+        }
 
-    section = content[matches[-1].end() :]
+    last = matches[-1]
+
+    stragglers = [
+        m.group(0).strip() for m in near_miss.finditer(content) if m.start() > last.start()
+    ]
+    if stragglers:
+        return {
+            "status": "ambiguous",
+            "verdict": None,
+            "detail": (
+                f"the heading {stragglers[-1]!r} follows the last exact "
+                f"`## {heading}` heading. Cycles are identified by repeating the "
+                f"EXACT heading, so a suffixed one is not read — and it cannot be "
+                f"ignored either, since it may be the current cycle"
+            ),
+        }
+
+    section = content[last.end() :]
     next_heading = re.search(r"^##[ \t]+", section, re.MULTILINE)
     if next_heading:
         section = section[: next_heading.start()]
 
-    verdicts = list(_VERDICT_RE.finditer(section))
-    return verdicts[-1].group(1) if verdicts else None
+    verdicts = [m.group(1) for m in _VERDICT_RE.finditer(section)]
+    if not verdicts:
+        return {"status": "absent", "verdict": None, "detail": "no `**Verdict:**` line"}
+    if len(verdicts) > 1:
+        return {
+            "status": "ambiguous",
+            "verdict": None,
+            "detail": (
+                f"{len(verdicts)} `**Verdict:**` lines in one section "
+                f"({', '.join(repr(v[:40]) for v in verdicts)})"
+            ),
+        }
+
+    return {"status": "found", "verdict": verdicts[0], "detail": ""}
 
 
 def classify_verdict(raw: str | None) -> str | None:

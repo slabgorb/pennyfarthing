@@ -219,8 +219,9 @@ def resolve_gate(
 
     if gr.has_rework_action(recovery_config):
         gate_agent = current_phase.get("agent", phase)
-        raw_verdict = gr.extract_agent_verdict(session_content, gate_agent)
-        verdict = gr.classify_verdict(raw_verdict)
+        heading = assessment_heading(gate_agent)
+        reading = gr.read_agent_verdict(session_content, gate_agent)
+        verdict = gr.classify_verdict(reading["verdict"])
 
         def _stop(status: str, error: str) -> dict:
             return _result(
@@ -236,15 +237,17 @@ def resolve_gate(
             )
 
         if verdict is None:
-            # Fail closed: silence or prose is not approval (gh #50).
-            heading = assessment_heading(gate_agent)
-            found = "no `**Verdict:**` line" if raw_verdict is None else repr(raw_verdict)
+            # Fail closed in every unclear case — silence, prose, or more than
+            # one candidate. Ambiguity is reported, never resolved (gh #50).
             return _stop(
                 "blocked",
-                f"No unambiguous verdict in the `## {heading}` section of "
-                f"`.session/{story_id}-session.md` ({found}). To fix: add a "
-                "`**Verdict:** APPROVED` or `**Verdict:** REJECTED` line to the "
-                "current assessment — 'looks good' is not a verdict.",
+                f"No single unambiguous verdict for the `## {heading}` section of "
+                f"`.session/{story_id}-session.md`: {reading['detail'] or 'unrecognized verdict'}. "
+                "To fix: the section must contain exactly one unindented "
+                "`**Verdict:** APPROVED` or `**Verdict:** REJECTED` line, and each "
+                f"review cycle repeats the exact `## {heading}` heading. Quote "
+                "examples inside a code fence — fenced text is ignored. "
+                "'looks good' is not a verdict.",
             )
 
         if verdict == "rework":
