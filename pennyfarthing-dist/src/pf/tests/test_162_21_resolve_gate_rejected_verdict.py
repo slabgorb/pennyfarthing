@@ -165,6 +165,33 @@ def _resolve_review(tmp_path: Path, **session_kwargs) -> dict:
     return resolve_gate(STORY_ID, "tdd", "review", project_root=project)
 
 
+def _session_header(phase: str = "review", round_trip_count: int | None = None) -> str:
+    """Session file up to (not including) any assessment section."""
+    return _SESSION_TEMPLATE.format(
+        story_id=STORY_ID,
+        phase=phase,
+        rt_line=(
+            f"**Round-Trip Count:** {round_trip_count}\n" if round_trip_count is not None else ""
+        ),
+    )
+
+
+def _resolve_with_reviewer_body(tmp_path: Path, body: str, **header_kwargs) -> dict:
+    """Resolve the review gate against a hand-built reviewer section.
+
+    For the fence/heading-shadowing cases, where the exact byte layout of the
+    section is the thing under test and the templated helpers are too tidy.
+    """
+    session = _session_header(**header_kwargs) + "\n## Reviewer Assessment\n\n" + body
+    project = _setup_project(tmp_path, _load_real_tdd(), session)
+    return resolve_gate(STORY_ID, "tdd", "review", project_root=project)
+
+
+# A fenced block is spelled via a variable so this file's own fences cannot be
+# confused with the fixture content it builds.
+FENCE = "```"
+
+
 # ===========================================================================
 # AC1: a non-APPROVED verdict routes to the recovery target phase
 # ===========================================================================
@@ -214,6 +241,11 @@ class TestRejectedVerdictRoutesToRework:
             "changes_requested",
             "CHANGES REQUESTED",
             "NOT APPROVED",
+            # `BLOCKED` is in _REJECTION_WORDS and in the verdict table of
+            # guides/handoff-cli.md. Documented vocabulary with no test is how
+            # get_rework_recovery shipped unwired in 143-10.
+            "BLOCKED",
+            "BLOCKED — cannot approve until the migration lands",
         ],
     )
     def test_non_approved_verdict_shapes_all_rework(self, tmp_path, verdict):
@@ -285,11 +317,20 @@ class TestReworkRoutingIsActionable:
         )
 
     def test_status_is_ready_for_a_rework_transition(self, tmp_path):
-        """A rejection is a known route, not an error: the exit protocol proceeds."""
+        """A rejection is a known route, not an error: the exit protocol proceeds.
+
+        The routing values are pinned here too. Asserting only ``status ==
+        "ready"`` and ``error is None`` is byte-identical to the ORIGINAL bug's
+        output (see the recorded pre-fix result in the TEA assessment) — such a
+        test passes on the code it was written to condemn.
+        """
         result = _resolve_review(tmp_path, verdict="REJECTED")
 
         assert result["status"] == "ready"
         assert result["error"] is None
+        assert result["next_phase"] == "green"
+        assert result["next_agent"] == "dev"
+        assert result["gate_type"] == "approval_rework"
 
     def test_end_to_end_exit_protocol_lands_on_green(self, tmp_path):
         """Mirror the CLI: resolve-gate's outputs feed complete-phase verbatim.
@@ -540,12 +581,17 @@ class TestFailsClosedWithoutAVerdict:
         assert result["status"] == "blocked"
 
     def test_unrecognized_verdict_word_does_not_count_as_approval(self, tmp_path):
-        """`looks good` is exactly what the approval gate forbids."""
+        """`looks good` is exactly what the approval gate forbids.
+
+        AC5 is fail-*closed*: `!= "finish"` alone would also be satisfied by
+        prose wrongly triggering a rework, which is a different bug.
+        """
         result = _resolve_review(tmp_path, verdict="looks good to me")
 
-        assert result["next_phase"] != "finish", (
-            f"a prose non-verdict was treated as approval — result: {result}"
+        assert result["status"] == "blocked", (
+            f"a prose non-verdict did not block — result: {result}"
         )
+        assert result["next_phase"] != "finish"
 
     def test_no_reviewer_assessment_section_at_all_blocks(self, tmp_path):
         """Session carries some other assessment but no reviewer verdict."""
@@ -558,6 +604,128 @@ class TestFailsClosedWithoutAVerdict:
 
         assert result["status"] == "blocked"
         assert result["next_phase"] != "finish"
+
+
+# ===========================================================================
+# AC5/AC6: illustrative Markdown must not be mistaken for the verdict
+# ===========================================================================
+
+
+class TestFencedContentIsNotTheVerdict:
+    """A verdict- or heading-shaped line inside a code fence is an EXAMPLE.
+
+    Reviewers quote the verdict format when explaining it. Reading a fenced
+    example as the operative verdict is fail-OPEN — it archives a rejected
+    story, which is the precise defect 162-21 exists to close. This was
+    reproduced for real: a reviewer's own assessment contained a fenced
+    `**Verdict:** APPROVED` illustration above a real `**Verdict:** REJECTED`,
+    and the parser read the approval.
+
+    Requiring an agent to know "never let a verdict-shaped line appear in your
+    prose" to avoid a fail-open gate is what SOUL #6 (Gates Over Goodwill)
+    forbids.
+    """
+
+    def test_fenced_approval_above_the_real_rejection_is_ignored(self, tmp_path):
+        """The exact reproduction: fenced APPROVED example, real REJECTED below."""
+        body = (
+            "The verdict line format is:\n\n"
+            f"{FENCE}\n"
+            "**Verdict:** APPROVED\n"
+            f"{FENCE}\n\n"
+            "**Verdict:** REJECTED — 3 blocking findings\n"
+        )
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["next_phase"] == "green", (
+            f"the gate read an APPROVED verdict out of a code fence and would "
+            f"have archived a rejected story — result: {result}"
+        )
+        assert result["next_agent"] == "dev"
+
+    def test_fenced_heading_does_not_shift_the_section_boundary(self, tmp_path):
+        """The heading scan is fence-blind too — proven by the same repro.
+
+        A fenced `## Reviewer Assessment` becomes ``matches[-1]`` and wins the
+        "last section" contest, so the operative section is chosen from inside
+        an example block.
+        """
+        body = (
+            "**Verdict:** REJECTED — 3 blocking findings\n\n"
+            "For reference, an approving assessment looks like:\n\n"
+            f"{FENCE}\n"
+            "## Reviewer Assessment\n\n"
+            "**Verdict:** APPROVED\n"
+            f"{FENCE}\n"
+        )
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["next_phase"] == "green", (
+            f"a fenced `## Reviewer Assessment` example redefined the current "
+            f"section — result: {result}"
+        )
+
+    def test_tilde_fences_are_honored_too(self, tmp_path):
+        """Markdown allows ~~~ fences; the parser must not only know backticks."""
+        body = (
+            "Example:\n\n~~~\n**Verdict:** APPROVED\n~~~\n\n"
+            "**Verdict:** REJECTED — see findings\n"
+        )
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["next_phase"] == "green", f"~~~ fence not honored — {result}"
+
+    def test_indented_code_block_verdict_is_ignored(self, tmp_path):
+        """A 4-space-indented example is also a code block, not the verdict."""
+        body = "Example of the format:\n\n    **Verdict:** APPROVED\n\n**Verdict:** REJECTED\n"
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["next_phase"] == "green", (
+            f"an indented example verdict was read as the operative one — {result}"
+        )
+
+    def test_last_verdict_line_in_the_section_wins(self, tmp_path):
+        """Line-level selection must agree with section-level "last wins".
+
+        "Last section wins, first line wins" is internally inconsistent, and the
+        inconsistency is what lets a leading example beat the real verdict.
+        """
+        body = "**Verdict:** APPROVED\n\nOn reflection, correcting myself:\n\n**Verdict:** REJECTED\n"
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["next_phase"] == "green", (
+            f"an earlier verdict line beat the later one — {result}"
+        )
+
+    def test_last_verdict_line_wins_in_the_approval_direction_too(self, tmp_path):
+        """The mirror: a corrected verdict that lands on APPROVED still finishes."""
+        body = "**Verdict:** REJECTED\n\nCorrection after re-checking:\n\n**Verdict:** APPROVED\n"
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["next_phase"] == "finish", result
+
+    def test_fenced_verdict_with_no_real_verdict_blocks(self, tmp_path):
+        """Only an example and no operative verdict is silence — fail closed."""
+        body = f"The format is:\n\n{FENCE}\n**Verdict:** APPROVED\n{FENCE}\n\nI forgot to decide.\n"
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["status"] == "blocked", result
+        assert result["next_phase"] != "finish"
+
+    def test_unterminated_fence_does_not_advance_to_finish(self, tmp_path):
+        """An unclosed fence must degrade closed, never into an approval."""
+        body = f"**Verdict:** REJECTED\n\n{FENCE}\n**Verdict:** APPROVED\n"
+
+        result = _resolve_with_reviewer_body(tmp_path, body)
+
+        assert result["next_phase"] != "finish", result
 
 
 # ===========================================================================
@@ -611,7 +779,7 @@ class TestReworkScope:
 
     @pytest.mark.parametrize(
         "suffix",
-        [" (Cycle 2)", " — Cycle 2", " (re-review)"],
+        [" (Cycle 2)", " — Cycle 2", " (re-review)", ": Cycle 2", " - round 2"],
     )
     def test_suffixed_current_cycle_heading_is_still_read(self, tmp_path, suffix):
         """A suffixed heading must not hide the current cycle's verdict.
@@ -668,6 +836,37 @@ class TestReworkScope:
             f"heading — result: {result}"
         )
 
+    @pytest.mark.parametrize(
+        "prose_heading",
+        [
+            "## Reviewer Assessment of Remaining Concerns",
+            "## Reviewer Assessment and Follow-Up Notes",
+            "## Reviewer Assessment Addendum",
+        ],
+    )
+    def test_prose_continuation_heading_is_not_a_new_verdict_section(
+        self, tmp_path, prose_heading
+    ):
+        """A heading that merely STARTS with the phrase is a different section.
+
+        Combined with "last section wins", accepting `## Reviewer Assessment of
+        Remaining Concerns` lets a supplementary section carrying an APPROVED
+        line silently convert an earlier REJECTED into an approval — fail-open.
+        The suffix must be an annotation (`(Cycle 2)`, `— Cycle 2`, `: round 2`),
+        not a continuation of the sentence.
+        """
+        session = _make_session(verdict="REJECTED") + _reviewer_assessment(
+            "APPROVED"
+        ).replace("## Reviewer Assessment", prose_heading)
+        project = _setup_project(tmp_path, _load_real_tdd(), session)
+
+        result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
+
+        assert result["next_phase"] == "green", (
+            f"{prose_heading!r} was treated as the current verdict section and "
+            f"overrode the real rejection — result: {result}"
+        )
+
     def test_current_cycle_approval_wins_over_earlier_rejection(self, tmp_path):
         """The benign direction: rejected then fixed then approved → finish."""
         session = _make_session(verdict="REJECTED") + _reviewer_assessment(
@@ -696,12 +895,21 @@ class TestReworkScope:
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
 
+        assert result["status"] == "error", (
+            f"a malformed recovery block must be an error, not a fabricated "
+            f"rework route — {result}"
+        )
         assert result["next_phase"] != "finish", (
             f"malformed recovery config fell through to archival — {result}"
         )
 
     def test_recovery_target_phase_must_exist_in_the_workflow(self, tmp_path):
-        """A target_phase naming a nonexistent phase is an error, not a silent skip."""
+        """A target_phase naming a nonexistent phase is an error, not a silent skip.
+
+        TEA left this as ``in ("blocked", "error")`` while the choice was open.
+        It is settled — a bad `target_phase` is a workflow-YAML defect no agent
+        can fix from the session — so the test pins `error`.
+        """
         workflow = _load_real_tdd()
         for phase in workflow["workflow"]["phases"]:
             if phase["name"] == "review":
@@ -710,5 +918,6 @@ class TestReworkScope:
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
 
-        assert result["status"] in ("blocked", "error")
+        assert result["status"] == "error", result
         assert result["next_phase"] != "finish"
+        assert "nope" in (result.get("error") or "")

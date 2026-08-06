@@ -18,9 +18,21 @@ from __future__ import annotations
 
 import re
 
+from pf.handoff.session_assessment import assessment_heading
+
 # Verdict vocabulary — one place. `gates/approval.md` and the reviewer
 # template cite the same words (APPROVED / CHANGES_REQUESTED / REJECTED).
-_VERDICT_RE = re.compile(r"^[ \t]*\*\*Verdict:\*\*[ \t]*(.*)$", re.MULTILINE)
+# Column 0 only: every verdict line in this repo's history is unindented, so an
+# indented one is an illustration inside a list or code block, not the verdict.
+_VERDICT_RE = re.compile(r"^\*\*Verdict:\*\*[ \t]*(.*)$", re.MULTILINE)
+# Fence toggles. Indented (4-space) code blocks need no separate handling: the
+# heading pattern requires `##` at column 0 and the verdict pattern likewise.
+_FENCE_RE = re.compile(r"^[ \t]*(?:```|~~~)")
+# An assessment heading may carry an ANNOTATION suffix — `(Cycle 2)`,
+# `— Cycle 2`, `: round 2`, `- round 2` — but not a prose continuation such as
+# `of Remaining Concerns`, which is a different section and must not become the
+# authoritative one via "last section wins".
+_HEADING_SUFFIX = r"(?:[ \t]*[-—–(:\[].*)?[ \t]*"
 # Rejection vocabulary is deliberately WIDER than the approval vocabulary: every
 # spelling reviewers actually use (`REJECT`, `⛔ REJECT — return to Dev`,
 # `REQUEST-CHANGES`, `CHANGES-REQUESTED` all appear in this repo's history) must
@@ -184,47 +196,77 @@ def has_rework_action(recovery_config: dict | None) -> bool:
     )
 
 
-def assessment_heading(agent: str) -> str:
-    """The session heading an agent writes its assessment under.
+def mask_illustrative_regions(content: str) -> str:
+    """Blank out fenced and indented code regions, preserving byte offsets.
 
-    Mirrors ``session_assessment.missing_assessment_error`` so the heading
-    resolve_gate reads is the heading agents are told to write (SOUL #2).
+    Reviewers quote the verdict format when explaining it, so a session can
+    legitimately contain a ``**Verdict:**`` or ``## … Assessment`` line that is
+    an EXAMPLE. Reading one as operative is fail-open: it can archive a rejected
+    story, the exact defect 162-21 exists to close. Requiring agents to know
+    "never let a verdict-shaped line appear in your prose" would be a rule
+    enforced by goodwill (SOUL #6); masking enforces it mechanically.
+
+    Every masked line becomes spaces of the same length so downstream match
+    offsets still index into a string of identical shape. An unterminated fence
+    masks everything after it — a verdict that cannot be read blocks, which is
+    the safe direction.
     """
-    return f"{agent.replace('-', ' ').title()} Assessment"
+    masked: list[str] = []
+    in_fence = False
+    for line in content.split("\n"):
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+            masked.append(" " * len(line))
+            continue
+        masked.append(" " * len(line) if in_fence else line)
+    return "\n".join(masked)
 
 
 def extract_agent_verdict(session_content: str, agent: str) -> str | None:
     """Raw verdict text from the LAST ``## <Agent> Assessment`` section.
 
-    A rework session accumulates one assessment section per cycle; the current
-    cycle is the LAST one. Matching the first heading reads a stale verdict —
-    the defect class story 162-5 documented.
+    A rework session accumulates one assessment section per cycle, so the
+    current cycle is the LAST one — at BOTH levels. The last matching section
+    wins, and within it the last ``**Verdict:**`` line wins; "last section,
+    first line" would be internally inconsistent, and that inconsistency is
+    what lets a leading example beat the real verdict.
 
-    The heading match is deliberately as permissive as every other reader of
-    the same heading — ``session_assessment.has_assessment`` and
-    ``complete_phase._check_subagent_dispatch`` both accept a suffixed
-    ``## Reviewer Assessment (Cycle 2)``. A stricter pattern here would skip
-    the suffixed CURRENT section and read the stale prior one (gh #49). The
-    trailing ``\\b`` still refuses a different word: ``## Reviewer Assessments``
-    is not this heading.
+    Two shapes are refused as verdict sources:
+
+    - Anything inside a code fence or indented code block
+      (see :func:`mask_illustrative_regions`) — it is an illustration.
+    - A verdict line that is not at column 0. Every verdict line in this
+      repo's history sits at column 0; indented ones are examples.
+
+    The heading suffix must be an ANNOTATION (``(Cycle 2)``, ``— Cycle 2``,
+    ``: round 2``), not a continuation of the sentence: accepting
+    ``## Reviewer Assessment of Remaining Concerns`` would let a supplementary
+    section carrying an approval override an earlier rejection. Still
+    permissive enough for the suffixed headings ``has_assessment`` and
+    ``complete_phase._check_subagent_dispatch`` accept (gh #49).
 
     Returns:
         The text after ``**Verdict:**``, or None if the section or the verdict
         line is absent.
     """
     heading = assessment_heading(agent)
-    pattern = re.compile(rf"^##\s+{re.escape(heading)}\b.*$", re.MULTILINE | re.IGNORECASE)
-    matches = list(pattern.finditer(session_content))
+    pattern = re.compile(
+        rf"^##[ \t]+{re.escape(heading)}{_HEADING_SUFFIX}$",
+        re.MULTILINE | re.IGNORECASE,
+    )
+
+    content = mask_illustrative_regions(session_content)
+    matches = list(pattern.finditer(content))
     if not matches:
         return None
 
-    section = session_content[matches[-1].end() :]
-    next_heading = re.search(r"^##\s+", section, re.MULTILINE)
+    section = content[matches[-1].end() :]
+    next_heading = re.search(r"^##[ \t]+", section, re.MULTILINE)
     if next_heading:
         section = section[: next_heading.start()]
 
-    verdict = _VERDICT_RE.search(section)
-    return verdict.group(1) if verdict else None
+    verdicts = list(_VERDICT_RE.finditer(section))
+    return verdicts[-1].group(1) if verdicts else None
 
 
 def classify_verdict(raw: str | None) -> str | None:

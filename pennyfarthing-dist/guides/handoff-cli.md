@@ -55,6 +55,20 @@ session accumulates one section per cycle — and routes on it:
 | `REJECTED` / `CHANGES REQUESTED` / `REQUEST-CHANGES` / `NOT APPROVED` / `BLOCKED` | `next_phase: recovery.target_phase`, and `gate_type` gains a `_rework` suffix (`approval` → `approval_rework`) |
 | absent, empty, or unrecognized prose | `blocked` — never advances |
 
+Which line is read is as important as how it is classified. The rule is
+**last wins at every level**, and illustrations are excluded:
+
+| Rule | Detail |
+|------|--------|
+| Last section wins | A rework session accumulates one assessment section per cycle; the current cycle is the last. |
+| Last verdict line wins | Within that section, a later `**Verdict:**` line supersedes an earlier one. |
+| Heading suffixes must be annotations | `## Reviewer Assessment (Cycle 2)`, `— Cycle 2`, `: round 2` are the same section. `## Reviewer Assessment of Remaining Concerns` is a *different* section and is ignored — otherwise a supplementary section could override the real verdict. |
+| Code regions are ignored | Content inside ``` / ~~~ fences is masked before both the heading scan and the verdict scan, so quoting the verdict format in your prose is safe. |
+| Verdict lines must be at column 0 | An indented `**Verdict:**` is an example, not the verdict. |
+
+Those last two matter: without them a reviewer explaining the format would set
+the gate's verdict, which can archive a rejected story.
+
 The verdict is taken from the **leading token**; trailing prose may name the
 opposite outcome without changing the classification, so
 `APPROVED (supersedes the round-1 REJECTED verdict above)` is an approval.

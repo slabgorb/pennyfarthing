@@ -215,6 +215,7 @@ def resolve_gate(
     # a `_rework` suffix because complete_phase keys round-trip tracking — and
     # therefore the max_attempts ceiling — off `"rework" in gate_type`.
     from pf.handoff import gate_recovery as gr
+    from pf.handoff.session_assessment import assessment_heading
 
     if gr.has_rework_action(recovery_config):
         gate_agent = current_phase.get("agent", phase)
@@ -236,7 +237,7 @@ def resolve_gate(
 
         if verdict is None:
             # Fail closed: silence or prose is not approval (gh #50).
-            heading = gr.assessment_heading(gate_agent)
+            heading = assessment_heading(gate_agent)
             found = "no `**Verdict:**` line" if raw_verdict is None else repr(raw_verdict)
             return _stop(
                 "blocked",

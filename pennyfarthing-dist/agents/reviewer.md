@@ -359,6 +359,13 @@ does. Write `APPROVED` or `REJECTED` as the FIRST token; trailing prose is free
 A near-miss like `APPROVE` or `looks good` is not a verdict and will block the
 handoff.
 
+Quoting the verdict format in your prose is safe — fenced and indented code
+regions are excluded from the scan, and only a column-0 `**Verdict:**` line
+counts. If you write more than one, the LAST one in the section wins. Heading
+suffixes are fine for cycles (`## Reviewer Assessment (Cycle 2)`); a heading that
+continues into prose (`## Reviewer Assessment of Remaining Concerns`) is treated
+as a different section and its verdict is ignored.
+
 ### Delivery Findings Capture
 
 After writing your assessment, append any upstream findings to the `## Delivery Findings` section
