@@ -276,6 +276,12 @@ class TestTheCounterWriterCannotBeSteeredByProse:
 
         session_dir = tmp_path / ".session"
         session_dir.mkdir()
+        # The compliant table and full tag line are here because story 162-47
+        # (AC-A8) made the approval subgates run on the REWORK path too. This
+        # class's subject is the counter writer, so the fixture satisfies those
+        # subgates rather than letting a completion failure mask every
+        # counter-arithmetic result. Rows cover every specialist so the outcome
+        # does not depend on the local toggle settings.
         (session_dir / "162-28-session.md").write_text(
             f"""# Story 162-28
 
@@ -285,9 +291,27 @@ class TestTheCounterWriterCannotBeSteeredByProse:
 
 {body}
 
+## Subagent Results
+
+| # | Specialist | Received | Status |
+|---|------------|----------|--------|
+| 1 | reviewer-preflight | Yes | clean |
+| 2 | reviewer-edge-hunter | Yes | clean |
+| 3 | reviewer-silent-failure-hunter | Yes | clean |
+| 4 | reviewer-test-analyzer | Yes | clean |
+| 5 | reviewer-comment-analyzer | Yes | clean |
+| 6 | reviewer-type-design | Yes | clean |
+| 7 | reviewer-security | Yes | clean |
+| 8 | reviewer-simplifier | Yes | clean |
+| 9 | reviewer-rule-checker | Yes | clean |
+
+All received: Yes
+
 ## Reviewer Assessment
 
 **Verdict:** REJECTED
+
+- [EDGE] [SILENT] [TEST] [DOC] [TYPE] [SEC] [SIMPLE] [RULE]
 """
         )
         with (
@@ -298,9 +322,7 @@ class TestTheCounterWriterCannotBeSteeredByProse:
             ),
             patch("pf.handoff.complete_phase._get_phase_tandem", return_value=None),
         ):
-            result = complete_phase(
-                "162-28", "tdd", "review", "green", "approval_rework", tmp_path
-            )
+            result = complete_phase("162-28", "tdd", "review", "green", "approval_rework", tmp_path)
         assert result["status"] == "success", result
         return (session_dir / "162-28-session.md").read_text()
 
@@ -431,9 +453,7 @@ class TestAnUnreadableCounterBlocks:
 
         assert read_round_trip_count("**Round-Trip Count:** 3")["status"] == "found"
         assert read_round_trip_count("no counter here")["status"] == "absent"
-        assert read_round_trip_count("<!-- **Round-Trip Count:** 3 -->")["status"] == (
-            "unreadable"
-        )
+        assert read_round_trip_count("<!-- **Round-Trip Count:** 3 -->")["status"] == ("unreadable")
 
 
 class TestDispatchTagsAreNotEatenByTheMasker:

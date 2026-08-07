@@ -197,6 +197,11 @@ workflow:
         file: gates/approval
         type: approval
         condition: Code review passed, no blocking issues
+        recovery:
+          reviewer-verdict:
+            action: rework
+            target_phase: green
+            max_attempts: 3
 
     # Review rejection loops — TEA writes tests for what Reviewer caught
     - name: review-fix-tea

@@ -156,9 +156,7 @@ def resolve_gate(
     if requires_assessment(gate_type) and not assessment_found:
         error = missing_assessment_error(current_phase.get("agent", phase))
         if not session_path.exists():
-            error = (
-                f"Session file not found at `.session/{story_id}-session.md`. " + error
-            )
+            error = f"Session file not found at `.session/{story_id}-session.md`. " + error
         return _result(
             status="blocked",
             gate_type=gate_type,
@@ -223,7 +221,6 @@ def resolve_gate(
         gate_agent = current_phase.get("agent", phase)
         heading = assessment_heading(gate_agent)
         reading = gr.read_agent_verdict(session_content, gate_agent)
-        verdict = gr.classify_verdict(reading["verdict"])
 
         def _stop(status: str, error: str) -> dict:
             return _result(
@@ -238,13 +235,13 @@ def resolve_gate(
                 error=error,
             )
 
-        if verdict is None:
+        def _unreadable_verdict(detail: str) -> dict:
             # Fail closed in every unclear case — silence, prose, or more than
             # one candidate. Ambiguity is reported, never resolved (gh #50).
             return _stop(
                 "blocked",
                 f"No single unambiguous verdict for the `## {heading}` section of "
-                f"`.session/{story_id}-session.md`: {reading['detail'] or 'unrecognized verdict'}. "
+                f"`.session/{story_id}-session.md`: {detail or 'unrecognized verdict'}. "
                 "To fix: the section must contain exactly one unindented "
                 "`**Verdict:** APPROVED` or `**Verdict:** REJECTED` line, and each "
                 f"review cycle repeats the exact `## {heading}` heading. Quote "
@@ -252,19 +249,72 @@ def resolve_gate(
                 "'looks good' is not a verdict.",
             )
 
-        if verdict == "rework":
-            recovery = (
-                gr.get_rework_recovery(
-                    recovery_config, gr.parse_round_trip_count(session_content)
-                )
-                or {}
+        # Branch on STATUS, not on `verdict is None`. The two agree only while
+        # `read_agent_verdict` upholds its invariant across every return path; a
+        # path that carried a verdict word out with a non-`found` status would be
+        # ROUTED on, which is the fail-open 162-21 exists to close (AC-A4).
+        if reading["status"] != "found":
+            return _unreadable_verdict(reading["detail"])
+        assert reading["verdict"] is not None, (
+            f"read_agent_verdict returned status 'found' with no verdict: {reading}"
+        )
+
+        verdict = gr.classify_verdict(reading["verdict"])
+        if verdict is None:
+            return _unreadable_verdict(reading["detail"])
+        if verdict not in ("approved", "rework"):
+            # Exhaustive switch. Without this arm a classification this function
+            # does not know — a future "abstain" / "needs-info" — would fall
+            # through to forward routing and archive the story: this story's own
+            # defect, reintroduced by extension rather than by bug (AC-A4).
+            return _stop(
+                "error",
+                f"Unrecognized verdict classification {verdict!r} for the "
+                f"`## {heading}` section. To fix: `classify_verdict` gained a "
+                "value `resolve_gate` has no routing rule for — add the arm in "
+                "`pf/handoff/resolve_gate.py` before shipping the new class.",
             )
+
+        if verdict == "rework":
+            round_trips = gr.parse_round_trip_count(session_content)
+            recovery = gr.get_rework_recovery(recovery_config, round_trips) or {}
             if recovery.get("status") == "blocked":
                 return _stop(
                     "blocked",
                     f"{recovery['reason']}. To fix: the rework loop is exhausted — "
                     "escalate to a human, split the remaining findings into a new "
                     "story, or raise max_attempts in the workflow YAML.",
+                )
+            if recovery.get("status") != "rework":
+                return _stop(
+                    "error",
+                    f"Gate recovery returned status {recovery.get('status')!r}, which "
+                    f"has no routing rule. To fix: `get_rework_recovery` gained a "
+                    "state `resolve_gate` cannot act on — add the arm in "
+                    "`pf/handoff/resolve_gate.py`.",
+                )
+
+            # A verdict already acted on must not buy a second rework round.
+            # Each round the workflow dispatches is recorded in the counter, and
+            # each ruling the agent makes is one more exact section — so the
+            # sections must lead the counter. Observed live in 162-49: after
+            # rework was dispatched the round-1 REJECTED section was still the
+            # last one, so re-resolving the gate sanctioned a second
+            # review→green advance on one rejection (AC-B3). Approvals are out of
+            # scope on purpose — `_check_rework_freshness` owns staleness on the
+            # approve path, and blocking here would wedge a reviewer who
+            # corrected its own section in place.
+            rulings = gr.count_exact_sections(session_content, heading)
+            if rulings <= round_trips:
+                return _stop(
+                    "blocked",
+                    f"This `## {heading}` verdict has already been routed to a rework "
+                    f"round: {rulings} exact `## {heading}` section(s) against "
+                    f"{round_trips} recorded round-trip(s). To fix: the reviewer must "
+                    f"append a NEW exact `## {heading}` section with its verdict for "
+                    "the current rework cycle — every rework round needs its own "
+                    "ruling, and re-resolving the gate on the previous one would "
+                    "advance the phase twice.",
                 )
 
             target_name = recovery.get("target_phase")

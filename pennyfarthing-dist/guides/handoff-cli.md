@@ -61,10 +61,13 @@ Which line is read matters as much as how it is classified, and the parser
 | Rule | Detail |
 |------|--------|
 | Section identity is the EXACT heading | Each cycle repeats `## Reviewer Assessment` verbatim; the last one is current. Position identifies the cycle. |
-| A suffixed heading after the last exact one blocks | `## Reviewer Assessment (Cycle 2)` is neither read nor ignored: it might be the current cycle, so the gate blocks and names it. No character class can distinguish a cycle marker `(Cycle 2)` from a section title `(Summary)`. |
+| A suffixed heading after the last exact one blocks | `## Reviewer Assessment (Cycle 2)` is neither read nor ignored: it might be the current cycle, so the gate blocks and names it. No character class can distinguish a cycle marker `(Cycle 2)` from a section title `(Summary)`. Any heading that merely STARTS with the phrase counts, extended words included — `## Reviewer Assessment2` and `## Reviewer Assessments` both block. A word-boundary requirement left a hole exactly where the suffix begins with a word character, making a newer section invisible. |
+| Write the heading in the EXACT case the formula produces | `## Reviewer Assessment`, from `assessment_heading()`. The two halves of the heading contract currently disagree about case and neither behaviour is sanctioned: the assessment PRECONDITION (`has_assessment`) is case-SENSITIVE, so a session whose only reviewer heading is lowercase blocks with "No assessment found"; the section READER is case-INSENSITIVE, so a lowercase `## reviewer assessment` appended after a correctly-cased one is selected as the operative section and can supersede its verdict. That is an open defect, not a tolerance — do not rely on either half. Tracked as a follow-up story. |
+| Each rework round needs its own verdict | Exact reviewer sections must outnumber the recorded `**Round-Trip Count:**`. A verdict already routed to rework blocks with an actionable message instead of buying a second round; acting on one twice advances the phase twice. Approvals are exempt — a reviewer may correct its own section in place from REJECTED to APPROVED, and `complete-phase`'s cycle tag is what holds it to re-verified results. |
+| The round-trip counter is read from the session preamble | The operative `**Round-Trip Count:**` line is the last one ABOVE the first `## … Assessment` heading — the only region the exit protocol itself writes. The reader and the writer share one locator, so a counter an agent mentions in its own prose is inert in both directions. |
 | Exactly one verdict line per section | Zero blocks as absent; two or more blocks as *ambiguous*. There is no first-wins or last-wins rule to exploit. |
 | Verdict lines must be at column 0 | An indented `**Verdict:**` is an example. |
-| Code regions are ignored | Text inside ``` / ~~~ fences is masked before both scans, so quoting the verdict format is safe. Fence types are tracked separately — a ``` line does not close a `~~~` block. |
+| Code regions are ignored | Text inside ``` / ~~~ fences is masked before both scans, so quoting the verdict format is safe. Fences follow CommonMark §6.1: a closer must match the opener's TYPE and be at least as LONG, so the six-backtick wrapper idiom for showing a three-backtick block holds, and a `~~~` line never closes a backtick fence. |
 
 The refusal-over-resolution stance is deliberate. Every selection rule tried in
 review had a mirror failure: first-line-wins let an illustrative example above the
@@ -81,8 +84,12 @@ unrecognized near-approval such as `APPROVE` blocks and asks for `APPROVED`,
 because widening approvals is how a story gets archived unreviewed.
 
 The `_rework` suffix is load-bearing — `complete-phase` keys its
-`**Round-Trip Count:**` tracking (and its skipping of the approval subgates) off
-`"rework" in gate_type`, which is what makes `recovery.max_attempts` enforceable.
+`**Round-Trip Count:**` tracking off `"rework" in gate_type`, which is what makes
+`recovery.max_attempts` enforceable. It does NOT skip the approval subgates:
+subagent completion, specialist tags and heading ambiguity are enforced on any
+transition out of an approval-FAMILY gate, rejections included. Only the cycle-tag
+freshness check is approval-only, since its subject is the staleness of results
+being used to APPROVE.
 Reaching `max_attempts` returns `blocked`, naming the exhausted limit. A
 `target_phase` that is missing or names no phase in the workflow returns `error`
 rather than falling through to `finish`.

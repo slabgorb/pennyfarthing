@@ -114,9 +114,23 @@ _SESSION_TEMPLATE = textwrap.dedent("""\
     | # | Specialist | Received | Status |
     |---|------------|----------|--------|
     | 1 | reviewer-preflight | Yes | clean |
+    | 2 | reviewer-edge-hunter | Yes | clean |
+    | 3 | reviewer-silent-failure-hunter | Yes | clean |
+    | 4 | reviewer-test-analyzer | Yes | clean |
+    | 5 | reviewer-comment-analyzer | Yes | clean |
+    | 6 | reviewer-type-design | Yes | clean |
+    | 7 | reviewer-security | Yes | clean |
+    | 8 | reviewer-simplifier | Yes | clean |
+    | 9 | reviewer-rule-checker | Yes | clean |
 
     All received: Yes
     """)
+# Every required specialist has a row, whatever the local toggles say. Story
+# 162-47 (AC-A8) made the approval subgates run on the REWORK path too, so a
+# rework transition through this fixture is now judged against the table — and a
+# one-row table would fail the completion check for reasons no test here is
+# about. A complete table is also the honest shape: this is what a real reviewer
+# handoff carries.
 
 
 def _reviewer_assessment(verdict: str | None, cycle_note: str = "") -> str:
@@ -207,8 +221,7 @@ class TestRejectedVerdictRoutesToRework:
             f"phase — full result: {result}"
         )
         assert result["next_agent"] != "sm", (
-            "resolve_gate handed a REJECTED review to SM for archival — "
-            f"full result: {result}"
+            f"resolve_gate handed a REJECTED review to SM for archival — full result: {result}"
         )
 
     def test_rejected_verdict_routes_to_recovery_target_phase(self, tmp_path):
@@ -337,9 +350,7 @@ class TestReworkRoutingIsActionable:
 
         This is the exact sequence that mis-advanced story 162-2 to finish.
         """
-        project = _setup_project(
-            tmp_path, _load_real_tdd(), _make_session(verdict="REJECTED")
-        )
+        project = _setup_project(tmp_path, _load_real_tdd(), _make_session(verdict="REJECTED"))
         session = project / ".session" / f"{STORY_ID}-session.md"
 
         resolved = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
@@ -361,9 +372,7 @@ class TestReworkRoutingIsActionable:
 
     def test_end_to_end_rework_increments_round_trip_count(self, tmp_path):
         """Without a round-trip count the max_attempts ceiling is unenforceable."""
-        project = _setup_project(
-            tmp_path, _load_real_tdd(), _make_session(verdict="REJECTED")
-        )
+        project = _setup_project(tmp_path, _load_real_tdd(), _make_session(verdict="REJECTED"))
         session = project / ".session" / f"{STORY_ID}-session.md"
 
         resolved = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
@@ -380,9 +389,7 @@ class TestReworkRoutingIsActionable:
 
     def test_rework_preserves_reviewer_findings_for_dev(self, tmp_path):
         """Dev needs the findings it is being sent back to fix."""
-        project = _setup_project(
-            tmp_path, _load_real_tdd(), _make_session(verdict="REJECTED")
-        )
+        project = _setup_project(tmp_path, _load_real_tdd(), _make_session(verdict="REJECTED"))
         session = project / ".session" / f"{STORY_ID}-session.md"
 
         resolved = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
@@ -507,12 +514,22 @@ class TestMaxAttemptsCeiling:
         )
 
     def test_at_max_attempts_does_not_advance_to_finish(self, tmp_path):
-        """Exhausting rework attempts must not fall through to archival."""
+        """Exhausting rework attempts must not fall through to archival.
+
+        Story 162-47 replaced the compound negation
+        ``not (status == "ready" and next_phase == "finish")`` with positive
+        assertions. The old form was weaker than the adjacent
+        ``test_at_max_attempts_rework_is_blocked``: it passed for any result
+        that was merely not-both, including ``status: ready`` with
+        ``next_phase: green`` — i.e. the 4th rework this class exists to refuse.
+        """
         result = _resolve_review(tmp_path, verdict="REJECTED", round_trip_count=3)
 
-        assert not (result["status"] == "ready" and result["next_phase"] == "finish"), (
-            f"exhausted rework silently approved the story — result: {result}"
+        assert result["status"] == "blocked", result
+        assert result["next_phase"] is None, (
+            f"an exhausted rework loop still nominated a next phase — {result}"
         )
+        assert result["next_agent"] is None, result
 
     def test_max_attempts_block_error_is_actionable(self, tmp_path):
         result = _resolve_review(tmp_path, verdict="REJECTED", round_trip_count=3)
@@ -523,7 +540,21 @@ class TestMaxAttemptsCeiling:
         )
 
     def test_one_below_max_attempts_still_reworks(self, tmp_path):
-        result = _resolve_review(tmp_path, verdict="REJECTED", round_trip_count=2)
+        """Story 162-47 (AC-B3) added the fresh-verdict requirement, so a session
+        at round-trip 2 needs three reviewer rulings to be at round 3 legitimately
+        — one per dispatched round. The subject is unchanged: 2 < max_attempts 3,
+        so the ceiling must not block. Leaving the fixture at one ruling would
+        have tested the staleness guard instead.
+        """
+        result = _resolve_review(
+            tmp_path,
+            verdict="REJECTED",
+            round_trip_count=2,
+            extra_assessments=(
+                _reviewer_assessment("REJECTED — cycle 2")
+                + _reviewer_assessment("REJECTED — cycle 3")
+            ),
+        )
 
         assert result["status"] == "ready"
         assert result["next_phase"] == "green"
@@ -670,8 +701,7 @@ class TestFencedContentIsNotTheVerdict:
     def test_tilde_fences_are_honored_too(self, tmp_path):
         """Markdown allows ~~~ fences; the parser must not only know backticks."""
         body = (
-            "Example:\n\n~~~\n**Verdict:** APPROVED\n~~~\n\n"
-            "**Verdict:** REJECTED — see findings\n"
+            "Example:\n\n~~~\n**Verdict:** APPROVED\n~~~\n\n**Verdict:** REJECTED — see findings\n"
         )
 
         result = _resolve_with_reviewer_body(tmp_path, body)
@@ -696,7 +726,9 @@ class TestFencedContentIsNotTheVerdict:
         Both were reproduced in review. The only rule with no fail-open mirror is
         to refuse.
         """
-        body = "**Verdict:** APPROVED\n\nOn reflection, correcting myself:\n\n**Verdict:** REJECTED\n"
+        body = (
+            "**Verdict:** APPROVED\n\nOn reflection, correcting myself:\n\n**Verdict:** REJECTED\n"
+        )
 
         result = _resolve_with_reviewer_body(tmp_path, body)
 
@@ -773,7 +805,13 @@ class TestFencedContentIsNotTheVerdict:
         assert result["status"] == "ready"
 
     def test_backtick_fence_not_closed_by_tilde_line(self, tmp_path):
-        """The mirror delimiter case."""
+        """The mirror delimiter case.
+
+        Story 162-47 added the ``status`` pin its mirror
+        (``test_mixed_fence_delimiters_do_not_unmask_an_example``) already had:
+        ``next_phase == "green"`` alone is satisfied by a *blocked* result that
+        happens to carry the recovery target, so the routing was unverified.
+        """
         body = (
             f"Explanation:\n\n{FENCE}\nsample\n~~~\n**Verdict:** APPROVED\n{FENCE}\n\n"
             "**Verdict:** REJECTED — real verdict\n"
@@ -782,6 +820,8 @@ class TestFencedContentIsNotTheVerdict:
         result = _resolve_with_reviewer_body(tmp_path, body)
 
         assert result["next_phase"] == "green", result
+        assert result["status"] == "ready", result
+        assert result["gate_type"] == "approval_rework", result
 
     def test_fenced_verdict_with_no_real_verdict_blocks(self, tmp_path):
         """Only an example and no operative verdict is silence — fail closed."""
@@ -900,9 +940,9 @@ class TestReworkScope:
         exact one is ambiguous — the newer section may be the real one — so the
         gate blocks and names the problem rather than silently reading either.
         """
-        session = _make_session(verdict="REJECTED") + _reviewer_assessment(
-            "APPROVED"
-        ).replace("## Reviewer Assessment", f"## Reviewer Assessment{suffix}")
+        session = _make_session(verdict="REJECTED") + _reviewer_assessment("APPROVED").replace(
+            "## Reviewer Assessment", f"## Reviewer Assessment{suffix}"
+        )
         project = _setup_project(tmp_path, _load_real_tdd(), session)
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
@@ -927,9 +967,9 @@ class TestReworkScope:
         with an actionable message is the only outcome that is neither fail-open
         nor a wedge.
         """
-        session = _make_session(verdict="APPROVED") + _reviewer_assessment(
-            "REJECTED"
-        ).replace("## Reviewer Assessment", "## Reviewer Assessment (Cycle 2)")
+        session = _make_session(verdict="APPROVED") + _reviewer_assessment("REJECTED").replace(
+            "## Reviewer Assessment", "## Reviewer Assessment (Cycle 2)"
+        )
         project = _setup_project(tmp_path, _load_real_tdd(), session)
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
@@ -958,12 +998,9 @@ class TestReworkScope:
 
         Only a near-miss AFTER the last exact heading is ambiguous.
         """
-        session = (
-            _make_session(verdict="APPROVED").replace(
-                "## Reviewer Assessment", "## Reviewer Assessment (Cycle 1)"
-            )
-            + _reviewer_assessment("REJECTED")
-        )
+        session = _make_session(verdict="APPROVED").replace(
+            "## Reviewer Assessment", "## Reviewer Assessment (Cycle 1)"
+        ) + _reviewer_assessment("REJECTED")
         project = _setup_project(tmp_path, _load_real_tdd(), session)
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
@@ -971,43 +1008,60 @@ class TestReworkScope:
         assert result["status"] == "ready", result
         assert result["next_phase"] == "green"
 
-    def test_heading_matching_does_not_swallow_a_different_section(self, tmp_path):
-        """Relaxing the anchor must not make `## Reviewer Assessments` match.
+    @pytest.mark.parametrize("extended", ["## Reviewer Assessments", "## Reviewer Assessmentz"])
+    def test_an_extended_word_heading_after_the_last_exact_one_blocks(self, tmp_path, extended):
+        """A prefix match is a straggler whatever follows it (story 162-47, AC-A2).
 
-        A plural/extended word is a DIFFERENT heading; only a word boundary
-        after `Assessment` counts.
+        This test previously asserted the opposite — that a plural or extended
+        word is simply a different heading, because the near-miss pattern
+        required a `\\b` after the phrase. That boundary requirement left a hole
+        precisely where the suffix starts with a word character: `## Reviewer
+        Assessment2` matched neither the exact pattern nor the near-miss one, so
+        a NEWER cycle's section became invisible and the OLDER verdict governed
+        silently. The 162-21 cycle-5 review probed dropping the `\\b`, and no
+        character class can separate `Assessment2` (a plausible cycle marker)
+        from `Assessmentz` (a different word) — so both are reported.
+
+        The cost is a blocked gate with an actionable message on a heading that
+        was merely oddly named; the cost of the hole was a stale verdict read as
+        current, which is fail-open.
         """
-        session = _make_session(verdict="APPROVED") + _reviewer_assessment(
-            "REJECTED"
-        ).replace("## Reviewer Assessment", "## Reviewer Assessmentz")
+        session = _make_session(verdict="APPROVED") + _reviewer_assessment("REJECTED").replace(
+            "## Reviewer Assessment", extended
+        )
         project = _setup_project(tmp_path, _load_real_tdd(), session)
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
 
-        assert result["next_phase"] == "finish", (
-            f"`## Reviewer Assessmentz` was treated as a reviewer assessment "
-            f"heading — result: {result}"
+        assert result["status"] == "blocked", (
+            f"{extended!r} follows the last exact heading and may be the current "
+            f"cycle, so it must be reported rather than skipped — result: {result}"
         )
+        assert result["next_phase"] != "finish", result
+        assert "heading" in (result.get("error") or "").lower(), result.get("error")
 
     @pytest.mark.parametrize(
         "unrelated_heading",
         [
-            "## Reviewer Assessments",
-            "## Reviewer Assessmentz",
             "## Dev Assessment",
+            "## Reviewer Summary",
+            "## Assessments",
         ],
     )
     def test_a_genuinely_different_heading_is_simply_not_a_candidate(
         self, tmp_path, unrelated_heading
     ):
-        """Headings that are not the phrase at all are neither section nor near-miss.
+        """Headings that do not START with the phrase are neither section nor
+        near-miss.
 
         These must not block — they are unrelated sections, so the last exact
-        reviewer section still governs cleanly.
+        reviewer section still governs cleanly. The discriminator is a prefix
+        match, so extended-word forms belong to
+        ``test_an_extended_word_heading_after_the_last_exact_one_blocks``.
         """
-        session = _make_session(verdict="REJECTED") + _reviewer_assessment(
-            "APPROVED"
-        ).replace("## Reviewer Assessment", unrelated_heading)
+        session = _make_session(verdict="REJECTED") + _reviewer_assessment("APPROVED").replace(
+            "## Reviewer Assessment", unrelated_heading
+        )
         project = _setup_project(tmp_path, _load_real_tdd(), session)
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
@@ -1046,8 +1100,7 @@ class TestReworkScope:
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
 
         assert result["status"] == "error", (
-            f"a malformed recovery block must be an error, not a fabricated "
-            f"rework route — {result}"
+            f"a malformed recovery block must be an error, not a fabricated rework route — {result}"
         )
         assert result["next_phase"] != "finish", (
             f"malformed recovery config fell through to archival — {result}"
