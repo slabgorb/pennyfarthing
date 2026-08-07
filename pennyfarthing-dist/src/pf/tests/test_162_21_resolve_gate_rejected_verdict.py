@@ -507,12 +507,22 @@ class TestMaxAttemptsCeiling:
         )
 
     def test_at_max_attempts_does_not_advance_to_finish(self, tmp_path):
-        """Exhausting rework attempts must not fall through to archival."""
+        """Exhausting rework attempts must not fall through to archival.
+
+        Story 162-47 replaced the compound negation
+        ``not (status == "ready" and next_phase == "finish")`` with positive
+        assertions. The old form was weaker than the adjacent
+        ``test_at_max_attempts_rework_is_blocked``: it passed for any result
+        that was merely not-both, including ``status: ready`` with
+        ``next_phase: green`` — i.e. the 4th rework this class exists to refuse.
+        """
         result = _resolve_review(tmp_path, verdict="REJECTED", round_trip_count=3)
 
-        assert not (result["status"] == "ready" and result["next_phase"] == "finish"), (
-            f"exhausted rework silently approved the story — result: {result}"
+        assert result["status"] == "blocked", result
+        assert result["next_phase"] is None, (
+            f"an exhausted rework loop still nominated a next phase — {result}"
         )
+        assert result["next_agent"] is None, result
 
     def test_max_attempts_block_error_is_actionable(self, tmp_path):
         result = _resolve_review(tmp_path, verdict="REJECTED", round_trip_count=3)
@@ -773,7 +783,13 @@ class TestFencedContentIsNotTheVerdict:
         assert result["status"] == "ready"
 
     def test_backtick_fence_not_closed_by_tilde_line(self, tmp_path):
-        """The mirror delimiter case."""
+        """The mirror delimiter case.
+
+        Story 162-47 added the ``status`` pin its mirror
+        (``test_mixed_fence_delimiters_do_not_unmask_an_example``) already had:
+        ``next_phase == "green"`` alone is satisfied by a *blocked* result that
+        happens to carry the recovery target, so the routing was unverified.
+        """
         body = (
             f"Explanation:\n\n{FENCE}\nsample\n~~~\n**Verdict:** APPROVED\n{FENCE}\n\n"
             "**Verdict:** REJECTED — real verdict\n"
@@ -782,6 +798,8 @@ class TestFencedContentIsNotTheVerdict:
         result = _resolve_with_reviewer_body(tmp_path, body)
 
         assert result["next_phase"] == "green", result
+        assert result["status"] == "ready", result
+        assert result["gate_type"] == "approval_rework", result
 
     def test_fenced_verdict_with_no_real_verdict_blocks(self, tmp_path):
         """Only an example and no operative verdict is silence — fail closed."""
