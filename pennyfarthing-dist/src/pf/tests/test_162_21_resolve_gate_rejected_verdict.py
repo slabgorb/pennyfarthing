@@ -572,8 +572,19 @@ class TestMaxAttemptsCeiling:
         assert result["status"] == "ready"
         assert result["next_phase"] == "finish"
 
-    def test_unparseable_round_trip_count_does_not_crash(self, tmp_path):
-        """A corrupted count must degrade, not raise."""
+    def test_unparseable_round_trip_count_does_not_buy_a_rework_round(self, tmp_path):
+        """A corrupted count must degrade CLOSED, not raise and not advance.
+
+        De-vacuumed by story 162-59. This test accepted ``status in ("ready",
+        "blocked")`` — which sanctioned the exact fail-open it was standing
+        over: a corrupt counter reads as 0 round-trips, so ``max_attempts`` and
+        the AC-B3 freshness guard both see a session that has never reworked and
+        hand out another round. ``next_phase != "finish"`` was satisfied by
+        ``green``, so the assertion pair could not tell the defect from the fix.
+        The corruption forms and the diagnostic contract are exercised in
+        ``test_162_59_unreadable_counter_tristate``; this keeps the no-crash
+        guarantee that was the original subject.
+        """
         session = _make_session(verdict="REJECTED").replace(
             "**Phase Started:** 2026-08-06T13:00:00Z",
             "**Phase Started:** 2026-08-06T13:00:00Z\n**Round-Trip Count:** many",
@@ -582,8 +593,13 @@ class TestMaxAttemptsCeiling:
 
         result = resolve_gate(STORY_ID, "tdd", "review", project_root=project)
 
-        assert result["status"] in ("ready", "blocked")
-        assert result["next_phase"] != "finish"
+        assert result["status"] != "ready", (
+            f"an unreadable counter advanced the gate — 'I cannot read the "
+            f"counter' is not 'there was no rework' (story 162-28): {result}"
+        )
+        assert result["next_phase"] is None, (
+            f"the gate routed forward on a counter no reader can read: {result}"
+        )
 
 
 # ===========================================================================
