@@ -180,6 +180,21 @@ def pf_project_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     ):
         monkeypatch.delenv(ambient, raising=False)
 
+    # Story 162-49 (rework 2): stub the CDN fetch explicitly. The persona payload
+    # resolves a portrait via resolve_portrait_path -> portrait_cdn.fetch_portrait,
+    # which does up to four urlopen(timeout=30) calls. Today this fixture reaches
+    # it only to bail early, because the test theme omits shortName/ocean and the
+    # slug never resolves — i.e. the suite is network-free by ACCIDENT. Adding an
+    # `ocean:` key to the theme above would silently convert every test using this
+    # fixture into a network-dependent one with a 30s timeout. Stub it so the
+    # hermeticity is a property of the fixture, not of a theme-YAML omission.
+    # Returning None keeps portraitPath None, matching the previous behaviour;
+    # tests that want the portrait branch override this with their own stub.
+    monkeypatch.setattr(
+        "pf.package.portrait_cdn.fetch_portrait",
+        lambda *a, **kw: None,
+    )
+
     return project
 
 

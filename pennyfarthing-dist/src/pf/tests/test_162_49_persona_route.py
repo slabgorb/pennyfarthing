@@ -119,6 +119,13 @@ class TestPersonaRouteReachesLoadPersona:
         ``load_persona(project_dir, session_id=...)`` and raises
         ``TypeError: load_persona() got an unexpected keyword argument
         'session_id'``, which Starlette's TestClient re-raises.
+
+        Story 162-49 (rework 2): the theme assertion pins PROVENANCE, not just
+        shape. A 200 alone is cwd-sensitive evidence — under an ``os.getcwd()``
+        regression, a run from a directory that happens to be a real PF project
+        with a live persona still returns 200 and this test still passed. Only
+        fixture-specific values distinguish "resolved from the dir we were given"
+        from "resolved from wherever pytest was launched".
         """
         response = client.get("/api/persona")
 
@@ -126,14 +133,21 @@ class TestPersonaRouteReachesLoadPersona:
             f"expected 200 for a project with an active agent and a theme, "
             f"got {response.status_code}: {response.text}"
         )
+        assert response.json()["theme"] == "conftest-test-theme"
 
     def test_persona_payload_matches_tui_contract(self, client: TestClient):
-        """AC2: Payload carries every key the TUI header renders."""
+        """AC2: Payload carries every key the TUI header renders.
+
+        Story 162-49 (rework 2): the theme assertion is here for the same reason
+        as above — a real ambient project satisfies the key-set check too, so the
+        shape assertion alone does not prove which project answered.
+        """
         data = client.get("/api/persona").json()
 
         assert isinstance(data, dict)
         missing = PERSONA_CONTRACT_KEYS - set(data)
         assert not missing, f"persona payload missing contract keys: {sorted(missing)}"
+        assert data["theme"] == "conftest-test-theme"
 
     def test_persona_payload_reflects_active_agent_and_theme(self, client: TestClient):
         """AC2+AC4: Values come from the fixture project, not placeholders.
@@ -155,10 +169,18 @@ class TestPersonaRouteReachesLoadPersona:
 
         If a future regression re-swaps the arguments, the character field would
         stringify a filesystem path. Assert it never does.
-        """
-        data = client.get("/api/persona").json()
 
-        character = data.get("character", "")
+        Story 162-49 (rework 2): the status assertion below is REQUIRED, not
+        decorative. Without it this test was vacuous on every non-200 response —
+        a 404 body is ``{"error": ...}``, so ``data.get("character", "")``
+        returned ``""``, and both ``"/" not in ""`` and ``"" != "Unknown"`` held.
+        It passed on exactly the responses it was written to rule out. Indexing
+        ``data["character"]`` rather than ``.get`` keeps it that way.
+        """
+        response = client.get("/api/persona")
+
+        assert response.status_code == 200, response.text
+        character = response.json()["character"]
         assert "/" not in character, f"character looks like a path: {character!r}"
         assert character != "Unknown", "agent name did not resolve to a themed character"
 
@@ -216,9 +238,26 @@ class TestPersonaRouteAbsentInputs:
     def test_non_pf_project_dir_returns_not_a_project(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
-        """AC5: A directory with no ``.pennyfarthing/`` → 404 "Not a Pennyfarthing project"."""
+        """AC5: A directory with no ``.pennyfarthing/`` → 404 "Not a Pennyfarthing project".
+
+        Story 162-49 (rework 2): this is the one test that hand-rolls its env
+        instead of using ``pf_project_dir`` (it needs a NON-PF directory, which
+        the fixture cannot provide). That made it the one place B1's fix could
+        rot: now that ``FRAME_PROJECT_DIR`` outranks ``PF_PROJECT_DIR``, an
+        ambient ``FRAME_PROJECT_DIR`` — exported by any running Frame server —
+        would redirect resolution to a real project and turn this 404 into a 200.
+        Clear the whole ambient set the fixture clears, for the same reason.
+        """
         bare = tmp_path / "not-a-pf-project"
         bare.mkdir()
+        for ambient in (
+            "FRAME_PROJECT_DIR",
+            "PROJECT_ROOT",
+            "CLAUDE_PROJECT_DIR",
+            "PF_THEME",
+            "SESSION_ID",
+        ):
+            monkeypatch.delenv(ambient, raising=False)
         monkeypatch.setenv("PF_PROJECT_DIR", str(bare))
 
         response = TestClient(create_app()).get("/api/persona")
@@ -568,3 +607,120 @@ class TestPersonaRouteDoesNotBlockTheEventLoop:
             "build_persona_payload ran on the event-loop thread — its blocking "
             "network I/O stalls every other request for up to ~120s"
         )
+
+
+class TestPortraitBranchOverHttp:
+    """B3 follow-up: the branch that does the blocking I/O must be executed."""
+
+    def _theme_with_portrait_slug(self, pf_project_dir: Path) -> None:
+        """Give ``dev`` a resolvable portrait slug (``shortName`` + full OCEAN).
+
+        ``resolve_portrait_path`` returns None before touching the CDN unless the
+        theme YAML carries both, which is why the base fixture never reaches the
+        network — and why the portrait branch had no HTTP-level coverage at all.
+        """
+        theme_yaml = (
+            pf_project_dir / ".pennyfarthing" / "personas" / "themes" / "conftest-test-theme.yaml"
+        )
+        theme_yaml.write_text(
+            theme_yaml.read_text(encoding="utf-8").replace(
+                "  dev:\n",
+                "  dev:\n    shortName: Ada\n    ocean: {O: 5, C: 5, E: 2, A: 4, N: 2}\n",
+                1,
+            ),
+            encoding="utf-8",
+        )
+
+    def test_route_returns_the_resolved_portrait_path(
+        self, pf_project_dir: Path, monkeypatch, tmp_path: Path
+    ):
+        """B3: the portrait branch runs over HTTP and its result reaches the payload.
+
+        This is the code path that stalls the event loop — four
+        ``urlopen(timeout=30)`` attempts on a cache miss, uncached. Before this
+        test, ``portraitPath`` was None for every route test (the fixture theme
+        omits ``shortName``/``ocean``), so the offload B3 added was never
+        exercised from the HTTP side at all.
+        """
+        self._theme_with_portrait_slug(pf_project_dir)
+        portrait = tmp_path / "ada-55242.png"
+        portrait.write_bytes(b"\x89PNG\r\n\x1a\n")
+
+        calls: list[tuple] = []
+
+        def _stub_fetch(theme, slug, preferred_size="medium", cache=None):
+            calls.append((theme, slug))
+            return portrait
+
+        monkeypatch.setattr("pf.package.portrait_cdn.fetch_portrait", _stub_fetch)
+
+        response = TestClient(create_app()).get("/api/persona")
+
+        assert response.status_code == 200, response.text
+        assert calls, "portrait resolution never reached the CDN fetch"
+        theme, slug = calls[0]
+        assert theme == "conftest-test-theme"
+        assert slug == "ada-55242"
+        assert response.json()["portraitPath"] == str(portrait)
+
+    def test_portrait_fetch_runs_off_the_event_loop(self, pf_project_dir: Path, monkeypatch):
+        """B3: the blocking CDN call specifically — not just the builder — is offloaded.
+
+        The builder-level test stubs ``build_persona_payload`` itself, so it
+        cannot see whether the real blocking work is on the loop. This one lets
+        the whole payload path run and checks the thread at the actual
+        ``urlopen`` site.
+        """
+        import asyncio as _asyncio
+
+        self._theme_with_portrait_slug(pf_project_dir)
+        observed: dict[str, bool] = {}
+
+        def _stub_fetch(theme, slug, preferred_size="medium", cache=None):
+            try:
+                _asyncio.get_running_loop()
+                observed["on_loop"] = True
+            except RuntimeError:
+                observed["on_loop"] = False
+            return None
+
+        monkeypatch.setattr("pf.package.portrait_cdn.fetch_portrait", _stub_fetch)
+
+        TestClient(create_app()).get("/api/persona")
+
+        assert observed, "the CDN fetch was never reached"
+        assert not observed["on_loop"], (
+            "portrait_cdn.fetch_portrait ran on the event-loop thread — this is "
+            "the up-to-120s blocking call B3 is about"
+        )
+
+    def test_portrait_failure_degrades_without_losing_the_persona(
+        self, pf_project_dir: Path, monkeypatch
+    ):
+        """B3/AC2: a broken CDN must cost the portrait, never the whole payload.
+
+        ``build_persona_payload``'s inner try exists for exactly this; with the
+        branch previously unreachable from the route tests, nothing pinned it.
+
+        Note on what this does NOT assert: no warning is emitted. I expected
+        ``build_persona_payload``'s "Failed to resolve portrait" warn to fire and
+        it does not — ``resolve_portrait_path`` wraps the CDN call in its own
+        ``except Exception: return None`` (``tui/portrait_resolver.py:86-90``), so
+        a broken CDN is swallowed one level below and the outer handler never
+        sees it. Pinning the real behaviour rather than the behaviour I assumed;
+        the silent swallow is pre-existing upstream and logged as a Delivery
+        Finding, not fixed here.
+        """
+        self._theme_with_portrait_slug(pf_project_dir)
+
+        def _boom(theme, slug, preferred_size="medium", cache=None):
+            raise OSError("CDN unreachable")
+
+        monkeypatch.setattr("pf.package.portrait_cdn.fetch_portrait", _boom)
+
+        response = TestClient(create_app()).get("/api/persona")
+
+        assert response.status_code == 200, response.text
+        data = response.json()
+        assert data["character"] == "Ada Lovelace"
+        assert data["portraitPath"] is None
