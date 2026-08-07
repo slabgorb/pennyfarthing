@@ -23,7 +23,7 @@ from fastapi.responses import JSONResponse
 from pf.context_window import check_context
 
 # Direct imports — no shelling out
-from pf.prime.persona import get_crew_manifest, load_persona
+from pf.prime.persona import get_crew_manifest
 
 _start_time = time.time()
 
@@ -62,30 +62,40 @@ def _safe_exc(exc: Exception) -> str:
 persona_router = APIRouter(prefix="/api/persona", tags=["persona"])
 
 
-@persona_router.get("/")
-async def get_persona() -> JSONResponse:
+def _persona_response(full: bool) -> JSONResponse:
+    """Shared body for both persona routes (story 162-49).
+
+    Both routes used to build their own persona, calling
+    ``load_persona(project_dir, session_id=..., full=...)`` — a signature that
+    never existed (``load_persona(agent_name, project_root=None)`` returns a
+    ``(Persona, theme)`` tuple), so every request that got past the project
+    detection above raised TypeError. ``ws_push.build_persona_payload`` is the
+    already-shipped, already-consumed implementation of exactly this: agent
+    resolution from ``.session/agents/``, the correct ``load_persona`` call,
+    portrait resolution, and the payload shape the TUI header reads. Delegate to
+    it rather than keeping a second, broken copy. The project dir is passed in
+    explicitly so resolution follows ``PF_PROJECT_DIR``, never ``os.getcwd()``.
+    """
     project_dir = _get_project_dir()
     if not _detect_pf_project(project_dir):
         return JSONResponse({"error": "Not a Pennyfarthing project"}, status_code=404)
 
-    session_id = os.environ.get("SESSION_ID")
-    persona = load_persona(project_dir, session_id=session_id)
+    from pf.frame.ws_push import build_persona_payload
+
+    persona = build_persona_payload(project_dir, full=full)
     if not persona:
         return JSONResponse({"error": "No active persona"}, status_code=404)
     return JSONResponse(persona)
+
+
+@persona_router.get("/")
+async def get_persona() -> JSONResponse:
+    return _persona_response(full=False)
 
 
 @persona_router.get("/full")
 async def get_persona_full() -> JSONResponse:
-    project_dir = _get_project_dir()
-    if not _detect_pf_project(project_dir):
-        return JSONResponse({"error": "Not a Pennyfarthing project"}, status_code=404)
-
-    session_id = os.environ.get("SESSION_ID")
-    persona = load_persona(project_dir, session_id=session_id, full=True)
-    if not persona:
-        return JSONResponse({"error": "No active persona"}, status_code=404)
-    return JSONResponse(persona)
+    return _persona_response(full=True)
 
 
 # ---------------------------------------------------------------------------
