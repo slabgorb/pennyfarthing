@@ -22,19 +22,19 @@ from pf.subagent.chain import (
     validate_handoff_document,
 )
 from pf.subagent.spawn import build_spawn_config
+from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs
 
 
 def _load_workflow_phases(
     workflow: str, project_root: Path
 ) -> list[dict] | None:
     """Load phases list from workflow YAML."""
-    for name in [f"{workflow}.yaml", f"{workflow}/workflow.yaml"]:
-        path = project_root / ".pennyfarthing" / "workflows" / name
-        if path.exists():
-            data = yaml.safe_load(path.read_text())
-            phases = data.get("workflow", {}).get("phases", [])
-            if isinstance(phases, list) and phases:
-                return phases
+    path = find_workflow_file(get_all_workflows_dirs(project_root), workflow)
+    if path is not None:
+        data = yaml.safe_load(path.read_text())
+        phases = data.get("workflow", {}).get("phases", [])
+        if isinstance(phases, list) and phases:
+            return phases
     return None
 
 

@@ -19,6 +19,8 @@ from pathlib import Path
 
 import yaml
 
+from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs
+
 
 def resolve_gate(
     story_id: str,
@@ -335,13 +337,7 @@ def _result(
 
 
 def _find_workflow_yaml(project_root: Path, workflow: str) -> Path | None:
-    flat = project_root / ".pennyfarthing" / "workflows" / f"{workflow}.yaml"
-    if flat.exists():
-        return flat
-    subdir = project_root / ".pennyfarthing" / "workflows" / workflow / "workflow.yaml"
-    if subdir.exists():
-        return subdir
-    return None
+    return find_workflow_file(get_all_workflows_dirs(project_root), workflow)
 
 
 def _list_available_workflows(project_root: Path) -> list[str]:

@@ -16,6 +16,8 @@ from pathlib import Path
 
 import yaml
 
+from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs
+
 # Mapping from setting keys to (subagent name, dispatch tag or None)
 _SUBAGENT_SETTING_MAP: dict[str, tuple[str, str | None]] = {
     "preflight": ("reviewer-preflight", None),
@@ -382,30 +384,28 @@ def _calc_duration(started_str: str, ended_str: str) -> str:
 
 def _get_phase_tandem(project_root: Path, workflow: str, phase: str) -> dict | None:
     """Return tandem config for a phase, or None if no tandem block."""
-    for name in [f"{workflow}.yaml", f"{workflow}/workflow.yaml"]:
-        path = project_root / ".pennyfarthing" / "workflows" / name
-        if path.exists():
-            try:
-                data = yaml.safe_load(path.read_text())
-                for p in data["workflow"]["phases"]:
-                    if p["name"] == phase:
-                        return p.get("tandem")
-            except Exception:
-                pass
+    path = find_workflow_file(get_all_workflows_dirs(project_root), workflow)
+    if path is not None:
+        try:
+            data = yaml.safe_load(path.read_text())
+            for p in data["workflow"]["phases"]:
+                if p["name"] == phase:
+                    return p.get("tandem")
+        except Exception:
+            pass
     return None
 
 
 def _get_phase_agent(project_root: Path, workflow: str, phase: str) -> str:
-    for name in [f"{workflow}.yaml", f"{workflow}/workflow.yaml"]:
-        path = project_root / ".pennyfarthing" / "workflows" / name
-        if path.exists():
-            try:
-                data = yaml.safe_load(path.read_text())
-                for p in data["workflow"]["phases"]:
-                    if p["name"] == phase:
-                        return p.get("agent", phase)
-            except Exception:
-                pass
+    path = find_workflow_file(get_all_workflows_dirs(project_root), workflow)
+    if path is not None:
+        try:
+            data = yaml.safe_load(path.read_text())
+            for p in data["workflow"]["phases"]:
+                if p["name"] == phase:
+                    return p.get("agent", phase)
+        except Exception:
+            pass
     return phase
 
 
@@ -458,14 +458,13 @@ def _resolve_one(value: str, phase_names: set[str], agent_to_phases: dict[str, l
 
 def _load_workflow_phases(project_root: Path, workflow: str) -> list[dict]:
     """Load phases list from workflow YAML."""
-    for name in [f"{workflow}.yaml", f"{workflow}/workflow.yaml"]:
-        path = project_root / ".pennyfarthing" / "workflows" / name
-        if path.exists():
-            try:
-                data = yaml.safe_load(path.read_text())
-                return data.get("workflow", {}).get("phases", [])
-            except Exception:
-                pass
+    path = find_workflow_file(get_all_workflows_dirs(project_root), workflow)
+    if path is not None:
+        try:
+            data = yaml.safe_load(path.read_text())
+            return data.get("workflow", {}).get("phases", [])
+        except Exception:
+            pass
     return []
 
 
