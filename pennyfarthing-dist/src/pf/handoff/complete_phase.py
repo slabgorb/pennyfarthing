@@ -673,9 +673,14 @@ _CYCLE_TAG_RE = re.compile(r"^\*\*Cycle:[ \t]*(\d+)\*\*[ \t]*$", re.MULTILINE | 
 def _parse_rework_cycle(session_content: str) -> int:
     """Parse the current rework cycle number from session content.
 
+    **NOT FOR PRODUCTION USE — kept only for the tests that characterise the
+    reader**, for the same reason as ``gate_recovery.parse_round_trip_count``: it
+    flattens ``unreadable`` onto ``absent``. Every production caller goes through
+    :func:`_read_rework_cycle` and branches on ``["status"]`` (story 162-59, AC4).
+
     ``**Round-Trip Count:** N`` — the counter ``complete_phase`` actually writes
     on every rework transition — is authoritative, and is read through
-    ``gate_recovery.parse_round_trip_count`` so this module does not fork a second
+    :func:`_read_rework_cycle` so this module does not fork a second
     reader of it. ``**Rework Cycle:** N`` is the field the original guard read but
     nothing ever wrote (story 162-28, B4); it remains a FALLBACK for hand-written
     sessions and story 150-8's fixtures, consulted only when the real counter is
