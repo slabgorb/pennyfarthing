@@ -768,11 +768,20 @@ def read_round_trip_count(session_content: str) -> RoundTripReading:
 def parse_round_trip_count(session_content: str) -> int:
     """Round-trips already recorded in the session. Absent or unparseable → 0.
 
-    **The single reader of this counter.** ``complete_phase._parse_rework_cycle``
-    delegates here rather than forking its own pattern: two readers of one
-    concept that disagree (masked vs unmasked, one field vs two) is the failure
-    class 162-21 set out to remove, and review found this pair had already
-    diverged (story 162-28).
+    **NOT FOR PRODUCTION USE — kept only for the tests that characterise the
+    reader.** This flattening is lossy in the one direction that matters:
+    ``unreadable`` and ``absent`` both come back as ``0``, so a caller deciding
+    whether rework has happened cannot tell a corrupt counter from a fresh
+    session. ``resolve_gate`` was that caller, and one unparseable byte bought an
+    unlimited rework loop (story 162-59). Production reads
+    :func:`read_round_trip_count` and branches on ``["status"]``; the AC4 test in
+    ``test_162_59_unreadable_counter_tristate.py`` sweeps the source by AST and
+    fails on any production call to this function.
+
+    The docstring this replaces claimed ``complete_phase._parse_rework_cycle``
+    delegates here. It does not — it delegates to its own tri-state
+    ``_read_rework_cycle`` — so the "single reader" reassurance was standing over
+    the flattening rather than justifying it.
 
     Illustrative regions are masked first, so a counter quoted in a code fence,
     an HTML comment, or backticks is not mistaken for the session's real one —

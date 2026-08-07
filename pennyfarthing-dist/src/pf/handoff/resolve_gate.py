@@ -276,7 +276,33 @@ def resolve_gate(
             )
 
         if verdict == "rework":
-            round_trips = gr.parse_round_trip_count(session_content)
+            # Branch on the counter's STATUS, exactly as the verdict above does.
+            # The flat read answered "how many round-trips" with 0 for BOTH "none
+            # yet" and "I cannot read the line", so a single unparseable byte —
+            # `one`, `3.`, `-3`, or the line wrapped in a comment, a fence or
+            # backticks — disarmed the two controls that key off this number at
+            # once: 162-47's AC-B3 freshness guard saw rulings > round_trips on a
+            # verdict already routed, and `max_attempts` never reached its
+            # ceiling. Unlimited rework rounds off a corrupt counter (story
+            # 162-59; the tri-state exists for this, story 162-28).
+            #
+            # `absent` still flows through: a first-cycle rejection has no
+            # counter at all, and conflating the two would wedge every rejection.
+            counter = gr.read_round_trip_count(session_content)
+            if counter["status"] == "unreadable":
+                return _stop(
+                    "blocked",
+                    "Cannot read the '**Round-Trip Count:**' line of "
+                    f"`.session/{story_id}-session.md`: {counter['detail']}. An "
+                    "unreadable counter is not 'no rework has happened' — the "
+                    "freshness guard and the max_attempts ceiling both count off "
+                    "this number, so routing rework on it would hand out an "
+                    "unlimited loop. To fix: put the counter back on its own line "
+                    "as '**Round-Trip Count:** N' in the session preamble, a plain "
+                    "integer with nothing after it, outside any code fence, HTML "
+                    "comment, backticks or indented block.",
+                )
+            round_trips = counter["count"]
             recovery = gr.get_rework_recovery(recovery_config, round_trips) or {}
             if recovery.get("status") == "blocked":
                 return _stop(
