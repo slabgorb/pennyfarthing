@@ -52,22 +52,63 @@ _TRACKING_RE = re.compile(r"\b\d+-\d+\b|\bgh\s*#\d+|#\d+")
 _QUARANTINE_MARKERS = ("mark.xfail", "mark.skip", "mark.skipif")
 
 
+def _markers_in_source(source: str) -> list[tuple[str, ast.expr]]:
+    """Core detection: yield (test_name, decorator_node) for one module's source.
+
+    Split out from the tree walk (story 162-29) so the anti-vacuity guards can
+    exercise *this* function against a synthetic module. Before the split they
+    asserted that the real test tree contained quarantines — which made paying
+    off the last xfail a test failure, exactly backwards from the intent.
+    """
+    found: list[tuple[str, ast.expr]] = []
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:  # pragma: no cover - a broken test file fails elsewhere
+        return found
+    for node in ast.walk(tree):
+        decorators = getattr(node, "decorator_list", None)
+        if not decorators:
+            continue
+        for dec in decorators:
+            src = ast.unparse(dec)
+            if any(m in src for m in _QUARANTINE_MARKERS):
+                found.append((getattr(node, "name", "<unknown>"), dec))
+    return found
+
+
+# A module carrying one of every quarantine flavour. The guards below run
+# _markers_in_source over this instead of over the real tree, so discovery is
+# pinned whether or not the tree currently holds any debt.
+SYNTHETIC_MODULE = '''
+import pytest
+
+@pytest.mark.xfail(reason="synthetic 999-1: pinned by the discovery guard", strict=False)
+def test_synthetic_xfail():
+    pass
+
+@pytest.mark.skip(reason="synthetic gh #999: pinned by the discovery guard")
+def test_synthetic_skip():
+    pass
+
+@pytest.mark.skipif(True, reason="synthetic #999: pinned by the discovery guard")
+def test_synthetic_skipif():
+    pass
+
+@pytest.mark.xfail
+def test_synthetic_bare_xfail():
+    pass
+
+def test_not_quarantined():
+    pass
+'''
+
+
 def _iter_quarantine_markers() -> list[tuple[Path, str, ast.expr]]:
     """Yield (file, test_name, decorator_node) for every quarantine marker."""
     found: list[tuple[Path, str, ast.expr]] = []
     for path in sorted(TESTS_DIR.rglob("test_*.py")):
-        try:
-            tree = ast.parse(path.read_text())
-        except SyntaxError:  # pragma: no cover - a broken test file fails elsewhere
-            continue
-        for node in ast.walk(tree):
-            decorators = getattr(node, "decorator_list", None)
-            if not decorators:
-                continue
-            for dec in decorators:
-                src = ast.unparse(dec)
-                if any(m in src for m in _QUARANTINE_MARKERS):
-                    found.append((path, getattr(node, "name", "<unknown>"), dec))
+        for name, dec in _markers_in_source(path.read_text()):
+            found.append((path, name, dec))
     return found
 
 
@@ -88,19 +129,42 @@ def _reason_of(dec: ast.expr) -> str | None:
 class TestQuarantineMarkersAreLoud:
     """AC3: no anonymous quarantines anywhere in the test tree."""
 
-    def test_markers_exist_to_check(self) -> None:
+    def test_marker_discovery_works(self) -> None:
         """Guard the guard.
 
-        The two policy tests below iterate a collection. If marker discovery
-        ever broke — a rename in pytest's API, an AST-walk regression — they
-        would pass over an empty list and assert nothing at all. Pin that the
-        scan actually finds the quarantines we know are there.
+        The policy tests below iterate a collection. If marker discovery ever
+        broke — a rename in pytest's API, an AST-walk regression — they would
+        pass over an empty list and assert nothing at all.
+
+        Pinned against SYNTHETIC_MODULE rather than against the real tree
+        (story 162-29). Asserting the tree holds >= N quarantines made *paying
+        off* debt a failure: 162-29 removed the last four xfails and this guard
+        went red for it. Discovery correctness and debt volume are different
+        facts and only the first belongs in a guard.
         """
-        markers = _iter_quarantine_markers()
-        assert len(markers) >= 5, (
-            f"marker discovery found only {len(markers)} markers; the 162-5 "
-            "quarantines alone should exceed this. Discovery is broken."
+        names = [name for name, _ in _markers_in_source(SYNTHETIC_MODULE)]
+        assert names == [
+            "test_synthetic_xfail",
+            "test_synthetic_skip",
+            "test_synthetic_skipif",
+            "test_synthetic_bare_xfail",
+        ], f"discovery is broken — found {names!r}"
+        # And it must reject, not just accept: the unmarked test stays out.
+        assert "test_not_quarantined" not in names
+
+    def test_tree_scan_reaches_the_test_suite(self) -> None:
+        """The tree walk must actually visit modules, even at zero debt.
+
+        Separate from discovery correctness: this catches TESTS_DIR pointing at
+        the wrong place or the glob matching nothing, which would make every
+        policy test below vacuous no matter how good the detection is.
+        """
+        modules = sorted(TESTS_DIR.rglob("test_*.py"))
+        assert len(modules) > 50, (
+            f"tree scan found only {len(modules)} test modules under "
+            f"{TESTS_DIR} — the walk is not reaching the suite."
         )
+        assert Path(__file__).resolve() in modules
 
     def test_every_quarantine_has_a_reason(self) -> None:
         """A bare ``@pytest.mark.xfail`` hides why a test was given up on."""
@@ -135,23 +199,34 @@ class TestQuarantineMarkersAreLoud:
             "Offenders:\n  " + "\n  ".join(offenders)
         )
 
-    def test_xfail_markers_are_actually_being_checked(self) -> None:
+    def test_xfail_filter_and_tracking_regex_are_live(self) -> None:
         """Guard the guard, part two.
 
-        ``test_every_xfail_cites_a_tracking_reference`` filters to xfail markers.
-        If that filter matched nothing the assertion would be vacuous, so pin
-        that xfail markers are found and that the tracking-reference regex
-        genuinely matches the 162-5 quarantines.
+        ``test_every_quarantine_has_a_reason`` and
+        ``test_every_xfail_cites_a_tracking_reference`` both narrow the marker
+        list before asserting. Pin that the xfail filter and the tracking-ref
+        regex each accept AND reject, so neither policy test can go vacuous.
+
+        Pinned against SYNTHETIC_MODULE (story 162-29) — see
+        ``test_marker_discovery_works`` for why the real tree is the wrong
+        fixture here.
         """
-        xfails = [
-            (path, name, dec)
-            for path, name, dec in _iter_quarantine_markers()
-            if "mark.xfail" in ast.unparse(dec)
-        ]
-        assert xfails, "no xfail markers discovered — the filter is broken"
-        assert all(_TRACKING_RE.search(_reason_of(dec) or "") for _, _, dec in xfails)
-        # And the regex must be capable of rejecting, not just accepting.
+        markers = _markers_in_source(SYNTHETIC_MODULE)
+        xfails = [(n, d) for n, d in markers if "mark.xfail" in ast.unparse(d)]
+        assert [n for n, _ in xfails] == [
+            "test_synthetic_xfail",
+            "test_synthetic_bare_xfail",
+        ], "the xfail filter is broken"
+
+        by_name = dict(xfails)
+        # Accepts a reason carrying a tracking reference...
+        assert _TRACKING_RE.search(_reason_of(by_name["test_synthetic_xfail"]) or "")
+        # ...and rejects a bare marker, which carries no reason at all.
+        assert _reason_of(by_name["test_synthetic_bare_xfail"]) is None
+        # The regex must be capable of rejecting, not just accepting.
         assert not _TRACKING_RE.search("no reference here at all")
+        assert _TRACKING_RE.search("gh #113")
+        assert _TRACKING_RE.search("162-29")
 
 
 class TestInScopeModulesHaveNoUnmarkedFailures:

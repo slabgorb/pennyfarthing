@@ -340,13 +340,11 @@ def status_cmd(output_json: bool):
                 if result["workflow"] and result["phase"]:
                     try:
                         from pf.workflow.helpers import (
-                            find_workflow_file,
-                            get_workflows_dir,
                             load_workflow_data,
+                            resolve_workflow_file,
                         )
 
-                        workflows_dir = get_workflows_dir(root)
-                        wf_file = find_workflow_file(workflows_dir, result["workflow"])
+                        wf_file = resolve_workflow_file(result["workflow"], root)
                         if wf_file:
                             data = load_workflow_data(wf_file)
                             phases = data.get("workflow", {}).get("phases", [])
