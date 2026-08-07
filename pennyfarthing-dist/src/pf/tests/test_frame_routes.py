@@ -26,6 +26,8 @@ Acceptance Criteria:
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from starlette.testclient import TestClient
 
@@ -33,8 +35,18 @@ from pf.frame.app import create_app
 
 
 @pytest.fixture()
-def client() -> TestClient:
-    """Create a TestClient for the Frame app with all routes mounted."""
+def client(pf_project_dir: Path) -> TestClient:
+    """Create a TestClient for the Frame app with all routes mounted.
+
+    Story 162-49: depends on the shared ``pf_project_dir`` conftest fixture,
+    which exports ``PF_PROJECT_DIR`` for a hermetic project under tmp_path. The
+    data-proxy routes resolve their project directory from that env var, falling
+    back to ``os.getcwd()`` — so before this fixture existed the whole module's
+    pass/fail count changed with the directory pytest was launched from (4 failed
+    from the orchestrator root, 0 failed from ``pennyfarthing-dist/``, where the
+    routes 404'd before reaching the code under test). Wiring the fixture in here
+    — once, at the client — is what makes the numbers below mean something.
+    """
     return TestClient(create_app())
 
 
@@ -47,26 +59,47 @@ class TestPersonaRoute:
     """GET /api/persona returns current persona info."""
 
     def test_get_persona_returns_json(self, client: TestClient):
-        """AC1+AC5: Persona endpoint returns JSON with persona data."""
+        """AC1+AC5: Persona endpoint returns JSON with persona data.
+
+        Story 162-49: was ``assert response.status_code in (200, 404)`` — an
+        assertion that admits both the success path and the short-circuit, so it
+        held even when the route never reached the code it was meant to cover.
+        The ``pf_project_dir`` fixture supplies an active agent and a theme, so
+        200 is the only correct answer.
+        """
         response = client.get("/api/persona")
-        assert response.status_code in (200, 404)
+        assert response.status_code == 200, response.text
         data = response.json()
-        # Either persona data or error — both are valid JSON shapes
         assert isinstance(data, dict)
+        assert data["character"], "persona payload has no character"
 
     def test_get_persona_full_returns_json(self, client: TestClient):
-        """AC1+AC5: Full persona endpoint returns extended persona details."""
+        """AC1+AC5: Full persona endpoint returns extended persona details.
+
+        Story 162-49: de-vacuumed alongside its sibling above.
+        """
         response = client.get("/api/persona/full")
-        assert response.status_code in (200, 404)
+        assert response.status_code == 200, response.text
         data = response.json()
         assert isinstance(data, dict)
+        assert data["character"], "full persona payload has no character"
 
-    def test_persona_not_found_returns_404(self, client: TestClient):
-        """AC5: When no persona active, returns 404 with error field."""
+    def test_persona_not_found_returns_404(self, client: TestClient, pf_project_dir: Path):
+        """AC5: When no persona active, returns 404 with error field.
+
+        Story 162-49: was guarded by ``if response.status_code == 404:`` — the
+        body assertions never ran when the route returned 200, and the test
+        passed either way. Now the no-active-agent state is *constructed* so the
+        404 branch is genuinely exercised.
+        """
+        agents_dir = pf_project_dir / ".session" / "agents"
+        for marker in agents_dir.iterdir():
+            marker.unlink()
+
         response = client.get("/api/persona")
-        if response.status_code == 404:
-            data = response.json()
-            assert "error" in data
+        assert response.status_code == 404
+        data = response.json()
+        assert data["error"] == "No active persona"
 
 
 # ---------------------------------------------------------------------------
@@ -700,14 +733,22 @@ class TestInlineEndpoints:
 class TestBackwardCompatibility:
     """Ensure response shapes match the Node.js Express server."""
 
-    def test_error_responses_have_error_field(self, client: TestClient):
-        """AC5: Error responses use {"error": "..."} shape."""
-        # Request a route that should 404 when project not detected
+    def test_error_responses_have_error_field(self, client: TestClient, pf_project_dir: Path):
+        """AC5: Error responses use {"error": "..."} shape.
+
+        Story 162-49: the ``if response.status_code == 404:`` guard meant this
+        asserted nothing on the 200 path — and on the 404 path it only ever fired
+        because the route had short-circuited on cwd-based project detection.
+        Construct the error state instead of hoping for it.
+        """
+        for marker in (pf_project_dir / ".session" / "agents").iterdir():
+            marker.unlink()
+
         response = client.get("/api/persona")
-        if response.status_code == 404:
-            data = response.json()
-            assert "error" in data
-            assert isinstance(data["error"], str)
+        assert response.status_code == 404
+        data = response.json()
+        assert isinstance(data["error"], str)
+        assert data["error"]
 
     def test_success_responses_are_json(self, client: TestClient):
         """AC5: All success responses return application/json."""

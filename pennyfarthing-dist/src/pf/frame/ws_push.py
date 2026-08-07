@@ -460,10 +460,22 @@ def fetch_settings() -> dict[str, Any]:
     return {"type": "init", "settings": settings}
 
 
-def fetch_persona() -> dict[str, Any]:
-    """Fetch active persona using the same agent resolution as statusline."""
+def build_persona_payload(project_dir: str | Path, full: bool = False) -> dict[str, Any]:
+    """Build the persona payload for a project dir (story 162-49).
+
+    Extracted from :func:`fetch_persona` so the ``GET /api/persona`` HTTP routes
+    can share it instead of re-deriving agent resolution. ``data_proxy.py`` had
+    its own second implementation that called ``load_persona(project_dir,
+    session_id=...)`` — every argument wrong against the real
+    ``load_persona(agent_name, project_root=None)`` signature, so any request
+    reaching it raised TypeError. The caller passes the project dir explicitly,
+    which is what keeps the routes independent of ``os.getcwd()``.
+
+    Returns ``{}`` when there is no resolvable active persona; callers decide
+    whether that is a blank panel or a 404. ``full=True`` adds the optional
+    Persona fields the base TUI contract omits.
+    """
     try:
-        project_dir = _get_project_dir()
         agents_dir = Path(project_dir, ".session", "agents")
         if not agents_dir.is_dir():
             return {}
@@ -505,7 +517,7 @@ def fetch_persona() -> dict[str, Any]:
             # would blank the entire persona panel (strictly worse than no portrait).
             warnings.warn(f"Failed to resolve portrait for {agent_name}: {exc}", stacklevel=2)
 
-        return {
+        payload = {
             "character": persona.character,
             "role": agent_name,
             "roleDescription": persona.style,
@@ -515,6 +527,17 @@ def fetch_persona() -> dict[str, Any]:
             "isStreaming": False,
             "portraitPath": portrait_path,
         }
+        if full:
+            payload.update(
+                {
+                    "roleTitle": persona.role,
+                    "quirk": persona.quirk or "",
+                    "motto": persona.motto or "",
+                    "helperName": persona.helper_name or "",
+                    "helperStyle": persona.helper_style or "",
+                }
+            )
+        return payload
     except Exception as exc:
         # Present-but-broken: persona resolution/load raised. Warn (gh #50
         # fail-loud) rather than silently blanking the persona panel, then
@@ -523,6 +546,25 @@ def fetch_persona() -> dict[str, Any]:
         # unaffected.)
         warnings.warn(f"Failed to load persona: {exc}", stacklevel=2)
         return {}
+
+
+def fetch_persona() -> dict[str, Any]:
+    """Fetch active persona using the same agent resolution as statusline."""
+    try:
+        project_dir = _get_project_dir()
+    except OSError as exc:
+        # Story 162-49 (rework): resolution must stay INSIDE a try. It used to be
+        # the first statement of the try block below; hoisting it into the caller
+        # let it escape. ``os.getcwd()`` raises FileNotFoundError once the cwd has
+        # been unlinked — reachable, because the launcher sets the server's cwd to
+        # the project dir, so a `git worktree remove`, a `mv`, or a tmpdir cleanup
+        # while Frame is alive triggers it. The escape landed in
+        # ``poll_and_broadcast``'s ``except Exception: pass``, so the persona panel
+        # stopped updating with zero diagnostic — the silent swallow epic 160 spent
+        # five stories removing. Warn (fail-loud) then degrade to {}, unchanged.
+        warnings.warn(f"Failed to load persona: {exc}", stacklevel=2)
+        return {}
+    return build_persona_payload(project_dir)
 
 
 def fetch_benchmark_history() -> dict[str, Any]:
