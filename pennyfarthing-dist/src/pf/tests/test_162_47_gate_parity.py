@@ -365,6 +365,98 @@ class TestApprovalRequirementsAreReportedTogether:
                 f"{expected!r} missing from the aggregated error — {error!r}"
             )
 
+    def test_an_ambiguous_heading_does_not_report_present_tags_as_missing(
+        self, tmp_path, all_subagents_enabled
+    ) -> None:
+        """Regression, review finding F1 — the defect aggregation introduced.
+
+        Before AC-B1 a short-circuit returned the ambiguity ALONE, which hid the
+        fact that ``_check_subagent_dispatch`` answers "every tag is missing" for
+        any section it cannot identify. Aggregating without fixing that made the
+        one error name a requirement that is SATISFIED: all eight specialist tags
+        reported absent while all eight sit plainly in the file, sending the
+        reviewer to chase tags it had already written. Fail-closed, but it is
+        exactly the wasted discovery cycle B1 exists to remove — and it re-opened
+        the 162-21 diagnostic defect whose fix comment was still in the code.
+        """
+        result = _complete(tmp_path, _session(tags=ALL_TAGS, straggler=" (Cycle 2)"))
+
+        error = _error(result)
+        assert result["status"] == "error", result
+        assert "Reviewer Assessment" in error, error
+        assert "missing specialist subagent tags" not in error, (
+            "every specialist tag is present in the file, yet the aggregated "
+            f"error reports them missing because the heading is ambiguous — {error!r}"
+        )
+        for tag in ("[SEC]", "[SILENT]", "[SIMPLE]", "[EDGE]"):
+            assert tag not in error, (
+                f"{tag} is present in the session but named as unmet — {error!r}"
+            )
+
+    def test_an_ambiguous_heading_still_reports_genuinely_missing_tags(
+        self, tmp_path, all_subagents_enabled
+    ) -> None:
+        """The other direction of F1's fix — it must not become a blind spot.
+
+        Searching the candidate sections instead of giving up has to keep saying
+        "this tag appears in NEITHER candidate". Suppressing the tag check
+        whenever the heading is ambiguous would have satisfied the test above
+        while losing the aggregation AC-B1 asked for.
+        """
+        result = _complete(tmp_path, _session(tags=SOME_TAGS, straggler=" (Cycle 2)"))
+
+        error = _error(result)
+        assert "Reviewer Assessment" in error, error
+        assert "[SEC]" in error, (
+            f"[SEC] is in neither candidate section, so it is genuinely unmet — {error!r}"
+        )
+
+    def test_a_tag_outside_the_candidate_sections_does_not_satisfy_the_check(
+        self, tmp_path, all_subagents_enabled
+    ) -> None:
+        """F1's fix must not widen the presence search to the whole document.
+
+        The candidate region stops at the first heading that is not itself a
+        candidate, so a tag mentioned in a later unrelated section cannot vouch
+        for the assessment. Reading to EOF would have traded a fail-CLOSED report
+        for a fail-OPEN one.
+        """
+        session = _session(tags=SOME_TAGS, straggler=" (Cycle 2)")
+        session += "\n## Delivery Findings\n\n- [SEC] [SILENT] [SIMPLE] noted here\n"
+
+        project = _setup_project(tmp_path, _load_real_tdd(), session)
+        result = complete_phase(
+            STORY_ID, "tdd", "review", "green", "approval_rework", project_root=project
+        )
+
+        assert "[SEC]" in _error(result), (
+            "a tag in an unrelated section satisfied the assessment's tag check — "
+            f"{_error(result)!r}"
+        )
+
+    def test_the_aggregated_error_keeps_its_entries_legible(
+        self, tmp_path, all_subagents_enabled
+    ) -> None:
+        """Regression, review finding F2 — ``" ".join`` corrupted the message.
+
+        The completion error ends in a two-line markdown example table, so a
+        space-joined aggregate splices the next requirement onto the table's last
+        row and yields one unbroken paragraph containing a malformed table. B1
+        would then have replaced five legible sequential errors with one
+        less-legible aggregate.
+        """
+        result = _complete(tmp_path, _session(results=None, tags=SOME_TAGS), "approval_rework")
+
+        error = _error(result)
+        assert result["status"] == "error", result
+        assert "\n\n" in error, f"the aggregated entries are not separated — {error!r}"
+        assert "| 1 | reviewer-preflight | Yes | clean | none | N/A |\n" in error, (
+            f"the example table row was fused with the requirement that follows it — {error!r}"
+        )
+        assert "N/A | Reviewer Assessment missing" not in error, (
+            f"a requirement spliced onto the example table's last row — {error!r}"
+        )
+
     def test_a_single_unmet_requirement_does_not_invent_the_others(
         self, tmp_path, all_subagents_enabled
     ) -> None:

@@ -144,7 +144,7 @@ def complete_phase(
                 # the reviewer discover the contract by five sequential gate
                 # failures — a cost the gate charged for its own shape, paid live
                 # in the 162-49 run (story 162-47, AC-B1).
-                "error": " ".join(unmet),
+                "error": _format_unmet(unmet),
             }
 
     now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -302,8 +302,16 @@ def _check_approval_requirements(content: str, gate_type: str) -> list[str]:
     """Every unmet approval requirement, in the order a reviewer should fix them.
 
     Returns an empty list when the assessment is compliant. Each entry is a
-    complete, actionable sentence — the caller joins them into ONE error so the
-    full contract is discoverable in a single attempt (AC-B1).
+    complete, actionable sentence — :func:`_format_unmet` renders them as ONE error
+    so the full contract is discoverable in a single attempt (AC-B1).
+
+    **Only requirements that are genuinely unmet appear.** Aggregating removed the
+    short-circuit that used to stop after the first problem, and the checks behind
+    it were written expecting to run only on input the earlier check had already
+    vetted — so each one has to be truthful on its own now. See
+    :func:`_check_subagent_dispatch`, which searches the candidate sections when
+    the heading is ambiguous rather than declaring every tag missing (story 162-47
+    review, F1).
 
     ``_check_rework_freshness`` is the one subcheck scoped to bare ``approval``:
     its subject is the staleness of results being used to APPROVE, and demanding a
@@ -317,8 +325,9 @@ def _check_approval_requirements(content: str, gate_type: str) -> list[str]:
     problems: list[str] = []
 
     # Which assessment is current must be unambiguous before anything is judged
-    # against it — otherwise the tag check reports every tag missing when the real
-    # problem is a suffixed heading (story 162-21).
+    # against it — reported FIRST because it is the problem that makes the others
+    # hard to interpret (story 162-21). It no longer suppresses them: the sibling
+    # checks handle an ambiguous heading themselves.
     selected_assessment = select_last_section(content, heading, mask_quoted_blocks)
     if selected_assessment["status"] == "ambiguous":
         problems.append(
@@ -346,6 +355,22 @@ def _check_approval_requirements(content: str, gate_type: str) -> list[str]:
             problems.append(freshness["message"])
 
     return problems
+
+
+def _format_unmet(unmet: list[str]) -> str:
+    """Render the unmet approval requirements as one legible error.
+
+    Blank-line separated and numbered, because these entries are multi-line: the
+    completion error ends in a two-line markdown example table, so joining on a
+    space spliced the next requirement onto the table's final row and produced one
+    unbroken paragraph containing a malformed table. Aggregating five legible
+    sequential errors into one illegible blob would have taken back most of what
+    AC-B1 bought (story 162-47 review, F2).
+    """
+    if len(unmet) == 1:
+        return unmet[0]
+    numbered = "\n\n".join(f"{i}. {problem}" for i, problem in enumerate(unmet, start=1))
+    return f"{len(unmet)} approval requirements are unmet — fix all of them:\n\n{numbered}"
 
 
 def _check_setup_context(project_root: Path, story_id: str) -> str | None:
@@ -608,12 +633,30 @@ def _check_subagent_dispatch(content: str) -> set[str]:
     # while they sat plainly in the file — a fail-CLOSED that is close to
     # undiagnosable from the message (story 162-28, cycle 2). Fenced examples are
     # still masked, so 162-21's fail-open stays closed.
-    from pf.handoff.gate_recovery import mask_quoted_blocks, select_last_section
+    from pf.handoff.gate_recovery import (
+        candidate_section_region,
+        mask_quoted_blocks,
+        select_last_section,
+    )
 
-    selected = select_last_section(content, assessment_heading(_APPROVAL_AGENT), mask_quoted_blocks)
-    if selected["status"] != "found":
+    heading = assessment_heading(_APPROVAL_AGENT)
+    selected = select_last_section(content, heading, mask_quoted_blocks)
+    if selected["status"] == "found":
+        assessment = selected["section"]
+    elif selected["status"] == "ambiguous":
+        # Which section is current is unknown, but the candidates are knowable, so
+        # search them rather than declaring every tag missing. Returning
+        # `required_tags` wholesale here reported all eight specialist tags absent
+        # while all eight sat plainly in the file — the aggregated error then named
+        # a requirement that was SATISFIED, sending the reviewer to chase tags it
+        # had already written. Before AC-B1 a short-circuit hid this by returning
+        # the ambiguity alone; aggregating without fixing the underlying report
+        # re-opened the 162-21 diagnostic defect (story 162-47 review, F1). The
+        # ambiguity is still reported by the caller either way.
+        assessment = candidate_section_region(content, heading, mask_quoted_blocks)
+    else:
+        # Absent: there is no assessment, so every required tag really is missing.
         return required_tags
-    assessment = selected["section"]
     return {tag for tag in required_tags if tag not in assessment}
 
 

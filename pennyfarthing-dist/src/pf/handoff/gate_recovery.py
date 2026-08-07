@@ -405,6 +405,67 @@ def _mask(content: str, *, code_blocks: bool, inline: bool) -> str:
     return "\n".join(masked)
 
 
+def _exact_heading_re(heading: str) -> re.Pattern[str]:
+    """``## <heading>`` and nothing else on the line. Section identity, one place."""
+    return re.compile(rf"^##[ \t]+{re.escape(heading)}[ \t]*$", re.MULTILINE | re.IGNORECASE)
+
+
+def _near_miss_heading_re(heading: str) -> re.Pattern[str]:
+    """``## <heading>…`` — any heading that STARTS with the phrase.
+
+    No `\\b` after the heading: a boundary requirement leaves a hole exactly where
+    the suffix starts with a word character, so `## Reviewer Assessment2` matched
+    NEITHER pattern and the newer section became invisible — the older one
+    governed silently (story 162-47, AC-A2). A heading that merely starts with the
+    phrase is a straggler whatever follows it: plural and extended forms
+    (`## Reviewer Assessments`) are reported as ambiguous rather than ignored,
+    because no character class can tell a cycle marker from a different section's
+    title, and blocking with an actionable message is the one outcome that neither
+    reads a stale verdict nor skips a current one.
+    """
+    return re.compile(rf"^##[ \t]+{re.escape(heading)}.*$", re.MULTILINE | re.IGNORECASE)
+
+
+_ANY_SECTION_HEADING_RE = re.compile(r"^##[ \t]+.*$", re.MULTILINE)
+
+
+def candidate_section_region(
+    content: str,
+    heading: str,
+    masker: Callable[[str], str] = mask_illustrative_regions,
+) -> str:
+    """Every candidate for the current ``## <heading>`` section, as one slice.
+
+    For use ONLY when :func:`select_last_section` reports ``ambiguous``. Which
+    section is current is then unknown, but the candidates are exactly the last
+    exact heading and the near-miss headings that follow it, so the slice runs
+    from that heading to the first ``##`` that is not itself a candidate.
+
+    A PRESENCE search over this region can still say truthfully that something
+    appears NOWHERE among the candidates, without the alternative's false claim:
+    reporting every specialist tag as missing while all eight sit plainly in the
+    file. That false report is a wasted reviewer cycle spent chasing tags that are
+    already there — the discovery cost AC-B1 exists to remove (story 162-47
+    review, F1). The region stops at the first non-candidate heading rather than
+    running to EOF, so a tag mentioned in `## Delivery Findings` cannot satisfy
+    the check either.
+
+    Returns "" when there is no exact heading at all — an absent section has no
+    candidates, and every required tag really is missing from it.
+    """
+    masked = masker(content)
+    exact = list(_exact_heading_re(heading).finditer(masked))
+    if not exact:
+        return ""
+
+    region = masked[exact[-1].end() :]
+    near_miss = _near_miss_heading_re(heading)
+    for match in _ANY_SECTION_HEADING_RE.finditer(region):
+        if not near_miss.match(match.group(0)):
+            return region[: match.start()]
+    return region
+
+
 def select_last_section(
     content: str,
     heading: str,
@@ -436,17 +497,8 @@ def select_last_section(
             section: the section body when status is "found", else ""
             detail: human-readable reason for "absent"/"ambiguous"
     """
-    exact = re.compile(rf"^##[ \t]+{re.escape(heading)}[ \t]*$", re.MULTILINE | re.IGNORECASE)
-    # No `\b` after the heading: a boundary requirement leaves a hole exactly
-    # where the suffix starts with a word character, so `## Reviewer Assessment2`
-    # matched NEITHER pattern and the newer section became invisible — the older
-    # one governed silently (story 162-47, AC-A2). A heading that merely STARTS
-    # with the phrase is a straggler whatever follows it: plural and extended
-    # forms (`## Reviewer Assessments`) are reported as ambiguous rather than
-    # ignored, because no character class can tell a cycle marker from a
-    # different section's title, and blocking with an actionable message is the
-    # one outcome that neither reads a stale verdict nor skips a current one.
-    near_miss = re.compile(rf"^##[ \t]+{re.escape(heading)}.*$", re.MULTILINE | re.IGNORECASE)
+    exact = _exact_heading_re(heading)
+    near_miss = _near_miss_heading_re(heading)
 
     masked = masker(content)
     matches = list(exact.finditer(masked))
@@ -514,8 +566,7 @@ def count_exact_sections(
     the recorded round-trips to tell a fresh verdict from one already acted on
     (story 162-47, AC-B3).
     """
-    exact = re.compile(rf"^##[ \t]+{re.escape(heading)}[ \t]*$", re.MULTILINE | re.IGNORECASE)
-    return len(exact.findall(masker(content)))
+    return len(_exact_heading_re(heading).findall(masker(content)))
 
 
 # The preamble ends at the first assessment section. Everything above it is the
