@@ -166,7 +166,18 @@ def pf_project_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     )
 
     monkeypatch.setenv("PF_PROJECT_DIR", str(project))
-    for ambient in ("PROJECT_ROOT", "CLAUDE_PROJECT_DIR", "PF_THEME", "SESSION_ID"):
+    # FRAME_PROJECT_DIR is cleared because it OUTRANKS PF_PROJECT_DIR in both
+    # resolvers (ws_push and, since 162-49's rework, data_proxy). Leaving it set
+    # would let an ambient value from a running Frame server redirect resolution
+    # straight past this fixture — the docstring's "every other ambient variable"
+    # claim was previously false for the one variable production actually sets.
+    for ambient in (
+        "FRAME_PROJECT_DIR",
+        "PROJECT_ROOT",
+        "CLAUDE_PROJECT_DIR",
+        "PF_THEME",
+        "SESSION_ID",
+    ):
         monkeypatch.delenv(ambient, raising=False)
 
     return project

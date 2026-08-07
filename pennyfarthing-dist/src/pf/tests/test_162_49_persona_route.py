@@ -162,9 +162,7 @@ class TestPersonaRouteReachesLoadPersona:
         assert "/" not in character, f"character looks like a path: {character!r}"
         assert character != "Unknown", "agent name did not resolve to a themed character"
 
-    def test_persona_tracks_a_different_active_agent(
-        self, client: TestClient, active_agent
-    ):
+    def test_persona_tracks_a_different_active_agent(self, client: TestClient, active_agent):
         """AC4: Changing the active agent changes the persona returned.
 
         Guards against a hardcoded agent name satisfying the tests above.
@@ -181,8 +179,7 @@ class TestPersonaRouteReachesLoadPersona:
         response = client.get("/api/persona/full")
 
         assert response.status_code == 200, (
-            f"expected 200 from /api/persona/full, got {response.status_code}: "
-            f"{response.text}"
+            f"expected 200 from /api/persona/full, got {response.status_code}: {response.text}"
         )
         data = response.json()
         missing = PERSONA_CONTRACT_KEYS - set(data)
@@ -198,9 +195,7 @@ class TestPersonaRouteReachesLoadPersona:
 class TestPersonaRouteAbsentInputs:
     """404s must remain 404s — and must say which 404 they are."""
 
-    def test_no_active_agent_returns_no_active_persona(
-        self, client: TestClient, active_agent
-    ):
+    def test_no_active_agent_returns_no_active_persona(self, client: TestClient, active_agent):
         """AC5: Empty ``.session/agents/`` → 404 "No active persona"."""
         active_agent(None)
 
@@ -209,9 +204,7 @@ class TestPersonaRouteAbsentInputs:
         assert response.status_code == 404
         assert response.json()["error"] == "No active persona"
 
-    def test_unknown_agent_returns_no_active_persona(
-        self, client: TestClient, active_agent
-    ):
+    def test_unknown_agent_returns_no_active_persona(self, client: TestClient, active_agent):
         """AC5: An agent absent from the theme resolves to no persona, not a 500."""
         active_agent("nonexistent-role")
 
@@ -322,7 +315,7 @@ class TestCwdIndependence:
 
         assert os.environ.get("PF_PROJECT_DIR") == str(pf_project_dir)
         assert (pf_project_dir / ".pennyfarthing").is_dir()
-        for ambient in ("PROJECT_ROOT", "CLAUDE_PROJECT_DIR", "PF_THEME"):
+        for ambient in ("FRAME_PROJECT_DIR", "PROJECT_ROOT", "CLAUDE_PROJECT_DIR", "PF_THEME"):
             assert ambient not in os.environ, (
                 f"{ambient} is set and can redirect project-root resolution"
             )
@@ -350,8 +343,7 @@ class TestCwdIndependence:
 
         distinct = set(observed.values())
         assert len(distinct) == 1, (
-            "persona route response varies with cwd — suite counts are not "
-            f"trustworthy: {observed}"
+            f"persona route response varies with cwd — suite counts are not trustworthy: {observed}"
         )
         status, _body = distinct.pop()
         assert status == 200
@@ -379,4 +371,200 @@ class TestCwdIndependence:
         assert not offenders, (
             "routes short-circuited on project detection despite PF_PROJECT_DIR "
             f"naming a real project: {offenders}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Rework round 1 — the four blocking review findings, each pinned
+# ---------------------------------------------------------------------------
+#
+# Every fix below was rejected as unpinned or wrong on the first pass. The
+# assertions here exist so a later refactor cannot silently undo them — which is
+# precisely the failure mode this whole story is about.
+
+# The extra keys /full adds on top of PERSONA_CONTRACT_KEYS. Unpinned on the
+# first pass: deleting the entire `if full:` block left 85/85 green (B4).
+FULL_ONLY_KEYS = {
+    "roleTitle",
+    "quirk",
+    "motto",
+    "helperName",
+    "helperStyle",
+}
+
+
+class TestFullContractIsPinned:
+    """B4: /api/persona/full's extra keys are asserted, not just counted."""
+
+    def test_full_payload_carries_every_full_only_key(self, client: TestClient):
+        """AC3: the superset is a specific set of keys, not any superset."""
+        data = client.get("/api/persona/full").json()
+
+        missing = FULL_ONLY_KEYS - set(data)
+        assert not missing, f"/full payload missing its own contract keys: {sorted(missing)}"
+
+    def test_full_payload_values_come_from_the_theme(self, client: TestClient):
+        """B4: values, not just keys — deleting the block must fail loudly.
+
+        Every value below is declared for ``dev`` in the conftest theme.
+        """
+        data = client.get("/api/persona/full").json()
+
+        assert data["roleTitle"] == "Developer"
+        assert data["quirk"] == "annotates everything"
+        assert data["motto"] == "Correctness before speed."
+        assert data["helperName"] == "Difference Engine"
+        assert data["helperStyle"] == "mechanical"
+
+    def test_base_payload_omits_the_full_only_keys(self, client: TestClient):
+        """AC2/AC3: base and /full are genuinely different payloads.
+
+        Without this, ``full=True`` could become a no-op and both endpoints would
+        still satisfy "superset of the base keys".
+        """
+        data = client.get("/api/persona").json()
+
+        leaked = FULL_ONLY_KEYS & set(data)
+        assert not leaked, f"base payload leaked /full-only keys: {sorted(leaked)}"
+
+    def test_absent_theme_fields_serialize_as_empty_strings(self, client: TestClient, active_agent):
+        """B4: ``tea`` declares no quirk and no helper — those keys stay present.
+
+        Pins the None-to-"" coercion rather than leaving it accidental; a consumer
+        reading ``data["helperName"]`` must not KeyError on a sparse theme entry.
+        """
+        active_agent("tea")
+
+        data = client.get("/api/persona/full").json()
+
+        assert data["quirk"] == ""
+        assert data["helperName"] == ""
+        assert data["helperStyle"] == ""
+        assert data["motto"] == "Prove it breaks."
+
+
+class TestProductionProjectDirResolution:
+    """B1: the route must read the variable production actually sets."""
+
+    def test_frame_project_dir_alone_resolves_the_persona(
+        self, pf_project_dir: Path, run_from_cwd, tmp_path: Path, monkeypatch
+    ):
+        """B1/AC4: FRAME_PROJECT_DIR is the only project-dir var production sets.
+
+        ``launcher.py:128`` exports FRAME_PROJECT_DIR when Frame is spawned;
+        nothing anywhere sets PF_PROJECT_DIR outside tests. With only the
+        production variable present and the cwd somewhere else, the route used to
+        fall through to ``os.getcwd()`` and 404 with "Not a Pennyfarthing
+        project" while the WebSocket channel returned the payload.
+        """
+        monkeypatch.delenv("PF_PROJECT_DIR", raising=False)
+        monkeypatch.setenv("FRAME_PROJECT_DIR", str(pf_project_dir))
+        run_from_cwd(tmp_path)
+
+        response = TestClient(create_app()).get("/api/persona")
+
+        assert response.status_code == 200, (
+            f"route ignored FRAME_PROJECT_DIR and fell back to cwd: {response.text}"
+        )
+        assert response.json()["character"] == "Ada Lovelace"
+
+    def test_frame_project_dir_outranks_pf_project_dir(
+        self, pf_project_dir: Path, tmp_path: Path, monkeypatch
+    ):
+        """B1: precedence matches ws_push — FRAME_PROJECT_DIR wins.
+
+        Both transports share one payload builder; if they disagree about which
+        directory to build it for, they return different answers for one request.
+        """
+        decoy = tmp_path / "decoy-not-a-pf-project"
+        decoy.mkdir()
+        monkeypatch.setenv("PF_PROJECT_DIR", str(decoy))
+        monkeypatch.setenv("FRAME_PROJECT_DIR", str(pf_project_dir))
+
+        response = TestClient(create_app()).get("/api/persona")
+
+        assert response.status_code == 200, response.text
+        assert response.json()["character"] == "Ada Lovelace"
+
+    def test_both_transports_agree_under_production_env(
+        self, pf_project_dir: Path, run_from_cwd, tmp_path: Path, monkeypatch
+    ):
+        """B1: the HTTP route and the WebSocket fetcher return the same payload.
+
+        The measured symptom of the divergence: identical env, one 404 and one
+        full payload. Assert the two resolvers cannot drift again.
+        """
+        from pf.frame.ws_push import fetch_persona
+
+        monkeypatch.delenv("PF_PROJECT_DIR", raising=False)
+        monkeypatch.setenv("FRAME_PROJECT_DIR", str(pf_project_dir))
+        run_from_cwd(tmp_path)
+
+        http_payload = TestClient(create_app()).get("/api/persona").json()
+
+        assert http_payload == fetch_persona()
+
+
+class TestPersonaFetchDegradesLoudly:
+    """B2: a project-dir resolution failure warns and degrades — never escapes."""
+
+    def test_unlinked_cwd_warns_and_returns_empty(self, monkeypatch, tmp_path: Path):
+        """B2: ``os.getcwd()`` raises once the cwd is unlinked.
+
+        Reachable in production: the launcher sets the server's cwd to the
+        project dir, so a ``git worktree remove`` / ``mv`` / tmpdir cleanup while
+        Frame is alive makes every resolution raise. ``poll_and_broadcast``
+        swallows exceptions with ``except Exception: pass``, so an escape here
+        stops the persona panel updating with zero diagnostic.
+        """
+        from pf.frame.ws_push import fetch_persona
+
+        for ambient in ("FRAME_PROJECT_DIR", "PF_PROJECT_DIR"):
+            monkeypatch.delenv(ambient, raising=False)
+
+        doomed = tmp_path / "doomed-cwd"
+        doomed.mkdir()
+        monkeypatch.chdir(doomed)
+        doomed.rmdir()
+
+        with pytest.warns(UserWarning, match="Failed to load persona"):
+            assert fetch_persona() == {}
+
+
+class TestPersonaRouteDoesNotBlockTheEventLoop:
+    """B3: the synchronous builder must not run on the ASGI event loop."""
+
+    def test_builder_runs_off_the_event_loop_thread(self, client: TestClient, monkeypatch):
+        """B3: ``build_persona_payload`` does blocking network I/O.
+
+        ``resolve_portrait_path`` → ``portrait_cdn.fetch_portrait`` walks four
+        size buckets at ``urlopen(timeout=30)`` each and does not cache a miss —
+        up to ~120s per request. Run inline in an ``async def`` handler that
+        stalls the entire loop (measured: a concurrent ``/ping`` blocked 4s).
+        Assert the builder executes on a worker thread, not the loop's.
+        """
+        import asyncio as _asyncio
+
+        observed: dict[str, bool] = {}
+
+        def _spy(project_dir, full=False):
+            # A running event loop is only visible from the loop's OWN thread.
+            # Reachable here => the builder is executing on the loop and every
+            # blocking urlopen inside it stalls the whole server. Comparing
+            # thread idents against the test's would prove nothing: TestClient
+            # already runs the app in a separate thread.
+            try:
+                _asyncio.get_running_loop()
+                observed["on_loop"] = True
+            except RuntimeError:
+                observed["on_loop"] = False
+            return {"character": "Ada Lovelace"}
+
+        monkeypatch.setattr("pf.frame.ws_push.build_persona_payload", _spy)
+
+        assert client.get("/api/persona").status_code == 200
+        assert observed, "build_persona_payload was never called"
+        assert not observed["on_loop"], (
+            "build_persona_payload ran on the event-loop thread — its blocking "
+            "network I/O stalls every other request for up to ~120s"
         )

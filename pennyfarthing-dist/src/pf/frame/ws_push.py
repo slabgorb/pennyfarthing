@@ -550,7 +550,21 @@ def build_persona_payload(project_dir: str | Path, full: bool = False) -> dict[s
 
 def fetch_persona() -> dict[str, Any]:
     """Fetch active persona using the same agent resolution as statusline."""
-    return build_persona_payload(_get_project_dir())
+    try:
+        project_dir = _get_project_dir()
+    except OSError as exc:
+        # Story 162-49 (rework): resolution must stay INSIDE a try. It used to be
+        # the first statement of the try block below; hoisting it into the caller
+        # let it escape. ``os.getcwd()`` raises FileNotFoundError once the cwd has
+        # been unlinked — reachable, because the launcher sets the server's cwd to
+        # the project dir, so a `git worktree remove`, a `mv`, or a tmpdir cleanup
+        # while Frame is alive triggers it. The escape landed in
+        # ``poll_and_broadcast``'s ``except Exception: pass``, so the persona panel
+        # stopped updating with zero diagnostic — the silent swallow epic 160 spent
+        # five stories removing. Warn (fail-loud) then degrade to {}, unchanged.
+        warnings.warn(f"Failed to load persona: {exc}", stacklevel=2)
+        return {}
+    return build_persona_payload(project_dir)
 
 
 def fetch_benchmark_history() -> dict[str, Any]:

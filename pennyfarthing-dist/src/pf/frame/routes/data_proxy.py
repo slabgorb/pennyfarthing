@@ -9,6 +9,7 @@ Now they import the Python modules directly, eliminating that overhead.
 
 from __future__ import annotations
 
+import asyncio
 import os
 import platform
 import sys
@@ -33,8 +34,19 @@ _start_time = time.time()
 
 
 def _get_project_dir() -> str:
-    """Resolve project directory from env or cwd."""
-    return os.environ.get("PF_PROJECT_DIR", os.getcwd())
+    """Resolve project directory from env or cwd.
+
+    Story 162-49 (rework): ``FRAME_PROJECT_DIR`` is checked FIRST because it is
+    the only project-dir variable production actually sets — ``launcher.py:128``
+    exports it when ``pf frame start [--project-dir X]`` spawns the server, and
+    nothing in ``pf.frame`` or ``pf.launch`` ever sets ``PF_PROJECT_DIR``.
+    Reading only ``PF_PROJECT_DIR`` meant every route here fell through to
+    ``os.getcwd()`` in production while ``ws_push._get_project_dir()`` (same
+    precedence as below) resolved correctly — two transports, one shared
+    builder, two different answers. The persona routes 404'd with "Not a
+    Pennyfarthing project" whenever the server's cwd was not the project dir.
+    """
+    return os.environ.get("FRAME_PROJECT_DIR", os.environ.get("PF_PROJECT_DIR", os.getcwd()))
 
 
 def _detect_pf_project(project_dir: str) -> bool:
@@ -62,7 +74,7 @@ def _safe_exc(exc: Exception) -> str:
 persona_router = APIRouter(prefix="/api/persona", tags=["persona"])
 
 
-def _persona_response(full: bool) -> JSONResponse:
+async def _persona_response(full: bool) -> JSONResponse:
     """Shared body for both persona routes (story 162-49).
 
     Both routes used to build their own persona, calling
@@ -73,8 +85,17 @@ def _persona_response(full: bool) -> JSONResponse:
     already-shipped, already-consumed implementation of exactly this: agent
     resolution from ``.session/agents/``, the correct ``load_persona`` call,
     portrait resolution, and the payload shape the TUI header reads. Delegate to
-    it rather than keeping a second, broken copy. The project dir is passed in
-    explicitly so resolution follows ``PF_PROJECT_DIR``, never ``os.getcwd()``.
+    it rather than keeping a second, broken copy.
+
+    Story 162-49 (rework): the builder is offloaded with ``asyncio.to_thread``
+    (the pattern at ``routes/analysis.py:63``) because it is fully synchronous
+    and does blocking network I/O — ``resolve_portrait_path`` →
+    ``portrait_cdn.fetch_portrait`` tries all four size buckets with
+    ``urlopen(timeout=30)`` each, and a miss is not cached, so every request
+    retries. Called inline it stalled the whole event loop — WebSocket pushes,
+    OTLP ingest, ``/health`` — for the duration. The WebSocket path already
+    offloads this same callable via ``run_in_executor``; this was the only
+    unoffloaded caller.
     """
     project_dir = _get_project_dir()
     if not _detect_pf_project(project_dir):
@@ -82,7 +103,7 @@ def _persona_response(full: bool) -> JSONResponse:
 
     from pf.frame.ws_push import build_persona_payload
 
-    persona = build_persona_payload(project_dir, full=full)
+    persona = await asyncio.to_thread(build_persona_payload, project_dir, full=full)
     if not persona:
         return JSONResponse({"error": "No active persona"}, status_code=404)
     return JSONResponse(persona)
@@ -90,12 +111,12 @@ def _persona_response(full: bool) -> JSONResponse:
 
 @persona_router.get("/")
 async def get_persona() -> JSONResponse:
-    return _persona_response(full=False)
+    return await _persona_response(full=False)
 
 
 @persona_router.get("/full")
 async def get_persona_full() -> JSONResponse:
-    return _persona_response(full=True)
+    return await _persona_response(full=True)
 
 
 # ---------------------------------------------------------------------------

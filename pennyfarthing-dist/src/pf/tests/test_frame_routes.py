@@ -733,9 +733,7 @@ class TestInlineEndpoints:
 class TestBackwardCompatibility:
     """Ensure response shapes match the Node.js Express server."""
 
-    def test_error_responses_have_error_field(
-        self, client: TestClient, pf_project_dir: Path
-    ):
+    def test_error_responses_have_error_field(self, client: TestClient, pf_project_dir: Path):
         """AC5: Error responses use {"error": "..."} shape.
 
         Story 162-49: the ``if response.status_code == 404:`` guard meant this
