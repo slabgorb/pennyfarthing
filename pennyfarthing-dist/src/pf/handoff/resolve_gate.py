@@ -19,7 +19,7 @@ from pathlib import Path
 
 import yaml
 
-from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs
+from pf.workflow.helpers import get_all_workflows_dirs, resolve_workflow_file
 
 
 def resolve_gate(
@@ -337,20 +337,27 @@ def _result(
 
 
 def _find_workflow_yaml(project_root: Path, workflow: str) -> Path | None:
-    return find_workflow_file(get_all_workflows_dirs(project_root), workflow)
+    return resolve_workflow_file(workflow, project_root)
 
 
 def _list_available_workflows(project_root: Path) -> list[str]:
-    """List available workflow names by scanning the workflows directory."""
-    workflows_dir = project_root / ".pennyfarthing" / "workflows"
-    if not workflows_dir.is_dir():
-        return []
+    """List workflow names that ``_find_workflow_yaml`` could actually resolve.
+
+    Enumerates the same tiers the resolver searches, dist included, so the
+    "available workflows" hint in a gate error can never omit a name that
+    resolution would have found.
+    """
     names: set[str] = set()
-    for path in workflows_dir.iterdir():
-        if path.is_file() and path.suffix == ".yaml":
-            names.add(path.stem)
-        elif path.is_dir() and (path / "workflow.yaml").exists():
-            names.add(path.name)
+    for workflows_dir in get_all_workflows_dirs(project_root, include_dist=True):
+        try:
+            entries = list(workflows_dir.iterdir())
+        except OSError:
+            continue
+        for path in entries:
+            if path.is_file() and path.suffix == ".yaml":
+                names.add(path.stem)
+            elif path.is_dir() and (path / "workflow.yaml").exists():
+                names.add(path.name)
     return sorted(names)
 
 

@@ -292,9 +292,9 @@ def workflow_route_cmd(story_id: str, output_json: bool):
     """
     from pf.common.config import get_project_root
     from pf.workflow.helpers import (
-        find_workflow_file,
         get_all_workflows_dirs,
         load_workflow_data,
+        resolve_workflow_file,
     )
 
     root = get_project_root()
@@ -322,8 +322,7 @@ def workflow_route_cmd(story_id: str, output_json: bool):
 
     # Priority 1: Explicit workflow field on story
     if story_workflow:
-        workflows_dirs = get_all_workflows_dirs(root)
-        wf_file = find_workflow_file(workflows_dirs, story_workflow)
+        wf_file = resolve_workflow_file(story_workflow, root)
         if wf_file:
             result = {
                 "workflow": story_workflow,

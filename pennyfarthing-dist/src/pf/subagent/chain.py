@@ -15,7 +15,7 @@ from typing import Any
 import yaml
 
 from pf.subagent.spawn import build_spawn_config
-from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs
+from pf.workflow.helpers import resolve_workflow_file
 
 
 def extract_handoff_path(
@@ -196,10 +196,16 @@ def chain_next_phase(
 
 def _load_workflow_phases(workflow: str, project_root: Path) -> list[dict] | None:
     """Load phases list from workflow YAML."""
-    path = find_workflow_file(get_all_workflows_dirs(project_root), workflow)
+    path = resolve_workflow_file(workflow, project_root)
     if path is not None:
-        data = yaml.safe_load(path.read_text())
-        phases = data.get("workflow", {}).get("phases", [])
-        if isinstance(phases, list) and phases:
-            return phases
+        try:
+            data = yaml.safe_load(path.read_text())
+            phases = data.get("workflow", {}).get("phases", [])
+            if isinstance(phases, list) and phases:
+                return phases
+        except Exception:
+            # Malformed, empty or non-mapping YAML degrades to "no phases"
+            # (project rule 6), matching every sibling loader. Never raise:
+            # an empty or half-written workflow file must not crash chaining.
+            return None
     return None

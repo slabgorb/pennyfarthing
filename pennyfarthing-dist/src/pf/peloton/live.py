@@ -13,16 +13,14 @@ from __future__ import annotations
 
 import json
 import logging
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import subprocess
-
 logger = logging.getLogger(__name__)
 
-from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs, load_workflow_data
-
+from pf.workflow.helpers import load_workflow_data, resolve_workflow_file
 
 _STATE_FILE = "peloton-state.json"
 _CLAUDE_DIR = Path.home() / ".claude"
@@ -126,8 +124,7 @@ def get_workflow_phases(workflow_name: str, project_root: Path | None = None) ->
         pass
 
     for root in roots_to_try:
-        workflows_dirs = get_all_workflows_dirs(root)
-        wf_file = find_workflow_file(workflows_dirs, workflow_name)
+        wf_file = resolve_workflow_file(workflow_name, root)
         if wf_file is not None:
             data = load_workflow_data(wf_file)
             phases = data.get("workflow", {}).get("phases", [])
@@ -162,8 +159,7 @@ def get_workflow_agents(workflow_name: str, project_root: Path | None = None) ->
         pass
 
     for root in roots_to_try:
-        workflows_dirs = get_all_workflows_dirs(root)
-        wf_file = find_workflow_file(workflows_dirs, workflow_name)
+        wf_file = resolve_workflow_file(workflow_name, root)
         if wf_file is not None:
             data = load_workflow_data(wf_file)
             agents = _extract_agents(data)

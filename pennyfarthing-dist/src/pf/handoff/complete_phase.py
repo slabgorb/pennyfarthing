@@ -16,7 +16,7 @@ from pathlib import Path
 
 import yaml
 
-from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs
+from pf.workflow.helpers import resolve_workflow_file
 
 # Mapping from setting keys to (subagent name, dispatch tag or None)
 _SUBAGENT_SETTING_MAP: dict[str, tuple[str, str | None]] = {
@@ -384,7 +384,7 @@ def _calc_duration(started_str: str, ended_str: str) -> str:
 
 def _get_phase_tandem(project_root: Path, workflow: str, phase: str) -> dict | None:
     """Return tandem config for a phase, or None if no tandem block."""
-    path = find_workflow_file(get_all_workflows_dirs(project_root), workflow)
+    path = resolve_workflow_file(workflow, project_root)
     if path is not None:
         try:
             data = yaml.safe_load(path.read_text())
@@ -397,7 +397,7 @@ def _get_phase_tandem(project_root: Path, workflow: str, phase: str) -> dict | N
 
 
 def _get_phase_agent(project_root: Path, workflow: str, phase: str) -> str:
-    path = find_workflow_file(get_all_workflows_dirs(project_root), workflow)
+    path = resolve_workflow_file(workflow, project_root)
     if path is not None:
         try:
             data = yaml.safe_load(path.read_text())
@@ -458,7 +458,7 @@ def _resolve_one(value: str, phase_names: set[str], agent_to_phases: dict[str, l
 
 def _load_workflow_phases(project_root: Path, workflow: str) -> list[dict]:
     """Load phases list from workflow YAML."""
-    path = find_workflow_file(get_all_workflows_dirs(project_root), workflow)
+    path = resolve_workflow_file(workflow, project_root)
     if path is not None:
         try:
             data = yaml.safe_load(path.read_text())

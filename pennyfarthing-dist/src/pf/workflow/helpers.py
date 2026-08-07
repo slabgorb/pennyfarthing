@@ -12,7 +12,29 @@ from pathlib import Path
 
 import yaml
 
-from pf.common.config import get_project_root
+from pf.common.config import get_dist_root, get_project_root
+
+
+def is_contained_path(candidate: Path, base_dir: Path) -> bool:
+    """Return True if ``candidate`` resolves to a path inside ``base_dir``.
+
+    Guards against path traversal (CWE-22). Workflow names are interpolated
+    into path joins (``{name}.yaml``, ``{name}/workflow.yaml``) and reach here
+    straight from a session file's ``**Workflow:**`` line, so a crafted name
+    such as ``../../evil`` — or an absolute path, which makes ``Path.__truediv__``
+    discard the base entirely — can otherwise load YAML from outside the
+    workflows directory. That YAML's ``agent:`` field decides which agent owns a
+    phase. ``resolve()`` is used so symlink escapes are caught too; a purely
+    lexical ``..`` check would not catch them.
+
+    Mirrors ``pf.sprint.shard_merge.is_safe_shard_path`` (epic-162, 26cb554).
+
+    On any resolution error the path is treated as unsafe (fail closed).
+    """
+    try:
+        return candidate.resolve().is_relative_to(base_dir.resolve())
+    except (OSError, ValueError, RuntimeError):
+        return False
 
 
 def get_workflows_dir(project_root: Path | None = None) -> Path:
@@ -27,8 +49,30 @@ def get_project_workflows_dir(project_root: Path | None = None) -> Path:
     return root / ".pennyfarthing" / "project" / "workflows"
 
 
-def get_all_workflows_dirs(project_root: Path | None = None) -> list[Path]:
-    """Get workflow directories in priority order (project first, then dist)."""
+def get_dist_workflows_dir(project_root: Path | None = None) -> Path:
+    """Get the installed dist workflows directory (the packaged floor tier)."""
+    root = project_root or get_project_root()
+    dist_root = get_dist_root(project_root=root)
+    base = dist_root if dist_root else root / "pennyfarthing-dist"
+    return base / "workflows"
+
+
+def get_all_workflows_dirs(
+    project_root: Path | None = None, *, include_dist: bool = False
+) -> list[Path]:
+    """Get workflow directories in priority order.
+
+    Order: ``.pennyfarthing/project/workflows/`` → ``.pennyfarthing/workflows/``
+    → (optionally) the installed dist. Project tiers always outrank dist.
+
+    Args:
+        project_root: Project root path (auto-detected if not provided)
+        include_dist: Append the packaged dist directory as the lowest-priority
+            floor. Needed by anything that must resolve a workflow in a
+            pip/npm-installed consumer project, where the project ships no
+            workflows dir at all. Off by default so listing commands keep
+            enumerating only project-local definitions.
+    """
     root = project_root or get_project_root()
     dirs: list[Path] = []
     project_dir = get_project_workflows_dir(root)
@@ -37,7 +81,42 @@ def get_all_workflows_dirs(project_root: Path | None = None) -> list[Path]:
     dist_dir = get_workflows_dir(root)
     if dist_dir.is_dir():
         dirs.append(dist_dir)
+    if include_dist:
+        packaged = get_dist_workflows_dir(root)
+        if packaged.is_dir() and packaged.resolve() not in {d.resolve() for d in dirs}:
+            dirs.append(packaged)
     return dirs
+
+
+def resolve_workflow_file(workflow_name: str, project_root: Path | None = None) -> Path | None:
+    """Resolve a workflow YAML for readers AND writers, dist included.
+
+    The single precedence definition for the whole codebase:
+
+    1. ``{root}/.pennyfarthing/project/workflows/``
+    2. ``{root}/.pennyfarthing/workflows/``
+    3. the installed dist (``get_dist_root()``, else ``{root}/pennyfarthing-dist/``)
+
+    Flat (``{name}.yaml``) and nested (``{name}/workflow.yaml``) layouts are
+    accepted at every tier. Project tiers outrank dist; dist is the floor, not
+    an override. Every caller must use this so that no two readers of the same
+    fact can disagree — a reader resolving a phase owner while a writer reports
+    "no such workflow" is what lets agent names get stamped into a session's
+    ``**Phase:**`` line.
+
+    The first tier holding a *readable, existing* file wins, and that file is
+    authoritative: callers must degrade to None/[]/False when it is malformed
+    rather than falling through to a lower tier, because a fall-through would
+    answer from a file the other side never sees. Note the narrow exception —
+    an entry that is present but unusable (a broken symlink, or a ``{name}/``
+    directory with no ``workflow.yaml``) fails the existence check, so
+    resolution does continue past it.
+
+    Returns:
+        Path to the workflow file, or None if no tier has one.
+    """
+    root = project_root or get_project_root()
+    return find_workflow_file(get_all_workflows_dirs(root, include_dist=True), workflow_name)
 
 
 def get_session_dir(project_root: Path | None = None) -> Path:
@@ -51,6 +130,13 @@ def find_workflow_file(workflows_dir: list[Path] | Path, workflow_name: str) -> 
 
     Supports both flat (name.yaml) and nested (name/workflow.yaml) layouts.
     Accepts a single Path or list of Paths (searched in order, first match wins).
+    Flat wins over nested within a single directory.
+
+    ``workflow_name`` is untrusted — it arrives from a session file's
+    ``**Workflow:**`` line — so every candidate is checked for containment
+    within the directory it was built from (CWE-22). A name that traverses out,
+    is absolute, or resolves through a symlink leading outside the directory is
+    skipped rather than loaded.
 
     Returns:
         Path to the workflow file, or None if not found.
@@ -58,13 +144,9 @@ def find_workflow_file(workflows_dir: list[Path] | Path, workflow_name: str) -> 
     dirs = [workflows_dir] if isinstance(workflows_dir, Path) else workflows_dir
 
     for d in dirs:
-        flat = d / f"{workflow_name}.yaml"
-        if flat.exists():
-            return flat
-
-        nested = d / workflow_name / "workflow.yaml"
-        if nested.exists():
-            return nested
+        for candidate in (d / f"{workflow_name}.yaml", d / workflow_name / "workflow.yaml"):
+            if candidate.exists() and is_contained_path(candidate, d):
+                return candidate
 
     return None
 

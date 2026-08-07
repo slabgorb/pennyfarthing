@@ -15,41 +15,9 @@ from typing import Any
 
 import yaml
 
-from pf.common.config import get_dist_root, get_project_root
+from pf.common.config import get_project_root
 from pf.prime.models import WorkflowState, WorkflowStatus
-from pf.workflow.helpers import find_workflow_file, get_all_workflows_dirs
-
-
-def _resolve_workflow_file(workflow_name: str, root: Path) -> Path | None:
-    """Resolve a workflow YAML, preferring project overrides over the dist copy.
-
-    Precedence (same order ``get_all_workflows_dirs`` establishes for the
-    ``pf workflow`` CLI and peloton):
-
-    1. ``{root}/.pennyfarthing/project/workflows/``
-    2. ``{root}/.pennyfarthing/workflows/``
-    3. dist (``get_dist_root()``, else ``{root}/pennyfarthing-dist/``)
-
-    Flat (``{name}.yaml``) and nested (``{name}/workflow.yaml``) layouts are
-    accepted at every tier. The first tier holding a file is authoritative:
-    callers must return None/False when it is malformed rather than falling
-    through to a lower tier, because the writers (``complete_phase``,
-    ``resolve_gate``) see only that file.
-
-    Args:
-        workflow_name: Workflow name (tdd, trivial, bdd, etc.)
-        root: Project root path
-
-    Returns:
-        Path to the workflow file, or None if no tier has one.
-    """
-    found = find_workflow_file(get_all_workflows_dirs(root), workflow_name)
-    if found is not None:
-        return found
-
-    dist_root = get_dist_root(project_root=root)
-    dist_base = dist_root if dist_root else root / "pennyfarthing-dist"
-    return find_workflow_file(dist_base / "workflows", workflow_name)
+from pf.workflow.helpers import resolve_workflow_file
 
 
 def find_active_session(project_root: Path) -> Path | None:
@@ -183,7 +151,7 @@ def get_phase_owner(workflow: str, phase: str, project_root: Path) -> str | None
     Returns:
         Agent name (sm, tea, dev, reviewer), or None if not found
     """
-    workflow_path = _resolve_workflow_file(workflow, project_root)
+    workflow_path = resolve_workflow_file(workflow, project_root)
     if workflow_path is None:
         return None
 
@@ -375,7 +343,7 @@ def get_phase_tandem_config(
         or None if no tandem config on this phase.
     """
     root = project_root or get_project_root()
-    workflow_path = _resolve_workflow_file(workflow_name, root)
+    workflow_path = resolve_workflow_file(workflow_name, root)
     if workflow_path is None:
         return None
 
@@ -413,7 +381,7 @@ def get_phase_team_config(
         or None if no team config on this phase.
     """
     root = project_root or get_project_root()
-    workflow_path = _resolve_workflow_file(workflow_name, root)
+    workflow_path = resolve_workflow_file(workflow_name, root)
     if workflow_path is None:
         return None
 
@@ -452,7 +420,7 @@ def get_phase_skills(
         or None when there are no required skills for this phase.
     """
     root = project_root or get_project_root()
-    workflow_path = _resolve_workflow_file(workflow_name, root)
+    workflow_path = resolve_workflow_file(workflow_name, root)
     if workflow_path is None:
         return None
 
@@ -519,7 +487,7 @@ def _get_step_config_block(
 ) -> dict[str, Any] | None:
     """Shared helper to extract a config block from a stepped workflow step."""
     root = project_root or get_project_root()
-    candidate = _resolve_workflow_file(workflow_name, root)
+    candidate = resolve_workflow_file(workflow_name, root)
     if candidate is None:
         return None
 
@@ -554,7 +522,7 @@ def get_phase_gate_recovery(
         True if the phase gate has recovery config, False otherwise.
     """
     root = project_root or get_project_root()
-    workflow_path = _resolve_workflow_file(workflow_name, root)
+    workflow_path = resolve_workflow_file(workflow_name, root)
     if workflow_path is None:
         return False
 
