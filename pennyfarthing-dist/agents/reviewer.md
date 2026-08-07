@@ -204,12 +204,28 @@ Do not skip subagents because "the code looks clean."
 **Total findings:** {N} confirmed, {N} dismissed (with rationale), {N} deferred
 ```
 
+### A REJECTION needs the same evidence as an approval — BLOCKING
+
+The Subagent Results table and the specialist tags are required on the way OUT to
+rework, not only on the way to finish: `complete-phase` runs those checks on the
+`approval_rework` gate type too. A rejection costs Dev a full cycle, so it must be
+as well-evidenced as an approval. All unmet requirements come back in one error.
+
+**Each rework round needs its own verdict.** Append a NEW section under the EXACT
+`## Reviewer Assessment` heading for every round — do not edit the previous
+round's section in place, and do not suffix the heading. `resolve-gate` compares
+the number of exact reviewer sections against `**Round-Trip Count:**`; a verdict
+already routed to rework will not buy a second round, because acting on it twice
+advances the phase twice.
+
 ### Rework re-reviews: tag the cycle — BLOCKING
 
 **On a re-review after rework (the session already carries `**Round-Trip Count:** N`), the approval gate checks that your results are from the CURRENT cycle.** Two rules, both enforced programmatically:
 
 1. **Append a NEW section with the EXACT heading `## Subagent Results`** — do not edit the previous cycle's table in place, and do not suffix the heading (`## Subagent Results (Cycle 2)` blocks the gate as ambiguous). Cycles are identified by repeating the exact heading; the last one is the current cycle.
 2. **Tag the new table with the cycle number:** put `**Cycle: N**` in the section body, where N is the session's `**Round-Trip Count:**` (on a legacy hand-written session that has no such line, its `**Rework Cycle:**` is used instead). Missing or mismatched tag → the gate rejects the approval as stale subagent results.
+
+   **Either route is accepted:** re-run all enabled subagents, or re-verify each previously recorded finding with targeted probes. Targeted re-verification of characterized findings is stronger evidence than a fresh generalist sweep — so it is not a shortcut, and "a full sweep is unaffordable" is never a reason to tag without evidence. State which method you used alongside the tag.
 
    The tag must be **a line of its own, starting at column 0**, spelled `**Cycle: N**` (the gate matches the word case-insensitively, but write it as shown). The gate reads nothing else as a tag: not prose that happens to end in `Cycle: N`, not a table cell, and not a quoted example — code fences, 4-space-indented blocks, backtick spans and HTML comments are all masked before the section is read. A tag under a later `###` subsection belongs to that subsection, not to your table. **Do not write a tag for a cycle you did not re-run** — every tag in the section must match the current cycle, so an old one left in place blocks the approval.
 

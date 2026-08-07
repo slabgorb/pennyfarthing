@@ -57,6 +57,11 @@ workflow:
       output: [code_approval]
       gate:
         type: approval
+        recovery:
+          reviewer-verdict:
+            action: rework
+            target_phase: green
+            max_attempts: 3
 
     - name: accept
       agent: pm

@@ -47,6 +47,11 @@ workflow:
       gate:
         file: gates/approval
         type: approval
+        recovery:
+          reviewer-verdict:
+            action: rework
+            target_phase: implement
+            max_attempts: 3
 
     - name: finish
       agent: sm

@@ -198,6 +198,22 @@ def _make_session(phase: str = "review", round_trip_count: int = 0) -> str:
         **Phase:** verify
         **Status:** GREEN confirmed
 
+        ## Subagent Results
+
+        | # | Specialist | Received | Status |
+        |---|------------|----------|--------|
+        | 1 | reviewer-preflight | Yes | clean |
+        | 2 | reviewer-edge-hunter | Yes | clean |
+        | 3 | reviewer-silent-failure-hunter | Yes | clean |
+        | 4 | reviewer-test-analyzer | Yes | clean |
+        | 5 | reviewer-comment-analyzer | Yes | clean |
+        | 6 | reviewer-type-design | Yes | clean |
+        | 7 | reviewer-security | Yes | clean |
+        | 8 | reviewer-simplifier | Yes | clean |
+        | 9 | reviewer-rule-checker | Yes | clean |
+
+        All received: Yes
+
         ## Reviewer Assessment
 
         **Verdict:** REJECTED
@@ -210,7 +226,14 @@ def _make_session(phase: str = "review", round_trip_count: int = 0) -> str:
         - [TEST] No concerns
         - [DOC] No concerns
         - [TYPE] No concerns
+        - [RULE] No concerns
     """)
+
+
+# The Subagent Results table and the `[RULE]` tag are required because story
+# 162-47 (AC-A8) made the approval subgates run on the REWORK path too — a real
+# `approval_rework` handoff carries both. Every specialist has a row so the
+# outcome does not depend on the local reviewer_subagents toggles.
 
 
 def _make_approved_session() -> str:
@@ -323,7 +346,11 @@ class TestBackwardPhaseTransition:
         session.write_text(_make_session(phase="review"))
 
         result = complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -338,7 +365,11 @@ class TestBackwardPhaseTransition:
         session.write_text(_make_session(phase="review"))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -359,7 +390,11 @@ class TestBackwardPhaseTransition:
         session.write_text(_make_session(phase="review"))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -375,7 +410,11 @@ class TestBackwardPhaseTransition:
         session.write_text(_make_session(phase="review", round_trip_count=0))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -392,7 +431,11 @@ class TestBackwardPhaseTransition:
         session.write_text(_make_session(phase="review", round_trip_count=1))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -419,7 +462,11 @@ class TestDevReceivesReviewerFindings:
         session.write_text(_make_session(phase="review"))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -437,7 +484,11 @@ class TestDevReceivesReviewerFindings:
         session.write_text(_make_session(phase="review"))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -451,7 +502,11 @@ class TestDevReceivesReviewerFindings:
         session.write_text(_make_session(phase="review"))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -495,7 +550,11 @@ class TestDevFixesToReview:
 
         # Step 1: review → green (rework)
         r1 = complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
         assert r1["status"] == "success"
@@ -507,7 +566,11 @@ class TestDevFixesToReview:
 
         # Step 2: green → verify
         r2 = complete_phase(
-            "143-10", "tdd", "green", "verify", "dev_exit",
+            "143-10",
+            "tdd",
+            "green",
+            "verify",
+            "dev_exit",
             project_root=project,
         )
         assert r2["status"] == "success"
@@ -519,7 +582,11 @@ class TestDevFixesToReview:
 
         # Step 3: verify → review
         r3 = complete_phase(
-            "143-10", "tdd", "verify", "review", "quality_pass",
+            "143-10",
+            "tdd",
+            "verify",
+            "review",
+            "quality_pass",
             project_root=project,
         )
         assert r3["status"] == "success"
@@ -547,7 +614,11 @@ class TestDevFixesToReview:
 
         # Rework: review → green
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -558,7 +629,11 @@ class TestDevFixesToReview:
 
         # green → verify
         complete_phase(
-            "143-10", "tdd", "green", "verify", "dev_exit",
+            "143-10",
+            "tdd",
+            "green",
+            "verify",
+            "dev_exit",
             project_root=project,
         )
 
@@ -568,7 +643,11 @@ class TestDevFixesToReview:
 
         # verify → review
         complete_phase(
-            "143-10", "tdd", "verify", "review", "quality_pass",
+            "143-10",
+            "tdd",
+            "verify",
+            "review",
+            "quality_pass",
             project_root=project,
         )
 
@@ -613,7 +692,11 @@ class TestDevFixesToReview:
 
         # review → finish
         r = complete_phase(
-            "143-10", "tdd", "review", "finish", "approval",
+            "143-10",
+            "tdd",
+            "review",
+            "finish",
+            "approval",
             project_root=project,
         )
         assert r["status"] == "success"

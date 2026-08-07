@@ -16,7 +16,14 @@ from pathlib import Path
 
 import yaml
 
+from pf.handoff.session_assessment import assessment_heading
 from pf.workflow.helpers import resolve_workflow_file
+
+# The agent whose assessment the approval subgates judge. Its heading comes from
+# the shared formula, never a literal: one truth, one place (SOUL #2). A reader
+# and a writer that disagreed about the heading would search for a section agents
+# are no longer told to write, and every verdict would read as absent.
+_APPROVAL_AGENT = "reviewer"
 
 # Mapping from setting keys to (subagent name, dispatch tag or None)
 _SUBAGENT_SETTING_MAP: dict[str, tuple[str, str | None]] = {
@@ -92,7 +99,7 @@ def complete_phase(
             ),
         }
 
-    content = session_path.read_text()
+    content = session_path.read_text(encoding="utf-8")
 
     from_agent = _get_phase_agent(project_root, workflow, from_phase)
 
@@ -125,54 +132,19 @@ def complete_phase(
                 "error": context_error,
             }
 
-    # Subgate: approval gate requires subagent completion table AND specialist tags
-    if gate_type == "approval":
-        # Which assessment is current must be unambiguous before anything is
-        # judged against it — otherwise the tag check reports every tag missing
-        # when the real problem is a suffixed heading (story 162-21).
-        from pf.handoff.gate_recovery import mask_quoted_blocks, select_last_section
-
-        selected_assessment = select_last_section(
-            content, "Reviewer Assessment", mask_quoted_blocks
-        )
-        if selected_assessment["status"] == "ambiguous":
+    # Subgate: approval-family gates require a subagent completion table AND
+    # specialist tags — on the way OUT to rework as much as on the way to finish.
+    if is_approval_family(gate_type):
+        unmet = _check_approval_requirements(content, gate_type)
+        if unmet:
             return {
                 "status": "error",
                 "session_file": str(session_path),
-                "error": (
-                    f"Cannot determine the current '## Reviewer Assessment' section: "
-                    f"{selected_assessment['detail']}. To fix: repeat the exact "
-                    "`## Reviewer Assessment` heading for each review cycle."
-                ),
-            }
-
-        completion_error = _check_subagent_completion(content)
-        if completion_error:
-            return {
-                "status": "error",
-                "session_file": str(session_path),
-                "error": completion_error,
-            }
-
-        missing = _check_subagent_dispatch(content)
-        if missing:
-            _, enabled_tags = _get_enabled_subagents()
-            return {
-                "status": "error",
-                "session_file": str(session_path),
-                "error": (
-                    f"Reviewer Assessment missing specialist subagent tags: {', '.join(sorted(missing))}. "
-                    f"To fix: Incorporate findings from all enabled specialist subagents in the "
-                    f"Reviewer Assessment using tags: {', '.join(sorted(enabled_tags))}."
-                ),
-            }
-
-        freshness = _check_rework_freshness(content)
-        if not freshness["pass"]:
-            return {
-                "status": "error",
-                "session_file": str(session_path),
-                "error": freshness["message"],
+                # ALL unmet requirements at once. Reporting one per attempt made
+                # the reviewer discover the contract by five sequential gate
+                # failures — a cost the gate charged for its own shape, paid live
+                # in the 162-49 run (story 162-47, AC-B1).
+                "error": " ".join(unmet),
             }
 
     now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -208,14 +180,15 @@ def complete_phase(
         # incremented, every other mention was rewritten to match, and no real
         # counter line was ever recorded — leaving the freshness guard reading
         # cycle 0, i.e. disarmed (story 162-28).
-        from pf.handoff.gate_recovery import (
-            ROUND_TRIP_COUNT_RE,
-            mask_illustrative_regions,
-        )
+        # The locator is shared with every reader (story 162-47, AC-A3): it
+        # returns the last counter line in the session PREAMBLE. A writer that
+        # rewrote the last match anywhere would increment a decoy an agent left
+        # in its own prose, freezing the real counter and disarming the freshness
+        # guard — the 162-28 defect from the other side.
+        from pf.handoff.gate_recovery import find_operative_round_trip_line
 
-        rt_matches = list(ROUND_TRIP_COUNT_RE.finditer(mask_illustrative_regions(content)))
-        if rt_matches:
-            rt_match = rt_matches[-1]
+        rt_match = find_operative_round_trip_line(content)
+        if rt_match is not None:
             new_count = int(rt_match.group(1)) + 1
             content = (
                 content[: rt_match.start()]
@@ -270,7 +243,7 @@ def complete_phase(
     os.close(temp_fd)
     temp_path = Path(temp_path_str)
     try:
-        temp_path.write_text(content)
+        temp_path.write_text(content, encoding="utf-8")
         temp_path.rename(session_path)
     except Exception:
         temp_path.unlink(missing_ok=True)
@@ -307,6 +280,72 @@ def complete_phase(
         "session_file": f".session/{story_id}-session.md",
         "error": None,
     }
+
+
+def is_approval_family(gate_type: str | None) -> bool:
+    """Whether ``gate_type`` is an approval gate or a variant resolved from one.
+
+    Keyed off the FAMILY, not the exact string ``"approval"``. A REJECTED verdict
+    resolves to ``approval_rework``, so an exact-string check enforced reviewer
+    diligence only on the path where the reviewer AGREES with the code and left it
+    unenforced on the path that costs a full Dev cycle. Verified live in the
+    162-21 review: a REJECTED handoff with no ``## Subagent Results`` section was
+    accepted while the byte-identical APPROVED handoff was refused (story 162-47,
+    AC-A8).
+    """
+    if not gate_type:
+        return False
+    return gate_type == "approval" or gate_type.startswith("approval_")
+
+
+def _check_approval_requirements(content: str, gate_type: str) -> list[str]:
+    """Every unmet approval requirement, in the order a reviewer should fix them.
+
+    Returns an empty list when the assessment is compliant. Each entry is a
+    complete, actionable sentence — the caller joins them into ONE error so the
+    full contract is discoverable in a single attempt (AC-B1).
+
+    ``_check_rework_freshness`` is the one subcheck scoped to bare ``approval``:
+    its subject is the staleness of results being used to APPROVE, and demanding a
+    ``**Cycle: N**`` tag on the way out to rework would ask the reviewer to attest
+    freshness for the very cycle it is rejecting (AC-A8, carried from the probed
+    fix including this deliberate exclusion).
+    """
+    from pf.handoff.gate_recovery import mask_quoted_blocks, select_last_section
+
+    heading = assessment_heading(_APPROVAL_AGENT)
+    problems: list[str] = []
+
+    # Which assessment is current must be unambiguous before anything is judged
+    # against it — otherwise the tag check reports every tag missing when the real
+    # problem is a suffixed heading (story 162-21).
+    selected_assessment = select_last_section(content, heading, mask_quoted_blocks)
+    if selected_assessment["status"] == "ambiguous":
+        problems.append(
+            f"Cannot determine the current '## {heading}' section: "
+            f"{selected_assessment['detail']}. To fix: repeat the exact "
+            f"`## {heading}` heading for each review cycle."
+        )
+
+    completion_error = _check_subagent_completion(content)
+    if completion_error:
+        problems.append(completion_error)
+
+    missing = _check_subagent_dispatch(content)
+    if missing:
+        _, enabled_tags = _get_enabled_subagents()
+        problems.append(
+            f"{heading} missing specialist subagent tags: {', '.join(sorted(missing))}. "
+            "To fix: Incorporate findings from all enabled specialist subagents in the "
+            f"{heading} using tags: {', '.join(sorted(enabled_tags))}."
+        )
+
+    if gate_type == "approval":
+        freshness = _check_rework_freshness(content)
+        if not freshness["pass"]:
+            problems.append(freshness["message"])
+
+    return problems
 
 
 def _check_setup_context(project_root: Path, story_id: str) -> str | None:
@@ -387,7 +426,7 @@ def _get_phase_tandem(project_root: Path, workflow: str, phase: str) -> dict | N
     path = resolve_workflow_file(workflow, project_root)
     if path is not None:
         try:
-            data = yaml.safe_load(path.read_text())
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
             for p in data["workflow"]["phases"]:
                 if p["name"] == phase:
                     return p.get("tandem")
@@ -400,7 +439,7 @@ def _get_phase_agent(project_root: Path, workflow: str, phase: str) -> str:
     path = resolve_workflow_file(workflow, project_root)
     if path is not None:
         try:
-            data = yaml.safe_load(path.read_text())
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
             for p in data["workflow"]["phases"]:
                 if p["name"] == phase:
                     return p.get("agent", phase)
@@ -461,14 +500,23 @@ def _load_workflow_phases(project_root: Path, workflow: str) -> list[dict]:
     path = resolve_workflow_file(workflow, project_root)
     if path is not None:
         try:
-            data = yaml.safe_load(path.read_text())
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
             return data.get("workflow", {}).get("phases", [])
         except Exception:
             pass
     return []
 
 
-SUBAGENT_DISPATCH_TAGS = {"[EDGE]", "[SILENT]", "[TEST]", "[DOC]", "[TYPE]", "[SEC]", "[SIMPLE]", "[RULE]"}
+SUBAGENT_DISPATCH_TAGS = {
+    "[EDGE]",
+    "[SILENT]",
+    "[TEST]",
+    "[DOC]",
+    "[TYPE]",
+    "[SEC]",
+    "[SIMPLE]",
+    "[RULE]",
+}
 
 REQUIRED_SUBAGENTS = {
     "reviewer-preflight",
@@ -562,16 +610,14 @@ def _check_subagent_dispatch(content: str) -> set[str]:
     # still masked, so 162-21's fail-open stays closed.
     from pf.handoff.gate_recovery import mask_quoted_blocks, select_last_section
 
-    selected = select_last_section(content, "Reviewer Assessment", mask_quoted_blocks)
+    selected = select_last_section(content, assessment_heading(_APPROVAL_AGENT), mask_quoted_blocks)
     if selected["status"] != "found":
         return required_tags
     assessment = selected["section"]
     return {tag for tag in required_tags if tag not in assessment}
 
 
-_LEGACY_REWORK_COUNTER_RE = re.compile(
-    r"^\*\*Rework Cycle:\*\*[ \t]*(\d+)[ \t]*$", re.MULTILINE
-)
+_LEGACY_REWORK_COUNTER_RE = re.compile(r"^\*\*Rework Cycle:\*\*[ \t]*(\d+)[ \t]*$", re.MULTILINE)
 _LEGACY_COUNTER_LINE_RE = re.compile(r"^.*\*\*Rework Cycle:\*\*.*$", re.MULTILINE)
 # The freshness tag, and nothing that merely resembles one. A standalone column-0
 # `**Cycle: N**` line — the form `agents/reviewer.md` documents. The unanchored,
@@ -646,6 +692,21 @@ def _read_rework_cycle(session_content: str) -> dict:
     return {"status": "absent", "count": 0, "detail": ""}
 
 
+# How the reviewer may honestly satisfy the freshness tag. Naming only the full
+# generalist sweep told a reviewer under context pressure that the honest answer
+# was unaffordable — so it added the tag without re-running anything, and the gate
+# certified the false attestation (story 162-47, AC-B2, observed in the 162-49
+# run). Targeted re-verification of already-characterized findings is STRONGER
+# evidence than a fresh sweep, so it is named as an accepted route and the
+# reviewer is asked to disclose which it used.
+_FRESHNESS_ROUTES = (
+    "Either re-run all enabled subagents, or re-verify each previously recorded "
+    "finding with targeted probes — targeted re-verification of characterized "
+    "findings is accepted, and is stronger evidence than a fresh generalist sweep. "
+    "State which method you used alongside the tag."
+)
+
+
 def _check_rework_freshness(session_content: str) -> dict:
     """Check that subagent results reference the current rework cycle.
 
@@ -694,7 +755,8 @@ def _check_rework_freshness(session_content: str) -> dict:
             "pass": False,
             "message": (
                 f"Rework cycle {cycle} is active but no Subagent Results section found. "
-                "Re-run all enabled subagents for the current cycle."
+                f"To fix: add a `## Subagent Results` section for the current cycle. "
+                f"{_FRESHNESS_ROUTES}"
             ),
             "current_cycle": cycle,
         }
@@ -724,10 +786,10 @@ def _check_rework_freshness(session_content: str) -> dict:
             "message": (
                 f"Rework cycle {cycle} is active but Subagent Results has no cycle tag. "
                 f"To fix: add the line '**Cycle: {cycle}**' to the Subagent Results "
-                "section after re-running all enabled subagents. It must be a line of its "
-                "own, starting at column 0 — a tag quoted in a code fence, an indented "
-                "example, backticks, an HTML comment, a table cell or prose does not count, "
-                "and neither does one under a `###` subsection of this section."
+                "section. It must be a line of its own, starting at column 0 — a tag "
+                "quoted in a code fence, an indented example, backticks, an HTML "
+                "comment, a table cell or prose does not count, and neither does one "
+                f"under a `###` subsection of this section. {_FRESHNESS_ROUTES}"
             ),
             "current_cycle": cycle,
         }
@@ -741,9 +803,8 @@ def _check_rework_freshness(session_content: str) -> dict:
             "message": (
                 f"Stale subagent results: results are from cycle {stale[0]} "
                 f"but current rework cycle is {cycle}. "
-                "To fix: Re-run ALL enabled subagents against the full diff for the "
-                f"current rework cycle before approving, and leave no tag other than "
-                f"'**Cycle: {cycle}**' in the current section."
+                f"To fix: leave no tag other than '**Cycle: {cycle}**' in the current "
+                f"section. {_FRESHNESS_ROUTES}"
             ),
             "current_cycle": cycle,
         }

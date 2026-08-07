@@ -65,6 +65,11 @@ workflow:
         file: gates/approval
         type: approval
         condition: Code review approved, no blocking issues
+        recovery:
+          reviewer-verdict:
+            action: rework
+            target_phase: green
+            max_attempts: 3
       team:
         teammates:
           - agent: architect

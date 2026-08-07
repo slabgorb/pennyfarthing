@@ -322,7 +322,7 @@ def status_cmd(output_json: bool):
 
     if session_dir.is_dir():
         for sf in sorted(session_dir.glob("*-session.md")):
-            content = sf.read_text()
+            content = sf.read_text(encoding="utf-8")
             wf_match = re.search(r"\*\*Workflow:\*\*\s*(\S+)", content)
             ph_match = re.search(r"\*\*Phase:\*\*\s*(\S+)", content)
             sid_match = re.search(r"# Story (\S+)", content)

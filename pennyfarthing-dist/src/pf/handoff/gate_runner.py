@@ -73,7 +73,7 @@ def parse_gate_file(
             "error": f"Gate file not found: {path}",
         }
 
-    content = path.read_text()
+    content = path.read_text(encoding="utf-8")
 
     gate_match = re.search(r"<gate\b[^>]*>", content)
     if not gate_match:
@@ -247,7 +247,9 @@ def apply_strictness_profile(
         return result
 
     # Normalize unknown levels/profiles to standard
-    level = gate_strictness_level if gate_strictness_level in _VALID_STRICTNESS_LEVELS else "standard"
+    level = (
+        gate_strictness_level if gate_strictness_level in _VALID_STRICTNESS_LEVELS else "standard"
+    )
     prof = profile if profile in _VALID_PROFILES else "standard"
 
     result["enforcement"] = _ENFORCEMENT_MATRIX.get((level, prof), "block")

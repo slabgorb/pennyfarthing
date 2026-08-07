@@ -325,8 +325,19 @@ class TestTheRoundTripCounterIsScopedToThePreamble:
         assert read_round_trip_count(session)["status"] == "absent"
 
     def test_a_forged_high_counter_cannot_wedge_the_rework_loop(self, tmp_path) -> None:
-        """tdd.yaml sets ``max_attempts: 3`` — a prose 9 must not exhaust it."""
-        body = "For the record:\n**Round-Trip Count:** 9\n\n**Verdict:** REJECTED — real\n"
+        """tdd.yaml sets ``max_attempts: 3`` — a prose 9 must not exhaust it.
+
+        Two exact reviewer sections against one recorded round-trip, because
+        AC-B3 requires a ruling per dispatched round and this case is about the
+        CEILING, not staleness: with the forged 9 read as operative the ceiling
+        blocks, with the preamble-scoped 1 it does not. That is what discriminates
+        here.
+        """
+        body = (
+            "Cycle 1 findings were addressed.\n\n"
+            "## Reviewer Assessment\n\n"
+            "For the record:\n**Round-Trip Count:** 9\n\n**Verdict:** REJECTED — real\n"
+        )
 
         result = _resolve_with_reviewer_body(tmp_path, body, round_trip_count=1)
 

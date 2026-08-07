@@ -6,6 +6,26 @@ AND that all specialist subagents were dispatched, received, assessed,
 and their results documented with clear decisions. This gate runs after
 the Reviewer agent's review phase to confirm the code has been formally
 approved or rejected before proceeding.
+
+**These checks apply to a REJECTION as much as to an approval.** `resolve-gate`
+resolves a non-APPROVED verdict to the `approval_rework` gate type, and
+`complete-phase` runs the subagent-completion, specialist-tag and
+heading-ambiguity checks on any transition out of an approval-FAMILY gate. A
+rejection costs a full Dev cycle, so it needs the same evidence an approval does
+— enforcing them only on the approve path meant diligence was required exactly
+where the reviewer agreed with the code (story 162-47). The one exception is the
+cycle-tag freshness check below, which stays approval-only: its subject is the
+staleness of results being used to APPROVE, and demanding a tag on the way out to
+rework would ask the reviewer to attest freshness for the cycle it is rejecting.
+
+**Every unmet requirement is reported in ONE error**, not one per attempt.
+
+**A rework round needs its own verdict.** Each round the workflow dispatches
+increments `**Round-Trip Count:**`, and each ruling the reviewer makes appends a
+NEW section under the EXACT `## Reviewer Assessment` heading — so the sections
+must lead the counter. Re-resolving the gate on a verdict already routed to
+rework blocks, because acting on it twice would advance the phase twice
+(observed live in the 162-49 run).
 </purpose>
 
 <pass>
@@ -136,7 +156,10 @@ Search the session file for a `## Subagent Results` section containing:
 4. **An `All received: Yes` line** after the table
 5. **On a rework session** (one carrying `**Round-Trip Count:** N` — or, on a legacy hand-written
    session with no such line, `**Rework Cycle:** N`), a `**Cycle: N**` tag matching that count —
-   proof the subagents were re-run for the CURRENT cycle. The tag is a standalone line at
+   proof the evidence is from the CURRENT cycle. Either a full re-run of the enabled subagents
+   OR targeted re-verification of each previously recorded finding satisfies it; targeted
+   re-probes of characterized findings are stronger evidence than a fresh generalist sweep, so
+   name which method you used alongside the tag. The tag is a standalone line at
    column 0; prose ending in `Cycle: N`, a table cell, and any quoted example (code fence,
    4-space-indented block, backtick span, HTML comment) are not tags. EVERY tag in the section
    must match the current cycle. The current section is the LAST one introduced by the exact
