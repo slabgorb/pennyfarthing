@@ -223,7 +223,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from pf.git.repos import RepoConfig, load_repos_config
+from pf.git.repos import RepoConfig, _parse_repo_entry, load_repos_config
 from pf.sprint import story_finish
 from pf.sprint.story_finish import _branch_merge_state, _git_cleanup, finish_story
 
@@ -1253,4 +1253,103 @@ class TestOrdinaryValuesAreUnaffected:
             f"a dash-leading branch name must still be classified by the read "
             f"path (162-4); cleanup's stricter rule must not leak into it. "
             f"Got {state!r}"
+        )
+
+
+# =============================================================================
+# Reviewer fold (162-48 review, F1 + F2) — pins for the pre-merge hardening
+# =============================================================================
+#
+# F1 — a non-string YAML scalar in a name field (``remote_name: yes`` parses to
+# Python ``True``; ``default_branch: 2`` to ``int``) survived
+# ``data.get(...) or "origin"`` unchanged and reached ``.strip()`` / the new
+# ``.split("/", 1)`` in ``_classify_branch_name``, raising ``AttributeError``
+# out of a module whose contract is to RETURN, never throw (SOUL #10). The
+# ``.split()`` crash was newly introduced by this diff's validator, so the fold
+# coerces at the one ingestion point (``_parse_repo_entry``) rather than at
+# every consumer.
+#
+# F2 — a slash-bearing ``remote_name`` (``subdir/evil``) is a legal refname, so
+# the shared branch-name validator accepted it, but ``git pull subdir/evil ...``
+# reads it as a LOCAL PATH and fetches from ``./subdir/evil`` if it is a repo,
+# running that repo's client-side hooks. Refused before the shared grammar via
+# a thin remote-only wrapper.
+
+
+class TestNonStringConfigValuesKeepTheNoThrowContract:
+    """F1: YAML bool/int name fields must not crash the finish path."""
+
+    @pytest.mark.parametrize("bad", [True, False, 123, 2.0])
+    def test_remote_name_is_coerced_to_str_at_parse(self, bad: Any) -> None:
+        cfg = _parse_repo_entry("proj", {"branch_strategy": "gitflow", "remote_name": bad})
+        assert isinstance(cfg.remote_name, str), (
+            f"remote_name={bad!r} ({type(bad).__name__}) survived parsing as a "
+            f"non-str; it later reaches .strip()/.split() and raises "
+            f"AttributeError out of the no-throw finish path. Coerce at parse."
+        )
+
+    @pytest.mark.parametrize("bad", [123, True])
+    def test_default_branch_is_coerced_to_str_at_parse(self, bad: Any) -> None:
+        cfg = _parse_repo_entry("proj", {"branch_strategy": "gitflow", "default_branch": bad})
+        assert isinstance(cfg.default_branch, str), (
+            f"default_branch={bad!r} ({type(bad).__name__}) survived parsing as "
+            f"a non-str; the new _classify_branch_name does value.split('/') and "
+            f"raises AttributeError. Coerce at parse."
+        )
+
+    def test_git_cleanup_does_not_raise_on_bool_remote_name(self, project: Path) -> None:
+        """RED (F1): pre-fix this raises ``'bool' object has no attribute 'strip'``."""
+        cfg = _parse_repo_entry(
+            "proj",
+            {"branch_strategy": "gitflow", "remote_name": True, "default_branch": BASE},
+        )
+        entries = _git_cleanup(project, branch=AHEAD, repo_config=cfg)
+        assert isinstance(entries, list) and entries and entries[0]["step"] == 6, entries
+
+    def test_branch_merge_state_does_not_raise_on_int_default_branch(
+        self, project: Path
+    ) -> None:
+        """RED (F1): pre-fix this raises ``'int' object has no attribute 'split'``."""
+        cfg = _parse_repo_entry(
+            "proj", {"branch_strategy": "gitflow", "default_branch": 2}
+        )
+        state = _branch_merge_state(project, AHEAD, base=cfg.default_branch)
+        assert isinstance(state, dict) and "state" in state, state
+
+
+class TestSlashBearingRemoteNameIsRefused:
+    """F2: a slash-bearing remote name is a local path to git, not a remote."""
+
+    def test_subdir_style_remote_is_refused_with_zero_mutations(
+        self, project: Path
+    ) -> None:
+        """RED (F2): ``subdir/evil`` is a legal refname, so the branch-name
+        validator accepts it and ``git pull subdir/evil ...`` fetches from a
+        local path — an adversarial repo's client-side hooks then run. Cleanup
+        must refuse it, emitting zero mutating git commands.
+        """
+        spy, calls = _spy()
+        cfg = _cfg(remote_name="subdir/evil")
+
+        with patch.object(story_finish, "_run", side_effect=spy):
+            entries = _git_cleanup(project, branch=AHEAD, repo_config=cfg)
+
+        assert _mutating(calls) == [], (
+            f"cleanup ran {_mutating(calls)} for a slash-bearing remote name. "
+            f"git reads 'subdir/evil' as a local path, not a remote — refuse it "
+            f"before any mutation."
+        )
+        _assert_refusal_warning(entries[0], "subdir/evil")
+
+    def test_ordinary_remote_names_are_still_accepted(self, project: Path) -> None:
+        """Control: the wrapper must not over-refuse a plain single-token name."""
+        spy, calls = _spy()
+        cfg = _cfg(remote_name="upstream")
+
+        with patch.object(story_finish, "_run", side_effect=spy):
+            _git_cleanup(project, branch=LANDED, repo_config=cfg)
+
+        assert any(argv[:2] == ["git", "pull"] for argv in calls), (
+            "a plain remote name must still reach the pull; the slash guard "
+            f"must not block it. Calls: {calls}"
         )

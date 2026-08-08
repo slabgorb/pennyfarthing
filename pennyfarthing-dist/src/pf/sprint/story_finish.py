@@ -722,6 +722,27 @@ def _classify_branch_name(
     return _NAME_OK, ""
 
 
+def _classify_remote_name(value: str, cwd: str) -> tuple[str, str]:
+    """Like :func:`_classify_branch_name`, but for a remote NAME slot.
+
+    A remote name is a single argv token in ``git pull <name> <refspec>``. Git
+    resolves a name it does not recognise as a repository URL, and a
+    slash-bearing value like ``subdir/evil`` is a legal refname (so
+    :func:`_classify_branch_name` accepts it) that git then reads as a LOCAL
+    PATH: ``git pull subdir/evil <ref>`` fetches from ``./subdir/evil`` if that
+    is a repo, running its client-side hooks (162-48 review F2). Conventional
+    remote names are a single path component, so a slash is never needed here
+    and is always dangerous — refuse it before the shared branch-name grammar
+    runs, then defer to that grammar for everything else (flags, control
+    characters, ``refs/``-prefixes, the refname rules).
+    """
+    if "/" in value:
+        return _NAME_REFUSED, (
+            "a slash-bearing remote name is read by git as a local path, not a remote"
+        )
+    return _classify_branch_name(value, cwd, allow_dash_leading=False)
+
+
 def _branch_merge_state(
     repo_path: Path,
     branch: str,
@@ -922,11 +943,21 @@ def _git_cleanup(
     # `default_branch: -f` makes the first command `git checkout -f`, which
     # silently discards every uncommitted modification in the repo. Stricter
     # than the read path by design — see :func:`_classify_branch_name`.
-    for describe, value in (
-        (lambda v, d: f"base branch '{v}' is not a valid branch name ({d})", base),
-        (lambda v, d: f"remote name '{v}' is not usable ({d})", remote),
+    for classify, describe, value in (
+        (
+            lambda v: _classify_branch_name(v, cwd, allow_dash_leading=False),
+            lambda v, d: f"base branch '{v}' is not a valid branch name ({d})",
+            base,
+        ),
+        (
+            # The remote slot has a stricter grammar than a branch name: a
+            # slash-bearing value git reads as a local-path URL (162-48 F2).
+            lambda v: _classify_remote_name(v, cwd),
+            lambda v, d: f"remote name '{v}' is not usable ({d})",
+            remote,
+        ),
     ):
-        verdict, detail = _classify_branch_name(value, cwd, allow_dash_leading=False)
+        verdict, detail = classify(value)
         if verdict == _NAME_TIMEOUT:
             return stopped(detail)
         if verdict == _NAME_REFUSED:

@@ -80,7 +80,7 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         name=name,
         path=data.get("path", name),
         repo_type=data.get("type", "unknown"),
-        default_branch=data.get("default_branch", "main"),
+        default_branch=str(data.get("default_branch") or "main"),
         branch_strategy=data.get("branch_strategy", "trunk-based"),
         description=data.get("description", ""),
         language=data.get("language", "unknown"),
@@ -97,7 +97,12 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         stack_tool=data.get("stack_tool", ""),
         simplify=data.get("simplify", False),
         remote=data.get("remote", ""),
-        remote_name=data.get("remote_name", "") or "origin",
+        # ``str(...)`` coerces a non-string YAML scalar (``remote_name: yes``
+        # parses to ``True``; a bare number to ``int``) into the field's
+        # declared type. Without it, the value reaches ``.strip()`` and the
+        # ``.split("/")`` in :func:`~pf.sprint.story_finish._classify_branch_name`
+        # and raises ``AttributeError`` out of a no-throw path (162-48 review F1).
+        remote_name=str(data.get("remote_name", "") or "origin"),
         symlinks=data.get("symlinks", {}) or {},
     )
 
