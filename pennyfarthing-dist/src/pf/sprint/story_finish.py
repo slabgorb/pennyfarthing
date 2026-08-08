@@ -655,10 +655,79 @@ def _valid_branch_name(value: str, cwd: str) -> subprocess.CompletedProcess:
     )
 
 
+#: The two values git's REFNAME grammar accepts but that name the current
+#: checkout rather than a branch. ``git check-ref-format refs/heads/HEAD`` and
+#: ``refs/heads/@`` both answer rc=0, while ``git check-ref-format --branch
+#: HEAD`` answers 128 and ``git branch HEAD`` refuses outright — so the value
+#: sails through the 162-25 guard, resolves nowhere once prefixed, and lands on
+#: the branch-not-found diagnosis (162-48 item 4).
+_NON_BRANCH_ALIASES = frozenset({"HEAD", "@"})
+
+#: Verdicts from :func:`_classify_branch_name`.
+_NAME_OK = "ok"
+_NAME_REFUSED = "refused"
+_NAME_TIMEOUT = "timeout"
+
+
+def _classify_branch_name(
+    value: str,
+    cwd: str,
+    *,
+    allow_dash_leading: bool = True,
+) -> tuple[str, str]:
+    """The one gate every operator-supplied branch-ish value passes through.
+
+    Returns ``(verdict, detail)``: ``_NAME_OK`` with an empty detail,
+    ``_NAME_REFUSED`` with the *family-specific* explanation of why the value is
+    not a branch name, or ``_NAME_TIMEOUT`` with git's own timeout text. Callers
+    compose the operator-facing prose around ``detail`` — the quoting of the
+    value lives at the call site, which knows what the value IS (a branch, a
+    base, a remote), so the refusal never quotes an internally prefixed form.
+
+    Beyond :func:`_valid_branch_name`'s refname grammar (unchanged, and still
+    the only rule that needs git), three families are refused HERE, in-process
+    and before any subprocess runs:
+
+    - ``HEAD``/``@`` — see :data:`_NON_BRANCH_ALIASES`.
+    - a value whose first path component is ``refs`` — a field that carries its
+      own prefix (``refs/heads/feat``, ``refs/tags/v1.0``). Prefixing it again
+      yields ``refs/heads/refs/heads/feat``, a legal refname that resolves
+      nowhere. In cleanup it is worse than imprecise: ``git checkout
+      refs/remotes/origin/develop`` lands a detached HEAD.
+    - a dash-leading value, when *allow_dash_leading* is False.
+
+    The dash asymmetry is deliberate. The READ path keeps classifying
+    dash-leading names (162-4: ``refs/heads/-evil`` is a legal ref plumbing
+    really does create, and a probe prefixes it out of argv's flag position),
+    while cleanup refuses them, because no ``git checkout`` argv reaches one
+    safely — ``git checkout -f`` discards every uncommitted modification in the
+    repo. One validator, one strictness knob, so the two rules cannot drift.
+
+    The in-process checks run FIRST so a refusal costs zero subprocesses: that
+    ordering is what lets cleanup promise it emits no git at all for an unusable
+    value (162-25's AC-3, extended to the mutating path).
+    """
+    if value in _NON_BRANCH_ALIASES:
+        return _NAME_REFUSED, "git's own alias for the current checkout, not a branch"
+    if value.split("/", 1)[0] == "refs":
+        return _NAME_REFUSED, "this field must hold a bare branch name, not a full ref path"
+    if not allow_dash_leading and value.startswith("-"):
+        return _NAME_REFUSED, "a dash-leading value reaches git's argv as a flag"
+
+    check = _valid_branch_name(value, cwd)
+    if _timed_out(check):
+        return _NAME_TIMEOUT, (check.stderr or "").strip()
+    if check.returncode != 0:
+        return _NAME_REFUSED, "git check-ref-format rejected it"
+    return _NAME_OK, ""
+
+
 def _branch_merge_state(
     repo_path: Path,
     branch: str,
     base: str | None = None,
+    *,
+    remote: str | None = None,
 ) -> dict[str, Any]:
     """Classify a session branch against the base branch: did its work land?
 
@@ -684,8 +753,17 @@ def _branch_merge_state(
     carries no ``count`` — there is no merged/unmerged claim to make about a
     value that is not a branch (162-25).
 
+    ``remote`` is the story repo's configured remote NAME (``RepoConfig.
+    remote_name``); ``None``/empty means ``origin``, so every existing repos.yaml
+    behaves exactly as before. It is threaded from the call site rather than
+    resolved here for the same reason ``base`` is (162-6). Hardcoding ``origin``
+    made ``refs/remotes/origin/<base>`` unresolvable in a repo whose remote is
+    named anything else, so the base arm fell back to the possibly-stale local
+    base and work that had landed upstream read ``unmerged`` — a loud false
+    abort on a story that is done.
+
     Every candidate is a FULL ref path — ``refs/heads/<name>`` or
-    ``refs/remotes/origin/<name>`` — never a bare name (162-4). A bare name
+    ``refs/remotes/<remote>/<name>`` — never a bare name (162-4). A bare name
     is an argv position git may flag-parse (a dash-leading branch reaches
     here intact: ``rev-parse --verify --quiet --local-env-vars`` executes
     the option and prints git's environment) and a rev name git may DWIM to
@@ -706,23 +784,21 @@ def _branch_merge_state(
     """
     cwd = str(repo_path)
     base = base or _resolve_base_branch(repo_path)
+    remote = (remote or "").strip() or "origin"
 
     for label, value in (("branch value", branch), ("base branch", base)):
-        check = _valid_branch_name(value, cwd)
-        if _timed_out(check):
-            return {"state": "timeout", "base": base, "reason": (check.stderr or "").strip()}
-        if check.returncode != 0:
+        verdict, detail = _classify_branch_name(value, cwd)
+        if verdict == _NAME_TIMEOUT:
+            return {"state": "timeout", "base": base, "reason": detail}
+        if verdict == _NAME_REFUSED:
             return {
                 "state": "unknown",
                 "base": base,
-                "reason": (
-                    f"{label} '{value}' is not a valid branch name "
-                    f"(git check-ref-format rejected it)"
-                ),
+                "reason": f"{label} '{value}' is not a valid branch name ({detail})",
             }
 
     branch_ref = None
-    for candidate in (f"refs/heads/{branch}", f"refs/remotes/origin/{branch}"):
+    for candidate in (f"refs/heads/{branch}", f"refs/remotes/{remote}/{branch}"):
         probe = _run(
             ["git", "rev-parse", "--verify", "--quiet", candidate],
             cwd=cwd,
@@ -737,11 +813,11 @@ def _branch_merge_state(
         return {
             "state": "unknown",
             "base": base,
-            "reason": "branch not found locally or on origin",
+            "reason": f"branch not found locally or on {remote}",
         }
 
     base_ref = None
-    for candidate in (f"refs/remotes/origin/{base}", f"refs/heads/{base}"):
+    for candidate in (f"refs/remotes/{remote}/{base}", f"refs/heads/{base}"):
         probe = _run(
             ["git", "rev-parse", "--verify", "--quiet", candidate],
             cwd=cwd,
@@ -756,7 +832,7 @@ def _branch_merge_state(
         return {
             "state": "unknown",
             "base": base,
-            "reason": f"base branch {base!r} not found locally or on origin",
+            "reason": f"base branch {base!r} not found locally or on {remote}",
         }
 
     result = _run(
@@ -804,37 +880,101 @@ def _git_cleanup(
     repo is exactly the failure this story removes. In both cases cleanup is
     skipped, using the repo's own ``default_branch`` (never a hardcoded guess).
 
+    The repo's ``remote_name`` supplies the pull's remote; empty means
+    ``origin``, so every existing repos.yaml is unchanged. Making it
+    configurable opens a new argv position, so it is validated exactly like the
+    base is (``git pull --upload-pack=<cmd> <ref>`` runs an arbitrary program).
+
+    A ``base`` or ``remote`` this function refuses, and a validation probe that
+    times out, both emit ZERO git subprocesses and return a single entry
+    carrying a ``warning`` that quotes the offending value verbatim.
+
     Returns the step entries to append to the finish report.
     """
     if repo_config is None or not repo_config.is_gitflow:
         reason = "root-repo-unresolved" if repo_config is None else "trunk-based"
         return [{"step": 6, "action": "git_cleanup", "skipped": reason, "branch": branch}]
 
+    cwd = str(repo_path)
     base = repo_config.default_branch
+    remote = (repo_config.remote_name or "").strip() or "origin"
+    entry: dict[str, Any] = {"step": 6, "action": "git_cleanup", "branch": branch}
+
+    def stopped(reason: str) -> list[dict[str, Any]]:
+        """The single output shape for "step 6 did not run, and here is why".
+
+        Step 6 runs AFTER the story is done and the YAML is written, so a
+        cleanup that cannot proceed is bookkeeping, not a finish failure
+        (162-9): un-reporting a story that genuinely shipped is the same lie as
+        reporting one that did not. But it must never read as a clean step 6
+        either — a silent skip is the failure this epic exists to kill, so the
+        report always carries the reason and the operator finishes by hand.
+        """
+        entry["warning"] = (
+            f"git cleanup stopped in {repo_path}: {reason} — "
+            "the story is done; finish the branch cleanup by hand"
+        )
+        return [entry]
+
+    # Validate BEFORE any git runs. `base` and `remote_name` are hand-edited
+    # repos.yaml values reaching argv positions git will flag-parse or DWIM, and
+    # step 6 is the one place in this file that MUTATES a working tree: a
+    # `default_branch: -f` makes the first command `git checkout -f`, which
+    # silently discards every uncommitted modification in the repo. Stricter
+    # than the read path by design — see :func:`_classify_branch_name`.
+    for describe, value in (
+        (lambda v, d: f"base branch '{v}' is not a valid branch name ({d})", base),
+        (lambda v, d: f"remote name '{v}' is not usable ({d})", remote),
+    ):
+        verdict, detail = _classify_branch_name(value, cwd, allow_dash_leading=False)
+        if verdict == _NAME_TIMEOUT:
+            return stopped(detail)
+        if verdict == _NAME_REFUSED:
+            return stopped(describe(value, detail))
+
+    # A legal name is not an existing branch: `default_branch: develp` is a
+    # typo no validator can catch. Confirm it with a read-only probe first, so
+    # the chain never runs three mutations off a checkout that could not work —
+    # and so a hung git is discovered by this probe rather than by the checkout.
+    probe = _run(
+        ["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{base}"],
+        cwd=cwd,
+        timeout=GIT_LOCAL_TIMEOUT_S,
+    )
+    if _timed_out(probe):
+        return stopped((probe.stderr or "").strip())
+    if probe.returncode != 0:
+        return stopped(
+            f"base branch '{base}' does not exist in this repo, so it is not "
+            f"usable as a checkout target"
+        )
+
     cleanup: list[tuple[list[str], float]] = [
-        (["git", "checkout", base], GIT_LOCAL_TIMEOUT_S),
-        (["git", "pull", "origin", base], GIT_NETWORK_TIMEOUT_S),
+        # `--` ends the rev list, so git cannot fall back to pathspec mode: a
+        # base that happens to name a tracked file would otherwise restore the
+        # indexed copy over the operator's uncommitted edit and answer rc=0.
+        (["git", "checkout", base, "--"], GIT_LOCAL_TIMEOUT_S),
+        # Fully-qualified refspec for the same reason every read-path candidate
+        # is (162-4): a bare name is resolved on the remote with the same DWIM,
+        # so a tag or an `origin/x`-shaped branch can shadow the intended base.
+        (["git", "pull", remote, f"refs/heads/{base}"], GIT_NETWORK_TIMEOUT_S),
     ]
     if branch:
         # `--` guards against a branch value that looks like a git flag.
         cleanup.append((["git", "branch", "-d", "--", branch], GIT_LOCAL_TIMEOUT_S))
 
-    entry: dict[str, Any] = {"step": 6, "action": "git_cleanup", "branch": branch}
     for cmd, timeout in cleanup:
-        result = _run(cmd, cwd=str(repo_path), timeout=timeout)
+        result = _run(cmd, cwd=cwd, timeout=timeout)
         if _timed_out(result):
-            # Step 6 runs AFTER the story is done and the YAML is written, so a
-            # hung cleanup command is bookkeeping, not a finish failure (162-9):
-            # un-reporting a story that genuinely shipped is the same lie as
-            # reporting one that did not. Record it and stop the chain — the
-            # later commands assume the earlier one landed (a delete aimed at
-            # the branch we are still standing on fails anyway), and step 7
-            # still removes the session.
-            entry["warning"] = (
-                f"git cleanup stopped in {repo_path}: {(result.stderr or '').strip()} — "
-                "the story is done; finish the branch cleanup by hand"
-            )
-            break
+            # Stop the chain: the later commands assume the earlier one landed
+            # (a delete aimed at the branch we are still standing on fails
+            # anyway), and step 7 still removes the session.
+            return stopped((result.stderr or "").strip())
+        if cmd[:2] == ["git", "checkout"] and result.returncode != 0:
+            # A checkout that failed (a conflicting local modification) leaves
+            # the feature branch checked out, and the pull below would then land
+            # the base's commits ON it. Never keep going from there.
+            return stopped((result.stderr or "").strip() or f"git checkout {base} failed")
     return [entry]
 
 
@@ -1314,6 +1454,7 @@ def finish_story(
                 repo_path,
                 branch,
                 base=repo_config.default_branch if repo_config else None,
+                remote=repo_config.remote_name if repo_config else None,
             )
             if merge_state["state"] == "merged":
                 # NOT ``skipped: True``: an all-repos abort keeps the already
