@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { expect, test, vi } from 'vitest'
 import type { PersonaPayload, StoryMessage } from '../api/types'
 import { personaFixture, storyFixture, workflowFixture } from '../test/fixtures/workflow'
+import { getJSON } from '../api/rest'
 
 const channels: Record<string, { data: unknown; connected: boolean; lastUpdated: number | null }> = {
   story: { data: storyFixture as StoryMessage, connected: true, lastUpdated: Date.now() },
@@ -25,6 +26,14 @@ test('highlights the current phase in the sequence', async () => {
     expect(screen.getByTestId('phase-red')).toHaveAttribute('data-current', 'true')
     expect(screen.getByTestId('phase-green')).toHaveAttribute('data-current', 'false')
   })
+})
+
+test('shows error message when workflow fetch fails', async () => {
+  vi.mocked(getJSON).mockRejectedValueOnce(new Error('GET /api/workflow/ failed: 500'))
+  render(<WorkflowActivity />)
+  await waitFor(() =>
+    expect(screen.getByText(/workflow phases unavailable/i)).toBeInTheDocument()
+  )
 })
 
 test('renders idle state when no story is active', () => {
