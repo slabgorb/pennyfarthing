@@ -119,6 +119,25 @@ async def get_persona_full() -> JSONResponse:
     return await _persona_response(full=True)
 
 
+@persona_router.get("/portrait")
+async def get_persona_portrait():
+    """Serve the active persona's portrait as a file (web GUI).
+
+    /api/persona returns portraitPath as a *filesystem* path; a browser
+    cannot load that, so this route streams the file itself.
+    """
+    from fastapi.responses import FileResponse
+
+    import pf.frame.ws_push as ws_push
+
+    project_dir = _get_project_dir()
+    payload = ws_push.build_persona_payload(project_dir)
+    path = payload.get("portraitPath")
+    if not path or not Path(path).is_file():
+        return JSONResponse({"error": "no portrait"}, status_code=404)
+    return FileResponse(path)
+
+
 # ---------------------------------------------------------------------------
 # Story router
 # ---------------------------------------------------------------------------
@@ -153,6 +172,36 @@ def _get_story_info(project_dir: str) -> dict[str, Any]:
 async def get_story() -> JSONResponse:
     project_dir = _get_project_dir()
     return JSONResponse(_get_story_info(project_dir))
+
+
+# ---------------------------------------------------------------------------
+# Workflow router — phase list for the web GUI (boundary rule: the browser
+# never parses workflow YAML; this route does).
+# ---------------------------------------------------------------------------
+
+workflow_router = APIRouter(prefix="/api/workflow", tags=["workflow"])
+
+
+@workflow_router.get("/")
+async def get_workflow() -> JSONResponse:
+    from pf.frame.ws_push import _read_yaml_file
+
+    project_dir = _get_project_dir()
+    story = _get_story_info(project_dir)
+    name = story.get("workflow")
+    phases: list[dict[str, str]] = []
+    if name:
+        wf_path = Path(project_dir, ".pennyfarthing", "workflows", f"{name}.yaml")
+        data = _read_yaml_file(wf_path)
+        if isinstance(data, dict):
+            for ph in data.get("phases") or []:
+                if isinstance(ph, dict) and ph.get("name"):
+                    phases.append(
+                        {"name": str(ph["name"]), "agent": str(ph.get("agent", ""))}
+                    )
+    return JSONResponse(
+        {"workflow": name, "phase": story.get("phase"), "phases": phases}
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -527,6 +576,7 @@ async def get_project_info() -> JSONResponse:
 all_data_proxy_routers = [
     persona_router,
     story_router,
+    workflow_router,
     git_router,
     context_router,
     theme_agents_router,
