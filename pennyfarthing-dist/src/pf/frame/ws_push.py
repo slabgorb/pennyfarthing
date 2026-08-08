@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import asyncio
 import os
+import shutil
+import subprocess
+import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -89,6 +92,49 @@ def _read_yaml_file(path: Path) -> Any:
         return None
 
 
+# Open-PR cache: {repo_path: (monotonic_ts, prs)}. The git channel polls every
+# POLL_INTERVAL_S (5s); gh hits the network, so cache for 60s per repo.
+_OPEN_PR_TTL_S = 60.0
+_open_pr_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+
+
+def _get_open_prs(repo_path: str) -> list[dict[str, Any]]:
+    """Open PRs for a repo via gh, TTL-cached. Empty list on any failure."""
+    cached = _open_pr_cache.get(repo_path)
+    if cached and (time.monotonic() - cached[0]) < _OPEN_PR_TTL_S:
+        return cached[1]
+
+    gh_bin = shutil.which("gh")
+    if not gh_bin:
+        return []
+
+    prs: list[dict[str, Any]] = []
+    try:
+        result = subprocess.run(
+            [gh_bin, "pr", "list", "--json", "number,title,isDraft", "--limit", "20"],
+            cwd=repo_path, capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode == 0:
+            import json
+
+            parsed = json.loads(result.stdout)
+            if isinstance(parsed, list):
+                prs = [
+                    {
+                        "number": p.get("number"),
+                        "title": p.get("title", ""),
+                        "isDraft": bool(p.get("isDraft", False)),
+                    }
+                    for p in parsed
+                    if isinstance(p, dict)
+                ]
+    except Exception as exc:
+        # Fail-loud (gh #50): warn once per failure, degrade to [].
+        warnings.warn(f"Failed to list PRs for {repo_path}: {exc}", stacklevel=2)
+    _open_pr_cache[repo_path] = (time.monotonic(), prs)
+    return prs
+
+
 # ---------------------------------------------------------------------------
 # Channel data fetchers — each returns a dict ready to send as JSON
 # ---------------------------------------------------------------------------
@@ -113,6 +159,7 @@ def fetch_git() -> dict[str, Any]:
             "behind": info.get("behind") if info else None,
             "developBehind": info.get("developBehind") if info else None,
             "dirtyFiles": info.get("dirtyFiles", []) if info else [],
+            "openPrs": _get_open_prs(repo_path),
         })
     return {"type": "update", "repos": results}
 
