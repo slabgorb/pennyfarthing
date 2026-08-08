@@ -28,9 +28,10 @@ If you run a mutation battery (deleting guards, flipping conditionals, changing 
 
 ```bash
 # Option A — git worktree (preferred: full isolation, shares git history)
-SCRATCH=$(git worktree add /tmp/mutation-scratch-$$ HEAD 2>&1 && echo /tmp/mutation-scratch-$$)
+SCRATCH=/tmp/mutation-scratch-$$
+git worktree add "$SCRATCH" HEAD
 # … apply mutations and run tests inside SCRATCH …
-git worktree remove /tmp/mutation-scratch-$$ --force
+git worktree remove "$SCRATCH" --force
 
 # Option B — scratch copy (simpler, no git required in target)
 SCRATCH=$(mktemp -d)
