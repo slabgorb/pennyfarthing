@@ -1,5 +1,6 @@
 import { SprintBoard } from './panels/SprintBoard'
 import { WorkflowActivity } from './panels/WorkflowActivity'
+import { GitStatus } from './panels/GitStatus'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
       >
         <SprintBoard />
         <WorkflowActivity />
+        <GitStatus />
       </main>
     </div>
   )
