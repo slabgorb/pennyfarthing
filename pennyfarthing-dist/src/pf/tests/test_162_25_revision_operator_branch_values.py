@@ -140,7 +140,6 @@ from pf.sprint.story_finish import (
     InvalidBranchValue,
     _branch_merge_state,
     _extract_branch,
-    _TimedOutProcess,
 )
 
 BASE = "develop"
@@ -709,27 +708,44 @@ class TestTimedOutValidationIsNotMerged:
     def test_all_probes_timing_out_never_reads_merged(self, project: Path) -> None:
         """Green guard (162-9's rule, extended to a new probe): a validation
         call that never comes back must not fall through to a classification.
-        Vacuous if Dev validates in pure Python — deliberately so; it costs
-        nothing and closes the branch that a ``check-ref-format`` through
-        ``_run`` opens.
+
+        Hardened for 162-48 (item 3). This test used to patch
+        ``story_finish._run`` and hand back a hand-built ``_TimedOutProcess``,
+        accepting ``state in {"timeout", "unknown"}``. Two problems, both
+        closed here:
+
+        - The mock stood in for the code under test. ``_run``'s real
+          ``TimeoutExpired`` -> ``_TimedOutProcess`` conversion — the thing
+          that makes ``_timed_out`` answer True at all — was never exercised.
+          Patching at the ``subprocess.run`` boundary raises a real
+          ``TimeoutExpired`` from the real syscall wrapper instead.
+        - The ``or unknown`` escape hatch passed a timeout misrouted into the
+          permissive arm, which is precisely what 162-9 forbids: ``unknown`` is
+          a claim about this repo's refs, ``timeout`` says the probe never came
+          back. The assertion is now the exact state.
         """
 
-        def always_timeout(cmd: list[Any], **kwargs: Any) -> Any:
-            return _TimedOutProcess(
-                args=[str(c) for c in cmd],
-                returncode=124,
-                stdout="",
-                stderr="timed out after 30.0s",
+        def always_timeout(cmd: Any = None, **kwargs: Any) -> Any:
+            raise subprocess.TimeoutExpired(
+                cmd=[str(c) for c in (cmd or ["git"])], timeout=30.0
             )
 
-        with patch.object(story_finish, "_run", side_effect=always_timeout):
+        with patch.object(subprocess, "run", side_effect=always_timeout):
             state = _branch_merge_state(project, AHEAD, base=BASE)
 
-        assert state["state"] in {"timeout", "unknown"}, (
-            f"every git probe timed out, so nothing was verified; the state "
-            f"must be timeout or unknown, never a classification. Got {state!r}"
+        assert state["state"] == "timeout", (
+            f"every git probe timed out, so nothing was verified. The state "
+            f"must be exactly `timeout` — not `unknown`, which asserts a fact "
+            f"about this repo's refs (162-9). Got {state!r}"
         )
-        assert state["state"] != "merged", state
+        assert "count" not in state, (
+            f"a timed-out probe verified nothing and cannot carry a count: {state!r}"
+        )
+        reason = state.get("reason") or ""
+        assert "timed out" in reason.lower() or "timeout" in reason.lower(), (
+            f"the reason must carry the real TimeoutExpired text, which names "
+            f"the program and the bound that expired. Got {reason!r}"
+        )
 
 
 # =============================================================================

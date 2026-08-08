@@ -47,6 +47,11 @@ class RepoConfig:
     stack_tool: str = ""  # "graphite" when pr_strategy is stacked
     simplify: bool = False  # Enable simplify subagents during TEA verify phase
     remote: str = ""  # Clone URL for the repo (e.g., git@github.com:org/repo.git)
+    #: Git remote NAME (``git remote add <name> <url>``), not a URL. Distinct
+    #: from ``remote`` above, which holds the clone URL and therefore cannot
+    #: double as the argv token git wants in ``git pull <name> <refspec>`` or in
+    #: a ``refs/remotes/<name>/...`` ref path. Empty means ``origin``.
+    remote_name: str = "origin"
     symlinks: dict[str, str] = field(default_factory=dict)  # link-path -> target, both rel to root
 
     @property
@@ -59,8 +64,12 @@ class RepoConfig:
 
     @property
     def upstream_ref(self) -> str:
-        """Remote ref to compare against for unpushed commits."""
-        return f"origin/{self.default_branch}"
+        """Remote ref to compare against for unpushed commits.
+
+        Honors ``remote_name`` so this object gives one answer to "which
+        remote?" — an empty/unset value keeps today's ``origin``.
+        """
+        return f"{self.remote_name or 'origin'}/{self.default_branch}"
 
 
 def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
@@ -71,7 +80,7 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         name=name,
         path=data.get("path", name),
         repo_type=data.get("type", "unknown"),
-        default_branch=data.get("default_branch", "main"),
+        default_branch=str(data.get("default_branch") or "main"),
         branch_strategy=data.get("branch_strategy", "trunk-based"),
         description=data.get("description", ""),
         language=data.get("language", "unknown"),
@@ -88,6 +97,12 @@ def _parse_repo_entry(name: str, data: dict[str, Any] | None) -> RepoConfig:
         stack_tool=data.get("stack_tool", ""),
         simplify=data.get("simplify", False),
         remote=data.get("remote", ""),
+        # ``str(...)`` coerces a non-string YAML scalar (``remote_name: yes``
+        # parses to ``True``; a bare number to ``int``) into the field's
+        # declared type. Without it, the value reaches ``.strip()`` and the
+        # ``.split("/")`` in :func:`~pf.sprint.story_finish._classify_branch_name`
+        # and raises ``AttributeError`` out of a no-throw path (162-48 review F1).
+        remote_name=str(data.get("remote_name", "") or "origin"),
         symlinks=data.get("symlinks", {}) or {},
     )
 
