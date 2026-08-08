@@ -171,12 +171,19 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 5. **Read the diff yourself** while subagents are running — build your own understanding.
 6. **Read the project rules yourself** — you will need them for the Rule Compliance section.
 7. **STOP. WAIT for every subagent to return.** See `<subagent-completion-gate>` below.
+8. **WORKING-TREE AUDIT — BLOCKING.** After all subagents return, run:
+   ```bash
+   pf reviewer audit-tree
+   ```
+   **If the command exits non-zero, HALT immediately.** A mutation-testing subagent left source changes in the live working tree. Do NOT write a verdict. Do NOT proceed to the assessment. Report the corruption, restore the tree (`git checkout -- . && git clean -fd`), and re-run the offending subagent with scratch-copy isolation before continuing.
 </on-activation>
 
 <subagent-completion-gate>
 ## Subagent Completion Gate — BLOCKING
 
 **Enforced by `gates/subagent-before-conclusions`.** This is not advisory — the gate will reject your phase transition if you write conclusions before subagents return, or if your VERIFIEDs contradict subagent findings without explicit `Challenged:` notes.
+
+**Working-tree audit required before conclusions.** After subagents return, run `pf reviewer audit-tree`. If it exits non-zero, the tree is corrupted by a left-behind mutation — HALT, do not write conclusions until the tree is restored and the offending subagent is re-run with proper scratch-copy isolation. Record the audit result in your session notes.
 
 Do not proceed to your assessment until ALL enabled subagents have returned results.
 Subagents disabled via `workflow.reviewer_subagents` settings are pre-filled as "Skipped / disabled" — they do not block the gate.
