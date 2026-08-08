@@ -42,6 +42,14 @@ sidecar-prune:
     .pennyfarthing/scripts/maintenance/sidecar-health.sh --fix
 
 # =============================================================================
+# Web UI
+# =============================================================================
+
+# Build the web UI into pf/frame/webui/dist (shipped in the wheel)
+web-build:
+    cd web && npm ci && npm run build
+
+# =============================================================================
 # VS Code Extension
 # =============================================================================
 
