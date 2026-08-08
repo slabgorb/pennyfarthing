@@ -48,3 +48,41 @@ def test_patch_write_failure_returns_error(tmp_path, monkeypatch):
     resp = client.patch("/api/settings/", json={"theme": "discworld"})
     assert resp.status_code == 500
     assert "error" in resp.json()
+
+
+def test_restart_reads_bell_mode_from_config(tmp_path, monkeypatch):
+    """Restart-shaped: bell_mode persisted to config.local.yaml must come back on fresh load."""
+    pf_dir = tmp_path / ".pennyfarthing"
+    pf_dir.mkdir()
+    (pf_dir / "config.local.yaml").write_text("bell_mode: true\n")
+
+    # Simulate restart: reset the module-level _settings to empty so there is no
+    # warm in-memory state — only what _load_settings reads from disk.
+    import pf.frame.routes.state as state_mod
+
+    monkeypatch.setattr(state_mod, "_settings", {})
+
+    client = _client(monkeypatch, tmp_path)
+    resp = client.get("/api/settings/")
+    assert resp.status_code == 200
+    assert resp.json().get("bell_mode") is True
+
+
+def test_failed_patch_does_not_change_get(tmp_path, monkeypatch):
+    """A failed PATCH (500) must not mutate what GET returns for persisted keys."""
+    # No .pennyfarthing dir -> the write will fail with a 500.
+    # Pre-seed _settings with a known value.
+    import pf.frame.routes.state as state_mod
+
+    monkeypatch.setattr(state_mod, "_settings", {"bell_mode": False})
+
+    client = _client(monkeypatch, tmp_path)
+
+    before = client.get("/api/settings/").json()
+    assert before.get("bell_mode") is False
+
+    patch_resp = client.patch("/api/settings/", json={"bell_mode": True})
+    assert patch_resp.status_code == 500
+
+    after = client.get("/api/settings/").json()
+    assert after.get("bell_mode") is False, "failed PATCH must not change GET result"

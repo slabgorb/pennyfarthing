@@ -151,6 +151,30 @@ def test_ac1_all_read_text_calls_specify_utf8_encoding():
 
 
 # ===========================================================================
+# Degraded-payload shape — missing-file early returns must include type +
+# completedEpics so the result always satisfies the TS SprintPayload type.
+# ===========================================================================
+
+
+def test_fetch_sprint_missing_file_returns_full_shaped_payload(project_dir):
+    """Early return (no sprint file) must return the full TS-typed payload shape.
+
+    Before the fix, the three early returns emitted ``{"sprint": {}, "epics": []}``
+    — missing ``type`` and ``completedEpics``, and ``sprint`` was an empty dict
+    rather than the zero-value object the TypeScript type requires.
+    """
+    # No current-sprint.yaml written → sprint_path.is_file() is False.
+    result = fetch_sprint()
+
+    assert result.get("type") == "init"
+    assert "completedEpics" in result
+    assert isinstance(result["completedEpics"], list)
+    sprint = result.get("sprint", {})
+    for key in ("number", "name", "goal", "done", "remaining", "inProgress", "inReview"):
+        assert key in sprint, f"missing sprint key: {key!r}"
+
+
+# ===========================================================================
 # AC2 — archive loop (fetch_sprint): present-but-broken archive files surface
 # ===========================================================================
 

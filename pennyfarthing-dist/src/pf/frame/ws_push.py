@@ -255,6 +255,24 @@ def fetch_diffs() -> dict[str, Any]:
     return {"type": "init", "diffs": diffs}
 
 
+def _empty_sprint_payload() -> dict[str, Any]:
+    """Return a full-shaped empty sprint payload (satisfies the TS type contract)."""
+    return {
+        "type": "init",
+        "sprint": {
+            "number": "",
+            "name": "",
+            "goal": "",
+            "done": 0,
+            "remaining": 0,
+            "inProgress": 0,
+            "inReview": 0,
+        },
+        "epics": [],
+        "completedEpics": [],
+    }
+
+
 def fetch_sprint() -> dict[str, Any]:
     """Fetch sprint data in the format expected by SprintPanel."""
     project_dir = _get_project_dir()
@@ -263,7 +281,7 @@ def fetch_sprint() -> dict[str, Any]:
 
     sprint_path = Path(project_dir, "sprint", "current-sprint.yaml")
     if not sprint_path.is_file():
-        return {"sprint": {}, "epics": []}
+        return _empty_sprint_payload()
 
     # Split read-vs-parse so the warning names the actual failure. A
     # present-but-undecodable file is surfaced by _read_text_file as
@@ -271,7 +289,7 @@ def fetch_sprint() -> dict[str, Any]:
     # as "Failed to parse {name}" (the prior single try always said "read").
     text = _read_text_file(sprint_path)
     if text is None:
-        return {"sprint": {}, "epics": []}
+        return _empty_sprint_payload()
 
     try:
         data = yaml.safe_load(text) or {}
@@ -279,7 +297,7 @@ def fetch_sprint() -> dict[str, Any]:
         warnings.warn(
             f"Failed to parse sprint file {sprint_path.name}: {exc}", stacklevel=2
         )
-        return {"sprint": {}, "epics": []}
+        return _empty_sprint_payload()
 
     sprint_info = data.get("sprint", {})
 

@@ -74,3 +74,14 @@ test('close() stops reconnecting', () => {
   vi.advanceTimersByTime(60000)
   expect(FakeWebSocket.instances).toHaveLength(1)
 })
+
+test('late onclose after close() fires no onStatus callback', () => {
+  const { sock, onStatus } = make()
+  sock.connect()
+  const ws = FakeWebSocket.instances[0]
+  ws.onopen?.()
+  onStatus.mockClear()
+  // close() sets #stopped = true then calls ws.close() which fires onclose
+  sock.close()
+  expect(onStatus).not.toHaveBeenCalled()
+})

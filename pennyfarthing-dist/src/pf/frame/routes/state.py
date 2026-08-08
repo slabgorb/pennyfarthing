@@ -45,8 +45,11 @@ def _load_settings(project_dir: str) -> dict[str, Any]:
             import yaml
 
             config = yaml.safe_load(config_path.read_text()) or {}
-            if config.get("theme"):
-                result["theme"] = config["theme"]
+            # Overlay all persisted keys (theme, bell_mode, relay_mode) so they
+            # survive a Frame restart (not just theme which was the original bug).
+            for key in _PERSISTED_SETTINGS_KEYS:
+                if key in config:
+                    result[key] = config[key]
             if config.get("display"):
                 result["display"] = config["display"]
             if config.get("workflow"):
@@ -68,8 +71,13 @@ _PERSISTED_SETTINGS_KEYS = ("theme", "bell_mode", "relay_mode")
 @settings_router.patch("/")
 async def patch_settings(request: Request) -> JSONResponse:
     body = await request.json()
-    _settings.update(body)
 
+    # Non-persisted keys update in-memory immediately (ephemeral, no file I/O).
+    non_persisted = {k: v for k, v in body.items() if k not in _PERSISTED_SETTINGS_KEYS}
+    _settings.update(non_persisted)
+
+    # Persisted keys: write to disk first; only update in-memory on success so
+    # GET never returns an unpersisted value after a write failure.
     persisted = {k: v for k, v in body.items() if k in _PERSISTED_SETTINGS_KEYS}
     if persisted:
         project_dir = _get_project_dir()
@@ -82,6 +90,8 @@ async def patch_settings(request: Request) -> JSONResponse:
                 config = yaml.safe_load(config_path.read_text()) or {}
             config.update(persisted)
             config_path.write_text(yaml.dump(config, default_flow_style=False))
+            # Only promote to in-memory AFTER the write succeeded.
+            _settings.update(persisted)
         except Exception as exc:
             return JSONResponse(
                 {"error": f"Failed to persist settings: {exc}"}, status_code=500

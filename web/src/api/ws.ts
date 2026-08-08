@@ -35,6 +35,7 @@ export class ChannelSocket<T = unknown> {
     }
     ws.onmessage = (ev) => this.#onMessage(JSON.parse(ev.data) as T)
     ws.onclose = () => {
+      if (this.#stopped) return
       this.#onStatus(false)
       this.#scheduleReconnect()
     }
