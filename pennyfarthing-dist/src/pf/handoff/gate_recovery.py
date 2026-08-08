@@ -739,6 +739,30 @@ def read_round_trip_count(session_content: str) -> RoundTripReading:
 
     match = find_operative_round_trip_line(session_content)
     if match is not None:
+        # 162-50 READER: a readable counter alongside a VISIBLE unreadable one is
+        # unreadable — which line is operative cannot be determined.  Without
+        # this check the writer's pre-162-50 insert bug produced a session with
+        # TWO visible counter lines (one corrupt value, one valid); the reader
+        # found the valid line and returned ``found/1``, and 162-59's unreadable
+        # guard silently never fired (measured: budget reset).
+        # Scope to VISIBLE lines only (compare against masked_preamble, not raw):
+        # backtick prose mentions and fenced examples are illustration, not
+        # counter attempts, and must not inflate the count — that would break the
+        # 162-28 tests that pin prose-vs-operative isolation.
+        visible_count = len(COUNTER_LINE_RE.findall(masked_preamble))
+        valid_count = len(ROUND_TRIP_COUNT_RE.findall(masked_preamble))
+        if visible_count > valid_count:
+            return {
+                "status": "unreadable",
+                "count": 0,
+                "detail": (
+                    "the preamble carries both a readable and an unreadable "
+                    "'**Round-Trip Count:**' line — which one is operative cannot "
+                    "be determined. To fix: remove the duplicate and keep exactly "
+                    "one '**Round-Trip Count:** N' line on its own line outside any "
+                    "code fence, HTML comment, indented block or backticks."
+                ),
+            }
         return {"status": "found", "count": int(match.group(1)), "detail": ""}
 
     if COUNTER_LINE_RE.search(masked_preamble):
