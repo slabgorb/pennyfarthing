@@ -1,4 +1,5 @@
 import { SprintBoard } from './panels/SprintBoard'
+import { WorkflowActivity } from './panels/WorkflowActivity'
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
         data-testid="panel-grid"
       >
         <SprintBoard />
+        <WorkflowActivity />
       </main>
     </div>
   )
