@@ -63,6 +63,30 @@ def textual_app_context():
         active_app.reset(token)
 
 
+@pytest.fixture(autouse=True)
+def isolate_frame_webui(monkeypatch, tmp_path):
+    """Isolate frame tests from built webui/dist (story 165-5 fix).
+
+    Frame's ``_resolve_webui_dir()`` searches for a built webui at
+    ``pennyfarthing-dist/src/pf/frame/webui/dist/``. When this directory
+    exists (from ``pf npm build`` in task 2), every route test that calls
+    ``create_app()`` mounts StaticFiles at ``/``, changing router behavior
+    and causing 405 Method Not Allowed on all data-proxy routes (404 for
+    missing routes → 405 when StaticFiles handles ``/`` first).
+
+    This autouse fixture sets ``FRAME_WEBUI_DIR`` to a nonexistent path by
+    default, so tests never pick up the packaged build. Tests that
+    explicitly want the webui mounted (webui integration tests) override
+    this by setting their own ``FRAME_WEBUI_DIR`` to a real directory
+    (see test_frame_web_routes.py fixtures).
+
+    Boundary: Applies globally, preventing the build artifact from silently
+    changing behavior. An explicit override is required to test webui integration.
+    """
+    nonexistent = tmp_path / "fake-webui-dir-never-created"
+    monkeypatch.setenv("FRAME_WEBUI_DIR", str(nonexistent))
+
+
 @pytest.fixture
 def project_root() -> Path:
     """Return the project root path."""

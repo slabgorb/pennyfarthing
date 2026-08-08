@@ -88,6 +88,17 @@ jobs:
 
 ### Package Publishing
 
+> **Web UI packaging note:** Wheels built without first building the UI will not include the
+> dashboard (`pf.frame` package data). Frame degrades gracefully when the UI is absent, but release
+> builds must build the web UI before packaging. Run both commands from `pennyfarthing/`
+> (`just web-build` requires the orchestrator root and will not work here):
+>
+> ```bash
+> # from pennyfarthing/
+> cd web && npm ci && npm run build && cd ..   # build Vite assets → pf/frame/webui/dist/
+> python3 -m pip wheel . --no-deps -w dist/    # then build the wheel
+> ```
+
 For npm package releases:
 
 ```yaml

@@ -53,6 +53,7 @@ include = ["pf*"]
 
 [tool.setuptools.package-data]
 "pf._dist" = ["**/*.md", "**/*.yaml", "**/*.yml", "**/*.json", "**/*.sh", "**/*.txt", "**/*.toml"]
+"pf.frame" = ["webui/dist/**/*"]
 
 [tool.ruff]
 line-length = 100

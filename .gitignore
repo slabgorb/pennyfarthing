@@ -115,3 +115,5 @@ tui-pid
 .pennyfarthing/tmux-activity
 # Local tmux config (copied from sample)
 tmux.conf
+
+pennyfarthing-dist/src/pf/frame/webui/dist/

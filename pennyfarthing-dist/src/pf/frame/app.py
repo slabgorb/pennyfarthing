@@ -84,6 +84,21 @@ def _resolve_project_dir() -> Path | None:
     return Path(env) if env else None
 
 
+def _resolve_webui_dir() -> Path | None:
+    """Locate the built web UI, if any.
+
+    FRAME_WEBUI_DIR env wins (tests, dev overrides); when set, it must exist —
+    no silent fallback. Otherwise use the packaged build at pf/frame/webui/dist
+    (populated by `vite build`; absent in a source tree with no web build).
+    """
+    env = os.environ.get("FRAME_WEBUI_DIR")
+    if env:
+        path = Path(env)
+        return path if path.is_dir() else None
+    packaged = Path(__file__).parent / "webui" / "dist"
+    return packaged if packaged.is_dir() else None
+
+
 # Time of the most recent WebSocket activity (connect/disconnect), used by the
 # lifecycle monitor's idle-timeout check. Initialised at import so a freshly
 # started server with no clients still measures idle time from launch.
@@ -238,6 +253,13 @@ def create_app() -> FastAPI:
             async def ws_endpoint(websocket: WebSocket) -> None:
                 await _ws_handler(websocket, ch)
         make_ws_route(channel)
+
+    # --- Static web UI (ADR web-gui-resurrection) ---
+    webui_dir = _resolve_webui_dir()
+    if webui_dir is not None:
+        from fastapi.staticfiles import StaticFiles
+
+        app.mount("/", StaticFiles(directory=str(webui_dir), html=True), name="webui")
 
     return app
 
