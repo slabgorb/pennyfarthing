@@ -61,10 +61,31 @@ async def get_settings() -> JSONResponse:
     return JSONResponse(_load_settings(_get_project_dir()))
 
 
+# Keys the web/TUI settings surface mutates that must survive a Frame restart.
+_PERSISTED_SETTINGS_KEYS = ("theme", "bell_mode", "relay_mode")
+
+
 @settings_router.patch("/")
 async def patch_settings(request: Request) -> JSONResponse:
     body = await request.json()
     _settings.update(body)
+
+    persisted = {k: v for k, v in body.items() if k in _PERSISTED_SETTINGS_KEYS}
+    if persisted:
+        project_dir = _get_project_dir()
+        config_path = Path(project_dir, ".pennyfarthing", "config.local.yaml")
+        try:
+            import yaml
+
+            config: dict[str, Any] = {}
+            if config_path.is_file():
+                config = yaml.safe_load(config_path.read_text()) or {}
+            config.update(persisted)
+            config_path.write_text(yaml.dump(config, default_flow_style=False))
+        except Exception as exc:
+            return JSONResponse(
+                {"error": f"Failed to persist settings: {exc}"}, status_code=500
+            )
     return JSONResponse({"success": True})
 
 
