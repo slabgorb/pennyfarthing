@@ -20,7 +20,7 @@ import subprocess
 import sys
 from datetime import date
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from pf.git.repos import RepoConfig
@@ -674,7 +674,7 @@ def _classify_branch_name(
     cwd: str,
     *,
     allow_dash_leading: bool = True,
-) -> tuple[str, str]:
+) -> tuple[Literal["ok", "refused", "timeout"], str]:
     """The one gate every operator-supplied branch-ish value passes through.
 
     Returns ``(verdict, detail)``: ``_NAME_OK`` with an empty detail,
@@ -703,9 +703,12 @@ def _classify_branch_name(
     safely — ``git checkout -f`` discards every uncommitted modification in the
     repo. One validator, one strictness knob, so the two rules cannot drift.
 
-    The in-process checks run FIRST so a refusal costs zero subprocesses: that
-    ordering is what lets cleanup promise it emits no git at all for an unusable
-    value (162-25's AC-3, extended to the mutating path).
+    The in-process checks run FIRST. A value they refuse costs zero
+    subprocesses. A value that passes them costs exactly one read-only
+    subprocess — ``git check-ref-format refs/heads/<value>`` via
+    :func:`_valid_branch_name` — before any verdict is returned. That single
+    read-only check is what lets cleanup promise it emits no MUTATING git at
+    all for an unusable value (162-25's AC-3, extended to the mutating path).
     """
     if value in _NON_BRANCH_ALIASES:
         return _NAME_REFUSED, "git's own alias for the current checkout, not a branch"
@@ -722,7 +725,7 @@ def _classify_branch_name(
     return _NAME_OK, ""
 
 
-def _classify_remote_name(value: str, cwd: str) -> tuple[str, str]:
+def _classify_remote_name(value: str, cwd: str) -> tuple[Literal["ok", "refused", "timeout"], str]:
     """Like :func:`_classify_branch_name`, but for a remote NAME slot.
 
     A remote name is a single argv token in ``git pull <name> <refspec>``. Git
@@ -907,8 +910,11 @@ def _git_cleanup(
     base is (``git pull --upload-pack=<cmd> <ref>`` runs an arbitrary program).
 
     A ``base`` or ``remote`` this function refuses, and a validation probe that
-    times out, both emit ZERO git subprocesses and return a single entry
-    carrying a ``warning`` that quotes the offending value verbatim.
+    times out, both return a single entry carrying a ``warning`` that quotes the
+    offending value verbatim. Values refused by an in-process check (``HEAD``,
+    ``@``, dash-leading, ``refs/``-prefixed) cost zero subprocesses; all other
+    values cost at most one read-only ``git check-ref-format`` probe before any
+    mutating command runs (162-69).
 
     Returns the step entries to append to the finish report.
     """
