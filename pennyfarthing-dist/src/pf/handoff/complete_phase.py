@@ -16,7 +16,7 @@ from pathlib import Path
 
 import yaml
 
-from pf.handoff.session_assessment import assessment_heading
+from pf.handoff.session_assessment import assessment_heading, normalize_session
 from pf.workflow.helpers import resolve_workflow_file
 
 # The agent whose assessment the approval subgates judge. Its heading comes from
@@ -184,6 +184,13 @@ def complete_phase(
         # creating a second counter and silently resetting the round-trip budget
         # — 162-59's unreadable guard then never fired because the reader found
         # the newly inserted valid line.
+        # 162-60: normalize ONCE before read/locate/splice so all three operations
+        # agree on the same byte sequence.  find_operative_round_trip_line returns
+        # offsets into the string it received; if content were normalized inside
+        # the locator while the splice target remained raw, any Cf/NFKC-changed
+        # byte before the counter line would shift the offsets and mangle the
+        # counter (review CRITICAL finding).
+        content = normalize_session(content)
         from pf.handoff.gate_recovery import (
             find_operative_round_trip_line,
             mask_illustrative_regions,
@@ -766,6 +773,11 @@ def _read_rework_cycle(session_content: str) -> dict:
         mask_illustrative_regions,
         read_round_trip_count,
     )
+
+    # 162-60: normalize before all matchers — homoglyph/format-char variants in
+    # the legacy "**Rework Cycle:**" label must not render it absent/unreadable.
+    # read_round_trip_count normalizes internally; the legacy matchers below do not.
+    session_content = normalize_session(session_content)
 
     reading = read_round_trip_count(session_content)
     if reading["status"] != "absent":

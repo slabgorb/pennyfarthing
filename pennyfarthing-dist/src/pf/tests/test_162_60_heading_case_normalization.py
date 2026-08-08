@@ -32,7 +32,10 @@ Story 162-60 / Epic 162 (Finish & sprint-tooling truthfulness)
 
 from __future__ import annotations
 
+import re
 import textwrap
+from pathlib import Path
+from unittest.mock import patch
 
 from pf.handoff.gate_recovery import read_agent_verdict, read_round_trip_count
 
@@ -269,4 +272,149 @@ class TestSessionNormalizationStripsCfCcFromLabels:
         assert reading["status"] == "found" and reading["count"] == 5, (
             "U+FF0D (FULLWIDTH HYPHEN-MINUS) in the label was not NFKC-normalized to '-': "
             f"got {reading}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# [WRITER] Cf char in preamble must not corrupt counter splice (162-60 CRITICAL)
+# ---------------------------------------------------------------------------
+
+
+_NONE_ENABLED = dict.fromkeys(
+    (
+        "preflight",
+        "edge_hunter",
+        "silent_failure_hunter",
+        "test_analyzer",
+        "comment_analyzer",
+        "type_design",
+        "security",
+        "simplifier",
+        "rule_checker",
+    ),
+    False,
+)
+
+_COUNTER_LINE_RE = re.compile(r"^\*\*Round-Trip Count:\*\*[ \t]*(\d+)[ \t]*$", re.MULTILINE)
+
+
+def _build_writer_project(tmp_path: Path, session: str) -> Path:
+    """Stand up a minimal tdd-workflow project for a writer round-trip."""
+
+    from pf.tests.test_162_21_resolve_gate_rejected_verdict import (
+        _load_real_tdd,
+        _setup_project,
+    )
+    return _setup_project(tmp_path, _load_real_tdd(), session)
+
+
+class TestWriterSpliceWithCfCharInPreamble:
+    """A Cf character before the counter line must not corrupt the splice.
+
+    **The defect (162-60 CRITICAL review finding):** ``find_operative_round_trip_line``
+    normalized content internally, returning offsets that indexed the NORMALIZED
+    string.  ``complete_phase`` then spliced those offsets into the RAW ``content``
+    variable.  Any Cf character before the counter line shifted the
+    offsets and mangled the counter, silently corrupting the session.
+
+    **The fix:** ``complete_phase`` normalizes ``content`` ONCE at the top of the
+    ``"rework" in gate_type`` block.  The read, locate, and splice all operate on
+    the same normalized string; ``find_operative_round_trip_line`` no longer
+    normalizes internally.
+
+    This test injects U+200B (ZERO WIDTH SPACE, category Cf) into the
+    ``**Workflow:**`` line, which appears BEFORE the ``**Round-Trip Count:**``
+    line in the preamble.  The ``**Phase Started:** \\S+`` substitution that runs
+    before the rework block uses ``\\S+``, which matches U+200B (category Cf, not
+    ``\\s``) and inadvertently strips it — so injecting into Phase Started is
+    neutralized before the splice.  Injecting into ``**Workflow:**`` instead
+    survives all pre-splice substitutions (the Workflow line is only rewritten
+    when a tandem partner is configured; approval_rework→green has no tandem).
+    Without the fix the splice is off by one code-point and the counter is garbled.
+    """
+
+    def test_counter_increments_cleanly_with_zwsp_before_it(self, tmp_path: Path) -> None:
+        """U+200B in the Workflow line must not corrupt the counter splice."""
+        from pf.handoff.complete_phase import complete_phase
+
+        # Build a session with Round-Trip Count: 1 already set
+        from pf.tests.test_162_21_resolve_gate_rejected_verdict import (
+            STORY_ID,
+            _load_real_tdd,
+            _make_session,
+            _setup_project,
+        )
+
+        base_session = _make_session(verdict="REJECTED", round_trip_count=1)
+        # Inject U+200B into the **Workflow:** line — comes before **Round-Trip Count:**
+        # and is NOT rewritten by the pre-splice substitutions (Phase/Phase Started use
+        # \S+ which also matches U+200B and neutralise it; Workflow is only rewritten
+        # when a tandem partner is configured, which approval_rework→green never has).
+        session_with_zwsp = base_session.replace(
+            "**Workflow:** tdd\n",
+            "**Workflow:** tdd​\n",  # U+200B (ZERO WIDTH SPACE) after 'tdd'
+        )
+        assert "​" in session_with_zwsp, "fixture injection failed"
+
+        project = _setup_project(tmp_path, _load_real_tdd(), session_with_zwsp)
+        session_path = project / ".session" / f"{STORY_ID}-session.md"
+
+        with patch("pf.settings.settings.get_setting", return_value=_NONE_ENABLED):
+            result = complete_phase(
+                STORY_ID, "tdd", "review", "green", "approval_rework",
+                project_root=project,
+            )
+
+        assert result["status"] == "success", (
+            f"complete_phase failed with a U+200B in the preamble: {result}"
+        )
+
+        written = session_path.read_text(encoding="utf-8")
+        counter_matches = _COUNTER_LINE_RE.findall(written)
+        assert len(counter_matches) == 1, (
+            f"expected exactly one **Round-Trip Count:** line after the rework write, "
+            f"got {len(counter_matches)}: {counter_matches!r}\n\n"
+            "If the count is 0, the counter line was mangled (offset corruption).\n"
+            "If the count is 2, a second line was inserted rather than a splice."
+        )
+        assert counter_matches[0] == "2", (
+            "the counter was not incremented from 1 to 2 — "
+            f"got {counter_matches[0]!r}.  Offset corruption from the U+200B "
+            "in the preamble would produce a garbled line or wrong value."
+        )
+
+    def test_counter_value_not_mangled_with_multi_cf_before_it(self, tmp_path: Path) -> None:
+        """Three U+200B chars in the Workflow line — 3-codepoint offset drift."""
+        from pf.handoff.complete_phase import complete_phase
+        from pf.tests.test_162_21_resolve_gate_rejected_verdict import (
+            STORY_ID,
+            _load_real_tdd,
+            _make_session,
+            _setup_project,
+        )
+
+        base_session = _make_session(verdict="REJECTED", round_trip_count=2)
+        # Three zero-width spaces in **Workflow:** — 3-codepoint offset drift.
+        # Using Workflow (not Phase Started) for the same reason as the sibling
+        # test: Phase Started \S+ substitution would strip U+200B before the splice.
+        session_with_zwsp = base_session.replace(
+            "**Workflow:** tdd\n",
+            "**Workflow:** tdd​​​\n",  # three U+200B after 'tdd'
+        )
+
+        project = _setup_project(tmp_path, _load_real_tdd(), session_with_zwsp)
+        session_path = project / ".session" / f"{STORY_ID}-session.md"
+
+        with patch("pf.settings.settings.get_setting", return_value=_NONE_ENABLED):
+            result = complete_phase(
+                STORY_ID, "tdd", "review", "green", "approval_rework",
+                project_root=project,
+            )
+
+        assert result["status"] == "success", result
+        written = session_path.read_text(encoding="utf-8")
+        counter_matches = _COUNTER_LINE_RE.findall(written)
+        assert len(counter_matches) == 1 and counter_matches[0] == "3", (
+            f"3 U+200B chars before counter caused offset corruption — "
+            f"got {counter_matches!r} in written session"
         )

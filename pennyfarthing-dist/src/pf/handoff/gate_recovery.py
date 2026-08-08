@@ -623,10 +623,18 @@ def find_operative_round_trip_line(content: str) -> re.Match[str] | None:
     anywhere would freeze the real counter and disarm the freshness guard, which
     is the 162-28 defect reintroduced from the other side (story 162-47, AC-A3).
 
-    Offsets index into ``content`` unchanged: masking preserves length, and the
-    preamble is a prefix.
+    Offsets index into the ``content`` argument as received: masking preserves
+    length, and the preamble is a prefix of the masked string.
+
+    **Callers must pre-normalize ``content``** via :func:`normalize_session`
+    before calling this function — the function does NOT normalize internally.
+    ``read_round_trip_count`` normalizes before it calls this; ``complete_phase``
+    normalizes at the top of the rework block before locate and splice (story
+    162-60).  Normalizing internally would corrupt the splice offsets: the returned
+    match would index the normalized string while the splice target remains the raw
+    string, and any Cf/NFKC-changed bytes before the counter line would shift the
+    boundary (story 162-60 review, CRITICAL finding).
     """
-    content = normalize_session(content)  # 162-60: homoglyph/format-char normalization
     masked = mask_illustrative_regions(content)
     scope = masked[: preamble_end(masked)]
     matches = list(ROUND_TRIP_COUNT_RE.finditer(scope))
