@@ -133,7 +133,7 @@ def get_next_story() -> dict[str, Any]:
         backlog,
         key=lambda s: (
             0 if s.get("assigned_to") == current_user else 1,
-            priority_order.get((s.get("priority") or "P2").upper(), 2),
+            priority_order.get((s.get("priority") or "P2").strip().upper(), 2),
         ),
     )
 
