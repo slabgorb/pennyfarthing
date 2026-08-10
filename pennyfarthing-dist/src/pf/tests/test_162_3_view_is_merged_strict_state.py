@@ -107,6 +107,10 @@ NON_CANONICAL_MERGED = [
     pytest.param("Merged", id="titlecase"),
     pytest.param("MeRgEd", id="mixedcase"),
     pytest.param("mERGED", id="inverted"),
+    # 162-18/R1: a .strip() mutant on _view_is_merged would accept these —
+    # pin that whitespace-padded spellings are refused regardless of stripping.
+    pytest.param(" MERGED", id="leading-whitespace"),
+    pytest.param("MERGED ", id="trailing-whitespace"),
 ]
 
 #: Values that must read as NOT merged both before and after the fix — the
@@ -205,7 +209,7 @@ def _view_payload(
     return json.dumps(
         {
             "state": state,
-            "mergedAt": "2026-08-04T00:00:00Z" if state.upper() == "MERGED" else None,
+            "mergedAt": "2026-08-04T00:00:00Z" if state == "MERGED" else None,
             "mergeable": mergeable,
             "mergeStateStatus": merge_state_status,
             "baseRefName": base_ref,
@@ -449,6 +453,13 @@ class TestConflictGateStillBlocksCanonicalMergeability:
             pytest.param("CONFLICTING", "DIRTY", id="conflicting+dirty"),
             pytest.param("CONFLICTING", "UNKNOWN", id="conflicting-only"),
             pytest.param("MERGEABLE", "DIRTY", id="dirty-only"),
+            # 162-18/R2: _pr_block_reason currently case-folds mergeable /
+            # mergeStateStatus (the finding is out of scope for _view_is_merged,
+            # but the fold is present). Pin that lowercase inputs still block so
+            # a sweep that removes the .upper() calls from _pr_block_reason cannot
+            # silently drop the 155-12 conflict abort.
+            pytest.param("conflicting", "dirty", id="lowercase-conflicting+dirty"),
+            pytest.param("conflicting", "unknown", id="lowercase-conflicting-only"),
         ],
     )
     def test_open_pr_with_canonical_conflict_fields_blocks(
