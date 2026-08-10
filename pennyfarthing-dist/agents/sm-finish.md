@@ -202,7 +202,7 @@ FINISH_PREFLIGHT_RESULT:
 ```
 
 ### Jira Skipped
-If `jira_skipped: true` in JSON, note this in output.
+If `jira.skipped: true` in JSON (nested under the `jira` key), note this in output.
 
 ### Deferred Follow-ups
 If Step 4 produced suggestions, append the `data.markdown` block (the
