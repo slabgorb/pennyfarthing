@@ -14,6 +14,7 @@ from typing import Any
 
 from pf.common.config import get_project_root
 from pf.sprint.loader import load_sprint
+from pf.sprint.path_validation import validate_sprint_id
 from pf.sprint.shard_merge import is_safe_shard_path
 from pf.sprint.yaml_io import (
     _get_epic_ref,
@@ -64,15 +65,10 @@ def get_archive_path(project_root: Path | None = None) -> Path:
         sprint_id = str(number)
 
     # Sanitize before building the path (CWE-22, 155-7): sprint_id comes from
-    # sprint YAML metadata and is used verbatim in a filename. Restrict to a
-    # filename-safe charset; `..` passes the charset check but is a parent ref,
-    # so refuse it explicitly.
-    if not re.fullmatch(r"[A-Za-z0-9._-]+", sprint_id) or ".." in sprint_id:
-        raise ValueError(
-            f"Invalid sprint id {sprint_id!r}: only [A-Za-z0-9._-] characters "
-            "(and no '..') are allowed in the archive filename. "
-            "Check sprint/current-sprint.yaml."
-        )
+    # sprint YAML metadata and is used verbatim in a filename. Delegate to the
+    # shared validator (pf.sprint.path_validation) so all archive-path sites
+    # use one code path (SOUL #2, 164-3).
+    validate_sprint_id(sprint_id)
 
     archive_dir = root / "sprint" / "archive"
     archive_path = archive_dir / f"sprint-{sprint_id}-completed.yaml"
@@ -385,7 +381,10 @@ def backfill_epic_refs(
             continue
         # Canonical epic-ref (SOUL #2) — the one formula used everywhere else in
         # this module; rejects jira sentinels + strips ``epic-`` (155-8).
-        epic_ref = _get_epic_ref(epic)
+        try:
+            epic_ref = _get_epic_ref(epic)
+        except ValueError:
+            continue  # skip traversal-ref epics; irrecoverable list unchanged
         if not epic_ref:
             continue
         for story in epic.get("stories") or []:
@@ -544,11 +543,23 @@ def archive_epic(
         }
 
     # Determine the shard ref (filename stem)
-    epic_ref = _get_epic_ref(epic)
+    try:
+        epic_ref = _get_epic_ref(epic)
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
     shard_file = sprint_dir / f"epic-{epic_ref}.yaml"
     archive_shard = archive_dir / f"epic-{epic_ref}.yaml"
     story_count = len(epic.get("stories", []))
     total_points = sum(s.get("points", 0) for s in epic.get("stories", []))
+
+    # Resolve (and create if needed) the sprint archive file BEFORE any
+    # filesystem mutation — a rejected sprint id must not strand a half-moved
+    # shard (155-7 rework: validate before the first irreversible step, 155-12).
+    # Hoisted above dry-run so unsafe sprint ids also fail in dry-run (164-3 AC3).
+    try:
+        archive_path = ensure_archive_file(root)
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
 
     if dry_run:
         msg_parts = [f"Would archive {epic_id} ({story_count} stories, {total_points} pts)"]
@@ -568,14 +579,6 @@ def archive_epic(
             "total_points": total_points,
             "message": "\n".join(msg_parts),
         }
-
-    # Resolve (and create if needed) the sprint archive file BEFORE any
-    # filesystem mutation — a rejected sprint id must not strand a half-moved
-    # shard (155-7 rework: validate before the first irreversible step, 155-12).
-    try:
-        archive_path = ensure_archive_file(root)
-    except ValueError as e:
-        return {"success": False, "error": str(e)}
 
     # 1. Update epic status in the shard before moving
     if shard_file.exists():

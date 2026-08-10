@@ -315,21 +315,34 @@ def _get_epic_ref(epic: Mapping) -> str:
     Priority: Jira key > numeric ID extracted from epic-N > raw ID.
     Strips 'epic-' prefix from IDs to prevent double-prefix filenames
     (e.g., epic-epic-94.yaml). See ADR-0022.
+
+    Raises:
+        ValueError: When the resolved ref contains traversal characters or
+            patterns (CWE-22, 164-3).  Delegates to
+            ``pf.sprint.path_validation.validate_shard_filename``.
     """
+    from pf.sprint.path_validation import validate_shard_filename
+
     jira = epic.get("jira")
     epic_id = str(epic.get("id", ""))
 
-    if jira and JIRA_PATTERN.match(str(jira)):
-        return str(jira)
+    if jira:
+        # Validate before use — traversal jira keys must fail even if they
+        # don't match JIRA_PATTERN (which would otherwise silently fall through).
+        jira_str = str(jira)
+        validate_shard_filename(jira_str)
+        if JIRA_PATTERN.match(jira_str):
+            return jira_str
     if JIRA_PATTERN.match(epic_id):
-        return epic_id
+        return validate_shard_filename(epic_id)
 
     # Strip epic- prefix to prevent double-prefix filenames
     # e.g., "epic-94" -> "94" so file becomes "epic-94.yaml" not "epic-epic-94.yaml"
     stripped = epic_id
     while stripped.startswith("epic-"):
         stripped = stripped[5:]
-    return stripped or epic_id
+    ref = stripped or epic_id
+    return validate_shard_filename(ref)
 
 
 def _write_yaml_file(path: Path, data: Any) -> None:
