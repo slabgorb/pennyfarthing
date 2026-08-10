@@ -21,11 +21,12 @@ from __future__ import annotations
 
 from pathlib import Path
 from textwrap import dedent
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
 
-from pf.sprint.story_add import add_story
+from pf.sprint.story_add import add_initiative_story, add_story
 from pf.sprint.yaml_io import read_sprint
 
 # =============================================================================
@@ -157,8 +158,8 @@ class TestDescriptionProgrammatic:
         assert new_story["description"] == "Shard provenance text."
 
     def test_description_appears_in_result_dict(self, sprint_file: Path) -> None:
-        """add_story result is success=True when description is supplied."""
-        result = add_story(
+        """add_story with description= persists value — verified by reading back from YAML."""
+        add_story(
             sprint_path=sprint_file,
             epic_id="164",
             title="Story with description",
@@ -166,7 +167,10 @@ class TestDescriptionProgrammatic:
             description="some text",
         )
 
-        assert result["success"] is True
+        data = read_sprint(sprint_file)
+        new_story = data["epics"][0]["stories"][-1]
+
+        assert new_story["description"] == "some text"
 
 
 # =============================================================================
@@ -184,9 +188,13 @@ class TestDescriptionCLI:
         result = runner.invoke(
             story_add_command,
             [
-                "--sprint-file", str(sprint_file),
-                "164", "CLI description story", "2",
-                "--description", "Provenance from CLI.",
+                "--sprint-file",
+                str(sprint_file),
+                "164",
+                "CLI description story",
+                "2",
+                "--description",
+                "Provenance from CLI.",
             ],
         )
 
@@ -201,9 +209,13 @@ class TestDescriptionCLI:
         runner.invoke(
             story_add_command,
             [
-                "--sprint-file", str(sprint_file),
-                "164", "CLI description story", "2",
-                "--description", "Added via CLI flag.",
+                "--sprint-file",
+                str(sprint_file),
+                "164",
+                "CLI description story",
+                "2",
+                "--description",
+                "Added via CLI flag.",
             ],
         )
 
@@ -221,9 +233,13 @@ class TestDescriptionCLI:
         result = runner.invoke(
             story_add_command,
             [
-                "--sprint-file", str(sprint_file),
-                "164", "CLI description story", "2",
-                "--description", "Some text.",
+                "--sprint-file",
+                str(sprint_file),
+                "164",
+                "CLI description story",
+                "2",
+                "--description",
+                "Some text.",
             ],
         )
 
@@ -246,9 +262,13 @@ class TestBodyAlias:
         result = runner.invoke(
             story_add_command,
             [
-                "--sprint-file", str(sprint_file),
-                "164", "Body alias story", "2",
-                "--body", "Body alias text.",
+                "--sprint-file",
+                str(sprint_file),
+                "164",
+                "Body alias story",
+                "2",
+                "--body",
+                "Body alias text.",
             ],
         )
 
@@ -265,9 +285,13 @@ class TestBodyAlias:
         runner.invoke(
             story_add_command,
             [
-                "--sprint-file", str(sprint_file),
-                "164", "Body alias story", "2",
-                "--body", "Body alias text.",
+                "--sprint-file",
+                str(sprint_file),
+                "164",
+                "Body alias story",
+                "2",
+                "--body",
+                "Body alias text.",
             ],
         )
 
@@ -288,9 +312,13 @@ class TestBodyAlias:
         runner.invoke(
             story_add_command,
             [
-                "--sprint-file", str(sprint_file),
-                "164", "Description story", "2",
-                "--description", TEXT,
+                "--sprint-file",
+                str(sprint_file),
+                "164",
+                "Description story",
+                "2",
+                "--description",
+                TEXT,
             ],
         )
         desc_story = read_sprint(sprint_file)["epics"][0]["stories"][-1]
@@ -298,9 +326,13 @@ class TestBodyAlias:
         runner.invoke(
             story_add_command,
             [
-                "--sprint-file", str(sprint_file),
-                "164", "Body story", "2",
-                "--body", TEXT,
+                "--sprint-file",
+                str(sprint_file),
+                "164",
+                "Body story",
+                "2",
+                "--body",
+                TEXT,
             ],
         )
         body_story = read_sprint(sprint_file)["epics"][0]["stories"][-1]
@@ -316,9 +348,7 @@ class TestBodyAlias:
 class TestOmitDescription:
     """Without --description, description is absent; existing tests still hold."""
 
-    def test_description_absent_when_not_provided_programmatic(
-        self, sprint_file: Path
-    ) -> None:
+    def test_description_absent_when_not_provided_programmatic(self, sprint_file: Path) -> None:
         """add_story() without description= must not put a description key in the story."""
         add_story(
             sprint_path=sprint_file,
@@ -362,9 +392,7 @@ class TestOmitDescription:
         for story in data["epics"][0]["stories"][:-1]:
             assert "description" not in story
 
-    def test_exit_code_zero_without_description(
-        self, runner: CliRunner, sprint_file: Path
-    ) -> None:
+    def test_exit_code_zero_without_description(self, runner: CliRunner, sprint_file: Path) -> None:
         """Plain add without --description must still exit 0 (backward compat)."""
         from pf.sprint.story_add import story_add_command
 
@@ -492,16 +520,14 @@ class TestDescriptionSpecialContent:
 
         assert stored == text
 
-    def test_adjacent_stories_unaffected_by_special_description(
-        self, sprint_file: Path
-    ) -> None:
+    def test_adjacent_stories_unaffected_by_special_description(self, sprint_file: Path) -> None:
         """Storing a complex description must not corrupt adjacent stories in the YAML."""
         add_story(
             sprint_path=sprint_file,
             epic_id="164",
             title="Complex description story",
             points=2,
-            description="Key: value\n- bullet\n# comment\n\"quote\"",
+            description='Key: value\n- bullet\n# comment\n"quote"',
         )
 
         data = read_sprint(sprint_file)
@@ -514,7 +540,7 @@ class TestDescriptionSpecialContent:
         assert stories[1]["title"] == "Second existing story"
 
     def test_shard_not_corrupted_by_special_description(self, shard_path: Path) -> None:
-        """Writing a complex description to a shard must leave the shard re-readable."""
+        """Writing a complex description to a shard must leave the shard re-readable with adjacent stories intact."""
         add_story(
             sprint_path=shard_path,
             epic_id="164",
@@ -527,6 +553,20 @@ class TestDescriptionSpecialContent:
         data = read_sprint(shard_path)
         assert data is not None
         assert len(data["stories"]) == 2
+
+        # Pre-existing story fields must be completely intact
+        original = data["stories"][0]
+        assert original["id"] == "164-1"
+        assert original["title"] == "First existing story"
+        assert original["points"] == 2
+        assert original["priority"] == "P1"
+        assert original["status"] == "backlog"
+        assert original["workflow"] == "tdd"
+        assert "description" not in original
+
+        # New story carries the complex description unchanged
+        new_story = data["stories"][1]
+        assert new_story["description"] == "Key: value\n- bullet\n# comment"
 
     def test_all_special_chars_in_one_description(self, sprint_file: Path) -> None:
         """A description combining colons, quotes, dashes, hashes, and newlines round-trips."""
@@ -550,3 +590,77 @@ class TestDescriptionSpecialContent:
         stored = data["epics"][0]["stories"][-1]["description"]
 
         assert stored == text
+
+
+# =============================================================================
+# AC1 (initiative path): --description round-trips for initiative stories
+# =============================================================================
+
+INITIATIVE_YAML = """\
+slug: test-slug
+title: Test Initiative
+total_points: 5
+standalone_stories:
+  - id: ts-1
+    title: Existing initiative story
+    points: 5
+    priority: P1
+    status: backlog
+    repos: pennyfarthing
+    workflow: tdd
+"""
+
+
+@pytest.fixture
+def initiative_root(tmp_path: Path) -> Path:
+    """Return a tmp root with sprint/initiative-test-slug.yaml set up."""
+    sprint_dir = tmp_path / "sprint"
+    sprint_dir.mkdir()
+    (sprint_dir / "initiative-test-slug.yaml").write_text(INITIATIVE_YAML, encoding="utf-8")
+    return tmp_path
+
+
+class TestInitiativeDescription:
+    """--description round-trips for initiative (standalone) stories."""
+
+    def test_initiative_description_round_trips(self, initiative_root: Path) -> None:
+        """add_initiative_story(description=...) writes description to the initiative YAML."""
+        with patch("pf.common.config.get_project_root", return_value=initiative_root):
+            result = add_initiative_story(
+                initiative_slug="test-slug",
+                title="Initiative story with provenance",
+                points=2,
+                description="Minted from review 155-13.",
+            )
+
+        assert result["success"] is True
+
+        # Read back directly — ruamel.yaml round-trip
+        from ruamel.yaml import YAML as RuamelYAML
+
+        ryml = RuamelYAML()
+        init_file = initiative_root / "sprint" / "initiative-test-slug.yaml"
+        with open(init_file, encoding="utf-8") as f:
+            data = ryml.load(f)
+
+        new_story = data["standalone_stories"][-1]
+        assert new_story["description"] == "Minted from review 155-13."
+
+    def test_initiative_description_absent_when_omitted(self, initiative_root: Path) -> None:
+        """add_initiative_story() without description= must not add a description field."""
+        with patch("pf.common.config.get_project_root", return_value=initiative_root):
+            add_initiative_story(
+                initiative_slug="test-slug",
+                title="No description initiative story",
+                points=1,
+            )
+
+        from ruamel.yaml import YAML as RuamelYAML
+
+        ryml = RuamelYAML()
+        init_file = initiative_root / "sprint" / "initiative-test-slug.yaml"
+        with open(init_file, encoding="utf-8") as f:
+            data = ryml.load(f)
+
+        new_story = data["standalone_stories"][-1]
+        assert "description" not in new_story

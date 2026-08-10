@@ -220,6 +220,7 @@ def add_initiative_story(
     workflow: str = "tdd",
     jira: str | None = None,
     repos: str = "pennyfarthing",
+    description: str | None = None,
 ) -> dict[str, Any]:
     """Add a standalone story to an initiative YAML file.
 
@@ -232,6 +233,7 @@ def add_initiative_story(
         workflow: Workflow (default: tdd)
         jira: Optional Jira key
         repos: Repos (default: pennyfarthing)
+        description: Optional provenance/description text
 
     Returns:
         Dict with success status and story_id or error
@@ -280,6 +282,8 @@ def add_initiative_story(
         story["jira"] = jira
     if story_type is not None:
         story["type"] = story_type
+    if description is not None:
+        story["description"] = description
 
     if "standalone_stories" not in init_data:
         init_data["standalone_stories"] = []
@@ -387,6 +391,7 @@ def story_add_command(
             workflow=workflow,
             jira=jira_id,
             repos=repos,
+            description=description,
         )
 
         if result["success"]:
