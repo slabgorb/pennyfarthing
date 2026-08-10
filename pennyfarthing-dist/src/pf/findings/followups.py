@@ -16,11 +16,36 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from pf.findings.aggregate import _parse_frontmatter
 from pf.findings.capture import parse_delivery_findings
-from pf.findings.summary import _parse_session_deviations
+from pf.findings.summary import parse_session_deviations
+
+
+class FindingCandidateDict(TypedDict):
+    """Candidate dict for a finding-source deferral."""
+
+    source: str
+    description: str
+    type: str
+
+
+class DeviationCandidateDict(TypedDict):
+    """Candidate dict for a deviation-source deferral."""
+
+    source: str
+    description: str
+    forward_impact: str
+
+
+class SuggestionDict(TypedDict):
+    """Rendered suggestion dict for output."""
+
+    description: str
+    command: str | None
+    provenance: str
+    source: str
 
 # Non-blocking findings whose description carries one of these phrases imply
 # consciously deferred work even when the finding type alone doesn't (gh #114).
@@ -81,7 +106,7 @@ def detect_deferred_followups(content: str) -> list[dict[str, Any]]:
                 }
             )
 
-    for deviation in _parse_session_deviations(content):
+    for deviation in parse_session_deviations(content):
         forward_impact = (deviation.get("forward_impact") or "").strip()
         if forward_impact and forward_impact.lower() != "none":
             candidates.append(
@@ -139,7 +164,8 @@ def _session_epic(content: str) -> str | None:
 
 
 def _open_stories(project_root: Path) -> list[tuple[str, str]]:
-    """Collect (id, title) for open stories in the merged current sprint.
+    """Collect (id, title) for open stories in the merged current sprint
+    and future.yaml (future.initiatives[].epics[].stories[]).
 
     Returns [] when no sprint data is loadable — dedup then fails OPEN
     (nothing to dedup against must not suppress the report).
@@ -147,19 +173,43 @@ def _open_stories(project_root: Path) -> list[tuple[str, str]]:
     from pf.sprint.loader import load_sprint
     from pf.sprint.status_normalize import normalize_status
 
-    data = load_sprint(project_root)
-    if not data:
-        return []
-
     stories: list[tuple[str, str]] = []
-    for epic in data.get("epics", []):
-        if not isinstance(epic, dict):
-            continue
-        for story in epic.get("stories", []) or []:
-            if not isinstance(story, dict):
+
+    data = load_sprint(project_root)
+    if data:
+        for epic in data.get("epics", []):
+            if not isinstance(epic, dict):
                 continue
-            if normalize_status(story.get("status")) in OPEN_STATUSES:
-                stories.append((str(story.get("id", "")), str(story.get("title", ""))))
+            for story in epic.get("stories", []) or []:
+                if not isinstance(story, dict):
+                    continue
+                if normalize_status(story.get("status")) in OPEN_STATUSES:
+                    stories.append(
+                        (str(story.get("id", "")), str(story.get("title", "")))
+                    )
+
+    # Also scan future.yaml — fail open when absent or unreadable.
+    future_path = project_root / "sprint" / "future.yaml"
+    if future_path.exists():
+        try:
+            from pf.common.config import load_yaml_config
+
+            future_data = load_yaml_config(future_path) or {}
+            for initiative in (future_data.get("future") or {}).get("initiatives", []):
+                if not isinstance(initiative, dict):
+                    continue
+                for epic in initiative.get("epics", []) or []:
+                    if not isinstance(epic, dict):
+                        continue
+                    for story in epic.get("stories", []) or []:
+                        if not isinstance(story, dict):
+                            continue
+                        stories.append(
+                            (str(story.get("id", "")), str(story.get("title", "")))
+                        )
+        except Exception:
+            pass  # fail open — missing/corrupt future.yaml must not suppress report
+
     return stories
 
 
@@ -207,6 +257,32 @@ def suggest_followups(
         shell-safe; the candidate stays listed in the markdown either way.
     """
     session_path = Path(session_path)
+
+    # CWE-22: verify the path resolves within <project_root>/.session/ before
+    # any filesystem access.  Determine the check-root eagerly; if it cannot be
+    # determined the check is skipped (fail-open mirrors the dedup posture).
+    _check_root = project_root
+    if _check_root is None:
+        try:
+            from pf.common.config import get_project_root
+
+            _check_root = get_project_root()
+        except (FileNotFoundError, OSError):
+            _check_root = None
+    if _check_root is not None:
+        _session_base = Path(_check_root).resolve() / ".session"
+        _resolved = session_path.resolve()
+        try:
+            _resolved.relative_to(_session_base)
+        except ValueError:
+            return {
+                "success": False,
+                "error": (
+                    f"Session path is outside the .session directory "
+                    f"(traversal rejected): {session_path}"
+                ),
+            }
+
     if not session_path.exists():
         return {"success": False, "error": f"Session file not found: {session_path}"}
 
