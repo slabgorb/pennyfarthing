@@ -23,6 +23,8 @@ from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, NamedTuple
 
+import yaml
+
 if TYPE_CHECKING:
     from pf.git.repos import RepoConfig
 
@@ -417,7 +419,7 @@ class _PRClassification(NamedTuple):
 
     verdict: _PRVerdict
     message: str | None  # non-None for BLOCKED; may be None for others
-    detail: str | None   # e.g. base branch for BLOCKED
+    detail: str | None  # e.g. base branch for BLOCKED
 
 
 def _classify_pr(view: dict[str, Any] | None) -> _PRClassification:
@@ -463,9 +465,7 @@ def _classify_pr(view: dict[str, Any] | None) -> _PRClassification:
     state_status = str(view.get("mergeStateStatus", "")).upper()
     if mergeable == "CONFLICTING" or state_status == "DIRTY":
         base = str(view.get("baseRefName") or "the base branch")
-        message = (
-            f"CONFLICTING — rebase on {base} and resolve the conflicts before finishing"
-        )
+        message = f"CONFLICTING — rebase on {base} and resolve the conflicts before finishing"
         return _PRClassification(verdict=_PRVerdict.BLOCKED, message=message, detail=base)
 
     # Rule 4: state field-type validation — malformed + no conflict → UNREADABLE
@@ -645,8 +645,12 @@ def _resolve_base_branch(project_root: Path) -> str:
     """
     from pf.git.repos import load_repos_config
 
+    try:
+        configs = load_repos_config(project_root)
+    except (yaml.YAMLError, OSError):
+        return "develop"
     root_repo = next(
-        (rc for rc in load_repos_config(project_root).values() if rc.path in (".", "")),
+        (rc for rc in configs.values() if rc.path in (".", "")),
         None,
     )
     return root_repo.default_branch if root_repo else "develop"
@@ -672,7 +676,10 @@ def _resolve_story_repos(
     """
     from pf.git.repos import load_repos_config
 
-    configs = load_repos_config(project_root)
+    try:
+        configs = load_repos_config(project_root)
+    except (yaml.YAMLError, OSError):
+        return [(project_root, None)]
     raw = story.get("repos")
     if isinstance(raw, list):
         names = [str(n).strip() for n in raw if str(n).strip()]
@@ -1141,7 +1148,17 @@ def finish_story(
             "error": format_story_not_found_error(data, story_id),
         }
 
-    fields = _parse_session(session_path)
+    try:
+        fields = _parse_session(session_path)
+    except (OSError, UnicodeDecodeError) as exc:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "error": (
+                f"Cannot read session file `.session/{story_id}-session.md`: {exc}. "
+                "To fix: Check file permissions and encoding, then retry."
+            ),
+        }
     jira_key = _extract_jira_key(fields)
     # A declared-but-impossible branch aborts here: before any subprocess, any
     # transition, and any archive, in dry run too (155-31 preview/reality
@@ -1318,9 +1335,7 @@ def finish_story(
                     "No PR and no branch resolve from the session — the Branch/PR "
                     "fields are empty, placeholders, or absent."
                 )
-                steps.append(
-                    {"step": 2, "action": "merge_pr", "success": False, "error": _error}
-                )
+                steps.append({"step": 2, "action": "merge_pr", "success": False, "error": _error})
         if jira_key:
             steps.append({"step": 3, "action": f"Transition {jira_key} to Done"})
         else:
@@ -1449,9 +1464,7 @@ def finish_story(
                     }
                 )
             else:
-                steps.append(
-                    {"step": 2, "action": "merge_pr", "mode": "human", "skipped": True}
-                )
+                steps.append({"step": 2, "action": "merge_pr", "mode": "human", "skipped": True})
             continue
 
         if repo_pr and _classify_pr(pr_views.get(repo_path)).verdict == _PRVerdict.MERGED:
@@ -1692,9 +1705,7 @@ def finish_story(
                 "Details (or set them to 'none' to affirm absence), then "
                 "re-run finish."
             )
-            steps.append(
-                {"step": 2, "action": "merge_pr", "success": False, "error": error}
-            )
+            steps.append({"step": 2, "action": "merge_pr", "success": False, "error": error})
             return {
                 "success": False,
                 "story_id": story_id,
@@ -1768,9 +1779,7 @@ def finish_story(
                 ),
                 "steps": steps,
             }
-        steps.append(
-            {"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)}
-        )
+        steps.append({"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)})
 
     # --- Steps 3 & 4: Transition via state machine (Jira + YAML atomically) ---
     # Story should already be in_review (transitioned at review phase entry).
@@ -1914,10 +1923,7 @@ def finish_story(
                 "step": "4b",
                 "action": "add_completed_story",
                 "success": False,
-                "error": (
-                    f"Could not re-read sprint data for completed-row "
-                    f"bookkeeping: {exc}"
-                ),
+                "error": (f"Could not re-read sprint data for completed-row bookkeeping: {exc}"),
             }
         )
     else:
@@ -1953,9 +1959,7 @@ def finish_story(
     try:
         from pf.demo import orchestrator as demo_orchestrator
 
-        demo_result = demo_orchestrator.generate(
-            story_id, project_root=project_root
-        )
+        demo_result = demo_orchestrator.generate(story_id, project_root=project_root)
         if demo_result.get("success"):
             steps.append({"step": "4c", "action": "demo_generate"})
         else:
