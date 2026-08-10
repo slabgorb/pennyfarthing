@@ -43,6 +43,13 @@ class LintResult:
     command: str = ""  # the linter actually run (e.g. "ruff check ."), for truthful remediation
     skipped: bool = False  # True when no lintable project was found — "not checked" != "passed" (SOUL #10)
 
+    def __post_init__(self) -> None:
+        if self.skipped and (self.error is not None or not self.clean):
+            raise ValueError(
+                "LintResult: skipped=True requires clean=True and error=None "
+                "(skipped means 'not checked', not 'checked and failed')"
+            )
+
 
 @dataclass
 class JiraStatus:
@@ -101,7 +108,6 @@ class PreflightResult:
         }
 
         if self.jira.skipped:
-            result["jira_skipped"] = True
             result["jira"] = {"skipped": True}
         else:
             result["jira"] = {
@@ -161,6 +167,13 @@ async def _lookup_merged_pr_by_branch(branch: str, repo: str | None) -> dict[str
     Mirrors the head-branch resolution used by story 155-1's finish flow.
     Returns the first merged PR record, or ``None`` if none is found.
     """
+    # Belt-and-suspenders guard: branch is passed as a bare positional to
+    # `gh pr list --head <branch>` — an option-shaped value would be parsed
+    # as a flag (CWE-88). Guard independently of check_pr_status's guard so
+    # direct callers are also protected.
+    if _reject_option_like(branch, "branch") is not None:
+        return None
+
     cmd = [
         "gh",
         "pr",
@@ -394,6 +407,10 @@ def aggregate_results(
     # Check PR status
     if pr.error:
         if "no pull requests found" in pr.error.lower():
+            warnings.append(
+                "Branch is unmerged and no pull request was found; "
+                "finish will be blocked until a PR is created or merged."
+            )
             issues.append(
                 PreflightIssue(
                     severity="critical",
