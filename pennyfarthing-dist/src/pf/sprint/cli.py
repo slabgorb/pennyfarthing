@@ -2211,6 +2211,12 @@ def new_sprint(
       pf sprint new 2607 278 2026-02-16 2026-03-01 "Performance and polish"
     """
     from pf.common.config import get_project_root
+    from pf.sprint.path_validation import validate_sprint_id
+
+    try:
+        validate_sprint_id(sprint_yyww)
+    except ValueError as exc:
+        raise SystemExit(f"Error: {exc}") from exc
 
     root = get_project_root()
     sprint_file = root / "sprint" / "current-sprint.yaml"
