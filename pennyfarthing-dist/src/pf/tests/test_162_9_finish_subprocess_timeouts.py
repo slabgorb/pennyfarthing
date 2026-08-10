@@ -430,6 +430,7 @@ def _install_fake(
                     stdout=json.dumps(
                         {
                             "state": live["state"],
+                            "mergedAt": "2026-08-04T00:00:00Z" if live["state"] == "MERGED" else None,
                             "mergeable": world.mergeable,
                             "mergeStateStatus": world.merge_state_status,
                             "baseRefName": "develop",

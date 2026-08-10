@@ -376,7 +376,7 @@ def _cwd_kwargs(cwd: Path | None) -> dict[str, str]:
 #: The union of the fields the PR probes read: ``state`` for the merged checks,
 #: ``mergeable``/``mergeStateStatus``/``baseRefName`` for the conflict gate. One
 #: field list means the two pre-merge questions share one round trip (155-32).
-_PR_VIEW_FIELDS = "state,mergeable,mergeStateStatus,baseRefName"
+_PR_VIEW_FIELDS = "state,mergeable,mergeStateStatus,baseRefName,mergedAt"
 
 
 def _pr_view_probe(
@@ -460,7 +460,7 @@ def _view_is_merged(view: dict[str, Any] | None) -> bool:
     """
     if view is None:
         return False
-    return view.get("state") == "MERGED"
+    return view.get("state") == "MERGED" and bool(view.get("mergedAt"))
 
 
 def _pr_is_merged(pr_number: str, cwd: Path | None = None) -> bool:

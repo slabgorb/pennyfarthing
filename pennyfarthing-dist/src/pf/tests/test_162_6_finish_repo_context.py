@@ -415,11 +415,13 @@ def _make_run(
                     return MagicMock(
                         returncode=1, stdout="", stderr=f"no pull request found for {asked}"
                     )
+                current_state = live.get(here, world.state)
                 return MagicMock(
                     returncode=0,
                     stdout=json.dumps(
                         {
-                            "state": live.get(here, world.state),
+                            "state": current_state,
+                            "mergedAt": "2026-08-04T00:00:00Z" if current_state == "MERGED" else None,
                             "mergeable": world.mergeable,
                             "mergeStateStatus": world.merge_state_status,
                             "baseRefName": "develop",

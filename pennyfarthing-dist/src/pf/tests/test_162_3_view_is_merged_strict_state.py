@@ -325,7 +325,7 @@ class TestViewIsMergedRejectsNonCanonicalState:
         """AC-2: the one value gh actually emits still reads as merged. Guards
         against a fix that tightens the predicate into uselessness.
         """
-        assert _view_is_merged({"state": "MERGED"}) is True
+        assert _view_is_merged({"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}) is True
 
     @pytest.mark.parametrize("state", ALREADY_NOT_MERGED)
     def test_other_states_remain_not_merged(self, state: str) -> None:
@@ -402,6 +402,7 @@ class TestConflictGateExemptionRequiresCanonicalMerged:
                 "999",
                 {
                     "state": "MERGED",
+                    "mergedAt": "2026-08-04T00:00:00Z",
                     "mergeable": "CONFLICTING",
                     "mergeStateStatus": "DIRTY",
                     "baseRefName": "develop",
@@ -650,7 +651,7 @@ class TestPostMergeVerificationRequiresCanonicalMerged:
         """AC-2: a real merge still verifies."""
         with patch(
             "pf.sprint.story_finish._pr_view",
-            return_value={"state": "MERGED", "mergeable": "MERGEABLE"},
+            return_value={"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z", "mergeable": "MERGEABLE"},
         ):
             assert _pr_is_merged("999") is True
 

@@ -265,6 +265,7 @@ def _make_fake_run(
                 stdout=json.dumps(
                     {
                         "state": pr_state if landed else pre_merge_pr_state,
+                        "mergedAt": "2026-08-04T00:00:00Z" if (pr_state if landed else pre_merge_pr_state) == "MERGED" else None,
                         "mergeable": mergeable,
                         "mergeStateStatus": merge_state_status,
                         "baseRefName": "develop",
