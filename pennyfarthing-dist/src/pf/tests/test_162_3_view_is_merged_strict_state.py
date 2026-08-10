@@ -652,7 +652,7 @@ class TestPostMergeVerificationRequiresCanonicalMerged:
         """
         with patch(
             "pf.sprint.story_finish._pr_view",
-            return_value={"state": state, "mergeable": "MERGEABLE"},
+            return_value={"state": state, "mergedAt": "2026-08-04T00:00:00Z", "mergeable": "MERGEABLE"},
         ):
             assert _pr_is_merged("999") is False, (
                 f"post-merge verification accepted state={state!r} — this is "

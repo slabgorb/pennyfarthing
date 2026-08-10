@@ -460,20 +460,19 @@ def _view_is_merged(view: dict[str, Any] | None) -> bool:
     (including a missing key or an unreadable probe) reads as "not merged",
     which is the safe answer at all four call sites.
 
-    A ``MERGED`` state is only trusted when corroborated by a non-null, non-empty
-    string ``mergedAt`` timestamp (162-18). A lone ``state`` snapshot is a single
-    field in a mutable API response; ``mergedAt`` is set by GitHub at merge time
-    and never cleared, so its presence is a second, independent signal that the
-    merge actually landed. This matters because the predicate authorises three
-    irreversible steps: the conflict-gate exemption, the already-merged
-    short-circuit, and the post-merge re-verify. Real ``gh pr view`` output never
-    emits ``state: MERGED`` without a non-null ``mergedAt``, so legitimate merges
-    are unaffected.
+    A ``MERGED`` state is only trusted when corroborated by a non-null
+    ``mergedAt`` timestamp (162-18). A lone ``state`` snapshot is a single
+    field in a mutable API response; ``mergedAt`` is set by GitHub at merge
+    time and never cleared, so its presence is a second, independent signal
+    that the merge actually landed. This matters because the predicate
+    authorises three irreversible steps: the conflict-gate exemption, the
+    already-merged short-circuit, and the post-merge re-verify. Real
+    ``gh pr view`` output never emits ``state: MERGED`` without a non-null
+    ``mergedAt``, so legitimate merges are unaffected.
     """
     if view is None:
         return False
-    merged_at = view.get("mergedAt")
-    return view.get("state") == "MERGED" and isinstance(merged_at, str) and bool(merged_at)
+    return view.get("state") == "MERGED" and bool(view.get("mergedAt"))
 
 
 def _pr_is_merged(pr_number: str, cwd: Path | None = None) -> bool:
