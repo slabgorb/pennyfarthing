@@ -344,10 +344,7 @@ def test_archive_epic_unsafe_sprint_id_leaves_no_stray_shard(tmp_path: Path) -> 
     """
     root = _write_epic_project(tmp_path, {"name": "Sprint (Q3)", "status": "active"})
 
-    try:
-        archive_epic("37", project_root=root)
-    except ValueError:
-        pass  # contract violation pinned by the sibling test; scope here is mutation
+    archive_epic("37", project_root=root)
 
     assert not (root / "sprint" / "archive" / "epic-37.yaml").exists(), (
         "failed archive_epic left a stray shard in sprint/archive/"
