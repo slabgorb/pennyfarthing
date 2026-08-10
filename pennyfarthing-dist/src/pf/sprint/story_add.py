@@ -71,6 +71,7 @@ def add_story(
     repos: str | None = None,
     depends_on: str | None = None,
     plan_ref: str | None = None,
+    description: str | None = None,
 ) -> dict[str, Any]:
     """Add a new story to an epic in the sprint YAML.
 
@@ -84,6 +85,7 @@ def add_story(
         workflow: Workflow (default: tdd)
         jira: Optional Jira key
         plan_ref: Optional plan back-link string (e.g. "plan:path/to/plan.md#task-1")
+        description: Optional provenance/description text
 
     Returns:
         Dict with success status and story_id or error
@@ -135,6 +137,8 @@ def add_story(
         fields["plan_ref"] = plan_ref
     if story_type is not None:
         fields["type"] = story_type
+    if description is not None:
+        fields["description"] = description
 
     # Insert keys in STORY_KEY_ORDER, then any extras
     for key in STORY_KEY_ORDER:
@@ -307,7 +311,9 @@ def add_initiative_story(
 @click.option(
     "--priority", type=click.Choice(["p0", "p1", "p2", "p3"], case_sensitive=False), default="p1"
 )
-@click.option("--workflow", type=click.Choice(["tdd", "trivial", "bdd", "superpowers"]), default="tdd")
+@click.option(
+    "--workflow", type=click.Choice(["tdd", "trivial", "bdd", "superpowers"]), default="tdd"
+)
 @click.option("--jira", "jira_id", type=str, default=None)
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
 @click.option(
@@ -326,6 +332,8 @@ def add_initiative_story(
     help="Target epic ID — overrides the positional EPIC_ID",
 )
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+@click.option("--description", type=str, default=None, help="Story description / provenance text")
+@click.option("--body", "description", type=str, default=None, help="Alias for --description")
 def story_add_command(
     epic_id: str | None,
     title: str | None,
@@ -340,6 +348,7 @@ def story_add_command(
     depends_on: str | None,
     epic_override: str | None,
     dry_run: bool,
+    description: str | None,
 ) -> None:
     """Add a new story to an epic or initiative.
 
@@ -418,6 +427,7 @@ def story_add_command(
             jira=jira_id,
             repos=repos,
             depends_on=depends_on,
+            description=description,
         )
 
         if result["success"]:
