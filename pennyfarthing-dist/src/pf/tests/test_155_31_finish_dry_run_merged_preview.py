@@ -444,27 +444,41 @@ class TestDryRunPreviewUnchangedPaths:
             "to the auto-mode arm only (155-32 placement)"
         )
 
+    @patch("pf.sprint.story_finish._branch_merge_state")
     @patch("pf.sprint.story_finish.transition_story")
     @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
     def test_no_pr_preview_unchanged_and_probe_free(
         self,
         mock_mode: MagicMock,
         mock_transition: MagicMock,
+        mock_merge_state: MagicMock,
         tmp_path: Path,
     ) -> None:
-        """AC-5: with no PR (session names none, ``gh pr list`` resolves
-        none), step 2 still previews "No PR to merge" and no view probe runs
-        — there is nothing to ask about.
+        """AC-5 (updated for 164-9 AC3): with no PR (session names none,
+        ``gh pr list`` resolves none) but a real branch, dry-run now calls
+        ``_branch_merge_state`` to predict the real-run outcome. In a merged
+        world the branch verifies as merged → step 2 is skipped, not aborted.
+        ``gh pr view`` is still never called (there is no PR to probe).
         """
+        mock_merge_state.return_value = {
+            "state": "merged",
+            "count": 0,
+            "base": "develop",
+        }
         project = _make_project(tmp_path, session_body=SESSION_NO_PR)
         fake = MagicMock(side_effect=_make_merged_world_run(list_stdout=""))
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project, "155-31", dry_run=True)
 
-        actions = _step2_actions(result)
-        assert actions, f"no step-2 entry in the dry-run plan: {result.get('steps')}"
-        assert "No PR to merge" in actions[0], (
-            f"no-PR dry-run preview must be unchanged: {actions[0]!r}"
+        step2_entries = [s for s in result.get("steps", []) if s.get("step") == 2]
+        assert step2_entries, f"no step-2 entry in the dry-run plan: {result.get('steps')}"
+        step2 = step2_entries[0]
+        assert step2.get("success") is not False, (
+            f"no-PR merged-branch dry-run step 2 must NOT predict abort: {step2!r}"
+        )
+        assert step2.get("skipped") == "branch-verified-merged", (
+            f"no-PR merged-branch dry-run step 2 must carry skipped='branch-verified-merged': "
+            f"{step2!r}"
         )
         assert _view_invocations(fake) == 0, (
             "no-PR dry-run must not invoke `gh pr view` — there is no PR to probe"
