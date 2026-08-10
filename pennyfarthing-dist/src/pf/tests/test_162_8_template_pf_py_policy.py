@@ -89,7 +89,9 @@ SENTINEL_TEMPLATES = (
     "agents/sm-finish.md",
     "agents/sm-setup.md",
     "agents/testing-runner.md",
-    "commands/pf-standalone.md",
+    # commands/pf-standalone.md removed in 164-6: its only pf-executing fence
+    # (the PR title ${PF_PY} -c block) was replaced with `pf git format-title`.
+    # The file no longer invokes the Python interpreter directly.
 )
 
 BASH_FENCE_RE = re.compile(r"```(?:bash|sh|shell)\n(.*?)```", re.DOTALL)
