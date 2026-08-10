@@ -381,7 +381,10 @@ def backfill_epic_refs(
             continue
         # Canonical epic-ref (SOUL #2) — the one formula used everywhere else in
         # this module; rejects jira sentinels + strips ``epic-`` (155-8).
-        epic_ref = _get_epic_ref(epic)
+        try:
+            epic_ref = _get_epic_ref(epic)
+        except ValueError:
+            continue  # skip traversal-ref epics; irrecoverable list unchanged
         if not epic_ref:
             continue
         for story in epic.get("stories") or []:
@@ -540,7 +543,10 @@ def archive_epic(
         }
 
     # Determine the shard ref (filename stem)
-    epic_ref = _get_epic_ref(epic)
+    try:
+        epic_ref = _get_epic_ref(epic)
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
     shard_file = sprint_dir / f"epic-{epic_ref}.yaml"
     archive_shard = archive_dir / f"epic-{epic_ref}.yaml"
     story_count = len(epic.get("stories", []))

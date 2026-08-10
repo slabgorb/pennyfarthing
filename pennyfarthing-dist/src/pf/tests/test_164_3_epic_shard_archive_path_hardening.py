@@ -515,3 +515,50 @@ def test_behaviour_parity_get_archive_path_vs_validate_sprint_id(
         f"validate_sprint_id raised={validator_raised}. "
         "Both must agree — they must route through the same validator."
     )
+
+
+# ===========================================================================
+# Rule 8 regression — archive_epic() with traversal EPIC id must return
+# {success: False}, not raise ValueError (non-CLI result-object contract).
+# ===========================================================================
+
+
+@pytest.mark.parametrize("token", ["../../evil", "../foo", "a/b", "a\x00b"])
+def test_archive_epic_traversal_epic_id_returns_failure_result(
+    tmp_path: Path, token: str
+) -> None:
+    """``archive_epic()`` must return ``{success: False, error: ...}`` for a traversal epic id.
+
+    The function is non-CLI and must not leak ValueError to its callers.
+    Regression guard for the Rule 8 finding in the 164-3 review.
+    """
+    root = _write_epic_project(tmp_path, {"number": 2607, "status": "active"}, epic_id=token)
+
+    result = archive_epic(token, project_root=root, dry_run=True)
+
+    assert result["success"] is False, (
+        f"archive_epic() raised or returned success=True for traversal epic id {token!r}: "
+        f"{result}"
+    )
+    assert "error" in result
+
+
+@pytest.mark.parametrize("token", ["../../evil", "../foo", "a/b", "a\x00b"])
+def test_archive_epic_traversal_epic_id_no_exception_raised(
+    tmp_path: Path, token: str
+) -> None:
+    """``archive_epic()`` must never raise ValueError for a traversal epic id.
+
+    Belt-and-suspenders: confirm the call returns without raising even in the
+    non-dry-run path (the epic won't be found, but no exception should escape).
+    """
+    root = _write_epic_project(tmp_path, {"number": 2607, "status": "active"}, epic_id=token)
+
+    # Must not raise — only return a failure result dict
+    try:
+        result = archive_epic(token, project_root=root, dry_run=False)
+        assert isinstance(result, dict), f"Expected dict result, got {type(result)}"
+    except ValueError as exc:
+        pytest.fail(
+            f"archive_epic() leaked ValueError for traversal epic id {token!r}: {exc}"
+        )

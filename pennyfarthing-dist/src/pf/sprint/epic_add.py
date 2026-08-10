@@ -84,7 +84,10 @@ def add_epic(
         return {"success": False, "error": f"Epic validation failed: {error_msgs}"}
 
     # Determine the shard reference
-    ref = _get_epic_ref(epic)
+    try:
+        ref = _get_epic_ref(epic)
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
     shard_file = sprint_dir / f"epic-{ref}.yaml"
 
     if shard_file.exists():
