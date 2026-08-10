@@ -34,17 +34,12 @@ from pf.sprint.loader import (
     find_story_in_data,
     format_story_not_found_error,
 )
+from pf.sprint.session_parse import (  # noqa: F401  # SESSION_FIELD_RE re-export; tests import from here
+    SESSION_FIELD_RE,
+)
+from pf.sprint.session_parse import parse_session as _parse_session_impl
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import _get_epic_ref, read_sprint
-
-#: Anchored to line start (155-40). The old unanchored ``search`` let ANY
-#: mid-prose mention of a field token parse as the field: the archived 155-33
-#: session's deviation prose ("...updating the ``**Branch:**`` field like the
-#: gitflow arm") became branch='field like the gitflow arm', finish probed a
-#: garbage head, took the silent no-PR arm, and marked the story done while
-#: its PR stayed OPEN. The optional list-bullet prefix keeps the sm-setup
-#: template's ``- **Branch:** ...`` Story Details shape parsing.
-SESSION_FIELD_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*(\w[\w\s]*):\*\*\s*(.*)")
 
 
 def _resolve_epic_ref(project_root: Path, story_id: str, story: dict) -> str:
@@ -144,6 +139,8 @@ def _add_story_to_completed(project_root: Path, story_id: str, story: dict) -> d
 def _parse_session(session_path: Path) -> dict[str, str]:
     """Extract metadata fields from a session markdown file.
 
+    Delegates to ``pf.sprint.session_parse.parse_session`` (164-13).
+
     Parses lines like ``**Jira:** PROJ-14467`` and
     ``**PR:** #748 - title`` into a dict. Only line-start field lines match
     (``SESSION_FIELD_RE`` is anchored) — prose that merely mentions a token
@@ -158,49 +155,7 @@ def _parse_session(session_path: Path) -> dict[str, str]:
     field is Dev's hand-written assessment line (the live 155-32 recovery
     shape).
     """
-    fields: dict[str, str] = {}
-    detail_fields: dict[str, str] = {}
-    if not session_path.exists():
-        return fields
-    section = None
-    in_fence = False
-    seen_story_details = False
-    for line in session_path.read_text(encoding="utf-8").splitlines():
-        # Toggle fence state on lines that are exactly a backtick fence marker
-        # (optionally with a language tag after the opening triple-backtick).
-        stripped = line.strip()
-        if stripped.startswith("```"):
-            in_fence = not in_fence
-            continue
-        if in_fence:
-            continue
-        if line.startswith("## "):
-            candidate = line[3:].strip().lower()
-            if candidate == "story details":
-                if not seen_story_details:
-                    seen_story_details = True
-                    section = candidate
-                # Second (and later) occurrences: do NOT update section —
-                # those lines must never contribute to detail_fields.
-            else:
-                section = candidate
-            continue
-        m = SESSION_FIELD_RE.search(line)
-        if not m:
-            continue
-        key = m.group(1).strip().lower()
-        value = m.group(2).strip()
-        # First-wins: with anchored matching, a later duplicate field line is
-        # a stray record, not a correction — last-wins is what let later
-        # sections silently override Story Details (155-33).
-        fields.setdefault(key, value)
-        if section == "story details":
-            detail_fields.setdefault(key, value)
-    # Story Details authority for the merge-target fields (155-40).
-    for key in ("branch", "pr"):
-        if key in detail_fields:
-            fields[key] = detail_fields[key]
-    return fields
+    return _parse_session_impl(session_path)
 
 
 def _extract_jira_key(fields: dict[str, str]) -> str | None:

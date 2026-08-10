@@ -629,23 +629,26 @@ class TestFinishEndToEnd:
 
 class TestEncodingRule:
     def test_parse_session_read_text_has_encoding(self) -> None:
-        """RED: ``_parse_session`` reads the session file without
-        ``encoding=`` — platform-dependent decoding of the file this whole
-        story is about parsing correctly. Scoped to the function this story
-        edits (module-wide sweep is 160-12's pattern, not this story).
+        """Pin: the function that reads the session file uses ``encoding='utf-8'``.
+
+        Originally pinned to ``story_finish._parse_session``.  Consolidated in
+        164-13: the read_text call now lives in ``pf.sprint.session_parse.parse_session``
+        (the shared module). Pin updated to follow the reader.
         """
-        source = Path(story_finish_module.__file__).read_text(encoding="utf-8")
+        import pf.sprint.session_parse as session_parse_module
+
+        source = Path(session_parse_module.__file__).read_text(encoding="utf-8")
         tree = ast.parse(source)
         fn = next(
             (
                 node
                 for node in ast.walk(tree)
-                if isinstance(node, ast.FunctionDef) and node.name == "_parse_session"
+                if isinstance(node, ast.FunctionDef) and node.name == "parse_session"
             ),
             None,
         )
         assert fn is not None, (
-            "_parse_session no longer exists in story_finish — update this pin "
+            "parse_session no longer exists in session_parse — update this pin "
             "to the function that reads the session file"
         )
         calls = [
@@ -655,11 +658,11 @@ class TestEncodingRule:
             and isinstance(node.func, ast.Attribute)
             and node.func.attr == "read_text"
         ]
-        assert calls, "_parse_session no longer calls read_text — update this pin"
+        assert calls, "parse_session no longer calls read_text — update this pin"
         for call in calls:
             keywords = {kw.arg: kw for kw in call.keywords}
             assert "encoding" in keywords, (
-                "_parse_session's read_text() has no encoding= — decoding "
+                "parse_session's read_text() has no encoding= — decoding "
                 "varies by platform (lang-review python #5, CWE-838)"
             )
             value = keywords["encoding"].value
