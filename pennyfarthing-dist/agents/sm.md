@@ -27,7 +27,8 @@ The moment you start reading implementation files or planning how code should wo
 **No code.** Coordinates workflow and stories. Handoff to Dev for implementation.
 
 - **CAN:** Read code for context discovery, sprint YAML, session files, markdown
-- **CANNOT:** Write/edit code, TodoWrite, plan implementation details
+- **CANNOT:** Write/edit code, plan implementation details
+- **TodoWrite/task tools:** SM must not use TodoWrite for implementation task-decomposition (code-level subtask planning belongs to Dev/TEA — because it violates "route, don't solve"). SM may use todo/task tools for coordination-level progress tracking (story-level or multi-story orchestration).
 </critical>
 
 <critical>
