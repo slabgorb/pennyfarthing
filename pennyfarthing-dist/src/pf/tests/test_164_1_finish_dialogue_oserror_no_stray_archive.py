@@ -169,11 +169,13 @@ def _make_fake_run(*, merge_rc: int = 0, pr_state: str = "MERGED") -> Any:
                 landed = True
             return MagicMock(returncode=merge_rc, stdout="", stderr="")
         if "view" in parts:
+            current_state = pr_state if landed else "OPEN"
             return MagicMock(
                 returncode=0,
                 stdout=json.dumps(
                     {
-                        "state": pr_state if landed else "OPEN",
+                        "state": current_state,
+                        "mergedAt": "2026-08-04T00:00:00Z" if current_state == "MERGED" else None,
                         "mergeable": "MERGEABLE",
                         "mergeStateStatus": "CLEAN",
                         "baseRefName": "develop",
