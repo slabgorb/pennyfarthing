@@ -161,9 +161,27 @@ def _parse_session(session_path: Path) -> dict[str, str]:
     if not session_path.exists():
         return fields
     section = None
+    in_fence = False
+    seen_story_details = False
     for line in session_path.read_text(encoding="utf-8").splitlines():
+        # Toggle fence state on lines that are exactly a backtick fence marker
+        # (optionally with a language tag after the opening triple-backtick).
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
         if line.startswith("## "):
-            section = line[3:].strip().lower()
+            candidate = line[3:].strip().lower()
+            if candidate == "story details":
+                if not seen_story_details:
+                    seen_story_details = True
+                    section = candidate
+                # Second (and later) occurrences: do NOT update section —
+                # those lines must never contribute to detail_fields.
+            else:
+                section = candidate
             continue
         m = SESSION_FIELD_RE.search(line)
         if not m:
