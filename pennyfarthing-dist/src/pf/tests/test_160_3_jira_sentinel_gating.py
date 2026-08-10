@@ -468,7 +468,7 @@ class TestRealJiraKeyUnchanged:
         )
         mock_transition.return_value = {"success": True, "to_status": "done"}
         # 155-1: finish verifies the PR merged via `gh pr view --json state`.
-        mock_run.return_value = MagicMock(returncode=0, stdout='{"state": "MERGED"}')
+        mock_run.return_value = MagicMock(returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}')
 
         result = finish_story(project, "160-1")
 

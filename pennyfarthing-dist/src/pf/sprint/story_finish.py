@@ -374,9 +374,11 @@ def _cwd_kwargs(cwd: Path | None) -> dict[str, str]:
 
 
 #: The union of the fields the PR probes read: ``state`` for the merged checks,
-#: ``mergeable``/``mergeStateStatus``/``baseRefName`` for the conflict gate. One
-#: field list means the two pre-merge questions share one round trip (155-32).
-_PR_VIEW_FIELDS = "state,mergeable,mergeStateStatus,baseRefName"
+#: ``mergeable``/``mergeStateStatus``/``baseRefName`` for the conflict gate, and
+#: ``mergedAt`` to corroborate ``state == "MERGED"`` — a non-null timestamp is
+#: the second conjunct in :func:`_view_is_merged` (162-18). One field list means
+#: the two pre-merge questions share one round trip (155-32).
+_PR_VIEW_FIELDS = "state,mergeable,mergeStateStatus,baseRefName,mergedAt"
 
 
 def _pr_view_probe(
@@ -457,10 +459,20 @@ def _view_is_merged(view: dict[str, Any] | None) -> bool:
     the story's transition to ``done``. Any spelling other than ``MERGED``
     (including a missing key or an unreadable probe) reads as "not merged",
     which is the safe answer at all four call sites.
+
+    A ``MERGED`` state is only trusted when corroborated by a non-null
+    ``mergedAt`` timestamp (162-18). A lone ``state`` snapshot is a single
+    field in a mutable API response; ``mergedAt`` is set by GitHub at merge
+    time and never cleared, so its presence is a second, independent signal
+    that the merge actually landed. This matters because the predicate
+    authorises three irreversible steps: the conflict-gate exemption, the
+    already-merged short-circuit, and the post-merge re-verify. Real
+    ``gh pr view`` output never emits ``state: MERGED`` without a non-null
+    ``mergedAt``, so legitimate merges are unaffected.
     """
     if view is None:
         return False
-    return view.get("state") == "MERGED"
+    return view.get("state") == "MERGED" and bool(view.get("mergedAt"))
 
 
 def _pr_is_merged(pr_number: str, cwd: Path | None = None) -> bool:

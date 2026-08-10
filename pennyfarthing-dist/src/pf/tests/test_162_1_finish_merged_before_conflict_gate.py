@@ -690,6 +690,7 @@ class TestConflictGateStillBlocksUnmergedPrs:
                     stdout=json.dumps(
                         {
                             "state": "MERGED" if state["merged"] else "OPEN",
+                            "mergedAt": "2026-08-04T00:00:00Z" if state["merged"] else None,
                             "mergeable": "MERGEABLE",
                             "mergeStateStatus": "CLEAN",
                             "baseRefName": "develop",

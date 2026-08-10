@@ -107,6 +107,12 @@ NON_CANONICAL_MERGED = [
     pytest.param("Merged", id="titlecase"),
     pytest.param("MeRgEd", id="mixedcase"),
     pytest.param("mERGED", id="inverted"),
+    # 162-18/R1: a .strip() mutant on _view_is_merged would accept these —
+    # pin that whitespace-padded spellings are refused by the state comparison.
+    # Tests supply a non-null mergedAt so the timestamp cannot mask a broken
+    # state check; the state comparison is the only thing under test.
+    pytest.param(" MERGED", id="leading-whitespace"),
+    pytest.param("MERGED ", id="trailing-whitespace"),
 ]
 
 #: Values that must read as NOT merged both before and after the fix — the
@@ -198,14 +204,23 @@ def project(tmp_path: Path) -> Path:
 def _view_payload(
     *,
     state: str,
+    mergedat: str | None = "2026-08-04T00:00:00Z",
     mergeable: str,
     merge_state_status: str,
     base_ref: str = "develop",
 ) -> str:
+    """Build a ``gh pr view`` JSON payload.
+
+    ``mergedat`` is explicit rather than derived from ``state`` — derivation
+    via case-fold makes every non-canonical state yield a null timestamp, which
+    means the state comparison is no longer the thing under test (162-18/R1).
+    Default is a non-null timestamp so callers that vary only ``state`` test
+    only the state comparison.
+    """
     return json.dumps(
         {
             "state": state,
-            "mergedAt": "2026-08-04T00:00:00Z" if state.upper() == "MERGED" else None,
+            "mergedAt": mergedat,
             "mergeable": mergeable,
             "mergeStateStatus": merge_state_status,
             "baseRefName": base_ref,
@@ -311,7 +326,7 @@ class TestViewIsMergedRejectsNonCanonicalState:
         """AC-1: HEAD's ``.upper()`` accepts every one of these; gh emits none
         of them. A state finish cannot vouch for must read as NOT merged.
         """
-        assert _view_is_merged({"state": state}) is False, (
+        assert _view_is_merged({"state": state, "mergedAt": "2026-08-04T00:00:00Z"}) is False, (
             f"state={state!r} was treated as MERGED — the case-fold widens the "
             "boolean that authorises the done transition, the conflict-gate "
             "exemption, the merge short-circuit and the post-merge re-verify"
@@ -321,7 +336,7 @@ class TestViewIsMergedRejectsNonCanonicalState:
         """AC-2: the one value gh actually emits still reads as merged. Guards
         against a fix that tightens the predicate into uselessness.
         """
-        assert _view_is_merged({"state": "MERGED"}) is True
+        assert _view_is_merged({"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}) is True
 
     @pytest.mark.parametrize("state", ALREADY_NOT_MERGED)
     def test_other_states_remain_not_merged(self, state: str) -> None:
@@ -329,7 +344,7 @@ class TestViewIsMergedRejectsNonCanonicalState:
         "MERGEDX" also pin that the fix stays an equality check rather than
         drifting into a prefix or substring test.
         """
-        assert _view_is_merged({"state": state}) is False
+        assert _view_is_merged({"state": state, "mergedAt": "2026-08-04T00:00:00Z"}) is False
 
     def test_unreadable_snapshot_is_not_merged(self) -> None:
         """The "unknown reads as not merged" contract every call site leans on
@@ -342,14 +357,14 @@ class TestViewIsMergedRejectsNonCanonicalState:
         """A snapshot without ``state`` at all (gh field-list drift) is
         unknown, not merged.
         """
-        assert _view_is_merged({"mergeable": "MERGEABLE"}) is False
+        assert _view_is_merged({"mergeable": "MERGEABLE", "mergedAt": "2026-08-04T00:00:00Z"}) is False
 
     def test_null_state_is_not_merged(self) -> None:
         """JSON ``null`` for ``state`` is unknown, not merged. Pins that a fix
         which drops the ``str()`` wrapper still cannot raise or return None-ish
         truth here.
         """
-        assert _view_is_merged({"state": None}) is False
+        assert _view_is_merged({"state": None, "mergedAt": "2026-08-04T00:00:00Z"}) is False
 
 
 # =============================================================================
@@ -375,6 +390,7 @@ class TestConflictGateExemptionRequiresCanonicalMerged:
             "999",
             {
                 "state": state,
+                "mergedAt": "2026-08-04T00:00:00Z",
                 "mergeable": "CONFLICTING",
                 "mergeStateStatus": "DIRTY",
                 "baseRefName": "develop",
@@ -398,6 +414,7 @@ class TestConflictGateExemptionRequiresCanonicalMerged:
                 "999",
                 {
                     "state": "MERGED",
+                    "mergedAt": "2026-08-04T00:00:00Z",
                     "mergeable": "CONFLICTING",
                     "mergeStateStatus": "DIRTY",
                     "baseRefName": "develop",
@@ -449,6 +466,13 @@ class TestConflictGateStillBlocksCanonicalMergeability:
             pytest.param("CONFLICTING", "DIRTY", id="conflicting+dirty"),
             pytest.param("CONFLICTING", "UNKNOWN", id="conflicting-only"),
             pytest.param("MERGEABLE", "DIRTY", id="dirty-only"),
+            # 162-18/R2: _pr_block_reason currently case-folds mergeable /
+            # mergeStateStatus (the finding is out of scope for _view_is_merged,
+            # but the fold is present). Pin that lowercase inputs still block so
+            # a sweep that removes the .upper() calls from _pr_block_reason cannot
+            # silently drop the 155-12 conflict abort.
+            pytest.param("conflicting", "dirty", id="lowercase-conflicting+dirty"),
+            pytest.param("conflicting", "unknown", id="lowercase-conflicting-only"),
         ],
     )
     def test_open_pr_with_canonical_conflict_fields_blocks(
@@ -628,7 +652,7 @@ class TestPostMergeVerificationRequiresCanonicalMerged:
         """
         with patch(
             "pf.sprint.story_finish._pr_view",
-            return_value={"state": state, "mergeable": "MERGEABLE"},
+            return_value={"state": state, "mergedAt": "2026-08-04T00:00:00Z", "mergeable": "MERGEABLE"},
         ):
             assert _pr_is_merged("999") is False, (
                 f"post-merge verification accepted state={state!r} — this is "
@@ -639,7 +663,7 @@ class TestPostMergeVerificationRequiresCanonicalMerged:
         """AC-2: a real merge still verifies."""
         with patch(
             "pf.sprint.story_finish._pr_view",
-            return_value={"state": "MERGED", "mergeable": "MERGEABLE"},
+            return_value={"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z", "mergeable": "MERGEABLE"},
         ):
             assert _pr_is_merged("999") is True
 

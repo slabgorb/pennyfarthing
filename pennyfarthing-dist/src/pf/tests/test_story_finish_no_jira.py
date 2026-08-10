@@ -550,7 +550,7 @@ class TestJiraProjectsStillWork:
         # (story 155-1). The session carries PR #42, so the verify call must see
         # a MERGED state for the clean path; a single JSON stdout satisfies both
         # the `gh pr merge` (ignores stdout) and `gh pr view` (parsed) calls.
-        mock_run.return_value = MagicMock(returncode=0, stdout='{"state": "MERGED"}')
+        mock_run.return_value = MagicMock(returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}')
 
         result = finish_story(jira_project, "148-1")
 
