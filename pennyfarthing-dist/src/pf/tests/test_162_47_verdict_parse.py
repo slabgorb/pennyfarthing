@@ -589,11 +589,25 @@ class TestReadAgentVerdictDirectly:
 
         assert read_agent_verdict(content, "tech-writer")["status"] == "found"
 
-    def test_heading_matching_is_case_insensitive(self) -> None:
-        """Untested until now (cycle-5 test-polish item)."""
+    def test_exact_heading_matching_requires_canonical_casing(self) -> None:
+        """Exact heading identity is case-sensitive (162-60 case-policy fix).
+
+        An all-caps ``## REVIEWER ASSESSMENT`` is not the canonical
+        ``## Reviewer Assessment`` produced by ``assessment_heading``.  The
+        gate returns ``absent`` and the error tells the agent to add the
+        correctly-cased heading — fail-closed.
+
+        If a near-miss (e.g. ``## REVIEWER ASSESSMENT``) appears AFTER a
+        properly-cased heading it is caught as a straggler (IGNORECASE
+        ``_near_miss_heading_re``) and reported ``ambiguous``.  The case-
+        insensitive behaviour this test previously asserted was the
+        verdict-supersession fail-open: a lowercase/uppercase variant could
+        become the ``last`` exact match and override an earlier REJECTED
+        verdict (story 162-60, F1).
+        """
         content = "## REVIEWER ASSESSMENT\n\n**Verdict:** REJECTED\n"
 
-        assert read_agent_verdict(content, "reviewer")["status"] == "found"
+        assert read_agent_verdict(content, "reviewer")["status"] == "absent"
 
     def test_an_indented_verdict_line_is_not_a_verdict(self) -> None:
         content = "## Reviewer Assessment\n\n- note:\n  **Verdict:** APPROVED\n"

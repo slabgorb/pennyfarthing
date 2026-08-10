@@ -20,7 +20,7 @@ import re
 from collections.abc import Callable
 from typing import Literal, TypedDict
 
-from pf.handoff.session_assessment import assessment_heading
+from pf.handoff.session_assessment import assessment_heading, normalize_session
 
 
 class SectionSelection(TypedDict):
@@ -406,8 +406,18 @@ def _mask(content: str, *, code_blocks: bool, inline: bool) -> str:
 
 
 def _exact_heading_re(heading: str) -> re.Pattern[str]:
-    """``## <heading>`` and nothing else on the line. Section identity, one place."""
-    return re.compile(rf"^##[ \t]+{re.escape(heading)}[ \t]*$", re.MULTILINE | re.IGNORECASE)
+    """``## <heading>`` and nothing else on the line. Section identity, one place.
+
+    CASE-SENSITIVE (``re.MULTILINE`` only): the exact heading name is a primary
+    identity contract — agents are instructed to write the canonical form (e.g.
+    ``## Reviewer Assessment``).  A lowercase variant (``## reviewer assessment``)
+    is a protocol deviation; it is caught by :func:`_near_miss_heading_re`
+    (IGNORECASE) as a straggler and reported as ambiguous rather than silently
+    superseding the properly-cased section.  This is the fail-safe direction for
+    the verdict-supersession class: a case variant cannot become the ``last``
+    exact match and override an earlier REJECTED verdict (story 162-60, F1).
+    """
+    return re.compile(rf"^##[ \t]+{re.escape(heading)}[ \t]*$", re.MULTILINE)
 
 
 def _near_miss_heading_re(heading: str) -> re.Pattern[str]:
@@ -453,6 +463,7 @@ def candidate_section_region(
     Returns "" when there is no exact heading at all — an absent section has no
     candidates, and every required tag really is missing from it.
     """
+    content = normalize_session(content)  # 162-60: homoglyph/format-char normalization
     masked = masker(content)
     exact = list(_exact_heading_re(heading).finditer(masked))
     if not exact:
@@ -472,6 +483,13 @@ def select_last_section(
     masker: Callable[[str], str] = mask_illustrative_regions,
 ) -> SectionSelection:
     """Slice the LAST section introduced by an exact ``## <heading>`` line.
+
+    .. note::
+        ``content`` is NFKC-normalized and stripped of Cf/Cc control characters
+        before any heading search.  Homoglyph and format-character variants of
+        heading labels are collapsed to the canonical byte sequence so they
+        neither bypass detection nor silently match as a different section
+        (story 162-60, normalization policy).
 
     The single selection rule for every reader of a session file. Both halves of
     the exit protocol use it — ``resolve_gate`` to find the verdict and
@@ -497,6 +515,10 @@ def select_last_section(
             section: the section body when status is "found", else ""
             detail: human-readable reason for "absent"/"ambiguous"
     """
+    # 162-60: normalize before any structural match so homoglyph/format-char
+    # variants of heading labels collapse to the canonical byte sequence.
+    content = normalize_session(content)
+
     exact = _exact_heading_re(heading)
     near_miss = _near_miss_heading_re(heading)
 
@@ -566,13 +588,18 @@ def count_exact_sections(
     the recorded round-trips to tell a fresh verdict from one already acted on
     (story 162-47, AC-B3).
     """
-    return len(_exact_heading_re(heading).findall(masker(content)))
+    return len(_exact_heading_re(heading).findall(masker(normalize_session(content))))
 
 
 # The preamble ends at the first assessment section. Everything above it is the
 # workflow's own bookkeeping — the only text the exit protocol writes; everything
 # below is agent prose, which may legitimately quote any field it likes.
-_PREAMBLE_END_RE = re.compile(r"^##[ \t]+.*Assessment", re.MULTILINE)
+# IGNORECASE: a lowercase first assessment heading (e.g. ``## reviewer assessment``)
+# must still end the preamble so agent prose below it cannot contain an operative
+# counter line.  A case-sensitive match here lets a lowercase heading make the
+# entire document "preamble", allowing a forged ``**Round-Trip Count:**`` in prose
+# to become operative (story 162-60, F2 — preamble-end fail-open).
+_PREAMBLE_END_RE = re.compile(r"^##[ \t]+.*Assessment", re.MULTILINE | re.IGNORECASE)
 
 
 def preamble_end(masked_content: str) -> int:
@@ -596,8 +623,17 @@ def find_operative_round_trip_line(content: str) -> re.Match[str] | None:
     anywhere would freeze the real counter and disarm the freshness guard, which
     is the 162-28 defect reintroduced from the other side (story 162-47, AC-A3).
 
-    Offsets index into ``content`` unchanged: masking preserves length, and the
-    preamble is a prefix.
+    Offsets index into the ``content`` argument as received: masking preserves
+    length, and the preamble is a prefix of the masked string.
+
+    **Callers must pre-normalize ``content``** via :func:`normalize_session`
+    before calling this function — the function does NOT normalize internally.
+    ``read_round_trip_count`` normalizes before it calls this; ``complete_phase``
+    normalizes at the top of the rework block before locate and splice (story
+    162-60).  Normalizing internally would corrupt the splice offsets: the returned
+    match would index the normalized string while the splice target remains the raw
+    string, and any Cf/NFKC-changed bytes before the counter line would shift the
+    boundary (story 162-60 review, CRITICAL finding).
     """
     masked = mask_illustrative_regions(content)
     scope = masked[: preamble_end(masked)]
@@ -728,6 +764,7 @@ def read_round_trip_count(session_content: str) -> RoundTripReading:
             count: the parsed value when found, else 0
             detail: human-readable reason when unreadable
     """
+    session_content = normalize_session(session_content)  # 162-60: Cf/NFKC normalization
     masked = mask_illustrative_regions(session_content)
     # Scoped to the preamble, because that is where `complete_phase` writes it.
     # Reading the last column-0 match over the WHOLE file let any agent override
@@ -739,6 +776,30 @@ def read_round_trip_count(session_content: str) -> RoundTripReading:
 
     match = find_operative_round_trip_line(session_content)
     if match is not None:
+        # 162-50 READER: a readable counter alongside a VISIBLE unreadable one is
+        # unreadable — which line is operative cannot be determined.  Without
+        # this check the writer's pre-162-50 insert bug produced a session with
+        # TWO visible counter lines (one corrupt value, one valid); the reader
+        # found the valid line and returned ``found/1``, and 162-59's unreadable
+        # guard silently never fired (measured: budget reset).
+        # Scope to VISIBLE lines only (compare against masked_preamble, not raw):
+        # backtick prose mentions and fenced examples are illustration, not
+        # counter attempts, and must not inflate the count — that would break the
+        # 162-28 tests that pin prose-vs-operative isolation.
+        visible_count = len(COUNTER_LINE_RE.findall(masked_preamble))
+        valid_count = len(ROUND_TRIP_COUNT_RE.findall(masked_preamble))
+        if visible_count > valid_count:
+            return {
+                "status": "unreadable",
+                "count": 0,
+                "detail": (
+                    "the preamble carries both a readable and an unreadable "
+                    "'**Round-Trip Count:**' line — which one is operative cannot "
+                    "be determined. To fix: remove the duplicate and keep exactly "
+                    "one '**Round-Trip Count:** N' line on its own line outside any "
+                    "code fence, HTML comment, indented block or backticks."
+                ),
+            }
         return {"status": "found", "count": int(match.group(1)), "detail": ""}
 
     if COUNTER_LINE_RE.search(masked_preamble):

@@ -158,7 +158,13 @@ class TestGenuineTagsStillPass:
         assert result["current_cycle"] == 2
 
     def test_the_tag_is_case_insensitive(self) -> None:
-        """`select_last_section` matches headings IGNORECASE; agree with it."""
+        """Cycle-tag matching is case-insensitive; the tag ``**cycle: 2**`` must pass.
+
+        Note: as of story 162-60, ``select_last_section`` uses a case-SENSITIVE
+        ``_exact_heading_re`` for section identity (canonical heading names are
+        required).  The case-insensitivity described here applies to the CYCLE TAG
+        regex inside the section, not to the heading selector.
+        """
         result = _check_rework_freshness(_session("**cycle: 2**\n\n" + STALE_TABLE))
 
         assert result["pass"] is True, f"`**cycle: 2**` hard-blocked: {result}"

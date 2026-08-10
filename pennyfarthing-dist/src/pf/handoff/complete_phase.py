@@ -16,7 +16,7 @@ from pathlib import Path
 
 import yaml
 
-from pf.handoff.session_assessment import assessment_heading
+from pf.handoff.session_assessment import assessment_heading, normalize_session
 from pf.workflow.helpers import resolve_workflow_file
 
 # The agent whose assessment the approval subgates judge. Its heading comes from
@@ -172,31 +172,88 @@ def complete_phase(
 
     # Track round-trip count for rework transitions
     if gate_type and "rework" in gate_type:
-        # Find the counter the same way every reader does — masked, so a counter
-        # quoted in prose or a fence is not mistaken for the operative one — and
-        # rewrite ONLY that occurrence. The unmasked search plus un-counted re.sub
-        # this replaces was reproduced corrupting story 162-28's own session: the
-        # first match was a backticked mention in prose, so the quotation was
-        # incremented, every other mention was rewritten to match, and no real
-        # counter line was ever recorded — leaving the freshness guard reading
-        # cycle 0, i.e. disarmed (story 162-28).
-        # The locator is shared with every reader (story 162-47, AC-A3): it
-        # returns the last counter line in the session PREAMBLE. A writer that
-        # rewrote the last match anywhere would increment a decoy an agent left
-        # in its own prose, freezing the real counter and disarming the freshness
-        # guard — the 162-28 defect from the other side.
-        from pf.handoff.gate_recovery import find_operative_round_trip_line
+        # 162-28: Find the counter the same way every reader does — masked, so a
+        # counter quoted in prose or a fence is not mistaken for the operative
+        # one — and rewrite ONLY that occurrence.
+        # 162-47 AC-A3: the locator is shared with every reader; it returns the
+        # last counter line in the session PREAMBLE so a writer cannot increment
+        # a decoy in agent prose.
+        # 162-50 WRITER: tri-state the read (absent / unreadable / found) so the
+        # absent and unreadable paths are handled distinctly. Collapsing them
+        # inserted a fresh ``**Round-Trip Count:** 1`` BESIDE a corrupt line,
+        # creating a second counter and silently resetting the round-trip budget
+        # — 162-59's unreadable guard then never fired because the reader found
+        # the newly inserted valid line.
+        # 162-60: normalize ONCE before read/locate/splice so all three operations
+        # agree on the same byte sequence.  find_operative_round_trip_line returns
+        # offsets into the string it received; if content were normalized inside
+        # the locator while the splice target remained raw, any Cf/NFKC-changed
+        # byte before the counter line would shift the offsets and mangle the
+        # counter (review CRITICAL finding).
+        content = normalize_session(content)
+        from pf.handoff.gate_recovery import (
+            find_operative_round_trip_line,
+            mask_illustrative_regions,
+            preamble_end,
+            read_round_trip_count,
+        )
 
-        rt_match = find_operative_round_trip_line(content)
-        if rt_match is not None:
+        rt_reading = read_round_trip_count(content)
+        if rt_reading["status"] == "found":
+            # Readable counter: locate via the shared locator and increment in-place.
+            rt_match = find_operative_round_trip_line(content)
             new_count = int(rt_match.group(1)) + 1
             content = (
                 content[: rt_match.start()]
                 + f"**Round-Trip Count:** {new_count}"
                 + content[rt_match.end() :]
             )
+        elif rt_reading["status"] == "unreadable":
+            # 162-50 WRITER: unreadable counter present. Two sub-cases:
+            #
+            # (a) VISIBLE corrupt line (bad value, not hidden): replace it rather
+            #     than inserting a second line beside it. Inserting resets the
+            #     budget: the reader finds the new valid line, returns found/1,
+            #     and 162-59's unreadable guard never fires.
+            # (b) HIDDEN line only (fence, HTML comment, backtick, indented):
+            #     these are illustrations or deliberately hidden; do NOT strip
+            #     them (that would corrupt prose in 162-28's pinned tests).
+            #     Fall through to the absent branch and insert a new counter.
+            _masked = mask_illustrative_regions(content)
+            _end = preamble_end(_masked)
+            _masked_preamble = _masked[:_end]
+            from pf.handoff.gate_recovery import COUNTER_LINE_RE as _COUNTER_LINE_RE
+
+            if _COUNTER_LINE_RE.search(_masked_preamble):
+                # Case (a): visible corrupt line — strip it and inject a clean one.
+                _preamble = content[:_end]
+                _rest = content[_end:]
+                _clean_preamble = re.sub(
+                    r"^.*\*\*Round-Trip Count:\*\*.*\n?",
+                    "",
+                    _preamble,
+                    flags=re.MULTILINE,
+                )
+                content = (
+                    re.sub(
+                        r"(\*\*Phase Started:\*\*[^\n]*)",
+                        r"\1\n**Round-Trip Count:** 1",
+                        _clean_preamble,
+                        count=1,
+                    )
+                    + _rest
+                )
+            else:
+                # Case (b): hidden line only — insert after Phase Started
+                # (same as absent; the hidden line is left in place).
+                content = re.sub(
+                    r"(\*\*Phase Started:\*\*[^\n]*)",
+                    r"\1\n**Round-Trip Count:** 1",
+                    content,
+                    count=1,
+                )
         else:
-            # Insert after Phase Started line
+            # Absent: insert after Phase Started line — pre-162-50 behaviour.
             content = re.sub(
                 r"(\*\*Phase Started:\*\*[^\n]*)",
                 r"\1\n**Round-Trip Count:** 1",
@@ -716,6 +773,11 @@ def _read_rework_cycle(session_content: str) -> dict:
         mask_illustrative_regions,
         read_round_trip_count,
     )
+
+    # 162-60: normalize before all matchers — homoglyph/format-char variants in
+    # the legacy "**Rework Cycle:**" label must not render it absent/unreadable.
+    # read_round_trip_count normalizes internally; the legacy matchers below do not.
+    session_content = normalize_session(session_content)
 
     reading = read_round_trip_count(session_content)
     if reading["status"] != "absent":
