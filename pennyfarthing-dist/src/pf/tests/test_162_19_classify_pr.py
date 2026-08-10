@@ -93,6 +93,7 @@ import pytest
 
 from pf.sprint.story_finish import (  # type: ignore[attr-defined]
     _classify_pr,
+    _PRVerdict,
 )
 
 # =============================================================================
@@ -693,12 +694,14 @@ class TestClassifyPrPrecedenceIsStructural:
 class TestPrViewFieldTypeValidation:
     """``_classify_pr`` enforces type constraints on the view dict at the
     ``_pr_view`` boundary (the AC spec: "add ``_pr_view`` field-type
-    validation").  A malformed or partial view must be rejected as UNREADABLE
-    rather than silently mis-classified as MERGEABLE.
+    validation").  A malformed or partial view with no conflict fields must be
+    classified as UNREADABLE rather than silently falling to MERGEABLE.
 
-    Without this gate a view carrying non-str ``state`` would slip through
-    ``_view_is_merged`` (False) and ``_pr_block_reason`` (None) and be treated
-    as safe-to-merge — an unguarded path to a ghost merge.
+    Note: a malformed view that also carries ``CONFLICTING``/``DIRTY`` fields
+    is classified BLOCKED (not UNREADABLE) — ``_classify_pr`` preserves the
+    pre-refactor ``_pr_block_reason`` behaviour, which checked conflict fields
+    independently of ``state`` validity.  Those shapes are pinned by
+    ``TestMalformedStateConflictCharacterization``.
 
     These tests are TRUE RED — ``_classify_pr`` does not exist yet.
     """
@@ -871,4 +874,171 @@ class TestResultBlobMessageDetailKeys:
         ), (
             f"BLOCKED message {new_msg!r} must carry the same actionable rebase "
             f"content as _pr_block_reason returned: {old_reason!r}"
+        )
+
+
+# =============================================================================
+# Malformed state + conflict: characterization pins (Reviewer R1 — 162-19)
+# =============================================================================
+
+
+class TestMalformedStateConflictCharacterization:
+    """Characterization pins for the multi-match shapes the original matrix
+    missed: a view whose ``state`` field is malformed/missing BUT whose
+    conflict fields (``mergeable`` / ``mergeStateStatus``) are
+    CONFLICTING/DIRTY.
+
+    Pre-refactor behaviour (``_pr_block_reason`` on develop): conflict fields
+    are checked INDEPENDENTLY of ``state`` validity — a malformed/missing
+    ``state`` with CONFLICTING/DIRTY mergeability was still hard-blocked with
+    the ``"PR #{n} is CONFLICTING…"`` message. ``_classify_pr`` MUST preserve
+    this fail-closed semantics (option A: BLOCKED rule runs before the non-str
+    ``state`` UNREADABLE guard).
+
+    Without the fix (UNREADABLE before BLOCKED), 588 malformed-but-conflicting
+    shapes diverged from ``develop`` — fail-open on the merge gate.
+    """
+
+    @pytest.mark.parametrize(
+        "state_value,label",
+        [
+            pytest.param(None, "null-state", id="null"),
+            pytest.param(42, "int-state", id="int"),
+            pytest.param([], "list-state", id="list"),
+            pytest.param(True, "bool-state", id="bool"),
+        ],
+    )
+    def test_malformed_state_plus_conflicting_returns_blocked(
+        self, state_value: Any, label: str
+    ) -> None:
+        """Malformed ``state`` + ``mergeable=="CONFLICTING"`` → BLOCKED.
+        The conflict gate must fire even when ``state`` is unreadable — this
+        is the fail-closed behaviour ``_pr_block_reason`` had pre-refactor.
+        """
+        view: dict[str, Any] = {
+            "state": state_value,
+            "mergedAt": None,
+            "mergeable": "CONFLICTING",
+            "mergeStateStatus": "CLEAN",
+            "baseRefName": "develop",
+        }
+        result = _classify_pr(view)
+        assert _verdict(result) == "blocked", (
+            f"[{label}] malformed state {state_value!r} + CONFLICTING must yield BLOCKED "
+            f"(preserves pre-refactor fail-closed behaviour): {result!r}"
+        )
+
+    @pytest.mark.parametrize(
+        "state_value,label",
+        [
+            pytest.param(None, "null-state", id="null"),
+            pytest.param(42, "int-state", id="int"),
+        ],
+    )
+    def test_malformed_state_plus_dirty_returns_blocked(
+        self, state_value: Any, label: str
+    ) -> None:
+        """Malformed ``state`` + ``mergeStateStatus=="DIRTY"`` → BLOCKED."""
+        view: dict[str, Any] = {
+            "state": state_value,
+            "mergedAt": None,
+            "mergeable": "MERGEABLE",
+            "mergeStateStatus": "DIRTY",
+            "baseRefName": "develop",
+        }
+        result = _classify_pr(view)
+        assert _verdict(result) == "blocked", (
+            f"[{label}] malformed state + DIRTY must yield BLOCKED: {result!r}"
+        )
+
+    @pytest.mark.parametrize(
+        "state_value,label",
+        [
+            pytest.param(None, "null-state", id="null"),
+            pytest.param(42, "int-state", id="int"),
+            pytest.param([], "list-state", id="list"),
+        ],
+    )
+    def test_malformed_state_plus_clean_returns_unreadable(
+        self, state_value: Any, label: str
+    ) -> None:
+        """Malformed ``state`` + clean mergeability → UNREADABLE.
+        No conflict gate fires; the view is unclassifiable and falls through
+        to the merge attempt (guarded by post-merge re-verify).
+        """
+        view: dict[str, Any] = {
+            "state": state_value,
+            "mergedAt": None,
+            "mergeable": "MERGEABLE",
+            "mergeStateStatus": "CLEAN",
+            "baseRefName": "develop",
+        }
+        result = _classify_pr(view)
+        assert _verdict(result) == "unreadable", (
+            f"[{label}] malformed state + clean mergeability must yield UNREADABLE "
+            f"(not BLOCKED, not MERGEABLE): {result!r}"
+        )
+
+    def test_blocked_message_for_malformed_state_is_actionable(self) -> None:
+        """BLOCKED result for a malformed-state+CONFLICTING view must carry
+        the same actionable rebase keywords as the pre-refactor ``_pr_block_reason``
+        would have returned.
+        """
+        view: dict[str, Any] = {
+            "state": None,
+            "mergedAt": None,
+            "mergeable": "CONFLICTING",
+            "mergeStateStatus": "DIRTY",
+            "baseRefName": "main",
+        }
+        result = _classify_pr(view)
+        assert _verdict(result) == "blocked", f"expected BLOCKED: {result!r}"
+        msg = result.message if hasattr(result, "message") else result.get("message")
+        assert msg is not None and any(
+            kw.lower() in msg.lower() for kw in ("rebase", "conflict", "CONFLICTING")
+        ), f"BLOCKED message must be actionable: {msg!r}"
+        assert "main" in (msg or "") or "main" in (result.detail or ""), (
+            "base branch 'main' must appear in message or detail"
+        )
+
+
+# =============================================================================
+# Result-type contract: verdict is a _PRVerdict instance (item 5, 162-19 R1)
+# =============================================================================
+
+
+class TestResultTypeContract:
+    """Pin that ``_classify_pr`` returns a ``_PRClassification`` whose
+    ``.verdict`` is an instance of ``_PRVerdict`` — not a plain string or
+    duck-typed value.  Prevents a silent regression if the enum is later
+    replaced with a plain string constant.
+    """
+
+    @pytest.mark.parametrize(
+        "view,label",
+        [
+            pytest.param(None, "none", id="none"),
+            pytest.param(
+                {"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"},
+                "merged",
+                id="merged",
+            ),
+            pytest.param(
+                {"state": "OPEN", "mergeable": "CONFLICTING", "mergeStateStatus": "DIRTY", "baseRefName": "develop"},
+                "blocked",
+                id="blocked",
+            ),
+            pytest.param(
+                {"state": "OPEN", "mergeable": "MERGEABLE", "mergeStateStatus": "CLEAN", "baseRefName": "develop"},
+                "mergeable",
+                id="mergeable",
+            ),
+        ],
+    )
+    def test_verdict_is_prverdict_instance(self, view: Any, label: str) -> None:
+        """``result.verdict`` must be a ``_PRVerdict`` enum member."""
+        result = _classify_pr(view)
+        assert isinstance(result.verdict, _PRVerdict), (
+            f"[{label}] result.verdict must be a _PRVerdict instance, "
+            f"got {type(result.verdict)}: {result!r}"
         )

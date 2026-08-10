@@ -382,7 +382,7 @@ def _cwd_kwargs(cwd: Path | None) -> dict[str, str]:
 _PR_VIEW_FIELDS = "state,mergeable,mergeStateStatus,baseRefName,mergedAt"
 
 
-class PRVerdict(enum.StrEnum):
+class _PRVerdict(enum.StrEnum):
     """Precedence-ordered PR disposition from :func:`_classify_pr`.
 
     Ordering encodes exactly once: MERGED > UNREADABLE > BLOCKED > MERGEABLE.
@@ -397,7 +397,7 @@ class PRVerdict(enum.StrEnum):
 class _PRClassification(NamedTuple):
     """Result of :func:`_classify_pr`."""
 
-    verdict: PRVerdict
+    verdict: _PRVerdict
     message: str | None  # non-None for BLOCKED; may be None for others
     detail: str | None   # e.g. base branch for BLOCKED
 
@@ -405,34 +405,42 @@ class _PRClassification(NamedTuple):
 def _classify_pr(view: dict[str, Any] | None) -> _PRClassification:
     """Classify a PR snapshot into a single precedence-ordered verdict.
 
-    Precedence: MERGED > UNREADABLE > BLOCKED > MERGEABLE — encoded here
-    ONCE so callers do not depend on the order they call the old helpers.
+    Precedence: MERGED > BLOCKED > UNREADABLE > MERGEABLE — encoded here ONCE
+    so callers do not depend on the order they call the old helpers.
 
-    Rules (in precedence order):
-    1. ``view is None`` → UNREADABLE (gh error or timeout)
-    2. ``view["state"]`` is not a ``str`` (or absent) → UNREADABLE
-       (field-type validation: rejects malformed views before any merge path)
-    3. ``state == "MERGED"`` AND ``bool(mergedAt)`` → MERGED
+    The BLOCKED conflict-field check intentionally runs BEFORE the non-str
+    ``state`` UNREADABLE guard (rules 3 vs 4). Pre-refactor ``_pr_block_reason``
+    checked ``mergeable``/``mergeStateStatus`` INDEPENDENTLY of ``state``
+    validity, so a view with a malformed/missing ``state`` that carries
+    ``CONFLICTING``/``DIRTY`` was still hard-blocked. Placing UNREADABLE first
+    would silently drop that block → fail-open. Rule order (option A from 162-19
+    Reviewer R1) preserves the old fail-closed semantics exactly.
+
+    Rules (in evaluation order):
+    1. ``view is None`` → UNREADABLE (gh error or timeout arm)
+    2. ``state == "MERGED"`` AND ``bool(mergedAt)`` → MERGED
+       (``==`` is safe on a non-str state: ``42 == "MERGED"`` is always False)
        (162-1: GitHub stops recomputing mergeability after merge, so stale
        CONFLICTING/DIRTY fields are irrelevant for a corroborated merge)
-    4. ``mergeable == "CONFLICTING"`` OR ``mergeStateStatus == "DIRTY"``
-       (case-folded) → BLOCKED with actionable message
+    3. ``mergeable == "CONFLICTING"`` OR ``mergeStateStatus == "DIRTY"``
+       (case-folded) → BLOCKED — reachable even when ``state`` is malformed,
+       preserving the pre-refactor fail-closed behaviour
+    4. ``view["state"]`` is not a ``str`` (or absent) → UNREADABLE
+       (malformed state + no conflict → safe fallthrough to merge attempt)
     5. All else → MERGEABLE
     """
     # Rule 1: None view — gh error or timeout arm
     if view is None:
-        return _PRClassification(verdict=PRVerdict.UNREADABLE, message=None, detail=None)
+        return _PRClassification(verdict=_PRVerdict.UNREADABLE, message=None, detail=None)
 
-    # Rule 2: state field-type validation
+    # Rule 2: corroborated merge — MERGED + non-null mergedAt (162-18)
+    # Safe before the str-check: non-str state never equals "MERGED".
     state = view.get("state")
-    if not isinstance(state, str):
-        return _PRClassification(verdict=PRVerdict.UNREADABLE, message=None, detail=None)
-
-    # Rule 3: corroborated merge — MERGED + non-null mergedAt (162-18)
     if state == "MERGED" and bool(view.get("mergedAt")):
-        return _PRClassification(verdict=PRVerdict.MERGED, message=None, detail=None)
+        return _PRClassification(verdict=_PRVerdict.MERGED, message=None, detail=None)
 
-    # Rule 4: definitively non-mergeable
+    # Rule 3: definitively non-mergeable — checked BEFORE state type validation
+    # to preserve pre-refactor fail-closed behaviour on malformed+conflict views.
     mergeable = str(view.get("mergeable", "")).upper()
     state_status = str(view.get("mergeStateStatus", "")).upper()
     if mergeable == "CONFLICTING" or state_status == "DIRTY":
@@ -440,10 +448,14 @@ def _classify_pr(view: dict[str, Any] | None) -> _PRClassification:
         message = (
             f"CONFLICTING — rebase on {base} and resolve the conflicts before finishing"
         )
-        return _PRClassification(verdict=PRVerdict.BLOCKED, message=message, detail=base)
+        return _PRClassification(verdict=_PRVerdict.BLOCKED, message=message, detail=base)
+
+    # Rule 4: state field-type validation — malformed + no conflict → UNREADABLE
+    if not isinstance(state, str):
+        return _PRClassification(verdict=_PRVerdict.UNREADABLE, message=None, detail=None)
 
     # Rule 5: everything else is safe to attempt
-    return _PRClassification(verdict=PRVerdict.MERGEABLE, message=None, detail=None)
+    return _PRClassification(verdict=_PRVerdict.MERGEABLE, message=None, detail=None)
 
 
 def _pr_view_probe(
@@ -520,7 +532,7 @@ def _view_is_merged(view: dict[str, Any] | None) -> bool:
 
     The full semantics live in :func:`_classify_pr` (rules 1–3).
     """
-    return _classify_pr(view).verdict == PRVerdict.MERGED
+    return _classify_pr(view).verdict == _PRVerdict.MERGED
 
 
 def _pr_is_merged(pr_number: str, cwd: Path | None = None) -> bool:
@@ -563,7 +575,7 @@ def _pr_block_reason(pr_number: str, view: dict[str, Any] | None) -> str | None:
     The blocking logic lives in :func:`_classify_pr` (rule 4).
     """
     cl = _classify_pr(view)
-    if cl.verdict != PRVerdict.BLOCKED:
+    if cl.verdict != _PRVerdict.BLOCKED:
         return None
     base = cl.detail or "the base branch"
     return (
@@ -1231,15 +1243,15 @@ def finish_story(
                 steps.append({"step": 2, "action": gate_error})
             else:
                 cl = _classify_pr(view)
-                if cl.verdict == PRVerdict.MERGED:
+                if cl.verdict == _PRVerdict.MERGED:
                     steps.append(
                         {
                             "step": 2,
                             "action": f"PR #{pr_number} already merged — will skip merge",
                         }
                     )
-                elif cl.verdict == PRVerdict.BLOCKED:
-                    steps.append({"step": 2, "action": _pr_block_reason(pr_number, view)})
+                elif cl.verdict == _PRVerdict.BLOCKED:
+                    steps.append({"step": 2, "action": f"PR #{pr_number} is {cl.message}"})
                 else:
                     steps.append(
                         {"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"}
@@ -1317,7 +1329,11 @@ def finish_story(
                 }
             pr_views[repo_path] = view
             cl = _classify_pr(view)
-            block_reason = _pr_block_reason(repo_pr, view) if cl.verdict == PRVerdict.BLOCKED else None
+            block_reason: str | None = None
+            if cl.verdict == _PRVerdict.BLOCKED:
+                # Prefix the classifier's message with the PR number so the
+                # abort reason is fully qualified (callers expect "PR #N is…").
+                block_reason = f"PR #{repo_pr} is {cl.message}"
             if block_reason:
                 steps.append(
                     {
@@ -1372,7 +1388,7 @@ def finish_story(
                 )
             continue
 
-        if repo_pr and _classify_pr(pr_views.get(repo_path)).verdict == PRVerdict.MERGED:
+        if repo_pr and _classify_pr(pr_views.get(repo_path)).verdict == _PRVerdict.MERGED:
             # Already-merged short-circuit (155-29): a prior finish run landed
             # the merge and then aborted on a later step (archive OSError,
             # status-read guard, transition failure) — all of which keep the
