@@ -553,3 +553,59 @@ class TestPreflightEntryUnmergedBranchWarning:
             "begins — the abort signal must surface at preflight entry, not only "
             "buried as a blocking issue in the aggregated result."
         )
+
+
+# =============================================================================
+# 164-2 review round-1 fixes
+# =============================================================================
+
+
+class TestCheckLintSkipPathInvariant:
+    """check_lint skip path must construct LintResult in one shot (not mutate post-init)."""
+
+    @pytest.mark.asyncio
+    async def test_check_lint_skip_path_yields_invariant_valid_result(
+        self, tmp_path: Path
+    ) -> None:
+        """Skip path must return a LintResult that satisfies __post_init__ (one-shot construction)."""
+        recorder = _Recorder(lambda tokens: _FakeProc(returncode=0))
+        with _patched(recorder):
+            result = await check_lint(tmp_path)
+
+        assert result.skipped is True
+        assert result.clean is True
+        assert result.error is None
+        # Re-construct from returned fields — must not raise ValueError.
+        # This guards against post-construction mutation that bypasses __post_init__.
+        LintResult(skipped=result.skipped, clean=result.clean, error=result.error)
+
+
+class TestEmptyBranchGuard:
+    """An empty or whitespace branch value must be rejected before reaching gh."""
+
+    @pytest.mark.asyncio
+    async def test_check_pr_status_rejects_empty_branch(self) -> None:
+        """Empty branch '' must not reach gh pr list --head '' (matches all merged PRs repo-wide)."""
+        recorder = _Recorder(lambda tokens: _FakeProc(returncode=0, stdout=b"[]"))
+        with _patched(recorder):
+            result = await check_pr_status("")
+
+        assert result.error is not None, (
+            "check_pr_status must reject an empty branch string — "
+            "'gh pr list --head \"\"' matches all merged PRs repo-wide (false-positive merged)."
+        )
+        assert recorder.argvs == [], (
+            f"empty branch reached the subprocess — must be rejected before launch. argvs: {recorder.argvs}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_lookup_direct_call_rejects_empty_branch(self) -> None:
+        """_lookup_merged_pr_by_branch with '' must also be neutralized by the internal guard."""
+        recorder = _Recorder(lambda tokens: _FakeProc(returncode=0, stdout=b"[]"))
+        with _patched(recorder):
+            result = await _lookup_merged_pr_by_branch("", None)
+
+        assert result is None, "empty branch must return None (guard rejected)"
+        assert recorder.argvs == [], (
+            f"empty branch reached gh pr list — must be rejected by internal guard. argvs: {recorder.argvs}"
+        )
