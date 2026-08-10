@@ -1517,7 +1517,7 @@ def check(id: str):
             ]
             # Sort by priority
             priority_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
-            available.sort(key=lambda s: priority_order.get(s.get("priority", "P2"), 2))
+            available.sort(key=lambda s: priority_order.get((s.get("priority") or "P2").strip().upper(), 2))
 
             first = available[0] if available else None
             out = {
