@@ -35,11 +35,7 @@ print(rc.pr_strategy if rc else 'standard')
 
 Format the PR title using the project's `pr_title_format` from `.pennyfarthing/repos.yaml`:
 ```bash
-PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-PR_TITLE=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
-from pf.git.repos import format_pr_title
-print(format_pr_title(jira_key='${JIRA_KEY:-$STORY_ID}', title='${title}', scope='${scope}'))
-")
+PR_TITLE=$(pf git format-title --jira-key "${JIRA_KEY:-$STORY_ID}" --title "$title" --scope "$scope")
 ```
 
 Check for existing PR first: `gh pr list --head {BRANCH} --json number --jq '.[0].number'`

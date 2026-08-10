@@ -149,13 +149,7 @@ git -C {repo_path} checkout -b "$BRANCH"
 
 Format the PR title using the project's `pr_title_format` setting:
 ```bash
-# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
-# .venv - derive the interpreter from the launcher shebang, never activate .venv.
-PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-PR_TITLE=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
-from pf.git.repos import format_pr_title
-print(format_pr_title(jira_key='${JIRA_KEY}', title='{title}'))
-")
+PR_TITLE=$(pf git format-title --jira-key "$JIRA_KEY" --title "$title")
 ```
 
 ```bash

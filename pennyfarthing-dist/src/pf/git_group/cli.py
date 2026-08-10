@@ -224,6 +224,27 @@ def snapshot(label: str):
         click.echo("\nAll work preserved safely.")
 
 
+@git.command("format-title")
+@click.option("--jira-key", required=True, help="Jira issue key (e.g. PROJ-123)")
+@click.option("--title", required=True, help="Short summary of the change")
+@click.option("--scope", default="", help="Optional scope (e.g. git, ui)")
+def format_title(jira_key: str, title: str, scope: str) -> None:
+    """Format a PR title safely via argv (no shell interpolation).
+
+    Calls pf.git.repos.format_pr_title() with arguments passed as argv values,
+    so injection metacharacters in TITLE or SCOPE are treated as literal strings.
+
+    \b
+    Examples:
+      pf git format-title --jira-key PROJ-123 --title "add new feature"
+      pf git format-title --jira-key PROJ-456 --title "fix crash" --scope git
+    """
+    from pf.git.repos import format_pr_title
+
+    result = format_pr_title(jira_key=jira_key, title=title, scope=scope)
+    click.echo(result)
+
+
 @git.command("install-hooks")
 def install_hooks():
     """Install git hooks with .d/ dispatcher pattern.
