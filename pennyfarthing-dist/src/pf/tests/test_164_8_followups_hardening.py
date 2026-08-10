@@ -407,6 +407,59 @@ def test_ac3_suggestion_typeddict_has_required_keys() -> None:
         )
 
 
+def test_ac3_detect_deferred_followups_return_type_uses_typeddicts() -> None:
+    """detect_deferred_followups must declare a return type that references both
+    FindingCandidateDict and DeviationCandidateDict, not bare dict.
+
+    Regression guard: a future removal of the annotation will fail this test.
+    """
+    fu = _followups()
+    fn = getattr(fu, "detect_deferred_followups", None)
+    assert fn is not None and callable(fn), (
+        "AC3 regression: detect_deferred_followups not found"
+    )
+    try:
+        hints = typing.get_type_hints(fn)
+    except Exception as exc:
+        pytest.fail(
+            f"AC3 regression: get_type_hints(detect_deferred_followups) raised: {exc}"
+        )
+    return_hint = hints.get("return")
+    assert return_hint is not None, (
+        "AC3 regression: detect_deferred_followups has no return type annotation — "
+        "annotate with list[FindingCandidateDict | DeviationCandidateDict]"
+    )
+    type_str = str(return_hint)
+    assert "FindingCandidateDict" in type_str, (
+        f"AC3 regression: detect_deferred_followups return type does not reference "
+        f"FindingCandidateDict: {type_str}"
+    )
+    assert "DeviationCandidateDict" in type_str, (
+        f"AC3 regression: detect_deferred_followups return type does not reference "
+        f"DeviationCandidateDict: {type_str}"
+    )
+
+
+def test_ac3_suggestion_dict_annotation_applied_in_suggest_followups() -> None:
+    """SuggestionDict must be used as an annotation inside suggest_followups, not
+    just defined at module level.
+
+    Regression guard: a future drop of the annotation will fail this test.
+    """
+    import inspect
+
+    fu = _followups()
+    fn = getattr(fu, "suggest_followups", None)
+    assert fn is not None and callable(fn), (
+        "AC3 regression: suggest_followups not found"
+    )
+    source = inspect.getsource(fn)
+    assert "SuggestionDict" in source, (
+        "AC3 regression: SuggestionDict not used as annotation inside "
+        "suggest_followups — annotate the suggestions list or construction site"
+    )
+
+
 # ---------------------------------------------------------------------------
 # AC 4: Dedup extends to future.yaml
 # ---------------------------------------------------------------------------

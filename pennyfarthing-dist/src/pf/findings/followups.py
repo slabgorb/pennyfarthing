@@ -15,6 +15,7 @@ Suggest posture only: this is a report, not a gate. It never blocks finish.
 from __future__ import annotations
 
 import re
+import warnings
 from pathlib import Path
 from typing import Any, TypedDict
 
@@ -28,7 +29,7 @@ class FindingCandidateDict(TypedDict):
 
     source: str
     description: str
-    type: str
+    type: str | None
 
 
 class DeviationCandidateDict(TypedDict):
@@ -67,7 +68,9 @@ OPEN_STATUSES: frozenset[str] = frozenset({"backlog", "in_progress", "in_review"
 DEFAULT_POINTS = 2
 
 
-def detect_deferred_followups(content: str) -> list[dict[str, Any]]:
+def detect_deferred_followups(
+    content: str,
+) -> list[FindingCandidateDict | DeviationCandidateDict]:
     """Scan session markdown for deferrals that imply future work.
 
     Candidates (gh #114 detection heuristics):
@@ -85,10 +88,10 @@ def detect_deferred_followups(content: str) -> list[dict[str, Any]]:
         content: Full session markdown.
 
     Returns:
-        Candidate dicts: {"source": "finding"|"deviation", "description": str,
-        plus "type" (findings) or "forward_impact" (deviations)}.
+        Typed candidate dicts — FindingCandidateDict (source="finding") or
+        DeviationCandidateDict (source="deviation").
     """
-    candidates: list[dict[str, Any]] = []
+    candidates: list[FindingCandidateDict | DeviationCandidateDict] = []
 
     for finding in parse_delivery_findings(content):
         if finding.get("type") == "none":
@@ -99,22 +102,22 @@ def detect_deferred_followups(content: str) -> list[dict[str, Any]]:
         tagged = bool(TAG_RE.search(description))
         if finding.get("type") in CANDIDATE_TYPES or tagged:
             candidates.append(
-                {
-                    "source": "finding",
-                    "description": description,
-                    "type": finding.get("type"),
-                }
+                FindingCandidateDict(
+                    source="finding",
+                    description=description,
+                    type=finding.get("type"),
+                )
             )
 
     for deviation in parse_session_deviations(content):
         forward_impact = (deviation.get("forward_impact") or "").strip()
         if forward_impact and forward_impact.lower() != "none":
             candidates.append(
-                {
-                    "source": "deviation",
-                    "description": deviation.get("description", ""),
-                    "forward_impact": forward_impact,
-                }
+                DeviationCandidateDict(
+                    source="deviation",
+                    description=deviation.get("description", ""),
+                    forward_impact=forward_impact,
+                )
             )
 
     return candidates
@@ -195,7 +198,9 @@ def _open_stories(project_root: Path) -> list[tuple[str, str]]:
             from pf.common.config import load_yaml_config
 
             future_data = load_yaml_config(future_path) or {}
-            for initiative in (future_data.get("future") or {}).get("initiatives", []):
+            # `initiatives` may be null in a skeleton future.yaml — guard with `or []`.
+            initiatives = (future_data.get("future") or {}).get("initiatives") or []
+            for initiative in initiatives:
                 if not isinstance(initiative, dict):
                     continue
                 for epic in initiative.get("epics", []) or []:
@@ -207,8 +212,14 @@ def _open_stories(project_root: Path) -> list[tuple[str, str]]:
                         stories.append(
                             (str(story.get("id", "")), str(story.get("title", "")))
                         )
-        except Exception:
-            pass  # fail open — missing/corrupt future.yaml must not suppress report
+        except Exception as exc:
+            # Corrupt or unreadable future.yaml: warn and fail open so the
+            # rest of the follow-up report is unaffected.
+            warnings.warn(
+                f"future.yaml could not be loaded from {future_path}: {exc!r} — "
+                "future story dedup skipped (fail open)",
+                stacklevel=2,
+            )
 
     return stories
 
@@ -270,7 +281,7 @@ def suggest_followups(
         except (FileNotFoundError, OSError):
             _check_root = None
     if _check_root is not None:
-        _session_base = Path(_check_root).resolve() / ".session"
+        _session_base = (Path(_check_root).resolve() / ".session").resolve()
         _resolved = session_path.resolve()
         try:
             _resolved.relative_to(_session_base)
@@ -313,7 +324,7 @@ def suggest_followups(
             project_root = None
     open_stories = _open_stories(Path(project_root)) if project_root else []
 
-    suggestions: list[dict[str, Any]] = []
+    suggestions: list[SuggestionDict] = []
     skipped: list[dict[str, Any]] = []
     for candidate in candidates:
         description = candidate["description"]
@@ -342,12 +353,12 @@ def suggest_followups(
                 f"{DEFAULT_POINTS}"
             )
         suggestions.append(
-            {
-                "description": description,
-                "command": command,
-                "provenance": provenance,
-                "source": candidate["source"],
-            }
+            SuggestionDict(
+                description=description,
+                command=command,
+                provenance=provenance,
+                source=candidate["source"],
+            )
         )
 
     lines: list[str] = []
