@@ -64,6 +64,27 @@ def textual_app_context():
 
 
 @pytest.fixture(autouse=True)
+def _stub_demo_generate(monkeypatch):
+    """Stub pf.demo.orchestrator.generate to a no-op for the full test suite.
+
+    Story 164-10: finish_story Step 4c calls demo_orchestrator.generate() after
+    the archive step. In the full suite this spawns real I/O (reads sprint/session
+    files, writes sprint/demos/), creating cross-test state leakage and slow
+    subprocess activity in finish-family tests that have no interest in demo
+    generation.
+
+    Tests that exercise generate() directly (test_demo_cli, test_demo_finish_hook)
+    apply their own @patch("pf.demo.orchestrator.generate") decorators, which
+    override this stub for the duration of those tests — the stub never masks their
+    real assertions.
+    """
+    monkeypatch.setattr(
+        "pf.demo.orchestrator.generate",
+        lambda *_args, **_kwargs: {"success": True},
+    )
+
+
+@pytest.fixture(autouse=True)
 def isolate_frame_webui(monkeypatch, tmp_path):
     """Isolate frame tests from built webui/dist (story 165-5 fix).
 
