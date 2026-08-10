@@ -389,23 +389,19 @@ class TestLiteralAliases:
         assert "UNKNOWN" in get_args(GhMergeStateStatus)
 
     def test_shared_aliases_importable_from_production_namespace(self) -> None:
-        """The aliases must exist where production code (story_finish.py or a
-        module it imports) declares them — not buried in the test tree.
-
-        RED after the helpers module lands: this test fails until Dev adds
-        ``GhPrState`` to the production export path.
+        """The aliases must exist where production code declares them — not
+        buried in the test tree.  ``pr_types`` is the canonical production
+        source; ``story_finish`` is the primary consumer.
         """
-        # story_finish.py is the primary consumer of these values.
-        # They may live directly in story_finish or in a new pr_types module
-        # that story_finish imports and re-exports — either is valid.
-        from pf.sprint.story_finish import GhPrState as ProductionGhPrState  # noqa: F401
+        from pf.sprint.pr_types import GhPrState as ProductionGhPrState  # noqa: F401
 
     def test_production_and_helper_aliases_cover_same_values(self) -> None:
-        """The aliases imported by gh_pr_fake.py and by story_finish.py must
-        cover the same gh-API string values — they must share a source."""
-        from pf.sprint.story_finish import GhPrState as ProductionGhPrState
+        """The aliases in gh_pr_fake.py and in the production module
+        ``pr_types`` must cover the same gh-API string values — they share a
+        source (``gh_pr_fake`` re-exports from ``pr_types``)."""
+        from pf.sprint.pr_types import GhPrState as ProductionGhPrState
 
         assert set(get_args(GhPrState)) == set(get_args(ProductionGhPrState)), (
-            "GhPrState in gh_pr_fake and in story_finish must be the same "
-            "Literal — they should be defined once and imported by both"
+            "GhPrState in gh_pr_fake and in pr_types must be the same "
+            "Literal — they are defined once in pr_types and re-exported"
         )

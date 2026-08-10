@@ -71,10 +71,18 @@ class GhPrFake:
             self.merge_calls.append(parts)
             if self.merge_rc == 0:
                 self._landed = True
+            # Auto-default stderr: if caller did not provide an explicit
+            # non-empty message and the merge failed, synthesise a gh-like
+            # error so production's error-passthrough arm fires correctly.
+            stderr = (
+                self.merge_stderr
+                if (self.merge_stderr or self.merge_rc == 0)
+                else "pull request is not mergeable"
+            )
             return MagicMock(
                 returncode=self.merge_rc,
                 stdout="",
-                stderr=self.merge_stderr,
+                stderr=stderr,
             )
 
         if "view" in parts:

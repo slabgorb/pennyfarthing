@@ -329,7 +329,13 @@ class TestMergedPrIgnoresStaleMergeability:
         """
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_add_completed.return_value = {"success": True, "epic": "162"}
-        fake = GhPrFake(pr_state="MERGED", pre_merge_state="MERGED", merge_rc=0)
+        fake = GhPrFake(
+            pr_state="MERGED",
+            pre_merge_state="MERGED",
+            mergeable="CONFLICTING",
+            merge_state_status="DIRTY",
+            merge_rc=0,
+        )
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project, "162-1")
 
@@ -359,7 +365,13 @@ class TestMergedPrIgnoresStaleMergeability:
         mock_add_completed.return_value = {"success": True, "epic": "162"}
         with patch(
             "pf.sprint.story_finish._run",
-            GhPrFake(pr_state="MERGED", pre_merge_state="MERGED"),
+            GhPrFake(
+                pr_state="MERGED",
+                pre_merge_state="MERGED",
+                mergeable="CONFLICTING",
+                merge_state_status="DIRTY",
+                merge_rc=1,
+            ),
         ):
             result = finish_story(project, "162-1")
 
@@ -395,9 +407,27 @@ class TestMergedPrIgnoresStaleMergeability:
         """
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_add_completed.return_value = {"success": True, "epic": "162"}
-        with patch("pf.sprint.story_finish._run", GhPrFake(pr_state="MERGED", pre_merge_state="MERGED")):
+        with patch(
+            "pf.sprint.story_finish._run",
+            GhPrFake(
+                pr_state="MERGED",
+                pre_merge_state="MERGED",
+                mergeable="CONFLICTING",
+                merge_state_status="DIRTY",
+                merge_rc=1,
+            ),
+        ):
             preview = finish_story(project, "162-1", dry_run=True)
-        with patch("pf.sprint.story_finish._run", GhPrFake(pr_state="MERGED", pre_merge_state="MERGED")):
+        with patch(
+            "pf.sprint.story_finish._run",
+            GhPrFake(
+                pr_state="MERGED",
+                pre_merge_state="MERGED",
+                mergeable="CONFLICTING",
+                merge_state_status="DIRTY",
+                merge_rc=1,
+            ),
+        ):
             real = finish_story(project, "162-1")
 
         preview_step2 = " ".join(
@@ -432,7 +462,14 @@ class TestMergedPrIgnoresStaleMergeability:
         mock_add_completed.return_value = {"success": True, "epic": "162"}
         project = _make_project(tmp_path, session_body=SESSION_BRANCH_ONLY)
         session_path = project / ".session" / "162-1-session.md"
-        fake = GhPrFake(pr_state="MERGED", pre_merge_state="MERGED", list_stdout="999\n")
+        fake = GhPrFake(
+            pr_state="MERGED",
+            pre_merge_state="MERGED",
+            mergeable="CONFLICTING",
+            merge_state_status="DIRTY",
+            merge_rc=1,
+            list_stdout="999\n",
+        )
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project, "162-1")
 
@@ -524,15 +561,21 @@ class TestConflictGateStillBlocksUnmergedPrs:
         """
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         session_path = project / ".session" / "162-1-session.md"
-        with patch(
-            "pf.sprint.story_finish._run",
-            GhPrFake(pr_state="CLOSED", pre_merge_state="CLOSED"),
-        ):
+        fake = GhPrFake(
+            pr_state="CLOSED",
+            pre_merge_state="CLOSED",
+            mergeable="CONFLICTING",
+            merge_state_status="DIRTY",
+        )
+        with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project, "162-1")
 
         assert result["success"] is False, (
             "a CLOSED-unmerged conflicting PR must still abort finish — only a "
             f"MERGED PR is exempt from the conflict gate: {result}"
+        )
+        assert fake.merge_calls == [], (
+            "the conflict gate must abort before `gh pr merge` is attempted"
         )
         assert session_path.exists()
         assert not _requested_done(mock_transition)

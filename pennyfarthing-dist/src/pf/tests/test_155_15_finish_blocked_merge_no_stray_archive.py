@@ -60,7 +60,7 @@ probe and ``finish_story`` took the 155-29 already-merged short-circuit —
 meaning none of the "clean, verified merge" tests below ever reached
 ``gh pr merge``. Every clean-path test now asserts that the merge actually
 happened as well as asserting the outcome — three of them via the merge ledger
-(``_merge_calls``), and ``test_clean_merge_step2_is_a_real_merge_not_the_short_circuit``
+(``fake.merge_calls``), and ``test_clean_merge_step2_is_a_real_merge_not_the_short_circuit``
 via the step-2 record (``merged`` true, ``already_merged`` absent), which is the
 same claim read off the run report instead of off the fake. ``TestFakeIsStateful``
 pins the fake's own contract so it cannot quietly regress to a stateless MERGED.
