@@ -108,7 +108,9 @@ NON_CANONICAL_MERGED = [
     pytest.param("MeRgEd", id="mixedcase"),
     pytest.param("mERGED", id="inverted"),
     # 162-18/R1: a .strip() mutant on _view_is_merged would accept these —
-    # pin that whitespace-padded spellings are refused regardless of stripping.
+    # pin that whitespace-padded spellings are refused by the state comparison.
+    # Tests supply a non-null mergedAt so the timestamp cannot mask a broken
+    # state check; the state comparison is the only thing under test.
     pytest.param(" MERGED", id="leading-whitespace"),
     pytest.param("MERGED ", id="trailing-whitespace"),
 ]
@@ -202,14 +204,23 @@ def project(tmp_path: Path) -> Path:
 def _view_payload(
     *,
     state: str,
+    mergedat: str | None = "2026-08-04T00:00:00Z",
     mergeable: str,
     merge_state_status: str,
     base_ref: str = "develop",
 ) -> str:
+    """Build a ``gh pr view`` JSON payload.
+
+    ``mergedat`` is explicit rather than derived from ``state`` — derivation
+    via case-fold makes every non-canonical state yield a null timestamp, which
+    means the state comparison is no longer the thing under test (162-18/R1).
+    Default is a non-null timestamp so callers that vary only ``state`` test
+    only the state comparison.
+    """
     return json.dumps(
         {
             "state": state,
-            "mergedAt": "2026-08-04T00:00:00Z" if state == "MERGED" else None,
+            "mergedAt": mergedat,
             "mergeable": mergeable,
             "mergeStateStatus": merge_state_status,
             "baseRefName": base_ref,
@@ -315,7 +326,7 @@ class TestViewIsMergedRejectsNonCanonicalState:
         """AC-1: HEAD's ``.upper()`` accepts every one of these; gh emits none
         of them. A state finish cannot vouch for must read as NOT merged.
         """
-        assert _view_is_merged({"state": state}) is False, (
+        assert _view_is_merged({"state": state, "mergedAt": "2026-08-04T00:00:00Z"}) is False, (
             f"state={state!r} was treated as MERGED — the case-fold widens the "
             "boolean that authorises the done transition, the conflict-gate "
             "exemption, the merge short-circuit and the post-merge re-verify"
@@ -333,7 +344,7 @@ class TestViewIsMergedRejectsNonCanonicalState:
         "MERGEDX" also pin that the fix stays an equality check rather than
         drifting into a prefix or substring test.
         """
-        assert _view_is_merged({"state": state}) is False
+        assert _view_is_merged({"state": state, "mergedAt": "2026-08-04T00:00:00Z"}) is False
 
     def test_unreadable_snapshot_is_not_merged(self) -> None:
         """The "unknown reads as not merged" contract every call site leans on
@@ -346,14 +357,14 @@ class TestViewIsMergedRejectsNonCanonicalState:
         """A snapshot without ``state`` at all (gh field-list drift) is
         unknown, not merged.
         """
-        assert _view_is_merged({"mergeable": "MERGEABLE"}) is False
+        assert _view_is_merged({"mergeable": "MERGEABLE", "mergedAt": "2026-08-04T00:00:00Z"}) is False
 
     def test_null_state_is_not_merged(self) -> None:
         """JSON ``null`` for ``state`` is unknown, not merged. Pins that a fix
         which drops the ``str()`` wrapper still cannot raise or return None-ish
         truth here.
         """
-        assert _view_is_merged({"state": None}) is False
+        assert _view_is_merged({"state": None, "mergedAt": "2026-08-04T00:00:00Z"}) is False
 
 
 # =============================================================================
@@ -379,6 +390,7 @@ class TestConflictGateExemptionRequiresCanonicalMerged:
             "999",
             {
                 "state": state,
+                "mergedAt": "2026-08-04T00:00:00Z",
                 "mergeable": "CONFLICTING",
                 "mergeStateStatus": "DIRTY",
                 "baseRefName": "develop",
