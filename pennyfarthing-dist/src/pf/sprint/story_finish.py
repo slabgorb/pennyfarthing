@@ -32,6 +32,7 @@ from pf.sprint.loader import (
     find_story_in_data,
     format_story_not_found_error,
 )
+from pf.sprint.pr_types import GhMergeable, GhMergeStateStatus, GhPrState
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import _get_epic_ref, read_sprint
 

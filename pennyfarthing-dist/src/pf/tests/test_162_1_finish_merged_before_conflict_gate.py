@@ -80,6 +80,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pf.sprint.story_finish import finish_story
+from pf.tests.helpers.gh_pr_fake import GhPrFake
 
 # =============================================================================
 # Fixtures — minimal sprint/.session project
@@ -183,66 +184,6 @@ STALE_MERGEABILITY = [
 ]
 
 
-def _make_run(
-    *,
-    pr_state: str = "MERGED",
-    mergeable: str = "CONFLICTING",
-    merge_state_status: str = "DIRTY",
-    merge_rc: int = 1,
-    list_stdout: str = "",
-    base_ref: str = "develop",
-):
-    """Dispatching fake for ``story_finish._run``.
-
-    - ``gh pr view`` → ``{state, mergedAt, mergeable, mergeStateStatus,
-      baseRefName}`` built from the knobs. Unlike the 155-29 fake, ``state``
-      and the mergeability fields vary INDEPENDENTLY — that decoupling is the
-      whole point: the bug lives in the (MERGED, DIRTY) combination that no
-      existing fake can express.
-    - ``gh pr merge`` → ``merge_rc``, defaulting to 1 with gh's real
-      "already merged" stderr (what a redundant merge on a landed PR does).
-    - ``gh pr list`` → ``list_stdout`` for the branch-resolution fallback.
-    """
-
-    def _fake_run(cmd, **kwargs):
-        parts = [str(c) for c in cmd]
-        if "merge" in parts:
-            return MagicMock(
-                returncode=merge_rc,
-                stdout="",
-                stderr=""
-                if merge_rc == 0
-                else "GraphQL: Pull request #999 is already merged (mergePullRequest)",
-            )
-        if "view" in parts:
-            return MagicMock(
-                returncode=0,
-                stdout=json.dumps(
-                    {
-                        "state": pr_state,
-                        "mergedAt": "2026-08-03T00:00:00Z" if pr_state == "MERGED" else None,
-                        "mergeable": mergeable,
-                        "mergeStateStatus": merge_state_status,
-                        "baseRefName": base_ref,
-                    }
-                ),
-                stderr="",
-            )
-        if "list" in parts:
-            return MagicMock(returncode=0, stdout=list_stdout, stderr="")
-        return MagicMock(returncode=0, stdout="", stderr="")
-
-    return _fake_run
-
-
-def _merge_invoked(fake: MagicMock) -> bool:
-    """True if ``gh pr merge`` was ever called through the fake ``_run``."""
-    for call in fake.call_args_list:
-        argv = [str(x) for x in call.args[0]]
-        if "merge" in argv:
-            return True
-    return False
-
 
 def _requested_done(mock_transition: MagicMock) -> bool:
     for call in mock_transition.call_args_list:
@@ -310,8 +251,9 @@ class TestMergedPrIgnoresStaleMergeability:
         session_path = project / ".session" / "162-1-session.md"
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_run(
+            GhPrFake(
                 pr_state="MERGED",
+                pre_merge_state="MERGED",
                 mergeable=mergeable,
                 merge_state_status=merge_state_status,
             ),
@@ -352,8 +294,9 @@ class TestMergedPrIgnoresStaleMergeability:
         mock_add_completed.return_value = {"success": True, "epic": "162"}
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_run(
+            GhPrFake(
                 pr_state="MERGED",
+                pre_merge_state="MERGED",
                 mergeable=mergeable,
                 merge_state_status=merge_state_status,
             ),
@@ -386,11 +329,11 @@ class TestMergedPrIgnoresStaleMergeability:
         """
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_add_completed.return_value = {"success": True, "epic": "162"}
-        fake = MagicMock(side_effect=_make_run(pr_state="MERGED", merge_rc=0))
+        fake = GhPrFake(pr_state="MERGED", pre_merge_state="MERGED", merge_rc=0)
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project, "162-1")
 
-        assert not _merge_invoked(fake), (
+        assert len(fake.merge_calls) == 0, (
             "finish ran `gh pr merge` on a PR that is already MERGED — the "
             "short-circuit must own this path, not the merge branch"
         )
@@ -416,7 +359,7 @@ class TestMergedPrIgnoresStaleMergeability:
         mock_add_completed.return_value = {"success": True, "epic": "162"}
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_run(pr_state="MERGED"),
+            GhPrFake(pr_state="MERGED", pre_merge_state="MERGED"),
         ):
             result = finish_story(project, "162-1")
 
@@ -452,11 +395,9 @@ class TestMergedPrIgnoresStaleMergeability:
         """
         mock_transition.return_value = {"success": True, "to_status": "done"}
         mock_add_completed.return_value = {"success": True, "epic": "162"}
-        fake_world = _make_run(pr_state="MERGED")
-
-        with patch("pf.sprint.story_finish._run", side_effect=fake_world):
+        with patch("pf.sprint.story_finish._run", GhPrFake(pr_state="MERGED", pre_merge_state="MERGED")):
             preview = finish_story(project, "162-1", dry_run=True)
-        with patch("pf.sprint.story_finish._run", side_effect=fake_world):
+        with patch("pf.sprint.story_finish._run", GhPrFake(pr_state="MERGED", pre_merge_state="MERGED")):
             real = finish_story(project, "162-1")
 
         preview_step2 = " ".join(
@@ -491,14 +432,14 @@ class TestMergedPrIgnoresStaleMergeability:
         mock_add_completed.return_value = {"success": True, "epic": "162"}
         project = _make_project(tmp_path, session_body=SESSION_BRANCH_ONLY)
         session_path = project / ".session" / "162-1-session.md"
-        fake = MagicMock(side_effect=_make_run(pr_state="MERGED", list_stdout="999\n"))
+        fake = GhPrFake(pr_state="MERGED", pre_merge_state="MERGED", list_stdout="999\n")
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project, "162-1")
 
         assert result["success"] is True, (
             f"branch-resolved merged PR with stale mergeability must finish: {result}"
         )
-        assert not _merge_invoked(fake), (
+        assert len(fake.merge_calls) == 0, (
             "branch-resolved merged PR must short-circuit the merge attempt"
         )
         assert not _REBASE_ADVICE.search(_result_blob(result)), (
@@ -538,13 +479,12 @@ class TestConflictGateStillBlocksUnmergedPrs:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         session_path = project / ".session" / "162-1-session.md"
         archive_dir = project / "sprint" / "archive"
-        fake = MagicMock(
-            side_effect=_make_run(
-                pr_state="OPEN",
-                mergeable=mergeable,
-                merge_state_status=merge_state_status,
-                base_ref="develop",
-            )
+        fake = GhPrFake(
+            pr_state="OPEN",
+            pre_merge_state="OPEN",
+            mergeable=mergeable,
+            merge_state_status=merge_state_status,
+            base_ref="develop",
         )
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project, "162-1")
@@ -558,7 +498,7 @@ class TestConflictGateStillBlocksUnmergedPrs:
             f"the abort must keep its actionable rebase advice: {error!r}"
         )
         assert "develop" in error, f"the abort must name the base branch to rebase on: {error!r}"
-        assert not _merge_invoked(fake), (
+        assert len(fake.merge_calls) == 0, (
             "the gate must abort BEFORE `gh pr merge` is attempted (155-12)"
         )
         assert session_path.exists(), "a blocked finish must keep the session"
@@ -586,7 +526,7 @@ class TestConflictGateStillBlocksUnmergedPrs:
         session_path = project / ".session" / "162-1-session.md"
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_run(pr_state="CLOSED"),
+            GhPrFake(pr_state="CLOSED", pre_merge_state="CLOSED"),
         ):
             result = finish_story(project, "162-1")
 
@@ -622,11 +562,13 @@ class TestConflictGateStillBlocksUnmergedPrs:
                 return MagicMock(returncode=0, stdout="", stderr="")
             return MagicMock(returncode=0, stdout="", stderr="")
 
-        fake = MagicMock(side_effect=_view_errors)
-        with patch("pf.sprint.story_finish._run", fake):
+        with patch("pf.sprint.story_finish._run", side_effect=_view_errors) as fake:
             result = finish_story(project, "162-1")
 
-        assert _merge_invoked(fake), (
+        assert any(
+            "merge" in [str(x) for x in c.args[0]]
+            for c in fake.call_args_list
+        ), (
             "an unreadable probe must fall through to the real merge attempt"
         )
         assert result["success"] is False, (
@@ -651,12 +593,12 @@ class TestConflictGateStillBlocksUnmergedPrs:
         ``done`` path.
         """
         mock_add_completed.return_value = {"success": True, "epic": "162"}
-        fake = MagicMock(side_effect=_make_run(pr_state="MERGED", merge_rc=0))
+        fake = GhPrFake(pr_state="MERGED", pre_merge_state="MERGED", merge_rc=0)
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project, "162-1")
 
         assert result["success"] is True, f"human mode must not be gated: {result}"
-        assert not _merge_invoked(fake), "human mode must never invoke gh pr merge"
+        assert len(fake.merge_calls) == 0, "human mode must never invoke gh pr merge"
         assert not _requested_done(mock_transition), (
             "human mode leaves the story in_review — never requests done"
         )
@@ -700,10 +642,12 @@ class TestConflictGateStillBlocksUnmergedPrs:
                 )
             return MagicMock(returncode=0, stdout="", stderr="")
 
-        fake = MagicMock(side_effect=_stateful)
-        with patch("pf.sprint.story_finish._run", fake):
+        with patch("pf.sprint.story_finish._run", side_effect=_stateful) as fake:
             result = finish_story(project, "162-1")
 
-        assert _merge_invoked(fake), "a clean OPEN PR must still get a real merge"
+        assert any(
+            "merge" in [str(x) for x in c.args[0]]
+            for c in fake.call_args_list
+        ), "a clean OPEN PR must still get a real merge"
         assert result["success"] is True, result
         assert not (project / ".session" / "162-1-session.md").exists()

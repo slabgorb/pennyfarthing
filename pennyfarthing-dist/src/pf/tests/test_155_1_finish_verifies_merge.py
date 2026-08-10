@@ -39,13 +39,13 @@ outcomes are controlled per-test, and ``transition_story`` is patched so the
 ``done`` request can be asserted on (or its absence asserted).
 """
 
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pf.sprint.story_finish import finish_story
+from pf.tests.helpers.gh_pr_fake import GhPrFake
 
 # =============================================================================
 # Fixtures
@@ -165,36 +165,6 @@ def project_no_pr(tmp_path: Path) -> Path:
     return _make_project(tmp_path, SESSION_NO_PR)
 
 
-def _make_fake_run(*, merge_rc: int = 0, pr_state: str = "MERGED", listed_pr: str = ""):
-    """Build a command-dispatching fake for ``story_finish._run``.
-
-    - ``gh pr merge ...``  → returncode=merge_rc
-    - ``gh pr view ...``   → stdout JSON ``{"state": pr_state, ...}``
-    - ``gh pr list ...``   → stdout=listed_pr (the resolved PR number)
-    - anything else (git checkout/pull/branch, epic archive) → returncode=0
-    """
-
-    def _fake_run(cmd, **kwargs):
-        parts = [str(c) for c in cmd]
-        if "merge" in parts:
-            return MagicMock(
-                returncode=merge_rc,
-                stdout="",
-                stderr="" if merge_rc == 0 else "merge failed: pull request is not mergeable",
-            )
-        if "view" in parts:
-            merged_at = "2026-06-04T00:00:00Z" if pr_state == "MERGED" else None
-            return MagicMock(
-                returncode=0,
-                stdout=json.dumps({"state": pr_state, "mergedAt": merged_at}),
-                stderr="",
-            )
-        if "list" in parts:
-            return MagicMock(returncode=0, stdout=listed_pr, stderr="")
-        return MagicMock(returncode=0, stdout="", stderr="")
-
-    return _fake_run
-
 
 def _requested_done(mock_transition: MagicMock) -> bool:
     """True if transition_story was ever asked to move the story to ``done``."""
@@ -233,7 +203,7 @@ class TestFinishAbortsWhenMergeFails:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=1, pr_state="OPEN"),
+            GhPrFake(merge_rc=1, pr_state="OPEN"),
         ):
             result = finish_story(project_with_pr, "155-1")
 
@@ -250,7 +220,7 @@ class TestFinishAbortsWhenMergeFails:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=1, pr_state="OPEN"),
+            GhPrFake(merge_rc=1, pr_state="OPEN"),
         ):
             result = finish_story(project_with_pr, "155-1")
 
@@ -271,7 +241,7 @@ class TestFinishAbortsWhenMergeFails:
 
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=1, pr_state="OPEN"),
+            GhPrFake(merge_rc=1, pr_state="OPEN"),
         ):
             finish_story(project_with_pr, "155-1")
 
@@ -288,7 +258,7 @@ class TestFinishAbortsWhenMergeFails:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=1, pr_state="OPEN"),
+            GhPrFake(merge_rc=1, pr_state="OPEN"),
         ):
             finish_story(project_with_pr, "155-1")
 
@@ -317,7 +287,7 @@ class TestFinishVerifiesMergeLanded:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN"),
+            GhPrFake(merge_rc=0, pr_state="OPEN"),
         ):
             result = finish_story(project_with_pr, "155-1")
 
@@ -335,7 +305,7 @@ class TestFinishVerifiesMergeLanded:
         session_path = project_with_pr / ".session" / "155-1-session.md"
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN"),
+            GhPrFake(merge_rc=0, pr_state="OPEN"),
         ):
             finish_story(project_with_pr, "155-1")
 
@@ -352,7 +322,7 @@ class TestFinishVerifiesMergeLanded:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN"),
+            GhPrFake(merge_rc=0, pr_state="OPEN"),
         ):
             finish_story(project_with_pr, "155-1")
 
@@ -379,43 +349,15 @@ class TestFinishResolvesOutOfBandPr:
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "done"}
 
-        # Stateful world (155-29 pre-adjustment): the resolved PR starts OPEN
-        # and flips to MERGED only after `gh pr merge` runs. The previous
-        # always-MERGED fake would take the 155-29 pre-merge short-circuit and
-        # never exercise the merge this test exists to assert. Green on HEAD
-        # (merge runs, verify reads MERGED) and post-fix (pre-check reads OPEN,
-        # merge runs, verify reads MERGED).
-        state = {"merged": False}
-        base = _make_fake_run(merge_rc=0, pr_state="OPEN", listed_pr="288")
-
-        def _stateful_run(cmd, **kwargs):
-            parts = [str(c) for c in cmd]
-            if "merge" in parts:
-                state["merged"] = True
-            if "view" in parts and state["merged"]:
-                return MagicMock(
-                    returncode=0,
-                    stdout=json.dumps(
-                        {"state": "MERGED", "mergedAt": "2026-06-04T00:00:00Z"}
-                    ),
-                    stderr="",
-                )
-            return base(cmd, **kwargs)
-
-        fake = MagicMock(side_effect=_stateful_run)
+        fake = GhPrFake(merge_rc=0, pr_state="MERGED", pre_merge_state="OPEN", list_stdout="288")
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project_no_pr, "155-1")
 
-        # The resolved PR (#288) must actually be merged — assert gh pr merge ran on it.
-        merge_calls = [
-            c for c in fake.call_args_list
-            if "merge" in [str(x) for x in c.args[0]]
-        ]
-        assert merge_calls, (
+        assert len(fake.merge_calls) > 0, (
             "No `gh pr merge` was invoked — out-of-band PR resolved by branch "
             "was silently skipped (gh #71)"
         )
-        assert any("288" in [str(x) for x in c.args[0]] for c in merge_calls), (
+        assert any("288" in c for c in fake.merge_calls), (
             "merge ran but not against the branch-resolved PR #288"
         )
         assert result["success"] is True
@@ -447,7 +389,7 @@ class TestFinishResolvesOutOfBandPr:
         # Sentinel branch → no gh pr list probe → no PR → merge step skipped.
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN", listed_pr=""),
+            GhPrFake(merge_rc=0, pr_state="OPEN", list_stdout=""),
         ):
             result = finish_story(project_sentinel, "155-1")
 
@@ -486,7 +428,7 @@ class TestFinishSuccessPathUnchanged:
 
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="MERGED"),
+            GhPrFake(merge_rc=0, pr_state="MERGED"),
         ):
             result = finish_story(project_with_pr, "155-1")
 
