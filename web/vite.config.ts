@@ -3,8 +3,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// Frame default port — see pf/frame/app.py _resolve_port()
-const FRAME = 'http://localhost:2898'
+// Frame port — OS-assigned per project (multiple Claude/Frame instances
+// coexist), so the launcher passes it via FRAME_PORT from .frame-port.
+// 2898 is only the fallback default — see pf/frame/app.py _resolve_port().
+const FRAME = `http://localhost:${process.env.FRAME_PORT ?? '2898'}`
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
