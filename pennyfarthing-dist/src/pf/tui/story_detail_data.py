@@ -9,7 +9,10 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+from pathlib import Path
 from typing import Any
+
+from pf.sprint.session_parse import parse_session as _parse_session_shared
 
 
 def _find_project_root() -> str | None:
@@ -76,27 +79,28 @@ def _parse_session_file(session_path: str) -> dict[str, Any]:
     if title_match:
         result["title"] = title_match.group(1).strip()
 
-    # Parse bold metadata lines: **Key:** value
-    for match in re.finditer(r"\*\*(\w[\w\s]*?):\*\*\s*(.*)", content):
-        key = match.group(1).strip().lower()
-        value = match.group(2).strip()
-        if key == "phase":
-            result["workflow_phase"] = value
-        elif key == "workflow":
-            result["workflow"] = value
-        elif key == "branch":
-            result["git_branch"] = value
-        elif key == "jira":
-            result["jiraKey"] = value
-        elif key == "points":
-            try:
-                result["points"] = int(value)
-            except ValueError:
-                result["points"] = value
-        elif key == "review verdict":
-            result["review_verdict"] = value
-        elif key == "review findings":
-            result["review_findings"] = value
+    # Parse bold metadata fields via shared anchored parser (164-13).
+    # Anchored regex, fence-skip, Story Details authority, first-wins.
+    session_fields = _parse_session_shared(Path(session_path))
+    _KEY_MAP = {
+        "phase": ("workflow_phase", None),
+        "workflow": ("workflow", None),
+        "branch": ("git_branch", None),
+        "jira": ("jiraKey", None),
+        "points": ("points", "int"),
+        "review verdict": ("review_verdict", None),
+        "review findings": ("review_findings", None),
+    }
+    for src_key, (dst_key, transform) in _KEY_MAP.items():
+        if src_key in session_fields:
+            value = session_fields[src_key]
+            if transform == "int":
+                try:
+                    result[dst_key] = int(value)
+                except ValueError:
+                    result[dst_key] = value
+            else:
+                result[dst_key] = value
 
     # Parse ACs from ## Acceptance Criteria section
     ac_match = re.search(r"## Acceptance Criteria\n(.*?)(?=\n##|\Z)", content, re.DOTALL)

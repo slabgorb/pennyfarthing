@@ -12,8 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from pf.demo.models import SignalBundle
+from pf.sprint.session_parse import parse_session as _parse_session_shared
 
-SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
 DIFF_FILE_RE = re.compile(r"diff --git a/(.+?) b/")
 MAX_DIFF_CHARS = 50_000
 
@@ -97,7 +97,8 @@ def _find_story_in_sprint(
 def parse_session_fields(session_path: Path) -> dict[str, str]:
     """Extract **Key:** Value fields from a session markdown file.
 
-    Reuses the same regex pattern as story_finish.py.
+    Delegates to the shared anchored parser (pf.sprint.session_parse, 164-13):
+    anchored regex, fence-skip, Story Details authority, first-wins semantics.
 
     Args:
         session_path: Path to the session .md file
@@ -105,16 +106,7 @@ def parse_session_fields(session_path: Path) -> dict[str, str]:
     Returns:
         Dict mapping lowercase field names to their string values
     """
-    fields: dict[str, str] = {}
-    if not session_path.exists():
-        return fields
-    for line in session_path.read_text().splitlines():
-        m = SESSION_FIELD_RE.search(line)
-        if m:
-            key = m.group(1).strip().lower()
-            value = m.group(2).strip()
-            fields[key] = value
-    return fields
+    return _parse_session_shared(session_path)
 
 
 def get_pr_diff(

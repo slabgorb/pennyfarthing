@@ -16,8 +16,7 @@ from pathlib import Path
 import yaml
 
 from pf.findings.capture import parse_delivery_findings
-
-_SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
+from pf.sprint.session_parse import _parse_session_lines
 
 
 def _parse_frontmatter(content: str) -> dict | None:
@@ -36,17 +35,13 @@ def _parse_frontmatter(content: str) -> dict | None:
 def _parse_session_fields(content: str) -> dict[str, str]:
     """Extract **Key:** Value fields from session markdown body.
 
+    Delegates to the shared anchored parser (pf.sprint.session_parse, 164-13):
+    anchored regex, fence-skip, Story Details authority, first-wins semantics.
+
     Handles sessions without YAML frontmatter by reading bold-field
     patterns like ``**ID:** 141-8`` and ``**Jira Key:** PROJ-16135``.
     """
-    fields: dict[str, str] = {}
-    for line in content.splitlines()[:30]:
-        m = _SESSION_FIELD_RE.search(line)
-        if m:
-            key = m.group(1).strip().lower()
-            value = m.group(2).strip()
-            fields[key] = value
-    return fields
+    return _parse_session_lines(content.splitlines())
 
 
 def _collect_done_stories(project_root: Path, sprint_number: int) -> dict[str, dict]:
