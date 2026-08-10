@@ -239,12 +239,14 @@ def test_sprint_new_rejects_traversal_sprint_id(
         catch_exceptions=False,
     )
 
-    # Validation must fire before any "Created …" confirmation.
-    assert result.exit_code != 0 or (
-        "Created" not in result.output and "[DRY-RUN] Would initialize" not in result.output
-    ), (
-        f"pf sprint new silently accepted traversal id {token!r}.\n"
-        f"exit_code={result.exit_code}\noutput:\n{result.output}"
+    # Validation must fire: non-zero exit AND the guard's "Error:" prefix must appear.
+    assert result.exit_code != 0, (
+        f"pf sprint new accepted traversal id {token!r} with exit_code=0.\n"
+        f"output:\n{result.output}"
+    )
+    assert "Error" in result.output, (
+        f"pf sprint new exited non-zero for {token!r} but guard 'Error:' prefix missing.\n"
+        f"output:\n{result.output}"
     )
 
 
@@ -272,9 +274,13 @@ def test_sprint_new_dry_run_rejects_traversal_sprint_id(
         catch_exceptions=False,
     )
 
-    assert result.exit_code != 0 or "[DRY-RUN] Would initialize" not in result.output, (
-        f"pf sprint new --dry-run silently previewed success for traversal id {token!r}.\n"
-        f"exit_code={result.exit_code}\noutput:\n{result.output}"
+    assert result.exit_code != 0, (
+        f"pf sprint new --dry-run accepted traversal id {token!r} with exit_code=0.\n"
+        f"output:\n{result.output}"
+    )
+    assert "Error" in result.output, (
+        f"pf sprint new --dry-run exited non-zero for {token!r} but guard 'Error:' prefix missing.\n"
+        f"output:\n{result.output}"
     )
 
 
