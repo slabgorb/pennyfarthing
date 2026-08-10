@@ -57,10 +57,12 @@ from pf.preflight.finish import (
     JiraStatus,
     LintResult,
     PRStatus,
+    _lookup_merged_pr_by_branch,
     aggregate_results,
     check_jira_status,
     check_lint,
     check_pr_status,
+    run_finish_preflight,
 )
 
 # =============================================================================
@@ -315,4 +317,239 @@ class TestLintSkipBranchCoverage:
         assert result.command == "", (
             "a skipped lint must not claim a linter command ran — that would be an "
             f"untruthful remediation hint, got command={result.command!r}"
+        )
+
+
+# =============================================================================
+# 164-2 AC1 — LintResult skipped-invariant enforcement (mutation-resistant)
+# =============================================================================
+
+
+class TestLintResultSkippedInvariant:
+    """LintResult must reject contradictory skipped=True states via __post_init__."""
+
+    def test_lintresult_rejects_skipped_true_with_error_set(self) -> None:
+        """skipped=True + error set is a contradictory state: skipped means no run, not a failed run."""
+        with pytest.raises(ValueError, match="skipped"):
+            LintResult(skipped=True, error="lint check failed")
+
+    def test_lintresult_rejects_skipped_true_with_clean_false(self) -> None:
+        """skipped=True + clean=False is a contradictory state: if skipped, clean must be True."""
+        with pytest.raises(ValueError, match="skipped"):
+            LintResult(skipped=True, clean=False)
+
+    def test_lintresult_accepts_canonical_skipped_state(self) -> None:
+        """skipped=True, clean=True, error=None is the only valid skipped form."""
+        result = LintResult(skipped=True, clean=True, error=None)
+        assert result.skipped is True
+        assert result.clean is True
+        assert result.error is None
+
+    def test_lintresult_accepts_normal_failed_lint(self) -> None:
+        """skipped=False + clean=False + error set is a valid (non-skipped) failure state."""
+        result = LintResult(skipped=False, clean=False, error="lint errors found")
+        assert result.skipped is False
+        assert result.clean is False
+        assert result.error == "lint errors found"
+
+
+# =============================================================================
+# 164-2 AC2 — Lint and Jira skipped to_dict shape unification
+# =============================================================================
+
+
+class TestLintJiraSkippedToDictUnification:
+    """Both lint.skipped and jira.skipped must serialize through the same nested convention."""
+
+    def test_jira_skipped_to_dict_has_no_top_level_jira_skipped_key(self) -> None:
+        """The asymmetric top-level 'jira_skipped' key must be removed; only nested form allowed."""
+        result = aggregate_results(
+            "164-2",
+            PRStatus(state="MERGED", merged=True),
+            LintResult(clean=True, skipped=True),
+            JiraStatus(skipped=True),
+            AcceptanceCriteria(),
+        )
+        d = result.to_dict()
+        assert "jira_skipped" not in d, (
+            "to_dict() emits a top-level 'jira_skipped' key — asymmetric shape "
+            "relative to lint skipped (which is nested only). Unify: drop the "
+            "top-level key and use only 'jira': {'skipped': True, ...}."
+        )
+
+    def test_jira_skipped_nested_shape_mirrors_lint_skipped_shape(self) -> None:
+        """jira.skipped and lint.skipped must use the same nested wire shape."""
+        result = aggregate_results(
+            "164-2",
+            PRStatus(state="MERGED", merged=True),
+            LintResult(clean=True, skipped=True),
+            JiraStatus(skipped=True),
+            AcceptanceCriteria(),
+        )
+        d = result.to_dict()
+        assert d.get("lint", {}).get("skipped") is True, (
+            f"lint skipped not nested correctly: {d.get('lint')}"
+        )
+        assert d.get("jira", {}).get("skipped") is True, (
+            "jira skipped is absent from the nested 'jira' dict — shape diverges "
+            f"from lint. Expected 'jira': {{'skipped': True, ...}}, got: {d.get('jira')}"
+        )
+
+
+# =============================================================================
+# 164-2 AC3 — _lookup_merged_pr_by_branch belt-and-suspenders arg guard
+# =============================================================================
+
+
+class TestLookupMergedPrByBranchArgGuard:
+    """_lookup_merged_pr_by_branch must guard its own branch arg, independent of callers."""
+
+    @pytest.mark.asyncio
+    async def test_lookup_direct_call_rejects_double_dash_option_branch(self) -> None:
+        """Direct call with '--foo' must not reach gh as an option-position arg (CWE-88)."""
+        recorder = _Recorder(lambda tokens: _FakeProc(returncode=0, stdout=b"[]"))
+        with _patched(recorder):
+            await _lookup_merged_pr_by_branch("--foo", None)
+
+        assert _token_is_neutralized(recorder, "--foo"), (
+            "_lookup_merged_pr_by_branch passed '--foo' directly to gh pr list "
+            "as a bare positional — argument injection CWE-88. Add an internal "
+            "_reject_option_like guard at the function entry (belt-and-suspenders, "
+            "independent of check_pr_status's guard)."
+        )
+
+    @pytest.mark.asyncio
+    async def test_lookup_direct_call_rejects_single_dash_injection(self) -> None:
+        """Direct call with '-R' (single-dash short flag) must also be neutralized."""
+        recorder = _Recorder(lambda tokens: _FakeProc(returncode=0, stdout=b"[]"))
+        with _patched(recorder):
+            await _lookup_merged_pr_by_branch("-R", None)
+
+        assert _token_is_neutralized(recorder, "-R"), (
+            "_lookup_merged_pr_by_branch passed single-dash '-R' to gh pr list "
+            f"as a positional flag. argv: {recorder.argvs}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_lookup_direct_call_allows_legitimate_branch(self) -> None:
+        """Over-reach: a legitimate branch must not be blocked by the internal guard."""
+        recorder = _Recorder(lambda tokens: _FakeProc(
+            returncode=0,
+            stdout=b'[{"state":"MERGED","mergedAt":"2026-01-01T00:00:00Z","url":"https://github.com/x/y/pull/1"}]',
+        ))
+        with _patched(recorder):
+            result = await _lookup_merged_pr_by_branch("feat/164-2", None)
+
+        assert recorder.argvs, "guard blocked a legitimate branch — no subprocess ran"
+        assert result is not None, "legitimate branch returned None instead of PR data"
+
+
+# =============================================================================
+# 164-2 AC4 — Symmetric over-reach + single-dash injection + skip invariant
+# =============================================================================
+
+
+class TestSymmetricGuardsAndSkipInvariant:
+    """AC4: symmetric jira over-reach, single-dash PR injection, skip-clean invariant."""
+
+    @pytest.mark.asyncio
+    async def test_jira_status_does_not_block_legitimate_key(self) -> None:
+        """Symmetric over-reach: a real Jira key 'PROJ-12345' must still reach jira issue view."""
+        recorder = _Recorder(lambda tokens: _FakeProc(
+            returncode=0,
+            stdout=b'{"fields":{"status":{"name":"In Progress"}}}',
+        ))
+        with _patched(recorder):
+            result = await check_jira_status("PROJ-12345")
+
+        assert result.error is None, (
+            f"check_jira_status blocked legitimate key 'PROJ-12345': {result.error!r}"
+        )
+        assert recorder.argvs, (
+            "guard suppressed a legitimate jira key — no subprocess ran"
+        )
+
+    @pytest.mark.asyncio
+    async def test_pr_status_neutralizes_single_dash_injection(self) -> None:
+        """Single-dash '-R owner/repo' is a real short-flag injection vector for gh."""
+        recorder = _Recorder(lambda tokens: _FakeProc(returncode=0, stdout=b'{"state":"MERGED"}'))
+        with _patched(recorder):
+            result = await check_pr_status("-R")
+
+        assert isinstance(result, PRStatus)
+        assert _token_is_neutralized(recorder, "-R"), (
+            "check_pr_status allowed single-dash '-R' to reach gh as a positional — "
+            f"argument injection. argv: {recorder.argvs}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_check_lint_marks_skipped_with_clean_true_invariant(
+        self, tmp_path: Path
+    ) -> None:
+        """skipped=True must coexist with clean=True — both must hold simultaneously (AC1+AC4c)."""
+        recorder = _Recorder(lambda tokens: _FakeProc(returncode=0))
+        with _patched(recorder):
+            result = await check_lint(tmp_path)
+
+        assert result.skipped is True
+        assert result.clean is True, (
+            "check_lint returned skipped=True but clean is not True — violates "
+            "the skipped→clean invariant. 'not checked' must report as clean "
+            "to avoid false-blocking finish (SOUL #10)."
+        )
+
+
+# =============================================================================
+# 164-2 AC5 — Unmerged-branch-no-PR warning surfaces at preflight entry
+# =============================================================================
+
+
+class TestPreflightEntryUnmergedBranchWarning:
+    """When branch is unmerged and no PR exists, a warning must appear at preflight entry."""
+
+    @pytest.mark.asyncio
+    async def test_run_finish_preflight_warns_on_unmerged_branch_no_pr(
+        self, tmp_path: Path
+    ) -> None:
+        """Unmerged-branch+no-PR must surface as a warning at preflight, not only as a critical issue."""
+        # Minimal session file so acceptance_criteria check does not error out.
+        session_dir = tmp_path / ".session"
+        session_dir.mkdir()
+        (session_dir / "164-2-session.md").write_text(
+            "# Story 164-2\n- [x] AC1 completed\n",
+            encoding="utf-8",
+        )
+
+        def _dispatch(tokens: list[str]) -> _FakeProc:
+            # Both gh pr view and gh pr list (merged fallback) report no PR.
+            if "gh" in tokens:
+                return _FakeProc(
+                    returncode=1,
+                    stdout=b"",
+                    stderr=b"no pull requests found for branch 'feat/164-2'",
+                )
+            return _FakeProc(returncode=0, stdout=b"")
+
+        recorder = _Recorder(_dispatch)
+        with _patched(recorder):
+            result = await run_finish_preflight(
+                story_id="164-2",
+                branch="feat/164-2",
+                jira_key=None,
+                project_root=tmp_path,
+            )
+
+        # Currently aggregate_results creates a *critical issue* for "no pull requests
+        # found", but emits NO warning. The preflight entry must ALSO emit a warning so
+        # the user sees the unmerged-branch signal before the ceremony proceeds.
+        unmerged_warning = any(
+            "unmerged" in w.lower() or "no pr" in w.lower() or "no pull request" in w.lower()
+            for w in result.warnings
+        )
+        assert unmerged_warning, (
+            "run_finish_preflight returned no warning for the unmerged-branch+no-PR "
+            f"condition (warnings={result.warnings!r}). Add an early pre-check in "
+            "run_finish_preflight that emits a warning before the parallel ceremony "
+            "begins — the abort signal must surface at preflight entry, not only "
+            "buried as a blocking issue in the aggregated result."
         )
