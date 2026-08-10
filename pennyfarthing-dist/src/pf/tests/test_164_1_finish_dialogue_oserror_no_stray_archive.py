@@ -50,9 +50,14 @@ session copy raises (AC1 regression guard).
 
 import json
 import shutil as _real_shutil
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 from unittest.mock import MagicMock, patch
+
+import pytest
+
+from pf.sprint.story_finish import finish_story
 
 # Capture the real shutil.copy2 function object at module-load time, before any
 # test-level patches can replace it on the shutil module. `patch(
@@ -61,10 +66,6 @@ from unittest.mock import MagicMock, patch
 # context (including `_real_shutil.copy2`) will find the mock.  Binding the
 # function object here ensures _copy_real always calls the genuine implementation.
 _copy2_real: Callable[[Any, Any], None] = _real_shutil.copy2
-
-import pytest
-
-from pf.sprint.story_finish import finish_story
 
 # =============================================================================
 # Fixtures
