@@ -13,6 +13,7 @@ Steps:
   7. Remove session file
 """
 
+import enum
 import json
 import re
 import shutil
@@ -20,7 +21,7 @@ import subprocess
 import sys
 from datetime import date
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple
 
 if TYPE_CHECKING:
     from pf.git.repos import RepoConfig
@@ -381,6 +382,70 @@ def _cwd_kwargs(cwd: Path | None) -> dict[str, str]:
 _PR_VIEW_FIELDS = "state,mergeable,mergeStateStatus,baseRefName,mergedAt"
 
 
+class PRVerdict(enum.StrEnum):
+    """Precedence-ordered PR disposition from :func:`_classify_pr`.
+
+    Ordering encodes exactly once: MERGED > UNREADABLE > BLOCKED > MERGEABLE.
+    """
+
+    MERGED = "merged"
+    UNREADABLE = "unreadable"
+    BLOCKED = "blocked"
+    MERGEABLE = "mergeable"
+
+
+class _PRClassification(NamedTuple):
+    """Result of :func:`_classify_pr`."""
+
+    verdict: PRVerdict
+    message: str | None  # non-None for BLOCKED; may be None for others
+    detail: str | None   # e.g. base branch for BLOCKED
+
+
+def _classify_pr(view: dict[str, Any] | None) -> _PRClassification:
+    """Classify a PR snapshot into a single precedence-ordered verdict.
+
+    Precedence: MERGED > UNREADABLE > BLOCKED > MERGEABLE — encoded here
+    ONCE so callers do not depend on the order they call the old helpers.
+
+    Rules (in precedence order):
+    1. ``view is None`` → UNREADABLE (gh error or timeout)
+    2. ``view["state"]`` is not a ``str`` (or absent) → UNREADABLE
+       (field-type validation: rejects malformed views before any merge path)
+    3. ``state == "MERGED"`` AND ``bool(mergedAt)`` → MERGED
+       (162-1: GitHub stops recomputing mergeability after merge, so stale
+       CONFLICTING/DIRTY fields are irrelevant for a corroborated merge)
+    4. ``mergeable == "CONFLICTING"`` OR ``mergeStateStatus == "DIRTY"``
+       (case-folded) → BLOCKED with actionable message
+    5. All else → MERGEABLE
+    """
+    # Rule 1: None view — gh error or timeout arm
+    if view is None:
+        return _PRClassification(verdict=PRVerdict.UNREADABLE, message=None, detail=None)
+
+    # Rule 2: state field-type validation
+    state = view.get("state")
+    if not isinstance(state, str):
+        return _PRClassification(verdict=PRVerdict.UNREADABLE, message=None, detail=None)
+
+    # Rule 3: corroborated merge — MERGED + non-null mergedAt (162-18)
+    if state == "MERGED" and bool(view.get("mergedAt")):
+        return _PRClassification(verdict=PRVerdict.MERGED, message=None, detail=None)
+
+    # Rule 4: definitively non-mergeable
+    mergeable = str(view.get("mergeable", "")).upper()
+    state_status = str(view.get("mergeStateStatus", "")).upper()
+    if mergeable == "CONFLICTING" or state_status == "DIRTY":
+        base = str(view.get("baseRefName") or "the base branch")
+        message = (
+            f"CONFLICTING — rebase on {base} and resolve the conflicts before finishing"
+        )
+        return _PRClassification(verdict=PRVerdict.BLOCKED, message=message, detail=base)
+
+    # Rule 5: everything else is safe to attempt
+    return _PRClassification(verdict=PRVerdict.MERGEABLE, message=None, detail=None)
+
+
 def _pr_view_probe(
     pr_number: str,
     cwd: Path | None = None,
@@ -447,32 +512,15 @@ def _pr_view(pr_number: str, cwd: Path | None = None) -> dict[str, Any] | None:
 
 
 def _view_is_merged(view: dict[str, Any] | None) -> bool:
-    """Read "did this land?" off an already-fetched snapshot.
+    """Return ``True`` iff the snapshot is a corroborated merge.
 
-    Callers decide *which* snapshot, and that choice is load-bearing: the
-    post-merge verification must pass a FRESH one (see :func:`_pr_is_merged`),
-    while the pre-merge short-circuit reuses the gate's.
+    Thin wrapper over :func:`_classify_pr` — kept for callers that need the
+    boolean directly (``_pr_is_merged``, ``_pr_merge_verification``) and for
+    regression suites that import it directly.
 
-    The comparison is deliberately strict — no case folding, no stripping, no
-    aliases (162-3). ``gh pr view --json state`` emits an uppercase enum, so
-    there is no lowercase producer to accommodate, and this boolean authorises
-    the story's transition to ``done``. Any spelling other than ``MERGED``
-    (including a missing key or an unreadable probe) reads as "not merged",
-    which is the safe answer at all four call sites.
-
-    A ``MERGED`` state is only trusted when corroborated by a non-null
-    ``mergedAt`` timestamp (162-18). A lone ``state`` snapshot is a single
-    field in a mutable API response; ``mergedAt`` is set by GitHub at merge
-    time and never cleared, so its presence is a second, independent signal
-    that the merge actually landed. This matters because the predicate
-    authorises three irreversible steps: the conflict-gate exemption, the
-    already-merged short-circuit, and the post-merge re-verify. Real
-    ``gh pr view`` output never emits ``state: MERGED`` without a non-null
-    ``mergedAt``, so legitimate merges are unaffected.
+    The full semantics live in :func:`_classify_pr` (rules 1–3).
     """
-    if view is None:
-        return False
-    return view.get("state") == "MERGED" and bool(view.get("mergedAt"))
+    return _classify_pr(view).verdict == PRVerdict.MERGED
 
 
 def _pr_is_merged(pr_number: str, cwd: Path | None = None) -> bool:
@@ -507,41 +555,21 @@ def _pr_merge_verification(pr_number: str, cwd: Path | None = None) -> tuple[boo
 
 
 def _pr_block_reason(pr_number: str, view: dict[str, Any] | None) -> str | None:
-    """Return an actionable abort message when the PR is definitively NOT cleanly
-    mergeable (``mergeable == CONFLICTING`` / ``mergeStateStatus == DIRTY``), else
-    ``None``.
+    """Return an actionable abort message for a definitively non-mergeable PR,
+    else ``None``.
 
-    ``None`` ("do not block") also covers MERGEABLE/CLEAN PRs *and* indeterminate
-    mergeability — ``UNKNOWN`` (GitHub still computing) or an unreadable probe.
-    Those fall through to the merge attempt, which is guarded by the post-merge
-    :func:`_pr_is_merged` verification (gh #71/#60). Only a definitively
-    conflicting PR is hard-blocked here, before any irreversible finish step
-    (gh #113).
-
-    Takes the snapshot rather than fetching one so the conflict gate and the
-    already-merged short-circuit share a single ``gh pr view`` (155-32).
-
-    "Did it already land?" is asked FIRST (162-1). GitHub stops recomputing
-    mergeability once a PR merges, so a ``state == MERGED`` snapshot can still
-    carry stale ``CONFLICTING``/``DIRTY`` fields. Blocking on those would abort
-    finish with rebase advice for a branch that is already in the base — so a
-    MERGED PR is never blocked, and the caller's already-merged short-circuit
-    handles it. Only ``MERGED`` is exempt: a CLOSED-without-merging PR did NOT
-    land, so it must still hard-block.
+    Thin wrapper over :func:`_classify_pr` — kept because call sites need the
+    pr-number-qualified message string, and regression suites import it directly.
+    The blocking logic lives in :func:`_classify_pr` (rule 4).
     """
-    if view is None:
+    cl = _classify_pr(view)
+    if cl.verdict != PRVerdict.BLOCKED:
         return None
-    if _view_is_merged(view):
-        return None
-    mergeable = str(view.get("mergeable", "")).upper()
-    state_status = str(view.get("mergeStateStatus", "")).upper()
-    if mergeable == "CONFLICTING" or state_status == "DIRTY":
-        base = view.get("baseRefName") or "the base branch"
-        return (
-            f"PR #{pr_number} is CONFLICTING — rebase on {base} and resolve the "
-            "conflicts before finishing"
-        )
-    return None
+    base = cl.detail or "the base branch"
+    return (
+        f"PR #{pr_number} is CONFLICTING — rebase on {base} and resolve the "
+        "conflicts before finishing"
+    )
 
 
 def _field_is_sentinel(raw: str | None) -> bool:
@@ -1189,13 +1217,9 @@ def finish_story(
                 {"step": 2, "action": f"PR #{pr_number} — waiting for human review and merge"}
             )
         elif pr_number:
-            # 162-20: Mirror the real-run gate path (155-32 / 162-9 / gh #113).
-            # Replace permissive _pr_view with _pr_view_probe to surface a hung
-            # probe separately, then evaluate _pr_block_reason before the merge
-            # promise — the same checks the real run applies before any
-            # irreversible step. The _view_is_merged already-merged short-circuit
-            # (155-31) is UNCHANGED; it runs after the timeout guard and before
-            # the conflict check, matching the real-run ordering.
+            # 162-19/162-20: Mirror the real-run gate path (155-32 / 162-9 / gh #113).
+            # _classify_pr encodes the precedence order ONCE; the verdict routes
+            # the dry-run step without positional dependence on call order.
             view, gate_timeout = _pr_view_probe(pr_number, cwd=primary_repo_path)
             if gate_timeout:
                 gate_error = (
@@ -1205,17 +1229,17 @@ def finish_story(
                     "landed. Re-run finish."
                 )
                 steps.append({"step": 2, "action": gate_error})
-            elif _view_is_merged(view):
-                steps.append(
-                    {
-                        "step": 2,
-                        "action": f"PR #{pr_number} already merged — will skip merge",
-                    }
-                )
             else:
-                block_reason = _pr_block_reason(pr_number, view)
-                if block_reason:
-                    steps.append({"step": 2, "action": block_reason})
+                cl = _classify_pr(view)
+                if cl.verdict == PRVerdict.MERGED:
+                    steps.append(
+                        {
+                            "step": 2,
+                            "action": f"PR #{pr_number} already merged — will skip merge",
+                        }
+                    )
+                elif cl.verdict == PRVerdict.BLOCKED:
+                    steps.append({"step": 2, "action": _pr_block_reason(pr_number, view)})
                 else:
                     steps.append(
                         {"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"}
@@ -1292,7 +1316,8 @@ def finish_story(
                     "steps": steps,
                 }
             pr_views[repo_path] = view
-            block_reason = _pr_block_reason(repo_pr, view)
+            cl = _classify_pr(view)
+            block_reason = _pr_block_reason(repo_pr, view) if cl.verdict == PRVerdict.BLOCKED else None
             if block_reason:
                 steps.append(
                     {
@@ -1347,7 +1372,7 @@ def finish_story(
                 )
             continue
 
-        if repo_pr and _view_is_merged(pr_views.get(repo_path)):
+        if repo_pr and _classify_pr(pr_views.get(repo_path)).verdict == PRVerdict.MERGED:
             # Already-merged short-circuit (155-29): a prior finish run landed
             # the merge and then aborted on a later step (archive OSError,
             # status-read guard, transition failure) — all of which keep the
