@@ -138,7 +138,7 @@ completed_stories:
 """
 
     archive_path.parent.mkdir(parents=True, exist_ok=True)
-    archive_path.write_text(template)
+    archive_path.write_text(template, encoding='utf-8')
 
     return archive_path
 
@@ -262,7 +262,7 @@ def _load_archive_file(archive_path: Path) -> dict[str, Any]:
         Archive data dict with completed_epics and completed_stories
     """
     yml = _make_yaml()
-    with open(archive_path) as f:
+    with open(archive_path, encoding='utf-8') as f:
         data = yml.load(f)
 
     if data is None:
@@ -342,7 +342,7 @@ def _write_archive_file(archive_path: Path, data: dict[str, Any]) -> None:
     cleaned = [line.rstrip() for line in lines]
     result = "\n".join(cleaned).rstrip("\n") + "\n"
 
-    archive_path.write_text(result)
+    archive_path.write_text(result, encoding='utf-8')
 
 
 def backfill_epic_refs(
@@ -639,7 +639,7 @@ def archive_epic(
     # 4. Remove epic from current-sprint.yaml index
     # Re-read the raw index (not merged) to update refs
     yml = _make_yaml()
-    with open(sprint_path) as f:
+    with open(sprint_path, encoding='utf-8') as f:
         index_data = yml.load(f)
 
     epics_list = index_data.get("epics", [])
