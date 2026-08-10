@@ -54,7 +54,13 @@ def get_archive_path(project_root: Path | None = None) -> Path:
     # `sprint-unknown-completed.yaml` masks misconfigured sprints (epic 151).
     name = sprint_info.get("name") or sprint_info.get("jira_sprint_name")
     if name:
-        sprint_id = str(name).split()[-1]
+        tokens = str(name).split()
+        if not tokens:
+            raise ValueError(
+                f"Invalid sprint id {name!r}: must not be empty. "
+                "Check sprint/current-sprint.yaml."
+            )
+        sprint_id = tokens[-1]
     else:
         number = sprint_info.get("number")
         if number is None or number == "":
