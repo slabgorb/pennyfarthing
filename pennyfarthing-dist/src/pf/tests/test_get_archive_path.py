@@ -51,3 +51,28 @@ def test_raises_when_name_and_number_missing(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="neither 'name' nor 'number'"):
         get_archive_path(project_root=root)
+
+
+def test_raises_valueerror_not_indexerror_for_whitespace_only_name(tmp_path: Path) -> None:
+    """Whitespace-only name yields no tokens — must raise ValueError with guidance,
+    not IndexError (164-4 regression guard)."""
+    root = _write_sprint(tmp_path, {"name": "   ", "number": 2699, "status": "active"})
+
+    with pytest.raises(ValueError, match="Invalid sprint id") as exc_info:
+        get_archive_path(project_root=root)
+
+    msg = str(exc_info.value)
+    assert "must not be empty" in msg
+    assert "Check sprint/current-sprint.yaml" in msg
+
+
+def test_legit_sprint_name_still_resolves(tmp_path: Path) -> None:
+    """Regression guard: a valid multi-word sprint name still resolves to the last token."""
+    root = _write_sprint(
+        tmp_path,
+        {"name": "TO Sprint 2699", "number": 2699, "status": "active"},
+    )
+
+    path = get_archive_path(project_root=root)
+
+    assert path == root / "sprint" / "archive" / "sprint-2699-completed.yaml"
