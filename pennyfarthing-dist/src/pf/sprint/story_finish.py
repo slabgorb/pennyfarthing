@@ -1257,7 +1257,52 @@ def finish_story(
                         {"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"}
                     )
         else:
-            steps.append({"step": 2, "action": "No PR to merge"})
+            # No PR resolves — mirror the real-run no-PR gate (155-34 parity, 164-9)
+            if branch:
+                merge_state = _branch_merge_state(
+                    primary_repo_path,
+                    branch,
+                    base=None,
+                    remote=None,
+                )
+                if merge_state["state"] == "merged":
+                    steps.append(
+                        {"step": 2, "action": "merge_pr", "skipped": "branch-verified-merged"}
+                    )
+                elif merge_state["state"] == "timeout":
+                    abort_msg = (
+                        f"No PR resolves, and verifying branch {branch!r} timed out: "
+                        f"{merge_state['reason']} — refusing to mark the story done"
+                    )
+                    steps.append(
+                        {"step": 2, "action": "merge_pr", "success": False, "error": abort_msg}
+                    )
+                elif merge_state["state"] == "unmerged":
+                    abort_msg = (
+                        f"No PR resolves, and branch {branch!r} has "
+                        f"{merge_state['count']} unmerged commit(s) — refusing to mark done"
+                    )
+                    steps.append(
+                        {"step": 2, "action": "merge_pr", "success": False, "error": abort_msg}
+                    )
+                else:
+                    abort_msg = (
+                        f"No PR resolves, and branch {branch!r} cannot be verified "
+                        f"({merge_state['reason']}) — refusing to mark done"
+                    )
+                    steps.append(
+                        {"step": 2, "action": "merge_pr", "success": False, "error": abort_msg}
+                    )
+            elif _field_is_sentinel(fields.get("branch")):
+                steps.append({"step": 2, "action": "merge_pr", "skipped": True})
+            else:
+                _error = (
+                    "No PR and no branch resolve from the session — the Branch/PR "
+                    "fields are empty, placeholders, or absent."
+                )
+                steps.append(
+                    {"step": 2, "action": "merge_pr", "success": False, "error": _error}
+                )
         if jira_key:
             steps.append({"step": 3, "action": f"Transition {jira_key} to Done"})
         else:
@@ -1267,7 +1312,10 @@ def finish_story(
         )
         steps.append({"step": "4c", "action": "Generate demo artifacts"})
         steps.append({"step": 5, "action": "Archive completed epics"})
-        steps.append({"step": 6, "action": f"Delete local branch: {branch}"})
+        if branch:
+            steps.append({"step": 6, "action": f"Delete local branch: {branch}"})
+        else:
+            steps.append({"step": 6, "action": "Skip git cleanup (no branch)"})
         steps.append({"step": 7, "action": "Remove session file"})
         return {"success": True, "dry_run": True, "jira_key": jira_key, "steps": steps}
 
