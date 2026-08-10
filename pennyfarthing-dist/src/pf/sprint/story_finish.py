@@ -1189,15 +1189,23 @@ def finish_story(
                 {"step": 2, "action": f"PR #{pr_number} — waiting for human review and merge"}
             )
         elif pr_number:
-            # Preview/reality parity (155-31): the real Step 2 short-circuits
-            # an already-merged PR (155-29), so the plan must not promise a
-            # merge the run will skip. The ONE consolidated probe (155-32)
-            # answers it; an unreadable state (``_pr_view`` → None) reads as
-            # NOT merged and previews the merge, mirroring the real run's
-            # permissive fall-through. Human mode and the no-PR arm stay
-            # probe-free for the same reason the real pre-merge probe lives
-            # inside the auto branch: they need no answer.
-            if _view_is_merged(_pr_view(pr_number, cwd=primary_repo_path)):
+            # 162-20: Mirror the real-run gate path (155-32 / 162-9 / gh #113).
+            # Replace permissive _pr_view with _pr_view_probe to surface a hung
+            # probe separately, then evaluate _pr_block_reason before the merge
+            # promise — the same checks the real run applies before any
+            # irreversible step. The _view_is_merged already-merged short-circuit
+            # (155-31) is UNCHANGED; it runs after the timeout guard and before
+            # the conflict check, matching the real-run ordering.
+            view, gate_timeout = _pr_view_probe(pr_number, cwd=primary_repo_path)
+            if gate_timeout:
+                gate_error = (
+                    f"Timed out reading the state of PR #{pr_number} in "
+                    f"{primary_repo_path}: {gate_timeout} — refusing to attempt "
+                    "the merge without knowing whether the PR conflicts or already "
+                    "landed. Re-run finish."
+                )
+                steps.append({"step": 2, "action": gate_error})
+            elif _view_is_merged(view):
                 steps.append(
                     {
                         "step": 2,
@@ -1205,9 +1213,13 @@ def finish_story(
                     }
                 )
             else:
-                steps.append(
-                    {"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"}
-                )
+                block_reason = _pr_block_reason(pr_number, view)
+                if block_reason:
+                    steps.append({"step": 2, "action": block_reason})
+                else:
+                    steps.append(
+                        {"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"}
+                    )
         else:
             steps.append({"step": 2, "action": "No PR to merge"})
         if jira_key:
