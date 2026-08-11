@@ -376,8 +376,15 @@ class TestStoryLabel:
         label = _build_story_label(story, "")
         assert "Scaffold" in label.plain
 
-    def test_null_jira_key_shows_dash(self) -> None:
+    def test_null_jira_key_falls_back_to_id(self) -> None:
+        """Story 164-20: no Jira key \u2192 show the story id, not an em-dash."""
         story = {"id": "103-1", "title": "Test", "points": 1, "status": "backlog", "jiraKey": None}
+        label = _build_story_label(story, "")
+        assert "\u2014" not in label.plain
+        assert label.plain.count("103-1") == 2
+
+    def test_no_id_and_no_jira_key_shows_dash(self) -> None:
+        story = {"title": "Test", "points": 1, "status": "backlog", "jiraKey": None}
         label = _build_story_label(story, "")
         assert "\u2014" in label.plain
 

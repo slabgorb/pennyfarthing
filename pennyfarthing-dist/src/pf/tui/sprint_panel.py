@@ -18,6 +18,7 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Static, Tree
 
+from pf.sprint.loader import _has_real_jira_key
 from pf.tui.base_panel import PANEL_ICONS, render_progress_bar
 
 
@@ -164,7 +165,14 @@ def _build_story_label(story: dict[str, Any], current_story_id: str, max_width: 
     story_id = story.get("id", "")
     title = story.get("title", "")
     pts = story.get("points", "")
-    jira = story.get("jiraKey") or "\u2014"
+    # Stories arrive straight from sprint YAML (``jira:``); normalized payloads
+    # use ``jiraKey``. Sentinel values ("none", "null", "x") are truthy strings
+    # that mean "no Jira key" (story 160-3), so both fields go through
+    # _has_real_jira_key. Fall back to the story id; em-dash only if nothing exists.
+    jira_key_field = story.get("jiraKey")
+    real_jira_key = jira_key_field if _has_real_jira_key({"jira": jira_key_field}) else None
+    real_jira = story.get("jira") if _has_real_jira_key(story) else None
+    jira = real_jira_key or real_jira or story_id or "\u2014"
     status = _normalize_status(story.get("status", ""))
     badge = _status_badge(story.get("status", ""))
 
