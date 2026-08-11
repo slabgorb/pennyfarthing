@@ -4,6 +4,7 @@ Sprint story archiving.
 Provides functions for archiving completed stories.
 """
 
+from collections.abc import Mapping
 from typing import Any
 
 from pf.common.config import get_project_root
@@ -31,8 +32,6 @@ def archive_story(
     """
     from datetime import date
 
-    import yaml
-
     # Find the story
     story = get_story_by_id(story_id)
     if not story:
@@ -56,8 +55,15 @@ def archive_story(
         return {"success": False, "error": f"Sprint file not found: {sprint_file}"}
 
     # Load sprint data (used below for epic lookup and --apply removal).
-    with open(sprint_file, encoding="utf-8") as f:
-        sprint_data = yaml.safe_load(f.read())
+    # Read through the shard-merging reader (story 162-17): a raw yaml.safe_load
+    # leaves a sharded index's epics as ID strings, which made the --apply
+    # removal below a silent no-op.
+    from pf.sprint.yaml_io import read_sprint
+
+    try:
+        sprint_data = read_sprint(sprint_file)
+    except (OSError, ValueError) as e:
+        return {"success": False, "error": f"Failed to read {sprint_file}: {e}"}
 
     # Resolve the archive filename via the shared resolver (story 151-1):
     # prefer name/jira_sprint_name, fall back to sprint.number, and fail loud
@@ -106,16 +112,34 @@ def archive_story(
 
     msg = f"Archived {story_id} to {archive_file.name}"
 
-    # Remove from current sprint if --apply
+    # Remove from current sprint if --apply.
+    # Story 162-17: cover every representation the loader reads — inline epic
+    # stories, sharded epic stories (merged in above), and the top-level
+    # standalone_stories/stories lists — and only claim removal if one happened.
     if apply:
+        removed = False
+
+        def _without_story(stories: Any) -> list[Any]:
+            nonlocal removed
+            original = list(stories or [])
+            kept = [s for s in original if not (isinstance(s, Mapping) and s.get("id") == story_id)]
+            if len(kept) != len(original):
+                removed = True
+            return kept
+
         for epic in sprint_data.get("epics", []):
-            if isinstance(epic, dict):
-                epic["stories"] = [s for s in epic.get("stories", []) if s.get("id") != story_id]
+            if isinstance(epic, Mapping):
+                epic["stories"] = _without_story(epic.get("stories", []))
+
+        for key in ("standalone_stories", "stories"):
+            if key in sprint_data:
+                sprint_data[key] = _without_story(sprint_data.get(key, []))
 
         from pf.sprint.yaml_io import write_sprint
 
         write_sprint(sprint_file, sprint_data)
-        msg += f" and removed from {sprint_file.name}"
+        if removed:
+            msg += f" and removed from {sprint_file.name}"
 
     return {
         "success": True,
