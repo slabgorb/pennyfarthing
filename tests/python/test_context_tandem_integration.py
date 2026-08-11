@@ -29,7 +29,8 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 @pytest.fixture
 def skill_path():
     """Path to the pf-context skill definition."""
-    return PROJECT_ROOT / "pennyfarthing-dist" / "skills" / "pf-context" / "skill.md"
+    # Skill body file was renamed skill.md -> context.md (skill dir name carries the id).
+    return PROJECT_ROOT / "pennyfarthing-dist" / "skills" / "pf-context" / "context.md"
 
 
 @pytest.fixture

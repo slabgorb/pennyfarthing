@@ -17,14 +17,12 @@ Run with: python -m pytest tests/python/test_prefix_skills_commands.py -v
 import re
 from pathlib import Path
 
-import pytest
 import yaml
 
 # Project root is pennyfarthing/ (two levels up from tests/python/)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SKILLS_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "skills"
 COMMANDS_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "commands"
-MIGRATIONS_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "migrations"
 REGISTRY_PATH = SKILLS_DIR / "skill-registry.yaml"
 
 # Files in the skills directory that are NOT skill directories
@@ -337,149 +335,17 @@ class TestAC3SkillRegistryUpdated:
 
 
 # =============================================================================
-# AC4/AC5: Migration file exists with correct structure
+# AC4-AC8 REMOVED (162-30): the JavaScript/TypeScript layer was deleted in
+# 038d3c6f0 (React GUI + all JS/TS removed; repo is Python-only). The deleted
+# classes pinned genuinely-removed artifacts:
+#   - TestAC4MigrationExists / TestAC8BackwardCompatibility ->
+#     pennyfarthing-dist/migrations/007-prefix-skills-commands.js (the whole
+#     migrations/ directory no longer exists)
+#   - TestAC6SymlinksHandlePrefixedNames ->
+#     packages/core/src/cli/utils/symlinks.ts (npm workspace removed)
+# The pf- prefix invariant they guarded is still covered by TestAC1/AC2/AC3
+# and TestIntegrationRealCodebase below, against the live Python surface.
 # =============================================================================
-
-
-class TestAC4MigrationExists:
-    """Migration 007 should exist for creating backward-compat symlinks."""
-
-    MIGRATION_PATH = MIGRATIONS_DIR / "007-prefix-skills-commands.js"
-
-    def test_migration_file_exists(self) -> None:
-        """Migration file should exist at expected path."""
-        assert self.MIGRATION_PATH.is_file(), (
-            f"Migration file not found: {self.MIGRATION_PATH}"
-        )
-
-    def test_migration_has_id_export(self) -> None:
-        """Migration should export an 'id' constant."""
-        content = self.MIGRATION_PATH.read_text()
-        assert re.search(r"export\s+const\s+id\s*=", content), (
-            "Migration is missing 'export const id' declaration"
-        )
-
-    def test_migration_id_value(self) -> None:
-        """Migration id should be '007-prefix-skills-commands'."""
-        content = self.MIGRATION_PATH.read_text()
-        assert "'007-prefix-skills-commands'" in content or '"007-prefix-skills-commands"' in content, (
-            "Migration id should be '007-prefix-skills-commands'"
-        )
-
-    def test_migration_has_description_export(self) -> None:
-        """Migration should export a 'description' constant."""
-        content = self.MIGRATION_PATH.read_text()
-        assert re.search(r"export\s+const\s+description\s*=", content), (
-            "Migration is missing 'export const description' declaration"
-        )
-
-    def test_migration_has_up_function(self) -> None:
-        """Migration should export an async 'up' function."""
-        content = self.MIGRATION_PATH.read_text()
-        assert re.search(r"export\s+async\s+function\s+up\s*\(", content), (
-            "Migration is missing 'export async function up()' declaration"
-        )
-
-    def test_migration_has_check_function(self) -> None:
-        """Migration should export an async 'check' function."""
-        content = self.MIGRATION_PATH.read_text()
-        assert re.search(r"export\s+async\s+function\s+check\s*\(", content), (
-            "Migration is missing 'export async function check()' declaration"
-        )
-
-    def test_migration_references_skills(self) -> None:
-        """Migration should reference skill directory operations."""
-        content = self.MIGRATION_PATH.read_text()
-        assert "skills" in content.lower(), (
-            "Migration should reference skills for backward-compat symlinks"
-        )
-
-    def test_migration_references_commands(self) -> None:
-        """Migration should reference command file operations."""
-        content = self.MIGRATION_PATH.read_text()
-        assert "commands" in content.lower(), (
-            "Migration should reference commands for backward-compat symlinks"
-        )
-
-    def test_migration_creates_symlinks(self) -> None:
-        """Migration should use symlinkSync for backward compatibility."""
-        content = self.MIGRATION_PATH.read_text()
-        assert "symlink" in content.lower(), (
-            "Migration should create symlinks for backward compatibility"
-        )
-
-
-# =============================================================================
-# AC6/AC7: symlinks.ts handles prefixed names
-# =============================================================================
-
-
-class TestAC6SymlinksHandlePrefixedNames:
-    """symlinks.ts should be updated to handle pf- prefixed names."""
-
-    SYMLINKS_PATH = PROJECT_ROOT / "packages" / "core" / "src" / "cli" / "utils" / "symlinks.ts"
-
-    def test_symlinks_file_exists(self) -> None:
-        """symlinks.ts should exist."""
-        assert self.SYMLINKS_PATH.is_file(), (
-            f"symlinks.ts not found at {self.SYMLINKS_PATH}"
-        )
-
-    def test_create_commands_directory_filters_pf_prefix(self) -> None:
-        """createCommandsDirectory should filter for pf-*.md files."""
-        content = self.SYMLINKS_PATH.read_text()
-        # After the change, the function should filter for pf- prefix
-        # The current code filters for .md only: f.endsWith('.md')
-        # The new code should also check for pf- prefix
-        assert re.search(r"""startsWith\s*\(\s*['"]pf-['"]""", content), (
-            "createCommandsDirectory should filter built-in commands by pf- prefix"
-        )
-
-    def test_create_skills_directory_filters_pf_prefix(self) -> None:
-        """createSkillsDirectory should filter for pf-* directories."""
-        content = self.SYMLINKS_PATH.read_text()
-        # Similar to commands, skills should be filtered by pf- prefix
-        assert re.search(r"""startsWith\s*\(\s*['"]pf-['"]""", content), (
-            "createSkillsDirectory should filter built-in skills by pf- prefix"
-        )
-
-
-# =============================================================================
-# AC8: Backward compatibility — old names still work
-# =============================================================================
-
-
-class TestAC8BackwardCompatibility:
-    """Old unprefixed names should resolve via compatibility symlinks or migration."""
-
-    def test_migration_handles_old_skill_names(self) -> None:
-        """Migration should map old skill names to new pf-prefixed names."""
-        migration_path = MIGRATIONS_DIR / "007-prefix-skills-commands.js"
-        if not migration_path.is_file():
-            pytest.skip("Migration file not yet created")
-
-        content = migration_path.read_text()
-        # Migration should have a mapping or loop over old names
-        # Check for at least a few known old names
-        for old_name in ["testing", "sprint", "workflow"]:
-            assert old_name in content, (
-                f"Migration should reference old skill name '{old_name}' "
-                f"for backward-compat symlink creation"
-            )
-
-    def test_migration_handles_old_command_names(self) -> None:
-        """Migration should map old command names to new pf-prefixed names."""
-        migration_path = MIGRATIONS_DIR / "007-prefix-skills-commands.js"
-        if not migration_path.is_file():
-            pytest.skip("Migration file not yet created")
-
-        content = migration_path.read_text()
-        # Check for at least a few known old command references
-        for old_name in ["sm.md", "dev.md", "tea.md"]:
-            assert old_name in content, (
-                f"Migration should reference old command name '{old_name}' "
-                f"for backward-compat symlink creation"
-            )
 
 
 # =============================================================================
