@@ -16,7 +16,7 @@ default:
 
 # Run all Python tests
 test:
-    python3 -m pytest pennyfarthing-dist/src/pf/tests/ tests/python/
+    python3 -m pytest pennyfarthing-dist/src/pf/tests/
 
 # Generate portraits for a theme (uses SDXL, requires GPU)
 # Usage: just portraits arthurian-mythos

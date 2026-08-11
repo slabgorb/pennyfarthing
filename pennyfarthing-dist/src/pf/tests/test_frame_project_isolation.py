@@ -7,7 +7,7 @@ Verifies:
   AC4: TUI never connects to another project's Frame server
   AC5: Two projects running simultaneously show correct project data
 
-Run with: python -m pytest tests/python/test_frame_project_isolation.py -v
+Run with: python -m pytest pennyfarthing-dist/src/pf/tests/test_frame_project_isolation.py -v
 """
 
 from unittest.mock import patch
