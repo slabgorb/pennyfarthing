@@ -94,7 +94,9 @@ def ensure_server() -> dict:
             session_name,
         )
     else:
-        source = _run_tmux("source-file", str(config), "-t", session_name)
+        # tmux grammar: source-file [-Fnqv] [-t target-pane] path ...
+        # Options must precede the path; trailing args parse as more paths.
+        source = _run_tmux("source-file", "-t", session_name, str(config))
         if not source["success"]:
             logger.warning(
                 "Failed to source %s into %s: %s",

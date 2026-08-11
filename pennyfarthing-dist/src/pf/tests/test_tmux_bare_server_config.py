@@ -105,7 +105,12 @@ class TestEnsureServerSourcesConfig:
     def test_source_file_targets_the_bare_session(
         self, mock_run: MagicMock, _running: MagicMock, vert_config: Path
     ) -> None:
-        """source-file must target the session it just created."""
+        """source-file must target the session it just created.
+
+        tmux grammar is `source-file [-Fnqv] [-t target-pane] path ...`,
+        so `-t <session>` MUST precede the config path — trailing args
+        after the path are parsed as additional paths and tmux exits 1.
+        """
         result = ensure_server()
         session_name = result["data"]
         assert session_name.startswith(BARE_SESSION_PREFIX)
@@ -117,6 +122,17 @@ class TestEnsureServerSourcesConfig:
         args = calls[idx[0]]
         assert "-t" in args, f"source-file must use -t <session>, got {args}"
         assert args[args.index("-t") + 1] == session_name
+
+        path_positions = [
+            i for i, a in enumerate(args) if a.endswith("tmux.conf.vert")
+        ]
+        assert path_positions, f"source-file must include the config path, got {args}"
+        assert args.index("-t") < path_positions[0], (
+            f"-t <session> must precede the config path per tmux grammar, got {args}"
+        )
+        assert args.index("-t") + 1 < path_positions[0], (
+            f"session target must precede the config path, got {args}"
+        )
 
     @patch("pf.tmux.panes.is_tmux_running", return_value=True)
     @patch("pf.tmux.panes._run_tmux", return_value=dict(OK))
