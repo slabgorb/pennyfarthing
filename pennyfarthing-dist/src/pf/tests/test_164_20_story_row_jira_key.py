@@ -10,7 +10,7 @@ Acceptance Criteria:
 - [AC2] With no ``jira``/``jiraKey``, the column falls back to the story ``id``
         (no regression for stories/epics where id == the key)
 - [AC3] Regression: a short-form-id story carrying a separate Jira key
-        (id ``40-1`` / ``83-1`` with ``MSSCI-*``/``PROJ-*``) renders the key, not em-dash
+        (id ``40-1`` / ``83-1`` with ``PROJ-*``) renders the key, not em-dash
 """
 
 from __future__ import annotations
@@ -92,6 +92,19 @@ class TestStoryRowFallsBackToId:
         label = _build_story_label(story, "")
         assert EM_DASH in label.plain
 
+    def test_sentinel_jira_value_falls_back_to_id(self) -> None:
+        """``jira: none`` is a truthy string but means "no key" (story 160-3)."""
+        label = _build_story_label(_story(id="40-1", jira="none"), "")
+        assert "none" not in label.plain, "sentinel must not render literally"
+        assert label.plain.count("40-1") == 2
+        assert EM_DASH not in label.plain
+
+    def test_sentinel_jira_key_falls_back_to_id(self) -> None:
+        """Same guard on the normalized field, in case ws_push starts setting it."""
+        label = _build_story_label(_story(id="40-2", jiraKey="x", jira="null"), "")
+        assert label.plain.count("40-2") == 2
+        assert EM_DASH not in label.plain
+
     def test_id_equals_jira_renders_once_in_key_column(self) -> None:
         """id == jira (old-style stories) — no double-rendering regression."""
         label = _build_story_label(_story(id="164-20", jira="164-20"), "")
@@ -101,9 +114,9 @@ class TestStoryRowFallsBackToId:
 class TestShortFormIdRegression:
     """AC3: short ordinal id + separate Jira key — the gh #141 reproduction."""
 
-    def test_short_id_with_mssci_key(self) -> None:
-        label = _build_story_label(_story(id="40-1", jira="MSSCI-18070", status="done"), "")
-        assert "MSSCI-18070" in label.plain
+    def test_short_id_with_separate_jira_key(self) -> None:
+        label = _build_story_label(_story(id="40-1", jira="PROJ-18070", status="done"), "")
+        assert "PROJ-18070" in label.plain
         assert EM_DASH not in label.plain
 
     def test_short_id_with_proj_key(self) -> None:
@@ -120,7 +133,7 @@ class TestShortFormIdRegression:
 
     def test_epic_row_behaviour_unchanged(self) -> None:
         """Epic labels already resolved correctly — must not regress."""
-        with_key = _build_epic_label("40", "Short form epic", 4, 6, jira_key="MSSCI-18070")
-        assert "MSSCI-18070" in with_key.plain
+        with_key = _build_epic_label("40", "Short form epic", 4, 6, jira_key="PROJ-18070")
+        assert "PROJ-18070" in with_key.plain
         without_key = _build_epic_label("40", "Short form epic", 4, 6)
         assert EM_DASH not in without_key.plain
