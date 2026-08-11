@@ -335,25 +335,47 @@ class TestAbsentSections:
 
 
 class TestScreenDossierSections:
-    """AC5 (re-derived): StoryDetailScreen composes the Tufte dossier sections.
+    """AC5: StoryDetailScreen renders two variants.
 
-    The 120-8 delegation to StoryDetailWidget was deliberately replaced in
+    The 120-8 delegation to StoryDetailWidget was replaced wholesale in
     e386cc6f7 (120-1 cherry-pick) by an inline dossier of id-tagged Static
-    sections, so the screen no longer wraps StoryDetailWidget in a
-    VerticalScroll. These tests pin the structure that actually shipped.
+    sections. 162-30 reinstated the delegation as the ``collapsible`` variant
+    used by the ProgressPanel drill-through, leaving the dossier as the default
+    (SprintPanel) variant. These tests pin both.
     """
 
-    def test_screen_does_not_delegate_to_story_detail_widget(self) -> None:
-        """The screen renders its own dossier — not StoryDetailWidget."""
+    def test_default_variant_renders_dossier_not_widget(self) -> None:
+        """The default (SprintPanel) variant renders the dossier, not the widget."""
         from pf.tui.story_detail_widget import StoryDetailWidget
 
         screen = StoryDetailScreen(story_data=FULL_STORY_DATA)
         children = list(screen.compose())
         assert not any(isinstance(c, StoryDetailWidget) for c in children), (
-            "StoryDetailScreen composed a StoryDetailWidget — the dossier "
-            "layout was reinstated as delegation; update these tests and the "
-            "orphaned-widget Delivery Finding for 162-30"
+            "Default variant must keep the dense dossier layout"
         )
+
+    def test_collapsible_variant_delegates_to_story_detail_widget(self) -> None:
+        """The collapsible variant wraps StoryDetailWidget in a VerticalScroll."""
+        from pf.tui.story_detail_widget import StoryDetailWidget
+        from textual.containers import VerticalScroll
+
+        screen = StoryDetailScreen(story_data=FULL_STORY_DATA, variant="collapsible")
+        children = list(screen.compose())
+        scrolls = [c for c in children if isinstance(c, VerticalScroll)]
+        assert scrolls, f"Expected a VerticalScroll wrapper, got: {children}"
+        widgets = [
+            w
+            for scroll in scrolls
+            for w in getattr(scroll, "_pending_children", [])
+            if isinstance(w, StoryDetailWidget)
+        ]
+        assert widgets, "collapsible variant must delegate to StoryDetailWidget"
+
+    def test_unknown_variant_falls_back_to_dossier(self) -> None:
+        """An unrecognised variant must not render an empty screen."""
+        screen = StoryDetailScreen(story_data=FULL_STORY_DATA, variant="bogus")
+        ids = [c.id for c in screen.compose() if isinstance(c, Static)]
+        assert "dossier-header" in ids, f"Expected dossier fallback, got: {ids}"
 
     def test_screen_composes_id_tagged_dossier_sections(self) -> None:
         """Each dossier section should be a Static with a stable dossier-* id."""
@@ -464,6 +486,11 @@ class TestProgressPanelDrillThrough:
             assert isinstance(app.screen, StoryDetailScreen), (
                 f"After drill_into_story, should be on StoryDetailScreen, "
                 f"got {type(app.screen).__name__}"
+            )
+            from pf.tui.story_detail_widget import StoryDetailWidget
+
+            assert app.screen.query(StoryDetailWidget), (
+                "ProgressPanel drill-through must render through StoryDetailWidget"
             )
 
 
