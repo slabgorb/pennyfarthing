@@ -624,7 +624,26 @@ def _resolve_story_repos(
 
     A ``repos:`` value that is absent, empty, or names nothing in repos.yaml
     degrades to the project root paired with the root repo's config — the
-    pre-162-6 behavior, so an operator typo cannot silently skip verification.
+    pre-162-6 behavior, which is what single-repo projects (every project with no
+    ``repos:`` field anywhere) rely on.
+
+    The degradation is NOT a typo guard, and this docstring used to claim it was
+    (162-33, deliverable 5). Resolution is per NAME, so a PARTIAL typo —
+    ``repos: "api, tpyo"`` — resolves ``api``, DROPS ``tpyo`` silently, and
+    succeeds: the mistyped repo's verification is skipped and no degradation
+    happens. Only an ALL-unknown value degrades. Recorded as a Delivery Finding
+    rather than fixed here: making an unknown name a hard abort changes the
+    finish outcome of existing stories and belongs in its own story.
+
+    ``repos:`` is read from the STORY dict only — it is never inherited from the
+    parent epic (162-33, deliverable 6). The field drives irreversible
+    ``gh pr merge`` calls, so the set of repos a finish will touch must be
+    visible in the same record the operator/agent is reading; an inherited list
+    makes it action-at-a-distance from a field the story's author never saw. The
+    degraded root pairing is also a SAFE default — the root repo is either
+    verifiable or it aborts loudly — whereas inheritance would hand an all-typo
+    story a plausible-but-wrong set of repos to verify. SM writes ``repos:``
+    onto each story explicitly instead (``schemas/session-schema.md``).
 
     Returns a result object (162-32): ``{"success": True, "data": [...]}``, or
     ``{"success": False, "error": ...}`` when a named repo is not cloned. The
@@ -1161,6 +1180,143 @@ def _git_cleanup(
     return [entry]
 
 
+def _repo_label(repo_path: Path, repo_config: "RepoConfig | None") -> str:
+    """The name an operator recognises a repo by: its repos.yaml name, else the
+    directory name.
+
+    Used wherever a multi-repo report has to say WHICH repo it is talking about
+    (162-33): a half-landed finish that reports only a PR number sends the
+    operator hunting for which repository that number belongs to.
+    """
+    name = str(getattr(repo_config, "name", "") or "").strip()
+    return name or repo_path.name
+
+
+def _verify_no_pr_repo(
+    repo_path: Path,
+    repo_config: "RepoConfig | None",
+    branch: str | None,
+    branch_field: str | None,
+) -> dict[str, Any]:
+    """The no-PR verification gate for ONE repo — read-only, no side effects.
+
+    Returns ``{"success": bool, "step": <step-2 entry>, "error": str | None}``.
+
+    Extracted from the step-2 merge loop (162-33/M4) so it can run BEFORE any
+    ``gh pr merge`` does. A multi-repo finish cannot be atomic, so the only safe
+    ordering is verify-everything-then-merge: while this check lived inside the
+    merge loop, a story whose repo A had a mergeable PR and whose repo B had
+    nothing verifiable MERGED A irreversibly and only then refused to mark the
+    story done — a partial landing plus a false abort. Being pure and
+    side-effect-free is what lets both the real run and the dry-run preview call
+    it, which is also how the preview stays honest (155-31 parity).
+
+    The gate itself is unchanged (155-34): the skip is accepted only for worlds
+    finish can affirmatively trust — a branch verified fully merged into this
+    repo's own base, or an agent's explicit no-branch sentinel. Everything else
+    (unmerged commits, an unverifiable/missing branch, empty or placeholder
+    fields, or fields absent entirely) is a refusal.
+    """
+    if branch:
+        merge_state = _branch_merge_state(
+            repo_path,
+            branch,
+            base=repo_config.default_branch if repo_config else None,
+            remote=repo_config.remote_name if repo_config else None,
+        )
+        if merge_state["state"] == "merged":
+            # NOT ``skipped: True``: this record reaches the report whenever the
+            # merge loop runs (it replays the recorded verdicts), and a bare
+            # ``skipped`` there reads as the silent skip this epic exists to
+            # kill (155-34). The value says what was verified. Note the pre-merge
+            # pass holds successful verdicts until that replay, so a repo that
+            # aborts the pre-pass suppresses the earlier repos' records too —
+            # the abort's own error names the failing repo instead.
+            return {
+                "success": True,
+                "error": None,
+                "step": {
+                    "step": 2,
+                    "action": "merge_pr",
+                    "skipped": "branch-verified-merged",
+                    "branch_verified_merged_into": merge_state["base"],
+                    "repo": _repo_label(repo_path, repo_config),
+                },
+            }
+        if merge_state["state"] == "timeout":
+            # A hung git probe is not the permissive unknown either (162-9):
+            # the no-PR arm has no later verification, so an unbounded-turned
+            # -degraded probe is exactly how unlanded work finishes silently.
+            error = (
+                f"No PR resolves in {_repo_label(repo_path, repo_config)}, and "
+                f"verifying branch {branch!r} timed out: "
+                f"{merge_state['reason']} — refusing to mark the story done on "
+                "the strength of a probe that never came back. Re-run finish "
+                "once git responds."
+            )
+        elif merge_state["state"] == "unmerged":
+            error = (
+                f"No PR resolves in {_repo_label(repo_path, repo_config)}, and "
+                f"branch {branch!r} has "
+                f"{merge_state['count']} unmerged commit(s) not in "
+                f"{merge_state['base']} — refusing to mark the story done "
+                "with unlanded code. Record the real PR in Story Details "
+                "(or merge the branch), then re-run finish."
+            )
+        else:
+            error = (
+                f"No PR resolves in {_repo_label(repo_path, repo_config)}, and "
+                f"branch {branch!r} cannot be verified "
+                f"({merge_state['reason']}) — refusing to mark the story "
+                "done with unverifiable work. Record the real PR in Story "
+                "Details, or set the Branch field to 'none' if there is "
+                "genuinely no branch, then re-run finish."
+            )
+        return {
+            "success": False,
+            "error": error,
+            "step": {
+                "step": 2,
+                "action": "merge_pr",
+                "branch": branch,
+                "repo": _repo_label(repo_path, repo_config),
+                "success": False,
+                "error": error,
+            },
+        }
+    if _field_is_sentinel(branch_field):
+        # An agent affirmatively recorded "no branch" — the accepted
+        # 155-1 no-PR world. Nothing exists to verify, by declaration.
+        return {
+            "success": True,
+            "error": None,
+            "step": {
+                "step": 2,
+                "action": "merge_pr",
+                "skipped": True,
+                "repo": _repo_label(repo_path, repo_config),
+            },
+        }
+    error = (
+        "No PR and no branch resolve from the session — the Branch/PR "
+        "fields are empty, placeholders, or absent, so finish cannot "
+        "verify anything landed. Record the real values in Story "
+        "Details (or set them to 'none' to affirm absence), then "
+        "re-run finish."
+    )
+    return {
+        "success": False,
+        "error": error,
+        "step": {
+            "step": 2,
+            "action": "merge_pr",
+            "repo": _repo_label(repo_path, repo_config),
+            "success": False,
+            "error": error,
+        },
+    }
+
+
 def finish_story(
     project_root: Path,
     story_id: str,
@@ -1317,10 +1473,6 @@ def finish_story(
                 resolved_pr = probe.stdout.strip()
         repo_prs.append((repo_path, repo_config, resolved_pr))
 
-    # The reported/previewed PR: the single repo's, or the first one resolved.
-    pr_number = next((rp for _p, _c, rp in repo_prs if rp), None)
-    primary_repo_path = repo_prs[0][0]
-
     today = date.today().isoformat()
     steps: list[dict[str, Any]] = []
     archive_name = f"{jira_key}-session.md" if jira_key else f"{story_id}-session.md"
@@ -1340,83 +1492,63 @@ def finish_story(
                     "action": f"Archive dialogue → {archive_dir / dialogue_archive_name}",
                 }
             )
-        if pr_number and get_pr_merge_mode() == "human":
-            steps.append(
-                {"step": 2, "action": f"PR #{pr_number} — waiting for human review and merge"}
-            )
-        elif pr_number:
-            # 162-19/162-20: Mirror the real-run gate path (155-32 / 162-9 / gh #113).
-            # _classify_pr encodes the precedence order ONCE; the verdict routes
-            # the dry-run step without positional dependence on call order.
-            view, gate_timeout = _pr_view_probe(pr_number, cwd=primary_repo_path)
-            if gate_timeout:
-                gate_error = (
-                    f"Timed out reading the state of PR #{pr_number} in "
-                    f"{primary_repo_path}: {gate_timeout} — refusing to attempt "
-                    "the merge without knowing whether the PR conflicts or already "
-                    "landed. Re-run finish."
+        # ONE step-2 entry per repo, each describing that repo's OWN PR (162-33
+        # /M6). The preview used to pair the FIRST resolved PR with the FIRST
+        # repo — the positional pairing 162-6 removed from the real run but left
+        # here — so for two repos with different PRs the second merge the run
+        # will actually attempt was missing from the plan entirely, and when the
+        # first repo had no PR the second repo's PR NUMBER was probed in the
+        # first repo, where that number means some other PR. A preview of an
+        # irreversible merge that names the wrong repo, or hides one, is finish
+        # lying (155-31 parity).
+        preview_mode = get_pr_merge_mode()
+        for repo_path, repo_config, repo_pr in repo_prs:
+            if repo_pr and preview_mode == "human":
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": f"PR #{repo_pr} — waiting for human review and merge",
+                        "repo": _repo_label(repo_path, repo_config),
+                    }
                 )
-                steps.append({"step": 2, "action": gate_error})
-            else:
-                cl = _classify_pr(view)
-                if cl.verdict == _PRVerdict.MERGED:
-                    steps.append(
-                        {
-                            "step": 2,
-                            "action": f"PR #{pr_number} already merged — will skip merge",
-                        }
+            elif repo_pr:
+                # 162-19/162-20: Mirror the real-run gate path (155-32 / 162-9 / gh #113).
+                # _classify_pr encodes the precedence order ONCE; the verdict routes
+                # the dry-run step without positional dependence on call order.
+                view, gate_timeout = _pr_view_probe(repo_pr, cwd=repo_path)
+                if gate_timeout:
+                    action = (
+                        f"Timed out reading the state of PR #{repo_pr} in "
+                        f"{repo_path}: {gate_timeout} — refusing to attempt "
+                        "the merge without knowing whether the PR conflicts or already "
+                        "landed. Re-run finish."
                     )
-                elif cl.verdict == _PRVerdict.BLOCKED:
-                    steps.append({"step": 2, "action": f"PR #{pr_number} is {cl.message}"})
                 else:
-                    steps.append(
-                        {"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"}
-                    )
-        else:
-            # No PR resolves — mirror the real-run no-PR gate (155-34 parity, 164-9)
-            if branch:
-                merge_state = _branch_merge_state(
-                    primary_repo_path,
+                    cl = _classify_pr(view)
+                    if cl.verdict == _PRVerdict.MERGED:
+                        action = f"PR #{repo_pr} already merged — will skip merge"
+                    elif cl.verdict == _PRVerdict.BLOCKED:
+                        action = f"PR #{repo_pr} is {cl.message}"
+                    else:
+                        action = f"Merge PR #{repo_pr} (squash, delete branch)"
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": action,
+                        "repo": _repo_label(repo_path, repo_config),
+                    }
+                )
+            else:
+                # No PR resolves in THIS repo — mirror the real-run no-PR gate
+                # (155-34 parity, 164-9), in this repo and against this repo's
+                # own base/remote, exactly as the hoisted verification does.
+                preview_step = _verify_no_pr_repo(
+                    repo_path,
+                    repo_config,
                     branch,
-                    base=None,
-                    remote=None,
-                )
-                if merge_state["state"] == "merged":
-                    steps.append(
-                        {"step": 2, "action": "merge_pr", "skipped": "branch-verified-merged"}
-                    )
-                elif merge_state["state"] == "timeout":
-                    abort_msg = (
-                        f"No PR resolves, and verifying branch {branch!r} timed out: "
-                        f"{merge_state['reason']} — refusing to mark the story done"
-                    )
-                    steps.append(
-                        {"step": 2, "action": "merge_pr", "success": False, "error": abort_msg}
-                    )
-                elif merge_state["state"] == "unmerged":
-                    abort_msg = (
-                        f"No PR resolves, and branch {branch!r} has "
-                        f"{merge_state['count']} unmerged commit(s) — refusing to mark done"
-                    )
-                    steps.append(
-                        {"step": 2, "action": "merge_pr", "success": False, "error": abort_msg}
-                    )
-                else:
-                    abort_msg = (
-                        f"No PR resolves, and branch {branch!r} cannot be verified "
-                        f"({merge_state['reason']}) — refusing to mark done"
-                    )
-                    steps.append(
-                        {"step": 2, "action": "merge_pr", "success": False, "error": abort_msg}
-                    )
-            elif _field_is_sentinel(fields.get("branch")):
-                steps.append({"step": 2, "action": "merge_pr", "skipped": True})
-            else:
-                _error = (
-                    "No PR and no branch resolve from the session — the Branch/PR "
-                    "fields are empty, placeholders, or absent."
-                )
-                steps.append({"step": 2, "action": "merge_pr", "success": False, "error": _error})
+                    fields.get("branch"),
+                )["step"]
+                steps.append(preview_step)
         if jira_key:
             steps.append({"step": 3, "action": f"Transition {jira_key} to Done"})
         else:
@@ -1448,18 +1580,44 @@ def finish_story(
     # conflicting?" and "did it already land?" — are questions about the same
     # snapshot of the same PR, so they share one ``gh pr view``.
     #
-    # It stays inside the auto-mode branch on purpose. Human merge mode never
+    # It is skipped for HUMAN merge mode on purpose. Human merge mode never
     # auto-merges, so it needs neither answer; hoisting the fetch above this
     # guard would add an API round trip to every human-mode finish and put the
-    # hard-blocking conflict gate on a path that is deliberately advisory.
+    # hard-blocking conflict gate on a path that is deliberately advisory. The
+    # condition is "not human" rather than "== auto" so this pass covers exactly
+    # the modes the merge loop below MERGES in: the loop now replays the verdicts
+    # recorded here, and a mode that merged without visiting this pass would find
+    # no verdict to replay.
     #
-    # Every repo is gated BEFORE any repo is merged (162-6): a multi-repo finish
-    # cannot be atomic, so the least it can do is not land repo A's PR and then
-    # discover repo B's is conflicting.
+    # EVERY repo is gated BEFORE any repo is merged (162-6, completed in
+    # 162-33/M4): a multi-repo finish cannot be atomic, so the least it can do is
+    # not land repo A's PR and then discover repo B's is conflicting — or, the
+    # half this pass adds, that repo B has no PR and nothing verifiable either.
+    # Both questions are read-only, so both belong here; the merge loop below
+    # only replays the verdicts this pass recorded.
     pr_views: dict[Path, dict[str, Any] | None] = {}
-    if pr_merge_mode == "auto":
-        for repo_path, _repo_config, repo_pr in repo_prs:
+    no_pr_steps: dict[Path, dict[str, Any]] = {}
+    if pr_merge_mode != "human":
+        for repo_path, repo_config, repo_pr in repo_prs:
             if not repo_pr:
+                verification = _verify_no_pr_repo(
+                    repo_path,
+                    repo_config,
+                    branch,
+                    fields.get("branch"),
+                )
+                if not verification["success"]:
+                    steps.append(verification["step"])
+                    return {
+                        "success": False,
+                        "story_id": story_id,
+                        "jira_key": jira_key,
+                        "error": verification["error"],
+                        "steps": steps,
+                    }
+                # Keyed by path — ``_resolve_story_repos`` dedupes on resolved
+                # path (162-32), so one entry per repo is exactly one step record.
+                no_pr_steps[repo_path] = verification["step"]
                 continue
             view, gate_timeout = _pr_view_probe(repo_pr, cwd=repo_path)
             if gate_timeout:
@@ -1530,6 +1688,27 @@ def finish_story(
     # done (162-6/AC2): one repo merged and another still open is half-shipped
     # work, and the abort names the PR that did not land so the operator knows
     # which repo to chase.
+    #
+    # Every read-only check now runs in the pass above, so the residual
+    # non-atomic case is narrow: a merge GitHub itself refuses (a review
+    # requirement, a race) after an earlier repo's merge already landed. That
+    # case cannot be prevented, so it is REPORTED — ``landed_repos`` plus a note
+    # on the error names what shipped, because an operator told only "PR #B merge
+    # failed" has no way to know half the story is already on the base branch
+    # (162-33/M5).
+    landed_repos: list[str] = []
+
+    def _half_landed_note() -> str:
+        if not landed_repos:
+            return ""
+        return (
+            " — WARNING: this run ALREADY MERGED the PR(s) for: "
+            f"{', '.join(landed_repos)}. That code is on the base branch while "
+            "this story is NOT done. Revert those merges, or fix the failure "
+            "above and re-run finish (an already-landed merge is skipped on the "
+            "retry)."
+        )
+
     for repo_path, repo_config, repo_pr in repo_prs:
         if pr_merge_mode == "human":
             # Human merge mode never auto-merges; the story is left in_review
@@ -1614,7 +1793,8 @@ def finish_story(
                     "success": False,
                     "story_id": story_id,
                     "jira_key": jira_key,
-                    "error": merge_timeout_error,
+                    "error": merge_timeout_error + _half_landed_note(),
+                    "landed_repos": list(landed_repos),
                     "steps": steps,
                 }
             if merge_result.returncode != 0:
@@ -1633,10 +1813,12 @@ def finish_story(
                     "story_id": story_id,
                     "jira_key": jira_key,
                     "error": (
-                        f"PR #{repo_pr} merge failed: "
-                        f"{stderr or 'gh pr merge returned non-zero'} — "
+                        f"PR #{repo_pr} ({_repo_label(repo_path, repo_config)}) "
+                        f"merge failed: {stderr or 'gh pr merge returned non-zero'} — "
                         "refusing to mark the story done with unmerged code"
-                    ),
+                    )
+                    + _half_landed_note(),
+                    "landed_repos": list(landed_repos),
                     "steps": steps,
                 }
             verified_merged, verify_timeout = _pr_merge_verification(repo_pr, cwd=repo_path)
@@ -1669,7 +1851,8 @@ def finish_story(
                     "success": False,
                     "story_id": story_id,
                     "jira_key": jira_key,
-                    "error": verify_error,
+                    "error": verify_error + _half_landed_note(),
+                    "landed_repos": list(landed_repos),
                     "steps": steps,
                 }
             if not verified_merged:
@@ -1687,113 +1870,34 @@ def finish_story(
                     "story_id": story_id,
                     "jira_key": jira_key,
                     "error": (
-                        f"PR #{repo_pr} is not MERGED after the merge step — "
-                        "refusing to mark the story done with unmerged code"
-                    ),
+                        f"PR #{repo_pr} ({_repo_label(repo_path, repo_config)}) is not "
+                        "MERGED after the merge step — refusing to mark the story done "
+                        "with unmerged code"
+                    )
+                    + _half_landed_note(),
+                    "landed_repos": list(landed_repos),
                     "steps": steps,
                 }
-            steps.append({"step": 2, "action": "merge_pr", "pr": repo_pr, "merged": True})
-            continue
-
-        # --- No-PR verification gate (155-34) ---
-        # The last unguarded arm: 155-1 made the merge load-bearing when a PR
-        # exists, but a story whose PR resolution comes up empty used to glide
-        # through this skip into the full done ceremony — even with real
-        # unmerged commits on its branch, and even for a session whose
-        # merge-target fields are unfilled placeholders (which 155-40's
-        # Story Details authority now correctly refuses to backfill from
-        # later sections). The skip is only accepted for worlds finish can
-        # affirmatively trust: a branch verified fully merged into the base,
-        # or an agent's explicit no-branch sentinel. Everything else —
-        # unmerged commits, an unverifiable/missing branch, empty or
-        # placeholder fields, or fields absent entirely (the uniform-abort
-        # answer to TEA's legacy-shape question: unresolvable is
-        # unverifiable, regardless of why) — aborts loudly BEFORE any
-        # irreversible step, with the session kept so finish can be retried
-        # once the operator records the real Branch/PR (or affirms absence).
-        if branch:
-            merge_state = _branch_merge_state(
-                repo_path,
-                branch,
-                base=repo_config.default_branch if repo_config else None,
-                remote=repo_config.remote_name if repo_config else None,
-            )
-            if merge_state["state"] == "merged":
-                # NOT ``skipped: True``: an all-repos abort keeps the already
-                # verified repos' step records in the report, and a bare
-                # ``skipped`` there reads as the silent skip this epic exists to
-                # kill (155-34). The value says what was verified.
-                steps.append(
-                    {
-                        "step": 2,
-                        "action": "merge_pr",
-                        "skipped": "branch-verified-merged",
-                        "branch_verified_merged_into": merge_state["base"],
-                    }
-                )
-                continue
-            if merge_state["state"] == "timeout":
-                # A hung git probe is not the permissive unknown either (162-9):
-                # the no-PR arm has no later verification, so an unbounded-turned
-                # -degraded probe is exactly how unlanded work finishes silently.
-                error = (
-                    f"No PR resolves, and verifying branch {branch!r} timed out: "
-                    f"{merge_state['reason']} — refusing to mark the story done on "
-                    "the strength of a probe that never came back. Re-run finish "
-                    "once git responds."
-                )
-            elif merge_state["state"] == "unmerged":
-                error = (
-                    f"No PR resolves, and branch {branch!r} has "
-                    f"{merge_state['count']} unmerged commit(s) not in "
-                    f"{merge_state['base']} — refusing to mark the story done "
-                    "with unlanded code. Record the real PR in Story Details "
-                    "(or merge the branch), then re-run finish."
-                )
-            else:
-                error = (
-                    f"No PR resolves, and branch {branch!r} cannot be verified "
-                    f"({merge_state['reason']}) — refusing to mark the story "
-                    "done with unverifiable work. Record the real PR in Story "
-                    "Details, or set the Branch field to 'none' if there is "
-                    "genuinely no branch, then re-run finish."
-                )
+            landed_repos.append(_repo_label(repo_path, repo_config))
             steps.append(
                 {
                     "step": 2,
                     "action": "merge_pr",
-                    "branch": branch,
-                    "success": False,
-                    "error": error,
+                    "pr": repo_pr,
+                    "repo": _repo_label(repo_path, repo_config),
+                    "merged": True,
                 }
             )
-            return {
-                "success": False,
-                "story_id": story_id,
-                "jira_key": jira_key,
-                "error": error,
-                "steps": steps,
-            }
-        elif _field_is_sentinel(fields.get("branch")):
-            # An agent affirmatively recorded "no branch" — the accepted
-            # 155-1 no-PR world. Nothing exists to verify, by declaration.
-            steps.append({"step": 2, "action": "merge_pr", "skipped": True})
-        else:
-            error = (
-                "No PR and no branch resolve from the session — the Branch/PR "
-                "fields are empty, placeholders, or absent, so finish cannot "
-                "verify anything landed. Record the real values in Story "
-                "Details (or set them to 'none' to affirm absence), then "
-                "re-run finish."
-            )
-            steps.append({"step": 2, "action": "merge_pr", "success": False, "error": error})
-            return {
-                "success": False,
-                "story_id": story_id,
-                "jira_key": jira_key,
-                "error": error,
-                "steps": steps,
-            }
+            continue
+
+        # --- No-PR verification: already decided, before any merge ran ---
+        # The gate itself is 155-34's and lives in :func:`_verify_no_pr_repo`; it
+        # ran for EVERY repo in the hoisted pre-merge pass above (162-33/M4).
+        # Running it here — interleaved with the merges — is what let a mixed
+        # multi-repo story land repo A's PR and only then refuse on repo B, so
+        # this arm now only replays the verdict recorded for this repo. A repo
+        # that failed verification never reaches this loop at all.
+        steps.append(no_pr_steps[repo_path])
 
     # --- Step 1 / 1b: Archive session + dialogue (only after the merge is verified) ---
     # Kept labelled "step 1"/"1b" for report stability, but executed after Step 2 so a

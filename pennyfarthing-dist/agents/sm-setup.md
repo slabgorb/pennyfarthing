@@ -365,6 +365,35 @@ field the same way as the gitflow arm (plain text, no backticks):
 - **Branch:** feat/{STORY_ID}-{SLUG}
 ```
 
+**Multi-repo stories: record a PR per repo.**
+
+The single `**PR:**` field can only describe ONE repository — a PR number names
+a different pull request in every repo — so `pf sprint story finish` honors it
+only when the story resolves to exactly one repo (since 162-6). When the story's
+`repos:` field names more than one repo, write one **per-repo PR line** instead,
+keyed by the repo's `repos.yaml` name:
+
+```markdown
+## Story Details
+- **Branch:** feat/{STORY_ID}-{SLUG}
+- **PR api:** #227
+- **PR ui:** #88
+```
+
+The key is `PR <repo-name>` — the `repos.yaml` name verbatim, hyphens included
+(`- **PR my-repo:** #227` is a valid field line); no parentheses or other
+punctuation (`**PR (api):**` is not a parseable field line). Finish does not read these lines yet: for a multi-repo
+story it resolves each repo's PR itself, in that repo, from the shared branch.
+They are the record an operator needs when a multi-repo finish half-lands (it
+reports which repos already merged), so keep them accurate and never invent a
+number. Full syntax: `schemas/session-schema.md`.
+
+**`repos:` is per story, never inherited from the epic.** Finish reads the
+story's own `repos:` field; an epic-level value is not inherited (162-33). Write
+`repos:` onto every story that touches a non-root repo — a story with no
+`repos:` degrades to the project root, and a mistyped name is dropped silently,
+leaving that repo unverified.
+
 <workflow-type-detection>
 ## Step 6: Determine Workflow Type
 

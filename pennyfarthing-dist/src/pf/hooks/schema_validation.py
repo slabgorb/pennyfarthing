@@ -35,7 +35,11 @@ SKILL_REQUIRED_TAGS = ["run", "output"]
 #: do not count as the required line until finish can read them.
 #: Anchoring is the other load-bearing part — a mid-prose mention of a field
 #: token is not a field (155-40).
-_FIELD_LINE_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*(\w[\w\s]*):\*\*\s*(.*)")
+#: Hyphens inside the key are accepted (162-33) so a per-repo ``**PR my-repo:**``
+#: line is a field for a real (hyphenated) repo name. Kept byte-identical to the
+#: consumer's ``SESSION_FIELD_RE``; the test at
+#: ``test_162_11_schema_hook_session_fields.py`` pins that equality.
+_FIELD_LINE_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*(\w[\w\s-]*):\*\*\s*(.*)")
 
 #: Merge-target fields the 155-33 template contract puts in Story Details, and
 #: which ``story_finish`` reads. Missing lines here are how 155-32 went done

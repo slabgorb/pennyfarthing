@@ -303,6 +303,63 @@ Session files track active work sessions for stories. They are the highest-frequ
 
 ---
 
+## Story Details Fields: `**Branch:**` and `**PR:**`
+
+`pf sprint story finish` reads these fields out of the `## Story Details`
+section. Only anchored `**Field:**` lines are fields (`pf.sprint.session_parse`);
+prose that merely mentions a value is never read, and Story Details wins over a
+later section's hand-written line.
+
+| Field | Syntax | Read by finish |
+|-------|--------|----------------|
+| `**Branch:**` | `- **Branch:** feat/162-33-slug` (bare name), or `none` to affirm there is no branch | Yes — the merge target and the no-PR verification's subject |
+| `**PR:**` | `- **PR:** #227 - title` | Yes, but ONLY when the story resolves to exactly one repo |
+| `**PR {repo}:**` | `- **PR api:** #227` — one line per repo the story touches | Not yet (see below) |
+
+### Per-repo PR lines (multi-repo stories)
+
+A single `**PR:**` line can only describe ONE repository — a PR number names a
+different pull request in every repo — so since 162-6 finish honors it only for
+a single-repo story. A multi-repo story records one line per repo, keyed by that
+repo's `repos.yaml` name:
+
+```markdown
+## Story Details
+- **Branch:** feat/162-33-multi-repo-session-schema
+- **PR api:** #227
+- **PR ui:** #88
+```
+
+The key is `PR <repo-name>` — the repo's `repos.yaml` name verbatim, including
+hyphens (`- **PR my-repo:** #227` parses to the field `pr my-repo`). Word
+characters, spaces and hyphens only: the parser's anchored pattern is what makes
+a line a field at all, so `**PR (api):**` is not a field.
+
+What finish does with these lines **today** (162-33): nothing. For a multi-repo
+story it ignores the single `**PR:**` line and resolves each repo's PR itself,
+in that repo, with `gh pr list --head <branch>` — which is what keeps every
+merge paired with the repo that owns the PR. The per-repo lines are the human /
+agent record (what to review; what to chase when a multi-repo finish half-lands)
+and the forward-compatible syntax for when finish reads a recorded PR per repo.
+Never write a per-repo line for a PR that does not exist.
+
+### `repos:` is per story, never inherited from the epic
+
+Finish resolves the repos it will touch from the **story's own** `repos:` field
+in the sprint YAML (`_resolve_story_repos`). It is deliberately **not** inherited
+from the parent epic (162-33 decision): the field drives irreversible
+`gh pr merge` calls, so the set of repos a finish will touch must be visible in
+the same record the agent is reading — not set action-at-a-distance by a field
+the story's author never saw. SM writes `repos:` onto each story explicitly.
+
+A story with no `repos:`, or one whose every name is unknown to `repos.yaml`,
+degrades to the project root paired with the root repo's config — a default that
+either verifies or aborts loudly. Stated honestly: resolution is per name, so a
+PARTIAL typo (`repos: "api, tpyo"`) resolves `api`, drops `tpyo`, and succeeds —
+the mistyped repo is never verified. Check the names.
+
+---
+
 ## Parsing Guidance
 
 ### Extracting Status

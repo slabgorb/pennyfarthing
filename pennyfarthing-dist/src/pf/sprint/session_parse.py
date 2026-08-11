@@ -16,7 +16,11 @@ from pathlib import Path
 
 #: Anchored to line start (155-40). The optional list-bullet prefix keeps the
 #: sm-setup template's ``- **Branch:** ...`` Story Details shape parsing.
-SESSION_FIELD_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*(\w[\w\s]*):\*\*\s*(.*)")
+#: Hyphens are allowed inside the key (162-33) so a repo-qualified field keeps
+#: the repo's real ``repos.yaml`` name: ``- **PR my-repo:** #227`` parses to the
+#: key ``pr my-repo``. Hyphenated repo names are the norm, and a documented
+#: syntax that silently fails to parse is worse than no syntax.
+SESSION_FIELD_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*(\w[\w\s-]*):\*\*\s*(.*)")
 
 
 def _parse_session_lines(lines: list[str]) -> dict[str, str]:
