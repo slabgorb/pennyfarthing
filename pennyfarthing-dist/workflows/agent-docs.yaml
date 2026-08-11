@@ -46,6 +46,11 @@ workflow:
           - Follows agent file conventions
           - XML tags properly nested
           - Examples are accurate
+        recovery:
+          reviewer-verdict:
+            action: rework
+            target_phase: implement
+            max_attempts: 3
 
     - name: finish
       agent: sm

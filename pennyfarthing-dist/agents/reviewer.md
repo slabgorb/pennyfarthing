@@ -171,12 +171,19 @@ OWNER=$(pf workflow phase-check {workflow} {phase})
 5. **Read the diff yourself** while subagents are running — build your own understanding.
 6. **Read the project rules yourself** — you will need them for the Rule Compliance section.
 7. **STOP. WAIT for every subagent to return.** See `<subagent-completion-gate>` below.
+8. **WORKING-TREE AUDIT — BLOCKING.** After all subagents return, run:
+   ```bash
+   pf reviewer audit-tree
+   ```
+   **If the command exits non-zero, HALT immediately.** A mutation-testing subagent left source changes in the live working tree. Do NOT write a verdict. Do NOT proceed to the assessment. Report the corruption, restore the tree (`git checkout -- . && git clean -fd`), and re-run the offending subagent with scratch-copy isolation before continuing.
 </on-activation>
 
 <subagent-completion-gate>
 ## Subagent Completion Gate — BLOCKING
 
 **Enforced by `gates/subagent-before-conclusions`.** This is not advisory — the gate will reject your phase transition if you write conclusions before subagents return, or if your VERIFIEDs contradict subagent findings without explicit `Challenged:` notes.
+
+**Working-tree audit required before conclusions.** After subagents return, run `pf reviewer audit-tree`. If it exits non-zero, the tree is corrupted by a left-behind mutation — HALT, do not write conclusions until the tree is restored and the offending subagent is re-run with proper scratch-copy isolation. Record the audit result in your session notes.
 
 Do not proceed to your assessment until ALL enabled subagents have returned results.
 Subagents disabled via `workflow.reviewer_subagents` settings are pre-filled as "Skipped / disabled" — they do not block the gate.
@@ -203,6 +210,43 @@ Do not skip subagents because "the code looks clean."
 **All received:** Yes/No
 **Total findings:** {N} confirmed, {N} dismissed (with rationale), {N} deferred
 ```
+
+### A REJECTION needs the same evidence as an approval — BLOCKING
+
+The Subagent Results table and the specialist tags are required on the way OUT to
+rework, not only on the way to finish: `complete-phase` runs those checks on the
+`approval_rework` gate type too. A rejection costs Dev a full cycle, so it must be
+as well-evidenced as an approval. All unmet requirements come back in one error.
+
+**Each rework round needs its own verdict.** Append a NEW section under the EXACT
+`## Reviewer Assessment` heading for every round — do not edit the previous
+round's section in place, and do not suffix the heading. `resolve-gate` compares
+the number of exact reviewer sections against `**Round-Trip Count:**`; a verdict
+already routed to rework will not buy a second round, because acting on it twice
+advances the phase twice.
+
+### Rework re-reviews: tag the cycle — BLOCKING
+
+**On a re-review after rework (the session already carries `**Round-Trip Count:** N`), the approval gate checks that your results are from the CURRENT cycle.** Two rules, both enforced programmatically:
+
+1. **Append a NEW section with the EXACT heading `## Subagent Results`** — do not edit the previous cycle's table in place, and do not suffix the heading (`## Subagent Results (Cycle 2)` blocks the gate as ambiguous). Cycles are identified by repeating the exact heading; the last one is the current cycle.
+2. **Tag the new table with the cycle number:** put `**Cycle: N**` in the section body, where N is the session's `**Round-Trip Count:**` (on a legacy hand-written session that has no such line, its `**Rework Cycle:**` is used instead). Missing or mismatched tag → the gate rejects the approval as stale subagent results.
+
+   **Either route is accepted:** re-run all enabled subagents, or re-verify each previously recorded finding with targeted probes. Targeted re-verification of characterized findings is stronger evidence than a fresh generalist sweep — so it is not a shortcut, and "a full sweep is unaffordable" is never a reason to tag without evidence. State which method you used alongside the tag.
+
+   The tag must be **a line of its own, starting at column 0**, spelled `**Cycle: N**` (the gate matches the word case-insensitively, but write it as shown). The gate reads nothing else as a tag: not prose that happens to end in `Cycle: N`, not a table cell, and not a quoted example — code fences, 4-space-indented blocks, backtick spans and HTML comments are all masked before the section is read. A tag under a later `###` subsection belongs to that subsection, not to your table. **Do not write a tag for a cycle you did not re-run** — every tag in the section must match the current cycle, so an old one left in place blocks the approval.
+
+```markdown
+## Subagent Results
+
+**Cycle: 2**
+
+| # | Specialist | Received | Status | Findings | Decision |
+...
+**All received:** Yes
+```
+
+Re-run **all** enabled subagents against the full diff for the new cycle — the cycle tag asserts that you did.
 
 ### Accepted "All received" formats
 
@@ -350,6 +394,28 @@ Append your audit under `### Reviewer (audit)` in the Design Deviations section.
 
 **Handoff:** Back to Dev for fixes
 ```
+
+**Verdict vocabulary is parsed, not just read.** `resolve-gate` classifies the
+`**Verdict:**` line mechanically and routes a non-approval to the review gate's
+`recovery.target_phase` — you do not choose the target phase, the workflow YAML
+does. Write `APPROVED` or `REJECTED` as the FIRST token; trailing prose is free
+(`APPROVED (re-review; supersedes the round-1 REJECTED verdict)` is an approval).
+A near-miss like `APPROVE` or `looks good` is not a verdict and will block the
+handoff.
+
+Three rules keep the parse unambiguous. Break one and the handoff blocks with a
+message naming the problem — it will never guess:
+
+1. **Exactly one unindented `**Verdict:**` line per assessment section.** Not two.
+   If you need to quote a previous cycle's verdict, put it inside a code fence —
+   fenced and indented text is excluded from the scan.
+2. **Use the heading `## Reviewer Assessment` verbatim, every cycle.** Repeat it
+   for a re-review; position identifies the cycle. Do NOT annotate it
+   (`(Cycle 2)`, `— Rollup`, `of Remaining Concerns`) — the parser cannot tell a
+   cycle marker from a section title, so a suffixed heading blocks instead of
+   being guessed at. Use a normal sub-heading (`###`) for supplementary notes.
+3. **Put the verdict word first.** `REJECTED — 3 blocking findings`, not
+   `After review, REJECTED`.
 
 ### Delivery Findings Capture
 

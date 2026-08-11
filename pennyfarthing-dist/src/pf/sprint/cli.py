@@ -312,7 +312,17 @@ def archive(story_id: str, pr_number: str | None, apply: bool, dry_run: bool):
 
 @sprint.command("backfill-epics")
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
-def backfill_epics(output_json: bool):
+@click.option(
+    "--prefix-parse",
+    "prefix_parse",
+    is_flag=True,
+    help=(
+        "One-time historical migration: resolve rows the live sprint can't "
+        "(long-archived epics) from the numeric {epic}-{seq} id prefix "
+        "(144-5 → epic '144'). Non-conforming ids stay irrecoverable."
+    ),
+)
+def backfill_epics(output_json: bool, prefix_parse: bool):
     """Repair archive entries whose `epic` field is missing or empty.
 
     Walks sprint/archive/sprint-*-completed.yaml, looks each epic-less
@@ -324,7 +334,7 @@ def backfill_epics(output_json: bool):
     """
     from pf.sprint.archive_epic import backfill_epic_refs
 
-    result = backfill_epic_refs()
+    result = backfill_epic_refs(prefix_parse=prefix_parse)
     backfilled = result.get("backfilled") or []
     irrecoverable = result.get("irrecoverable") or []
 
@@ -1507,7 +1517,7 @@ def check(id: str):
             ]
             # Sort by priority
             priority_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
-            available.sort(key=lambda s: priority_order.get(s.get("priority", "P2"), 2))
+            available.sort(key=lambda s: priority_order.get((s.get("priority") or "P2").strip().upper(), 2))
 
             first = available[0] if available else None
             out = {
@@ -2201,6 +2211,12 @@ def new_sprint(
       pf sprint new 2607 278 2026-02-16 2026-03-01 "Performance and polish"
     """
     from pf.common.config import get_project_root
+    from pf.sprint.path_validation import validate_sprint_id
+
+    try:
+        validate_sprint_id(sprint_yyww)
+    except ValueError as exc:
+        raise SystemExit(f"Error: {exc}") from exc
 
     root = get_project_root()
     sprint_file = root / "sprint" / "current-sprint.yaml"

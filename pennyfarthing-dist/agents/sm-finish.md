@@ -20,9 +20,13 @@ model: haiku
 Before running preflight, check if a PR exists for the branch. If not, create one.
 
 ```bash
+# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
+# .venv — derive the interpreter from the launcher shebang, never activate .venv.
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+
 # Read pr_mode and pr_strategy
-PR_MODE=$(source .venv/bin/activate && python -m pf.common.pr_config)
-PR_STRATEGY=$(python3 -c "
+PR_MODE=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -m pf.common.pr_config)
+PR_STRATEGY=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
 from pf.git.repos import get_repo_config
 rc = get_repo_config('{REPOS}')
 print(rc.pr_strategy if rc else 'standard')
@@ -31,10 +35,7 @@ print(rc.pr_strategy if rc else 'standard')
 
 Format the PR title using the project's `pr_title_format` from `.pennyfarthing/repos.yaml`:
 ```bash
-PR_TITLE=$(python3 -c "
-from pf.git.repos import format_pr_title
-print(format_pr_title(jira_key='${JIRA_KEY:-$STORY_ID}', title='${title}', scope='${scope}'))
-")
+PR_TITLE=$(pf git format-title --jira-key "${JIRA_KEY:-$STORY_ID}" --title "$title" --scope "$scope")
 ```
 
 Check for existing PR first: `gh pr list --head {BRANCH} --json number --jq '.[0].number'`
@@ -91,7 +92,8 @@ session, parses R1-format findings via `pf.findings.capture.parse_delivery_findi
 and writes the `## Impact Summary` section between Delivery Findings and agent assessments.
 
 ```bash
-source .venv/bin/activate && python -c "
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
 from pathlib import Path
 from pf.findings.summary import write_impact_summary_to_session
 import json
@@ -103,12 +105,42 @@ print(json.dumps(result))
 - If `success: true`: Impact Summary compiled. Log `finding_count` and `blocking_count`.
 - If `success: false`: Log the error but continue with preflight — Impact Summary is non-blocking.
 
-## 3. Run Preflight Script
+## 4. Scan for Deferred Follow-ups
+
+Scan the session's Delivery Findings and Design Deviations for deferrals that
+imply future work (gh #114). This runs while the session is still live —
+after finish archives and removes it, the deferrals are archive-only. Uses
+`pf.findings.followups.suggest_followups()`, which dedups candidates against
+open stories in the current sprint and pre-fills a `pf sprint story add`
+command (with a "from {STORY_ID} review" provenance back-reference) per
+unsuggested candidate.
+
+```bash
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
+from pathlib import Path
+from pf.findings.followups import suggest_followups
+import json
+result = suggest_followups(Path('.session/{STORY_ID}-session.md'), story_id='{STORY_ID}')
+print(json.dumps(result))
+"
+```
+
+- If `success: true` and `data.suggestions` is non-empty: include the
+  `data.markdown` block verbatim in your output so the operator can run or
+  skip each pre-filled command. Do NOT run the commands yourself.
+- If `success: true` and `data.suggestions` is empty: log "No deferred
+  follow-ups detected."
+- If `success: false`: Log the error but continue with preflight — the
+  follow-up scan is a report, never a finish gate (suggest posture).
+
+## 5. Run Preflight Script
 
 The preflight script runs all checks in parallel using asyncio:
 
 ```bash
-source .venv/bin/activate && python -m pf.preflight finish {STORY_ID} --branch {BRANCH} --jira {JIRA_KEY}
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -m pf.preflight finish {STORY_ID} --branch {BRANCH} --jira {JIRA_KEY}
 ```
 
 If no JIRA_KEY, omit the `--jira` flag.
@@ -166,5 +198,10 @@ FINISH_PREFLIGHT_RESULT:
 ```
 
 ### Jira Skipped
-If `jira_skipped: true` in JSON, note this in output.
+If `jira.skipped: true` in JSON (nested under the `jira` key), note this in output.
+
+### Deferred Follow-ups
+If Step 4 produced suggestions, append the `data.markdown` block (the
+"Deferred follow-ups detected" list with its pre-filled commands) after the
+`FINISH_PREFLIGHT_RESULT` block so the SM can surface it to the operator.
 </output>

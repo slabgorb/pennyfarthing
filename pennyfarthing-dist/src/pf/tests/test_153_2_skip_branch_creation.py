@@ -227,13 +227,28 @@ class TestFinishGitCleanupRespectsStrategy:
 
         cfg = _cfg("gitflow", default_branch="develop")
         with patch("pf.sprint.story_finish._run") as mock_run:
+            # An explicit rc=0 rather than a bare MagicMock: 162-48 adds
+            # read-only validation/existence probes ahead of the three
+            # mutations, and a MagicMock `returncode` compares unequal to 0, so
+            # a default mock would read as "base unusable" and skip cleanup.
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
             _git_cleanup(Path("/proj"), branch="feat/153-2-x", repo_config=cfg)
 
         invoked = [c.args[0] for c in mock_run.call_args_list if c.args]
-        assert ["git", "checkout", "develop"] in invoked, invoked
+        # Prefix/containment rather than whole-argv equality: 162-48 guards the
+        # base against flag parsing and pathspec DWIM (a `--` separator, a
+        # qualified refspec), so the exact argv is not this story's contract —
+        # "gitflow returns to the base and pulls it" is.
+        assert any(
+            cmd[:2] in (["git", "checkout"], ["git", "switch"])
+            and any("develop" in token for token in cmd)
+            for cmd in invoked
+        ), invoked
         # pull is one of the three operations that must run on gitflow (and must
         # NOT run on trunk-based) — assert it symmetrically.
-        assert any(cmd[:3] == ["git", "pull", "origin"] for cmd in invoked), invoked
+        assert any(cmd[:2] == ["git", "pull"] for cmd in invoked), invoked
         assert any(
             cmd[:2] == ["git", "branch"] and "-d" in cmd and "feat/153-2-x" in cmd
             for cmd in invoked

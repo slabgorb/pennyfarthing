@@ -149,10 +149,7 @@ git -C {repo_path} checkout -b "$BRANCH"
 
 Format the PR title using the project's `pr_title_format` setting:
 ```bash
-PR_TITLE=$(source .venv/bin/activate && python -c "
-from pf.git.repos import format_pr_title
-print(format_pr_title(jira_key='${JIRA_KEY}', title='{title}'))
-")
+PR_TITLE=$(pf git format-title --jira-key "$JIRA_KEY" --title "$title")
 ```
 
 ```bash

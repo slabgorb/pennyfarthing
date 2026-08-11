@@ -24,6 +24,16 @@ from pf.prime.models import CrewMember, Persona
 # Per-agent quote cache: agent_name -> selected catchphrase
 _quote_cache: dict[tuple[str, str], str] = {}
 
+
+def reset_quote_cache() -> None:
+    """Clear the module-level quote cache in place.
+
+    Clears rather than rebinds so callers holding a reference to the dict
+    (including the module's own global) observe the reset. Wired into an
+    autouse conftest fixture so no test inherits another test's quote.
+    """
+    _quote_cache.clear()
+
 AGENT_ROLES = [
     "sm",
     "tea",
@@ -90,6 +100,25 @@ def load_theme(theme: str, project_root: Path | None = None) -> dict[str, Any] |
         return None
 
 
+def _apply_override(
+    override: Any, agent_data: dict[str, Any] | None
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Merge a ``theme_characters`` override over the theme's agent data.
+
+    An override may be a dict (rich override, merged over the theme without
+    mutating it) or a str (character name only). Any other shape is junk and is
+    ignored so the theme data still wins.
+
+    Returns:
+        Tuple of (merged agent data, character override or None)
+    """
+    if isinstance(override, dict):
+        return {**(agent_data or {}), **override}, override.get("character")
+    if isinstance(override, str):
+        return agent_data, override
+    return agent_data, None
+
+
 def load_persona(
     agent_name: str, project_root: Path | None = None
 ) -> tuple[Persona | None, str | None]:
@@ -122,14 +151,9 @@ def load_persona(
     agents_section = theme_data.get("agents", {})
     agent_data = agents_section.get(agent_name)
 
-    character_override: str | None = None
-    if isinstance(override, dict):
-        # Merge override onto theme data, override-wins, without mutating the
-        # theme dict (a new dict — never agent_data.update()).
-        agent_data = {**(agent_data or {}), **override}
-        character_override = override.get("character")
-    elif isinstance(override, str):
-        character_override = override
+    # Merge override onto theme data, override-wins, without mutating the
+    # theme dict (a new dict — never agent_data.update()).
+    agent_data, character_override = _apply_override(override, agent_data)
 
     # If no agent data in theme AND no config override, not found
     if not agent_data and not character_override:
@@ -137,18 +161,32 @@ def load_persona(
 
     # Build persona — config override wins for character name
     agent_data = agent_data or {}
-    helper = agent_data.get("helper", {})
+
+    # A malformed helper (str/list/scalar from a hand-edited YAML) is dropped
+    # rather than half-applied — .get() on a non-dict would raise.
+    helper = agent_data.get("helper")
+    if not isinstance(helper, dict):
+        helper = {}
+
+    # A bare str is a sequence of CHARACTERS, so random.choice would silently
+    # yield a one-letter quote. Only a real list/tuple of phrases selects a
+    # quote; anything else falls back to the explicit ``quote`` field.
+    catchphrases = agent_data.get("catchphrases")
+    if isinstance(catchphrases, (list, tuple)) and catchphrases:
+        quote = _quote_cache.setdefault((agent_name, theme), random.choice(catchphrases))
+    else:
+        quote = agent_data.get("quote")
 
     persona = Persona(
         character=character_override or agent_data.get("character", "Unknown"),
         style=agent_data.get("style", ""),
         role=agent_data.get("role", ""),
-        quote=_quote_cache.setdefault((agent_name, theme), random.choice(catchphrases)) if (catchphrases := agent_data.get("catchphrases")) else agent_data.get("quote"),
+        quote=quote,
         trait=agent_data.get("trait"),
         quirk=agent_data.get("quirk"),
         motto=agent_data.get("motto"),
-        helper_name=helper.get("name") if helper else None,
-        helper_style=helper.get("style") if helper else None,
+        helper_name=helper.get("name"),
+        helper_style=helper.get("style"),
     )
 
     return persona, theme
@@ -186,19 +224,19 @@ def get_crew_manifest(project_root: Path | None = None) -> list[CrewMember]:
 
     crew = []
     for role in all_roles:
+        agent_data = agents_section.get(role)
+
         # Config override wins. An override may be a str (character name) or a
-        # dict carrying a "character" field — mirror load_persona's handling.
+        # dict carrying a "character" field — apply load_persona's full fallback
+        # chain so the manifest and the persona never disagree about a role.
         if role in theme_characters:
-            override = theme_characters[role]
-            character = (
-                override.get("character") if isinstance(override, dict) else override
-            )
-            if character:
-                crew.append(CrewMember(role=role, character=character))
-        else:
-            agent_data = agents_section.get(role)
-            if agent_data and "character" in agent_data:
-                crew.append(CrewMember(role=role, character=agent_data["character"]))
+            agent_data, character_override = _apply_override(theme_characters[role], agent_data)
+            if not agent_data and not character_override:
+                continue
+            character = character_override or (agent_data or {}).get("character", "Unknown")
+            crew.append(CrewMember(role=role, character=character))
+        elif agent_data and "character" in agent_data:
+            crew.append(CrewMember(role=role, character=agent_data["character"]))
 
     return crew
 

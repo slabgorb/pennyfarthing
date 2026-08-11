@@ -22,19 +22,25 @@ from pf.subagent.chain import (
     validate_handoff_document,
 )
 from pf.subagent.spawn import build_spawn_config
+from pf.workflow.helpers import resolve_workflow_file
 
 
 def _load_workflow_phases(
     workflow: str, project_root: Path
 ) -> list[dict] | None:
     """Load phases list from workflow YAML."""
-    for name in [f"{workflow}.yaml", f"{workflow}/workflow.yaml"]:
-        path = project_root / ".pennyfarthing" / "workflows" / name
-        if path.exists():
+    path = resolve_workflow_file(workflow, project_root)
+    if path is not None:
+        try:
             data = yaml.safe_load(path.read_text())
             phases = data.get("workflow", {}).get("phases", [])
             if isinstance(phases, list) and phases:
                 return phases
+        except Exception:
+            # Malformed, empty or non-mapping YAML degrades to "no phases"
+            # (project rule 6), matching every sibling loader. Never raise:
+            # an empty or half-written workflow file must not crash chaining.
+            return None
     return None
 
 

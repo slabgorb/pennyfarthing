@@ -13,6 +13,7 @@ Steps:
   7. Remove session file
 """
 
+import enum
 import json
 import re
 import shutil
@@ -20,7 +21,9 @@ import subprocess
 import sys
 from datetime import date
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple
+
+import yaml
 
 if TYPE_CHECKING:
     from pf.git.repos import RepoConfig
@@ -31,10 +34,12 @@ from pf.sprint.loader import (
     find_story_in_data,
     format_story_not_found_error,
 )
+from pf.sprint.session_parse import (  # noqa: F401  # SESSION_FIELD_RE re-export; tests import from here
+    SESSION_FIELD_RE,
+)
+from pf.sprint.session_parse import parse_session as _parse_session_impl
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import _get_epic_ref, read_sprint
-
-SESSION_FIELD_RE = re.compile(r"\*\*(\w[\w\s]*):\*\*\s*(.*)")
 
 
 def _resolve_epic_ref(project_root: Path, story_id: str, story: dict) -> str:
@@ -134,19 +139,23 @@ def _add_story_to_completed(project_root: Path, story_id: str, story: dict) -> d
 def _parse_session(session_path: Path) -> dict[str, str]:
     """Extract metadata fields from a session markdown file.
 
+    Delegates to ``pf.sprint.session_parse.parse_session`` (164-13).
+
     Parses lines like ``**Jira:** PROJ-14467`` and
-    ``**PR:** #748 - title`` into a dict.
+    ``**PR:** #748 - title`` into a dict. Only line-start field lines match
+    (``SESSION_FIELD_RE`` is anchored) — prose that merely mentions a token
+    is never a field (155-40).
+
+    Resolution order (155-40): the ``## Story Details`` section is
+    authoritative for ``branch``/``pr`` — the 155-33 template contract puts
+    the real fields there, and a hand-written field line in a later section
+    (an agent assessment) must not override them. When Story Details lacks
+    the field, the first anchored occurrence elsewhere still resolves: that
+    fallback is the shipped 155-33 contract for sessions whose only Branch
+    field is Dev's hand-written assessment line (the live 155-32 recovery
+    shape).
     """
-    fields: dict[str, str] = {}
-    if not session_path.exists():
-        return fields
-    for line in session_path.read_text().splitlines():
-        m = SESSION_FIELD_RE.search(line)
-        if m:
-            key = m.group(1).strip().lower()
-            value = m.group(2).strip()
-            fields[key] = value
-    return fields
+    return _parse_session_impl(session_path)
 
 
 def _extract_jira_key(fields: dict[str, str]) -> str | None:
@@ -166,73 +175,790 @@ def _extract_pr_number(fields: dict[str, str]) -> str | None:
     return m.group(1) if m else None
 
 
+#: No-branch sentinels agents write into the ``**Branch:**`` field. They must
+#: resolve to None — a truthy sentinel reaches ``gh pr list --head none``,
+#: whose empty answer silently skips the merge (155-33).
+#:
+#: The set is the contract, and both of its edges are SILENT failures: a value
+#: added here turns a real branch into a no-PR finish, and one removed sends a
+#: placeholder to gh. Matching is whole-value (after normalization) and
+#: case-insensitive, never a prefix or substring — ``feat/none`` is a branch.
+#: The lone dash earns its place as an affirmative "no branch" mark, which is
+#: also why dash-LEADING values are refused instead (see below): the sentinel
+#: covering only the lone dash is what let ``-evil`` reach git's argv (162-4).
+_BRANCH_SENTINELS = {"none", "n/a", "na", "null", "-", "—"}
+
+#: Ceiling on the normalization loop below. The strips shrink the value
+#: monotonically, so real sessions converge in two or three passes and this
+#: bound is never reached — it is a belt against a pathological value, kept as a
+#: reviewable module constant rather than a magic number inside the loop. Read
+#: at call time so tests can starve it.
+_MAX_BRANCH_STRIP_PASSES = 8
+
+#: Characters that cannot appear in an extracted branch name: markdown/annotation
+#: residue the strips exist to remove, plus whitespace, which git's own ref
+#: grammar forbids outright.
+_BRANCH_RESIDUE_CHARS = ("`", "(", ")")
+
+
+class InvalidBranchValue(ValueError):
+    """A session declares a branch value that cannot BE a git branch (162-10).
+
+    Raising beats returning None: None means "this session records no branch",
+    which routes finish into the no-PR arm — a silent, SUCCESSFUL finish off a
+    value that was never a ref. A declared-but-impossible branch is the
+    unverifiable world, not the no-branch world, and epic 155's rule is that
+    finish must not lie. ``ValueError`` subclass so existing broad handlers see
+    a bad value rather than an unhandled traceback.
+    """
+
+
+def _normalize_branch_field(raw: str) -> str:
+    """Strip trailing annotations and markdown backticks to a FIXED POINT.
+
+    Applying the two strips once, in a fixed order, only handles the annotation
+    OUTSIDE the backticks. Agents write the other nesting too, and then the
+    annotation regex never matches (the value ends with a backtick), leaving the
+    annotation glued to the branch name for every downstream git/gh call. So
+    both strips run in a loop until the value stops changing.
+
+    Raises:
+        InvalidBranchValue: the value had not stabilized when the pass bound was
+            spent. A half-reduced value is exactly what must never reach git, so
+            the belt fails loud rather than returning residue.
+    """
+    value = raw
+    for _ in range(_MAX_BRANCH_STRIP_PASSES):
+        stripped = re.sub(r"\s*\(.*\)\s*$", "", value).strip()
+        stripped = stripped.strip("`").strip()
+        if stripped == value:
+            return value
+        value = stripped
+    raise InvalidBranchValue(
+        f"branch value {raw!r} did not reduce to a branch name within "
+        f"{_MAX_BRANCH_STRIP_PASSES} strip passes"
+    )
+
+
 def _extract_branch(fields: dict[str, str]) -> str | None:
-    """Get branch name, stripping trailing annotations like ``(pushed)``."""
+    """Get branch name from the shapes agents actually write: trailing
+    annotations like ``(pushed)`` and markdown backticks are stripped to a fixed
+    point (162-10), and no-branch sentinels resolve to None (155-33).
+
+    Raises:
+        InvalidBranchValue: the session declares a value that cannot be a
+            branch — dash-leading (an option in git's argv, 162-4), interior
+            whitespace, or residue no strip pass can remove.
+    """
     raw = fields.get("branch", "")
-    return re.sub(r"\s*\(.*\)\s*$", "", raw).strip() or None
+    value = _normalize_branch_field(raw)
+    # Sentinels are tested against the FIXED POINT, so a nested sentinel like a
+    # backtick-quoted "none (no branch)" still means no branch — and the lone
+    # dash keeps its sentinel meaning ahead of the dash-leading refusal below.
+    if value.lower() in _BRANCH_SENTINELS:
+        return None
+    if not value:
+        return None
+    if value.startswith("-"):
+        raise InvalidBranchValue(
+            f"branch value {raw!r} starts with a dash — git reads it as an "
+            f"option, not a ref; fix the session's Branch field"
+        )
+    if any(char.isspace() for char in value) or any(c in value for c in _BRANCH_RESIDUE_CHARS):
+        raise InvalidBranchValue(
+            f"branch value {raw!r} is not a usable branch name "
+            f"(reduced to {value!r}); fix the session's Branch field"
+        )
+    return value
 
 
-def _run(cmd: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
-    """Run a subprocess with sane defaults."""
-    return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+#: Bounded-subprocess envelope for the whole finish ceremony (162-9). The
+#: ceremony is not a read-only report: it wedges MID-SEQUENCE, and an unbounded
+#: child blocks it forever for entirely ordinary reasons (a stalled TLS
+#: handshake, a credential helper prompting on a non-tty, an ssh host-key
+#: prompt, a proxy that blackholes instead of resetting). The tiering lives in
+#: one reviewable block so the trade-off is visible: every bound must be loose
+#: enough that a working-but-slow command is not killed — a tight bound on the
+#: irreversible merge trades a rare hang for a routine mid-merge kill.
+DEFAULT_TIMEOUT_S = 120.0
+#: Network-facing gh calls, including the irreversible merge.
+GH_TIMEOUT_S = 120.0
+#: Purely local git plumbing: ref existence, commit counting, branch delete.
+GIT_LOCAL_TIMEOUT_S = 30.0
+#: git that reaches origin.
+GIT_NETWORK_TIMEOUT_S = 120.0
+#: The step-5 re-entrant pf.cli invocation.
+SUBCOMMAND_TIMEOUT_S = 120.0
+
+#: timeout(1)'s conventional exit status, so a timed-out result reads as a
+#: failure to every existing ``returncode != 0`` check.
+_TIMEOUT_RETURNCODE = 124
 
 
-def _pr_is_merged(pr_number: str) -> bool:
-    """Return True only when ``gh`` reports the PR in the ``MERGED`` state.
+class _TimedOutProcess(subprocess.CompletedProcess):
+    """A :func:`_run` result standing in for a child that blew its timeout.
+
+    A distinct TYPE rather than a marker attribute or a magic returncode:
+    ``_timed_out`` must answer False for every other result shape, including
+    the mocks the finish test suites hand back (a ``getattr`` probe on a
+    ``MagicMock`` invents a truthy attribute, which would read every faked call
+    as timed out).
+    """
+
+
+def _timed_out(result: Any) -> bool:
+    """True when *result* came from a child that hit its timeout."""
+    return isinstance(result, _TimedOutProcess)
+
+
+def _run(
+    cmd: list[str],
+    *,
+    timeout: float = DEFAULT_TIMEOUT_S,
+    **kwargs: Any,
+) -> subprocess.CompletedProcess[str]:
+    """Run a subprocess with sane defaults, always BOUNDED (162-9).
+
+    The bound is a default on the helper rather than a kwarg repeated at every
+    call site, so "every finish subprocess is bounded" is a property of this
+    function instead of an audit of its callers — and the next call site added
+    inherits it. An explicitly passed ``timeout`` wins; that is how the
+    per-site tiering above is expressed.
+
+    A blown timeout is returned as a :class:`_TimedOutProcess`, never raised:
+    ``TimeoutExpired`` escaping ``finish_story`` violates the no-throw contract
+    (SOUL #10) exactly as badly as the hang it replaced, and after the
+    irreversible merge it strands the story with a traceback instead of a
+    report. ``stderr`` carries the exception's own text, which names the
+    program, its subcommand and the bound that expired — the callers below
+    surface it verbatim so "something timed out" is never the whole story.
+    """
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, **kwargs)
+    except subprocess.TimeoutExpired as exc:
+        return _TimedOutProcess(list(cmd), _TIMEOUT_RETURNCODE, "", str(exc))
+
+
+def _cwd_kwargs(cwd: Path | None) -> dict[str, str]:
+    """``{"cwd": str(cwd)}`` when a repo is known, else no kwarg at all.
+
+    Keeps the pre-162-6 "no cwd" behavior for the direct helper callers that
+    pass nothing, while every finish-path call site now supplies the story's
+    code repo.
+    """
+    return {"cwd": str(cwd)} if cwd is not None else {}
+
+
+#: The union of the fields the PR probes read: ``state`` for the merged checks,
+#: ``mergeable``/``mergeStateStatus``/``baseRefName`` for the conflict gate, and
+#: ``mergedAt`` to corroborate ``state == "MERGED"`` — a non-null timestamp is
+#: the second conjunct in :func:`_view_is_merged` (162-18). One field list means
+#: the two pre-merge questions share one round trip (155-32).
+_PR_VIEW_FIELDS = "state,mergeable,mergeStateStatus,baseRefName,mergedAt"
+
+
+class _PRVerdict(enum.StrEnum):
+    """Precedence-ordered PR disposition from :func:`_classify_pr`.
+
+    Ordering encodes exactly once: MERGED > UNREADABLE > BLOCKED > MERGEABLE.
+    """
+
+    MERGED = "merged"
+    UNREADABLE = "unreadable"
+    BLOCKED = "blocked"
+    MERGEABLE = "mergeable"
+
+
+class _PRClassification(NamedTuple):
+    """Result of :func:`_classify_pr`."""
+
+    verdict: _PRVerdict
+    message: str | None  # non-None for BLOCKED; may be None for others
+    detail: str | None  # e.g. base branch for BLOCKED
+
+
+def _classify_pr(view: dict[str, Any] | None) -> _PRClassification:
+    """Classify a PR snapshot into a single precedence-ordered verdict.
+
+    Precedence: MERGED > BLOCKED > UNREADABLE > MERGEABLE — encoded here ONCE
+    so callers do not depend on the order they call the old helpers.
+
+    The BLOCKED conflict-field check intentionally runs BEFORE the non-str
+    ``state`` UNREADABLE guard (rules 3 vs 4). Pre-refactor ``_pr_block_reason``
+    checked ``mergeable``/``mergeStateStatus`` INDEPENDENTLY of ``state``
+    validity, so a view with a malformed/missing ``state`` that carries
+    ``CONFLICTING``/``DIRTY`` was still hard-blocked. Placing UNREADABLE first
+    would silently drop that block → fail-open. Rule order (option A from 162-19
+    Reviewer R1) preserves the old fail-closed semantics exactly.
+
+    Rules (in evaluation order):
+    1. ``view is None`` → UNREADABLE (gh error or timeout arm)
+    2. ``state == "MERGED"`` AND ``bool(mergedAt)`` → MERGED
+       (``==`` is safe on a non-str state: ``42 == "MERGED"`` is always False)
+       (162-1: GitHub stops recomputing mergeability after merge, so stale
+       CONFLICTING/DIRTY fields are irrelevant for a corroborated merge)
+    3. ``mergeable == "CONFLICTING"`` OR ``mergeStateStatus == "DIRTY"``
+       (case-folded) → BLOCKED — reachable even when ``state`` is malformed,
+       preserving the pre-refactor fail-closed behaviour
+    4. ``view["state"]`` is not a ``str`` (or absent) → UNREADABLE
+       (malformed state + no conflict → safe fallthrough to merge attempt)
+    5. All else → MERGEABLE
+    """
+    # Rule 1: None view — gh error or timeout arm
+    if view is None:
+        return _PRClassification(verdict=_PRVerdict.UNREADABLE, message=None, detail=None)
+
+    # Rule 2: corroborated merge — MERGED + non-null mergedAt (162-18)
+    # Safe before the str-check: non-str state never equals "MERGED".
+    state = view.get("state")
+    if state == "MERGED" and bool(view.get("mergedAt")):
+        return _PRClassification(verdict=_PRVerdict.MERGED, message=None, detail=None)
+
+    # Rule 3: definitively non-mergeable — checked BEFORE state type validation
+    # to preserve pre-refactor fail-closed behaviour on malformed+conflict views.
+    mergeable = str(view.get("mergeable", "")).upper()
+    state_status = str(view.get("mergeStateStatus", "")).upper()
+    if mergeable == "CONFLICTING" or state_status == "DIRTY":
+        base = str(view.get("baseRefName") or "the base branch")
+        message = f"CONFLICTING — rebase on {base} and resolve the conflicts before finishing"
+        return _PRClassification(verdict=_PRVerdict.BLOCKED, message=message, detail=base)
+
+    # Rule 4: state field-type validation — malformed + no conflict → UNREADABLE
+    if not isinstance(state, str):
+        return _PRClassification(verdict=_PRVerdict.UNREADABLE, message=None, detail=None)
+
+    # Rule 5: everything else is safe to attempt
+    return _PRClassification(verdict=_PRVerdict.MERGEABLE, message=None, detail=None)
+
+
+def _pr_view_probe(
+    pr_number: str,
+    cwd: Path | None = None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """:func:`_pr_view`, plus the one answer it cannot express: ``(view,
+    timeout_message)``.
+
+    A timed-out probe is NOT the permissive "unknown" ``_pr_view`` degrades a gh
+    error to (162-9). An error is a fact about one call; a timeout predicts the
+    next call hangs too. Degrading a hung branch-to-PR or gate probe drops
+    finish into an arm that can silently finish a merged-LOOKING branch, and
+    degrading a hung post-merge verification reaches an abort message that
+    flatly denies a merge which in fact landed. Callers on the finish path take
+    the second element and abort on it; the permissive wrapper stays for the
+    dry-run preview, which has no side effects to protect.
+    """
+    result = _run(
+        ["gh", "pr", "view", pr_number, "--json", _PR_VIEW_FIELDS],
+        timeout=GH_TIMEOUT_S,
+        **_cwd_kwargs(cwd),
+    )
+    if _timed_out(result):
+        return None, (result.stderr or "").strip()
+    if result.returncode != 0:
+        return None, None
+    try:
+        data = json.loads(result.stdout)
+    except (json.JSONDecodeError, ValueError):
+        return None, None
+    if not isinstance(data, dict):
+        return None, None
+    return data, None
+
+
+def _pr_view(pr_number: str, cwd: Path | None = None) -> dict[str, Any] | None:
+    """Fetch one snapshot of the PR, or ``None`` when its state cannot be
+    established (``gh`` error, unparseable output, or a payload that is not a
+    JSON object).
+
+    ``cwd`` is the repo the PR lives in (162-6). ``gh`` resolves the PR number
+    against whatever GitHub remote its working directory points at, so an
+    omitted ``cwd`` asks the repo the operator happened to invoke ``pf`` from —
+    the orchestrator root, which in an inlined-sub-repo workspace is the wrong
+    repository entirely. ``None`` keeps the process cwd, for the direct callers
+    that predate repo routing.
+
+    ``None`` is the single "unknown" answer both readers below degrade to, and
+    both degrade *permissively*: an unknown PR neither blocks the finish nor
+    counts as merged, so the flow falls through to the real merge attempt —
+    which is itself guarded by the post-merge verification (gh #71/#60).
+
+    The ``isinstance`` check is load-bearing, not defensive padding. ``null``,
+    ``[]`` and bare scalars are all valid JSON that ``json.loads`` accepts
+    happily and that then raise ``AttributeError`` on ``.get`` — an exception
+    escaping ``finish_story`` instead of the ``{success, error}`` result object
+    the caller contracts for.
+
+    A timed-out probe also reads as "unknown" here, which is why the finish path
+    calls :func:`_pr_view_probe` instead — this wrapper cannot tell its caller to
+    abort (162-9). Its remaining caller is the dry-run preview, which has no
+    side effects to protect.
+    """
+    return _pr_view_probe(pr_number, cwd=cwd)[0]
+
+
+def _view_is_merged(view: dict[str, Any] | None) -> bool:
+    """Return ``True`` iff the snapshot is a corroborated merge.
+
+    Thin wrapper over :func:`_classify_pr` — kept for callers that need the
+    boolean directly (``_pr_is_merged``, ``_pr_merge_verification``) and for
+    regression suites that import it directly.
+
+    The full semantics live in :func:`_classify_pr` (rules 1–3).
+    """
+    return _classify_pr(view).verdict == _PRVerdict.MERGED
+
+
+def _pr_is_merged(pr_number: str, cwd: Path | None = None) -> bool:
+    """Return True only when ``gh`` reports the PR in the ``MERGED`` state,
+    reading a snapshot taken NOW.
 
     A zero exit from ``gh pr merge`` is not proof the code landed — the merge can
     silently no-op while the PR stays OPEN (gh #71 / #60). Finish must confirm
     the actual PR state before transitioning the story to ``done``.
+
+    This deliberately re-fetches rather than accepting a snapshot argument. It
+    runs *after* the merge, and the whole point is to observe the world the
+    merge produced; answering it from the pre-merge snapshot would report the
+    state finish already knew and verify nothing.
+
+    ``cwd`` is the story's code repo, for the same reason as :func:`_pr_view`'s
+    (162-6): a verification aimed at the wrong repo proves nothing about the PR
+    that was just merged.
     """
-    result = _run(["gh", "pr", "view", pr_number, "--json", "state"])
-    if result.returncode != 0:
-        return False
-    try:
-        state = json.loads(result.stdout).get("state", "")
-    except (json.JSONDecodeError, ValueError):
-        return False
-    return state == "MERGED"
+    return _view_is_merged(_pr_view(pr_number, cwd=cwd))
 
 
-def _pr_block_reason(pr_number: str) -> str | None:
-    """Return an actionable abort message when the PR is definitively NOT cleanly
-    mergeable (``mergeable == CONFLICTING`` / ``mergeStateStatus == DIRTY``), else
-    ``None``.
+def _pr_merge_verification(pr_number: str, cwd: Path | None = None) -> tuple[bool, str | None]:
+    """:func:`_pr_is_merged`, plus whether the verification itself timed out.
 
-    ``None`` ("do not block") also covers MERGEABLE/CLEAN PRs *and* indeterminate
-    mergeability — ``UNKNOWN`` (GitHub still computing) or a ``gh`` error. Those
-    fall through to the merge attempt, which is guarded by the post-merge
-    :func:`_pr_is_merged` verification (gh #71/#60). Only a definitively
-    conflicting PR is hard-blocked here, before any irreversible finish step
-    (gh #113).
+    ``(merged, timeout_message)``. The second element is what keeps the
+    post-merge report truthful (162-9): "could not verify" is a different fact
+    from "did not merge", and only the caller can tell them apart.
     """
-    result = _run(
-        ["gh", "pr", "view", pr_number, "--json", "mergeable,mergeStateStatus,baseRefName"]
+    view, timeout_message = _pr_view_probe(pr_number, cwd=cwd)
+    return _view_is_merged(view), timeout_message
+
+
+def _pr_block_reason(pr_number: str, view: dict[str, Any] | None) -> str | None:
+    """Return an actionable abort message for a definitively non-mergeable PR,
+    else ``None``.
+
+    Thin wrapper over :func:`_classify_pr` — kept because call sites need the
+    pr-number-qualified message string, and regression suites import it directly.
+    The blocking logic lives in :func:`_classify_pr` (rule 4).
+    """
+    cl = _classify_pr(view)
+    if cl.verdict != _PRVerdict.BLOCKED:
+        return None
+    base = cl.detail or "the base branch"
+    return (
+        f"PR #{pr_number} is CONFLICTING — rebase on {base} and resolve the "
+        "conflicts before finishing"
     )
-    if result.returncode != 0:
-        return None
+
+
+def _field_is_sentinel(raw: str | None) -> bool:
+    """True when a raw session field value is an AFFIRMATIVE no-value sentinel
+    (``none``/``n/a``/...), as opposed to empty, a template placeholder, or an
+    absent key (155-34).
+
+    ``_extract_branch`` collapses all of those to ``None``, but the no-PR gate
+    must tell them apart: a sentinel is an agent's deliberate record that no
+    branch exists (the accepted 155-1 world), while an empty or placeholder
+    value means the field was never filled in — an unverifiable world that
+    must not silently finish. Calls ``_extract_branch``'s own normalization
+    (annotation strip, backticks, to a fixed point) so ``none (no branch)`` and
+    a backtick-quoted form of it still read as the sentinel they are — one
+    helper, so the gate and the extractor cannot drift (162-10).
+    """
+    if raw is None:
+        return False
     try:
-        data = json.loads(result.stdout)
-    except (json.JSONDecodeError, ValueError):
-        return None
-    mergeable = str(data.get("mergeable", "")).upper()
-    state_status = str(data.get("mergeStateStatus", "")).upper()
-    if mergeable == "CONFLICTING" or state_status == "DIRTY":
-        base = data.get("baseRefName") or "the base branch"
-        return (
-            f"PR #{pr_number} is CONFLICTING — rebase on {base} and resolve the "
-            "conflicts before finishing"
+        value = _normalize_branch_field(raw)
+    except InvalidBranchValue:
+        # Not a sentinel, and not this gate's error to raise: the extractor has
+        # already refused such a value before finish reaches the gate.
+        return False
+    return value.lower() in _BRANCH_SENTINELS
+
+
+def _resolve_base_branch(project_root: Path) -> str:
+    """The integration branch the no-PR gate verifies against when the caller
+    knows of no repo config: the root repo's ``default_branch``, falling back to
+    ``develop`` (the gitflow base this finish flow serves) when no repos.yaml
+    resolves.
+
+    Root-scoped BY CONSTRUCTION — which is why the finish path passes
+    ``_branch_merge_state``'s ``base`` explicitly from the story repo's own
+    config (162-6). A code repo's base is its own ``default_branch``, and the
+    dogfood topology has a trunk-based ``main`` orchestrator wrapping a gitflow
+    ``develop`` framework repo, so borrowing the root's answer looks for a base
+    ref the code repo does not have.
+
+    Local import for the same reason as Step 6's: pf.git.repos must not be a
+    top-level dependency of pf.sprint (circular layering).
+    """
+    from pf.git.repos import load_repos_config
+
+    try:
+        configs = load_repos_config(project_root)
+    except (yaml.YAMLError, OSError):
+        return "develop"
+    root_repo = next(
+        (rc for rc in configs.values() if rc.path in (".", "")),
+        None,
+    )
+    return root_repo.default_branch if root_repo else "develop"
+
+
+def _resolve_story_repos(
+    project_root: Path,
+    story: dict,
+) -> list[tuple[Path, "RepoConfig | None"]]:
+    """Every code repo the story's work lives in, as ``(abs_path, config)``.
+
+    The story's ``repos:`` field names them; ``.pennyfarthing/repos.yaml`` gives
+    each one its path and its own ``default_branch``/``branch_strategy``. All
+    three shapes seen in the wild parse: a bare name, a comma-separated string,
+    and a YAML list (same parse as ``staleness._resolve_repo_path``).
+
+    A ``repos:`` value that is absent, empty, or names nothing in repos.yaml
+    degrades to the project root paired with the root repo's config — the
+    pre-162-6 behavior, so an operator typo cannot silently skip verification.
+
+    Local import for the same circular-layering reason as
+    :func:`_resolve_base_branch`.
+    """
+    from pf.git.repos import load_repos_config
+
+    try:
+        configs = load_repos_config(project_root)
+    except (yaml.YAMLError, OSError):
+        return [(project_root, None)]
+    raw = story.get("repos")
+    if isinstance(raw, list):
+        names = [str(n).strip() for n in raw if str(n).strip()]
+    elif raw:
+        names = [n.strip() for n in str(raw).split(",") if n.strip()]
+    else:
+        names = []
+
+    resolved = [configs[name] for name in names if name in configs]
+    if not resolved:
+        root_repo = next((rc for rc in configs.values() if rc.path in (".", "")), None)
+        return [(project_root, root_repo)]
+    return [((project_root / rc.path).resolve(), rc) for rc in resolved]
+
+
+def _valid_branch_name(value: str, cwd: str) -> subprocess.CompletedProcess:
+    """Ask git whether *value* is a branch NAME, before anything resolves it.
+
+    A full ref path closes flag parsing and bare-name DWIM (162-4), but
+    ``refs/heads/<value>`` is still parsed as a REVISION, so every
+    ``gitrevisions(7)`` suffix operator survives the prefixing: ``feat~3``,
+    ``feat^^^``, ``feat@{3}`` and ``feat:`` all resolve rc=0 to an ANCESTOR of
+    the real tip (or a tree), the reused rev-list endpoint counts 0, and
+    unlanded work reads ``merged`` (162-25).
+
+    The check is ``check-ref-format`` on the PREFIXED refname, not
+    ``--branch`` on the bare value. Both refuse every operator form — the
+    refname grammar bans ``~ ^ : ? * [``, ``@{`` and control characters — but
+    they differ on two values that matter:
+
+    - ``--branch`` refuses a dash-leading name, while ``refs/heads/-evil`` is a
+      legal refname that plumbing really does create. 162-4 pins that such a
+      ref must still be classified rather than reported missing.
+    - ``--branch`` is not a pure validator: it EXPANDS ``@{-N}`` to the
+      previously-checked-out branch and answers rc=0, so a caller must be
+      careful never to trust its stdout. Refname mode has no DWIM at all.
+
+    Legal-but-awkward names (``release-1.2.3``, ``feat/v1.0``, ``a/b/c``) pass
+    both, which is the point of asking git instead of writing a regex. The
+    prefix also keeps the value out of argv's flag position.
+
+    Returns the raw ``_run`` result: rc=0 means valid, and a
+    :class:`_TimedOutProcess` must be routed to the timeout arm rather than
+    read as either answer.
+    """
+    return _run(
+        ["git", "check-ref-format", f"refs/heads/{value}"],
+        cwd=cwd,
+        timeout=GIT_LOCAL_TIMEOUT_S,
+    )
+
+
+#: The two values git's REFNAME grammar accepts but that name the current
+#: checkout rather than a branch. ``git check-ref-format refs/heads/HEAD`` and
+#: ``refs/heads/@`` both answer rc=0, while ``git check-ref-format --branch
+#: HEAD`` answers 128 and ``git branch HEAD`` refuses outright — so the value
+#: sails through the 162-25 guard, resolves nowhere once prefixed, and lands on
+#: the branch-not-found diagnosis (162-48 item 4).
+_NON_BRANCH_ALIASES = frozenset({"HEAD", "@"})
+
+#: Verdicts from :func:`_classify_branch_name`.
+_NAME_OK = "ok"
+_NAME_REFUSED = "refused"
+_NAME_TIMEOUT = "timeout"
+
+
+def _classify_branch_name(
+    value: str,
+    cwd: str,
+    *,
+    allow_dash_leading: bool = True,
+) -> tuple[Literal["ok", "refused", "timeout"], str]:
+    """The one gate every operator-supplied branch-ish value passes through.
+
+    Returns ``(verdict, detail)``: ``_NAME_OK`` with an empty detail,
+    ``_NAME_REFUSED`` with the *family-specific* explanation of why the value is
+    not a branch name, or ``_NAME_TIMEOUT`` with git's own timeout text. Callers
+    compose the operator-facing prose around ``detail`` — the quoting of the
+    value lives at the call site, which knows what the value IS (a branch, a
+    base, a remote), so the refusal never quotes an internally prefixed form.
+
+    Beyond :func:`_valid_branch_name`'s refname grammar (unchanged, and still
+    the only rule that needs git), three families are refused HERE, in-process
+    and before any subprocess runs:
+
+    - ``HEAD``/``@`` — see :data:`_NON_BRANCH_ALIASES`.
+    - a value whose first path component is ``refs`` — a field that carries its
+      own prefix (``refs/heads/feat``, ``refs/tags/v1.0``). Prefixing it again
+      yields ``refs/heads/refs/heads/feat``, a legal refname that resolves
+      nowhere. In cleanup it is worse than imprecise: ``git checkout
+      refs/remotes/origin/develop`` lands a detached HEAD.
+    - a dash-leading value, when *allow_dash_leading* is False.
+
+    The dash asymmetry is deliberate. The READ path keeps classifying
+    dash-leading names (162-4: ``refs/heads/-evil`` is a legal ref plumbing
+    really does create, and a probe prefixes it out of argv's flag position),
+    while cleanup refuses them, because no ``git checkout`` argv reaches one
+    safely — ``git checkout -f`` discards every uncommitted modification in the
+    repo. One validator, one strictness knob, so the two rules cannot drift.
+
+    The in-process checks run FIRST. A value they refuse costs zero
+    subprocesses. A value that passes them costs exactly one read-only
+    subprocess — ``git check-ref-format refs/heads/<value>`` via
+    :func:`_valid_branch_name` — before any verdict is returned. That single
+    read-only check is what lets cleanup promise it emits no MUTATING git at
+    all for an unusable value (162-25's AC-3, extended to the mutating path).
+    """
+    if value in _NON_BRANCH_ALIASES:
+        return _NAME_REFUSED, "git's own alias for the current checkout, not a branch"
+    if value.split("/", 1)[0] == "refs":
+        return _NAME_REFUSED, "this field must hold a bare branch name, not a full ref path"
+    if not allow_dash_leading and value.startswith("-"):
+        return _NAME_REFUSED, "a dash-leading value reaches git's argv as a flag"
+
+    check = _valid_branch_name(value, cwd)
+    if _timed_out(check):
+        return _NAME_TIMEOUT, (check.stderr or "").strip()
+    if check.returncode != 0:
+        return _NAME_REFUSED, "git check-ref-format rejected it"
+    return _NAME_OK, ""
+
+
+def _classify_remote_name(value: str, cwd: str) -> tuple[Literal["ok", "refused", "timeout"], str]:
+    """Like :func:`_classify_branch_name`, but for a remote NAME slot.
+
+    A remote name is a single argv token in ``git pull <name> <refspec>``. Git
+    resolves a name it does not recognise as a repository URL, and a
+    slash-bearing value like ``subdir/evil`` is a legal refname (so
+    :func:`_classify_branch_name` accepts it) that git then reads as a LOCAL
+    PATH: ``git pull subdir/evil <ref>`` fetches from ``./subdir/evil`` if that
+    is a repo, running its client-side hooks (162-48 review F2). Conventional
+    remote names are a single path component, so a slash is never needed here
+    and is always dangerous — refuse it before the shared branch-name grammar
+    runs, then defer to that grammar for everything else (flags, control
+    characters, ``refs/``-prefixes, the refname rules).
+    """
+    if "/" in value:
+        return _NAME_REFUSED, (
+            "a slash-bearing remote name is read by git as a local path, not a remote"
         )
-    return None
+    return _classify_branch_name(value, cwd, allow_dash_leading=False)
+
+
+def _branch_merge_state(
+    repo_path: Path,
+    branch: str,
+    base: str | None = None,
+    *,
+    remote: str | None = None,
+) -> dict[str, Any]:
+    """Classify a session branch against the base branch: did its work land?
+
+    ``repo_path`` is the repo that OWNS the branch — the story's code repo, not
+    necessarily the orchestrator project root (162-6). ``base`` is that repo's
+    own integration branch; when omitted it falls back to
+    :func:`_resolve_base_branch`, which answers for the root repo.
+
+    Returns ``{"state": "merged" | "unmerged" | "unknown" | "timeout", ...}``
+    with ``count``/``base`` on a definitive answer and ``reason`` on an unknown
+    or timed-out one. ``timeout`` is kept distinct from ``unknown`` (162-9)
+    because the two say different things to the operator: unknown is a fact
+    about this repo's refs, while a timed-out probe says the git call itself
+    never came back and the next one probably will not either.
+
+    ``base`` in the result has TWO shapes, deliberately (162-26): on every arm
+    that reached ref resolution it is the winning FULL ref
+    (``refs/remotes/<remote>/<base>``, or ``refs/heads/<base>`` when the remote
+    one is absent) — the definitive answers and the rev-list failure arms alike,
+    so the operator sees which ref was actually counted against. On every arm
+    that returns BEFORE a base ref resolves — a refused name, a branch or base
+    that was not found — it is the BARE declared value, echoed back verbatim,
+    because no ref was chosen to report.
+
+    All probes route
+    through ``_run`` with an explicit
+    ``cwd=repo_path`` — the finish family's test suites fake ``_run`` as
+    THE hermetic seam, and a cwd-less git call would interrogate whatever
+    repo the process happens to sit in (155-34).
+
+    Both ``branch`` and ``base`` are validated as branch NAMES before anything
+    resolves them (:func:`_valid_branch_name`); a refused value returns
+    ``unknown`` with a reason that quotes it verbatim and calls it invalid, and
+    carries no ``count`` — there is no merged/unmerged claim to make about a
+    value that is not a branch (162-25).
+
+    ``remote`` is the story repo's configured remote NAME (``RepoConfig.
+    remote_name``); ``None``/empty means ``origin``, so every existing repos.yaml
+    behaves exactly as before. It is threaded from the call site rather than
+    resolved here for the same reason ``base`` is (162-6). Hardcoding ``origin``
+    made ``refs/remotes/origin/<base>`` unresolvable in a repo whose remote is
+    named anything else, so the base arm fell back to the possibly-stale local
+    base and work that had landed upstream read ``unmerged`` — a loud false
+    abort on a story that is done.
+
+    Every candidate is a FULL ref path — ``refs/heads/<name>`` or
+    ``refs/remotes/<remote>/<name>`` — never a bare name (162-4). A bare name
+    is an argv position git may flag-parse (a dash-leading branch reaches
+    here intact: ``rev-parse --verify --quiet --local-env-vars`` executes
+    the option and prints git's environment) and a rev name git may DWIM to
+    the wrong ref (a TAG, or the ``git checkout -b origin/x`` typo branch,
+    shadows the intended one and answers ``merged`` for unlanded work). The
+    ``--`` separator is NOT the fix: ``rev-parse --verify --quiet -- <ref>``
+    returns rc=1. The winning candidate is also the rev-list range endpoint,
+    so the counting step cannot fall back into either shadow.
+
+    Ref resolution tries the local branch first (the ref Step 6 would
+    delete), then the remote-tracking ref; the base prefers origin's ref
+    over the possibly-stale local base so a merge that landed upstream is
+    not misread as unmerged. ``unknown`` is deliberately NOT permissive
+    here: unlike the PR probes above (which fall through to a merge attempt
+    that is itself verified), the no-PR arm has no later verification —
+    unknown must abort, never silently finish (rule #1: unknown is not
+    merged).
+    """
+    cwd = str(repo_path)
+    base = base or _resolve_base_branch(repo_path)
+    remote = (remote or "").strip() or "origin"
+
+    for label, value in (("branch value", branch), ("base branch", base)):
+        verdict, detail = _classify_branch_name(value, cwd)
+        if verdict == _NAME_TIMEOUT:
+            return {"state": "timeout", "base": base, "reason": detail}
+        if verdict == _NAME_REFUSED:
+            return {
+                "state": "unknown",
+                "base": base,
+                "reason": f"{label} '{value}' is not a valid branch name ({detail})",
+            }
+
+    branch_ref = None
+    candidates = [f"refs/heads/{branch}", f"refs/remotes/{remote}/{branch}"]
+    # 162-26: a remote-qualified value ('<remote>/<name>', the shape a human
+    # copies out of 'git branch -a') double-prefixes into
+    # 'refs/remotes/<remote>/<remote>/<name>' and resolved nothing, so a story
+    # whose work HAD landed aborted as not-found. Widen rather than strip: the
+    # correctly-interpreted remote-tracking ref is APPENDED, so the literal
+    # candidates keep first-probe priority and the 162-4 look-alike branch at
+    # 'refs/heads/<remote>/<name>' (the 'git checkout -b origin/x' typo) still
+    # wins and answers for its OWN commits. Stripping instead would let the
+    # merged remote-tracking ref speak for the typo branch's unlanded work.
+    # Keyed off the CONFIGURED remote (162-6), never a hardcoded 'origin'; a
+    # value qualified with some OTHER remote's name stays not-found, which is
+    # the same loud abort as any unresolvable branch. ``refs/``-prefixed values
+    # are NOT widened — the name gate above refuses them (162-25).
+    qualifier = f"{remote}/"
+    if branch.startswith(qualifier) and branch[len(qualifier) :]:
+        widened = f"refs/remotes/{remote}/{branch[len(qualifier) :]}"
+        if widened not in candidates:
+            candidates.append(widened)
+    for candidate in candidates:
+        probe = _run(
+            ["git", "rev-parse", "--verify", "--quiet", candidate],
+            cwd=cwd,
+            timeout=GIT_LOCAL_TIMEOUT_S,
+        )
+        if _timed_out(probe):
+            return {"state": "timeout", "base": base, "reason": (probe.stderr or "").strip()}
+        if probe.returncode == 0:
+            branch_ref = candidate
+            break
+    if branch_ref is None:
+        return {
+            "state": "unknown",
+            "base": base,
+            "reason": f"branch not found locally or on {remote}",
+        }
+
+    base_ref = None
+    for candidate in (f"refs/remotes/{remote}/{base}", f"refs/heads/{base}"):
+        probe = _run(
+            ["git", "rev-parse", "--verify", "--quiet", candidate],
+            cwd=cwd,
+            timeout=GIT_LOCAL_TIMEOUT_S,
+        )
+        if _timed_out(probe):
+            return {"state": "timeout", "base": base, "reason": (probe.stderr or "").strip()}
+        if probe.returncode == 0:
+            base_ref = candidate
+            break
+    if base_ref is None:
+        return {
+            "state": "unknown",
+            "base": base,
+            "reason": f"base branch {base!r} not found locally or on {remote}",
+        }
+
+    result = _run(
+        ["git", "rev-list", "--count", f"{base_ref}..{branch_ref}"],
+        cwd=cwd,
+        timeout=GIT_LOCAL_TIMEOUT_S,
+    )
+    if _timed_out(result):
+        return {"state": "timeout", "base": base_ref, "reason": (result.stderr or "").strip()}
+    if result.returncode != 0:
+        reason = (result.stderr or "").strip() or "git rev-list failed"
+        return {"state": "unknown", "base": base_ref, "reason": reason}
+    try:
+        count = int(result.stdout.strip())
+    except ValueError:
+        return {
+            "state": "unknown",
+            "base": base_ref,
+            "reason": "unparseable rev-list output",
+        }
+    return {
+        "state": "unmerged" if count else "merged",
+        "count": count,
+        "base": base_ref,
+    }
 
 
 def _git_cleanup(
-    project_root: Path,
+    repo_path: Path,
     branch: str | None,
     repo_config: "RepoConfig | None",
 ) -> list[dict[str, Any]]:
     """Step 6: for gitflow repos, return to the base branch and delete the
     merged feature branch; for trunk-based or unidentified repos, record a skip.
+
+    ``repo_path``/``repo_config`` describe the repo that OWNS the feature branch
+    — the story's code repo (162-6). Keying the gitflow decision off the root
+    repo instead strands every merged branch in an inlined sub-repo (the root is
+    trunk-based, so cleanup "skipped") and, in a gitflow-root workspace, runs
+    ``git checkout`` against a repo that has nothing to do with the story.
 
     Cleanup runs only for a *known gitflow* repo. Trunk-based repos have no
     feature-branch workflow, and an unresolved repo (``repo_config is None``)
@@ -240,19 +966,115 @@ def _git_cleanup(
     repo is exactly the failure this story removes. In both cases cleanup is
     skipped, using the repo's own ``default_branch`` (never a hardcoded guess).
 
+    The repo's ``remote_name`` supplies the pull's remote; empty means
+    ``origin``, so every existing repos.yaml is unchanged. Making it
+    configurable opens a new argv position, so it is validated exactly like the
+    base is (``git pull --upload-pack=<cmd> <ref>`` runs an arbitrary program).
+
+    A ``base`` or ``remote`` this function refuses, and a validation probe that
+    times out, both return a single entry carrying a ``warning`` that quotes the
+    offending value verbatim. Values refused by an in-process check (``HEAD``,
+    ``@``, dash-leading, ``refs/``-prefixed) cost zero subprocesses; all other
+    values cost at most one read-only ``git check-ref-format`` probe before any
+    mutating command runs (162-69).
+
     Returns the step entries to append to the finish report.
     """
     if repo_config is None or not repo_config.is_gitflow:
         reason = "root-repo-unresolved" if repo_config is None else "trunk-based"
         return [{"step": 6, "action": "git_cleanup", "skipped": reason, "branch": branch}]
 
+    cwd = str(repo_path)
     base = repo_config.default_branch
-    _run(["git", "checkout", base], cwd=str(project_root))
-    _run(["git", "pull", "origin", base], cwd=str(project_root))
+    remote = (repo_config.remote_name or "").strip() or "origin"
+    entry: dict[str, Any] = {"step": 6, "action": "git_cleanup", "branch": branch}
+
+    def stopped(reason: str) -> list[dict[str, Any]]:
+        """The single output shape for "step 6 did not run, and here is why".
+
+        Step 6 runs AFTER the story is done and the YAML is written, so a
+        cleanup that cannot proceed is bookkeeping, not a finish failure
+        (162-9): un-reporting a story that genuinely shipped is the same lie as
+        reporting one that did not. But it must never read as a clean step 6
+        either — a silent skip is the failure this epic exists to kill, so the
+        report always carries the reason and the operator finishes by hand.
+        """
+        entry["warning"] = (
+            f"git cleanup stopped in {repo_path}: {reason} — "
+            "the story is done; finish the branch cleanup by hand"
+        )
+        return [entry]
+
+    # Validate BEFORE any git runs. `base` and `remote_name` are hand-edited
+    # repos.yaml values reaching argv positions git will flag-parse or DWIM, and
+    # step 6 is the one place in this file that MUTATES a working tree: a
+    # `default_branch: -f` makes the first command `git checkout -f`, which
+    # silently discards every uncommitted modification in the repo. Stricter
+    # than the read path by design — see :func:`_classify_branch_name`.
+    for classify, describe, value in (
+        (
+            lambda v: _classify_branch_name(v, cwd, allow_dash_leading=False),
+            lambda v, d: f"base branch '{v}' is not a valid branch name ({d})",
+            base,
+        ),
+        (
+            # The remote slot has a stricter grammar than a branch name: a
+            # slash-bearing value git reads as a local-path URL (162-48 F2).
+            lambda v: _classify_remote_name(v, cwd),
+            lambda v, d: f"remote name '{v}' is not usable ({d})",
+            remote,
+        ),
+    ):
+        verdict, detail = classify(value)
+        if verdict == _NAME_TIMEOUT:
+            return stopped(detail)
+        if verdict == _NAME_REFUSED:
+            return stopped(describe(value, detail))
+
+    # A legal name is not an existing branch: `default_branch: develp` is a
+    # typo no validator can catch. Confirm it with a read-only probe first, so
+    # the chain never runs three mutations off a checkout that could not work —
+    # and so a hung git is discovered by this probe rather than by the checkout.
+    probe = _run(
+        ["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{base}"],
+        cwd=cwd,
+        timeout=GIT_LOCAL_TIMEOUT_S,
+    )
+    if _timed_out(probe):
+        return stopped((probe.stderr or "").strip())
+    if probe.returncode != 0:
+        return stopped(
+            f"base branch '{base}' does not exist in this repo, so it is not "
+            f"usable as a checkout target"
+        )
+
+    cleanup: list[tuple[list[str], float]] = [
+        # `--` ends the rev list, so git cannot fall back to pathspec mode: a
+        # base that happens to name a tracked file would otherwise restore the
+        # indexed copy over the operator's uncommitted edit and answer rc=0.
+        (["git", "checkout", base, "--"], GIT_LOCAL_TIMEOUT_S),
+        # Fully-qualified refspec for the same reason every read-path candidate
+        # is (162-4): a bare name is resolved on the remote with the same DWIM,
+        # so a tag or an `origin/x`-shaped branch can shadow the intended base.
+        (["git", "pull", remote, f"refs/heads/{base}"], GIT_NETWORK_TIMEOUT_S),
+    ]
     if branch:
         # `--` guards against a branch value that looks like a git flag.
-        _run(["git", "branch", "-d", "--", branch], cwd=str(project_root))
-    return [{"step": 6, "action": "git_cleanup", "branch": branch}]
+        cleanup.append((["git", "branch", "-d", "--", branch], GIT_LOCAL_TIMEOUT_S))
+
+    for cmd, timeout in cleanup:
+        result = _run(cmd, cwd=cwd, timeout=timeout)
+        if _timed_out(result):
+            # Stop the chain: the later commands assume the earlier one landed
+            # (a delete aimed at the branch we are still standing on fails
+            # anyway), and step 7 still removes the session.
+            return stopped((result.stderr or "").strip())
+        if cmd[:2] == ["git", "checkout"] and result.returncode != 0:
+            # A checkout that failed (a conflicting local modification) leaves
+            # the feature branch checked out, and the pull below would then land
+            # the base's commits ON it. Never keep going from there.
+            return stopped((result.stderr or "").strip() or f"git checkout {base} failed")
+    return [entry]
 
 
 def finish_story(
@@ -311,9 +1133,30 @@ def finish_story(
             "error": format_story_not_found_error(data, story_id),
         }
 
-    fields = _parse_session(session_path)
+    try:
+        fields = _parse_session(session_path)
+    except (OSError, UnicodeDecodeError) as exc:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "error": (
+                f"Cannot read session file `.session/{story_id}-session.md`: {exc}. "
+                "To fix: Check file permissions and encoding, then retry."
+            ),
+        }
     jira_key = _extract_jira_key(fields)
-    branch = _extract_branch(fields)
+    # A declared-but-impossible branch aborts here: before any subprocess, any
+    # transition, and any archive, in dry run too (155-31 preview/reality
+    # parity). Converted to a result rather than propagated, per the no-throw
+    # contract (SOUL #10).
+    try:
+        branch = _extract_branch(fields)
+    except InvalidBranchValue as exc:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "error": f"Cannot finish {story_id}: {exc}",
+        }
     pr_number = _extract_pr_number(fields)
 
     # Resolve Jira key from sprint YAML when the session omits it, reusing the
@@ -323,13 +1166,64 @@ def finish_story(
     if not jira_key and _has_real_jira_key(story):
         jira_key = story.get("jira")
 
-    # Fallback: resolve PR from GitHub if not in session
-    if not pr_number and branch:
-        result = _run(
-            ["gh", "pr", "list", "--head", branch, "--json", "number", "--jq", ".[0].number"]
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            pr_number = result.stdout.strip()
+    # --- Resolve the story's code repo(s) (162-6) ---
+    # Every gh/git probe below runs in the repo the story's work actually lives
+    # in. ``gh`` answers a PR number against its working directory's remote, so
+    # a probe left at the orchestrator root reads a DIFFERENT repository: a
+    # number collision merges an unrelated PR, and a miss aborts a finish whose
+    # work landed. Step 5 (the epic archive) is the one deliberate exception —
+    # it reads the orchestrator's own ``sprint/`` tree.
+    story_repos = _resolve_story_repos(project_root, story)
+
+    # PR-field semantics for a multi-repo story: the session carries a single
+    # ``**PR:** #N`` line, which can only describe ONE repo, so it is honored
+    # only when the story resolves to exactly one repo. A multi-repo story
+    # resolves each repo's PR from the shared feature branch, in that repo.
+    # (Recorded as a Delivery Finding: a per-repo session syntax belongs in the
+    # session schema before multi-repo stories rely on a recorded PR number.)
+    session_pr = pr_number if len(story_repos) == 1 else None
+    repo_prs: list[tuple[Path, RepoConfig | None, str | None]] = []
+    for repo_path, repo_config in story_repos:
+        resolved_pr = session_pr
+        if not resolved_pr and branch:
+            probe = _run(
+                [
+                    "gh",
+                    "pr",
+                    "list",
+                    "--head",
+                    branch,
+                    "--json",
+                    "number",
+                    "--jq",
+                    ".[0].number",
+                ],
+                cwd=str(repo_path),
+                timeout=GH_TIMEOUT_S,
+            )
+            if _timed_out(probe):
+                # A timed-out probe must NOT degrade to "no PR resolves" (162-9):
+                # that drops finish into the no-PR arm, where a branch that
+                # merely LOOKS merged finishes silently. Abort before any
+                # irreversible step, naming the command that hung.
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": (
+                        f"Timed out resolving the PR for branch {branch!r} in "
+                        f"{repo_path}: {(probe.stderr or '').strip()} — refusing to "
+                        "treat a hung probe as 'no PR exists'. Re-run finish, or "
+                        "record the real PR in Story Details."
+                    ),
+                }
+            if probe.returncode == 0 and probe.stdout.strip():
+                resolved_pr = probe.stdout.strip()
+        repo_prs.append((repo_path, repo_config, resolved_pr))
+
+    # The reported/previewed PR: the single repo's, or the first one resolved.
+    pr_number = next((rp for _p, _c, rp in repo_prs if rp), None)
+    primary_repo_path = repo_prs[0][0]
 
     today = date.today().isoformat()
     steps: list[dict[str, Any]] = []
@@ -355,9 +1249,78 @@ def finish_story(
                 {"step": 2, "action": f"PR #{pr_number} — waiting for human review and merge"}
             )
         elif pr_number:
-            steps.append({"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"})
+            # 162-19/162-20: Mirror the real-run gate path (155-32 / 162-9 / gh #113).
+            # _classify_pr encodes the precedence order ONCE; the verdict routes
+            # the dry-run step without positional dependence on call order.
+            view, gate_timeout = _pr_view_probe(pr_number, cwd=primary_repo_path)
+            if gate_timeout:
+                gate_error = (
+                    f"Timed out reading the state of PR #{pr_number} in "
+                    f"{primary_repo_path}: {gate_timeout} — refusing to attempt "
+                    "the merge without knowing whether the PR conflicts or already "
+                    "landed. Re-run finish."
+                )
+                steps.append({"step": 2, "action": gate_error})
+            else:
+                cl = _classify_pr(view)
+                if cl.verdict == _PRVerdict.MERGED:
+                    steps.append(
+                        {
+                            "step": 2,
+                            "action": f"PR #{pr_number} already merged — will skip merge",
+                        }
+                    )
+                elif cl.verdict == _PRVerdict.BLOCKED:
+                    steps.append({"step": 2, "action": f"PR #{pr_number} is {cl.message}"})
+                else:
+                    steps.append(
+                        {"step": 2, "action": f"Merge PR #{pr_number} (squash, delete branch)"}
+                    )
         else:
-            steps.append({"step": 2, "action": "No PR to merge"})
+            # No PR resolves — mirror the real-run no-PR gate (155-34 parity, 164-9)
+            if branch:
+                merge_state = _branch_merge_state(
+                    primary_repo_path,
+                    branch,
+                    base=None,
+                    remote=None,
+                )
+                if merge_state["state"] == "merged":
+                    steps.append(
+                        {"step": 2, "action": "merge_pr", "skipped": "branch-verified-merged"}
+                    )
+                elif merge_state["state"] == "timeout":
+                    abort_msg = (
+                        f"No PR resolves, and verifying branch {branch!r} timed out: "
+                        f"{merge_state['reason']} — refusing to mark the story done"
+                    )
+                    steps.append(
+                        {"step": 2, "action": "merge_pr", "success": False, "error": abort_msg}
+                    )
+                elif merge_state["state"] == "unmerged":
+                    abort_msg = (
+                        f"No PR resolves, and branch {branch!r} has "
+                        f"{merge_state['count']} unmerged commit(s) — refusing to mark done"
+                    )
+                    steps.append(
+                        {"step": 2, "action": "merge_pr", "success": False, "error": abort_msg}
+                    )
+                else:
+                    abort_msg = (
+                        f"No PR resolves, and branch {branch!r} cannot be verified "
+                        f"({merge_state['reason']}) — refusing to mark done"
+                    )
+                    steps.append(
+                        {"step": 2, "action": "merge_pr", "success": False, "error": abort_msg}
+                    )
+            elif _field_is_sentinel(fields.get("branch")):
+                steps.append({"step": 2, "action": "merge_pr", "skipped": True})
+            else:
+                _error = (
+                    "No PR and no branch resolve from the session — the Branch/PR "
+                    "fields are empty, placeholders, or absent."
+                )
+                steps.append({"step": 2, "action": "merge_pr", "success": False, "error": _error})
         if jira_key:
             steps.append({"step": 3, "action": f"Transition {jira_key} to Done"})
         else:
@@ -367,7 +1330,10 @@ def finish_story(
         )
         steps.append({"step": "4c", "action": "Generate demo artifacts"})
         steps.append({"step": 5, "action": "Archive completed epics"})
-        steps.append({"step": 6, "action": f"Delete local branch: {branch}"})
+        if branch:
+            steps.append({"step": 6, "action": f"Delete local branch: {branch}"})
+        else:
+            steps.append({"step": 6, "action": "Skip git cleanup (no branch)"})
         steps.append({"step": 7, "action": "Remove session file"})
         return {"success": True, "dry_run": True, "jira_key": jira_key, "steps": steps}
 
@@ -380,25 +1346,77 @@ def finish_story(
     # the merge + post-merge _pr_is_merged verification.
     from pf.common.pr_config import get_pr_merge_mode
 
-    if pr_number and get_pr_merge_mode() == "auto":
-        block_reason = _pr_block_reason(pr_number)
-        if block_reason:
-            steps.append(
-                {
-                    "step": 2,
-                    "action": "merge_pr",
-                    "pr": pr_number,
+    pr_merge_mode = get_pr_merge_mode()
+
+    # The ONE pre-merge probe (155-32). Both pre-merge questions — "is it
+    # conflicting?" and "did it already land?" — are questions about the same
+    # snapshot of the same PR, so they share one ``gh pr view``.
+    #
+    # It stays inside the auto-mode branch on purpose. Human merge mode never
+    # auto-merges, so it needs neither answer; hoisting the fetch above this
+    # guard would add an API round trip to every human-mode finish and put the
+    # hard-blocking conflict gate on a path that is deliberately advisory.
+    #
+    # Every repo is gated BEFORE any repo is merged (162-6): a multi-repo finish
+    # cannot be atomic, so the least it can do is not land repo A's PR and then
+    # discover repo B's is conflicting.
+    pr_views: dict[Path, dict[str, Any] | None] = {}
+    if pr_merge_mode == "auto":
+        for repo_path, _repo_config, repo_pr in repo_prs:
+            if not repo_pr:
+                continue
+            view, gate_timeout = _pr_view_probe(repo_pr, cwd=repo_path)
+            if gate_timeout:
+                # Unlike a gh ERROR, a hung gate probe is not permissively
+                # indeterminate (162-9): the process that just hung will hang on
+                # the merge call too, and falling through would attempt the
+                # irreversible step with no idea whether the PR conflicts or
+                # already landed. Abort before anything irreversible runs.
+                gate_error = (
+                    f"Timed out reading the state of PR #{repo_pr} in {repo_path}: "
+                    f"{gate_timeout} — refusing to attempt the merge without knowing "
+                    "whether the PR conflicts or already landed. Re-run finish."
+                )
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "success": False,
+                        "error": gate_error,
+                    }
+                )
+                return {
                     "success": False,
-                    "error": block_reason,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": gate_error,
+                    "steps": steps,
                 }
-            )
-            return {
-                "success": False,
-                "story_id": story_id,
-                "jira_key": jira_key,
-                "error": block_reason,
-                "steps": steps,
-            }
+            pr_views[repo_path] = view
+            cl = _classify_pr(view)
+            block_reason: str | None = None
+            if cl.verdict == _PRVerdict.BLOCKED:
+                # Prefix the classifier's message with the PR number so the
+                # abort reason is fully qualified (callers expect "PR #N is…").
+                block_reason = f"PR #{repo_pr} is {cl.message}"
+            if block_reason:
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "success": False,
+                        "error": block_reason,
+                    }
+                )
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": block_reason,
+                    "steps": steps,
+                }
 
     # --- Step 2: Merge PR (runs BEFORE archive) ---
     # The merge is verified here, ahead of the (irreversible) session archive, so
@@ -411,76 +1429,275 @@ def finish_story(
     # as CONFLICTING; it surfaces as a non-zero ``gh pr merge`` (or a merge that
     # never reaches MERGED) and is caught by the two abort branches below —
     # before Step 1 archives anything.
-    pr_merge_mode = get_pr_merge_mode()
-    if pr_merge_mode == "human":
-        # Human merge mode never auto-merges; the story is left in_review below
-        # for a human to merge. Nothing here is load-bearing.
-        if pr_number:
+    #
+    # EVERY repo the story touches must clear this gate before the story can go
+    # done (162-6/AC2): one repo merged and another still open is half-shipped
+    # work, and the abort names the PR that did not land so the operator knows
+    # which repo to chase.
+    for repo_path, repo_config, repo_pr in repo_prs:
+        if pr_merge_mode == "human":
+            # Human merge mode never auto-merges; the story is left in_review
+            # below for a human to merge. Nothing here is load-bearing.
+            if repo_pr:
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "mode": "human",
+                        "message": f"PR #{repo_pr} ready for human review and merge",
+                    }
+                )
+            else:
+                steps.append({"step": 2, "action": "merge_pr", "mode": "human", "skipped": True})
+            continue
+
+        if repo_pr and _classify_pr(pr_views.get(repo_path)).verdict == _PRVerdict.MERGED:
+            # Already-merged short-circuit (155-29): a prior finish run landed
+            # the merge and then aborted on a later step (archive OSError,
+            # status-read guard, transition failure) — all of which keep the
+            # session so finish can be retried. The retry must NOT re-attempt
+            # ``gh pr merge``: gh exits non-zero on a merged PR ("already
+            # merged"), which would trip the rc!=0 abort below and wedge every
+            # retry.
+            #
+            # This reads the pre-merge snapshot taken by the conflict gate above
+            # — correct here precisely because nothing has happened since: no
+            # merge was attempted, so the snapshot still describes the current
+            # PR. The post-merge verification below must NOT do this. An
+            # unreadable probe leaves the snapshot None, which reads as NOT
+            # merged and falls through to the real merge attempt — never
+            # silently skips it.
             steps.append(
                 {
                     "step": 2,
                     "action": "merge_pr",
-                    "pr": pr_number,
-                    "mode": "human",
-                    "message": f"PR #{pr_number} ready for human review and merge",
+                    "pr": repo_pr,
+                    "merged": True,
+                    "already_merged": True,
                 }
             )
+            continue
+
+        if repo_pr:
+            # Auto merge mode: the merge is load-bearing. A non-zero merge OR a
+            # merge that did not actually land must abort finish BEFORE the story
+            # is flipped to ``done`` AND before the session is archived —
+            # otherwise we mark a story shipped whose code never reached the base
+            # branch (gh #71 / #60) or leave a stray archive that lies about
+            # completion (155-15). Return loud, run no irreversible step (no
+            # archive, no transition, no session removal).
+            merge_result = _run(
+                ["gh", "pr", "merge", repo_pr, "--squash", "--delete-branch"],
+                cwd=str(repo_path),
+                timeout=GH_TIMEOUT_S,
+            )
+            if _timed_out(merge_result):
+                # The irreversible step hung. Whether it landed server-side is
+                # genuinely unknown, so the report says exactly that and nothing
+                # more (162-9) — it must not blame unmerged code, which would
+                # send an operator to re-merge or revert a PR that may be fine.
+                # 155-29's already-merged short-circuit makes the re-run safe.
+                merge_timeout_error = (
+                    f"Timed out merging PR #{repo_pr}: "
+                    f"{(merge_result.stderr or '').strip()} — whether the merge "
+                    "landed on GitHub is unknown, so the story is not being marked "
+                    "done. Check the PR and re-run finish; an already-landed merge "
+                    "is skipped on the retry."
+                )
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "success": False,
+                        "error": merge_timeout_error,
+                    }
+                )
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": merge_timeout_error,
+                    "steps": steps,
+                }
+            if merge_result.returncode != 0:
+                stderr = (merge_result.stderr or "").strip()
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "success": False,
+                        "error": stderr or "gh pr merge returned non-zero",
+                    }
+                )
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": (
+                        f"PR #{repo_pr} merge failed: "
+                        f"{stderr or 'gh pr merge returned non-zero'} — "
+                        "refusing to mark the story done with unmerged code"
+                    ),
+                    "steps": steps,
+                }
+            verified_merged, verify_timeout = _pr_merge_verification(repo_pr, cwd=repo_path)
+            if verify_timeout:
+                # The merge command completed; the VERIFICATION hung. Finish
+                # still cannot mark the story done — it has no confirmation —
+                # but the report must say "could not verify", never "the PR did
+                # not land" (162-9). That state is un-observed, and in the case
+                # this guards it is false: routing this into the abort below
+                # would tell an operator to chase unmerged code for a merge that
+                # went through. The step record keeps the merge attempt visible
+                # so a retry (and 155-29's short-circuit) can reason about it.
+                verify_error = (
+                    f"PR #{repo_pr}: the merge command completed, but confirming the "
+                    f"result timed out: {verify_timeout} — refusing to mark the story "
+                    "done without confirmation. Check the PR's state and re-run "
+                    "finish; an already-landed merge is skipped on the retry."
+                )
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "merge_command_completed": True,
+                        "success": False,
+                        "error": verify_error,
+                    }
+                )
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": verify_error,
+                    "steps": steps,
+                }
+            if not verified_merged:
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "pr": repo_pr,
+                        "success": False,
+                        "error": "PR is not in MERGED state after the merge step",
+                    }
+                )
+                return {
+                    "success": False,
+                    "story_id": story_id,
+                    "jira_key": jira_key,
+                    "error": (
+                        f"PR #{repo_pr} is not MERGED after the merge step — "
+                        "refusing to mark the story done with unmerged code"
+                    ),
+                    "steps": steps,
+                }
+            steps.append({"step": 2, "action": "merge_pr", "pr": repo_pr, "merged": True})
+            continue
+
+        # --- No-PR verification gate (155-34) ---
+        # The last unguarded arm: 155-1 made the merge load-bearing when a PR
+        # exists, but a story whose PR resolution comes up empty used to glide
+        # through this skip into the full done ceremony — even with real
+        # unmerged commits on its branch, and even for a session whose
+        # merge-target fields are unfilled placeholders (which 155-40's
+        # Story Details authority now correctly refuses to backfill from
+        # later sections). The skip is only accepted for worlds finish can
+        # affirmatively trust: a branch verified fully merged into the base,
+        # or an agent's explicit no-branch sentinel. Everything else —
+        # unmerged commits, an unverifiable/missing branch, empty or
+        # placeholder fields, or fields absent entirely (the uniform-abort
+        # answer to TEA's legacy-shape question: unresolvable is
+        # unverifiable, regardless of why) — aborts loudly BEFORE any
+        # irreversible step, with the session kept so finish can be retried
+        # once the operator records the real Branch/PR (or affirms absence).
+        if branch:
+            merge_state = _branch_merge_state(
+                repo_path,
+                branch,
+                base=repo_config.default_branch if repo_config else None,
+                remote=repo_config.remote_name if repo_config else None,
+            )
+            if merge_state["state"] == "merged":
+                # NOT ``skipped: True``: an all-repos abort keeps the already
+                # verified repos' step records in the report, and a bare
+                # ``skipped`` there reads as the silent skip this epic exists to
+                # kill (155-34). The value says what was verified.
+                steps.append(
+                    {
+                        "step": 2,
+                        "action": "merge_pr",
+                        "skipped": "branch-verified-merged",
+                        "branch_verified_merged_into": merge_state["base"],
+                    }
+                )
+                continue
+            if merge_state["state"] == "timeout":
+                # A hung git probe is not the permissive unknown either (162-9):
+                # the no-PR arm has no later verification, so an unbounded-turned
+                # -degraded probe is exactly how unlanded work finishes silently.
+                error = (
+                    f"No PR resolves, and verifying branch {branch!r} timed out: "
+                    f"{merge_state['reason']} — refusing to mark the story done on "
+                    "the strength of a probe that never came back. Re-run finish "
+                    "once git responds."
+                )
+            elif merge_state["state"] == "unmerged":
+                error = (
+                    f"No PR resolves, and branch {branch!r} has "
+                    f"{merge_state['count']} unmerged commit(s) not in "
+                    f"{merge_state['base']} — refusing to mark the story done "
+                    "with unlanded code. Record the real PR in Story Details "
+                    "(or merge the branch), then re-run finish."
+                )
+            else:
+                error = (
+                    f"No PR resolves, and branch {branch!r} cannot be verified "
+                    f"({merge_state['reason']}) — refusing to mark the story "
+                    "done with unverifiable work. Record the real PR in Story "
+                    "Details, or set the Branch field to 'none' if there is "
+                    "genuinely no branch, then re-run finish."
+                )
+            steps.append(
+                {
+                    "step": 2,
+                    "action": "merge_pr",
+                    "branch": branch,
+                    "success": False,
+                    "error": error,
+                }
+            )
+            return {
+                "success": False,
+                "story_id": story_id,
+                "jira_key": jira_key,
+                "error": error,
+                "steps": steps,
+            }
+        elif _field_is_sentinel(fields.get("branch")):
+            # An agent affirmatively recorded "no branch" — the accepted
+            # 155-1 no-PR world. Nothing exists to verify, by declaration.
+            steps.append({"step": 2, "action": "merge_pr", "skipped": True})
         else:
-            steps.append({"step": 2, "action": "merge_pr", "mode": "human", "skipped": True})
-    elif pr_number:
-        # Auto merge mode: the merge is load-bearing. A non-zero merge OR a
-        # merge that did not actually land must abort finish BEFORE the story is
-        # flipped to ``done`` AND before the session is archived — otherwise we
-        # mark a story shipped whose code never reached the base branch
-        # (gh #71 / #60) or leave a stray archive that lies about completion
-        # (155-15). Return loud, run no irreversible step (no archive, no
-        # transition, no session removal).
-        merge_result = _run(["gh", "pr", "merge", pr_number, "--squash", "--delete-branch"])
-        if merge_result.returncode != 0:
-            stderr = (merge_result.stderr or "").strip()
-            steps.append(
-                {
-                    "step": 2,
-                    "action": "merge_pr",
-                    "pr": pr_number,
-                    "success": False,
-                    "error": stderr or "gh pr merge returned non-zero",
-                }
+            error = (
+                "No PR and no branch resolve from the session — the Branch/PR "
+                "fields are empty, placeholders, or absent, so finish cannot "
+                "verify anything landed. Record the real values in Story "
+                "Details (or set them to 'none' to affirm absence), then "
+                "re-run finish."
             )
+            steps.append({"step": 2, "action": "merge_pr", "success": False, "error": error})
             return {
                 "success": False,
                 "story_id": story_id,
                 "jira_key": jira_key,
-                "error": (
-                    f"PR #{pr_number} merge failed: "
-                    f"{stderr or 'gh pr merge returned non-zero'} — "
-                    "refusing to mark the story done with unmerged code"
-                ),
+                "error": error,
                 "steps": steps,
             }
-        if not _pr_is_merged(pr_number):
-            steps.append(
-                {
-                    "step": 2,
-                    "action": "merge_pr",
-                    "pr": pr_number,
-                    "success": False,
-                    "error": "PR is not in MERGED state after the merge step",
-                }
-            )
-            return {
-                "success": False,
-                "story_id": story_id,
-                "jira_key": jira_key,
-                "error": (
-                    f"PR #{pr_number} is not MERGED after the merge step — "
-                    "refusing to mark the story done with unmerged code"
-                ),
-                "steps": steps,
-            }
-        steps.append({"step": 2, "action": "merge_pr", "pr": pr_number, "merged": True})
-    else:
-        steps.append({"step": 2, "action": "merge_pr", "skipped": True})
 
     # --- Step 1 / 1b: Archive session + dialogue (only after the merge is verified) ---
     # Kept labelled "step 1"/"1b" for report stability, but executed after Step 2 so a
@@ -494,17 +1711,9 @@ def finish_story(
     # stuck in_review and the session unremoved. Abort loud-but-clean, exactly like the
     # merge/verify/transition failures above: return a result dict, run no further
     # irreversible step (no done transition, no session removal).
+    archive_dest = archive_dir / archive_name
     try:
-        archive_dest = archive_dir / archive_name
         shutil.copy2(session_path, archive_dest)
-        steps.append({"step": 1, "action": "archive_session", "dest": str(archive_dest)})
-
-        if dialogue_path.exists():
-            dialogue_dest = archive_dir / dialogue_archive_name
-            shutil.copy2(dialogue_path, dialogue_dest)
-            steps.append(
-                {"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)}
-            )
     except OSError as exc:
         steps.append(
             {
@@ -524,17 +1733,98 @@ def finish_story(
             ),
             "steps": steps,
         }
+    steps.append({"step": 1, "action": "archive_session", "dest": str(archive_dest)})
+
+    if dialogue_path.exists():
+        dialogue_dest = archive_dir / dialogue_archive_name
+        try:
+            shutil.copy2(dialogue_path, dialogue_dest)
+        except OSError as exc:
+            # Step 1 already landed — remove the partial session archive before
+            # returning so no stray file is left behind (SOUL #14).
+            try:
+                archive_dest.unlink()
+            except OSError:
+                pass
+            steps.append(
+                {
+                    "step": "1b",
+                    "action": "archive_dialogue",
+                    "success": False,
+                    "error": str(exc),
+                }
+            )
+            return {
+                "success": False,
+                "story_id": story_id,
+                "jira_key": jira_key,
+                "error": (
+                    f"Failed to archive dialogue for {story_id}: {exc} — refusing to "
+                    "mark the story done with an un-archived session"
+                ),
+                "steps": steps,
+            }
+        steps.append({"step": "1b", "action": "archive_dialogue", "dest": str(dialogue_dest)})
 
     # --- Steps 3 & 4: Transition via state machine (Jira + YAML atomically) ---
     # Story should already be in_review (transitioned at review phase entry).
     # If still in_progress (legacy/edge case), do the two-step.
+    #
+    # read_sprint raises FileNotFoundError/ValueError on a missing or malformed
+    # sprint YAML (155-16, same taxonomy as the primary-read guard above). A
+    # sprint index that became unreadable since that first read must abort the
+    # ceremony loudly HERE — before any status transition — not proceed on a
+    # silently assumed in_progress and surface later as a generic yaml-update
+    # failure (or, worse, complete the full done ceremony against a broken
+    # index). The merge has already landed at this point, so this abort leaves
+    # the same merged-but-not-done state as the transition-failure abort below:
+    # session kept, no done transition, no irreversible cleanup.
+    #
+    # The trailing broad fallback is the PRE-EXISTING behavior for exotic
+    # exceptions, deliberately retained (155-16): this read runs after the
+    # irreversible merge, so an unexpected exception type escaping
+    # finish_story's no-throw contract (SOUL #10) would strand a merged story
+    # with a raw traceback — strictly worse than degrading to the transition
+    # path, which fails loudly on a genuinely broken index anyway.
     try:
         data = read_sprint(sprint_path)
         _epic, current_story, _location = find_story_in_data(data, story_id)
         current_status = (
             current_story.get("status", "in_progress") if current_story else "in_progress"
         )
-    except Exception:
+    except (FileNotFoundError, ValueError) as exc:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "jira_key": jira_key,
+            "error": (
+                f"Could not read sprint data for the status transition: {exc} — "
+                "refusing to transition against an unreadable sprint index"
+            ),
+            "steps": steps,
+        }
+    except Exception as exc:
+        # The broad fallback is deliberately kept (155-16, above) but must not be
+        # SILENT (162-9/AC1). It fires after the irreversible merge and rewrites
+        # the story's real status to an ASSUMED in_progress, which then drives two
+        # bridge transitions against a sprint index we have just proven
+        # unreadable — and the operator saw a clean finish. Name the error on
+        # stderr and in the report; degrading loudly is the point, so this still
+        # must not raise.
+        status_read_warning = (
+            f"Could not read sprint data for the status transition: {exc!r} — "
+            "assuming status 'in_progress' and continuing after the merge. The "
+            "sprint index may be broken; verify this story's status by hand."
+        )
+        print(f"WARNING: {status_read_warning}", file=sys.stderr)
+        steps.append(
+            {
+                "step": "3a",
+                "action": "status_read",
+                "success": False,
+                "warning": status_read_warning,
+            }
+        )
         current_status = "in_progress"
 
     # Bridge through intermediate states to reach in_review (or done).
@@ -609,8 +1899,8 @@ def finish_story(
     # (SOUL #10). Broad catch is deliberate: any exception at this point is
     # strictly bookkeeping, and the failure is surfaced in the step entry.
     try:
-        data = read_sprint(sprint_path)
-        _epic, completed_story, _location = find_story_in_data(data, story_id)
+        data_step4b = read_sprint(sprint_path)
+        _epic, completed_story, _location = find_story_in_data(data_step4b, story_id)
     except Exception as exc:
         completed_story = None
         steps.append(
@@ -618,12 +1908,22 @@ def finish_story(
                 "step": "4b",
                 "action": "add_completed_story",
                 "success": False,
-                "error": (
-                    f"Could not re-read sprint data for completed-row "
-                    f"bookkeeping: {exc}"
-                ),
+                "error": (f"Could not re-read sprint data for completed-row bookkeeping: {exc}"),
             }
         )
+    else:
+        if not completed_story:
+            steps.append(
+                {
+                    "step": "4b",
+                    "action": "add_completed_story",
+                    "success": False,
+                    "error": (
+                        f"Story {story_id} not found in re-read sprint data; "
+                        "completed row not recorded"
+                    ),
+                }
+            )
     if completed_story:
         add_result = _add_story_to_completed(project_root, story_id, completed_story)
         if add_result.get("success"):
@@ -644,9 +1944,7 @@ def finish_story(
     try:
         from pf.demo import orchestrator as demo_orchestrator
 
-        demo_result = demo_orchestrator.generate(
-            story_id, project_root=project_root
-        )
+        demo_result = demo_orchestrator.generate(story_id, project_root=project_root)
         if demo_result.get("success"):
             steps.append({"step": "4c", "action": "demo_generate"})
         else:
@@ -667,25 +1965,36 @@ def finish_story(
         )
 
     # --- Step 5: Archive completed epics ---
-    result = _run(
+    # Deliberately NOT routed into the story's code repo (162-6 over-reach
+    # guard): this reads the ORCHESTRATOR's ``sprint/`` tree, which no code repo
+    # has — re-routing it would make the epic archive a silent no-op.
+    archive_result = _run(
         [sys.executable, "-m", "pf.cli", "sprint", "epic", "archive"],
         cwd=str(project_root),
+        timeout=SUBCOMMAND_TIMEOUT_S,
     )
-    steps.append({"step": 5, "action": "archive_epics", "ran": True})
+    if _timed_out(archive_result):
+        # Post-done bookkeeping: recorded, not fatal (162-9). The story shipped.
+        steps.append(
+            {
+                "step": 5,
+                "action": "archive_epics",
+                "ran": False,
+                "warning": (
+                    f"Timed out: {(archive_result.stderr or '').strip()} — the story "
+                    "is done; re-run the epic archive by hand"
+                ),
+            }
+        )
+    else:
+        steps.append({"step": 5, "action": "archive_epics", "ran": True})
 
     # --- Step 6: Git cleanup ---
-    # Resolve the config for the repo at the project root (cwd of cleanup).
-    # Only a known gitflow root repo gets branch cleanup; trunk-based or an
-    # unresolved root (root_repo is None) is skipped by _git_cleanup.
-    # Local import: avoids a circular dependency (pf.git.repos imports nothing
-    # from pf.sprint, but the reverse top-level import would couple the layers).
-    from pf.git.repos import load_repos_config
-
-    root_repo = next(
-        (rc for rc in load_repos_config(project_root).values() if rc.path in (".", "")),
-        None,
-    )
-    steps.extend(_git_cleanup(project_root, branch, root_repo))
+    # Cleanup runs in each of the story's code repos — those are where the
+    # feature branch exists (162-6). Only a known gitflow repo gets branch
+    # cleanup; trunk-based or an unresolved repo is skipped by _git_cleanup.
+    for repo_path, repo_config in story_repos:
+        steps.extend(_git_cleanup(repo_path, branch, repo_config))
 
     # --- Step 7: Remove session file ---
     if session_path.exists():

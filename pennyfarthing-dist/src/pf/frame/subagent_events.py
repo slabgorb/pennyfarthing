@@ -10,10 +10,14 @@ Story: 143-16
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from pathlib import Path
 from typing import Any
+
+# Frame logs through uvicorn's error logger so records land in .session/frame.log
+_logger = logging.getLogger("uvicorn.error")
 
 
 def _get_frame_url() -> str | None:
@@ -33,7 +37,11 @@ def _get_frame_url() -> str | None:
                 port = port_file.read_text().strip()
                 return f"http://127.0.0.1:{port}"
             except Exception:
-                pass
+                _logger.error(
+                    "Failed to read Frame port file %s from FRAME_PROJECT_DIR",
+                    port_file,
+                    exc_info=True,
+                )
 
     # Try CWD
     cwd_port = Path.cwd() / ".frame-port"
@@ -42,7 +50,11 @@ def _get_frame_url() -> str | None:
             port = cwd_port.read_text().strip()
             return f"http://127.0.0.1:{port}"
         except Exception:
-            pass
+            _logger.error(
+                "Failed to read Frame port file %s from the current directory",
+                cwd_port,
+                exc_info=True,
+            )
 
     return None
 
@@ -121,4 +133,10 @@ def emit_subagent_event(
         urllib.request.urlopen(req, timeout=2)
         return {"success": True}
     except Exception:
+        _logger.error(
+            "Failed to POST subagent %r event to Frame at %s",
+            event_type,
+            url,
+            exc_info=True,
+        )
         return {"success": False, "error": "Failed to reach Frame"}

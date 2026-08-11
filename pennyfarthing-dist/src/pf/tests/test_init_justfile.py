@@ -341,13 +341,45 @@ class TestLegacyMigration:
             "frame *args:\n"
             "    pf launch frame\n"
             "\n"
-            "gui:\n"
-            "    pf launch frame\n"
+            # `gui` used to be listed here, but it was removed from
+            # FRAMEWORK_RECIPES when the dead gui recipe was dropped
+            # (9f8786396), so it is no longer migratable. `tui` is a
+            # current framework recipe and preserves this test's intent:
+            # the count must reflect *all* migrated recipes, not just one.
+            "tui:\n"
+            "    pf frame start\n"
         )
 
         result = update_framework_justfile(target_dir, mock_dist)
 
-        assert len(result["data"]["recipes_migrated"]) == 2
+        migrated = result["data"]["recipes_migrated"]
+        assert len(migrated) == 2, migrated
+        # Names, not just the count — a count-only assertion would pass if the
+        # migrator reported the wrong recipes.
+        assert sorted(migrated) == ["frame", "tui"], migrated
+
+    def test_non_framework_recipe_is_not_migrated(
+        self, target_dir: Path, mock_dist: Path
+    ) -> None:
+        """A project's own recipe must survive untouched (162-5).
+
+        `gui` is the concrete regression: once it left FRAMEWORK_RECIPES it
+        became a user recipe, and migrating it would silently comment out
+        working project tooling.
+        """
+        from pf.init.justfile import update_framework_justfile
+
+        (target_dir / "justfile").write_text(
+            "gui:\n"
+            "    ./my-own-gui\n"
+        )
+
+        result = update_framework_justfile(target_dir, mock_dist)
+
+        assert result["data"]["recipes_migrated"] == []
+        content = (target_dir / "justfile").read_text()
+        assert "# [pf-migrated]" not in content
+        assert "    ./my-own-gui" in content
 
 
 # ===================================================================

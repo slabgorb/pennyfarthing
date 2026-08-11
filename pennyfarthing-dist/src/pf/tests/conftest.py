@@ -2,9 +2,12 @@
 
 Story 63-9: Reorganize pf into fan-out CLI pattern.
 Story 126-1: Updated for src/ layout migration.
+Story 162-49: Added `pf_project_dir` — a hermetic PF_PROJECT_DIR fixture so
+frame-route results can never depend on the cwd pytest was invoked from.
 """
 
 import sys
+import textwrap
 from collections.abc import Generator
 from pathlib import Path
 
@@ -60,10 +63,235 @@ def textual_app_context():
         active_app.reset(token)
 
 
+@pytest.fixture(autouse=True)
+def _stub_demo_generate(monkeypatch):
+    """Stub pf.demo.orchestrator.generate to a no-op for the full test suite.
+
+    Story 164-10: finish_story Step 4c calls demo_orchestrator.generate() after
+    the archive step. In the full suite this spawns real I/O (reads sprint/session
+    files, writes sprint/demos/), creating cross-test state leakage and slow
+    subprocess activity in finish-family tests that have no interest in demo
+    generation.
+
+    Tests that exercise generate() directly (test_demo_cli, test_demo_finish_hook)
+    apply their own @patch("pf.demo.orchestrator.generate") decorators, which
+    override this stub for the duration of those tests — the stub never masks their
+    real assertions.
+    """
+    monkeypatch.setattr(
+        "pf.demo.orchestrator.generate",
+        lambda *_args, **_kwargs: {"success": True},
+    )
+
+
+@pytest.fixture(autouse=True)
+def isolate_frame_webui(monkeypatch, tmp_path):
+    """Isolate frame tests from built webui/dist (story 165-5 fix).
+
+    Frame's ``_resolve_webui_dir()`` searches for a built webui at
+    ``pennyfarthing-dist/src/pf/frame/webui/dist/``. When this directory
+    exists (from ``pf npm build`` in task 2), every route test that calls
+    ``create_app()`` mounts StaticFiles at ``/``, changing router behavior
+    and causing 405 Method Not Allowed on all data-proxy routes (404 for
+    missing routes → 405 when StaticFiles handles ``/`` first).
+
+    This autouse fixture sets ``FRAME_WEBUI_DIR`` to a nonexistent path by
+    default, so tests never pick up the packaged build. Tests that
+    explicitly want the webui mounted (webui integration tests) override
+    this by setting their own ``FRAME_WEBUI_DIR`` to a real directory
+    (see test_frame_web_routes.py fixtures).
+
+    Boundary: Applies globally, preventing the build artifact from silently
+    changing behavior. An explicit override is required to test webui integration.
+    """
+    nonexistent = tmp_path / "fake-webui-dir-never-created"
+    monkeypatch.setenv("FRAME_WEBUI_DIR", str(nonexistent))
+
+
+@pytest.fixture(autouse=True)
+def _reset_persona_quote_cache():
+    """Drop the persona quote cache before and after every test (story 164-18).
+
+    ``pf.prime.persona._quote_cache`` is a module global keyed by
+    (agent_name, theme). Without this reset a quote selected by one test leaks
+    into every later test using the same key, so a test asserting on a quote can
+    pass or fail depending on what ran before it.
+    """
+    from pf.prime.persona import reset_quote_cache
+
+    reset_quote_cache()
+    yield
+    reset_quote_cache()
+
+
 @pytest.fixture
 def project_root() -> Path:
     """Return the project root path."""
     return PROJECT_ROOT
+
+
+# ---------------------------------------------------------------------------
+# Story 162-49: cwd-independent project-dir fixture
+# ---------------------------------------------------------------------------
+#
+# `pf.frame.routes.data_proxy._get_project_dir()` resolves the project directory
+# from ``PF_PROJECT_DIR`` and falls back to ``os.getcwd()``. Because the fallback
+# won, the frame-route suite silently changed shape with the invocation cwd:
+# from the orchestrator root the persona route reached its `load_persona(...)`
+# call and blew up, while from `pennyfarthing-dist/` no `.pennyfarthing/` was
+# found above the cwd, the route short-circuited to 404, and the very same tests
+# passed VACUOUSLY (6119 passed / 4 failed from one cwd vs 6123 / 0 from the
+# other). Suite counts that depend on the shell's cwd are not evidence.
+#
+# `pf_project_dir` removes that degree of freedom: it builds a complete, hermetic
+# Pennyfarthing project under tmp_path, points PF_PROJECT_DIR at it, and clears
+# every other ambient variable that could redirect project-root resolution
+# (PROJECT_ROOT, CLAUDE_PROJECT_DIR, PF_THEME, SESSION_ID). Tests that go through
+# a frame route should depend on this fixture — one fixture, not a monkeypatch
+# copy-pasted into each test.
+
+TEST_THEME = "conftest-test-theme"
+
+_TEST_THEME_YAML = """\
+id: conftest-test-theme
+name: Conftest Test Theme
+tier: test
+user_title: Test Pilot
+agents:
+  dev:
+    character: Ada Lovelace
+    style: precise and unhurried
+    role: Developer
+    quote: First, make it correct.
+    trait: methodical
+    quirk: annotates everything
+    motto: Correctness before speed.
+    helper:
+      name: Difference Engine
+      style: mechanical
+  tea:
+    character: Grace Hopper
+    style: relentlessly skeptical
+    role: Test Engineer
+    quote: A ship in port is safe, but that is not what ships are built for.
+    trait: paranoid
+    motto: Prove it breaks.
+  sm:
+    character: Margaret Hamilton
+    style: calm and exacting
+    role: Scrum Master
+"""
+
+
+@pytest.fixture
+def pf_project_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Build a hermetic Pennyfarthing project and export it as PF_PROJECT_DIR.
+
+    The returned directory contains everything the frame data-proxy routes need
+    to resolve a real persona:
+
+    - ``.pennyfarthing/`` so ``_detect_pf_project`` succeeds
+    - ``.pennyfarthing/config.local.yaml`` selecting ``TEST_THEME``
+    - ``.pennyfarthing/personas/themes/<TEST_THEME>.yaml`` defining dev/tea/sm
+    - ``.session/agents/dev`` marking ``dev`` as the active agent
+    - ``.session/162-49-session.md`` so story-shaped routes have something to read
+
+    Ambient project-root env vars are cleared so nothing outside tmp_path can
+    influence resolution. Because the project dir is passed explicitly via
+    PF_PROJECT_DIR, results are identical no matter which directory pytest was
+    launched from.
+    """
+    project = tmp_path / "pf-project"
+    pf_dir = project / ".pennyfarthing"
+    themes_dir = pf_dir / "personas" / "themes"
+    themes_dir.mkdir(parents=True)
+
+    (pf_dir / "config.local.yaml").write_text(
+        f"theme: {TEST_THEME}\nbell_mode: off\n", encoding="utf-8"
+    )
+    (themes_dir / f"{TEST_THEME}.yaml").write_text(_TEST_THEME_YAML, encoding="utf-8")
+
+    agents_dir = project / ".session" / "agents"
+    agents_dir.mkdir(parents=True)
+    (agents_dir / "current").write_text("dev\n", encoding="utf-8")
+
+    (project / ".session" / "162-49-session.md").write_text(
+        textwrap.dedent("""\
+            # Story 162-49: conftest fixture project
+
+            **Story ID:** 162-49
+            **Phase:** green
+            **Workflow:** tdd
+            """),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("PF_PROJECT_DIR", str(project))
+    # FRAME_PROJECT_DIR is cleared because it OUTRANKS PF_PROJECT_DIR in both
+    # resolvers (ws_push and, since 162-49's rework, data_proxy). Leaving it set
+    # would let an ambient value from a running Frame server redirect resolution
+    # straight past this fixture — the docstring's "every other ambient variable"
+    # claim was previously false for the one variable production actually sets.
+    for ambient in (
+        "FRAME_PROJECT_DIR",
+        "PROJECT_ROOT",
+        "CLAUDE_PROJECT_DIR",
+        "PF_THEME",
+        "SESSION_ID",
+    ):
+        monkeypatch.delenv(ambient, raising=False)
+
+    # Story 162-49 (rework 2): stub the CDN fetch explicitly. The persona payload
+    # resolves a portrait via resolve_portrait_path -> portrait_cdn.fetch_portrait,
+    # which does up to four urlopen(timeout=30) calls. Today this fixture reaches
+    # it only to bail early, because the test theme omits shortName/ocean and the
+    # slug never resolves — i.e. the suite is network-free by ACCIDENT. Adding an
+    # `ocean:` key to the theme above would silently convert every test using this
+    # fixture into a network-dependent one with a 30s timeout. Stub it so the
+    # hermeticity is a property of the fixture, not of a theme-YAML omission.
+    # Returning None keeps portraitPath None, matching the previous behaviour;
+    # tests that want the portrait branch override this with their own stub.
+    monkeypatch.setattr(
+        "pf.package.portrait_cdn.fetch_portrait",
+        lambda *a, **kw: None,
+    )
+
+    return project
+
+
+@pytest.fixture
+def active_agent(pf_project_dir: Path):
+    """Set which agent the ``.session/agents/`` marker names as active.
+
+    Returns a setter so a test can retarget the active agent without reaching
+    into the fixture's directory layout.
+    """
+    agents_dir = pf_project_dir / ".session" / "agents"
+
+    def _set(agent_name: str | None) -> None:
+        for existing in agents_dir.iterdir():
+            existing.unlink()
+        if agent_name is not None:
+            (agents_dir / "current").write_text(f"{agent_name}\n", encoding="utf-8")
+
+    return _set
+
+
+@pytest.fixture
+def run_from_cwd(monkeypatch: pytest.MonkeyPatch):
+    """Chdir into an arbitrary directory for the duration of a test.
+
+    Used to prove cwd-independence: the same request must produce the same
+    response whether pytest ran from the repo root, from ``pennyfarthing-dist``,
+    or from an unrelated temp directory.
+    """
+
+    def _chdir(target: Path) -> Path:
+        resolved = Path(target).resolve()
+        monkeypatch.chdir(resolved)
+        return resolved
+
+    return _chdir
 
 
 @pytest.fixture

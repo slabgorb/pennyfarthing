@@ -147,10 +147,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
 Format the PR title using the project's `pr_title_format` setting:
 ```bash
-PR_TITLE=$(source .venv/bin/activate && python -c "
-from pf.git.repos import format_pr_title
-print(format_pr_title(jira_key='${JIRA_KEY}', title='${TITLE}'))
-")
+PR_TITLE=$(pf git format-title --jira-key "$JIRA_KEY" --title "$TITLE")
 ```
 
 ```bash
@@ -256,12 +253,12 @@ git commit -m "chore(sprint): add standalone ${JIRA_KEY} to sprint tracking"
 
 | Command | Tracking | Branch | PR | Use For |
 |---------|----------|--------|-----|---------|
-| `/chore` | None | chore/* | No | Quick maintenance |
-| `/standalone` | Jira | feat/* | Yes | Trackable features |
+| `/pf-chore` | None | chore/* | No | Quick maintenance |
+| `/pf-standalone` | Jira | feat/* | Yes | Trackable features |
 | `/pf-sprint work` | Jira + Sprint | feat/* | Yes | Planned sprint work |
 
 <related>
-- `/chore` - Quick commits without Jira tracking
+- `/pf-chore` - Quick commits without Jira tracking
 - `/pf-sprint work` - Full sprint workflow with story setup
 - `/pf-git cleanup` - Organize multiple changes into groups
 </related>

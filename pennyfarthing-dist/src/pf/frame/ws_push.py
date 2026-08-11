@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import asyncio
 import os
+import shutil
+import subprocess
+import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -38,6 +41,19 @@ def get_shared_executor() -> ThreadPoolExecutor:
             max_workers=4, thread_name_prefix="frame-fetch"
         )
     return _shared_executor
+
+
+def shutdown_shared_executor() -> None:
+    """Shut down the shared executor (non-blocking) and drop the singleton.
+
+    Called from the Frame lifespan exit path so the bounded ``frame-fetch`` pool
+    does not outlive the server. ``wait=False`` keeps teardown from stalling
+    behind an in-flight subprocess fetch. A no-op when no pool was ever created.
+    """
+    global _shared_executor
+    if _shared_executor is not None:
+        _shared_executor.shutdown(wait=False)
+        _shared_executor = None
 
 
 def _get_project_dir() -> str:
@@ -89,6 +105,49 @@ def _read_yaml_file(path: Path) -> Any:
         return None
 
 
+# Open-PR cache: {repo_path: (monotonic_ts, prs)}. The git channel polls every
+# POLL_INTERVAL_S (5s); gh hits the network, so cache for 60s per repo.
+_OPEN_PR_TTL_S = 60.0
+_open_pr_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+
+
+def _get_open_prs(repo_path: str) -> list[dict[str, Any]]:
+    """Open PRs for a repo via gh, TTL-cached. Empty list on any failure."""
+    cached = _open_pr_cache.get(repo_path)
+    if cached and (time.monotonic() - cached[0]) < _OPEN_PR_TTL_S:
+        return cached[1]
+
+    gh_bin = shutil.which("gh")
+    if not gh_bin:
+        return []
+
+    prs: list[dict[str, Any]] = []
+    try:
+        result = subprocess.run(
+            [gh_bin, "pr", "list", "--json", "number,title,isDraft", "--limit", "20"],
+            cwd=repo_path, capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode == 0:
+            import json
+
+            parsed = json.loads(result.stdout)
+            if isinstance(parsed, list):
+                prs = [
+                    {
+                        "number": p.get("number"),
+                        "title": p.get("title", ""),
+                        "isDraft": bool(p.get("isDraft", False)),
+                    }
+                    for p in parsed
+                    if isinstance(p, dict)
+                ]
+    except Exception as exc:
+        # Fail-loud (gh #50): warn once per failure, degrade to [].
+        warnings.warn(f"Failed to list PRs for {repo_path}: {exc}", stacklevel=2)
+    _open_pr_cache[repo_path] = (time.monotonic(), prs)
+    return prs
+
+
 # ---------------------------------------------------------------------------
 # Channel data fetchers — each returns a dict ready to send as JSON
 # ---------------------------------------------------------------------------
@@ -113,6 +172,7 @@ def fetch_git() -> dict[str, Any]:
             "behind": info.get("behind") if info else None,
             "developBehind": info.get("developBehind") if info else None,
             "dirtyFiles": info.get("dirtyFiles", []) if info else [],
+            "openPrs": _get_open_prs(repo_path),
         })
     return {"type": "update", "repos": results}
 
@@ -208,6 +268,24 @@ def fetch_diffs() -> dict[str, Any]:
     return {"type": "init", "diffs": diffs}
 
 
+def _empty_sprint_payload() -> dict[str, Any]:
+    """Return a full-shaped empty sprint payload (satisfies the TS type contract)."""
+    return {
+        "type": "init",
+        "sprint": {
+            "number": "",
+            "name": "",
+            "goal": "",
+            "done": 0,
+            "remaining": 0,
+            "inProgress": 0,
+            "inReview": 0,
+        },
+        "epics": [],
+        "completedEpics": [],
+    }
+
+
 def fetch_sprint() -> dict[str, Any]:
     """Fetch sprint data in the format expected by SprintPanel."""
     project_dir = _get_project_dir()
@@ -216,7 +294,7 @@ def fetch_sprint() -> dict[str, Any]:
 
     sprint_path = Path(project_dir, "sprint", "current-sprint.yaml")
     if not sprint_path.is_file():
-        return {"sprint": {}, "epics": []}
+        return _empty_sprint_payload()
 
     # Split read-vs-parse so the warning names the actual failure. A
     # present-but-undecodable file is surfaced by _read_text_file as
@@ -224,7 +302,7 @@ def fetch_sprint() -> dict[str, Any]:
     # as "Failed to parse {name}" (the prior single try always said "read").
     text = _read_text_file(sprint_path)
     if text is None:
-        return {"sprint": {}, "epics": []}
+        return _empty_sprint_payload()
 
     try:
         data = yaml.safe_load(text) or {}
@@ -232,7 +310,7 @@ def fetch_sprint() -> dict[str, Any]:
         warnings.warn(
             f"Failed to parse sprint file {sprint_path.name}: {exc}", stacklevel=2
         )
-        return {"sprint": {}, "epics": []}
+        return _empty_sprint_payload()
 
     sprint_info = data.get("sprint", {})
 
@@ -333,6 +411,10 @@ def fetch_sprint() -> dict[str, Any]:
     if archive_dir.is_dir():
         sprint_number = sprint_info.get("number")
         for archive_path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
+            # Path traversal (CWE-22): a glob match is a *name* match, so a
+            # symlink inside archive_dir pointing outside it is yielded happily.
+            if not is_safe_shard_path(archive_path, archive_dir):
+                continue
             archive_data = _read_yaml_file(archive_path)
             if not isinstance(archive_data, dict):
                 continue
@@ -456,10 +538,22 @@ def fetch_settings() -> dict[str, Any]:
     return {"type": "init", "settings": settings}
 
 
-def fetch_persona() -> dict[str, Any]:
-    """Fetch active persona using the same agent resolution as statusline."""
+def build_persona_payload(project_dir: str | Path, full: bool = False) -> dict[str, Any]:
+    """Build the persona payload for a project dir (story 162-49).
+
+    Extracted from :func:`fetch_persona` so the ``GET /api/persona`` HTTP routes
+    can share it instead of re-deriving agent resolution. ``data_proxy.py`` had
+    its own second implementation that called ``load_persona(project_dir,
+    session_id=...)`` — every argument wrong against the real
+    ``load_persona(agent_name, project_root=None)`` signature, so any request
+    reaching it raised TypeError. The caller passes the project dir explicitly,
+    which is what keeps the routes independent of ``os.getcwd()``.
+
+    Returns ``{}`` when there is no resolvable active persona; callers decide
+    whether that is a blank panel or a 404. ``full=True`` adds the optional
+    Persona fields the base TUI contract omits.
+    """
     try:
-        project_dir = _get_project_dir()
         agents_dir = Path(project_dir, ".session", "agents")
         if not agents_dir.is_dir():
             return {}
@@ -501,7 +595,7 @@ def fetch_persona() -> dict[str, Any]:
             # would blank the entire persona panel (strictly worse than no portrait).
             warnings.warn(f"Failed to resolve portrait for {agent_name}: {exc}", stacklevel=2)
 
-        return {
+        payload = {
             "character": persona.character,
             "role": agent_name,
             "roleDescription": persona.style,
@@ -511,6 +605,17 @@ def fetch_persona() -> dict[str, Any]:
             "isStreaming": False,
             "portraitPath": portrait_path,
         }
+        if full:
+            payload.update(
+                {
+                    "roleTitle": persona.role,
+                    "quirk": persona.quirk or "",
+                    "motto": persona.motto or "",
+                    "helperName": persona.helper_name or "",
+                    "helperStyle": persona.helper_style or "",
+                }
+            )
+        return payload
     except Exception as exc:
         # Present-but-broken: persona resolution/load raised. Warn (gh #50
         # fail-loud) rather than silently blanking the persona panel, then
@@ -519,6 +624,25 @@ def fetch_persona() -> dict[str, Any]:
         # unaffected.)
         warnings.warn(f"Failed to load persona: {exc}", stacklevel=2)
         return {}
+
+
+def fetch_persona() -> dict[str, Any]:
+    """Fetch active persona using the same agent resolution as statusline."""
+    try:
+        project_dir = _get_project_dir()
+    except OSError as exc:
+        # Story 162-49 (rework): resolution must stay INSIDE a try. It used to be
+        # the first statement of the try block below; hoisting it into the caller
+        # let it escape. ``os.getcwd()`` raises FileNotFoundError once the cwd has
+        # been unlinked — reachable, because the launcher sets the server's cwd to
+        # the project dir, so a `git worktree remove`, a `mv`, or a tmpdir cleanup
+        # while Frame is alive triggers it. The escape landed in
+        # ``poll_and_broadcast``'s ``except Exception: pass``, so the persona panel
+        # stopped updating with zero diagnostic — the silent swallow epic 160 spent
+        # five stories removing. Warn (fail-loud) then degrade to {}, unchanged.
+        warnings.warn(f"Failed to load persona: {exc}", stacklevel=2)
+        return {}
+    return build_persona_payload(project_dir)
 
 
 def fetch_benchmark_history() -> dict[str, Any]:

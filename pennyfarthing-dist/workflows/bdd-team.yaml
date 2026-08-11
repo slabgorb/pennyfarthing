@@ -77,6 +77,11 @@ workflow:
         file: gates/approval
         type: approval
         condition: Code review approved, UX requirements met
+        recovery:
+          reviewer-verdict:
+            action: rework
+            target_phase: green
+            max_attempts: 3
 
     - name: finish
       agent: sm

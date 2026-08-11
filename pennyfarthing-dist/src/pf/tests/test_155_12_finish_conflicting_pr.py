@@ -54,7 +54,6 @@ so a conflicting PR can be simulated. Preflight tests call the pure
 ``aggregate_results`` directly — no subprocess needed.
 """
 
-import json
 import re
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -69,6 +68,7 @@ from pf.preflight.finish import (
     aggregate_results,
 )
 from pf.sprint.story_finish import finish_story
+from pf.tests.helpers.gh_pr_fake import GhPrFake
 
 # =============================================================================
 # Fixtures — a minimal sprint/.session project for finish_story (story 155-12)
@@ -143,60 +143,6 @@ def project(tmp_path: Path) -> Path:
     return _make_project(tmp_path)
 
 
-def _make_fake_run(
-    *,
-    merge_rc: int = 1,
-    pr_state: str = "OPEN",
-    mergeable: str = "CONFLICTING",
-    merge_state_status: str = "DIRTY",
-    listed_pr: str = "",
-):
-    """Command-dispatching fake for ``story_finish._run``.
-
-    - ``gh pr view ...``  → JSON ``{state, mergedAt, mergeable, mergeStateStatus}``
-      (all fields always present; the code reads whichever it asks for).
-    - ``gh pr merge ...`` → returncode=merge_rc (default 1: gh refuses a dirty PR).
-    - ``gh pr list ...``  → stdout=listed_pr.
-    - anything else (git checkout/pull/branch, epic archive) → returncode=0.
-    """
-
-    def _fake_run(cmd, **kwargs):
-        parts = [str(c) for c in cmd]
-        if "merge" in parts:
-            return MagicMock(
-                returncode=merge_rc,
-                stdout="",
-                stderr="" if merge_rc == 0 else "pull request is not mergeable",
-            )
-        if "view" in parts:
-            merged_at = "2026-06-27T00:00:00Z" if pr_state == "MERGED" else None
-            return MagicMock(
-                returncode=0,
-                stdout=json.dumps(
-                    {
-                        "state": pr_state,
-                        "mergedAt": merged_at,
-                        "mergeable": mergeable,
-                        "mergeStateStatus": merge_state_status,
-                    }
-                ),
-                stderr="",
-            )
-        if "list" in parts:
-            return MagicMock(returncode=0, stdout=listed_pr, stderr="")
-        return MagicMock(returncode=0, stdout="", stderr="")
-
-    return _fake_run
-
-
-def _merge_invoked(fake: MagicMock) -> bool:
-    """True if ``gh pr merge`` was ever called through the fake ``_run``."""
-    for call in fake.call_args_list:
-        argv = [str(x) for x in call.args[0]]
-        if "merge" in argv:
-            return True
-    return False
-
 
 def _requested_done(mock_transition: MagicMock) -> bool:
     for call in mock_transition.call_args_list:
@@ -227,14 +173,12 @@ class TestPreMergeGate:
         """The gate must detect the conflict via ``gh pr view`` and STOP — never
         run ``gh pr merge`` on a PR it already knows is unmergeable (AC1)."""
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
-        fake = MagicMock(
-            side_effect=_make_fake_run(pr_state="OPEN", mergeable="CONFLICTING")
-        )
+        fake = GhPrFake(merge_rc=1, pr_state="OPEN", pre_merge_state="OPEN", mergeable="CONFLICTING", merge_state_status="DIRTY")
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project, "155-12")
 
         assert result["success"] is False, f"CONFLICTING PR must abort finish: {result}"
-        assert not _merge_invoked(fake), (
+        assert len(fake.merge_calls) == 0, (
             "finish ran `gh pr merge` on a CONFLICTING PR — it must pre-check "
             "mergeability (gh pr view --json mergeable,mergeStateStatus) and stop "
             "before attempting the merge"
@@ -254,7 +198,7 @@ class TestPreMergeGate:
 
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(pr_state="OPEN", mergeable="CONFLICTING"),
+            GhPrFake(merge_rc=1, pr_state="OPEN", pre_merge_state="OPEN", mergeable="CONFLICTING", merge_state_status="DIRTY"),
         ):
             finish_story(project, "155-12")
 
@@ -274,7 +218,7 @@ class TestPreMergeGate:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(pr_state="OPEN", mergeable="CONFLICTING"),
+            GhPrFake(merge_rc=1, pr_state="OPEN", pre_merge_state="OPEN", mergeable="CONFLICTING", merge_state_status="DIRTY"),
         ):
             result = finish_story(project, "155-12")
 
@@ -298,7 +242,7 @@ class TestPreMergeGate:
         session_path = project / ".session" / "155-12-session.md"
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(pr_state="OPEN", mergeable="CONFLICTING"),
+            GhPrFake(merge_rc=1, pr_state="OPEN", pre_merge_state="OPEN", mergeable="CONFLICTING", merge_state_status="DIRTY"),
         ):
             finish_story(project, "155-12")
 
@@ -329,8 +273,8 @@ class TestPostMergeVerifyStillHolds:
         # mergeable so the pre-gate would pass, but the merge no-ops (state OPEN).
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(
-                merge_rc=0, pr_state="OPEN", mergeable="MERGEABLE", merge_state_status="CLEAN"
+            GhPrFake(
+                merge_rc=0, pr_state="OPEN", pre_merge_state="OPEN", mergeable="MERGEABLE", merge_state_status="CLEAN"
             ),
         ):
             result = finish_story(project, "155-12")
@@ -367,7 +311,7 @@ class TestCleanPathNotOverBlocked:
         session_path = project / ".session" / "155-12-session.md"
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(
+            GhPrFake(
                 merge_rc=0, pr_state="MERGED", mergeable="MERGEABLE", merge_state_status="CLEAN"
             ),
         ):

@@ -7,12 +7,15 @@ The sprint completed file references archived epics by ID (not inlined).
 
 import re
 import shutil
+import warnings
 from datetime import date
 from pathlib import Path
 from typing import Any
 
 from pf.common.config import get_project_root
 from pf.sprint.loader import load_sprint
+from pf.sprint.path_validation import validate_sprint_id
+from pf.sprint.shard_merge import is_safe_shard_path
 from pf.sprint.yaml_io import (
     _get_epic_ref,
     _make_yaml,
@@ -51,7 +54,13 @@ def get_archive_path(project_root: Path | None = None) -> Path:
     # `sprint-unknown-completed.yaml` masks misconfigured sprints (epic 151).
     name = sprint_info.get("name") or sprint_info.get("jira_sprint_name")
     if name:
-        sprint_id = str(name).split()[-1]
+        tokens = str(name).split()
+        if not tokens:
+            raise ValueError(
+                f"Invalid sprint id {name!r}: must not be empty. "
+                "Check sprint/current-sprint.yaml."
+            )
+        sprint_id = tokens[-1]
     else:
         number = sprint_info.get("number")
         if number is None or number == "":
@@ -62,15 +71,10 @@ def get_archive_path(project_root: Path | None = None) -> Path:
         sprint_id = str(number)
 
     # Sanitize before building the path (CWE-22, 155-7): sprint_id comes from
-    # sprint YAML metadata and is used verbatim in a filename. Restrict to a
-    # filename-safe charset; `..` passes the charset check but is a parent ref,
-    # so refuse it explicitly.
-    if not re.fullmatch(r"[A-Za-z0-9._-]+", sprint_id) or ".." in sprint_id:
-        raise ValueError(
-            f"Invalid sprint id {sprint_id!r}: only [A-Za-z0-9._-] characters "
-            "(and no '..') are allowed in the archive filename. "
-            "Check sprint/current-sprint.yaml."
-        )
+    # sprint YAML metadata and is used verbatim in a filename. Delegate to the
+    # shared validator (pf.sprint.path_validation) so all archive-path sites
+    # use one code path (SOUL #2, 164-3).
+    validate_sprint_id(sprint_id)
 
     archive_dir = root / "sprint" / "archive"
     archive_path = archive_dir / f"sprint-{sprint_id}-completed.yaml"
@@ -134,7 +138,7 @@ completed_stories:
 """
 
     archive_path.parent.mkdir(parents=True, exist_ok=True)
-    archive_path.write_text(template)
+    archive_path.write_text(template, encoding='utf-8')
 
     return archive_path
 
@@ -171,6 +175,15 @@ def migrate_completed_archive(archive_path: Path) -> dict[str, Any]:
     stories_migrated = 0
     for epic_ref, stories in epic_stories.items():
         shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+        # Path traversal (CWE-22): this site both reads and rewrites the shard,
+        # so an escaping ref would be an out-of-bounds write. Fail closed.
+        if not is_safe_shard_path(shard_path, archive_dir):
+            warnings.warn(
+                f"Archived epic ref '{epic_ref}' escapes the archive directory "
+                f"({shard_path}) — skipping",
+                stacklevel=2,
+            )
+            continue
         if shard_path.exists():
             existing = _read_yaml_file(shard_path)
             existing_ids = {s["id"] for s in existing.get("stories", [])}
@@ -220,6 +233,13 @@ def load_archive(archive_path: Path) -> dict[str, Any]:
     all_stories: list[dict[str, Any]] = []
     for epic_ref in data["completed_epics"]:
         shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+        if not is_safe_shard_path(shard_path, archive_dir):
+            warnings.warn(
+                f"Archived epic ref '{epic_ref}' escapes the archive directory "
+                f"({shard_path}) — skipping",
+                stacklevel=2,
+            )
+            continue
         if shard_path.exists():
             shard = _read_yaml_file(shard_path)
             all_stories.extend(shard.get("stories", []))
@@ -242,7 +262,7 @@ def _load_archive_file(archive_path: Path) -> dict[str, Any]:
         Archive data dict with completed_epics and completed_stories
     """
     yml = _make_yaml()
-    with open(archive_path) as f:
+    with open(archive_path, encoding='utf-8') as f:
         data = yml.load(f)
 
     if data is None:
@@ -322,10 +342,12 @@ def _write_archive_file(archive_path: Path, data: dict[str, Any]) -> None:
     cleaned = [line.rstrip() for line in lines]
     result = "\n".join(cleaned).rstrip("\n") + "\n"
 
-    archive_path.write_text(result)
+    archive_path.write_text(result, encoding='utf-8')
 
 
-def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
+def backfill_epic_refs(
+    project_root: Path | None = None, *, prefix_parse: bool = False
+) -> dict[str, Any]:
     """Repair archive entries whose `epic` field is missing or empty.
 
     Walks every ``sprint/archive/sprint-*-completed.yaml`` under ``project_root``
@@ -340,6 +362,13 @@ def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
 
     Args:
         project_root: Project root path (defaults to auto-detect).
+        prefix_parse: Opt-in one-time migration mode for historical archives
+            (155-10). For rows still unresolved after the live-sprint lookup
+            (live data always wins), derive the epic from the story id iff it
+            is an unambiguous numeric ``{epic}-{seq}`` (``144-5`` → ``'144'``).
+            Off by default: the live finish path's no-prefix-parse rule (155-4)
+            must not gain a silent fallback — anything not matching stays
+            irrecoverable.
 
     Returns:
         {"success": True, "backfilled": [{"id", "epic"}, ...],
@@ -358,7 +387,10 @@ def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
             continue
         # Canonical epic-ref (SOUL #2) — the one formula used everywhere else in
         # this module; rejects jira sentinels + strips ``epic-`` (155-8).
-        epic_ref = _get_epic_ref(epic)
+        try:
+            epic_ref = _get_epic_ref(epic)
+        except ValueError:
+            continue  # skip traversal-ref epics; irrecoverable list unchanged
         if not epic_ref:
             continue
         for story in epic.get("stories") or []:
@@ -370,6 +402,15 @@ def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
         return {"success": True, "backfilled": backfilled, "irrecoverable": irrecoverable}
 
     for archive_path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
+        # Path traversal (CWE-22): a glob match is a *name* match, so a symlink
+        # inside the archive dir pointing outside it is yielded happily.
+        if not is_safe_shard_path(archive_path, archive_dir):
+            warnings.warn(
+                f"Archive index {archive_path.name} escapes the archive directory "
+                f"({archive_path}) — skipping",
+                stacklevel=2,
+            )
+            continue
         data = _load_archive_file(archive_path)
         stories = data.get("completed_stories") or []
         file_changed = False
@@ -379,6 +420,12 @@ def backfill_epic_refs(project_root: Path | None = None) -> dict[str, Any]:
                 continue
             sid = str(story.get("id") or "").strip()
             resolved = id_to_epic.get(sid) if sid else None
+            if not resolved and prefix_parse and sid:
+                # Historical-archive migration only (155-10): unambiguous
+                # numeric {epic}-{seq} ids may fall back to their prefix.
+                match = re.fullmatch(r"(\d+)-\d+", sid)
+                if match:
+                    resolved = match.group(1)
             if resolved:
                 story["epic"] = resolved
                 backfilled.append({"id": sid, "epic": resolved})
@@ -502,11 +549,23 @@ def archive_epic(
         }
 
     # Determine the shard ref (filename stem)
-    epic_ref = _get_epic_ref(epic)
+    try:
+        epic_ref = _get_epic_ref(epic)
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
     shard_file = sprint_dir / f"epic-{epic_ref}.yaml"
     archive_shard = archive_dir / f"epic-{epic_ref}.yaml"
     story_count = len(epic.get("stories", []))
     total_points = sum(s.get("points", 0) for s in epic.get("stories", []))
+
+    # Resolve (and create if needed) the sprint archive file BEFORE any
+    # filesystem mutation — a rejected sprint id must not strand a half-moved
+    # shard (155-7 rework: validate before the first irreversible step, 155-12).
+    # Hoisted above dry-run so unsafe sprint ids also fail in dry-run (164-3 AC3).
+    try:
+        archive_path = ensure_archive_file(root)
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
 
     if dry_run:
         msg_parts = [f"Would archive {epic_id} ({story_count} stories, {total_points} pts)"]
@@ -526,14 +585,6 @@ def archive_epic(
             "total_points": total_points,
             "message": "\n".join(msg_parts),
         }
-
-    # Resolve (and create if needed) the sprint archive file BEFORE any
-    # filesystem mutation — a rejected sprint id must not strand a half-moved
-    # shard (155-7 rework: validate before the first irreversible step, 155-12).
-    try:
-        archive_path = ensure_archive_file(root)
-    except ValueError as e:
-        return {"success": False, "error": str(e)}
 
     # 1. Update epic status in the shard before moving
     if shard_file.exists():
@@ -588,7 +639,7 @@ def archive_epic(
     # 4. Remove epic from current-sprint.yaml index
     # Re-read the raw index (not merged) to update refs
     yml = _make_yaml()
-    with open(sprint_path) as f:
+    with open(sprint_path, encoding='utf-8') as f:
         index_data = yml.load(f)
 
     epics_list = index_data.get("epics", [])

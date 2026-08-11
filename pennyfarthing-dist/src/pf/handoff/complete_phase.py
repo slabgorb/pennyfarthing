@@ -16,6 +16,15 @@ from pathlib import Path
 
 import yaml
 
+from pf.handoff.session_assessment import assessment_heading, normalize_session
+from pf.workflow.helpers import resolve_workflow_file
+
+# The agent whose assessment the approval subgates judge. Its heading comes from
+# the shared formula, never a literal: one truth, one place (SOUL #2). A reader
+# and a writer that disagreed about the heading would search for a section agents
+# are no longer told to write, and every verdict would read as absent.
+_APPROVAL_AGENT = "reviewer"
+
 # Mapping from setting keys to (subagent name, dispatch tag or None)
 _SUBAGENT_SETTING_MAP: dict[str, tuple[str, str | None]] = {
     "preflight": ("reviewer-preflight", None),
@@ -90,7 +99,7 @@ def complete_phase(
             ),
         }
 
-    content = session_path.read_text()
+    content = session_path.read_text(encoding="utf-8")
 
     from_agent = _get_phase_agent(project_root, workflow, from_phase)
 
@@ -123,35 +132,19 @@ def complete_phase(
                 "error": context_error,
             }
 
-    # Subgate: approval gate requires subagent completion table AND specialist tags
-    if gate_type == "approval":
-        completion_error = _check_subagent_completion(content)
-        if completion_error:
+    # Subgate: approval-family gates require a subagent completion table AND
+    # specialist tags — on the way OUT to rework as much as on the way to finish.
+    if is_approval_family(gate_type):
+        unmet = _check_approval_requirements(content, gate_type)
+        if unmet:
             return {
                 "status": "error",
                 "session_file": str(session_path),
-                "error": completion_error,
-            }
-
-        missing = _check_subagent_dispatch(content)
-        if missing:
-            _, enabled_tags = _get_enabled_subagents()
-            return {
-                "status": "error",
-                "session_file": str(session_path),
-                "error": (
-                    f"Reviewer Assessment missing specialist subagent tags: {', '.join(sorted(missing))}. "
-                    f"To fix: Incorporate findings from all enabled specialist subagents in the "
-                    f"Reviewer Assessment using tags: {', '.join(sorted(enabled_tags))}."
-                ),
-            }
-
-        freshness = _check_rework_freshness(content)
-        if not freshness["pass"]:
-            return {
-                "status": "error",
-                "session_file": str(session_path),
-                "error": freshness["message"],
+                # ALL unmet requirements at once. Reporting one per attempt made
+                # the reviewer discover the contract by five sequential gate
+                # failures — a cost the gate charged for its own shape, paid live
+                # in the 162-49 run (story 162-47, AC-B1).
+                "error": _format_unmet(unmet),
             }
 
     now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -174,21 +167,97 @@ def complete_phase(
     # Update all **Phase:** lines to new phase
     content = re.sub(r"(\*\*Phase:\*\*) \S+", rf"\1 {to_phase}", content)
 
-    # Update all **Phase Started:** lines to now
-    content = re.sub(r"(\*\*Phase Started:\*\*) \S+", rf"\1 {now}", content)
+    # Update all **Phase Started:** lines to now.
+    # 164-17: match the whole rest of the line, not `\S+`. The timestamp may be
+    # the space-separated `YYYY-MM-DD HH:MM:SS UTC` form 159-4 taught the parser
+    # to accept; `\S+` stopped at the first space and left a stale tail glued to
+    # the fresh value (`**Phase Started:** 2026-08-11T12:48:16Z 22:00 UTC`).
+    content = re.sub(r"(\*\*Phase Started:\*\*) [^\n]+", rf"\1 {now}", content)
 
     # Track round-trip count for rework transitions
     if gate_type and "rework" in gate_type:
-        rt_match = re.search(r"\*\*Round-Trip Count:\*\*\s*(\d+)", content)
-        if rt_match:
+        # 162-28: Find the counter the same way every reader does — masked, so a
+        # counter quoted in prose or a fence is not mistaken for the operative
+        # one — and rewrite ONLY that occurrence.
+        # 162-47 AC-A3: the locator is shared with every reader; it returns the
+        # last counter line in the session PREAMBLE so a writer cannot increment
+        # a decoy in agent prose.
+        # 162-50 WRITER: tri-state the read (absent / unreadable / found) so the
+        # absent and unreadable paths are handled distinctly. Collapsing them
+        # inserted a fresh ``**Round-Trip Count:** 1`` BESIDE a corrupt line,
+        # creating a second counter and silently resetting the round-trip budget
+        # — 162-59's unreadable guard then never fired because the reader found
+        # the newly inserted valid line.
+        # 162-60: normalize ONCE before read/locate/splice so all three operations
+        # agree on the same byte sequence.  find_operative_round_trip_line returns
+        # offsets into the string it received; if content were normalized inside
+        # the locator while the splice target remained raw, any Cf/NFKC-changed
+        # byte before the counter line would shift the offsets and mangle the
+        # counter (review CRITICAL finding).
+        content = normalize_session(content)
+        from pf.handoff.gate_recovery import (
+            find_operative_round_trip_line,
+            mask_illustrative_regions,
+            preamble_end,
+            read_round_trip_count,
+        )
+
+        rt_reading = read_round_trip_count(content)
+        if rt_reading["status"] == "found":
+            # Readable counter: locate via the shared locator and increment in-place.
+            rt_match = find_operative_round_trip_line(content)
             new_count = int(rt_match.group(1)) + 1
-            content = re.sub(
-                r"\*\*Round-Trip Count:\*\*\s*\d+",
-                f"**Round-Trip Count:** {new_count}",
-                content,
+            content = (
+                content[: rt_match.start()]
+                + f"**Round-Trip Count:** {new_count}"
+                + content[rt_match.end() :]
             )
+        elif rt_reading["status"] == "unreadable":
+            # 162-50 WRITER: unreadable counter present. Two sub-cases:
+            #
+            # (a) VISIBLE corrupt line (bad value, not hidden): replace it rather
+            #     than inserting a second line beside it. Inserting resets the
+            #     budget: the reader finds the new valid line, returns found/1,
+            #     and 162-59's unreadable guard never fires.
+            # (b) HIDDEN line only (fence, HTML comment, backtick, indented):
+            #     these are illustrations or deliberately hidden; do NOT strip
+            #     them (that would corrupt prose in 162-28's pinned tests).
+            #     Fall through to the absent branch and insert a new counter.
+            _masked = mask_illustrative_regions(content)
+            _end = preamble_end(_masked)
+            _masked_preamble = _masked[:_end]
+            from pf.handoff.gate_recovery import COUNTER_LINE_RE as _COUNTER_LINE_RE
+
+            if _COUNTER_LINE_RE.search(_masked_preamble):
+                # Case (a): visible corrupt line — strip it and inject a clean one.
+                _preamble = content[:_end]
+                _rest = content[_end:]
+                _clean_preamble = re.sub(
+                    r"^.*\*\*Round-Trip Count:\*\*.*\n?",
+                    "",
+                    _preamble,
+                    flags=re.MULTILINE,
+                )
+                content = (
+                    re.sub(
+                        r"(\*\*Phase Started:\*\*[^\n]*)",
+                        r"\1\n**Round-Trip Count:** 1",
+                        _clean_preamble,
+                        count=1,
+                    )
+                    + _rest
+                )
+            else:
+                # Case (b): hidden line only — insert after Phase Started
+                # (same as absent; the hidden line is left in place).
+                content = re.sub(
+                    r"(\*\*Phase Started:\*\*[^\n]*)",
+                    r"\1\n**Round-Trip Count:** 1",
+                    content,
+                    count=1,
+                )
         else:
-            # Insert after Phase Started line
+            # Absent: insert after Phase Started line — pre-162-50 behaviour.
             content = re.sub(
                 r"(\*\*Phase Started:\*\*[^\n]*)",
                 r"\1\n**Round-Trip Count:** 1",
@@ -235,7 +304,7 @@ def complete_phase(
     os.close(temp_fd)
     temp_path = Path(temp_path_str)
     try:
-        temp_path.write_text(content)
+        temp_path.write_text(content, encoding="utf-8")
         temp_path.rename(session_path)
     except Exception:
         temp_path.unlink(missing_ok=True)
@@ -272,6 +341,97 @@ def complete_phase(
         "session_file": f".session/{story_id}-session.md",
         "error": None,
     }
+
+
+def is_approval_family(gate_type: str | None) -> bool:
+    """Whether ``gate_type`` is an approval gate or a variant resolved from one.
+
+    Keyed off the FAMILY, not the exact string ``"approval"``. A REJECTED verdict
+    resolves to ``approval_rework``, so an exact-string check enforced reviewer
+    diligence only on the path where the reviewer AGREES with the code and left it
+    unenforced on the path that costs a full Dev cycle. Verified live in the
+    162-21 review: a REJECTED handoff with no ``## Subagent Results`` section was
+    accepted while the byte-identical APPROVED handoff was refused (story 162-47,
+    AC-A8).
+    """
+    if not gate_type:
+        return False
+    return gate_type == "approval" or gate_type.startswith("approval_")
+
+
+def _check_approval_requirements(content: str, gate_type: str) -> list[str]:
+    """Every unmet approval requirement, in the order a reviewer should fix them.
+
+    Returns an empty list when the assessment is compliant. Each entry is a
+    complete, actionable sentence — :func:`_format_unmet` renders them as ONE error
+    so the full contract is discoverable in a single attempt (AC-B1).
+
+    **Only requirements that are genuinely unmet appear.** Aggregating removed the
+    short-circuit that used to stop after the first problem, and the checks behind
+    it were written expecting to run only on input the earlier check had already
+    vetted — so each one has to be truthful on its own now. See
+    :func:`_check_subagent_dispatch`, which searches the candidate sections when
+    the heading is ambiguous rather than declaring every tag missing (story 162-47
+    review, F1).
+
+    ``_check_rework_freshness`` is the one subcheck scoped to bare ``approval``:
+    its subject is the staleness of results being used to APPROVE, and demanding a
+    ``**Cycle: N**`` tag on the way out to rework would ask the reviewer to attest
+    freshness for the very cycle it is rejecting (AC-A8, carried from the probed
+    fix including this deliberate exclusion).
+    """
+    from pf.handoff.gate_recovery import mask_quoted_blocks, select_last_section
+
+    heading = assessment_heading(_APPROVAL_AGENT)
+    problems: list[str] = []
+
+    # Which assessment is current must be unambiguous before anything is judged
+    # against it — reported FIRST because it is the problem that makes the others
+    # hard to interpret (story 162-21). It no longer suppresses them: the sibling
+    # checks handle an ambiguous heading themselves.
+    selected_assessment = select_last_section(content, heading, mask_quoted_blocks)
+    if selected_assessment["status"] == "ambiguous":
+        problems.append(
+            f"Cannot determine the current '## {heading}' section: "
+            f"{selected_assessment['detail']}. To fix: repeat the exact "
+            f"`## {heading}` heading for each review cycle."
+        )
+
+    completion_error = _check_subagent_completion(content)
+    if completion_error:
+        problems.append(completion_error)
+
+    missing = _check_subagent_dispatch(content)
+    if missing:
+        _, enabled_tags = _get_enabled_subagents()
+        problems.append(
+            f"{heading} missing specialist subagent tags: {', '.join(sorted(missing))}. "
+            "To fix: Incorporate findings from all enabled specialist subagents in the "
+            f"{heading} using tags: {', '.join(sorted(enabled_tags))}."
+        )
+
+    if gate_type == "approval":
+        freshness = _check_rework_freshness(content)
+        if not freshness["pass"]:
+            problems.append(freshness["message"])
+
+    return problems
+
+
+def _format_unmet(unmet: list[str]) -> str:
+    """Render the unmet approval requirements as one legible error.
+
+    Blank-line separated and numbered, because these entries are multi-line: the
+    completion error ends in a two-line markdown example table, so joining on a
+    space spliced the next requirement onto the table's final row and produced one
+    unbroken paragraph containing a malformed table. Aggregating five legible
+    sequential errors into one illegible blob would have taken back most of what
+    AC-B1 bought (story 162-47 review, F2).
+    """
+    if len(unmet) == 1:
+        return unmet[0]
+    numbered = "\n\n".join(f"{i}. {problem}" for i, problem in enumerate(unmet, start=1))
+    return f"{len(unmet)} approval requirements are unmet — fix all of them:\n\n{numbered}"
 
 
 def _check_setup_context(project_root: Path, story_id: str) -> str | None:
@@ -349,30 +509,28 @@ def _calc_duration(started_str: str, ended_str: str) -> str:
 
 def _get_phase_tandem(project_root: Path, workflow: str, phase: str) -> dict | None:
     """Return tandem config for a phase, or None if no tandem block."""
-    for name in [f"{workflow}.yaml", f"{workflow}/workflow.yaml"]:
-        path = project_root / ".pennyfarthing" / "workflows" / name
-        if path.exists():
-            try:
-                data = yaml.safe_load(path.read_text())
-                for p in data["workflow"]["phases"]:
-                    if p["name"] == phase:
-                        return p.get("tandem")
-            except Exception:
-                pass
+    path = resolve_workflow_file(workflow, project_root)
+    if path is not None:
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
+            for p in data["workflow"]["phases"]:
+                if p["name"] == phase:
+                    return p.get("tandem")
+        except Exception:
+            pass
     return None
 
 
 def _get_phase_agent(project_root: Path, workflow: str, phase: str) -> str:
-    for name in [f"{workflow}.yaml", f"{workflow}/workflow.yaml"]:
-        path = project_root / ".pennyfarthing" / "workflows" / name
-        if path.exists():
-            try:
-                data = yaml.safe_load(path.read_text())
-                for p in data["workflow"]["phases"]:
-                    if p["name"] == phase:
-                        return p.get("agent", phase)
-            except Exception:
-                pass
+    path = resolve_workflow_file(workflow, project_root)
+    if path is not None:
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
+            for p in data["workflow"]["phases"]:
+                if p["name"] == phase:
+                    return p.get("agent", phase)
+        except Exception:
+            pass
     return phase
 
 
@@ -425,18 +583,26 @@ def _resolve_one(value: str, phase_names: set[str], agent_to_phases: dict[str, l
 
 def _load_workflow_phases(project_root: Path, workflow: str) -> list[dict]:
     """Load phases list from workflow YAML."""
-    for name in [f"{workflow}.yaml", f"{workflow}/workflow.yaml"]:
-        path = project_root / ".pennyfarthing" / "workflows" / name
-        if path.exists():
-            try:
-                data = yaml.safe_load(path.read_text())
-                return data.get("workflow", {}).get("phases", [])
-            except Exception:
-                pass
+    path = resolve_workflow_file(workflow, project_root)
+    if path is not None:
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
+            return data.get("workflow", {}).get("phases", [])
+        except Exception:
+            pass
     return []
 
 
-SUBAGENT_DISPATCH_TAGS = {"[EDGE]", "[SILENT]", "[TEST]", "[DOC]", "[TYPE]", "[SEC]", "[SIMPLE]", "[RULE]"}
+SUBAGENT_DISPATCH_TAGS = {
+    "[EDGE]",
+    "[SILENT]",
+    "[TEST]",
+    "[DOC]",
+    "[TYPE]",
+    "[SEC]",
+    "[SIMPLE]",
+    "[RULE]",
+}
 
 REQUIRED_SUBAGENTS = {
     "reviewer-preflight",
@@ -459,9 +625,21 @@ def _check_subagent_completion(content: str) -> str | None:
     """
     enabled_names, _ = _get_enabled_subagents()
 
-    # Look for ## Subagent Results section
-    match = re.search(r"^## Subagent Results\b.*", content, re.MULTILINE)
-    if not match:
+    # The CURRENT cycle's table — LAST section, same selection as resolve_gate
+    # (story 162-21). First-match was the more dangerous half of the 162-5
+    # defect: a stale cycle-1 "All received: Yes" silently certified that
+    # specialists ran for a cycle whose table was never completed.
+    # Presence search (row names, "All received") — lenient masker, as above.
+    from pf.handoff.gate_recovery import mask_quoted_blocks, select_last_section
+
+    selected = select_last_section(content, "Subagent Results", mask_quoted_blocks)
+    if selected["status"] == "ambiguous":
+        return (
+            f"Cannot determine the current '## Subagent Results' section: "
+            f"{selected['detail']}. To fix: repeat the exact "
+            "`## Subagent Results` heading for each review cycle."
+        )
+    if selected["status"] != "found":
         count = len(enabled_names)
         return (
             "Missing '## Subagent Results' section in session file. "
@@ -473,10 +651,7 @@ def _check_subagent_completion(content: str) -> str | None:
             "| 1 | reviewer-preflight | Yes | clean | none | N/A |"
         )
 
-    section = content[match.start():]
-    next_heading = re.search(r"^## (?!Subagent Results)", section, re.MULTILINE)
-    if next_heading:
-        section = section[:next_heading.start()]
+    section = selected["section"]
 
     # Check for "All received: Yes" (tolerates bold markdown: **All received:** **Yes**)
     if not re.search(r"\*{0,2}All received:\*{0,2}\s*\*{0,2}Yes\*{0,2}", section, re.IGNORECASE):
@@ -509,31 +684,141 @@ def _check_subagent_dispatch(content: str) -> set[str]:
     _, enabled_tags = _get_enabled_subagents()
     required_tags = SUBAGENT_DISPATCH_TAGS & enabled_tags
 
-    # Extract content after "## Reviewer Assessment"
-    match = re.search(r"^## Reviewer Assessment\b.*", content, re.MULTILINE)
-    if not match:
+    # The CURRENT cycle's assessment — the LAST section, selected by the same
+    # rule resolve_gate uses (story 162-21). Matching the first heading judged a
+    # rework session on its oldest section, so cycle 1's tags satisfied the gate
+    # even when the current cycle dispatched no specialists (fail-open, 162-5).
+    # PRESENCE search, so the lenient masker: a tag in backticks is exactly how
+    # `agents/reviewer.md` and `gates/approval.md` render these, and an indented
+    # line under a `###` heading is prose. Masking either reported tags missing
+    # while they sat plainly in the file — a fail-CLOSED that is close to
+    # undiagnosable from the message (story 162-28, cycle 2). Fenced examples are
+    # still masked, so 162-21's fail-open stays closed.
+    from pf.handoff.gate_recovery import (
+        candidate_section_region,
+        mask_quoted_blocks,
+        select_last_section,
+    )
+
+    heading = assessment_heading(_APPROVAL_AGENT)
+    selected = select_last_section(content, heading, mask_quoted_blocks)
+    if selected["status"] == "found":
+        assessment = selected["section"]
+    elif selected["status"] == "ambiguous":
+        # Which section is current is unknown, but the candidates are knowable, so
+        # search them rather than declaring every tag missing. Returning
+        # `required_tags` wholesale here reported all eight specialist tags absent
+        # while all eight sat plainly in the file — the aggregated error then named
+        # a requirement that was SATISFIED, sending the reviewer to chase tags it
+        # had already written. Before AC-B1 a short-circuit hid this by returning
+        # the ambiguity alone; aggregating without fixing the underlying report
+        # re-opened the 162-21 diagnostic defect (story 162-47 review, F1). The
+        # ambiguity is still reported by the caller either way.
+        assessment = candidate_section_region(content, heading, mask_quoted_blocks)
+    else:
+        # Absent: there is no assessment, so every required tag really is missing.
         return required_tags
-    assessment = content[match.start():]
-    # Truncate at next ## heading
-    next_heading = re.search(r"^## (?!Reviewer Assessment)", assessment, re.MULTILINE)
-    if next_heading:
-        assessment = assessment[:next_heading.start()]
     return {tag for tag in required_tags if tag not in assessment}
 
 
-def _parse_rework_cycle(session_content: str) -> int:
-    """Parse rework cycle number from session content.
+_LEGACY_REWORK_COUNTER_RE = re.compile(r"^\*\*Rework Cycle:\*\*[ \t]*(\d+)[ \t]*$", re.MULTILINE)
+_LEGACY_COUNTER_LINE_RE = re.compile(r"^.*\*\*Rework Cycle:\*\*.*$", re.MULTILINE)
+# The freshness tag, and nothing that merely resembles one. A standalone column-0
+# `**Cycle: N**` line — the form `agents/reviewer.md` documents. The unanchored,
+# asterisk-optional predicate this replaces was satisfied by any prose ending in
+# `Cycle: N`, including `Re-ran for Rework Cycle: 2` and a table cell, so the
+# guard could be cleared by text that asserts nothing (story 162-28 review).
+_CYCLE_TAG_RE = re.compile(r"^\*\*Cycle:[ \t]*(\d+)\*\*[ \t]*$", re.MULTILINE | re.IGNORECASE)
 
-    Looks for ``**Rework Cycle:** N`` and returns N.
-    Returns 0 if the field is absent or the value is not a valid integer.
+
+def _parse_rework_cycle(session_content: str) -> int:
+    """Parse the current rework cycle number from session content.
+
+    **NOT FOR PRODUCTION USE — kept only for the tests that characterise the
+    reader**, for the same reason as ``gate_recovery.parse_round_trip_count``: it
+    flattens ``unreadable`` onto ``absent``. Every production caller goes through
+    :func:`_read_rework_cycle` and branches on ``["status"]`` (story 162-59, AC4).
+
+    ``**Round-Trip Count:** N`` — the counter ``complete_phase`` actually writes
+    on every rework transition — is authoritative, and is read through
+    :func:`_read_rework_cycle` so this module does not fork a second
+    reader of it. ``**Rework Cycle:** N`` is the field the original guard read but
+    nothing ever wrote (story 162-28, B4); it remains a FALLBACK for hand-written
+    sessions and story 150-8's fixtures, consulted only when the real counter is
+    absent.
+
+    The real field wins rather than the higher value: ``agents/reviewer.md`` tells
+    the Reviewer to tag with the Round-Trip Count, and a ``max()`` across both
+    fields rejected that documented tag whenever a stale legacy field sat above it
+    — an unsatisfiable instruction, which is its own kind of gate failure.
+
+    Both readings mask illustrative regions and accept digits only. A value the
+    tag regex could never match must not arm the guard: ``-3`` used to clear the
+    ``== 0`` sentinel and then demand a tag no digits can satisfy, leaving the
+    session permanently unapprovable.
+
+    Returns 0 when no counter is present or none parses as a non-negative integer.
+    A counter that is present but HIDDEN or unparseable is not 0 — see
+    :func:`_read_rework_cycle`, which the guard uses so it can block on that state.
     """
-    match = re.search(r"\*\*Rework Cycle:\*\*\s*(\S+)", session_content)
-    if not match:
-        return 0
-    try:
-        return int(match.group(1))
-    except ValueError:
-        return 0
+    return _read_rework_cycle(session_content)["count"]
+
+
+def _read_rework_cycle(session_content: str) -> dict:
+    """Tri-state rework-cycle read: ``absent``, ``found`` or ``unreadable``.
+
+    Delegates the real counter to ``gate_recovery.read_round_trip_count`` and falls
+    back to the legacy ``**Rework Cycle:**`` field only when the real one is
+    genuinely absent — an unreadable real counter must not be papered over by a
+    legacy line, and a hidden legacy line is unreadable for the same reason
+    (story 162-28, review cycle 2).
+    """
+    from pf.handoff.gate_recovery import (
+        mask_illustrative_regions,
+        read_round_trip_count,
+    )
+
+    # 162-60: normalize before all matchers — homoglyph/format-char variants in
+    # the legacy "**Rework Cycle:**" label must not render it absent/unreadable.
+    # read_round_trip_count normalizes internally; the legacy matchers below do not.
+    session_content = normalize_session(session_content)
+
+    reading = read_round_trip_count(session_content)
+    if reading["status"] != "absent":
+        return reading
+
+    legacy = _LEGACY_REWORK_COUNTER_RE.findall(mask_illustrative_regions(session_content))
+    if legacy:
+        return {"status": "found", "count": int(legacy[-1]), "detail": ""}
+
+    if _LEGACY_COUNTER_LINE_RE.search(session_content):
+        return {
+            "status": "unreadable",
+            "count": 0,
+            "detail": (
+                "a '**Rework Cycle:**' line is present but cannot be read as "
+                "operative — its value does not parse as a plain integer ending "
+                "the line, or it sits inside a code fence, HTML comment, indented "
+                "block or backticks"
+            ),
+        }
+
+    return {"status": "absent", "count": 0, "detail": ""}
+
+
+# How the reviewer may honestly satisfy the freshness tag. Naming only the full
+# generalist sweep told a reviewer under context pressure that the honest answer
+# was unaffordable — so it added the tag without re-running anything, and the gate
+# certified the false attestation (story 162-47, AC-B2, observed in the 162-49
+# run). Targeted re-verification of already-characterized findings is STRONGER
+# evidence than a fresh sweep, so it is named as an accepted route and the
+# reviewer is asked to disclose which it used.
+_FRESHNESS_ROUTES = (
+    "Either re-run all enabled subagents, or re-verify each previously recorded "
+    "finding with targeted probes — targeted re-verification of characterized "
+    "findings is accepted, and is stronger evidence than a fresh generalist sweep. "
+    "State which method you used alongside the tag."
+)
 
 
 def _check_rework_freshness(session_content: str) -> dict:
@@ -544,7 +829,24 @@ def _check_rework_freshness(session_content: str) -> dict:
         message: str — human-readable explanation
         current_cycle: int — the parsed rework cycle number
     """
-    cycle = _parse_rework_cycle(session_content)
+    reading = _read_rework_cycle(session_content)
+
+    # "I cannot read the counter" is not "there was no rework". Treating them the
+    # same let the guard be disarmed by hiding the operative line — in an HTML
+    # comment it does not even leave a visible hole (story 162-28, cycle 2).
+    if reading["status"] == "unreadable":
+        return {
+            "pass": False,
+            "message": (
+                f"Cannot determine the rework cycle: {reading['detail']}. "
+                "To fix: put the counter back on its own line as "
+                "'**Round-Trip Count:** N', outside any code fence, HTML comment or "
+                "backticks, with nothing after the number."
+            ),
+            "current_cycle": 0,
+        }
+
+    cycle = reading["count"]
 
     if cycle == 0:
         return {
@@ -553,45 +855,70 @@ def _check_rework_freshness(session_content: str) -> dict:
             "current_cycle": 0,
         }
 
-    # Look for "Cycle: N" in the Subagent Results section
-    results_match = re.search(r"^## Subagent Results\b.*", session_content, re.MULTILINE)
-    if not results_match:
+    # The CURRENT cycle's results — the LAST exact section, selected by the same
+    # rule the sibling subchecks and resolve_gate use (stories 162-21, 162-28).
+    # The old reader took the FIRST match and truncated on
+    # `^## (?!Subagent Results)`, a lookahead that skipped same-named headings and
+    # so concatenated consecutive cycles: an older cycle's tag vouched for a
+    # current section that was never re-run. That is B1's fail-open.
+    from pf.handoff.gate_recovery import section_preamble, select_last_section
+
+    selected = select_last_section(session_content, "Subagent Results")
+    if selected["status"] == "absent":
         return {
             "pass": False,
             "message": (
                 f"Rework cycle {cycle} is active but no Subagent Results section found. "
-                "Re-run all enabled subagents for the current cycle."
+                f"To fix: add a `## Subagent Results` section for the current cycle. "
+                f"{_FRESHNESS_ROUTES}"
+            ),
+            "current_cycle": cycle,
+        }
+    if selected["status"] == "ambiguous":
+        return {
+            "pass": False,
+            "message": (
+                f"Rework cycle {cycle} is active but the current '## Subagent Results' "
+                f"section cannot be determined: {selected['detail']}. To fix: repeat the "
+                "exact `## Subagent Results` heading for each review cycle."
             ),
             "current_cycle": cycle,
         }
 
-    section = session_content[results_match.start():]
-    next_heading = re.search(r"^## (?!Subagent Results)", section, re.MULTILINE)
-    if next_heading:
-        section = section[:next_heading.start()]
+    # Only the section's own preamble attests to its table — a tag under an
+    # appended `### Reviewer Notes` speaks for that subsection, not for the results.
+    section = section_preamble(selected["section"])
 
-    # Check for "Cycle: N" matching the current cycle
-    cycle_tag = re.search(r"\*{0,2}Cycle:\s*(\d+)\*{0,2}", section)
-    if not cycle_tag:
+    # The tag is a standalone column-0 `**Cycle: N**` line, nothing that merely
+    # resembles one. select_last_section has already masked illustrative regions
+    # (fences, HTML comments, indented blocks, inline backticks), so no quoted
+    # example can vouch for this table either.
+    tags = [int(value) for value in _CYCLE_TAG_RE.findall(section)]
+    if not tags:
         return {
             "pass": False,
             "message": (
                 f"Rework cycle {cycle} is active but Subagent Results has no cycle tag. "
-                "To fix: Add '**Cycle: {cycle}**' to the Subagent Results section after "
-                "re-running all enabled subagents."
+                f"To fix: add the line '**Cycle: {cycle}**' to the Subagent Results "
+                "section. It must be a line of its own, starting at column 0 — a tag "
+                "quoted in a code fence, an indented example, backticks, an HTML "
+                "comment, a table cell or prose does not count, and neither does one "
+                f"under a `###` subsection of this section. {_FRESHNESS_ROUTES}"
             ),
             "current_cycle": cycle,
         }
 
-    results_cycle = int(cycle_tag.group(1))
-    if results_cycle != cycle:
+    # EVERY tag in the section must agree. Tags that disagree cannot both be true,
+    # and picking one is how the section reader used to fail open.
+    stale = [value for value in tags if value != cycle]
+    if stale:
         return {
             "pass": False,
             "message": (
-                f"Stale subagent results: results are from cycle {results_cycle} "
+                f"Stale subagent results: results are from cycle {stale[0]} "
                 f"but current rework cycle is {cycle}. "
-                "To fix: Re-run ALL enabled subagents against the full diff for the "
-                "current rework cycle before approving."
+                f"To fix: leave no tag other than '**Cycle: {cycle}**' in the current "
+                f"section. {_FRESHNESS_ROUTES}"
             ),
             "current_cycle": cycle,
         }

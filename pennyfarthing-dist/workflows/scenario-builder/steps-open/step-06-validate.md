@@ -35,9 +35,28 @@ Run the scenario validator against the assembled YAML, handle any field mapping 
 </instructions>
 
 <actions>
-- Run: `python -c "from pf.benchmark.scenario_validator import validate_scenario; ..."` with the scenario data
+- Validate: run `pf.benchmark.scenario_validator.validate_scenario` on the assembled data using the guarded interpreter (fence below)
 - Write: `{benchmarks_root}/{scenario_category}/{scenario_id}-{slug}.yaml`
 </actions>
+
+Run the validator with the pf launcher's own interpreter. A bare interpreter
+resolves to whatever is first on PATH — usually a project `.venv` that has no
+pf installed, so the import dies with ModuleNotFoundError (gh #112). The
+scenario data is fed on stdin through a single-quoted heredoc, so nothing in it
+is expanded by the shell or interpolated into the Python source (CWE-78).
+
+```bash
+# pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
+# .venv - derive the interpreter from the launcher shebang, never activate .venv.
+PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
+import json, sys, yaml
+from pf.benchmark.scenario_validator import validate_scenario
+print(json.dumps(validate_scenario(yaml.safe_load(sys.stdin)), indent=2))
+" <<'SCENARIOEOF'
+{assembled scenario YAML, with the validator field mapping below applied}
+SCENARIOEOF
+```
 
 ## Validator Field Mapping
 
@@ -74,8 +93,8 @@ Examples:
 ## Post-Creation
 
 After successful creation, suggest:
-- "Run `/benchmark` with this scenario to test it"
-- "Create another scenario with `/workflow start scenario-builder`"
+- "Run `/pf-benchmark` with this scenario to test it"
+- "Create another scenario with `/pf-workflow start scenario-builder`"
 
 <output>
 - Validation result (pass/fail with details)

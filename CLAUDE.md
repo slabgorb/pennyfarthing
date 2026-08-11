@@ -1,6 +1,6 @@
 # CLAUDE.md — Pennyfarthing Framework
 
-Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 13.4.0. Python-first architecture.
+Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workflows and themed personas. **Version:** 13.5.0. Python-first architecture.
 
 <critical>
 ## Implementation Rules
@@ -10,7 +10,7 @@ Pennyfarthing is a Claude Code agent orchestration framework with BikeLane workf
 3. **Scripts use `.pennyfarthing/` paths** — never `pennyfarthing-dist/` in runtime
 4. **Scripts must exist in ONE location only** — build-time validation prevents duplication
 5. **Never edit symlink targets** — trace to `pennyfarthing-dist/`
-6. **Python is the only language** — no JavaScript/TypeScript logic in this repo
+6. **Python owns all logic** — `web/` is a pure view layer over the Frame API (ADR-0042 boundary rule: no client-side workflow derivation, YAML parsing, or theme logic; computations become Frame routes). No other JavaScript/TypeScript in this repo.
 </critical>
 
 <critical>
@@ -58,6 +58,7 @@ pf validate                                          # Framework validation
 |-----------|---------|
 | `pennyfarthing-dist/` | Published package (source of truth) — agents, commands, guides, skills, personas, workflows, scripts |
 | `pennyfarthing-dist/src/pf/` | Python CLI package (hooks, jira, sprint, story, prime, frame, tui) |
+| `web/` | Browser dashboard (React/Vite) — pure Frame API client, builds into `pf/frame/webui/dist` |
 | `tests/` | Framework tests |
 | `scripts/` | Framework dev only (NOT distributed) |
 

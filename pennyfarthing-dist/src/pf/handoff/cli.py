@@ -129,8 +129,16 @@ def resolve_gate_cmd(
         "next_agent": string | null,
         "next_phase": string | null,
         "assessment_found": boolean,
-        "error": string | null
+        "error": string | null,
+        "gate_extensions": [string] | null,
+        "recovery_config": object    // only when the gate declares recovery
       }
+
+    \b
+    Gates declaring `recovery: {action: rework}` route on the phase agent's
+    verdict (story 162-21): a non-APPROVED verdict yields next_phase =
+    recovery.target_phase and a `<type>_rework` gate_type; a missing or
+    ambiguous verdict, or an exhausted max_attempts, yields "blocked".
     """
     from pf.handoff.resolve_gate import resolve_gate
 
@@ -314,7 +322,7 @@ def status_cmd(output_json: bool):
 
     if session_dir.is_dir():
         for sf in sorted(session_dir.glob("*-session.md")):
-            content = sf.read_text()
+            content = sf.read_text(encoding="utf-8")
             wf_match = re.search(r"\*\*Workflow:\*\*\s*(\S+)", content)
             ph_match = re.search(r"\*\*Phase:\*\*\s*(\S+)", content)
             sid_match = re.search(r"# Story (\S+)", content)
@@ -332,13 +340,11 @@ def status_cmd(output_json: bool):
                 if result["workflow"] and result["phase"]:
                     try:
                         from pf.workflow.helpers import (
-                            find_workflow_file,
-                            get_workflows_dir,
                             load_workflow_data,
+                            resolve_workflow_file,
                         )
 
-                        workflows_dir = get_workflows_dir(root)
-                        wf_file = find_workflow_file(workflows_dir, result["workflow"])
+                        wf_file = resolve_workflow_file(result["workflow"], root)
                         if wf_file:
                             data = load_workflow_data(wf_file)
                             phases = data.get("workflow", {}).get("phases", [])

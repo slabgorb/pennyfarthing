@@ -91,8 +91,14 @@ workflow: "tdd"
 - **ID:** 200-1
 - **Jira:** PROJ-99901
 - **Workflow:** tdd
-- **Branch:** feat/200-1-stuck-in-backlog
+- **Branch:** none
 """
+# Branch is the none-sentinel (155-34 pre-adjustment): these worlds pin the
+# transition chain, not branch verification. A real branch name here would
+# meet the 155-34 unmerged-branch probe with this file's generic rc=0 mock
+# and make the outcome depend on the probe's parse shape; the sentinel is
+# the affirmed no-branch world, which stays on the accepted no-PR arm both
+# before and after the 155-34 guard.
 
 NO_JIRA_SESSION = """\
 ---
@@ -109,7 +115,7 @@ workflow: "trivial"
 - **ID:** 200-4
 - **Jira:** none
 - **Workflow:** trivial
-- **Branch:** feat/200-4-no-jira-backlog
+- **Branch:** none
 """
 
 IN_PROGRESS_SESSION = """\
@@ -127,7 +133,7 @@ workflow: "tdd"
 - **ID:** 200-2
 - **Jira:** [PROJ-99902](https://jira.example.com/browse/PROJ-99902)
 - **Workflow:** tdd
-- **Branch:** feat/200-2-in-progress
+- **Branch:** none
 """
 
 

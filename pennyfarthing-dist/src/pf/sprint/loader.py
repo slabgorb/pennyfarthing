@@ -8,6 +8,7 @@ Provides access to sprint data with support for:
 - Sharded per-epic format: epic-{ref}.yaml shard files
 """
 
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,7 @@ from pf.common.config import (
     save_pennyfarthing_config_key,
 )
 from pf.core.resolver import resolve_sprint_context
+from pf.sprint.shard_merge import is_safe_shard_path
 
 # Sentinel ``jira`` values that mean "no real Jira key" even though the field is
 # present. Single source of truth (story 160-3) — consumed by story_update,
@@ -306,6 +308,14 @@ def get_archived_stories(
 
     stories = []
     for path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
+        # Path traversal (CWE-22): a glob match is a *name* match, so a symlink
+        # inside the archive dir pointing outside it is yielded happily.
+        if not is_safe_shard_path(path, archive_dir):
+            warnings.warn(
+                f"Archive index {path.name} escapes the archive directory ({path}) — skipping",
+                stacklevel=2,
+            )
+            continue
         data = load_yaml_config(path)
         if not data or "completed_stories" not in data:
             continue
@@ -324,6 +334,13 @@ def get_archived_stories(
         # Also load stories from archived epic shards referenced by completed_epics
         for epic_ref in data.get("completed_epics", []):
             shard_path = archive_dir / f"epic-{epic_ref}.yaml"
+            if not is_safe_shard_path(shard_path, archive_dir):
+                warnings.warn(
+                    f"Archived epic ref '{epic_ref}' escapes the archive directory "
+                    f"({shard_path}) — skipping",
+                    stacklevel=2,
+                )
+                continue
             if shard_path.exists():
                 shard_data = load_yaml_config(shard_path)
                 if shard_data and "stories" in shard_data:

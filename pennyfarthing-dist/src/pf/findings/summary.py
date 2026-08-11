@@ -161,7 +161,7 @@ def compile_impact_summary(
     }
 
 
-def _parse_session_deviations(content: str) -> list[dict]:
+def parse_session_deviations(content: str) -> list[dict]:
     """Parse Design Deviations section from session markdown.
 
     Returns list of deviation dicts with keys: description, rationale,
@@ -252,7 +252,7 @@ def write_impact_summary_to_session(session_path: Path) -> dict:
     findings = parse_delivery_findings(content)
 
     # Parse deviations (returns [] if no Design Deviations section)
-    deviations = _parse_session_deviations(content)
+    deviations = parse_session_deviations(content)
 
     # Compile
     result = compile_impact_summary(findings, deviations=deviations)

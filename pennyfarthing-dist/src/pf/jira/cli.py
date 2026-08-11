@@ -114,17 +114,39 @@ def move(key, status, dry_run):
 @click.argument("user")
 @click.option("--dry-run", is_flag=True, help="Preview without applying")
 def assign(key, user, dry_run):
-    """Assign issue to a user (email or GitHub username)."""
+    """Assign issue to a user.
+
+    \b
+    USER: GitHub username (must be listed in jira.user_map), or the user
+    Jira account email. Non-Jira emails will not resolve — the account
+    email is the corporate SSO address the Jira account was created with,
+    not any personal address.
+
+    \b
+    --dry-run resolves USER against Jira and fails if it cannot be
+    assigned; it never modifies the issue.
+    """
     from pf.jira.operations import assign_issue
 
     result = assign_issue(key, user, dry_run=dry_run)
-    if result.get("already_assigned"):
-        click.echo(f"{key} already assigned to {user}")
-    elif result.get("success"):
-        click.echo(f"Assigned {key} to {user}")
-    else:
+
+    if not result.get("success"):
         click.echo(f"Failed: {result.get('error', 'unknown')}", err=True)
         raise SystemExit(1)
+
+    if result.get("unassign"):
+        # No account to name — say only what happens, and say it once.
+        click.echo(f"[DRY RUN] Would unassign {key}" if dry_run else f"Unassigned {key}")
+        return
+
+    data = result.get("data") or {}
+    who = f"{data.get('display_name')} <{data.get('email')}>"
+    if result.get("already_assigned"):
+        click.echo(f"{key} already assigned to {who}")
+    elif dry_run:
+        click.echo(f"[DRY RUN] Would assign {key} to {who}")
+    else:
+        click.echo(f"Assigned {key} to {who}")
 
 
 @jira.command()
@@ -142,7 +164,8 @@ def link(parent_key, child_key, link_type, dry_run):
 
     result = link_issues(parent_key, child_key, link_type, dry_run=dry_run)
     if result.get("success"):
-        click.echo(f"Linked {parent_key} -> {child_key} ({link_type})")
+        prefix = "[DRY RUN] Would link" if dry_run else "Linked"
+        click.echo(f"{prefix} {parent_key} -> {child_key} ({link_type})")
     else:
         click.echo(f"Failed: {result.get('error', 'unknown')}", err=True)
         raise SystemExit(1)
@@ -465,12 +488,19 @@ def jira_sprint():
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def sprint_add(sprint_id, issue_key, dry_run):
     """Add an issue to a sprint."""
-    if dry_run:
-        click.echo(f"[DRY-RUN] Would add {issue_key} to sprint {sprint_id}")
-        return
     from pf.jira.client import get_client
 
     client = get_client()
+
+    if dry_run:
+        # Verify the issue exists — the echo-only preview could not tell you
+        # the key was wrong.
+        if not client.get_issue_sync(issue_key):
+            click.echo(f"Issue not found: {issue_key}", err=True)
+            raise SystemExit(1)
+        click.echo(f"[DRY-RUN] Would add {issue_key} to sprint {sprint_id}")
+        return
+
     result = client.add_to_sprint_sync(sprint_id, issue_key)
     if result.get("success"):
         click.echo(f"Added {issue_key} to sprint {sprint_id}")

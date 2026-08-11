@@ -22,7 +22,7 @@ A scientific study of how strong personalities affect agent behavior:
 
 - **OCEAN Profiling** - Big Five personality scores for every character
 - **TRAIL Framework Integration** - Categorizing errors (reasoning, planning, execution) and correlating with personality
-- **Benchmarking System** - `/solo`, `/benchmark-control`, `/benchmark` for statistical evaluation
+- **Benchmarking System** - `/pf-solo`, `/pf-benchmark-control`, `/pf-benchmark` for statistical evaluation
 - **JobFair** - Discovering which characters excel at roles beyond their native specialization
 - **Hypothesis Testing** - Does High Openness detect more reasoning errors? Does Low Agreeableness improve adversarial review?
 

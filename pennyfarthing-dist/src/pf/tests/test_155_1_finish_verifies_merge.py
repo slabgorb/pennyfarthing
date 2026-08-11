@@ -39,13 +39,13 @@ outcomes are controlled per-test, and ``transition_story`` is patched so the
 ``done`` request can be asserted on (or its absence asserted).
 """
 
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pf.sprint.story_finish import finish_story
+from pf.tests.helpers.gh_pr_fake import GhPrFake
 
 # =============================================================================
 # Fixtures
@@ -119,6 +119,28 @@ workflow: "tdd"
 - **Branch:** feat/155-1-finish-flow-merge-pr-noop
 """
 
+# Session with the none-sentinel branch (155-34 pre-adjustment): the affirmed
+# no-branch world, which stays on the accepted no-PR arm before and after the
+# 155-34 unmerged-branch guard. The over-reach guard below uses this shape;
+# the real-branch-with-no-resolvable-PR world it previously occupied is now
+# owned (and aborted) by test_155_34_finish_no_pr_unmerged_branch.py, closing
+# the "no PR at all" open question this file's Delivery Findings recorded.
+SESSION_NO_PR_SENTINEL = """\
+---
+story_id: "155-1"
+jira_key: ""
+epic: "155"
+workflow: "tdd"
+---
+
+# Story 155-1: finish must verify the PR merged before marking done
+
+## Story Details
+- **ID:** 155-1
+- **Workflow:** tdd
+- **Branch:** none
+"""
+
 
 def _make_project(tmp_path: Path, session_text: str) -> Path:
     """Build a project layout (sprint/ + .session/) for finish_story tests."""
@@ -143,36 +165,6 @@ def project_no_pr(tmp_path: Path) -> Path:
     return _make_project(tmp_path, SESSION_NO_PR)
 
 
-def _make_fake_run(*, merge_rc: int = 0, pr_state: str = "MERGED", listed_pr: str = ""):
-    """Build a command-dispatching fake for ``story_finish._run``.
-
-    - ``gh pr merge ...``  → returncode=merge_rc
-    - ``gh pr view ...``   → stdout JSON ``{"state": pr_state, ...}``
-    - ``gh pr list ...``   → stdout=listed_pr (the resolved PR number)
-    - anything else (git checkout/pull/branch, epic archive) → returncode=0
-    """
-
-    def _fake_run(cmd, **kwargs):
-        parts = [str(c) for c in cmd]
-        if "merge" in parts:
-            return MagicMock(
-                returncode=merge_rc,
-                stdout="",
-                stderr="" if merge_rc == 0 else "merge failed: pull request is not mergeable",
-            )
-        if "view" in parts:
-            merged_at = "2026-06-04T00:00:00Z" if pr_state == "MERGED" else None
-            return MagicMock(
-                returncode=0,
-                stdout=json.dumps({"state": pr_state, "mergedAt": merged_at}),
-                stderr="",
-            )
-        if "list" in parts:
-            return MagicMock(returncode=0, stdout=listed_pr, stderr="")
-        return MagicMock(returncode=0, stdout="", stderr="")
-
-    return _fake_run
-
 
 def _requested_done(mock_transition: MagicMock) -> bool:
     """True if transition_story was ever asked to move the story to ``done``."""
@@ -193,6 +185,14 @@ def _requested_done(mock_transition: MagicMock) -> bool:
 class TestFinishAbortsWhenMergeFails:
     """When ``gh pr merge`` returns non-zero, finish must NOT mark the story
     done. Today it only appends a ``warning`` step and continues.
+
+    ``pr_state="OPEN"`` is pinned explicitly (155-29 pre-adjustment): these
+    tests previously relied on the fake's default ``pr_state="MERGED"``, an
+    inconsistent world (merge fails but the PR reports MERGED) that the
+    155-29 pre-merge ``_pr_is_merged`` short-circuit legitimately turns into
+    an already-merged success. A *genuinely failed* merge is one where the PR
+    is still OPEN — which is what these tests always meant to simulate.
+    Green on HEAD (the rc!=0 abort fires before any state read) and post-fix.
     """
 
     @patch("pf.sprint.story_finish.transition_story")
@@ -202,7 +202,8 @@ class TestFinishAbortsWhenMergeFails:
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
-            "pf.sprint.story_finish._run", side_effect=_make_fake_run(merge_rc=1)
+            "pf.sprint.story_finish._run",
+            GhPrFake(merge_rc=1, pr_state="OPEN"),
         ):
             result = finish_story(project_with_pr, "155-1")
 
@@ -218,7 +219,8 @@ class TestFinishAbortsWhenMergeFails:
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
-            "pf.sprint.story_finish._run", side_effect=_make_fake_run(merge_rc=1)
+            "pf.sprint.story_finish._run",
+            GhPrFake(merge_rc=1, pr_state="OPEN"),
         ):
             result = finish_story(project_with_pr, "155-1")
 
@@ -238,7 +240,8 @@ class TestFinishAbortsWhenMergeFails:
         assert session_path.exists()  # precondition
 
         with patch(
-            "pf.sprint.story_finish._run", side_effect=_make_fake_run(merge_rc=1)
+            "pf.sprint.story_finish._run",
+            GhPrFake(merge_rc=1, pr_state="OPEN"),
         ):
             finish_story(project_with_pr, "155-1")
 
@@ -254,7 +257,8 @@ class TestFinishAbortsWhenMergeFails:
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
-            "pf.sprint.story_finish._run", side_effect=_make_fake_run(merge_rc=1)
+            "pf.sprint.story_finish._run",
+            GhPrFake(merge_rc=1, pr_state="OPEN"),
         ):
             finish_story(project_with_pr, "155-1")
 
@@ -283,7 +287,7 @@ class TestFinishVerifiesMergeLanded:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN"),
+            GhPrFake(merge_rc=0, pr_state="OPEN"),
         ):
             result = finish_story(project_with_pr, "155-1")
 
@@ -301,7 +305,7 @@ class TestFinishVerifiesMergeLanded:
         session_path = project_with_pr / ".session" / "155-1-session.md"
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN"),
+            GhPrFake(merge_rc=0, pr_state="OPEN"),
         ):
             finish_story(project_with_pr, "155-1")
 
@@ -318,7 +322,7 @@ class TestFinishVerifiesMergeLanded:
         mock_transition.return_value = {"success": True, "to_status": "in_review"}
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN"),
+            GhPrFake(merge_rc=0, pr_state="OPEN"),
         ):
             finish_story(project_with_pr, "155-1")
 
@@ -344,20 +348,16 @@ class TestFinishResolvesOutOfBandPr:
         self, mock_mode: MagicMock, mock_transition: MagicMock, project_no_pr: Path
     ) -> None:
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        fake = MagicMock(side_effect=_make_fake_run(merge_rc=0, pr_state="MERGED", listed_pr="288"))
+
+        fake = GhPrFake(merge_rc=0, pr_state="MERGED", pre_merge_state="OPEN", list_stdout="288")
         with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project_no_pr, "155-1")
 
-        # The resolved PR (#288) must actually be merged — assert gh pr merge ran on it.
-        merge_calls = [
-            c for c in fake.call_args_list
-            if "merge" in [str(x) for x in c.args[0]]
-        ]
-        assert merge_calls, (
+        assert len(fake.merge_calls) > 0, (
             "No `gh pr merge` was invoked — out-of-band PR resolved by branch "
             "was silently skipped (gh #71)"
         )
-        assert any("288" in [str(x) for x in c.args[0]] for c in merge_calls), (
+        assert any("288" in c for c in fake.merge_calls), (
             "merge ran but not against the branch-resolved PR #288"
         )
         assert result["success"] is True
@@ -370,26 +370,28 @@ class TestFinishResolvesOutOfBandPr:
         mock_mode: MagicMock,
         mock_transition: MagicMock,
         mock_add_completed: MagicMock,
-        project_no_pr: Path,
+        tmp_path: Path,
     ) -> None:
-        """No PR in session AND none findable by branch, in auto merge mode.
+        """Affirmed-no-branch world (sentinel), in auto merge mode.
 
         Product decision (2026-06-04, Keith): the verify-merged guard applies
-        **only when a PR exists**. A story with no resolvable PR is NOT blocked
-        by this story — it keeps the prior behavior of marking done (guarded
-        separately by ``test_151_3::test_success_path_unchanged``). This test is
-        the over-reach guard: the new ``gh pr view`` verification must not abort
-        a legitimate no-PR finish. The "no PR at all" case is tracked as an open
-        question in the 155-1 Delivery Findings; both reported bugs (#71/#60)
-        involved a PR that existed but did not merge, which is covered above.
+        **only when a PR exists**. This test is the over-reach guard: the
+        ``gh pr view`` verification must not abort a legitimate no-PR finish.
+        155-34 reinterpretation: the original real-branch-with-no-resolvable-PR
+        world (the "no PR at all" open question in this file's Delivery
+        Findings) is now owned by test_155_34_finish_no_pr_unmerged_branch.py,
+        which ABORTS it when the branch holds unmerged commits. The accepted
+        no-PR done path survives for worlds finish can trust without a PR —
+        here, the agent's affirmative ``Branch: none`` sentinel.
         """
         mock_transition.return_value = {"success": True, "to_status": "done"}
-        # listed_pr="" → gh pr list resolves nothing → no PR → merge step skipped.
+        project_sentinel = _make_project(tmp_path, SESSION_NO_PR_SENTINEL)
+        # Sentinel branch → no gh pr list probe → no PR → merge step skipped.
         with patch(
             "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="OPEN", listed_pr=""),
+            GhPrFake(merge_rc=0, pr_state="OPEN", list_stdout=""),
         ):
-            result = finish_story(project_no_pr, "155-1")
+            result = finish_story(project_sentinel, "155-1")
 
         assert result["success"] is True, (
             "verify-merged must not block a no-PR finish (over-reach guard): "
@@ -409,6 +411,14 @@ class TestFinishSuccessPathUnchanged:
     """When the merge succeeds AND the PR is verified ``MERGED``, finish behaves
     exactly as before: marks done and removes the session. Stops the
     verify-merge change from over-reaching and blocking healthy finishes.
+
+    162-22: this class's happy path used to stub a **fixed ``MERGED``** PR view.
+    Because 155-29 added a pre-merge short-circuit that treats an
+    already-``MERGED`` view as done, that world made finish skip ``gh pr merge``
+    entirely — the test passed while asserting nothing about the merge that
+    155-1 made load-bearing. The happy path now pins the stateful world
+    (``pre_merge_state="OPEN"`` → ``pr_state="MERGED"``) and asserts the merge
+    **invocation**, not just the final state.
     """
 
     @patch("pf.sprint.story_finish._add_story_to_completed")
@@ -424,12 +434,23 @@ class TestFinishSuccessPathUnchanged:
         mock_transition.return_value = {"success": True, "to_status": "done"}
         session_path = project_with_pr / ".session" / "155-1-session.md"
 
-        with patch(
-            "pf.sprint.story_finish._run",
-            side_effect=_make_fake_run(merge_rc=0, pr_state="MERGED"),
-        ):
+        # Stateful world: OPEN until `gh pr merge` actually runs, then MERGED.
+        # `pre_merge_state` is pinned explicitly rather than inherited from the
+        # GhPrFake default so a future default change cannot silently re-arm
+        # the 155-29 short-circuit and re-hollow this test.
+        fake = GhPrFake(merge_rc=0, pr_state="MERGED", pre_merge_state="OPEN")
+        with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project_with_pr, "155-1")
 
+        assert len(fake.merge_calls) == 1, (
+            "The clean happy path must invoke `gh pr merge` exactly once — "
+            f"got {fake.merge_calls!r}. Zero calls means finish short-circuited "
+            "and the merge 155-1 made load-bearing was never exercised."
+        )
+        assert "288" in fake.merge_calls[0], (
+            "merge ran but not against the session's PR #288: "
+            f"{fake.merge_calls[0]!r}"
+        )
         assert result["success"] is True, result
         assert result["story_id"] == "155-1"
         assert _requested_done(mock_transition), (
@@ -437,4 +458,36 @@ class TestFinishSuccessPathUnchanged:
         )
         assert not session_path.exists(), (
             "Clean finish must still remove the session file"
+        )
+
+    @patch("pf.sprint.story_finish._add_story_to_completed")
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_fixed_merged_view_short_circuits_and_never_merges(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        mock_add_completed: MagicMock,
+        project_with_pr: Path,
+    ) -> None:
+        """Vacuity sentinel (162-22).
+
+        Pins *why* the clean-merge test must use the stateful fake: in a world
+        where the PR already reads ``MERGED`` up front, the 155-29 pre-check
+        legitimately declares success **without calling ``gh pr merge``**. That
+        is correct behavior for a genuine already-merged PR — and exactly why a
+        fixed-``MERGED`` stub can never stand in for a clean merge. If this
+        assertion ever flips (merge called here), the short-circuit is gone and
+        the sibling happy-path test above needs re-derivation.
+        """
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+
+        fake = GhPrFake(merge_rc=0, pr_state="MERGED", pre_merge_state="MERGED")
+        with patch("pf.sprint.story_finish._run", fake):
+            result = finish_story(project_with_pr, "155-1")
+
+        assert result["success"] is True, result
+        assert fake.merge_calls == [], (
+            "An already-MERGED PR must take the 155-29 short-circuit, not "
+            f"re-merge: {fake.merge_calls!r}"
         )

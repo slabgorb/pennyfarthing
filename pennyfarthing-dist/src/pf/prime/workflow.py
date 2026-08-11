@@ -15,8 +15,9 @@ from typing import Any
 
 import yaml
 
-from pf.common.config import get_dist_root, get_project_root
+from pf.common.config import get_project_root
 from pf.prime.models import WorkflowState, WorkflowStatus
+from pf.workflow.helpers import resolve_workflow_file
 
 
 def find_active_session(project_root: Path) -> Path | None:
@@ -150,17 +151,9 @@ def get_phase_owner(workflow: str, phase: str, project_root: Path) -> str | None
     Returns:
         Agent name (sm, tea, dev, reviewer), or None if not found
     """
-    dist_root = get_dist_root(project_root=project_root)
-    if dist_root:
-        workflow_path = dist_root / "workflows" / f"{workflow}.yaml"
-    else:
-        workflow_path = project_root / "pennyfarthing-dist" / "workflows" / f"{workflow}.yaml"
-
-    if not workflow_path.exists():
-        # Fallback to symlinked location
-        workflow_path = project_root / ".pennyfarthing" / "workflows" / f"{workflow}.yaml"
-        if not workflow_path.exists():
-            return None
+    workflow_path = resolve_workflow_file(workflow, project_root)
+    if workflow_path is None:
+        return None
 
     try:
         data = yaml.safe_load(workflow_path.read_text())
@@ -350,13 +343,8 @@ def get_phase_tandem_config(
         or None if no tandem config on this phase.
     """
     root = project_root or get_project_root()
-    dist_root = get_dist_root(project_root=root)
-    if dist_root:
-        workflow_path = dist_root / "workflows" / f"{workflow_name}.yaml"
-    else:
-        workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
-
-    if not workflow_path.exists():
+    workflow_path = resolve_workflow_file(workflow_name, root)
+    if workflow_path is None:
         return None
 
     try:
@@ -393,13 +381,8 @@ def get_phase_team_config(
         or None if no team config on this phase.
     """
     root = project_root or get_project_root()
-    dist_root = get_dist_root(project_root=root)
-    if dist_root:
-        workflow_path = dist_root / "workflows" / f"{workflow_name}.yaml"
-    else:
-        workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
-
-    if not workflow_path.exists():
+    workflow_path = resolve_workflow_file(workflow_name, root)
+    if workflow_path is None:
         return None
 
     try:
@@ -437,13 +420,8 @@ def get_phase_skills(
         or None when there are no required skills for this phase.
     """
     root = project_root or get_project_root()
-    dist_root = get_dist_root(project_root=root)
-    if dist_root:
-        workflow_path = dist_root / "workflows" / f"{workflow_name}.yaml"
-    else:
-        workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
-
-    if not workflow_path.exists():
+    workflow_path = resolve_workflow_file(workflow_name, root)
+    if workflow_path is None:
         return None
 
     try:
@@ -509,29 +487,22 @@ def _get_step_config_block(
 ) -> dict[str, Any] | None:
     """Shared helper to extract a config block from a stepped workflow step."""
     root = project_root or get_project_root()
-    dist_root = get_dist_root(project_root=root)
-    base = dist_root if dist_root else root / "pennyfarthing-dist"
+    candidate = resolve_workflow_file(workflow_name, root)
+    if candidate is None:
+        return None
 
-    # Try flat file first, then directory-based workflow
-    for candidate in [
-        base / "workflows" / f"{workflow_name}.yaml",
-        base / "workflows" / workflow_name / "workflow.yaml",
-    ]:
-        if not candidate.exists():
-            continue
-        try:
-            data = yaml.safe_load(candidate.read_text())
-            steps_cfg = data.get("workflow", {}).get("steps", {})
-            config = steps_cfg.get("config", {})
-            step_cfg = config.get(step_number, {})
-            if isinstance(step_cfg, dict):
-                value = step_cfg.get(block)
-                if isinstance(value, dict):
-                    return dict(value)
-            return None
-        except Exception:
-            return None
-    return None
+    try:
+        data = yaml.safe_load(candidate.read_text())
+        steps_cfg = data.get("workflow", {}).get("steps", {})
+        config = steps_cfg.get("config", {})
+        step_cfg = config.get(step_number, {})
+        if isinstance(step_cfg, dict):
+            value = step_cfg.get(block)
+            if isinstance(value, dict):
+                return dict(value)
+        return None
+    except Exception:
+        return None
 
 
 def get_phase_gate_recovery(
@@ -551,13 +522,8 @@ def get_phase_gate_recovery(
         True if the phase gate has recovery config, False otherwise.
     """
     root = project_root or get_project_root()
-    dist_root = get_dist_root(project_root=root)
-    if dist_root:
-        workflow_path = dist_root / "workflows" / f"{workflow_name}.yaml"
-    else:
-        workflow_path = root / "pennyfarthing-dist" / "workflows" / f"{workflow_name}.yaml"
-
-    if not workflow_path.exists():
+    workflow_path = resolve_workflow_file(workflow_name, root)
+    if workflow_path is None:
         return False
 
     try:

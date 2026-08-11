@@ -10,6 +10,7 @@ Entry point for uvicorn.
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import sys
 import time
@@ -21,6 +22,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .otlp import OTLPReceiver
+
+# Frame logs through uvicorn's error logger so records land in .session/frame.log
+_logger = logging.getLogger("uvicorn.error")
 
 # Module-level receiver instance (shared across routes)
 _receiver = OTLPReceiver()
@@ -68,6 +72,11 @@ async def broadcast(channel: str, data: dict) -> None:
         try:
             await ws.send_text(message)
         except Exception:
+            _logger.error(
+                "Frame broadcast to a %s WebSocket client failed; pruning client",
+                channel,
+                exc_info=True,
+            )
             dead.append(ws)
     for ws in dead:
         _ws_clients[channel].discard(ws)
@@ -82,6 +91,21 @@ def _resolve_project_dir() -> Path | None:
     """Resolve project dir from FRAME_PROJECT_DIR env."""
     env = os.environ.get("FRAME_PROJECT_DIR")
     return Path(env) if env else None
+
+
+def _resolve_webui_dir() -> Path | None:
+    """Locate the built web UI, if any.
+
+    FRAME_WEBUI_DIR env wins (tests, dev overrides); when set, it must exist —
+    no silent fallback. Otherwise use the packaged build at pf/frame/webui/dist
+    (populated by `vite build`; absent in a source tree with no web build).
+    """
+    env = os.environ.get("FRAME_WEBUI_DIR")
+    if env:
+        path = Path(env)
+        return path if path.is_dir() else None
+    packaged = Path(__file__).parent / "webui" / "dist"
+    return packaged if packaged.is_dir() else None
 
 
 # Time of the most recent WebSocket activity (connect/disconnect), used by the
@@ -107,7 +131,7 @@ async def _lifespan(app: FastAPI):
     import signal
 
     from .lifecycle import monitor_and_shutdown
-    from .ws_push import poll_and_broadcast
+    from .ws_push import poll_and_broadcast, shutdown_shared_executor
 
     project_dir = _resolve_project_dir()
     port = _resolve_port()
@@ -137,6 +161,8 @@ async def _lifespan(app: FastAPI):
                 await task
             except asyncio.CancelledError:
                 pass
+        # Don't let the bounded frame-fetch thread pool outlive the server.
+        shutdown_shared_executor()
         if project_dir:
             cleanup_port_file(project_dir)
 
@@ -182,7 +208,7 @@ def create_app() -> FastAPI:
             for span in new_spans:
                 await broadcast("spans", {"type": "span", "span": span})
         except Exception:
-            pass
+            _logger.error("Failed to ingest OTLP logs payload", exc_info=True)
         return JSONResponse({"partialSuccess": {}})
 
     @app.post("/v1/metrics")
@@ -195,7 +221,7 @@ def create_app() -> FastAPI:
                 _receiver.process_metrics(body)
                 await broadcast("token-stats", _receiver.get_token_stats())
         except Exception:
-            pass
+            _logger.error("Failed to ingest OTLP metrics payload", exc_info=True)
         return JSONResponse({"partialSuccess": {}})
 
     @app.post("/v1/traces")
@@ -206,7 +232,7 @@ def create_app() -> FastAPI:
             for span in new_spans:
                 await broadcast("spans", {"type": "span", "span": span})
         except Exception:
-            pass
+            _logger.error("Failed to ingest OTLP traces payload", exc_info=True)
         return JSONResponse({"partialSuccess": {}})
 
     # --- Mount all API route groups ---
@@ -238,6 +264,13 @@ def create_app() -> FastAPI:
             async def ws_endpoint(websocket: WebSocket) -> None:
                 await _ws_handler(websocket, ch)
         make_ws_route(channel)
+
+    # --- Static web UI (ADR web-gui-resurrection) ---
+    webui_dir = _resolve_webui_dir()
+    if webui_dir is not None:
+        from fastapi.staticfiles import StaticFiles
+
+        app.mount("/", StaticFiles(directory=str(webui_dir), html=True), name="webui")
 
     return app
 

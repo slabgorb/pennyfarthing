@@ -136,7 +136,7 @@ class TestDemoHookTriggered:
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
         # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
         mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+            returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}', stderr=""
         )
         mock_demo_generate.return_value = {"success": True, "data": {"files": []}}
 
@@ -191,7 +191,7 @@ class TestDemoHookTriggered:
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
         # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
         mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+            returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}', stderr=""
         )
         mock_demo_generate.return_value = {"success": True, "data": {"files": []}}
 
@@ -234,7 +234,7 @@ class TestDemoHookConfiguration:
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
         # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
         mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+            returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}', stderr=""
         )
         mock_demo_generate.return_value = {"success": True, "data": {"files": []}}
 
@@ -332,7 +332,7 @@ class TestDemoHookErrorHandling:
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
         # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
         mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+            returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}', stderr=""
         )
         # Demo generation returns failure
         mock_demo_generate.return_value = {
@@ -369,7 +369,7 @@ class TestDemoHookErrorHandling:
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
         # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
         mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+            returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}', stderr=""
         )
         # Demo generation raises an unexpected exception
         mock_demo_generate.side_effect = RuntimeError("Unexpected crash in demo pipeline")
@@ -403,7 +403,7 @@ class TestDemoHookErrorHandling:
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
         # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
         mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+            returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}', stderr=""
         )
         mock_demo_generate.return_value = {
             "success": False,
@@ -445,7 +445,7 @@ class TestDemoHookErrorHandling:
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
         # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
         mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+            returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}', stderr=""
         )
         mock_demo_generate.side_effect = RuntimeError("Boom")
 
@@ -484,7 +484,7 @@ class TestDemoHookErrorHandling:
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
         # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
         mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+            returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}', stderr=""
         )
         mock_demo_generate.return_value = {
             "success": True,
@@ -514,6 +514,12 @@ class TestDemoHookErrorHandling:
         add_steps = [s for s in steps if s.get("action") == "add_completed_story"]
         assert len(add_steps) == 1 and "error" not in add_steps[0], (
             f"completed-story archive step should run and succeed, got: {add_steps}"
+        )
+        # 155-16 (155-6 LOW deferral): pin the resolved epic VALUE, not just
+        # error-absence — the fixture epic carries the real jira key
+        # PROJ-99990, which wins the 155-9 priority (jira > numeric id).
+        assert add_steps[0].get("epic") == "PROJ-99990", (
+            f"the 4b step must carry the resolved jira-keyed epic, got: {add_steps[0]!r}"
         )
 
 
@@ -545,7 +551,7 @@ class TestDemoHookStepOrdering:
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
         # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
         mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+            returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}', stderr=""
         )
         mock_demo_generate.return_value = {"success": True, "data": {"files": []}}
 
@@ -594,7 +600,7 @@ class TestDemoHookStepOrdering:
         # MERGED state; one JSON stdout satisfies both `gh pr merge` (ignores
         # stdout) and `gh pr view` (parsed). Demo behavior under test is unchanged.
         mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"state": "MERGED"}', stderr=""
+            returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}', stderr=""
         )
 
         def verify_archive_exists(*args, **kwargs):

@@ -41,7 +41,6 @@ import pytest
 
 from pf.sprint.story_finish import finish_story
 from pf.sprint.story_transition import transition_story
-from pf.sprint.yaml_io import read_sprint
 
 # =============================================================================
 # Test Data
@@ -94,8 +93,11 @@ workflow: "tdd"
 
 - **ID:** 160-99
 - **Jira:** {jira_value}
-- **Branch:** feature/160-99-sentinel
+- **Branch:** none
 """
+# Branch is the none-sentinel (155-34 pre-adjustment): these worlds pin jira
+# sentinel gating and archive naming, not branch verification — the sentinel
+# stays on the accepted no-PR arm before and after the 155-34 guard.
 
 
 # Real-Jira sprint for AC2 regression.
@@ -214,14 +216,14 @@ class TestSharedSentinelSurface:
         import pf.sprint.story_update as su
         from pf.sprint.loader import NO_JIRA_SENTINELS
 
-        shared = {s for s in NO_JIRA_SENTINELS}
+        shared = set(NO_JIRA_SENTINELS)
         # story_update may keep the old private alias, but it must resolve to the
         # shared values rather than redefining them.
         update_set = getattr(su, "_NO_JIRA_SENTINELS", None) or getattr(
             su, "NO_JIRA_SENTINELS", None
         )
         assert update_set is not None, "story_update lost its sentinel reference"
-        assert {s for s in update_set} == shared
+        assert set(update_set) == shared
 
     def test_helper_semantics_match_156_2(self) -> None:
         """Case-insensitive, whitespace-stripped, non-str truthy fallback."""
@@ -466,7 +468,7 @@ class TestRealJiraKeyUnchanged:
         )
         mock_transition.return_value = {"success": True, "to_status": "done"}
         # 155-1: finish verifies the PR merged via `gh pr view --json state`.
-        mock_run.return_value = MagicMock(returncode=0, stdout='{"state": "MERGED"}')
+        mock_run.return_value = MagicMock(returncode=0, stdout='{"state": "MERGED", "mergedAt": "2026-08-04T00:00:00Z"}')
 
         result = finish_story(project, "160-1")
 

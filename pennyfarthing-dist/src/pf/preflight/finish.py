@@ -43,6 +43,13 @@ class LintResult:
     command: str = ""  # the linter actually run (e.g. "ruff check ."), for truthful remediation
     skipped: bool = False  # True when no lintable project was found — "not checked" != "passed" (SOUL #10)
 
+    def __post_init__(self) -> None:
+        if self.skipped and (self.error is not None or not self.clean):
+            raise ValueError(
+                "LintResult: skipped=True requires clean=True and error=None "
+                "(skipped means 'not checked', not 'checked and failed')"
+            )
+
 
 @dataclass
 class JiraStatus:
@@ -101,7 +108,6 @@ class PreflightResult:
         }
 
         if self.jira.skipped:
-            result["jira_skipped"] = True
             result["jira"] = {"skipped": True}
         else:
             result["jira"] = {
@@ -147,6 +153,8 @@ def _reject_option_like(value: str, kind: str) -> str | None:
     error string to surface (return-don't-throw, SOUL #10) rather than launching
     the subprocess; return ``None`` when the value is safe.
     """
+    if not value or not value.strip():
+        return f"Refusing empty {kind}: {value!r}"
     if value.startswith("-"):
         return f"Refusing option-like {kind}: {value!r} (possible argument injection)"
     return None
@@ -161,6 +169,13 @@ async def _lookup_merged_pr_by_branch(branch: str, repo: str | None) -> dict[str
     Mirrors the head-branch resolution used by story 155-1's finish flow.
     Returns the first merged PR record, or ``None`` if none is found.
     """
+    # Belt-and-suspenders guard: branch is passed as a bare positional to
+    # `gh pr list --head <branch>` — an option-shaped value would be parsed
+    # as a flag (CWE-88). Guard independently of check_pr_status's guard so
+    # direct callers are also protected.
+    if _reject_option_like(branch, "branch") is not None:
+        return None
+
     cmd = [
         "gh",
         "pr",
@@ -281,9 +296,8 @@ async def check_lint(project_root: Path | None = None) -> LintResult:
         # No lintable project at this root — absence of lint is not a failure,
         # but it is "not checked", not "checked and clean". Report it truthfully
         # as skipped so it cannot masquerade as a genuine pass (SOUL #10).
-        result.clean = True
-        result.skipped = True
-        return result
+        # Construct in one shot so __post_init__ validates the invariant.
+        return LintResult(clean=True, skipped=True)
 
     result.command = " ".join(lint_cmd)
 
@@ -505,9 +519,19 @@ async def run_finish_preflight(
     """
     root = Path(project_root) if project_root else Path.cwd()
 
-    # Build list of checks to run
+    # Step 1: PR check runs first so the unmerged-branch-no-PR signal can surface
+    # at preflight entry, before the remaining checks launch (155-34 / AC5).
+    pr_result = await check_pr_status(branch, repo)
+
+    early_warnings: list[str] = []
+    if pr_result.error and "no pull requests found" in pr_result.error.lower():
+        early_warnings.append(
+            "Branch is unmerged and no pull request was found; "
+            "finish will be blocked until a PR is created or merged."
+        )
+
+    # Step 2: Run remaining checks in parallel
     checks = [
-        check_pr_status(branch, repo),
         check_lint(root),
         check_acceptance_criteria(story_id, root),
     ]
@@ -516,37 +540,36 @@ async def run_finish_preflight(
     if jira_key:
         checks.append(check_jira_status(jira_key))
 
-    # Run all checks in parallel
     results = await asyncio.gather(*checks, return_exceptions=True)
 
     # Unpack results
-    pr_result = (
-        results[0] if not isinstance(results[0], Exception) else PRStatus(error=str(results[0]))
-    )
     lint_result = (
-        results[1] if not isinstance(results[1], Exception) else LintResult(error=str(results[1]))
+        results[0] if not isinstance(results[0], Exception) else LintResult(error=str(results[0]))
     )
     acceptance_result = (
-        results[2]
-        if not isinstance(results[2], Exception)
-        else AcceptanceCriteria(error=str(results[2]))
+        results[1]
+        if not isinstance(results[1], Exception)
+        else AcceptanceCriteria(error=str(results[1]))
     )
 
     # Handle Jira result
     if jira_key:
         jira_result = (
-            results[3]
-            if not isinstance(results[3], Exception)
-            else JiraStatus(error=str(results[3]))
+            results[2]
+            if not isinstance(results[2], Exception)
+            else JiraStatus(error=str(results[2]))
         )
     else:
         jira_result = JiraStatus(skipped=True)
 
-    # Aggregate and return
-    return aggregate_results(
+    # Aggregate then prepend any early preflight-entry warnings
+    preflight = aggregate_results(
         story_id=story_id,
         pr=pr_result,
         lint=lint_result,
         jira=jira_result,
         acceptance=acceptance_result,
     )
+    if early_warnings:
+        preflight.warnings = early_warnings + preflight.warnings
+    return preflight

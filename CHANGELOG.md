@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.5.0] - 2026-08-11
+
+### Added
+
+- **Web GUI (Frame browser UI)** — a Vite + React + Tailwind web front-end served by the Frame server. Ships a WebSocket channel client with reconnect (`useChannel` hook + connection registry), `PanelShell` chrome, and live panels: **Sprint Board** (copyable story ids), **Git Status** (per-repo branch, dirty state, open PRs), and **Workflow Activity** (phase sequence + persona). Frame gains supporting routes — static UI from `webui/dist`, persona portrait file route, workflow-phases route, a git channel enriched with a TTL-cached open-PR list via `gh`, and a `PATCH /api/settings` that persists theme/bell_mode/relay_mode. Header settings controls and a disconnect banner round out the shell. Built UI ships as `pf.frame` package data via a `just web-build` recipe; CI runs an isolated frontend job gated on `web/**` paths. (ADR-0042 records the `web/` view layer and boundary rule.)
+- **Finish auto-suggests follow-up stories (155-13)** — deferred review findings become suggested follow-up stories at finish time.
+- **`pf sprint story add --description/--body` (164-7)** — story bodies threaded through the initiative path.
+- **`pf git format-title` CLI (164-6)** — title formatting helper, hardened against CWE-94.
+- **Ghostty tab-title sync (statusline)** — the statusline syncs the terminal tab title to the current story and phase.
+
+### Fixed
+
+- **Finish-flow correctness (epics 155/162)** — finish now short-circuits when the PR is already merged (evaluated before the conflict gate), corroborates merges via `mergedAt`, and verifies the branch actually landed in the no-PR path; `gh`/`git` subprocesses route to the story's own code repo; bounded subprocess timeouts with loud post-merge exception handling; branch-field fixed-point normalization with loud refusal on invalid branches; `_git_cleanup` argv guarded and remote de-hardcoded; status-transition `read_sprint` guarded.
+- **Handoff hardening (epic 162)** — approval gate fails open on rework sessions; `resolve-gate` rejects verdict-driven rework routing; a corrupt round-trip counter can no longer buy extra rework rounds; verdict-parse and approval-gate hardening; project workflow overrides are now reachable and name-traversal guarded.
+- **Parser & boundary robustness (epic 164)** — session-field parsing consolidated onto a shared anchored parser; `_parse_session` gains a fence-state machine and first-`Story Details`-wins guard; `finish_story` no-throw boundary hardened against `UnicodeDecodeError`/`yaml.YAMLError`; `theme_characters` overrides hardened (guards, manifest parity, quote-cache reset); OTLP + subagent-event handlers log fail-loud; `followups.py` gains a public API, CWE-22 guard, TypedDicts, and `future.yaml` dedup.
+- **Sprint & validation** — priority normalized to uppercase before lookup in `get_next_story`; `depends_on` list-form accepted in validator and story move; shard-ref read/write sites guarded with `is_safe_shard_path` and epic-shard archive paths hardened (CWE-22); schema-validation requires Branch/PR field lines in session Story Details; `archive --apply` truthfully removes standalone + sharded stories.
+- **Frame server** — persona-route `TypeError` repaired; web reads the Frame port from `FRAME_PORT` instead of a hardcoded value; monitor loop body guarded with shared-executor shutdown on lifespan exit; route tests isolated from a built `webui/dist`.
+- **Jira** — truthful `assign --dry-run`, resolved-account output, and a firmed-up identifier contract (gh #146).
+- **Editing engine (epic 162)** — writer tri-state replace-not-insert with visible-corrupt detection on read; offset-corruption guard for control-char-in-preamble splices; reviewer-heading case policy with fail-open verdict supersession.
+- **Templates** — uniform `${PF_PY:?}` fail-loud guards across all dist templates; bare text-I/O sites given explicit `encoding='utf-8'` (CWE-838).
+- **Commands** — bare slash-command references repointed to `/pf-*`.
+
+### Changed
+
+- **Test infrastructure** — gh-PR fakes consolidated into a shared `GhPrFake` callable dataclass; `_classify_pr(view)` consolidates the former `_pr_block_reason`/`_view_is_merged` probes; mutation-testing subagents no longer corrupt the live working tree.
+
 ## [13.4.0] - 2026-07-27
 
 ### Added
@@ -696,14 +722,21 @@ For detailed history of these releases, see the git log.
 
 ---
 
-[Unreleased]: https://github.com/slabgorb/pennyfarthing/compare/v13.4.0...HEAD
+[Unreleased]: https://github.com/slabgorb/pennyfarthing/compare/v13.5.0...HEAD
+[13.5.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.4.0...v13.5.0
 [13.4.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.3.0...v13.4.0
 [13.3.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.2.0...v13.3.0
 [13.2.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.1.2...v13.2.0
 [13.1.2]: https://github.com/slabgorb/pennyfarthing/compare/v13.1.1...v13.1.2
 [13.1.1]: https://github.com/slabgorb/pennyfarthing/compare/v13.1.0...v13.1.1
 [13.1.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.0.0...v13.1.0
-[13.0.0]: https://github.com/slabgorb/pennyfarthing/compare/v12.7.0...v13.0.0
+[13.0.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.0.0-beta.2...v13.0.0
+[13.0.0-beta.2]: https://github.com/slabgorb/pennyfarthing/compare/v13.0.0-beta.1...v13.0.0-beta.2
+[13.0.0-beta.1]: https://github.com/slabgorb/pennyfarthing/compare/v13.0.0-alpha.3...v13.0.0-beta.1
+[13.0.0-alpha.3]: https://github.com/slabgorb/pennyfarthing/compare/v13.0.0-alpha.2...v13.0.0-alpha.3
+[13.0.0-alpha.2]: https://github.com/slabgorb/pennyfarthing/compare/v13.0.0-alpha.1...v13.0.0-alpha.2
+[13.0.0-alpha.1]: https://github.com/slabgorb/pennyfarthing/compare/v13.0.0-alpha.0...v13.0.0-alpha.1
+[13.0.0-alpha.0]: https://github.com/slabgorb/pennyfarthing/compare/v12.7.0...v13.0.0-alpha.0
 [12.7.0]: https://github.com/slabgorb/pennyfarthing/compare/v12.6.2...v12.7.0
 [12.6.2]: https://github.com/slabgorb/pennyfarthing/compare/v12.6.1...v12.6.2
 [12.6.1]: https://github.com/slabgorb/pennyfarthing/compare/v12.6.0...v12.6.1
@@ -717,4 +750,4 @@ For detailed history of these releases, see the git log.
 [12.1.2]: https://github.com/slabgorb/pennyfarthing/compare/v12.1.1...v12.1.2
 [12.1.1]: https://github.com/slabgorb/pennyfarthing/compare/v12.1.0...v12.1.1
 [12.1.0]: https://github.com/slabgorb/pennyfarthing/compare/v12.0.0...v12.1.0
-[12.0.0]: https://github.com/slabgorb/pennyfarthing/compare/v11.5.0-alpha.0...v12.0.0
+[12.0.0]: https://github.com/slabgorb/pennyfarthing/releases/tag/v12.0.0

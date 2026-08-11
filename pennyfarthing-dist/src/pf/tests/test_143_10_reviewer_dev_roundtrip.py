@@ -198,6 +198,22 @@ def _make_session(phase: str = "review", round_trip_count: int = 0) -> str:
         **Phase:** verify
         **Status:** GREEN confirmed
 
+        ## Subagent Results
+
+        | # | Specialist | Received | Status |
+        |---|------------|----------|--------|
+        | 1 | reviewer-preflight | Yes | clean |
+        | 2 | reviewer-edge-hunter | Yes | clean |
+        | 3 | reviewer-silent-failure-hunter | Yes | clean |
+        | 4 | reviewer-test-analyzer | Yes | clean |
+        | 5 | reviewer-comment-analyzer | Yes | clean |
+        | 6 | reviewer-type-design | Yes | clean |
+        | 7 | reviewer-security | Yes | clean |
+        | 8 | reviewer-simplifier | Yes | clean |
+        | 9 | reviewer-rule-checker | Yes | clean |
+
+        All received: Yes
+
         ## Reviewer Assessment
 
         **Verdict:** REJECTED
@@ -210,7 +226,14 @@ def _make_session(phase: str = "review", round_trip_count: int = 0) -> str:
         - [TEST] No concerns
         - [DOC] No concerns
         - [TYPE] No concerns
+        - [RULE] No concerns
     """)
+
+
+# The Subagent Results table and the `[RULE]` tag are required because story
+# 162-47 (AC-A8) made the approval subgates run on the REWORK path too — a real
+# `approval_rework` handoff carries both. Every specialist has a row so the
+# outcome does not depend on the local reviewer_subagents toggles.
 
 
 def _make_approved_session() -> str:
@@ -240,13 +263,17 @@ def _setup_project(tmp_path: Path, workflow: dict) -> Path:
     session_dir.mkdir()
 
     # resolve_gate enforces the assessment precondition on gated phases
-    # (158-4) — seed a session with an assessment heading so these routing/
-    # recovery tests exercise their own concern, not the assessment guard.
+    # (158-4) and, since story 162-21, fails closed on a review gate whose
+    # reviewer assessment carries no verdict — seed both so these routing/
+    # recovery tests exercise their own concern, not the guards. The verdict
+    # is APPROVED because these tests assert the forward (approval) routing;
+    # the rework routing is covered in test_162_21_*.
     (session_dir / "143-10-session.md").write_text(
         "# Story 143-10: roundtrip fixture\n\n"
         "**Workflow:** tdd\n"
         "**Phase:** review\n\n"
-        "## Dev Assessment\n\nFixture assessment.\n"
+        "## Dev Assessment\n\nFixture assessment.\n\n"
+        "## Reviewer Assessment\n\n**Verdict:** APPROVED\n"
     )
 
     return project
@@ -319,7 +346,11 @@ class TestBackwardPhaseTransition:
         session.write_text(_make_session(phase="review"))
 
         result = complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -334,7 +365,11 @@ class TestBackwardPhaseTransition:
         session.write_text(_make_session(phase="review"))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -355,7 +390,11 @@ class TestBackwardPhaseTransition:
         session.write_text(_make_session(phase="review"))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -371,7 +410,11 @@ class TestBackwardPhaseTransition:
         session.write_text(_make_session(phase="review", round_trip_count=0))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -388,7 +431,11 @@ class TestBackwardPhaseTransition:
         session.write_text(_make_session(phase="review", round_trip_count=1))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -415,7 +462,11 @@ class TestDevReceivesReviewerFindings:
         session.write_text(_make_session(phase="review"))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -433,7 +484,11 @@ class TestDevReceivesReviewerFindings:
         session.write_text(_make_session(phase="review"))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -447,7 +502,11 @@ class TestDevReceivesReviewerFindings:
         session.write_text(_make_session(phase="review"))
 
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -491,7 +550,11 @@ class TestDevFixesToReview:
 
         # Step 1: review → green (rework)
         r1 = complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
         assert r1["status"] == "success"
@@ -503,7 +566,11 @@ class TestDevFixesToReview:
 
         # Step 2: green → verify
         r2 = complete_phase(
-            "143-10", "tdd", "green", "verify", "dev_exit",
+            "143-10",
+            "tdd",
+            "green",
+            "verify",
+            "dev_exit",
             project_root=project,
         )
         assert r2["status"] == "success"
@@ -515,7 +582,11 @@ class TestDevFixesToReview:
 
         # Step 3: verify → review
         r3 = complete_phase(
-            "143-10", "tdd", "verify", "review", "quality_pass",
+            "143-10",
+            "tdd",
+            "verify",
+            "review",
+            "quality_pass",
             project_root=project,
         )
         assert r3["status"] == "success"
@@ -524,6 +595,17 @@ class TestDevFixesToReview:
         header = parse_session_header(session)
         assert header.get("phase") == "review"
 
+    # UN-QUARANTINED by story 162-21. The approval subchecks used to locate
+    # their section with a plain `re.search` (FIRST match) and truncate at the
+    # next `## `, so a rework session — which legitimately holds several
+    # `## Reviewer Assessment` / `## Subagent Results` headings appended in
+    # order — was judged on its OLDEST section. Here that meant the empty
+    # template assessment was checked instead of the approved one this test
+    # appends. Both checks now select the LAST section through
+    # `gate_recovery.select_last_section`, the same selection `resolve_gate`
+    # uses, so the two halves of the exit protocol agree (gh #49). The
+    # fail-open direction stays pinned by `TestDuplicateHeadingGateBypass` in
+    # test_143_12_subagent_dispatch.py.
     def test_full_rework_then_approval(self, tmp_path):
         """After rework cycle completes, Reviewer approves and finishes normally."""
         project = _setup_project(tmp_path, TDD_WORKFLOW_WITH_RECOVERY)
@@ -532,7 +614,11 @@ class TestDevFixesToReview:
 
         # Rework: review → green
         complete_phase(
-            "143-10", "tdd", "review", "green", "approval_rework",
+            "143-10",
+            "tdd",
+            "review",
+            "green",
+            "approval_rework",
             project_root=project,
         )
 
@@ -543,7 +629,11 @@ class TestDevFixesToReview:
 
         # green → verify
         complete_phase(
-            "143-10", "tdd", "green", "verify", "dev_exit",
+            "143-10",
+            "tdd",
+            "green",
+            "verify",
+            "dev_exit",
             project_root=project,
         )
 
@@ -553,7 +643,11 @@ class TestDevFixesToReview:
 
         # verify → review
         complete_phase(
-            "143-10", "tdd", "verify", "review", "quality_pass",
+            "143-10",
+            "tdd",
+            "verify",
+            "review",
+            "quality_pass",
             project_root=project,
         )
 
@@ -563,6 +657,8 @@ class TestDevFixesToReview:
         content += textwrap.dedent("""\
 
             ## Subagent Results
+
+            **Cycle: 1**
 
             | Subagent | Received | Result |
             |----------|----------|--------|
@@ -574,6 +670,7 @@ class TestDevFixesToReview:
             | reviewer-type-design | Yes | PASS |
             | reviewer-security | Yes | PASS |
             | reviewer-simplifier | Yes | PASS |
+            | reviewer-rule-checker | Yes | PASS |
 
             All received: Yes
 
@@ -589,12 +686,17 @@ class TestDevFixesToReview:
             [TYPE] Types correct.
             [SEC] No security issues.
             [SIMPLE] Code is simple enough.
+            [RULE] Project rules satisfied.
         """)
         session.write_text(content)
 
         # review → finish
         r = complete_phase(
-            "143-10", "tdd", "review", "finish", "approval",
+            "143-10",
+            "tdd",
+            "review",
+            "finish",
+            "approval",
             project_root=project,
         )
         assert r["status"] == "success"
