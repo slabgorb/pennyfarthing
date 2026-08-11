@@ -23,7 +23,11 @@ from pf.sprint.loader import (
 )
 from pf.sprint.status_normalize import normalize_status
 from pf.sprint.story_move import move_story
-from pf.sprint.validator import VALID_STORY_STATUSES, validate_sprint_document
+from pf.sprint.validator import (
+    VALID_STORY_STATUSES,
+    VALID_STORY_TYPES,
+    validate_sprint_document,
+)
 from pf.sprint.yaml_io import read_sprint, write_sprint
 
 # Sentinel handling consolidated into pf.sprint.loader (story 160-3).
@@ -48,6 +52,8 @@ def update_story(
     review_verdict: str | None = None,
     add_ac: list[str] | None = None,
     clear_ac: bool = False,
+    story_type: str | None = None,
+    depends_on: str | None = None,
     dry_run: bool = False,
     update_jira: bool = False,
     epic: str | None = None,
@@ -74,6 +80,9 @@ def update_story(
         review_verdict: Review verdict (approved, rejected, pending)
         add_ac: Acceptance criteria to append
         clear_ac: If True, clear existing ACs before adding
+        story_type: New story type tag (validated against VALID_STORY_TYPES)
+        depends_on: Story ID this story depends on. Must resolve to a real
+            story and may not be the story itself (fail-loud on either).
         dry_run: If True, report changes without writing
         update_jira: If True, sync changed fields to Jira after YAML update
 
@@ -111,6 +120,8 @@ def update_story(
             "--review-verdict": review_verdict is not None,
             "--add-ac": bool(add_ac),
             "--clear-ac": clear_ac,
+            "--type": story_type is not None,
+            "--depends-on": depends_on is not None,
         }
         conflicting = [flag for flag, present in field_flags.items() if present]
         if conflicting:
@@ -141,6 +152,20 @@ def update_story(
             "error": f"Invalid status '{status}'. Must be one of: {', '.join(sorted(VALID_STORY_STATUSES))}",
         }
 
+    # Validate type before reading file (fail-loud, no throw — SOUL #10)
+    if story_type is not None and story_type not in VALID_STORY_TYPES:
+        return {
+            "success": False,
+            "error": f"Invalid type '{story_type}'. Must be one of: {', '.join(sorted(VALID_STORY_TYPES))}",
+        }
+
+    # A story may not depend on itself (fail-loud, no throw)
+    if depends_on is not None and depends_on == story_id:
+        return {
+            "success": False,
+            "error": f"Story '{story_id}' cannot depend on itself.",
+        }
+
     data = read_sprint(sprint_path)
 
     _epic, story, _location = find_story_in_data(data, story_id)
@@ -150,6 +175,18 @@ def update_story(
             "success": False,
             "error": format_story_not_found_error(data, story_id),
         }
+
+    # A depends_on target must resolve to a real story (truthfulness charter)
+    if depends_on is not None:
+        _dep_epic, dep_story, _dep_loc = find_story_in_data(data, depends_on)
+        if dep_story is None:
+            return {
+                "success": False,
+                "error": (
+                    f"--depends-on target '{depends_on}' does not resolve to a "
+                    f"known story."
+                ),
+            }
 
     # Apply field updates
     if status is not None:
@@ -168,6 +205,10 @@ def update_story(
         story["started"] = started_date
     if workflow is not None:
         story["workflow"] = workflow
+    if story_type is not None:
+        story["type"] = story_type
+    if depends_on is not None:
+        story["depends_on"] = depends_on
     if description is not None:
         story["description"] = description
     if review_findings is not None:
@@ -339,6 +380,17 @@ def update_story(
     "--clear-ac", is_flag=True, help="Clear all acceptance criteria (use with --add-ac to replace)"
 )
 @click.option(
+    "--type",
+    "story_type",
+    default=None,
+    help="Story type tag (feature, fix, bug, chore, refactor, test, doc, comment)",
+)
+@click.option(
+    "--depends-on",
+    default=None,
+    help="Story ID this story depends on (must resolve to a real story)",
+)
+@click.option(
     "--epic",
     default=None,
     help=(
@@ -365,6 +417,8 @@ def story_update_command(
     review_verdict: str | None,
     add_ac: tuple[str, ...],
     clear_ac: bool,
+    story_type: str | None,
+    depends_on: str | None,
     dry_run: bool,
     update_jira: bool,
     epic: str | None,
@@ -377,6 +431,7 @@ def story_update_command(
       --status --title --points --priority --assigned-to
       --completed --started --workflow --description
       --review-findings --review-verdict --add-ac --clear-ac
+      --type --depends-on
 
     \b
     Move between epics (mutually exclusive with the field flags):
@@ -410,6 +465,8 @@ def story_update_command(
         review_verdict=review_verdict,
         add_ac=list(add_ac) if add_ac else None,
         clear_ac=clear_ac,
+        story_type=story_type,
+        depends_on=depends_on,
         dry_run=dry_run,
         update_jira=update_jira,
         epic=epic,
