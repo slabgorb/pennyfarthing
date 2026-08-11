@@ -73,6 +73,12 @@ RED on HEAD — 6:
     merges twice and false-aborts)
   - TestGitCleanupPropagatesReturnCodes: 2 (failed pull / failed delete both
     reported clean)
+
+Added in review round 1 — 5, pinning the boundaries of AC3's generalized rc
+check and of AC2's dedup key: the branch that the merge already deleted is NOT
+a cleanup failure, a failing pull's stderr carries no remote credentials, two
+repos.yaml names for one directory resolve (and merge) once, and a failing
+cleanup leaves ``finish_story`` successful with step 7 still run (162-9).
 """
 
 from __future__ import annotations
@@ -157,6 +163,20 @@ repos:
 """
 
 
+#: Two repos.yaml NAMES pointing at ONE directory — the case a name-keyed dedup
+#: lets through (R1/M1), so the per-repo loop would still run twice on one repo.
+REPOS_YAML_ALIASED = (
+    REPOS_YAML_INLINED
+    + """\
+  framework-alias:
+    path: framework
+    type: framework
+    default_branch: develop
+    branch_strategy: gitflow
+"""
+)
+
+
 def _shard_yaml(repos_field: str) -> str:
     return f"""\
 id: "162"
@@ -219,6 +239,7 @@ def _make_workspace(
     *,
     repos_field: str,
     code_repos: dict[str, str],
+    repos_yaml: str = REPOS_YAML_INLINED,
 ) -> Path:
     """Orchestrator project root, plus whichever code sub-repos are cloned.
 
@@ -237,7 +258,7 @@ def _make_workspace(
     (session_dir / f"{STORY_ID}-session.md").write_text(SESSION_BRANCH_ONLY, encoding="utf-8")
     pf_dir = root / ".pennyfarthing"
     pf_dir.mkdir()
-    (pf_dir / "repos.yaml").write_text(REPOS_YAML_INLINED, encoding="utf-8")
+    (pf_dir / "repos.yaml").write_text(repos_yaml, encoding="utf-8")
 
     _init_repo(root, tmp_path, default_branch="main", world="absent")
     for rel, world in code_repos.items():
@@ -521,16 +542,31 @@ CLEANUP_CONFIG = RepoConfig(
 )
 
 
-def _cleanup_run(*, pull_rc: int = 0, delete_rc: int = 0):
+def _cleanup_run(
+    *,
+    pull_rc: int = 0,
+    delete_rc: int = 0,
+    pull_stderr: str | None = None,
+    branch_exists: bool = True,
+):
     """Fake ``_run`` for ``_git_cleanup``: validation and the base probe
     succeed, and the two chained mutations answer configurable return codes.
+
+    ``branch_exists=False`` models the NORMAL happy path (R1): step 2's
+    ``gh pr merge --delete-branch`` already deleted the local feature branch, so
+    a probe for ``refs/heads/<branch>`` answers rc=1.
     """
     recorder = Recorder()
 
     def _fake(cmd: list[Any], **kwargs: Any) -> Any:
         argv = [str(c) for c in cmd]
         recorder.calls.append((argv, kwargs.get("cwd")))
+        if not branch_exists and argv[:4] == ["git", "rev-parse", "--verify", "--quiet"]:
+            if argv[-1] == f"refs/heads/{STORY_BRANCH}":
+                return MagicMock(returncode=1, stdout="", stderr="")
         if argv[:2] == ["git", "pull"]:
+            if pull_rc != 0 and pull_stderr is not None:
+                return MagicMock(returncode=pull_rc, stdout="", stderr=pull_stderr)
             return MagicMock(
                 returncode=pull_rc,
                 stdout="",
@@ -598,3 +634,147 @@ class TestGitCleanupPropagatesReturnCodes:
             entry.get("warning") or entry.get("error") or entry.get("success") is False
             for entry in entries
         ), f"a refused branch delete must not read as a clean step 6: {entries}"
+
+    def test_branch_already_deleted_by_merge_reports_no_warning(self, tmp_path: Path) -> None:
+        """R1/H1: step 2 merges with ``--delete-branch``, which deletes the LOCAL
+        branch too, so on every healthy finish ``git branch -d`` would exit rc=1
+        ("branch 'X' not found"). Reading every rc must not turn that into a
+        cleanup warning on the primary happy path.
+        """
+        fake, rec = _cleanup_run(branch_exists=False)
+
+        with patch("pf.sprint.story_finish._run", side_effect=fake):
+            entries = _git_cleanup(tmp_path, STORY_BRANCH, CLEANUP_CONFIG)
+
+        assert rec.matching("git", "pull"), "precondition: the chain still ran"
+        assert not rec.matching("git", "branch", "-d"), (
+            "an absent branch must not be handed to `git branch -d` at all"
+        )
+        assert [e.get("warning") for e in entries] == [None], (
+            f"a branch the merge already deleted is not a cleanup failure: {entries}"
+        )
+
+    def test_pull_stderr_does_not_leak_remote_credentials(self, tmp_path: Path) -> None:
+        """R1/M3: the failing pull's stderr is now printed verbatim by the CLI,
+        and an HTTPS-with-token remote puts the token in that stderr.
+        """
+        token = "ghp_S3CRETtokenVALUE"
+        fake, _rec = _cleanup_run(
+            pull_rc=1,
+            pull_stderr=(
+                f"fatal: repository 'https://oauth2:{token}@github.com/slabgorb/pf.git' not found"
+            ),
+        )
+
+        with patch("pf.sprint.story_finish._run", side_effect=fake):
+            entries = _git_cleanup(tmp_path, STORY_BRANCH, CLEANUP_CONFIG)
+
+        text = _entry_text(entries)
+        assert token not in text, f"the remote's token must never reach the report: {entries}"
+        assert "oauth2" not in text, f"the userinfo must be redacted whole: {entries}"
+        assert "<credentials>@github.com" in text, (
+            f"the redacted URL must still identify the remote: {entries}"
+        )
+        assert "not found" in text, f"the operator still needs the failure itself: {entries}"
+
+
+# =============================================================================
+# R1 — dedup keys on the resolved path, and a failing cleanup stays a warning
+# =============================================================================
+
+
+class TestAliasedReposDedupOnPath:
+    """Two repos.yaml NAMES, one directory — a name-keyed dedup lets both through."""
+
+    @pytest.fixture
+    def project(self, tmp_path: Path) -> Path:
+        return _make_workspace(
+            tmp_path,
+            repos_field='["framework", "framework-alias"]',
+            code_repos={"framework": "unmerged"},
+            repos_yaml=REPOS_YAML_ALIASED,
+        )
+
+    def test_two_names_one_path_resolve_once(self, project: Path) -> None:
+        resolved = _resolved_repos(
+            _resolve_story_repos(project, _story(["framework", "framework-alias"]))
+        )
+
+        paths = [p for p, _c in resolved]
+        assert paths == [(project / "framework").resolve()], (
+            f"one directory must resolve once, however many names point at it: {paths}"
+        )
+
+    @patch("pf.sprint.story_finish._add_story_to_completed")
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_two_names_one_path_merges_once(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        mock_add_completed: MagicMock,
+        project: Path,
+    ) -> None:
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+        mock_add_completed.return_value = {"success": True, "epic": "162"}
+        fake, rec = _make_run(project, {"framework": PrWorld(pr=PR_NUMBER, state="OPEN")})
+
+        with patch("pf.sprint.story_finish._run", side_effect=fake):
+            result = finish_story(project, STORY_ID)
+
+        merges = rec.matching("gh", "merge")
+        assert len(merges) == 1, (
+            f"one repo behind two names must be merged once, not {len(merges)}: {merges}"
+        )
+        assert result["success"] is True, f"the second merge attempt false-aborted: {result}"
+
+
+class TestFailedCleanupIsAWarningNotAFinishFailure:
+    """R1/M2: pins the 162-9 invariant END-TO-END, through ``finish_story``."""
+
+    @patch("pf.sprint.story_finish._add_story_to_completed")
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_failing_cleanup_still_finishes_and_runs_step_7(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        mock_add_completed: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Step 6 runs after the story has shipped, so a cleanup that cannot
+        proceed is bookkeeping: the finish still succeeds and step 7 still
+        removes the session. Propagating the cleanup rc outward would fail here.
+        """
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+        mock_add_completed.return_value = {"success": True, "epic": "162"}
+        project = _make_workspace(
+            tmp_path, repos_field="framework", code_repos={"framework": "unmerged"}
+        )
+        fake, _rec = _make_run(project, {"framework": PrWorld(pr=PR_NUMBER, state="OPEN")})
+
+        def failing_pull(cmd: list[Any], **kwargs: Any) -> Any:
+            if [str(c) for c in cmd][:2] == ["git", "pull"]:
+                return MagicMock(
+                    returncode=1,
+                    stdout="",
+                    stderr="fatal: could not read from remote repository",
+                )
+            return fake(cmd, **kwargs)
+
+        with patch("pf.sprint.story_finish._run", side_effect=failing_pull):
+            result = finish_story(project, STORY_ID)
+
+        assert result["success"] is True, (
+            f"a failed step-6 cleanup must not un-report a story that shipped: {result}"
+        )
+        step6 = [s for s in result["steps"] if s.get("step") == 6]
+        assert any(
+            "could not read from remote repository" in str(s.get("warning")) for s in step6
+        ), f"the cleanup failure must still be reported as a warning: {step6}"
+        assert any(s.get("step") == 7 for s in result["steps"]), (
+            f"step 7 must still run after a failed cleanup: {result['steps']}"
+        )
+        assert not (project / ".session" / f"{STORY_ID}-session.md").exists(), (
+            "step 7 removes the session even when cleanup warned"
+        )

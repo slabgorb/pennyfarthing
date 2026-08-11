@@ -636,7 +636,8 @@ def _resolve_story_repos(
     rather than silently dropping the repo, since dropping it would degrade the
     story to the project root and verify the WRONG repository.
 
-    Names are deduped in order (162-32): the same repo named twice made every
+    Repos are deduped by RESOLVED PATH, in order (162-32): the same repo named
+    twice — or two repos.yaml entries pointing at one directory — made every
     per-repo loop run twice against it, and the merge loop reads a ``pr_views``
     snapshot taken BEFORE the merge, so the second pass re-ran ``gh pr merge``
     on a PR that had just landed and false-aborted fully-shipped work.
@@ -658,17 +659,24 @@ def _resolve_story_repos(
     else:
         names = []
 
-    resolved = []
-    seen: set[str] = set()
-    for name in names:
-        if name in configs and name not in seen:
-            seen.add(name)
-            resolved.append(configs[name])
+    resolved = [configs[name] for name in names if name in configs]
     if not resolved:
         root_repo = next((rc for rc in configs.values() if rc.path in (".", "")), None)
         return {"success": True, "data": [(project_root, root_repo)]}
 
-    paths = [((project_root / rc.path).resolve(), rc) for rc in resolved]
+    # Dedup on the RESOLVED PATH, not the name (162-32 R1): two repos.yaml
+    # entries can carry the same `path`, and keying on the name lets both survive
+    # so the per-repo loop still runs twice against one directory — re-issuing
+    # `gh pr merge` off the pre-merge `pr_views` snapshot, i.e. the exact false
+    # abort this guard removes. First occurrence wins, order preserved.
+    paths: list[tuple[Path, Any]] = []
+    seen: set[Path] = set()
+    for rc in resolved:
+        path = (project_root / rc.path).resolve()
+        if path in seen:
+            continue
+        seen.add(path)
+        paths.append((path, rc))
     missing = [(p, rc) for p, rc in paths if not p.is_dir()]
     if missing:
         detail = ", ".join(f"{rc.name} ({p})" for p, rc in missing)
@@ -979,6 +987,22 @@ def _branch_merge_state(
     }
 
 
+#: ``scheme://userinfo@`` — the only place a git remote URL carries a secret.
+_CREDENTIAL_URL_RE = re.compile(r"(https?://)[^@/\s]+@")
+
+
+def _scrub_credentials(text: str) -> str:
+    """Redact the userinfo of any URL in *text* (162-32 R1).
+
+    Step 6 now reports a failing ``git pull``'s stderr verbatim, and with an
+    HTTPS-with-token remote that stderr reads
+    ``fatal: repository 'https://oauth2:<TOKEN>@github.com/...' not found`` —
+    so the token would land in the operator's terminal (``cli.py`` prints the
+    warning as-is) on a path that previously discarded the stderr entirely.
+    """
+    return _CREDENTIAL_URL_RE.sub(r"\1<credentials>@", text)
+
+
 def _git_cleanup(
     repo_path: Path,
     branch: str | None,
@@ -1033,7 +1057,7 @@ def _git_cleanup(
         report always carries the reason and the operator finishes by hand.
         """
         entry["warning"] = (
-            f"git cleanup stopped in {repo_path}: {reason} — "
+            f"git cleanup stopped in {repo_path}: {_scrub_credentials(reason)} — "
             "the story is done; finish the branch cleanup by hand"
         )
         return [entry]
@@ -1092,8 +1116,24 @@ def _git_cleanup(
         (["git", "pull", remote, f"refs/heads/{base}"], GIT_NETWORK_TIMEOUT_S),
     ]
     if branch:
-        # `--` guards against a branch value that looks like a git flag.
-        cleanup.append((["git", "branch", "-d", "--", branch], GIT_LOCAL_TIMEOUT_S))
+        # Step 2 merges with `gh pr merge --squash --delete-branch`, and `-d`
+        # deletes the LOCAL branch too, so on the normal happy path the branch is
+        # already gone by the time step 6 runs. `git branch -d` then exits rc=1
+        # ("branch 'X' not found"), which — now that every rc is read (162-32) —
+        # would report a cleanup failure on EVERY healthy finish. Probe for the
+        # branch first (same read-only shape as the base probe above) and skip
+        # the delete cleanly when it is absent; the rc that survives this guard
+        # is a REFUSED delete, which is exactly the case worth warning about.
+        exists = _run(
+            ["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}"],
+            cwd=cwd,
+            timeout=GIT_LOCAL_TIMEOUT_S,
+        )
+        if _timed_out(exists):
+            return stopped((exists.stderr or "").strip())
+        if exists.returncode == 0:
+            # `--` guards against a branch value that looks like a git flag.
+            cleanup.append((["git", "branch", "-d", "--", branch], GIT_LOCAL_TIMEOUT_S))
 
     for cmd, timeout in cleanup:
         result = _run(cmd, cwd=cwd, timeout=timeout)
