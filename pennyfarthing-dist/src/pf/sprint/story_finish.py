@@ -797,7 +797,18 @@ def _branch_merge_state(
     or timed-out one. ``timeout`` is kept distinct from ``unknown`` (162-9)
     because the two say different things to the operator: unknown is a fact
     about this repo's refs, while a timed-out probe says the git call itself
-    never came back and the next one probably will not either. All probes route
+    never came back and the next one probably will not either.
+
+    ``base`` in the result has TWO shapes, deliberately (162-26): on every arm
+    that reached ref resolution it is the winning FULL ref
+    (``refs/remotes/<remote>/<base>``, or ``refs/heads/<base>`` when the remote
+    one is absent) — the definitive answers and the rev-list failure arms alike,
+    so the operator sees which ref was actually counted against. On every arm
+    that returns BEFORE a base ref resolves — a refused name, a branch or base
+    that was not found — it is the BARE declared value, echoed back verbatim,
+    because no ref was chosen to report.
+
+    All probes route
     through ``_run`` with an explicit
     ``cwd=repo_path`` — the finish family's test suites fake ``_run`` as
     THE hermetic seam, and a cwd-less git call would interrogate whatever
@@ -854,7 +865,26 @@ def _branch_merge_state(
             }
 
     branch_ref = None
-    for candidate in (f"refs/heads/{branch}", f"refs/remotes/{remote}/{branch}"):
+    candidates = [f"refs/heads/{branch}", f"refs/remotes/{remote}/{branch}"]
+    # 162-26: a remote-qualified value ('<remote>/<name>', the shape a human
+    # copies out of 'git branch -a') double-prefixes into
+    # 'refs/remotes/<remote>/<remote>/<name>' and resolved nothing, so a story
+    # whose work HAD landed aborted as not-found. Widen rather than strip: the
+    # correctly-interpreted remote-tracking ref is APPENDED, so the literal
+    # candidates keep first-probe priority and the 162-4 look-alike branch at
+    # 'refs/heads/<remote>/<name>' (the 'git checkout -b origin/x' typo) still
+    # wins and answers for its OWN commits. Stripping instead would let the
+    # merged remote-tracking ref speak for the typo branch's unlanded work.
+    # Keyed off the CONFIGURED remote (162-6), never a hardcoded 'origin'; a
+    # value qualified with some OTHER remote's name stays not-found, which is
+    # the same loud abort as any unresolvable branch. ``refs/``-prefixed values
+    # are NOT widened — the name gate above refuses them (162-25).
+    qualifier = f"{remote}/"
+    if branch.startswith(qualifier) and branch[len(qualifier) :]:
+        widened = f"refs/remotes/{remote}/{branch[len(qualifier) :]}"
+        if widened not in candidates:
+            candidates.append(widened)
+    for candidate in candidates:
         probe = _run(
             ["git", "rev-parse", "--verify", "--quiet", candidate],
             cwd=cwd,
