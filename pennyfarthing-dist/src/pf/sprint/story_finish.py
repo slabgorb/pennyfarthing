@@ -614,7 +614,7 @@ def _resolve_base_branch(project_root: Path) -> str:
 def _resolve_story_repos(
     project_root: Path,
     story: dict,
-) -> list[tuple[Path, "RepoConfig | None"]]:
+) -> dict[str, Any]:
     """Every code repo the story's work lives in, as ``(abs_path, config)``.
 
     The story's ``repos:`` field names them; ``.pennyfarthing/repos.yaml`` gives
@@ -626,6 +626,21 @@ def _resolve_story_repos(
     degrades to the project root paired with the root repo's config — the
     pre-162-6 behavior, so an operator typo cannot silently skip verification.
 
+    Returns a result object (162-32): ``{"success": True, "data": [...]}``, or
+    ``{"success": False, "error": ...}`` when a named repo is not cloned. The
+    first consumer of a resolved path is ``_run(..., cwd=str(repo_path))``, and
+    ``subprocess`` on a ``cwd`` that does not exist RAISES — a traceback out of
+    a function whose contract is a result (SOUL #6). ``Path.resolve()`` happily
+    produces a path to nothing, so the existence check belongs here, mirroring
+    ``pf.git.repos.get_repo_paths``'s ``abs_path.exists()`` precedent — but LOUD
+    rather than silently dropping the repo, since dropping it would degrade the
+    story to the project root and verify the WRONG repository.
+
+    Names are deduped in order (162-32): the same repo named twice made every
+    per-repo loop run twice against it, and the merge loop reads a ``pr_views``
+    snapshot taken BEFORE the merge, so the second pass re-ran ``gh pr merge``
+    on a PR that had just landed and false-aborted fully-shipped work.
+
     Local import for the same circular-layering reason as
     :func:`_resolve_base_branch`.
     """
@@ -634,7 +649,7 @@ def _resolve_story_repos(
     try:
         configs = load_repos_config(project_root)
     except (yaml.YAMLError, OSError):
-        return [(project_root, None)]
+        return {"success": True, "data": [(project_root, None)]}
     raw = story.get("repos")
     if isinstance(raw, list):
         names = [str(n).strip() for n in raw if str(n).strip()]
@@ -643,11 +658,29 @@ def _resolve_story_repos(
     else:
         names = []
 
-    resolved = [configs[name] for name in names if name in configs]
+    resolved = []
+    seen: set[str] = set()
+    for name in names:
+        if name in configs and name not in seen:
+            seen.add(name)
+            resolved.append(configs[name])
     if not resolved:
         root_repo = next((rc for rc in configs.values() if rc.path in (".", "")), None)
-        return [(project_root, root_repo)]
-    return [((project_root / rc.path).resolve(), rc) for rc in resolved]
+        return {"success": True, "data": [(project_root, root_repo)]}
+
+    paths = [((project_root / rc.path).resolve(), rc) for rc in resolved]
+    missing = [(p, rc) for p, rc in paths if not p.is_dir()]
+    if missing:
+        detail = ", ".join(f"{rc.name} ({p})" for p, rc in missing)
+        return {
+            "success": False,
+            "error": (
+                f"Repo not cloned: {detail} — repos.yaml names it, but that "
+                "directory does not exist. Clone it (or fix the story's repos: "
+                "field) and re-run finish."
+            ),
+        }
+    return {"success": True, "data": paths}
 
 
 def _valid_branch_name(value: str, cwd: str) -> subprocess.CompletedProcess:
@@ -1069,11 +1102,22 @@ def _git_cleanup(
             # (a delete aimed at the branch we are still standing on fails
             # anyway), and step 7 still removes the session.
             return stopped((result.stderr or "").strip())
-        if cmd[:2] == ["git", "checkout"] and result.returncode != 0:
-            # A checkout that failed (a conflicting local modification) leaves
-            # the feature branch checked out, and the pull below would then land
-            # the base's commits ON it. Never keep going from there.
-            return stopped((result.stderr or "").strip() or f"git checkout {base} failed")
+        if result.returncode != 0:
+            # EVERY command's return code is read, not just the checkout's
+            # (162-32). Reading the pull's and the delete's rc and discarding
+            # them returned the bare `entry` — a step 6 that reads exactly like
+            # a clean cleanup — so a failed pull (no network, diverged base) or
+            # a refused `branch -d` (git does not consider the branch merged:
+            # precisely the case where the operator must look) was reported as
+            # success. That is the silent skip this epic exists to kill.
+            #
+            # Stopping the chain is also the only safe route: a checkout that
+            # failed (a conflicting local modification) leaves the feature
+            # branch checked out and the pull would land the base's commits ON
+            # it, and a delete aimed off a base the pull never updated is
+            # refused anyway. Step 6 runs after the story is done, so this is a
+            # warning, not a finish failure (162-9), and step 7 still runs.
+            return stopped((result.stderr or "").strip() or f"{' '.join(cmd)} failed")
     return [entry]
 
 
@@ -1173,7 +1217,19 @@ def finish_story(
     # number collision merges an unrelated PR, and a miss aborts a finish whose
     # work landed. Step 5 (the epic archive) is the one deliberate exception —
     # it reads the orchestrator's own ``sprint/`` tree.
-    story_repos = _resolve_story_repos(project_root, story)
+    # An unresolvable repo (162-32: named in repos.yaml, never cloned) aborts
+    # BEFORE any irreversible step — the session stays, nothing is archived —
+    # and is REPORTED, not raised: every probe below would otherwise run with a
+    # cwd that does not exist and subprocess would throw out of this function.
+    repos_result = _resolve_story_repos(project_root, story)
+    if not repos_result.get("success"):
+        return {
+            "success": False,
+            "story_id": story_id,
+            "jira_key": jira_key,
+            "error": repos_result.get("error"),
+        }
+    story_repos = repos_result["data"]
 
     # PR-field semantics for a multi-repo story: the session carries a single
     # ``**PR:** #N`` line, which can only describe ONE repo, so it is honored
