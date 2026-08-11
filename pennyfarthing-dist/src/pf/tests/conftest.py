@@ -108,6 +108,22 @@ def isolate_frame_webui(monkeypatch, tmp_path):
     monkeypatch.setenv("FRAME_WEBUI_DIR", str(nonexistent))
 
 
+@pytest.fixture(autouse=True)
+def _reset_persona_quote_cache():
+    """Drop the persona quote cache before and after every test (story 164-18).
+
+    ``pf.prime.persona._quote_cache`` is a module global keyed by
+    (agent_name, theme). Without this reset a quote selected by one test leaks
+    into every later test using the same key, so a test asserting on a quote can
+    pass or fail depending on what ran before it.
+    """
+    from pf.prime.persona import reset_quote_cache
+
+    reset_quote_cache()
+    yield
+    reset_quote_cache()
+
+
 @pytest.fixture
 def project_root() -> Path:
     """Return the project root path."""
