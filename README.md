@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v13.4.0** | *The outer loop goes once, the inner loop goes many times.*
+**v13.5.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -129,7 +129,10 @@ Pennyfarthing works in any terminal. Optional dashboards add real-time visibilit
 |--------------|------|---------|
 | Just use agents in my terminal | **CLI only** | `claude` (no dashboard needed) |
 | Stay fully in the terminal | **Frame TUI** | `just tui` + `just claude` |
+| Watch panels in the browser | **Frame Web GUI** | `pf frame start`, then open the Frame port |
 | One command, everything | **Frame all-in-one** | `pf frame start` |
+
+The **Frame Web GUI** is a React/Vite front-end served by the Frame server at its root URL. It currently offers the Sprint Board, Git Status, and Workflow Activity panels, with more being ported from the TUI. Build it into the wheel with `just web-build`.
 
 > **See the full [Frame Guide](pennyfarthing-dist/guides/frame.md)** for setup, panels, and OTEL telemetry.
 
