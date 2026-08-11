@@ -62,10 +62,14 @@ pf git branches 86-3
 Interactive release with verification gates.
 
 ```bash
-pf git release
+pf workflow start release
 ```
 
-Starts the release stepped workflow — an 11-step process with gates at each stage.
+Starts the release stepped workflow — an 11-step process with gates at each stage. Advance
+with `pf workflow complete-step release`.
+
+> **Note:** `pf git release` does **not** exist — the release is a stepped workflow, started
+> via `pf workflow start release`, not a `pf git` subcommand.
 
 ## Quick Reference
 
@@ -75,17 +79,17 @@ Starts the release stepped workflow — an 11-step process with gates at each st
 | `/pf-git snapshot` | Safety-branch + commit all dirty repos |
 | `/pf-git cleanup` | Organize changes into commits/branches |
 | `/pf-git branches <id>` | Create feature branches from story |
-| `/pf-git release` | Interactive release workflow |
+| `/pf-git release` | Interactive release workflow (`pf workflow start release`) |
 
 ## CLI Equivalent
 
-All commands are also available via `pf git`:
+All commands are also available via `pf git` (except `release`, which is a workflow):
 
 ```bash
 pf git status
 pf git cleanup
 pf git branches 86-3
-pf git release
+pf workflow start release   # NOT `pf git release`
 ```
 
 ## Related

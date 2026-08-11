@@ -24,6 +24,29 @@ Merge develop into main and create the annotated release tag. This prepares ever
 Merge summary and tag details. Everything is local — nothing has been pushed yet.
 </output>
 
+<critical>
+**Branch-protection hook blocks agent-run merges/pushes here.** In orchestrator repos the
+`branch_protection` PreToolUse hook blocks any `git commit`/`git merge`/`git rebase` while
+HEAD is on a protected branch (`main`/`develop`), and any `git push` to those branches. That
+means an agent driving this workflow **cannot** run 8.2 (merge to main), the tag push, or the
+develop push itself — they exit 2.
+
+Resolution: the operator runs the protected-branch commands in their own shell (in Claude
+Code, prefix with `!` so they execute in-session and bypass the assistant's hook). A single
+chained command covers steps 8–9:
+
+```bash
+git merge develop -m "Merge develop into main for release {new_version}" \
+  && git tag -a v{new_version} -m "Release {new_version}" \
+  && git push origin main && git push origin v{new_version} \
+  && git checkout develop && git push origin develop
+```
+
+Two gotchas: the hook's commit pattern also false-matches `git merge-base` (avoid that
+substring while on a protected branch), and detection can fall back to protecting `main` too.
+Candidate framework fix: a release-context bypass in `pf/hooks/branch_protection.py`.
+</critical>
+
 ## Execution
 
 ### 8.0 Prerelease Check
