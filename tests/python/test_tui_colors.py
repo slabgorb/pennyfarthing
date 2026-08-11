@@ -1,6 +1,6 @@
 """Tests for Story 136-4: Extract shared TUI color thresholds and contrast constants.
 
-The Frame TUI TUI has color threshold logic (green < 50, yellow <= 80, red > 80)
+The Frame TUI TUI has color threshold logic (green < 70, yellow <= 85, red > 85)
 duplicated across three modules. This story extracts them into a shared
 `colors.py` module. Tests verify the new module's API, that callers use it,
 and that visual output is unchanged.
@@ -47,19 +47,19 @@ class TestColorsModuleAPI:
         from pf.tui import colors  # noqa: F401
 
     def test_warn_threshold_low_value(self):
-        """WARN_THRESHOLD_LOW should be 50."""
+        """WARN_THRESHOLD_LOW should be 70 (aligned with the statusline in 1cd0a2b03)."""
         from pf.tui.colors import WARN_THRESHOLD_LOW
 
-        assert WARN_THRESHOLD_LOW == 50, (
-            f"WARN_THRESHOLD_LOW should be 50, got {WARN_THRESHOLD_LOW}"
+        assert WARN_THRESHOLD_LOW == 70, (
+            f"WARN_THRESHOLD_LOW should be 70, got {WARN_THRESHOLD_LOW}"
         )
 
     def test_warn_threshold_high_value(self):
-        """WARN_THRESHOLD_HIGH should be 80."""
+        """WARN_THRESHOLD_HIGH should be 85 (aligned with the statusline in 1cd0a2b03)."""
         from pf.tui.colors import WARN_THRESHOLD_HIGH
 
-        assert WARN_THRESHOLD_HIGH == 80, (
-            f"WARN_THRESHOLD_HIGH should be 80, got {WARN_THRESHOLD_HIGH}"
+        assert WARN_THRESHOLD_HIGH == 85, (
+            f"WARN_THRESHOLD_HIGH should be 85, got {WARN_THRESHOLD_HIGH}"
         )
 
     def test_tier_styles_dict_keys(self):
@@ -86,39 +86,39 @@ class TestColorsModuleAPI:
 
         assert warn_style(0) == "green"
 
-    def test_warn_style_green_at_49(self):
-        """warn_style(49) should return 'green' (below threshold)."""
+    def test_warn_style_green_at_69(self):
+        """warn_style(69) should return 'green' (below the low threshold)."""
         from pf.tui.colors import warn_style
 
-        assert warn_style(49) == "green"
+        assert warn_style(69) == "green"
 
-    def test_warn_style_yellow_at_50(self):
-        """warn_style(50) should return 'yellow' (exactly at low threshold)."""
+    def test_warn_style_yellow_at_70(self):
+        """warn_style(70) should return 'yellow' (exactly at low threshold)."""
         from pf.tui.colors import warn_style
 
-        assert warn_style(50) == "yellow", (
-            "percent=50 should be 'yellow' — matches 'if percent < 50' boundary"
+        assert warn_style(70) == "yellow", (
+            "percent=70 should be 'yellow' — matches the 'if percent < 70' boundary"
         )
 
-    def test_warn_style_yellow_at_79(self):
-        """warn_style(79) should return 'yellow'."""
+    def test_warn_style_yellow_at_84(self):
+        """warn_style(84) should return 'yellow'."""
         from pf.tui.colors import warn_style
 
-        assert warn_style(79) == "yellow"
+        assert warn_style(84) == "yellow"
 
-    def test_warn_style_yellow_at_80(self):
-        """warn_style(80) should return 'yellow' (exactly at high threshold)."""
+    def test_warn_style_yellow_at_85(self):
+        """warn_style(85) should return 'yellow' (exactly at high threshold)."""
         from pf.tui.colors import warn_style
 
-        assert warn_style(80) == "yellow", (
-            "percent=80 should be 'yellow' — matches 'elif percent <= 80' boundary"
+        assert warn_style(85) == "yellow", (
+            "percent=85 should be 'yellow' — matches the 'elif percent <= 85' boundary"
         )
 
-    def test_warn_style_red_at_81(self):
-        """warn_style(81) should return 'red'."""
+    def test_warn_style_red_at_86(self):
+        """warn_style(86) should return 'red'."""
         from pf.tui.colors import warn_style
 
-        assert warn_style(81) == "red"
+        assert warn_style(86) == "red"
 
     def test_warn_style_red_at_100(self):
         """warn_style(100) should return 'red'."""
@@ -130,9 +130,9 @@ class TestColorsModuleAPI:
         """warn_style should accept float values."""
         from pf.tui.colors import warn_style
 
-        assert warn_style(49.9) == "green"
-        assert warn_style(50.0) == "yellow"
-        assert warn_style(80.1) == "red"
+        assert warn_style(69.9) == "green"
+        assert warn_style(70.0) == "yellow"
+        assert warn_style(85.1) == "red"
 
     def test_no_intra_package_imports(self):
         """colors.py should have no imports from pf.tui (prevents circular)."""
@@ -317,16 +317,18 @@ class TestContextMeterFooterUsesSharedConstants:
         )
 
     def test_no_inline_threshold_logic(self):
-        """context_meter_footer should not have inline < 50 / <= 80 threshold checks
-        in _render_context_bar."""
+        """context_meter_footer should not compare percent to a threshold literal
+        in _render_context_bar — it must delegate to warn_style()."""
         import inspect
 
         from pf.tui import context_meter_footer
 
         source = inspect.getsource(context_meter_footer.StatusFooter._render_context_bar)
-        assert "percent < 50" not in source, (
-            "_render_context_bar should use warn_style(), not inline thresholds"
-        )
+        for literal in ("percent < 50", "percent <= 80", "percent < 70", "percent <= 85"):
+            assert literal not in source, (
+                f"_render_context_bar should use warn_style(), not the inline "
+                f"threshold check {literal!r}"
+            )
 
     def test_footer_tier_green_at_low_percent(self):
         """Tier label at percent=0 with tier='FULL' should be bold green."""

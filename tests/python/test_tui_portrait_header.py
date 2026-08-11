@@ -1,7 +1,7 @@
 """Tests for Frame TUI portrait image header (Story 110-3).
 
 Verifies:
-  AC1: textual-image added to [tui] optional dependencies
+  AC1: textual-image is a declared dependency of the pf package
   AC2: Portrait image renders alongside agent info in header
   AC3: Protocol auto-detection runs before App.run()
   AC4: Graceful fallback to text-only on unsupported terminals
@@ -47,26 +47,31 @@ PERSONA_STREAMING = {
 
 
 class TestDependencies:
-    """AC1: textual-image added to [tui] optional dependencies."""
+    """AC1: textual-image is a declared dependency of the pf package.
 
-    def test_textual_image_in_tui_deps(self):
-        """pyproject.toml [tui] optional deps should include textual-image."""
-        content = PYPROJECT_PATH.read_text()
-        # Parse the [tui] section — textual-image must appear in the tui deps
-        in_tui_section = False
-        found = False
-        for line in content.splitlines():
-            if line.strip().startswith("tui = ["):
-                in_tui_section = True
-                continue
-            if in_tui_section:
-                if line.strip() == "]":
-                    break
-                if "textual-image" in line:
-                    found = True
-                    break
-        assert found, (
-            "textual-image should be listed in [project.optional-dependencies] tui"
+    The `[tui]` extra was folded into the required `dependencies` list — the TUI
+    ships with the package now, so the portrait renderer is not optional.
+    """
+
+    def test_textual_image_is_a_required_dependency(self):
+        """pyproject.toml [project] dependencies should include textual-image."""
+        import tomllib
+
+        data = tomllib.loads(PYPROJECT_PATH.read_text())
+        deps = data["project"]["dependencies"]
+        assert any(d.startswith("textual-image") for d in deps), (
+            f"textual-image should be a required dependency, got: {deps}"
+        )
+
+    def test_textual_image_is_not_an_unused_extra(self):
+        """There should be no leftover [tui] extra now that the dep is required."""
+        import tomllib
+
+        data = tomllib.loads(PYPROJECT_PATH.read_text())
+        extras = data["project"].get("optional-dependencies", {})
+        assert "tui" not in extras, (
+            "textual-image moved into the required dependencies; a stale [tui] "
+            f"extra would double-declare it. Extras present: {sorted(extras)}"
         )
 
 
@@ -157,7 +162,7 @@ class TestProtocolDetection:
 
     def test_main_calls_detect_before_app_run(self):
         """main() should call detect_image_protocol() before App.run()."""
-        from pf.tui import tui
+        from pf.tui import app as tui_app
 
         call_order: list[str] = []
 
@@ -165,11 +170,11 @@ class TestProtocolDetection:
             "pf.tui.portrait_resolver.detect_image_protocol",
             side_effect=lambda: (call_order.append("detect"), None)[1],
         ), patch.object(
-            tui.TuiApp,
+            tui_app.TuiApp,
             "run",
             side_effect=lambda *a, **kw: call_order.append("app_run"),
         ):
-            tui.main(port=9999)
+            tui_app.main(port=9999)
 
         assert "detect" in call_order, "main() should call detect_image_protocol()"
         assert "app_run" in call_order, "main() should call app.run()"

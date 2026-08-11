@@ -4,7 +4,7 @@ Verifies:
   AC1: Refactor layout to Horizontal(left_pane, right_pane) container structure
   AC2: Shift+S keybinding to toggle split mode
   AC3: Tab switches focus between panes in split mode
-  AC4: Named presets: sprint+diffs, changed+diffs, progress+debug
+  AC4: Named presets: sprint+diffs, git+diffs, progress+debug
   AC5: /bc split <left> <right> command for custom splits
   AC6: Workflow-aware auto-layout via /ws/focus channel extension
 
@@ -31,7 +31,7 @@ class TestSplitPaneStructure:
         """When split mode is active, left and right pane containers should exist."""
         async with app.run_test() as pilot:
             # Activate split mode
-            await pilot.press("shift+s")
+            await pilot.press("S")
             left = app.query("#split-left")
             right = app.query("#split-right")
             assert len(left) > 0, "Split mode should create #split-left container"
@@ -40,7 +40,7 @@ class TestSplitPaneStructure:
     async def test_split_containers_are_vertical_scroll(self, app):
         """Split panes should be VerticalScroll containers."""
         async with app.run_test() as pilot:
-            await pilot.press("shift+s")
+            await pilot.press("S")
             left = app.query_one("#split-left")
             right = app.query_one("#split-right")
             assert isinstance(left, VerticalScroll), (
@@ -53,7 +53,7 @@ class TestSplitPaneStructure:
     async def test_split_panes_inside_horizontal_container(self, app):
         """Split panes should be children of a Horizontal container."""
         async with app.run_test() as pilot:
-            await pilot.press("shift+s")
+            await pilot.press("S")
             split_container = app.query("#split-container")
             assert len(split_container) > 0, (
                 "Split mode should mount a #split-container Horizontal"
@@ -66,7 +66,7 @@ class TestSplitPaneStructure:
     async def test_each_pane_holds_one_panel(self, app):
         """In split mode, each pane should hold exactly one visible panel."""
         async with app.run_test() as pilot:
-            await pilot.press("shift+s")
+            await pilot.press("S")
             left = app.query_one("#split-left")
             right = app.query_one("#split-right")
             left_visible = [c for c in left.children if c.display]
@@ -104,7 +104,9 @@ class TestSplitToggle:
     def test_shift_s_binding_exists(self, app):
         """App BINDINGS should include Shift+S for split toggle."""
         binding_keys = [b.key for b in app.BINDINGS]
-        # Textual represents Shift+S as "S" (uppercase) or "shift+s"
+        # Textual names the shifted key "S" (uppercase); "shift+s" is not
+        # dispatched by Pilot.press, so the binding and the presses below both
+        # have to use "S".
         has_split = any(k in ("S", "shift+s") for k in binding_keys)
         assert has_split, (
             f"BINDINGS should include Shift+S for split toggle, found: {binding_keys}"
@@ -117,7 +119,7 @@ class TestSplitToggle:
             assert not getattr(app, "_split_mode", False), (
                 "App should start in single mode"
             )
-            await pilot.press("shift+s")
+            await pilot.press("S")
             assert app._split_mode is True, (
                 "After Shift+S, _split_mode should be True"
             )
@@ -125,8 +127,8 @@ class TestSplitToggle:
     async def test_shift_s_deactivates_split_mode(self, app):
         """Pressing Shift+S twice should return to single mode."""
         async with app.run_test() as pilot:
-            await pilot.press("shift+s")  # activate
-            await pilot.press("shift+s")  # deactivate
+            await pilot.press("S")  # activate
+            await pilot.press("S")  # deactivate
             assert app._split_mode is False, (
                 "After second Shift+S, _split_mode should be False"
             )
@@ -137,7 +139,7 @@ class TestSplitToggle:
             # Switch to diffs panel first
             await pilot.press("3")  # key 3 = diffs
             focused_before = app._focused_panel
-            await pilot.press("shift+s")  # enter split mode
+            await pilot.press("S")  # enter split mode
             # Verify split mode actually activated first
             assert app._split_mode is True, (
                 "Shift+S should have activated split mode"
@@ -163,7 +165,7 @@ class TestSplitPaneFocusCycling:
     async def test_tab_cycles_pane_focus_in_split_mode(self, app):
         """Tab key should cycle focus between left and right panes in split mode."""
         async with app.run_test() as pilot:
-            await pilot.press("shift+s")  # enter split mode
+            await pilot.press("S")  # enter split mode
 
             # Determine which pane is focused
             initial_pane = app._active_split_pane
@@ -177,7 +179,7 @@ class TestSplitPaneFocusCycling:
     async def test_tab_wraps_around_in_split_mode(self, app):
         """Tab should wrap from right pane back to left pane."""
         async with app.run_test() as pilot:
-            await pilot.press("shift+s")  # enter split mode
+            await pilot.press("S")  # enter split mode
 
             initial_pane = app._active_split_pane
             await pilot.press("tab")  # left → right (or right → left)
@@ -205,7 +207,12 @@ class TestSplitPaneFocusCycling:
 # AC4: Named presets
 # ---------------------------------------------------------------------------
 class TestNamedPresets:
-    """AC4: Named presets: sprint+diffs, changed+diffs, progress+debug."""
+    """AC4: Named presets: sprint+diffs, git+diffs, progress+debug.
+
+    The standalone "changed" panel was merged into the Git panel in ab9ad54bb,
+    so the `changed+diffs` preset became `git+diffs` and `panel-changed` no
+    longer exists.
+    """
 
     def test_split_presets_dict_exists(self):
         """SPLIT_PRESETS dict should be defined in tui module."""
@@ -217,7 +224,7 @@ class TestNamedPresets:
         """All required presets should be defined."""
         from pf.tui.app import SPLIT_PRESETS
 
-        required = ["sprint+diffs", "changed+diffs", "progress+debug"]
+        required = ["sprint+diffs", "git+diffs", "progress+debug"]
         for preset in required:
             assert preset in SPLIT_PRESETS, (
                 f"Missing required preset: '{preset}'"
@@ -243,13 +250,25 @@ class TestNamedPresets:
             f"sprint+diffs should be ('sprint', 'diffs'), got {SPLIT_PRESETS.get('sprint+diffs')}"
         )
 
-    def test_changed_diffs_preset_values(self):
-        """changed+diffs preset should map to ('changed', 'diffs')."""
+    def test_git_diffs_preset_values(self):
+        """git+diffs preset should map to ('git', 'diffs')."""
         from pf.tui.app import SPLIT_PRESETS
 
-        assert SPLIT_PRESETS["changed+diffs"] == ("changed", "diffs"), (
-            f"changed+diffs should be ('changed', 'diffs'), got {SPLIT_PRESETS.get('changed+diffs')}"
+        assert SPLIT_PRESETS["git+diffs"] == ("git", "diffs"), (
+            f"git+diffs should be ('git', 'diffs'), got {SPLIT_PRESETS.get('git+diffs')}"
         )
+
+    def test_no_preset_names_a_removed_panel(self):
+        """Every preset must reference panels that actually exist."""
+        from pf.tui.app import _PANEL_KEYS, SPLIT_PRESETS
+
+        for name, (left, right) in SPLIT_PRESETS.items():
+            assert left in _PANEL_KEYS, (
+                f"Preset '{name}' left panel '{left}' is not in PANEL_REGISTRY"
+            )
+            assert right in _PANEL_KEYS, (
+                f"Preset '{name}' right panel '{right}' is not in PANEL_REGISTRY"
+            )
 
     def test_progress_debug_preset_values(self):
         """progress+debug preset should map to ('progress', 'debug')."""
@@ -408,14 +427,14 @@ class TestWorkflowAwareAutoLayout:
             app._handle_focus_message({
                 "type": "update",
                 "focus": "split",
-                "split": {"left": "changed", "right": "diffs"},
+                "split": {"left": "git", "right": "diffs"},
             })
             await pilot.pause()
             left = app.query_one("#split-left")
             right = app.query_one("#split-right")
             left_panels = [c for c in left.children if c.display]
             right_panels = [c for c in right.children if c.display]
-            assert left_panels[0].id == "panel-changed"
+            assert left_panels[0].id == "panel-git"
             assert right_panels[0].id == "panel-diffs"
 
     async def test_focus_message_with_preset_name(self, app):
@@ -434,7 +453,7 @@ class TestWorkflowAwareAutoLayout:
         """Regular single-panel focus message should exit split mode."""
         async with app.run_test() as pilot:
             # First enter split mode
-            await pilot.press("shift+s")
+            await pilot.press("S")
             assert app._split_mode is True
 
             # Then receive a single-panel focus update

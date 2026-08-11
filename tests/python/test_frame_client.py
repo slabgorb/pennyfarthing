@@ -60,11 +60,20 @@ class TestImportAndInterface:
         assert callable(getattr(client, "on_state_change", None))
         assert callable(getattr(client, "discover_port", None))
 
-    def test_default_port_constant(self):
-        """DEFAULT_PORT should be 2898 (Frame mode)."""
-        from pf.tui.client import DEFAULT_PORT
+    def test_client_exposes_no_default_port(self):
+        """The client must NOT carry a default port constant.
 
-        assert DEFAULT_PORT == 2898
+        Frame binds an OS-assigned free port (``frame/launcher.py:find_free_port``)
+        and publishes it in ``.frame-port``; the only fixed 2898 left in the tree is
+        ``pf.hooks.DEFAULT_FRAME_PORT``, used by hooks, not by the TUI client. A
+        default here would let the TUI silently talk to the wrong server.
+        """
+        from pf.tui import client as ws_client
+
+        assert not hasattr(ws_client, "DEFAULT_PORT"), (
+            "pf.tui.client must not define DEFAULT_PORT — the port comes from "
+            ".frame-port or an explicit argument only"
+        )
 
     def test_reconnect_delay_constant(self):
         """RECONNECT_DELAY should be 2.0 seconds."""
@@ -102,19 +111,25 @@ class TestPortDiscovery:
         port = client.discover_port()
         assert port == 3456, f"Should read 3456 from port file, got {port}"
 
-    def test_falls_back_to_default_port(self, tmp_path):
-        """discover_port() should return DEFAULT_PORT when no port file exists."""
-        from pf.tui.client import (
-            DEFAULT_PORT,
-            FrameClient,
-        )
+    def test_missing_port_file_raises(self, tmp_path):
+        """discover_port() should raise when no port file exists — no silent fallback."""
+        from pf.tui.client import FrameClient
 
         # No .frame-port file in tmp_path
         client = FrameClient(project_dir=tmp_path)
-        port = client.discover_port()
-        assert port == DEFAULT_PORT, (
-            f"Should fall back to {DEFAULT_PORT}, got {port}"
+        with pytest.raises(FileNotFoundError) as exc:
+            client.discover_port()
+        assert "pf frame start" in str(exc.value), (
+            f"Error should tell the user how to start Frame, got: {exc.value}"
         )
+
+    def test_no_port_source_raises(self):
+        """discover_port() should raise when neither port nor project_dir is set."""
+        from pf.tui.client import FrameClient
+
+        client = FrameClient()
+        with pytest.raises(RuntimeError, match="No port source available"):
+            client.discover_port()
 
     def test_uses_explicit_port_over_discovery(self, tmp_path):
         """When port is passed explicitly, discover_port() should return it."""
