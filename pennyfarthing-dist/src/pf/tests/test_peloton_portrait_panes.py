@@ -270,16 +270,22 @@ class TestAgentPaneSplitWithPortrait:
                 theme="firefly",
             )
 
-            # Verify split was horizontal ("h" direction) for portrait
-            if mock_split.called:
-                for c in mock_split.call_args_list:
-                    args = c[0] if c[0] else ()
-                    kwargs = c[1] if c[1] else {}
-                    direction = args[2] if len(args) > 2 else kwargs.get("direction")
-                    if direction == "h":
-                        break
-                else:
-                    pytest.fail("No horizontal split found — portrait must split horizontally")
+            # Story 162-31: the assertion used to sit behind `if
+            # mock_split.called:`, so it passed vacuously whenever the portrait
+            # split never happened at all — which is precisely the regression it
+            # is supposed to catch. Assert the call happened, then its shape.
+            assert mock_split.called, (
+                "portrait pane must be created by splitting the agent pane — "
+                "split_pane was never called"
+            )
+            for c in mock_split.call_args_list:
+                args = c[0] if c[0] else ()
+                kwargs = c[1] if c[1] else {}
+                direction = args[2] if len(args) > 2 else kwargs.get("direction")
+                if direction == "h":
+                    break
+            else:
+                pytest.fail("No horizontal split found — portrait must split horizontally")
 
 
 # ===========================================================================
@@ -368,19 +374,25 @@ class TestPortraitPaneSize:
                 theme="firefly",
             )
 
-            # Find the portrait split call and check size
-            if mock_split.called:
-                for c in mock_split.call_args_list:
-                    args = c[0] if c[0] else ()
-                    kwargs = c[1] if c[1] else {}
-                    size = args[3] if len(args) > 3 else kwargs.get("size_pct")
-                    direction = args[2] if len(args) > 2 else kwargs.get("direction")
-                    if direction == "h" and size is not None:
-                        assert size <= 25, \
-                            f"Portrait pane should be <=25% of width, got {size}%"
-                        break
-                else:
-                    pytest.fail("No horizontal split with size found for portrait pane")
+            # Story 162-31: de-vacuumed — same `if mock_split.called:` shield as
+            # test_split_direction_is_horizontal. With no split the size
+            # assertion never ran and the test claimed a guarantee it did not
+            # provide.
+            assert mock_split.called, (
+                "portrait pane must be created by splitting the agent pane — "
+                "split_pane was never called, so no size can be checked"
+            )
+            for c in mock_split.call_args_list:
+                args = c[0] if c[0] else ()
+                kwargs = c[1] if c[1] else {}
+                size = args[3] if len(args) > 3 else kwargs.get("size_pct")
+                direction = args[2] if len(args) > 2 else kwargs.get("direction")
+                if direction == "h" and size is not None:
+                    assert size <= 25, \
+                        f"Portrait pane should be <=25% of width, got {size}%"
+                    break
+            else:
+                pytest.fail("No horizontal split with size found for portrait pane")
 
     def test_portrait_uses_small_image_size(self, project: Path) -> None:
         """Portrait resolution should prefer 'small' size bucket for peloton panes."""
