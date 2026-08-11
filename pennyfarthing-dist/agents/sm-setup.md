@@ -380,8 +380,9 @@ keyed by the repo's `repos.yaml` name:
 - **PR ui:** #88
 ```
 
-The key is `PR <repo-name>` — bare words, no parentheses (`**PR (api):**` is not
-a parseable field line). Finish does not read these lines yet: for a multi-repo
+The key is `PR <repo-name>` — the `repos.yaml` name verbatim, hyphens included
+(`- **PR my-repo:** #227` is a valid field line); no parentheses or other
+punctuation (`**PR (api):**` is not a parseable field line). Finish does not read these lines yet: for a multi-repo
 story it resolves each repo's PR itself, in that repo, from the shared branch.
 They are the record an operator needs when a multi-repo finish half-lands (it
 reports which repos already merged), so keep them accurate and never invent a

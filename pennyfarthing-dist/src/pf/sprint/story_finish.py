@@ -1225,10 +1225,13 @@ def _verify_no_pr_repo(
             remote=repo_config.remote_name if repo_config else None,
         )
         if merge_state["state"] == "merged":
-            # NOT ``skipped: True``: an all-repos abort keeps the already
-            # verified repos' step records in the report, and a bare
+            # NOT ``skipped: True``: this record reaches the report whenever the
+            # merge loop runs (it replays the recorded verdicts), and a bare
             # ``skipped`` there reads as the silent skip this epic exists to
-            # kill (155-34). The value says what was verified.
+            # kill (155-34). The value says what was verified. Note the pre-merge
+            # pass holds successful verdicts until that replay, so a repo that
+            # aborts the pre-pass suppresses the earlier repos' records too —
+            # the abort's own error names the failing repo instead.
             return {
                 "success": True,
                 "error": None,

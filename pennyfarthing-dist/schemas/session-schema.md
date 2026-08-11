@@ -330,9 +330,10 @@ repo's `repos.yaml` name:
 - **PR ui:** #88
 ```
 
-The key is `PR <repo-name>` — bare words only, no parentheses or punctuation:
-the parser's anchored pattern (`**Word words:**`) is what makes a line a field
-at all, and `**PR (api):**` is therefore not a field.
+The key is `PR <repo-name>` — the repo's `repos.yaml` name verbatim, including
+hyphens (`- **PR my-repo:** #227` parses to the field `pr my-repo`). Word
+characters, spaces and hyphens only: the parser's anchored pattern is what makes
+a line a field at all, so `**PR (api):**` is not a field.
 
 What finish does with these lines **today** (162-33): nothing. For a multi-repo
 story it ignores the single `**PR:**` line and resolves each repo's PR itself,

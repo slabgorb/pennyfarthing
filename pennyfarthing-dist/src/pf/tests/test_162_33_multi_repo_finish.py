@@ -79,6 +79,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from pf.sprint.session_parse import parse_session
 from pf.sprint.story_finish import _resolve_story_repos, finish_story
 
 STORY_ID = "162-33"
@@ -547,9 +548,7 @@ class TestLandedRepoRecovery:
 
         # The recovery report: the top-level result (not just the step log) must
         # say what already landed. Search every top-level value except `steps`.
-        reported = " ".join(
-            str(value) for key, value in result.items() if key != "steps"
-        )
+        reported = " ".join(str(value) for key, value in result.items() if key != "steps")
         assert "api" in reported, (
             "the failure report never names the repo whose PR already LANDED — an "
             "operator reading this cannot tell that half the story shipped: "
@@ -732,3 +731,34 @@ class TestPerRepoPrFieldIsDocumented:
             f"{rel_path} does not document the per-repo PR field syntax, so a "
             "multi-repo session has no way to record a PR per repo"
         )
+
+
+class TestPerRepoPrFieldIsParseable:
+    """The documented syntax must actually parse for REAL repo names.
+
+    The docs justify ``**PR <repo>:**`` by parser compatibility, so a hyphenated
+    repo name — the norm — must produce its own field key, distinct from the
+    single-repo ``pr`` field.
+    """
+
+    def test_hyphenated_repo_key_parses_to_its_own_field(self, tmp_path: Path) -> None:
+        session = tmp_path / "162-33-session.md"
+        session.write_text(
+            "## Story Details\n"
+            "- **Branch:** feat/162-33-slug\n"
+            "- **PR my-repo:** #227\n"
+            "- **PR ui:** #88\n",
+            encoding="utf-8",
+        )
+
+        fields = parse_session(session)
+
+        assert fields.get("pr my-repo") == "#227", (
+            "the documented per-repo syntax does not parse for a hyphenated repo "
+            f"name, so its PR field is invisible to finish: {fields}"
+        )
+        assert fields.get("pr ui") == "#88"
+        assert "pr" not in fields, (
+            "a per-repo line must not be read as the single-repo **PR:** field"
+        )
+        assert fields.get("branch") == "feat/162-33-slug"
