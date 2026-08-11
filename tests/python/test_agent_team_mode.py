@@ -663,7 +663,7 @@ class TestValidatorRun:
 
         report = run(project_dir, fix=False, strict=False)
 
-        assert report.errors == 0, (
+        assert report.errors == [], (
             f"Expected 0 errors, got {report.errors}:\n"
             + "\n".join(d for d in report.details if "[ERROR]" in d)
         )
@@ -675,7 +675,7 @@ class TestValidatorRun:
 
         report = run(project_dir, fix=False, strict=False)
 
-        assert report.errors > 0
+        assert len(report.errors) > 0
 
     def test_missing_lead_sections_produce_errors(self, project_dir: Path) -> None:
         """Lead agents without <team-mode> should produce errors."""
@@ -684,7 +684,7 @@ class TestValidatorRun:
 
         report = run(project_dir, fix=False, strict=False)
 
-        assert report.errors > 0
+        assert len(report.errors) > 0
 
 
 # =============================================================================
@@ -782,7 +782,7 @@ class TestRealAgentFiles:
 
         report = run(root, fix=False, strict=False)
 
-        assert report.errors == 0, (
+        assert report.errors == [], (
             f"Real files have {report.errors} team-mode errors:\n"
             + "\n".join(d for d in report.details if "[ERROR]" in d)
         )

@@ -261,6 +261,9 @@ class TestAnalyzeRepo:
 
     def test_successful_analysis(self):
         with patch(
+            "pf.hotspots.analyze._analyze_repo_pydriller",
+            side_effect=ImportError("pydriller not available"),
+        ), patch(
             "pf.hotspots.analyze._run_git_log",
             new_callable=AsyncMock,
             return_value=(SAMPLE_GIT_LOG, "", 0),
@@ -273,6 +276,9 @@ class TestAnalyzeRepo:
 
     def test_git_failure(self):
         with patch(
+            "pf.hotspots.analyze._analyze_repo_pydriller",
+            side_effect=ImportError("pydriller not available"),
+        ), patch(
             "pf.hotspots.analyze._run_git_log",
             new_callable=AsyncMock,
             return_value=("", "fatal: not a git repository", 128),
@@ -283,6 +289,9 @@ class TestAnalyzeRepo:
 
     def test_empty_history(self):
         with patch(
+            "pf.hotspots.analyze._analyze_repo_pydriller",
+            side_effect=ImportError("pydriller not available"),
+        ), patch(
             "pf.hotspots.analyze._run_git_log",
             new_callable=AsyncMock,
             return_value=("", "", 0),
@@ -296,6 +305,9 @@ class TestAnalyzeRepo:
 100\t50\tpnpm-lock.yaml
 5\t2\tsrc/app.ts"""
         with patch(
+            "pf.hotspots.analyze._analyze_repo_pydriller",
+            side_effect=ImportError("pydriller not available"),
+        ), patch(
             "pf.hotspots.analyze._run_git_log",
             new_callable=AsyncMock,
             return_value=(log_with_lock, "", 0),
@@ -724,6 +736,9 @@ class TestExpandedDefaultExcludes:
 2\t1\tfonts/Inter.woff2
 4\t2\t.eslintrc"""
         with patch(
+            "pf.hotspots.analyze._analyze_repo_pydriller",
+            side_effect=ImportError("pydriller not available"),
+        ), patch(
             "pf.hotspots.analyze._run_git_log",
             new_callable=AsyncMock,
             return_value=(log_with_artifacts, "", 0),

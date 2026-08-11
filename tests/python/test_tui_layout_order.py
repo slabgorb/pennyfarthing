@@ -61,7 +61,7 @@ class TestDefaultOrder:
 
     def test_get_layout_order_returns_default_for_missing_key(self):
         """Config without layout_order key should return default."""
-        config = {"theme": "mash", "workflow": {"statusbar": True}}
+        config = {"theme": "mash", "workflow": {"tui_statusbar": True}}
         order = get_layout_order(config)
         assert order == ["menu", "profile", "content", "status"]
 
@@ -227,13 +227,18 @@ class TestRenderingOrder:
 
 
 class TestDisabledBarsOmitted:
-    """Individual bar toggle settings should omit disabled bars from layout."""
+    """Individual bar toggle settings should omit disabled bars from layout.
+
+    The status-bar toggle key was renamed ``workflow.statusbar`` →
+    ``workflow.tui_statusbar`` in dd618eb04 (tmux status-bar integration); see
+    ``pf/tui/layout_order.py:_BAR_TOGGLE_MAP``.
+    """
 
     def test_get_layout_order_filters_disabled_bars(self):
         """When a bar is disabled in config, it should not appear in the order."""
         config = {
             "layout_order": ["menu", "profile", "content", "status"],
-            "workflow": {"statusbar": False},
+            "workflow": {"tui_statusbar": False},
         }
         order = get_layout_order(config)
         assert "status" not in order, (
@@ -265,7 +270,7 @@ class TestDisabledBarsOmitted:
         """When all bars are enabled, the full configured order is returned."""
         config = {
             "layout_order": ["status", "content", "profile", "menu"],
-            "workflow": {"statusbar": True},
+            "workflow": {"tui_statusbar": True},
         }
         order = get_layout_order(config)
         assert order == ["status", "content", "profile", "menu"]

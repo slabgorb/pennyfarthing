@@ -2,7 +2,7 @@
 Tests for hooks/ subpackage — bash-to-Python migration.
 
 Validates hook modules:
-- session_start, session_stop, reflector_check, cyclist_pretooluse
+- session_start, session_stop, pretooluse_forward
 - context_warning, context_breaker, pre_edit_check, schema_validation
 - sprint_yaml_validation, statusline
 
@@ -77,9 +77,11 @@ class TestCLIGroup:
         from pf.hooks.cli import hooks
         command_names = sorted(hooks.list_commands(None))
         expected = sorted([
+            "advisory-model-tier", "advisory-never-edit-zone",
+            "agent-reload", "branch-protection",
             "context-breaker", "context-warning",
-            "cyclist-pretooluse", "dispatch", "pre-edit-check",
-            "agent-reload", "pre-compact", "reflector-check",
+            "dispatch", "pre-compact", "pre-edit-check",
+            "pretooluse-forward",
             "schema-validation", "session-end", "session-start",
             "session-stop", "sprint-yaml", "statusline",
         ])
@@ -90,9 +92,8 @@ class TestCLIGroup:
         from pf.hooks import (
             context_breaker,
             context_warning,
-            cyclist_pretooluse,
             pre_edit_check,
-            reflector_check,
+            pretooluse_forward,
             schema_validation,
             session_start,
             session_stop,
@@ -102,7 +103,7 @@ class TestCLIGroup:
         # Each module should have a main() entry point
         for mod in [
             context_breaker, context_warning,
-            cyclist_pretooluse, pre_edit_check, reflector_check,
+            pre_edit_check, pretooluse_forward,
             schema_validation, session_start, session_stop,
             sprint_yaml_validation, statusline,
         ]:
@@ -161,20 +162,10 @@ class TestSessionStart:
         drift_log = tmp_project_with_checkpoint / ".session" / "drift-log.txt"
         assert not drift_log.exists()
 
-    def test_get_project_name_from_package_json(self, tmp_project):
-        from pf.hooks.session_start import _get_project_name
-        (tmp_project / "package.json").write_text('{"name": "my-project"}')
-        assert _get_project_name(tmp_project) == "my-project"
-
-    def test_get_project_name_fallback_to_dir(self, tmp_project):
-        from pf.hooks.session_start import _get_project_name
-        name = _get_project_name(tmp_project)
-        assert name == tmp_project.name
-
-    def test_welcome_lock_prevents_double_display(self, tmp_project):
-        from pf.hooks.session_start import _get_welcome_lock_path
-        lock = _get_welcome_lock_path(tmp_project)
-        assert ".welcome-shown-" in lock.name
+    # Removed (162-30): test_get_project_name_{from_package_json,fallback_to_dir} and
+    # test_welcome_lock_prevents_double_display pinned _get_project_name/
+    # _get_welcome_lock_path, deleted with the welcome/greeting/nudge code in
+    # 508cab627 ("Remove dead welcome/greeting/nudge code from session_start.py").
 
     def test_write_env_file(self, tmp_project):
         from pf.hooks.session_start import _write_env_file
@@ -256,105 +247,10 @@ class TestSessionStop:
         assert "phase=green" in log
 
 
-# =============================================================================
-# reflector_check
-# =============================================================================
-
-
-class TestReflectorCheck:
-    """Reflector marker enforcement hook (Stop hook)."""
-
-    def test_has_reflector_marker_question(self):
-        from pf.hooks.reflector_check import _has_reflector_marker
-        assert _has_reflector_marker("Do you want me to proceed? <!-- CYCLIST:QUESTION:yesno -->")
-        assert _has_reflector_marker("What approach? <!-- CYCLIST:QUESTION:open -->")
-
-    def test_has_reflector_marker_choices(self):
-        from pf.hooks.reflector_check import _has_reflector_marker
-        assert _has_reflector_marker("<!-- CYCLIST:CHOICES:optA,optB -->")
-
-    def test_has_reflector_marker_handoff(self):
-        from pf.hooks.reflector_check import _has_reflector_marker
-        assert _has_reflector_marker("<!-- CYCLIST:HANDOFF:/dev -->")
-
-    def test_has_reflector_marker_continue(self):
-        from pf.hooks.reflector_check import _has_reflector_marker
-        assert _has_reflector_marker("Work complete. <!-- CYCLIST:CONTINUE -->")
-
-    def test_has_reflector_marker_context_clear(self):
-        from pf.hooks.reflector_check import _has_reflector_marker
-        assert _has_reflector_marker("<!-- CYCLIST:CONTEXT_CLEAR:/dev -->")
-
-    def test_no_marker_detected(self):
-        from pf.hooks.reflector_check import _has_reflector_marker
-        assert not _has_reflector_marker("Just a regular message with no marker.")
-
-    def test_detect_question_direct(self):
-        from pf.hooks.reflector_check import _detect_question
-        result = _detect_question("What do you think about this approach?")
-        assert result["detected"] is True
-        assert result["type"] == "direct"
-
-    def test_detect_question_implicit(self):
-        from pf.hooks.reflector_check import _detect_question
-        # No trailing ? so direct question pattern doesn't match first
-        result = _detect_question("Would you like me to proceed with this.")
-        assert result["detected"] is True
-        assert result["type"] == "implicit"
-
-    def test_detect_question_choices(self):
-        from pf.hooks.reflector_check import _detect_question
-        result = _detect_question("We could choose between Option A or Option B.")
-        assert result["detected"] is True
-        assert result["type"] == "choices"
-
-    def test_detect_question_rhetorical_skipped(self):
-        from pf.hooks.reflector_check import _detect_question
-        result = _detect_question("The question was whether to proceed.")
-        assert result["detected"] is False
-
-    def test_detect_question_no_question(self):
-        from pf.hooks.reflector_check import _detect_question
-        result = _detect_question("I have completed the implementation.")
-        assert result["detected"] is False
-
-    def test_detect_handoff_phrase(self):
-        from pf.hooks.reflector_check import _detect_handoff_phrase
-        assert _detect_handoff_phrase("I'm handing off to the Dev agent now.")
-        assert _detect_handoff_phrase("Passing to TEA for test writing.")
-        assert not _detect_handoff_phrase("I fixed the bug and committed.")
-
-    def test_strip_code_blocks(self):
-        from pf.hooks.reflector_check import _strip_code_blocks
-        text = "Here is code:\n```python\nwould you like?\n```\nDone."
-        result = _strip_code_blocks(text)
-        assert "would you like" not in result
-        assert "Done." in result
-
-    def test_build_block_reason_direct_question(self):
-        from pf.hooks.reflector_check import _build_block_reason
-        reason = _build_block_reason("direct")
-        assert "CYCLIST:QUESTION:open" in reason
-
-    def test_build_block_reason_handoff_violation(self):
-        from pf.hooks.reflector_check import _build_block_reason
-        reason = _build_block_reason("", handoff_without_task=True)
-        assert "HANDOFF COMPLIANCE VIOLATION" in reason
-
-    def test_build_block_reason_no_question(self):
-        from pf.hooks.reflector_check import _build_block_reason
-        reason = _build_block_reason("")
-        assert "CYCLIST:CONTINUE" in reason
-
-    def test_should_skip_enforcement_in_cli(self):
-        from pf.hooks.reflector_check import _should_skip_enforcement
-        with patch.dict(os.environ, {}, clear=True):
-            assert _should_skip_enforcement() is True
-
-    def test_should_not_skip_in_cyclist(self):
-        from pf.hooks.reflector_check import _should_skip_enforcement
-        with patch.dict(os.environ, {"CYCLIST": "1"}):
-            assert _should_skip_enforcement() is False
+# Removed (162-30): the reflector_check hook module was deleted in 959b179d3
+# ("chore(hooks): remove parked bell-mode and reflector-check hooks"), along with
+# the CYCLIST marker protocol it enforced (removed in e10aa3bd1). TestReflectorCheck
+# (18 tests) pinned genuinely-removed behavior and has no current counterpart.
 
 
 # =============================================================================
@@ -756,21 +652,45 @@ class TestSprintYamlValidation:
 
 
 # =============================================================================
-# cyclist_pretooluse
+# pretooluse_forward (renamed from cyclist_pretooluse in e10aa3bd1)
 # =============================================================================
 
 
-class TestCyclistPretooluse:
+class TestPretoolusForward:
     """PreToolUse hook — forward tool inputs to Frame."""
 
     def test_exits_zero(self):
-        from pf.hooks import cyclist_pretooluse
+        from pf.hooks import pretooluse_forward
 
         with patch("sys.stdin", StringIO('{"tool_name": "Bash"}')):
-            with patch("pf.hooks.cyclist_pretooluse.find_project_root", return_value=None):
+            with patch(
+                "pf.hooks.pretooluse_forward.find_project_root", return_value=None
+            ):
                 with pytest.raises(SystemExit) as exc_info:
-                    cyclist_pretooluse.main()
+                    pretooluse_forward.main()
                 assert exc_info.value.code == 0
+
+    def test_no_forward_without_project_root(self):
+        """No project root -> nothing sent to Frame."""
+        from pf.hooks import pretooluse_forward
+
+        with patch("pf.hooks.pretooluse_forward.send_to_frame") as mock_send:
+            pretooluse_forward._forward_tool_input("Bash", "t1", {"command": "ls"}, None)
+        mock_send.assert_not_called()
+
+    def test_forwards_tool_input_to_frame(self, tmp_path):
+        """With a project root, the tool input is posted to Frame."""
+        from pf.hooks import pretooluse_forward
+
+        with patch("pf.hooks.pretooluse_forward.send_to_frame") as mock_send:
+            pretooluse_forward._forward_tool_input(
+                "Edit", "t2", {"file_path": "a.py"}, tmp_path
+            )
+        mock_send.assert_called_once_with(
+            endpoint="/api/pending-tool-input",
+            data={"toolName": "Edit", "toolId": "t2", "input": {"file_path": "a.py"}},
+            project_root=tmp_path,
+        )
 
 
 # =============================================================================

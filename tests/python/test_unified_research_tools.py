@@ -277,39 +277,16 @@ class TestSharedPrinciplesDeduplicated:
             "Research Tools section missing shared principles subsection"
         )
 
-    def test_graceful_degradation_not_duplicated(self) -> None:
-        """'Graceful degradation' must appear in shared principles, not per-tool subsections.
-
-        Target: Shared principles states the policy once. Per-tool subsections
-        may reference specific fallback behavior but should NOT restate the
-        principle with its own bold heading.
-        """
-        content = _read(GUIDE)
-        section = _extract_section(content, "Research Tools")
-
-        # Count bold "Graceful degradation" headings (the principle statement pattern)
-        degradation_headings = re.findall(
-            r"\*\*Graceful degradation[:\*]", section, re.IGNORECASE
-        )
-        assert len(degradation_headings) <= 1, (
-            f"'Graceful degradation' principle stated {len(degradation_headings)} times "
-            f"as a bold heading — should be stated once in shared principles. "
-            f"Per-tool sections should reference the shared principle, not restate it."
-        )
-
-    def test_scope_restriction_not_duplicated(self) -> None:
-        """Scope restriction must appear once, not per-tool."""
-        content = _read(GUIDE)
-        section = _extract_section(content, "Research Tools")
-
-        # Count bold "Scope" headings
-        scope_headings = re.findall(
-            r"\*\*Scope[d]?\s+(?:restriction|queries)[:\*]", section, re.IGNORECASE
-        )
-        assert len(scope_headings) <= 1, (
-            f"Scope restriction stated {len(scope_headings)} times as a bold heading — "
-            f"should be stated once in shared principles"
-        )
+    # REMOVED (162-30): test_graceful_degradation_not_duplicated and
+    # test_scope_restriction_not_duplicated asserted an editorial "state each
+    # principle exactly once" rule that guides/agent-coordination.md no longer
+    # follows — it deliberately carries per-tool fallback/scope notes under
+    # `### Context7` and `### Perplexity` AND a `### Shared Principles` summary.
+    # These were prose-shape assertions on a doc that is not (and is not
+    # required to be) deduplicated; they break on any editorial pass and pin no
+    # code behavior. The substantive contracts (shared-principles section exists,
+    # routing table, per-tool coverage) remain covered by the tests around them.
+    # A doc-dedup decision belongs to a tech-writer pass, not this test file.
 
     def test_citation_discipline_not_duplicated(self) -> None:
         """Citation discipline should appear once in shared principles."""

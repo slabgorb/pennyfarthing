@@ -334,54 +334,73 @@ class TestAbsentSections:
 # ===========================================================================
 
 
-class TestScreenDelegation:
-    """AC5: StoryDetailScreen uses StoryDetailWidget instead of inline Static."""
+class TestScreenDossierSections:
+    """AC5: StoryDetailScreen renders two variants.
 
-    def test_screen_compose_yields_story_detail_widget(self) -> None:
-        """StoryDetailScreen.compose() should yield a container with StoryDetailWidget."""
+    The 120-8 delegation to StoryDetailWidget was replaced wholesale in
+    e386cc6f7 (120-1 cherry-pick) by an inline dossier of id-tagged Static
+    sections. 162-30 reinstated the delegation as the ``collapsible`` variant
+    used by the ProgressPanel drill-through, leaving the dossier as the default
+    (SprintPanel) variant. These tests pin both.
+    """
+
+    def test_default_variant_renders_dossier_not_widget(self) -> None:
+        """The default (SprintPanel) variant renders the dossier, not the widget."""
+        from pf.tui.story_detail_widget import StoryDetailWidget
+
+        screen = StoryDetailScreen(story_data=FULL_STORY_DATA)
+        children = list(screen.compose())
+        assert not any(isinstance(c, StoryDetailWidget) for c in children), (
+            "Default variant must keep the dense dossier layout"
+        )
+
+    def test_collapsible_variant_delegates_to_story_detail_widget(self) -> None:
+        """The collapsible variant wraps StoryDetailWidget in a VerticalScroll."""
         from pf.tui.story_detail_widget import StoryDetailWidget
         from textual.containers import VerticalScroll
 
+        screen = StoryDetailScreen(story_data=FULL_STORY_DATA, variant="collapsible")
+        children = list(screen.compose())
+        scrolls = [c for c in children if isinstance(c, VerticalScroll)]
+        assert scrolls, f"Expected a VerticalScroll wrapper, got: {children}"
+        widgets = [
+            w
+            for scroll in scrolls
+            for w in getattr(scroll, "_pending_children", [])
+            if isinstance(w, StoryDetailWidget)
+        ]
+        assert widgets, "collapsible variant must delegate to StoryDetailWidget"
+
+    def test_unknown_variant_falls_back_to_dossier(self) -> None:
+        """An unrecognised variant must not render an empty screen."""
+        screen = StoryDetailScreen(story_data=FULL_STORY_DATA, variant="bogus")
+        ids = [c.id for c in screen.compose() if isinstance(c, Static)]
+        assert "dossier-header" in ids, f"Expected dossier fallback, got: {ids}"
+
+    def test_screen_composes_id_tagged_dossier_sections(self) -> None:
+        """Each dossier section should be a Static with a stable dossier-* id."""
         screen = StoryDetailScreen(story_data=FULL_STORY_DATA)
         children = list(screen.compose())
-        # VerticalScroll stores constructor children in _pending_children
-        found = False
-        for child in children:
-            if isinstance(child, VerticalScroll):
-                for pending in getattr(child, "_pending_children", []):
-                    if isinstance(pending, StoryDetailWidget):
-                        found = True
-                        break
-            if isinstance(child, StoryDetailWidget):
-                found = True
+        ids = [c.id for c in children if isinstance(c, Static)]
+        for expected in (
+            "dossier-header",
+            "dossier-workflow",
+            "dossier-ac",
+            "dossier-git",
+        ):
+            assert expected in ids, (
+                f"Dossier should include a Static#{expected}, got: {ids}"
+            )
 
-        assert found, (
-            f"StoryDetailScreen should compose StoryDetailWidget, got: "
-            f"{[type(c).__name__ for c in children]}"
-        )
-
-    def test_screen_has_vertical_scroll(self) -> None:
-        """StoryDetailScreen should wrap content in a VerticalScroll."""
-        from textual.containers import VerticalScroll
-
+    def test_screen_sections_are_all_addressable(self) -> None:
+        """No dossier Static may be composed without an id (unaddressable)."""
         screen = StoryDetailScreen(story_data=FULL_STORY_DATA)
-        children = list(screen.compose())
-        scroll_found = any(isinstance(c, VerticalScroll) for c in children)
-        assert scroll_found, (
-            f"StoryDetailScreen should use VerticalScroll, got: "
-            f"{[type(c).__name__ for c in children]}"
-        )
-
-    def test_screen_does_not_use_inline_static_sections(self) -> None:
-        """StoryDetailScreen should NOT compose multiple Static widgets for sections."""
-        screen = StoryDetailScreen(story_data=FULL_STORY_DATA)
-        children = list(screen.compose())
-        # Old implementation had 6+ Static widgets directly. New should have 1-2 tops
-        # (VerticalScroll containing StoryDetailWidget)
-        direct_statics = [c for c in children if isinstance(c, Static) and not isinstance(c, Collapsible)]
-        assert len(direct_statics) <= 2, (
-            f"Screen should delegate to StoryDetailWidget, not use {len(direct_statics)} "
-            f"inline Static widgets (old pattern)"
+        statics = [c for c in screen.compose() if isinstance(c, Static)]
+        assert statics, "Screen should compose at least one dossier section"
+        unnamed = [type(c).__name__ for c in statics if not c.id]
+        assert not unnamed, (
+            f"Every dossier section needs an id so panels can update it in "
+            f"place; unnamed sections: {unnamed}"
         )
 
 
@@ -443,8 +462,8 @@ class TestProgressPanelDrillThrough:
 
     async def test_progress_panel_enter_pushes_detail_screen(self) -> None:
         """Calling drill_into_story on ProgressPanel should push StoryDetailScreen."""
-        from pf.tui.progress_panel import ProgressPanel
         from pf.tui.app import TuiApp
+        from pf.tui.progress_panel import ProgressPanel
 
         mock_client = MagicMock()
         mock_client.connect = MagicMock(return_value=_noop_coroutine())
@@ -467,6 +486,11 @@ class TestProgressPanelDrillThrough:
             assert isinstance(app.screen, StoryDetailScreen), (
                 f"After drill_into_story, should be on StoryDetailScreen, "
                 f"got {type(app.screen).__name__}"
+            )
+            from pf.tui.story_detail_widget import StoryDetailWidget
+
+            assert app.screen.query(StoryDetailWidget), (
+                "ProgressPanel drill-through must render through StoryDetailWidget"
             )
 
 
@@ -503,26 +527,37 @@ class TestProgressPanelHint:
             f"Should show '[Enter] Story Details' hint, got: {output[:200]}"
         )
 
-    def test_no_hint_without_story(self) -> None:
-        """Progress panel should NOT show hint when no story is active."""
+    def test_empty_backlog_shows_placeholder_not_a_story(self) -> None:
+        """With no story, no sprint data and an empty backlog, show the placeholder.
+
+        The drill-through hint is unconditional now (``render_panel`` always
+        appends it), so the contract is about the *header*: an empty backlog
+        must render the "No stories" placeholder rather than a story line.
+        ``get_stories_by_status`` is patched because ``_render_next_story``
+        reads the live sprint YAML.
+        """
+        from io import StringIO
+
         from pf.tui.progress_panel import ProgressPanel
+        from rich.console import Console
 
         panel = ProgressPanel()
         panel._story_data = None
         panel._sprint_data = None
-        rendered = panel.render_panel({})
-        from io import StringIO
 
-        from rich.console import Console
+        with patch("pf.sprint.loader.get_stories_by_status", return_value=[]):
+            rendered = panel.render_panel({})
 
         buf = StringIO()
         console = Console(file=buf, width=80)
         console.print(rendered)
-        output = buf.getvalue()
+        output = buf.getvalue().lower()
 
-        # The "no active story" message should not have the drill-through hint
-        assert "story details" not in output.lower() or "no active" in output.lower(), (
-            "Should NOT show drill-through hint without active story"
+        assert "no stories" in output, (
+            f"Empty backlog should render the placeholder header, got: {output[:200]}"
+        )
+        assert "next story" not in output, (
+            f"Empty backlog must not advertise a next story, got: {output[:200]}"
         )
 
 
@@ -548,25 +583,32 @@ class TestKeyboardNavigation:
                 f"Collapsible '{c.title}' should be focusable or have focusable children"
             )
 
-    async def test_tab_navigates_between_sections(self) -> None:
-        """Tab key should move focus between Collapsible sections."""
-        from pf.tui.app import TuiApp
+    async def test_tab_navigates_between_collapsible_sections(self) -> None:
+        """Tab should move focus between StoryDetailWidget's Collapsibles.
 
-        mock_client = MagicMock()
-        mock_client.connect = MagicMock(return_value=_noop_coroutine())
-        app = TuiApp(client=mock_client)
+        Mounted on the widget, not StoryDetailScreen: the screen's dossier is
+        built from non-focusable Static sections (see TestScreenDossierSections),
+        so Tab has nothing to land on there.
+        """
+        from pf.tui.story_detail_widget import StoryDetailWidget
+        from textual.app import App, ComposeResult
 
-        async with app.run_test() as pilot:
-            screen = StoryDetailScreen(story_data=FULL_STORY_DATA)
-            await app.push_screen(screen)
-            await pilot.pause()
+        class _Host(App):
+            def compose(self) -> ComposeResult:
+                yield StoryDetailWidget(story_data=FULL_STORY_DATA)
 
-            # Tab should cycle through focusable elements
+        host = _Host()
+        async with host.run_test() as pilot:
             await pilot.press("tab")
             await pilot.pause()
-            focused = app.focused
-            assert focused is not None, (
-                "Tab should focus an element within StoryDetailScreen"
+            assert host.focused is not None, (
+                "Tab should focus a Collapsible inside StoryDetailWidget"
+            )
+            assert isinstance(host.focused, Collapsible) or any(
+                isinstance(a, Collapsible) for a in host.focused.ancestors
+            ), (
+                f"Tab focus should land on/in a Collapsible, got: "
+                f"{type(host.focused).__name__}"
             )
 
 
@@ -597,7 +639,9 @@ class TestEnrichmentReuse:
         mock_fetch.return_value = {"id": "120-8", "workflow": "bdd"}
         ws_data = {"id": "120-8", "title": "Test", "status": "backlog"}
         _screen = StoryDetailScreen(story_data=ws_data)
-        mock_fetch.assert_called_once_with("120-8")
+        # jira_key was added to the enrichment signature; it is "" when the WS
+        # payload carries no jiraKey.
+        mock_fetch.assert_called_once_with("120-8", jira_key="")
 
 
 # ===========================================================================

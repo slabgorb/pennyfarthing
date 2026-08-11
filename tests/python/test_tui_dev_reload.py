@@ -61,26 +61,27 @@ class TestDevModeLauncherExists:
 class TestWatchScope:
     """AC2: File watcher targets correct directories and excludes noise."""
 
-    def test_watch_paths_include_bikerack(self):
-        """Watcher should monitor pf/bikerack/ directory."""
+    def test_watch_paths_include_tui(self):
+        """Watcher should monitor the pf/tui/ directory.
+
+        The package was renamed bikerack -> tui in 424f84701.
+        """
+        from pf.tui import app as tui_app
         from pf.tui.app import get_watch_paths
 
-        paths = get_watch_paths()
-        Path(__file__).resolve().parent.parent.parent / "pennyfarthing-dist" / "pf" / "bikerack"
-        # At least one path should be or contain the bikerack directory
-        path_strs = [str(p) for p in paths]
-        assert any("bikerack" in s for s in path_strs), (
-            f"Watch paths should include bikerack dir, got: {path_strs}"
+        pf_root = Path(tui_app.__file__).resolve().parent.parent
+        assert pf_root / "tui" in get_watch_paths(), (
+            f"Watch paths should include {pf_root / 'tui'}, got: {get_watch_paths()}"
         )
 
     def test_watch_paths_include_bc(self):
         """Watcher should also monitor pf/bc/ (panel focus module)."""
+        from pf.tui import app as tui_app
         from pf.tui.app import get_watch_paths
 
-        paths = get_watch_paths()
-        path_strs = [str(p) for p in paths]
-        assert any("bc" in s for s in path_strs), (
-            f"Watch paths should include bc dir, got: {path_strs}"
+        pf_root = Path(tui_app.__file__).resolve().parent.parent
+        assert pf_root / "bc" in get_watch_paths(), (
+            f"Watch paths should include {pf_root / 'bc'}, got: {get_watch_paths()}"
         )
 
     def test_watch_filter_ignores_pycache(self):
@@ -89,10 +90,10 @@ class TestWatchScope:
 
         # Simulate a change event in __pycache__
         assert watch_filter(
-            "modified", "/path/to/pf/bikerack/sprint_panel.py"
+            "modified", "/path/to/pf/tui/sprint_panel.py"
         ), "Should accept .py files"
         assert not watch_filter(
-            "modified", "/path/to/pf/bikerack/__pycache__/sprint_panel.cpython-314.pyc"
+            "modified", "/path/to/pf/tui/__pycache__/sprint_panel.cpython-314.pyc"
         ), "Should reject __pycache__ files"
 
     def test_watch_filter_ignores_pyc(self):
@@ -100,7 +101,7 @@ class TestWatchScope:
         from pf.tui.app import watch_filter
 
         assert not watch_filter(
-            "modified", "/path/to/pf/bikerack/tui.pyc"
+            "modified", "/path/to/pf/tui/app.pyc"
         ), "Should reject .pyc files"
 
     def test_watch_filter_accepts_python_files(self):
@@ -108,10 +109,10 @@ class TestWatchScope:
         from pf.tui.app import watch_filter
 
         assert watch_filter(
-            "modified", "/path/to/pf/bikerack/tui.py"
+            "modified", "/path/to/pf/tui/app.py"
         ), "Should accept .py files"
         assert watch_filter(
-            "modified", "/path/to/pf/bikerack/sprint_panel.py"
+            "modified", "/path/to/pf/tui/sprint_panel.py"
         ), "Should accept panel .py files"
 
     def test_watch_filter_ignores_non_python(self):
@@ -119,10 +120,10 @@ class TestWatchScope:
         from pf.tui.app import watch_filter
 
         assert not watch_filter(
-            "modified", "/path/to/pf/bikerack/README.md"
+            "modified", "/path/to/pf/tui/README.md"
         ), "Should reject .md files"
         assert not watch_filter(
-            "modified", "/path/to/pf/bikerack/data.json"
+            "modified", "/path/to/pf/tui/data.json"
         ), "Should reject .json files"
 
 

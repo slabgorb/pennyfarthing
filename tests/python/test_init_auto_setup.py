@@ -31,8 +31,9 @@ class TestRepoDiscovery:
         (tmp_path / ".git").mkdir()
         result = discover_repos(tmp_path)
         assert result["success"] is True
-        assert "repos" in result
-        assert len(result["repos"]) >= 1
+        # Result objects now nest payload under "data".
+        assert "repos" in result["data"]
+        assert len(result["data"]["repos"]) >= 1
 
     def test_writes_repos_yaml(self, tmp_path):
         """discover_repos writes repos.yaml to .pennyfarthing/."""
@@ -51,17 +52,18 @@ class TestRepoDiscovery:
         (tmp_path / ".git").mkdir()
         result = discover_repos(tmp_path)
         assert result["success"] is True
-        for repo in result["repos"]:
-            assert "path" in repo, "repo missing 'path'"
-            assert "type" in repo, "repo missing 'type'"
+        # repos is a dict keyed by repo name -> config.
+        for name, repo in result["data"]["repos"].items():
+            assert "path" in repo, f"repo {name} missing 'path'"
+            assert "type" in repo, f"repo {name} missing 'type'"
 
     def test_discover_repos_no_git_dir(self, tmp_path):
-        """discover_repos returns empty list when no .git found."""
+        """discover_repos returns no repos when no .git found."""
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()
         result = discover_repos(tmp_path)
         assert result["success"] is True
-        assert result["repos"] == []
+        assert result["data"]["repos"] == {}
 
 
 class TestThemeSelection:
@@ -172,7 +174,7 @@ class TestNodePackageInstall:
         mock_run.return_value = MagicMock(returncode=0)
         result = install_node_packages(tmp_path, "pnpm")
         assert result["success"] is True
-        assert result["package_manager"] == "pnpm"
+        assert result["data"]["package_manager"] == "pnpm"
         mock_run.assert_called_once()
         cmd = mock_run.call_args[0][0]
         assert "pnpm" in cmd
@@ -184,7 +186,7 @@ class TestNodePackageInstall:
         mock_run.return_value = MagicMock(returncode=0)
         result = install_node_packages(tmp_path, "npm")
         assert result["success"] is True
-        assert result["package_manager"] == "npm"
+        assert result["data"]["package_manager"] == "npm"
 
     @patch("subprocess.run")
     def test_install_failure_returns_error(self, mock_run, tmp_path):

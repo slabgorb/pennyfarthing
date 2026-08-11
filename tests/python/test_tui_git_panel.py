@@ -17,8 +17,8 @@ from typing import Any
 from unittest.mock import MagicMock
 
 from pf.tui.base_panel import PANEL_ICONS, BasePanel
-from pf.tui.git_panel import GitPanel
 from pf.tui.client import FrameClient
+from pf.tui.git_panel import GitPanel
 from rich.console import Console
 from rich.console import Group as RichGroup
 from rich.text import Text
@@ -136,7 +136,23 @@ class TestGitPanelSubscription:
 
         panel.on_mount()
 
-        client.subscribe.assert_called_once_with("git", panel.handle_message)
+        client.subscribe.assert_any_call("git", panel.handle_message)
+
+    def test_subscribes_to_diffs_channel_for_drill_through(self):
+        """GitPanel also owns the 'diffs' channel since the Changed-panel merge.
+
+        The standalone Changed panel was folded into GitPanel in ab9ad54bb, which
+        added diff drill-through, so GitPanel legitimately holds two
+        subscriptions: 'diffs' (in __init__) and 'git' (in on_mount).
+        """
+        client = MagicMock(spec=FrameClient)
+        panel = GitPanel(client=client)
+        panel.on_mount()
+
+        channels = [call.args[0] for call in client.subscribe.call_args_list]
+        assert channels == ["diffs", "git"], (
+            f"GitPanel should subscribe to exactly ['diffs', 'git'], got: {channels}"
+        )
 
     def test_accepts_client_parameter(self):
         """GitPanel constructor should accept a client parameter."""
@@ -161,13 +177,34 @@ class TestGitPanelSubscription:
 
 
 class TestGitPanelGroupRendering:
-    """AC2: Multi-repo status renders as Rich Group with text lines."""
+    """AC2: Multi-repo status renders repo lines; the diff view renders a Group.
 
-    def test_render_panel_returns_group_for_repos(self):
-        """render_panel should return a Rich Group when repos are present."""
+    The overview was reworked into a single Rich ``Text`` so per-file lines can
+    carry selection spans (``_render_repo_overview``); ``RichGroup`` is now used
+    only by the diff drill-through view.
+    """
+
+    def test_render_panel_returns_text_for_repos(self):
+        """The repo overview should be a single Rich Text carrying style spans."""
         panel = GitPanel(client=MagicMock())
         result = panel.render_panel(SAMPLE_INIT_MESSAGE)
-        assert isinstance(result, RichGroup)
+        assert isinstance(result, Text), (
+            f"Overview should be a Text, got {type(result).__name__}"
+        )
+        assert result.spans, (
+            "Overview Text should carry style spans for branch/status/selection"
+        )
+
+    def test_diff_view_returns_group(self):
+        """The diff drill-through view should still return a Rich Group."""
+        panel = GitPanel(client=MagicMock())
+        panel.handle_message(SAMPLE_INIT_MESSAGE)
+        panel._viewing_diff = True
+        panel._diff_file_path = "sprint/epic-PROJ-14951.yaml"
+        result = panel.render_panel(SAMPLE_INIT_MESSAGE)
+        assert isinstance(result, RichGroup), (
+            f"Diff view should be a RichGroup, got {type(result).__name__}"
+        )
 
     def test_render_panel_returns_text_for_empty_repos(self):
         """render_panel should return Text for empty repos list."""

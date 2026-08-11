@@ -238,18 +238,25 @@ class TestMapGithubToJira:
         """map_github_to_jira function should exist."""
         assert hasattr(jira_module, "map_github_to_jira")
 
-    def test_map_github_to_jira_known_user(self, jira_module):
-        """Should map known GitHub users to Jira emails."""
-        assert jira_module.map_github_to_jira("slabgorb") == "user@example.com"
+    # test_map_github_to_jira_known_user and test_map_github_to_jira_arcaven were
+    # deleted: the hardcoded slabgorb/arcaven mapping table was removed in the
+    # Story 152-1 refactor. The function now reads exclusively from
+    # jira.user_map in config.local.yaml; there is no built-in fallback email.
+    # New contract is covered by test_map_github_to_jira_mapped_user below.
 
-    def test_map_github_to_jira_arcaven(self, jira_module):
-        """Should map arcaven to correct email."""
-        assert jira_module.map_github_to_jira("arcaven") == "collaborator@example.com"
+    def test_map_github_to_jira_mapped_user(self, jira_module):
+        """Should return the configured email for a user in jira.user_map."""
+        from unittest.mock import patch
+        with patch("pf.jira.client._load_user_map", return_value={"slabgorb": "keith@example.com"}):
+            result = jira_module.map_github_to_jira("slabgorb")
+            assert result == "keith@example.com"
 
     def test_map_github_to_jira_unknown_user(self, jira_module):
-        """Should generate email for unknown users."""
+        """Unmapped users return None (no auto-generated email fallback)."""
+        # Story 152-1 deliberately removed the @example.com fallback to prevent
+        # silent wrong-assignee bugs when a teammate's GitHub handle is not mapped.
         result = jira_module.map_github_to_jira("unknown-user")
-        assert result == "unknown-user@example.com"
+        assert result is None
 
     def test_map_github_to_jira_none(self, jira_module):
         """Should handle None input."""
@@ -266,8 +273,8 @@ class TestJiraSyncStoryModule:
     """Tests for jira_sync_story.py module existence."""
 
     def test_module_exists(self):
-        """jira_sync_story.py module should exist."""
-        jira_sync_story_path = PROJECT_ROOT / "pf" / "jira" / "story.py"
+        """jira/story.py module should exist (src layout: pennyfarthing-dist/src/pf/jira/story.py)."""
+        jira_sync_story_path = PROJECT_ROOT / "pennyfarthing-dist" / "src" / "pf" / "jira" / "story.py"
         assert jira_sync_story_path.exists(), "jira/story.py not found"
 
     def test_module_imports(self):
@@ -368,8 +375,8 @@ class TestJiraEpicCreationModule:
     """Tests for jira_epic_creation.py module existence."""
 
     def test_module_exists(self):
-        """jira_epic_creation.py module should exist."""
-        epic_creation_path = PROJECT_ROOT / "pf" / "jira" / "epic.py"
+        """jira/epic.py module should exist (src layout: pennyfarthing-dist/src/pf/jira/epic.py)."""
+        epic_creation_path = PROJECT_ROOT / "pennyfarthing-dist" / "src" / "pf" / "jira" / "epic.py"
         assert epic_creation_path.exists(), "jira/epic.py not found"
 
     def test_module_imports(self):
@@ -394,22 +401,26 @@ class TestJiraEpicCreation:
 
     def test_create_epic_returns_result(self, epic_creation_module):
         """create_epic should return a result dict with dry_run."""
-        result = epic_creation_module.create_epic(
-            title="Test Epic",
-            description="Test description",
-            dry_run=True,
-        )
+        from unittest.mock import patch
+        with patch("pf.jira.epic.require_jira_project", return_value="PROJ"):
+            result = epic_creation_module.create_epic(
+                title="Test Epic",
+                description="Test description",
+                dry_run=True,
+            )
         assert isinstance(result, dict)
         assert "success" in result
         assert result["dry_run"] is True
 
     def test_create_epic_dry_run(self, epic_creation_module):
         """Dry run should not make actual API calls."""
-        result = epic_creation_module.create_epic(
-            title="Test Epic",
-            description="Test description",
-            dry_run=True,
-        )
+        from unittest.mock import patch
+        with patch("pf.jira.epic.require_jira_project", return_value="PROJ"):
+            result = epic_creation_module.create_epic(
+                title="Test Epic",
+                description="Test description",
+                dry_run=True,
+            )
 
         # In dry run mode, no API call is made and success is True
         assert result["dry_run"] is True
@@ -426,6 +437,8 @@ class TestEpicCreationFromSprintYAML:
 
     def test_build_epic_payload_structure(self):
         """Should build correct Jira API payload structure."""
+        from unittest.mock import patch
+
         from pf.jira import epic as jira_epic_creation
 
         epic_data = {
@@ -434,7 +447,8 @@ class TestEpicCreationFromSprintYAML:
             "description": "Improve script performance through parallelism",
         }
 
-        payload = jira_epic_creation.build_epic_payload(epic_data)
+        with patch("pf.jira.epic.require_jira_project", return_value="PROJ"):
+            payload = jira_epic_creation.build_epic_payload(epic_data)
 
         assert "fields" in payload
         assert "summary" in payload["fields"]

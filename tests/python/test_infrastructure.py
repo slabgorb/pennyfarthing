@@ -5,7 +5,6 @@ These tests verify the pf package structure and core utilities.
 Run with: python -m pytest tests/python/ -v
 """
 
-import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -14,6 +13,8 @@ import pytest
 
 # Project root for path resolution
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+# The pf package moved under a src layout in 5d92bf792.
+PACKAGE_ROOT = PROJECT_ROOT / "pennyfarthing-dist" / "src" / "pf"
 
 
 class TestPyprojectToml:
@@ -49,13 +50,12 @@ class TestPackageStructure:
 
     def test_package_directory_exists(self):
         """pf/ directory should exist."""
-        package_dir = PROJECT_ROOT / "pf"
-        assert package_dir.exists(), "pf/ directory not found"
-        assert package_dir.is_dir(), "pf should be a directory"
+        assert PACKAGE_ROOT.exists(), f"pf/ directory not found at {PACKAGE_ROOT}"
+        assert PACKAGE_ROOT.is_dir(), "pf should be a directory"
 
     def test_package_init_exists(self):
         """pf/__init__.py should exist."""
-        init_file = PROJECT_ROOT / "pf" / "__init__.py"
+        init_file = PACKAGE_ROOT / "__init__.py"
         assert init_file.exists(), "__init__.py not found"
 
     def test_package_importable(self):
@@ -69,20 +69,20 @@ class TestPackageStructure:
             sys.path.pop(0)
 
     def test_config_module_exists(self):
-        """pf/config.py should exist."""
-        config_file = PROJECT_ROOT / "pf" / "config.py"
+        """pf/common/config.py should exist (config moved into pf.common)."""
+        config_file = PACKAGE_ROOT / "common" / "config.py"
         assert config_file.exists(), "config.py module not found"
 
     def test_sprint_module_exists(self):
         """pf/sprint package should exist."""
-        sprint_dir = PROJECT_ROOT / "pf" / "sprint"
+        sprint_dir = PACKAGE_ROOT / "sprint"
         assert sprint_dir.exists(), "sprint package not found"
         assert sprint_dir.is_dir(), "sprint should be a package directory"
         assert (sprint_dir / "__init__.py").exists(), "sprint/__init__.py not found"
 
     def test_jira_module_exists(self):
         """pf/jira package should exist."""
-        jira_dir = PROJECT_ROOT / "pf" / "jira"
+        jira_dir = PACKAGE_ROOT / "jira"
         assert jira_dir.exists(), "jira package not found"
         assert jira_dir.is_dir(), "jira should be a package directory"
         assert (jira_dir / "__init__.py").exists(), "jira/__init__.py not found"
@@ -118,7 +118,9 @@ class TestConfigModule:
         """get_project_root should return project root path."""
         root = config_module.get_project_root()
         assert root.exists()
-        assert (root / "package.json").exists()  # Pennyfarthing marker
+        # package.json is gone (JS/TS removed in 038d3c6f0); .pennyfarthing/ is
+        # the marker get_project_root actually walks up looking for.
+        assert (root / ".pennyfarthing").exists()
 
 
 class TestSprintModule:
@@ -190,32 +192,55 @@ class TestJiraModule:
         """jira CLI should be available."""
         assert jira_module.is_jira_cli_available()
 
-    def test_get_issue(self, jira_module, monkeypatch):
-        """get_issue should fetch issue details via CLI."""
-        # Mock subprocess to avoid actual Jira calls
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = '{"key": "PROJ-12398", "fields": {"summary": "Test"}}'
-        monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
+    # Module-level get_issue/update_issue_status were replaced by the REST client:
+    # JiraClient.get_issue_sync and pf.jira.operations.move_issue (result object).
 
-        issue = jira_module.get_issue("PROJ-12398")
+    def test_get_issue(self, jira_module, monkeypatch):
+        """JiraClient.get_issue_sync should fetch issue details via the REST API."""
+        client = jira_module.JiraClient()
+        monkeypatch.setattr(
+            client,
+            "_call_api_sync",
+            lambda *args, **kwargs: {
+                "key": "PROJ-12398",
+                "fields": {"summary": "Test"},
+            },
+        )
+
+        issue = client.get_issue_sync("PROJ-12398")
         assert issue["key"] == "PROJ-12398"
 
     def test_get_issue_not_found(self, jira_module, monkeypatch):
-        """get_issue should return None for missing issues."""
-        mock_result = MagicMock()
-        mock_result.returncode = 1
-        mock_result.stderr = "Issue not found"
-        monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
+        """get_issue_sync should return None for missing issues."""
+        client = jira_module.JiraClient()
+        monkeypatch.setattr(client, "_call_api_sync", lambda *args, **kwargs: None)
 
-        issue = jira_module.get_issue("NONEXISTENT-999")
-        assert issue is None
+        assert client.get_issue_sync("NONEXISTENT-999") is None
 
     def test_update_issue_status(self, jira_module, monkeypatch):
-        """update_issue_status should transition issues."""
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: mock_result)
+        """move_issue should transition issues and return a result object."""
+        operations = jira_module.operations
+        client = MagicMock()
+        client.get_issue_sync.return_value = {
+            "fields": {"status": {"name": "To Do"}}
+        }
+        client.transition_sync.return_value = {"success": True}
+        monkeypatch.setattr(operations, "get_client", lambda *a, **kw: client)
 
-        result = jira_module.update_issue_status("PROJ-12398", "In Progress")
-        assert result is True
+        result = operations.move_issue("PROJ-12398", "In Progress")
+        assert result["success"] is True
+        client.transition_sync.assert_called_once_with("PROJ-12398", "In Progress")
+
+    def test_update_issue_status_already_at_target(self, jira_module, monkeypatch):
+        """move_issue should short-circuit when already at the target status."""
+        operations = jira_module.operations
+        client = MagicMock()
+        client.get_issue_sync.return_value = {
+            "fields": {"status": {"name": "In Progress"}}
+        }
+        monkeypatch.setattr(operations, "get_client", lambda *a, **kw: client)
+
+        result = operations.move_issue("PROJ-12398", "In Progress")
+        assert result["success"] is True
+        assert result["already_at_status"] is True
+        client.transition_sync.assert_not_called()

@@ -137,8 +137,8 @@ class TestJiraSyncScript:
         return jira_sync
 
     def test_module_exists(self):
-        """jira/sync.py module should exist."""
-        jira_sync_path = PROJECT_ROOT / "pf" / "jira" / "sync.py"
+        """jira/sync.py module should exist (src layout: pennyfarthing-dist/src/pf/jira/sync.py)."""
+        jira_sync_path = PROJECT_ROOT / "pennyfarthing-dist" / "src" / "pf" / "jira" / "sync.py"
         assert jira_sync_path.exists(), "jira/sync.py not found"
 
     def test_sync_epic_function_exists(self, jira_sync_module):

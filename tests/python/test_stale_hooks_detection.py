@@ -81,17 +81,15 @@ class TestMissingInfrastructureHooks:
         assert len(result["missing_infrastructure"]) > 0
         # Should identify the missing SessionStart hooks
         missing_commands = [h["command"] for h in result["missing_infrastructure"]]
-        assert "pf hooks session-start" in missing_commands
+        assert "pf hooks dispatch SessionStart" in " ".join(missing_commands)
 
     def test_missing_single_hook_entry(self, tmp_project, dist_root):
-        """Detect when one hook entry within an event type is missing."""
-        # Remove context-warning from PreToolUse but keep pre-edit-check
+        """Detect when an event type is present but its hook entry list is empty."""
+        # Hooks are now dispatcher-based: one `pf hooks dispatch <Event>` entry
+        # per event. The "present-but-empty" list is a distinct code path from a
+        # deleted event key (covered by test_missing_hook_event_type).
         hooks = json.loads(json.dumps(INFRASTRUCTURE_HOOKS))
-        hooks["PreToolUse"] = [
-            entry
-            for entry in hooks["PreToolUse"]
-            if "context-warning" not in entry["hooks"][0]["command"]
-        ]
+        hooks["PreToolUse"] = []
         (tmp_project / ".claude" / "settings.local.json").write_text(
             json.dumps({"hooks": hooks})
         )
@@ -100,7 +98,7 @@ class TestMissingInfrastructureHooks:
 
         assert result["stale"] is True
         missing_commands = [h["command"] for h in result["missing_infrastructure"]]
-        assert "pf hooks context-warning" in missing_commands
+        assert "pf hooks dispatch PreToolUse" in " ".join(missing_commands)
 
     def test_missing_hook_event_type(self, tmp_project, dist_root):
         """Detect when an entire event type is missing from settings."""
@@ -114,7 +112,7 @@ class TestMissingInfrastructureHooks:
 
         assert result["stale"] is True
         missing_commands = [h["command"] for h in result["missing_infrastructure"]]
-        assert "pf hooks session-stop" in missing_commands
+        assert "pf hooks dispatch Stop" in " ".join(missing_commands)
 
 
 # =============================================================================
@@ -316,7 +314,7 @@ class TestUpgradePrompt:
 
         result = detect_stale_hooks(tmp_project, dist_root)
 
-        assert "session-stop" in result["summary"].lower()
+        assert "dispatch stop" in result["summary"].lower()
 
     def test_clean_summary_is_empty(self, current_settings, dist_root):
         """No summary when hooks are clean."""

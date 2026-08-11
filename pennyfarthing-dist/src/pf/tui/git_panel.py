@@ -221,12 +221,20 @@ class GitPanel(BasePanel):
             client.subscribe("diffs", self._handle_diffs_message)
 
     def _handle_diffs_message(self, message: dict[str, Any] | None) -> None:
-        """Store diffs payload for drill-through rendering."""
-        if message is not None:
-            self._diffs_payload = message
-            # If viewing a diff, re-render with updated diff data
-            if self._viewing_diff:
-                self._rerender()
+        """Store diffs payload for drill-through rendering.
+
+        No-op after unmount or if message is None — same guard as
+        ``BasePanel.handle_message``. The ``diffs`` subscription is registered in
+        ``__init__`` rather than ``on_mount`` and ``FrameClient`` exposes no
+        ``unsubscribe``, so this handler stays live for the app's lifetime and
+        must not ``_rerender()`` a panel that is no longer mounted.
+        """
+        if not self._mounted or message is None:
+            return
+        self._diffs_payload = message
+        # If viewing a diff, re-render with updated diff data
+        if self._viewing_diff:
+            self._rerender()
 
     def toggle_repo_collapsed(self, repo_name: str) -> None:
         """Toggle the collapsed state of a repo section."""

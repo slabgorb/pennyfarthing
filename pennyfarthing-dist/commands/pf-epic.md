@@ -1,5 +1,5 @@
 ---
-description: Epic conductor: brainstorm → plan → materialize → execute → review
+description: "Epic conductor: brainstorm → plan → materialize → execute → review"
 args: "[start|close] <epic-id>"
 ---
 

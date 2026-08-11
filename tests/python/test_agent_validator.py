@@ -16,6 +16,7 @@ Covers all 10 Acceptance Criteria:
 Run with: python -m pytest tests/python/test_agent_validator.py -v
 """
 
+import re
 from pathlib import Path
 from textwrap import dedent
 
@@ -39,9 +40,9 @@ VALID_MAIN_AGENT = dedent("""\
     Test agent for validation testing
     </role>
 
-    <test-discipline>
+    <minimalist-discipline>
     Philosophy text here.
-    </test-discipline>
+    </minimalist-discipline>
 
     <critical>
     **No code.** Test-only agent.
@@ -409,6 +410,10 @@ MAIN_AGENT_NO_ON_ACTIVATION = dedent("""\
     Test role
     </role>
 
+    <minimalist-discipline>
+    Philosophy text here.
+    </minimalist-discipline>
+
     <critical>
     Rules here.
     </critical>
@@ -431,6 +436,10 @@ MAIN_AGENT_NO_EXIT = dedent("""\
     <role>
     Test role
     </role>
+
+    <minimalist-discipline>
+    Philosophy text here.
+    </minimalist-discipline>
 
     <critical>
     Rules here.
@@ -501,6 +510,15 @@ def _write_agent(agents_dir: Path, name: str, content: str) -> Path:
     return p
 
 
+def _named(content: str, name: str) -> str:
+    """Rewrite a subagent fixture's frontmatter `name:` field.
+
+    The validator requires frontmatter `name` to equal the file stem, so a
+    fixture written under a different filename must have its name rewritten.
+    """
+    return re.sub(r"^name: .*$", f"name: {name}", content, count=1, flags=re.MULTILINE)
+
+
 # =============================================================================
 # AC1: pf validate agent validates all agent definition files
 # =============================================================================
@@ -512,7 +530,7 @@ class TestDiscoveryAndClassification:
     def test_discovers_all_md_files(self, agents_dir: Path) -> None:
         """Should find all .md files in agents directory."""
         _write_agent(agents_dir, "dev.md", VALID_MAIN_AGENT)
-        _write_agent(agents_dir, "testing-runner.md", VALID_SUBAGENT)
+        _write_agent(agents_dir, "testing-runner.md", _named(VALID_SUBAGENT, "testing-runner"))
         _write_agent(agents_dir, "README.md", "# Documentation")
 
         main, sub, skipped = classify_agent_files(agents_dir)
@@ -523,7 +541,7 @@ class TestDiscoveryAndClassification:
     def test_classifies_main_vs_subagent(self, agents_dir: Path) -> None:
         """Should classify files with YAML frontmatter as subagents."""
         _write_agent(agents_dir, "dev.md", VALID_MAIN_AGENT)
-        _write_agent(agents_dir, "testing-runner.md", VALID_SUBAGENT)
+        _write_agent(agents_dir, "testing-runner.md", _named(VALID_SUBAGENT, "testing-runner"))
 
         main, sub, skipped = classify_agent_files(agents_dir)
 
@@ -544,12 +562,12 @@ class TestDiscoveryAndClassification:
     def test_run_counts_passed_files(self, agents_dir: Path) -> None:
         """Valid files should increment passed count."""
         _write_agent(agents_dir, "dev.md", VALID_MAIN_AGENT)
-        _write_agent(agents_dir, "testing-runner.md", VALID_SUBAGENT)
+        _write_agent(agents_dir, "testing-runner.md", _named(VALID_SUBAGENT, "testing-runner"))
 
         report = run(agents_dir.parent.parent, fix=False, strict=False)
 
         assert report.passed == 2
-        assert report.errors == 0
+        assert report.errors == []
 
 
 # =============================================================================
@@ -600,6 +618,18 @@ class TestMainAgentRequiredSections:
 
         assert any("skills" in e.lower() for e in errors)
 
+    def test_missing_mindset_tag_is_error(self, agents_dir: Path) -> None:
+        """A main agent in the mindset map without its tag should error.
+
+        `dev` requires <minimalist-discipline> per MINDSET_TAGS.
+        """
+        content = VALID_MAIN_AGENT.replace("minimalist-discipline", "some-other-discipline")
+        path = _write_agent(agents_dir, "dev.md", content)
+
+        errors, warnings = validate_main_agent(path, agents_dir)
+
+        assert any("minimalist-discipline" in e for e in errors)
+
     def test_multiple_missing_sections_all_reported(self, agents_dir: Path) -> None:
         """Agent missing multiple sections should report all of them."""
         # This agent has no role, no helpers, no skills — only <critical>
@@ -628,7 +658,7 @@ class TestSubagentFrontmatter:
 
     def test_valid_subagent_passes(self, agents_dir: Path) -> None:
         """Subagent with all required frontmatter fields should pass."""
-        path = _write_agent(agents_dir, "test-sub.md", VALID_SUBAGENT)
+        path = _write_agent(agents_dir, "test-sub.md", _named(VALID_SUBAGENT, "test-sub"))
 
         errors, warnings = validate_subagent(path)
 
@@ -641,6 +671,14 @@ class TestSubagentFrontmatter:
         errors, warnings = validate_subagent(path)
 
         assert any("name" in e.lower() for e in errors)
+
+    def test_name_not_matching_filename_is_error(self, agents_dir: Path) -> None:
+        """Frontmatter `name` must equal the file stem."""
+        path = _write_agent(agents_dir, "test-sub.md", _named(VALID_SUBAGENT, "something-else"))
+
+        errors, warnings = validate_subagent(path)
+
+        assert any("name mismatch" in e.lower() for e in errors)
 
     def test_missing_description_is_error(self, agents_dir: Path) -> None:
         """Subagent without description field should produce an error."""
@@ -712,7 +750,7 @@ class TestModelValidation:
 
     def test_subagent_haiku_model_passes(self, agents_dir: Path) -> None:
         """Subagent with model: haiku should pass."""
-        path = _write_agent(agents_dir, "test-sub.md", VALID_SUBAGENT)
+        path = _write_agent(agents_dir, "test-sub.md", _named(VALID_SUBAGENT, "test-sub"))
 
         errors, warnings = validate_subagent(path)
 
@@ -720,8 +758,14 @@ class TestModelValidation:
         assert len(model_errors) == 0
 
     def test_subagent_non_haiku_model_is_error(self, agents_dir: Path) -> None:
-        """Subagent with model: opus should produce an error."""
-        path = _write_agent(agents_dir, "test-sub.md", SUBAGENT_WRONG_MODEL)
+        """Subagent whose model contradicts its models.yaml tier is an error.
+
+        The contract is now tier-map conformance, not a blanket haiku-only rule:
+        `testing-runner` is the `mechanical` tier → `haiku`, so `opus` is an error.
+        """
+        path = _write_agent(
+            agents_dir, "testing-runner.md", _named(SUBAGENT_WRONG_MODEL, "testing-runner")
+        )
 
         errors, warnings = validate_subagent(path)
 
@@ -739,7 +783,7 @@ class TestSubagentReferences:
 
     def test_valid_reference_no_warning(self, agents_dir: Path) -> None:
         """Reference to existing subagent file should produce no warning."""
-        _write_agent(agents_dir, "testing-runner.md", VALID_SUBAGENT)
+        _write_agent(agents_dir, "testing-runner.md", _named(VALID_SUBAGENT, "testing-runner"))
         path = _write_agent(agents_dir, "dev.md", VALID_MAIN_AGENT)
 
         errors, warnings = validate_main_agent(path, agents_dir)
@@ -757,7 +801,7 @@ class TestSubagentReferences:
 
     def test_builtin_agent_reference_no_warning(self, agents_dir: Path) -> None:
         """Reference to built-in agent (Explore) should not produce a warning."""
-        _write_agent(agents_dir, "testing-runner.md", VALID_SUBAGENT)
+        _write_agent(agents_dir, "testing-runner.md", _named(VALID_SUBAGENT, "testing-runner"))
         path = _write_agent(agents_dir, "dev.md", MAIN_AGENT_BUILTIN_REF)
 
         errors, warnings = validate_main_agent(path, agents_dir)
@@ -802,7 +846,7 @@ class TestStrictMode:
         report = run(agents_dir.parent.parent, fix=False, strict=False)
 
         assert report.warnings > 0
-        assert report.errors == 0
+        assert report.errors == []
 
     def test_warning_becomes_error_in_strict_mode(self, agents_dir: Path) -> None:
         """Missing <on-activation> should be an error in strict mode."""
@@ -810,7 +854,7 @@ class TestStrictMode:
 
         report = run(agents_dir.parent.parent, fix=False, strict=True)
 
-        assert report.errors > 0
+        assert len(report.errors) > 0
 
 
 # =============================================================================
@@ -841,7 +885,7 @@ class TestReadmeExclusion:
 
         # Only dev.md should count
         assert report.passed == 1
-        assert report.errors == 0
+        assert report.errors == []
 
 
 # =============================================================================
@@ -863,7 +907,7 @@ class TestRealAgentFiles:
 
         report = run(project_root, fix=False, strict=False)
 
-        assert report.errors == 0, (
+        assert report.errors == [], (
             f"Expected zero errors on real agent files, got {report.errors}:\n"
             + "\n".join(d for d in report.details if "[ERROR]" in d)
         )

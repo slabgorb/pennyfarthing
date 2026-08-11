@@ -8,7 +8,13 @@ Verifies:
   AC5: App exits cleanly on quit keybinding (q)
   AC6: Entry point callable from Python
 
-Run with: python -m pytest tests/python/test_tui_tui.py -v
+Run with: python -m pytest tests/python/test_tui_app.py -v
+
+Repaired for 162-30 (class G): the module moved from `pf.tui.tui` to
+`pf.tui.app`, TITLE was renamed bikerack -> "Frame TUI" (424f84701), and the
+stock Textual `Footer` was replaced by the custom `StatusFooter`
+(`pf/tui/context_meter_footer.py`), which carries the panel name, keybinding
+hints and the context meter.
 """
 
 import pytest
@@ -19,7 +25,7 @@ class TestImportAndEntryPoint:
     """AC6: Entry point callable from Python."""
 
     def test_tui_app_importable(self):
-        """TuiApp should be importable from tui.tui."""
+        """TuiApp should be importable from pf.tui.app."""
         from pf.tui.app import TuiApp
 
         assert TuiApp is not None
@@ -35,8 +41,7 @@ class TestImportAndEntryPoint:
         from pf.tui.app import TuiApp
 
         app = TuiApp()
-        # Default App title is empty string or class name — we want "Frame TUI" somewhere
-        assert "bikerack" in app.title.lower(), (
+        assert "frame tui" in app.title.lower(), (
             f"App title should contain 'Frame TUI', got: '{app.title}'"
         )
 
@@ -57,10 +62,10 @@ class TestAppLayout:
             assert len(headers) > 0, "App should have a Header widget"
 
     async def test_app_has_footer(self, app):
-        """App should mount a Footer widget."""
+        """App should mount a StatusFooter widget."""
         async with app.run_test() as _pilot:
-            footers = app.query("Footer")
-            assert len(footers) > 0, "App should have a Footer widget"
+            footers = app.query("StatusFooter")
+            assert len(footers) > 0, "App should have a StatusFooter widget"
 
     async def test_app_has_main_content_area(self, app):
         """App should mount a main content area (container for panels)."""
@@ -77,7 +82,7 @@ class TestAppLayout:
             # All three core layout elements must be present
             assert len(app.query("Header")) > 0, "Missing Header"
             assert len(app.query("#main-content")) > 0, "Missing main content"
-            assert len(app.query("Footer")) > 0, "Missing Footer"
+            assert len(app.query("StatusFooter")) > 0, "Missing StatusFooter"
 
 
 class TestConnectionStatusHeader:
@@ -119,10 +124,12 @@ class TestFooter:
         return TuiApp()
 
     async def test_footer_exists(self, app):
-        """Footer widget should be present."""
+        """StatusFooter widget should be present."""
         async with app.run_test() as _pilot:
-            footers = app.query("Footer")
-            assert len(footers) > 0, "App should have a Footer widget"
+            from pf.tui.context_meter_footer import StatusFooter
+
+            footers = app.query(StatusFooter)
+            assert len(footers) > 0, "App should have a StatusFooter widget"
 
     async def test_app_has_quit_binding(self, app):
         """App should have a 'q' keybinding for quit."""

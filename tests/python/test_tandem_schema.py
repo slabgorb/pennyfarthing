@@ -522,8 +522,9 @@ class TestAC4BackwardCompatibility:
 
         report = run(root, fix=False, strict=False)
 
-        assert report.errors == 0, (
-            f"Real workflows have {report.errors} errors after tandem validation:\n"
+        # ValidateReport.errors is a list of messages, not a count.
+        assert report.errors == [], (
+            f"Real workflows have {len(report.errors)} errors after tandem validation:\n"
             + "\n".join(d for d in report.details if "[ERROR]" in d)
         )
 

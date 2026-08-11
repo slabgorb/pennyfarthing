@@ -106,14 +106,18 @@ class ProgressPanel(BasePanel):
             pass
 
     def drill_into_story(self) -> None:
-        """Push StoryDetailScreen for the current story."""
+        """Push StoryDetailScreen for the current story.
+
+        Uses the ``collapsible`` variant — the drill-through renders through
+        StoryDetailWidget's navigable Collapsible sections.
+        """
         story_data = self._build_story_detail_data()
         if story_data is None:
             return
         from pf.tui.story_detail_screen import StoryDetailScreen
 
         try:
-            self.app.push_screen(StoryDetailScreen(story_data=story_data))
+            self.app.push_screen(StoryDetailScreen(story_data=story_data, variant="collapsible"))
         except Exception:
             pass
 
