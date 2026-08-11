@@ -16,7 +16,14 @@ from pathlib import Path
 import yaml
 
 from pf.findings.capture import parse_delivery_findings
-from pf.sprint.session_parse import _parse_session_lines
+
+# NOTE: `pf.sprint.session_parse` is imported lazily inside
+# `_parse_session_fields` (below) to break an import cycle. Importing it at
+# module scope pulls in `pf/sprint/__init__.py`, which eagerly imports
+# `pf.sprint.cli`, which imports `pf.sprint.findings_cmd`, which imports back
+# into this still-initialising module. That made
+# `from pf.findings.aggregate import aggregate_findings` fail whenever it was
+# the first `pf` import in a process.
 
 
 def _parse_frontmatter(content: str) -> dict | None:
@@ -41,16 +48,31 @@ def _parse_session_fields(content: str) -> dict[str, str]:
     Handles sessions without YAML frontmatter by reading bold-field
     patterns like ``**ID:** 141-8`` and ``**Jira Key:** PROJ-16135``.
     """
+    from pf.sprint.session_parse import _parse_session_lines  # noqa: PLC0415
+
     return _parse_session_lines(content.splitlines())
 
 
 def _collect_done_stories(project_root: Path, sprint_number: int) -> dict[str, dict]:
     """Collect all done stories from current sprint YAML and completed file.
 
-    Returns a dict mapping jira_key -> {story_id, jira_key} for all done
+    Returns a dict mapping lookup-key -> {story_id, jira_key} for all done
     stories in the sprint, regardless of whether their epic is archived.
+
+    The lookup key is the story's Jira key when one can be resolved, and the
+    story id otherwise. Keying on the story id matters: ``completed_stories``
+    rows in ``sprint-{N}-completed.yaml`` carry ``id`` and ``epic`` but no
+    ``jira``, so a Jira key is only resolvable when an ``epic-{ref}.yaml`` shard
+    is also present in the archive. Projects that do not track Jira never have
+    one at all. Dropping those stories silently omitted their Delivery Findings
+    from every sprint findings report (162-30).
     """
     stories: dict[str, dict] = {}
+
+    def _record(story_id: str, jira_key: str) -> None:
+        key = jira_key or story_id
+        if key:
+            stories[key] = {"story_id": story_id, "jira_key": jira_key}
 
     # 1. From completed file (archived epics)
     archive_dir = project_root / "sprint" / "archive"
@@ -64,9 +86,7 @@ def _collect_done_stories(project_root: Path, sprint_number: int) -> dict[str, d
             sid = str(s.get("id", ""))
             # Look up jira key from epic shards in archive
             epic_ref = s.get("epic", "")
-            jira_key = _find_jira_key_in_shard(archive_dir, epic_ref, sid)
-            if jira_key:
-                stories[jira_key] = {"story_id": sid, "jira_key": jira_key}
+            _record(sid, _find_jira_key_in_shard(archive_dir, epic_ref, sid))
 
         # Epic shard stories (archived epics)
         for epic_ref in sprint_data.get("completed_epics", []) or []:
@@ -77,10 +97,7 @@ def _collect_done_stories(project_root: Path, sprint_number: int) -> dict[str, d
                 for s in shard_data.get("stories", []) or []:
                     status = s.get("status", "")
                     if status in ("done", "completed"):
-                        sid = str(s.get("id", ""))
-                        jira_key = str(s.get("jira", ""))
-                        if jira_key:
-                            stories[jira_key] = {"story_id": sid, "jira_key": jira_key}
+                        _record(str(s.get("id", "")), str(s.get("jira", "")))
 
     # 2. From current sprint YAML (unarchived epics + standalone)
     current_sprint = project_root / "sprint" / "current-sprint.yaml"
@@ -91,10 +108,7 @@ def _collect_done_stories(project_root: Path, sprint_number: int) -> dict[str, d
         # Standalone stories
         for s in current_data.get("standalone_stories", []) or []:
             if s.get("status") in ("done", "completed"):
-                jira_key = str(s.get("jira", ""))
-                sid = str(s.get("id", ""))
-                if jira_key:
-                    stories[jira_key] = {"story_id": sid, "jira_key": jira_key}
+                _record(str(s.get("id", "")), str(s.get("jira", "")))
 
         # Epic shard stories (still active epics)
         sprint_dir = project_root / "sprint"
@@ -109,10 +123,7 @@ def _collect_done_stories(project_root: Path, sprint_number: int) -> dict[str, d
                 for s in shard_data.get("stories", []) or []:
                     status = s.get("status", "")
                     if status in ("done", "completed"):
-                        sid = str(s.get("id", ""))
-                        jira_key = str(s.get("jira", ""))
-                        if jira_key:
-                            stories[jira_key] = {"story_id": sid, "jira_key": jira_key}
+                        _record(str(s.get("id", "")), str(s.get("jira", "")))
 
     return stories
 
@@ -159,8 +170,8 @@ def collect_session_files(archive_dir: Path, sprint_number: int) -> dict:
             return {"success": False, "error": f"Sprint completed file not found: {sprint_file}"}
         return {"success": True, "data": {"sessions": [], "sprint_file": str(sprint_file)}}
 
-    # Build reverse lookup: jira_key -> story info
-    jira_keys = set(done_stories.keys())
+    # Lookup keys are Jira keys where the story has one, story ids otherwise.
+    lookup_keys = set(done_stories.keys())
 
     sessions: list[dict] = []
     seen_keys: set[str] = set()
@@ -170,51 +181,35 @@ def collect_session_files(archive_dir: Path, sprint_number: int) -> dict:
             continue
 
         content = session_file.read_text()
+        fm = _parse_frontmatter(content) or {}
+        fields = _parse_session_fields(content)
 
-        # Strategy 1: YAML frontmatter
-        fm = _parse_frontmatter(content)
-        if fm:
-            jira_key = str(fm.get("jira_key", fm.get("jira", "")))
-            if jira_key in jira_keys and jira_key not in seen_keys:
-                info = done_stories[jira_key]
+        body_jira = fields.get("jira key", fields.get("jira", ""))
+        body_jira = re.sub(r"\[([^\]]+)\].*", r"\1", body_jira).strip()
+
+        # Candidate keys in priority order. Jira legs come first so a
+        # Jira-tracked story still matches on its key; the story-id legs are
+        # what let a story with no resolvable Jira key be found at all.
+        candidates = (
+            str(fm.get("jira_key", fm.get("jira", ""))),  # 1. frontmatter Jira key
+            body_jira,  # 2. markdown body Jira field
+            str(fm.get("story_id", fm.get("id", ""))),  # 3. frontmatter story id
+            fields.get("id", fields.get("story id", "")).strip(),  # 4. body story id
+            session_file.stem.removesuffix("-session"),  # 5. filename
+        )
+
+        for key in candidates:
+            if key and key in lookup_keys and key not in seen_keys:
+                info = done_stories[key]
                 sessions.append(
                     {
-                        "jira_key": jira_key,
+                        "jira_key": info["jira_key"],
                         "story_id": info["story_id"],
                         "path": session_file,
                     }
                 )
-                seen_keys.add(jira_key)
-                continue
-
-        # Strategy 2: Markdown body fields
-        fields = _parse_session_fields(content)
-        jira_key = fields.get("jira key", fields.get("jira", ""))
-        jira_key = re.sub(r"\[([^\]]+)\].*", r"\1", jira_key).strip()
-        if jira_key in jira_keys and jira_key not in seen_keys:
-            info = done_stories[jira_key]
-            sessions.append(
-                {
-                    "jira_key": jira_key,
-                    "story_id": info["story_id"],
-                    "path": session_file,
-                }
-            )
-            seen_keys.add(jira_key)
-            continue
-
-        # Strategy 3: Filename match (e.g. PROJ-16135-session.md)
-        stem = session_file.stem.removesuffix("-session")
-        if stem in jira_keys and stem not in seen_keys:
-            info = done_stories[stem]
-            sessions.append(
-                {
-                    "jira_key": stem,
-                    "story_id": info["story_id"],
-                    "path": session_file,
-                }
-            )
-            seen_keys.add(stem)
+                seen_keys.add(key)
+                break
 
     sprint_file = archive_dir / f"sprint-{sprint_number}-completed.yaml"
     return {

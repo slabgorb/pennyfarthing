@@ -216,7 +216,7 @@ skills:
     keywords: [opentelemetry, spans, traces, enrichment, correlation]
 
   pf-settings:
-    name: settings
+    name: pf-settings
     description: View and manage .pennyfarthing/config.local.yaml settings
     category: tools
     tags: [configuration, settings, config]
@@ -229,6 +229,30 @@ skills:
         invocation: /pf-settings get workflow.relay_mode
     related_skills: [pf-theme, pf-bc]
     keywords: [theme, relay, bell, permission, display, config]
+
+  pf-peloton:
+    name: pf-peloton
+    description: Run stories through peloton mode - persistent tmux panes for each agent role
+    category: project-management
+    tags: [peloton, agent-team, tmux, workflow, orchestration]
+    version: "1.0.0"
+    command_group: peloton
+    prerequisites: [pf-tmux]
+    examples:
+      - context: Initializing a peloton team for the current story
+        invocation: pf peloton start
+      - context: Starting peloton with explicit story and workflow
+        invocation: pf peloton start --story-id 148-12 --workflow tdd
+      - context: Checking the active peloton team state
+        invocation: pf peloton status --json
+      - context: Tearing the peloton team down
+        invocation: pf peloton stop
+    anti_patterns:
+      - Never run peloton without enabling agent teams in .claude/settings.json first
+      - Don't leave state behind — always pair peloton stop with TeamDelete
+      - Don't use peloton for benchmark replay — use pf benchmark replay instead
+    related_skills: [pf-tmux, pf-sprint, pf-workflow]
+    keywords: [peloton, team, teammate, tmux, pane, agent-team, sm, orchestrate, story, workflow, TeamCreate, SendMessage]
 
   pf-persona-benchmark:
     name: pf-persona-benchmark
@@ -291,7 +315,7 @@ skills:
     keywords: [debugging, bisect, reproduce, isolate, root-cause, regression]
 
   pf-tmux:
-    name: tmux
+    name: pf-tmux
     description: Pane management for tmux sessions — read TUI content, run commands, discover panes, capture output
     category: tools
     tags: [tmux, panes, terminal, agents, tui, capture, read, screenshot]
@@ -324,9 +348,9 @@ skills:
     keywords: [tmux, panes, terminal, worker, split, send-keys, protected, idle, tui, read, capture, screenshot, look, see, view, display, content, output, pane-id, discover, find, window]
 
   pf-handoff:
-    name: handoff
+    name: pf-handoff
     description: Phase gate resolution, session transitions, and agent handoff markers — the exit protocol every agent runs
-    category: workflow
+    category: project-management
     tags: [handoff, gate, phase, transition, exit, agent, marker, relay]
     version: "1.0.0"
     command_group: handoff
@@ -343,7 +367,7 @@ skills:
     anti_patterns:
       - Never skip resolve-gate — it validates the assessment exists
       - Never call marker without complete-phase first — session won't update
-      - Always run in order: resolve-gate → complete-phase → marker
+      - "Always run in order: resolve-gate → complete-phase → marker"
     related_skills: [pf-workflow]
     keywords: [handoff, gate, phase, transition, exit, agent, marker, relay, resolve, complete, session, assessment, next-agent, phase-check, exit-protocol, hand-off, hand off]
 
@@ -391,7 +415,7 @@ skills:
 
 
   pf-ux-tandem:
-    name: ux-tandem
+    name: pf-ux-tandem
     description: Live UX review tandem — spawn a UX designer to watch a tmux pane and suggest improvements in real time
     category: development
     tags: [ux, tandem, review, tmux, collaboration, team]

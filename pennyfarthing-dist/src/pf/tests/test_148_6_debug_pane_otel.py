@@ -427,3 +427,79 @@ class TestTokenStatsEdgeCases:
             _make_metrics_payload(input_tokens=100)
         )
         assert result is None
+
+
+# ---------------------------------------------------------------------------
+# 162-30: cost accumulation — the Cost row must be reachable from live data
+# ---------------------------------------------------------------------------
+
+
+def _make_cost_payload(cost_usd: float = 0.0042, *, as_int: bool = False) -> dict[str, Any]:
+    """Build an OTLP metrics payload carrying claude_code.cost.usage (USD)."""
+    data_point: dict[str, Any] = {"attributes": []}
+    if as_int:
+        data_point["asInt"] = int(cost_usd)
+    else:
+        data_point["asDouble"] = cost_usd
+
+    return {
+        "resourceMetrics": [
+            {
+                "scopeMetrics": [
+                    {
+                        "metrics": [
+                            {
+                                "name": "claude_code.cost.usage",
+                                "sum": {"dataPoints": [data_point]},
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
+
+class TestCostAccumulation:
+    """`totalCost` must be parsed and accumulated, not left permanently at 0.
+
+    Before 162-30 `parse_otlp_metrics` only handled `claude_code.token.usage`
+    and `aggregate_token_stats` omitted cost entirely, so `totalCost` was
+    initialised to 0 in three places and never written. `_render_token_stats`
+    only emits the Cost row when `cost > 0`, which made that row dead code
+    against live data.
+    """
+
+    def test_parse_extracts_cost_from_cost_usage_metric(self):
+        parsed = parse_otlp_metrics(_make_cost_payload(0.0042))
+        assert parsed.get("totalCost") == pytest.approx(0.0042)
+
+    def test_parse_accepts_whole_dollar_as_int(self):
+        parsed = parse_otlp_metrics(_make_cost_payload(3, as_int=True))
+        assert parsed.get("totalCost") == pytest.approx(3.0)
+
+    def test_receiver_accumulates_cost_across_payloads(self):
+        receiver = OTLPReceiver()
+        receiver.process_metrics(_make_cost_payload(0.0042))
+        receiver.process_metrics(_make_cost_payload(0.0008))
+        assert receiver.get_token_stats()["totalCost"] == pytest.approx(0.005)
+
+    def test_token_only_payload_leaves_cost_untouched(self):
+        """A token payload must not reset or clobber accumulated cost."""
+        receiver = OTLPReceiver()
+        receiver.process_metrics(_make_cost_payload(0.0042))
+        receiver.process_metrics(_make_metrics_payload(input_tokens=1000))
+        stats = receiver.get_token_stats()
+        assert stats["totalCost"] == pytest.approx(0.0042)
+        assert stats["inputTokens"] == 1000
+
+    def test_cost_reaches_the_rendered_cost_row(self):
+        """End-to-end: a cost metric in → a Cost row out of the debug panel."""
+        from pf.tui.debug_panel import _render_token_stats
+
+        receiver = OTLPReceiver()
+        receiver.process_metrics(_make_cost_payload(0.0042))
+        rendered = _render_to_text(_render_token_stats(receiver.get_token_stats()))
+        assert "$0.0042" in rendered, (
+            f"Cost row missing from rendered debug panel: {rendered}"
+        )
