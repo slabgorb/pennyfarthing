@@ -122,7 +122,7 @@ async def _lifespan(app: FastAPI):
     import signal
 
     from .lifecycle import monitor_and_shutdown
-    from .ws_push import poll_and_broadcast
+    from .ws_push import poll_and_broadcast, shutdown_shared_executor
 
     project_dir = _resolve_project_dir()
     port = _resolve_port()
@@ -152,6 +152,8 @@ async def _lifespan(app: FastAPI):
                 await task
             except asyncio.CancelledError:
                 pass
+        # Don't let the bounded frame-fetch thread pool outlive the server.
+        shutdown_shared_executor()
         if project_dir:
             cleanup_port_file(project_dir)
 

@@ -43,6 +43,19 @@ def get_shared_executor() -> ThreadPoolExecutor:
     return _shared_executor
 
 
+def shutdown_shared_executor() -> None:
+    """Shut down the shared executor (non-blocking) and drop the singleton.
+
+    Called from the Frame lifespan exit path so the bounded ``frame-fetch`` pool
+    does not outlive the server. ``wait=False`` keeps teardown from stalling
+    behind an in-flight subprocess fetch. A no-op when no pool was ever created.
+    """
+    global _shared_executor
+    if _shared_executor is not None:
+        _shared_executor.shutdown(wait=False)
+        _shared_executor = None
+
+
 def _get_project_dir() -> str:
     return os.environ.get("FRAME_PROJECT_DIR", os.environ.get("PF_PROJECT_DIR", os.getcwd()))
 

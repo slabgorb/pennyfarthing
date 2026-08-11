@@ -116,25 +116,40 @@ async def monitor_and_shutdown(
 
     while True:
         await asyncio.sleep(interval_s)
-        active_clients = count_active_clients()
-        last_activity = last_activity_getter()
-        now = time.monotonic()
-        owner_alive = is_process_alive(owner_pid) if owner_pid is not None else True
-        if should_shutdown(
-            owner_pid=owner_pid,
-            owner_alive=owner_alive,
-            active_clients=active_clients,
-            last_activity=last_activity,
-            now=now,
-            idle_timeout_s=idle_timeout_s,
-        ):
-            if owner_pid is not None and not owner_alive:
-                reason = f"owner {owner_pid} dead"
-            else:
-                reason = (
-                    f"idle: {active_clients} clients, "
-                    f"no traffic {now - last_activity:.0f}s"
-                )
-            _logger.info("Frame self-terminating (%s)", reason)
-            trigger_shutdown()
-            return
+        # A raise from any dependency (client count, activity clock, PID probe)
+        # must not kill the monitor task: a dead monitor silently disarms BOTH
+        # orphan protection and idle reaping (gh #97). Log and keep looping so
+        # protection is restored as soon as the dependency recovers.
+        try:
+            active_clients = count_active_clients()
+            last_activity = last_activity_getter()
+            now = time.monotonic()
+            owner_alive = is_process_alive(owner_pid) if owner_pid is not None else True
+            if should_shutdown(
+                owner_pid=owner_pid,
+                owner_alive=owner_alive,
+                active_clients=active_clients,
+                last_activity=last_activity,
+                now=now,
+                idle_timeout_s=idle_timeout_s,
+            ):
+                if owner_pid is not None and not owner_alive:
+                    reason = f"owner {owner_pid} dead"
+                else:
+                    reason = (
+                        f"idle: {active_clients} clients, "
+                        f"no traffic {now - last_activity:.0f}s"
+                    )
+                _logger.info("Frame self-terminating (%s)", reason)
+                trigger_shutdown()
+                return
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            _logger.warning(
+                "Frame lifecycle monitor iteration failed (%s: %s); continuing",
+                type(exc).__name__,
+                exc,
+                exc_info=True,
+            )
+            continue
