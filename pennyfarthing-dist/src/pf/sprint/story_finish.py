@@ -614,7 +614,7 @@ def _resolve_base_branch(project_root: Path) -> str:
 def _resolve_story_repos(
     project_root: Path,
     story: dict,
-) -> list[tuple[Path, "RepoConfig | None"]]:
+) -> dict[str, Any]:
     """Every code repo the story's work lives in, as ``(abs_path, config)``.
 
     The story's ``repos:`` field names them; ``.pennyfarthing/repos.yaml`` gives
@@ -626,6 +626,22 @@ def _resolve_story_repos(
     degrades to the project root paired with the root repo's config — the
     pre-162-6 behavior, so an operator typo cannot silently skip verification.
 
+    Returns a result object (162-32): ``{"success": True, "data": [...]}``, or
+    ``{"success": False, "error": ...}`` when a named repo is not cloned. The
+    first consumer of a resolved path is ``_run(..., cwd=str(repo_path))``, and
+    ``subprocess`` on a ``cwd`` that does not exist RAISES — a traceback out of
+    a function whose contract is a result (SOUL #6). ``Path.resolve()`` happily
+    produces a path to nothing, so the existence check belongs here, mirroring
+    ``pf.git.repos.get_repo_paths``'s ``abs_path.exists()`` precedent — but LOUD
+    rather than silently dropping the repo, since dropping it would degrade the
+    story to the project root and verify the WRONG repository.
+
+    Repos are deduped by RESOLVED PATH, in order (162-32): the same repo named
+    twice — or two repos.yaml entries pointing at one directory — made every
+    per-repo loop run twice against it, and the merge loop reads a ``pr_views``
+    snapshot taken BEFORE the merge, so the second pass re-ran ``gh pr merge``
+    on a PR that had just landed and false-aborted fully-shipped work.
+
     Local import for the same circular-layering reason as
     :func:`_resolve_base_branch`.
     """
@@ -634,7 +650,7 @@ def _resolve_story_repos(
     try:
         configs = load_repos_config(project_root)
     except (yaml.YAMLError, OSError):
-        return [(project_root, None)]
+        return {"success": True, "data": [(project_root, None)]}
     raw = story.get("repos")
     if isinstance(raw, list):
         names = [str(n).strip() for n in raw if str(n).strip()]
@@ -646,8 +662,33 @@ def _resolve_story_repos(
     resolved = [configs[name] for name in names if name in configs]
     if not resolved:
         root_repo = next((rc for rc in configs.values() if rc.path in (".", "")), None)
-        return [(project_root, root_repo)]
-    return [((project_root / rc.path).resolve(), rc) for rc in resolved]
+        return {"success": True, "data": [(project_root, root_repo)]}
+
+    # Dedup on the RESOLVED PATH, not the name (162-32 R1): two repos.yaml
+    # entries can carry the same `path`, and keying on the name lets both survive
+    # so the per-repo loop still runs twice against one directory — re-issuing
+    # `gh pr merge` off the pre-merge `pr_views` snapshot, i.e. the exact false
+    # abort this guard removes. First occurrence wins, order preserved.
+    paths: list[tuple[Path, Any]] = []
+    seen: set[Path] = set()
+    for rc in resolved:
+        path = (project_root / rc.path).resolve()
+        if path in seen:
+            continue
+        seen.add(path)
+        paths.append((path, rc))
+    missing = [(p, rc) for p, rc in paths if not p.is_dir()]
+    if missing:
+        detail = ", ".join(f"{rc.name} ({p})" for p, rc in missing)
+        return {
+            "success": False,
+            "error": (
+                f"Repo not cloned: {detail} — repos.yaml names it, but that "
+                "directory does not exist. Clone it (or fix the story's repos: "
+                "field) and re-run finish."
+            ),
+        }
+    return {"success": True, "data": paths}
 
 
 def _valid_branch_name(value: str, cwd: str) -> subprocess.CompletedProcess:
@@ -946,6 +987,22 @@ def _branch_merge_state(
     }
 
 
+#: ``scheme://userinfo@`` — the only place a git remote URL carries a secret.
+_CREDENTIAL_URL_RE = re.compile(r"(https?://)[^@/\s]+@")
+
+
+def _scrub_credentials(text: str) -> str:
+    """Redact the userinfo of any URL in *text* (162-32 R1).
+
+    Step 6 now reports a failing ``git pull``'s stderr verbatim, and with an
+    HTTPS-with-token remote that stderr reads
+    ``fatal: repository 'https://oauth2:<TOKEN>@github.com/...' not found`` —
+    so the token would land in the operator's terminal (``cli.py`` prints the
+    warning as-is) on a path that previously discarded the stderr entirely.
+    """
+    return _CREDENTIAL_URL_RE.sub(r"\1<credentials>@", text)
+
+
 def _git_cleanup(
     repo_path: Path,
     branch: str | None,
@@ -1000,7 +1057,7 @@ def _git_cleanup(
         report always carries the reason and the operator finishes by hand.
         """
         entry["warning"] = (
-            f"git cleanup stopped in {repo_path}: {reason} — "
+            f"git cleanup stopped in {repo_path}: {_scrub_credentials(reason)} — "
             "the story is done; finish the branch cleanup by hand"
         )
         return [entry]
@@ -1059,8 +1116,24 @@ def _git_cleanup(
         (["git", "pull", remote, f"refs/heads/{base}"], GIT_NETWORK_TIMEOUT_S),
     ]
     if branch:
-        # `--` guards against a branch value that looks like a git flag.
-        cleanup.append((["git", "branch", "-d", "--", branch], GIT_LOCAL_TIMEOUT_S))
+        # Step 2 merges with `gh pr merge --squash --delete-branch`, and `-d`
+        # deletes the LOCAL branch too, so on the normal happy path the branch is
+        # already gone by the time step 6 runs. `git branch -d` then exits rc=1
+        # ("branch 'X' not found"), which — now that every rc is read (162-32) —
+        # would report a cleanup failure on EVERY healthy finish. Probe for the
+        # branch first (same read-only shape as the base probe above) and skip
+        # the delete cleanly when it is absent; the rc that survives this guard
+        # is a REFUSED delete, which is exactly the case worth warning about.
+        exists = _run(
+            ["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}"],
+            cwd=cwd,
+            timeout=GIT_LOCAL_TIMEOUT_S,
+        )
+        if _timed_out(exists):
+            return stopped((exists.stderr or "").strip())
+        if exists.returncode == 0:
+            # `--` guards against a branch value that looks like a git flag.
+            cleanup.append((["git", "branch", "-d", "--", branch], GIT_LOCAL_TIMEOUT_S))
 
     for cmd, timeout in cleanup:
         result = _run(cmd, cwd=cwd, timeout=timeout)
@@ -1069,11 +1142,22 @@ def _git_cleanup(
             # (a delete aimed at the branch we are still standing on fails
             # anyway), and step 7 still removes the session.
             return stopped((result.stderr or "").strip())
-        if cmd[:2] == ["git", "checkout"] and result.returncode != 0:
-            # A checkout that failed (a conflicting local modification) leaves
-            # the feature branch checked out, and the pull below would then land
-            # the base's commits ON it. Never keep going from there.
-            return stopped((result.stderr or "").strip() or f"git checkout {base} failed")
+        if result.returncode != 0:
+            # EVERY command's return code is read, not just the checkout's
+            # (162-32). Reading the pull's and the delete's rc and discarding
+            # them returned the bare `entry` — a step 6 that reads exactly like
+            # a clean cleanup — so a failed pull (no network, diverged base) or
+            # a refused `branch -d` (git does not consider the branch merged:
+            # precisely the case where the operator must look) was reported as
+            # success. That is the silent skip this epic exists to kill.
+            #
+            # Stopping the chain is also the only safe route: a checkout that
+            # failed (a conflicting local modification) leaves the feature
+            # branch checked out and the pull would land the base's commits ON
+            # it, and a delete aimed off a base the pull never updated is
+            # refused anyway. Step 6 runs after the story is done, so this is a
+            # warning, not a finish failure (162-9), and step 7 still runs.
+            return stopped((result.stderr or "").strip() or f"{' '.join(cmd)} failed")
     return [entry]
 
 
@@ -1173,7 +1257,19 @@ def finish_story(
     # number collision merges an unrelated PR, and a miss aborts a finish whose
     # work landed. Step 5 (the epic archive) is the one deliberate exception —
     # it reads the orchestrator's own ``sprint/`` tree.
-    story_repos = _resolve_story_repos(project_root, story)
+    # An unresolvable repo (162-32: named in repos.yaml, never cloned) aborts
+    # BEFORE any irreversible step — the session stays, nothing is archived —
+    # and is REPORTED, not raised: every probe below would otherwise run with a
+    # cwd that does not exist and subprocess would throw out of this function.
+    repos_result = _resolve_story_repos(project_root, story)
+    if not repos_result.get("success"):
+        return {
+            "success": False,
+            "story_id": story_id,
+            "jira_key": jira_key,
+            "error": repos_result.get("error"),
+        }
+    story_repos = repos_result["data"]
 
     # PR-field semantics for a multi-repo story: the session carries a single
     # ``**PR:** #N`` line, which can only describe ONE repo, so it is honored
