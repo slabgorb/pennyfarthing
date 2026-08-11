@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 import os
 from datetime import UTC, datetime
 from pathlib import Path
@@ -17,6 +18,9 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 
 from pf.frame.otlp import OTLPReceiver
+
+# Frame logs through uvicorn's error logger so records land in .session/frame.log
+_logger = logging.getLogger("uvicorn.error")
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -536,7 +540,10 @@ async def post_subagent_event(request: Request) -> JSONResponse:
         from pf.frame.app import broadcast
         asyncio.ensure_future(broadcast("subagent-transitions", {"type": "event", "event": body}))
     except Exception:
-        pass
+        _logger.error(
+            "Failed to broadcast subagent transition event on 'subagent-transitions'",
+            exc_info=True,
+        )
 
     return JSONResponse({"success": True})
 
