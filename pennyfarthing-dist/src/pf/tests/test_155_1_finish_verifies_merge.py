@@ -411,6 +411,14 @@ class TestFinishSuccessPathUnchanged:
     """When the merge succeeds AND the PR is verified ``MERGED``, finish behaves
     exactly as before: marks done and removes the session. Stops the
     verify-merge change from over-reaching and blocking healthy finishes.
+
+    162-22: this class's happy path used to stub a **fixed ``MERGED``** PR view.
+    Because 155-29 added a pre-merge short-circuit that treats an
+    already-``MERGED`` view as done, that world made finish skip ``gh pr merge``
+    entirely — the test passed while asserting nothing about the merge that
+    155-1 made load-bearing. The happy path now pins the stateful world
+    (``pre_merge_state="OPEN"`` → ``pr_state="MERGED"``) and asserts the merge
+    **invocation**, not just the final state.
     """
 
     @patch("pf.sprint.story_finish._add_story_to_completed")
@@ -426,12 +434,23 @@ class TestFinishSuccessPathUnchanged:
         mock_transition.return_value = {"success": True, "to_status": "done"}
         session_path = project_with_pr / ".session" / "155-1-session.md"
 
-        with patch(
-            "pf.sprint.story_finish._run",
-            GhPrFake(merge_rc=0, pr_state="MERGED"),
-        ):
+        # Stateful world: OPEN until `gh pr merge` actually runs, then MERGED.
+        # `pre_merge_state` is pinned explicitly rather than inherited from the
+        # GhPrFake default so a future default change cannot silently re-arm
+        # the 155-29 short-circuit and re-hollow this test.
+        fake = GhPrFake(merge_rc=0, pr_state="MERGED", pre_merge_state="OPEN")
+        with patch("pf.sprint.story_finish._run", fake):
             result = finish_story(project_with_pr, "155-1")
 
+        assert len(fake.merge_calls) == 1, (
+            "The clean happy path must invoke `gh pr merge` exactly once — "
+            f"got {fake.merge_calls!r}. Zero calls means finish short-circuited "
+            "and the merge 155-1 made load-bearing was never exercised."
+        )
+        assert "288" in fake.merge_calls[0], (
+            "merge ran but not against the session's PR #288: "
+            f"{fake.merge_calls[0]!r}"
+        )
         assert result["success"] is True, result
         assert result["story_id"] == "155-1"
         assert _requested_done(mock_transition), (
@@ -439,4 +458,36 @@ class TestFinishSuccessPathUnchanged:
         )
         assert not session_path.exists(), (
             "Clean finish must still remove the session file"
+        )
+
+    @patch("pf.sprint.story_finish._add_story_to_completed")
+    @patch("pf.sprint.story_finish.transition_story")
+    @patch("pf.common.pr_config.get_pr_merge_mode", return_value="auto")
+    def test_fixed_merged_view_short_circuits_and_never_merges(
+        self,
+        mock_mode: MagicMock,
+        mock_transition: MagicMock,
+        mock_add_completed: MagicMock,
+        project_with_pr: Path,
+    ) -> None:
+        """Vacuity sentinel (162-22).
+
+        Pins *why* the clean-merge test must use the stateful fake: in a world
+        where the PR already reads ``MERGED`` up front, the 155-29 pre-check
+        legitimately declares success **without calling ``gh pr merge``**. That
+        is correct behavior for a genuine already-merged PR — and exactly why a
+        fixed-``MERGED`` stub can never stand in for a clean merge. If this
+        assertion ever flips (merge called here), the short-circuit is gone and
+        the sibling happy-path test above needs re-derivation.
+        """
+        mock_transition.return_value = {"success": True, "to_status": "done"}
+
+        fake = GhPrFake(merge_rc=0, pr_state="MERGED", pre_merge_state="MERGED")
+        with patch("pf.sprint.story_finish._run", fake):
+            result = finish_story(project_with_pr, "155-1")
+
+        assert result["success"] is True, result
+        assert fake.merge_calls == [], (
+            "An already-MERGED PR must take the 155-29 short-circuit, not "
+            f"re-merge: {fake.merge_calls!r}"
         )
