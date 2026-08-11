@@ -38,6 +38,21 @@ from pf.handoff.phase_check import phase_check_start
 from pf.handoff.resolve_gate import resolve_gate
 from pf.prime.workflow import detect_workflow_state, parse_session_header
 
+# Why the four `verify`-phase tests below are no longer quarantined. Written
+# once and referenced from each of them (story 162-31) — the same eight lines
+# had been copy-pasted four times, which is four places to update and three
+# chances to leave a stale explanation behind.
+VERIFY_PHASE_UNQUARANTINE_NOTE = """
+UNQUARANTINED (story 162-29). Both 162-5 causes were the same cause:
+`prime.workflow.get_phase_owner` resolved the workflow YAML from the installed
+dist root before `{project_root}/.pennyfarthing/workflows/`, so this module's
+six-phase TDD_WORKFLOW fixture was unreachable and the packaged five-phase
+`tdd.yaml` answered instead (no `verify` phase -> phase_owner None -> no
+redirect). Fixing the resolution order so project YAML wins makes the fixture's
+`verify` phase visible, which is also what
+`handoff.complete_phase._get_phase_agent` has always read.
+"""
+
 # ---------------------------------------------------------------------------
 # TDD workflow definition (matching real tdd.yaml)
 # ---------------------------------------------------------------------------
@@ -644,14 +659,7 @@ class TestPhaseOwnershipValidation:
         result = phase_check_start("dev", project_root=project)
         assert result["action"] == "start"
 
-    # UNQUARANTINED (story 162-29). Both 162-5 causes were the same cause:
-    # `prime.workflow.get_phase_owner` resolved the workflow YAML from the
-    # installed dist root before `{project_root}/.pennyfarthing/workflows/`,
-    # so this module's six-phase TDD_WORKFLOW fixture was unreachable and the
-    # packaged five-phase `tdd.yaml` answered instead (no `verify` phase →
-    # phase_owner None → no redirect). Fixing the resolution order so project
-    # YAML wins makes the fixture's `verify` phase visible, which is also what
-    # `handoff.complete_phase._get_phase_agent` has always read.
+    # See VERIFY_PHASE_UNQUARANTINE_NOTE above.
     def test_dev_redirected_during_verify(
         self, project: Path, session_at_setup: Path
     ) -> None:
@@ -665,14 +673,7 @@ class TestPhaseOwnershipValidation:
         assert result["action"] == "redirect"
         assert result["agent"] == "tea"
 
-    # UNQUARANTINED (story 162-29). Both 162-5 causes were the same cause:
-    # `prime.workflow.get_phase_owner` resolved the workflow YAML from the
-    # installed dist root before `{project_root}/.pennyfarthing/workflows/`,
-    # so this module's six-phase TDD_WORKFLOW fixture was unreachable and the
-    # packaged five-phase `tdd.yaml` answered instead (no `verify` phase →
-    # phase_owner None → no redirect). Fixing the resolution order so project
-    # YAML wins makes the fixture's `verify` phase visible, which is also what
-    # `handoff.complete_phase._get_phase_agent` has always read.
+    # See VERIFY_PHASE_UNQUARANTINE_NOTE above.
     def test_reviewer_redirected_during_verify(
         self, project: Path, session_at_setup: Path
     ) -> None:
@@ -858,14 +859,7 @@ class TestWorkflowStateDetection:
         assert status.phase == "green"
         assert status.phase_owner == "dev"
 
-    # UNQUARANTINED (story 162-29). Both 162-5 causes were the same cause:
-    # `prime.workflow.get_phase_owner` resolved the workflow YAML from the
-    # installed dist root before `{project_root}/.pennyfarthing/workflows/`,
-    # so this module's six-phase TDD_WORKFLOW fixture was unreachable and the
-    # packaged five-phase `tdd.yaml` answered instead (no `verify` phase →
-    # phase_owner None → no redirect). Fixing the resolution order so project
-    # YAML wins makes the fixture's `verify` phase visible, which is also what
-    # `handoff.complete_phase._get_phase_agent` has always read.
+    # See VERIFY_PHASE_UNQUARANTINE_NOTE above.
     def test_in_progress_during_verify(
         self, project: Path, session_at_setup: Path
     ) -> None:
@@ -993,14 +987,7 @@ class TestTEADualPhaseOwnership:
         assert status.phase_owner == "tea"
         assert status.phase == "red"
 
-    # UNQUARANTINED (story 162-29). Both 162-5 causes were the same cause:
-    # `prime.workflow.get_phase_owner` resolved the workflow YAML from the
-    # installed dist root before `{project_root}/.pennyfarthing/workflows/`,
-    # so this module's six-phase TDD_WORKFLOW fixture was unreachable and the
-    # packaged five-phase `tdd.yaml` answered instead (no `verify` phase →
-    # phase_owner None → no redirect). Fixing the resolution order so project
-    # YAML wins makes the fixture's `verify` phase visible, which is also what
-    # `handoff.complete_phase._get_phase_agent` has always read.
+    # See VERIFY_PHASE_UNQUARANTINE_NOTE above.
     def test_tea_owns_verify_phase(
         self, project: Path, session_at_setup: Path
     ) -> None:

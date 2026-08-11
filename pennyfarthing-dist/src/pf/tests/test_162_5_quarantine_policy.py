@@ -45,20 +45,80 @@ IN_SCOPE_MODULES = [
     "test_peloton_portrait_panes.py",
 ]
 
-# A tracking reference is a story id (``162-5``), a gh issue (``gh #113``), or a
-# bare issue number (``#113``). Quarantines must point somewhere.
-_TRACKING_RE = re.compile(r"\b\d+-\d+\b|\bgh\s*#\d+|#\d+")
+# A tracking reference has to be *followable*. Story 162-31's review of this
+# guard found the original ``\b\d+-\d+\b|#\d+`` accepted anything hyphen-shaped
+# or hash-shaped — ``flaky 3-14 on macos``, ``see 1-1``, ``quarantined 2026-08``,
+# ``top #5 flake`` — which is the same as no reference, only harder to notice.
+# A number now only counts inside a recognisable context word, or as a Jira key.
+_TRACKING_RE = re.compile(
+    r"\b(?:story|epic|issue|bug|pr|gh|github)\s*#?\s*\d+(?:-\d+)?\b"
+    r"|\b[A-Z][A-Z0-9]+-\d+\b"
+)
 
 _QUARANTINE_MARKERS = ("mark.xfail", "mark.skip", "mark.skipif")
 
+# Runtime bail-outs. ``pytest.xfail("...")`` never appears in a decorator list,
+# so before story 162-31 it removed a test from the suite invisibly to this
+# policy. ``pytest.skip`` is deliberately NOT here: at runtime it overwhelmingly
+# encodes an environment fact, not debt.
+_RUNTIME_XFAIL_CALLS = ("pytest.xfail", "xfail")
+
+# Name reported for a marker that belongs to the module rather than one test.
+MODULE_MARKER_NAME = "<module>"
+
+
+def _module_level_markers(tree: ast.Module) -> list[tuple[str, ast.expr]]:
+    """Quarantines declared as ``pytestmark = pytest.mark.xfail(...)``.
+
+    A module-level marker quarantines *every* test in the file, so it is the
+    cheapest possible bypass of a decorator-only scan (story 162-31). Both the
+    single-marker and the list form are recognised.
+    """
+    found: list[tuple[str, ast.expr]] = []
+    for stmt in tree.body:
+        if not isinstance(stmt, ast.Assign):
+            continue
+        if not any(
+            isinstance(t, ast.Name) and t.id == "pytestmark" for t in stmt.targets
+        ):
+            continue
+        value = stmt.value
+        items = (
+            list(value.elts) if isinstance(value, ast.List | ast.Tuple) else [value]
+        )
+        for item in items:
+            if any(m in ast.unparse(item) for m in _QUARANTINE_MARKERS):
+                found.append((MODULE_MARKER_NAME, item))
+    return found
+
+
+def _runtime_xfail_markers(tree: ast.Module) -> list[tuple[str, ast.expr]]:
+    """Quarantines declared by calling ``pytest.xfail("...")`` inside a test."""
+    found: list[tuple[str, ast.expr]] = []
+    seen: set[int] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+            continue
+        for inner in ast.walk(node):
+            if not isinstance(inner, ast.Call) or id(inner) in seen:
+                continue
+            if ast.unparse(inner.func) in _RUNTIME_XFAIL_CALLS:
+                seen.add(id(inner))
+                found.append((node.name, inner))
+    return found
+
 
 def _markers_in_source(source: str) -> list[tuple[str, ast.expr]]:
-    """Core detection: yield (test_name, decorator_node) for one module's source.
+    """Core detection: yield (test_name, marker_node) for one module's source.
 
     Split out from the tree walk (story 162-29) so the anti-vacuity guards can
     exercise *this* function against a synthetic module. Before the split they
     asserted that the real test tree contained quarantines — which made paying
     off the last xfail a test failure, exactly backwards from the intent.
+
+    Covers three declaration sites (story 162-31): decorators, module-level
+    ``pytestmark``, and runtime ``pytest.xfail()`` calls. The first was the only
+    one scanned originally, and the other two bypassed the policy entirely.
     """
     found: list[tuple[str, ast.expr]] = []
     try:
@@ -73,7 +133,46 @@ def _markers_in_source(source: str) -> list[tuple[str, ast.expr]]:
             src = ast.unparse(dec)
             if any(m in src for m in _QUARANTINE_MARKERS):
                 found.append((getattr(node, "name", "<unknown>"), dec))
+    found.extend(_module_level_markers(tree))
+    found.extend(_runtime_xfail_markers(tree))
     return found
+
+
+def find_xpasses(targets: list[Path]) -> list[str]:
+    """Test ids that XPASSed — a quarantine whose bug is already fixed.
+
+    The 162-5 quarantines are ``xfail(strict=False)``: when the underlying bug
+    is finally fixed the test XPASSes, pytest still exits 0, and nobody is told
+    to lift the marker. This is the forcing function. Detection has to be a real
+    run rather than a scan of the source, because "this xfail passed" is a
+    runtime fact.
+
+    Returns the offender ids (empty when there are none) rather than raising —
+    the caller decides whether an XPASS is a failure.
+    """
+    if not targets:
+        return []
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "--tb=no",
+            "-rX",
+            "-p",
+            "no:cacheprovider",
+            *(str(t) for t in targets),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=TESTS_DIR.parent.parent.parent.parent,
+    )
+    offenders: list[str] = []
+    for line in proc.stdout.splitlines():
+        if line.startswith("XPASS "):
+            offenders.append(line[len("XPASS ") :].strip())
+    return offenders
 
 
 # A module carrying one of every quarantine flavour. The guards below run
@@ -82,7 +181,7 @@ def _markers_in_source(source: str) -> list[tuple[str, ast.expr]]:
 SYNTHETIC_MODULE = '''
 import pytest
 
-@pytest.mark.xfail(reason="synthetic 999-1: pinned by the discovery guard", strict=False)
+@pytest.mark.xfail(reason="synthetic story 999-1: pinned by the discovery guard", strict=False)
 def test_synthetic_xfail():
     pass
 
@@ -113,7 +212,7 @@ def _iter_quarantine_markers() -> list[tuple[Path, str, ast.expr]]:
 
 
 def _reason_of(dec: ast.expr) -> str | None:
-    """Extract a literal ``reason=`` string from a marker, if present."""
+    """Extract a literal reason string from a marker, if present."""
     if not isinstance(dec, ast.Call):
         return None
     for kw in dec.keywords:
@@ -123,6 +222,16 @@ def _reason_of(dec: ast.expr) -> str | None:
             except (ValueError, SyntaxError):
                 return None
             return value if isinstance(value, str) else None
+    # A runtime ``pytest.xfail("...")`` passes its reason positionally (story
+    # 162-31). Restricted to non-``mark.*`` calls on purpose: for
+    # ``mark.skipif(cond, ...)`` the first positional is the condition, not a
+    # reason, and reading it would invent references that do not exist.
+    if "mark." not in ast.unparse(dec.func) and dec.args:
+        try:
+            value = ast.literal_eval(dec.args[0])
+        except (ValueError, SyntaxError):
+            return None
+        return value if isinstance(value, str) else None
     return None
 
 
@@ -226,7 +335,9 @@ class TestQuarantineMarkersAreLoud:
         # The regex must be capable of rejecting, not just accepting.
         assert not _TRACKING_RE.search("no reference here at all")
         assert _TRACKING_RE.search("gh #113")
-        assert _TRACKING_RE.search("162-29")
+        assert _TRACKING_RE.search("story 162-29")
+        # Hyphen-shaped is not enough (story 162-31) — junk must be rejected.
+        assert not _TRACKING_RE.search("flaky 3-14 on macos")
 
 
 class TestInScopeModulesHaveNoUnmarkedFailures:
