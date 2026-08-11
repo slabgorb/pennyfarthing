@@ -7,10 +7,15 @@ with {success, data?, error?}.
 
 from __future__ import annotations
 
+import logging
 import subprocess
+from pathlib import Path
 
 SOCKET = "pf"
 IDLE_SHELLS = {"zsh", "bash", "fish", "sh", "-zsh", "-bash"}
+DEFAULT_TMUX_CONF = "tmux.conf.vert"
+
+logger = logging.getLogger(__name__)
 
 
 def _run_tmux(*args: str, capture: bool = True) -> dict:
@@ -41,6 +46,18 @@ def is_tmux_running() -> bool:
 BARE_SESSION_PREFIX = "pf-bare-"
 
 
+def _resolve_tmux_conf() -> Path | None:
+    """Resolve the project's tmux config path, or None if unavailable."""
+    from pf.common.config import get_project_root
+
+    try:
+        root = get_project_root()
+    except (FileNotFoundError, OSError):
+        return None
+    config = Path(root) / DEFAULT_TMUX_CONF
+    return config if config.is_file() else None
+
+
 def ensure_server() -> dict:
     """Ensure a tmux server is running on the pf socket.
 
@@ -48,6 +65,11 @@ def ensure_server() -> dict:
     commands work immediately without requiring `just start` first.
     The bare session uses a distinct prefix (pf-bare-*) so it never
     collides with start-session's naming scheme (pf-<project>-N).
+
+    The project's tmux config (tmux.conf.vert) is sourced into the new
+    session so it does not inherit vanilla tmux defaults. A missing
+    config or a failing source-file is logged as a warning and does not
+    fail session creation.
 
     Returns:
         {success: True, data: "session_name"} or {success: False, error: ...}
@@ -63,6 +85,23 @@ def ensure_server() -> dict:
     result = _run_tmux("new-session", "-d", "-s", session_name)
     if not result["success"]:
         return result
+
+    config = _resolve_tmux_conf()
+    if config is None:
+        logger.warning(
+            "No %s found for project; bare tmux session %s uses tmux defaults",
+            DEFAULT_TMUX_CONF,
+            session_name,
+        )
+    else:
+        source = _run_tmux("source-file", str(config), "-t", session_name)
+        if not source["success"]:
+            logger.warning(
+                "Failed to source %s into %s: %s",
+                config,
+                session_name,
+                source.get("error"),
+            )
 
     return {"success": True, "data": session_name}
 
