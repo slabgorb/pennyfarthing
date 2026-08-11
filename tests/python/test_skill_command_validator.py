@@ -422,7 +422,10 @@ class TestAC1SkillRegistryValidation:
 
     def test_registry_not_found_is_error(self, tmp_path: Path) -> None:
         """Missing skill-registry.yaml should produce an error."""
-        # No files written
+        # A dist root must exist, otherwise get_dist_root() falls back to the
+        # installed package's bundled pf._dist and finds a real registry.
+        (tmp_path / "pennyfarthing-dist").mkdir()
+
         errors, warnings = validate_skill_registry(tmp_path)
 
         assert any("not found" in e.lower() or "missing" in e.lower() for e in errors)
@@ -530,7 +533,7 @@ class TestAC3PipelineIntegration:
 
         # Registry (1) + commands (2) should all pass
         assert report.passed >= 3
-        assert report.errors == 0
+        assert report.errors == []
 
     def test_run_reports_mixed_results(self, tmp_path: Path) -> None:
         """run() with valid registry but bad command should report correctly."""
@@ -541,7 +544,7 @@ class TestAC3PipelineIntegration:
         report = run(tmp_path, fix=False, strict=False)
 
         assert report.passed >= 1
-        assert report.errors >= 1
+        assert len(report.errors) >= 1
 
 
 # =============================================================================
@@ -577,8 +580,8 @@ class TestAC4ZeroFalsePositives:
 
         report = run(root, fix=False, strict=False)
 
-        assert report.errors == 0, (
-            f"Real files have {report.errors} errors:\n"
+        assert report.errors == [], (
+            f"Real files have {len(report.errors)} errors:\n"
             + "\n".join(d for d in report.details if "[ERROR]" in d)
         )
 
@@ -623,7 +626,7 @@ class TestAC5StrictMode:
 
         report = run(tmp_path, fix=False, strict=True)
 
-        assert report.errors >= 1
+        assert len(report.errors) >= 1
         assert any("[ERROR]" in d and "bare.md" in d for d in report.details)
 
 
@@ -667,6 +670,10 @@ class TestAC7Discovery:
 
     def test_discover_skill_registry_missing(self, tmp_path: Path) -> None:
         """Should return None when skill-registry.yaml is absent."""
+        # A dist root must exist, otherwise get_dist_root() falls back to the
+        # installed package's bundled pf._dist and finds a real registry.
+        (tmp_path / "pennyfarthing-dist").mkdir()
+
         path = discover_skill_registry(tmp_path)
 
         assert path is None
@@ -733,7 +740,7 @@ class TestEdgeCases:
         report = run(tmp_path, fix=False, strict=False)
 
         # Should report missing registry as error, but commands should still pass
-        assert report.errors >= 1  # Missing registry
+        assert len(report.errors) >= 1  # Missing registry
         assert report.passed >= 1  # Command validated
 
     def test_report_details_use_error_prefix(self, tmp_path: Path) -> None:

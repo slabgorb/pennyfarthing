@@ -93,14 +93,19 @@ class TestValidateEpicShard:
         assert not result.valid
 
     def test_invalid_jira_key_format_rejected(self):
-        """Epic shard with malformed jira key should be rejected."""
+        """Epic shard with malformed jira key should be rejected.
+
+        The contract is PROJECT-NUMBER, not a specific project prefix — any
+        uppercase project key is accepted (e.g. PROJ-17, TEAM-12345), so the
+        malformed case is a key that does not match the shape at all.
+        """
         from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
-        epic["jira"] = "BAD-123"
+        epic["jira"] = "bad_key123"
         result = validate_epic_shard(epic)
         assert not result.valid
-        assert any("jira" in e.message.lower() or "PROJ" in e.message for e in result.errors)
+        assert any("jira" in e.message.lower() for e in result.errors)
 
     def test_valid_jira_key_passes(self):
         """Epic shard with valid PROJ-NNNNN jira key should pass."""
