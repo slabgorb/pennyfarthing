@@ -76,6 +76,24 @@ VALID_STORY_STATUSES = {
     "planning",
     "split",
 }
+# Canonical story `type` tags. Deliberately the UNION of (a) every value already
+# present in the live sprint corpus (bug/chore/refactor/feature/docs/fix/test) and
+# (b) the classification the 162 tagging request asked for
+# (comment/test/doc/feature/fix). A generous set is intentional: a stricter enum
+# would retroactively invalidate ~315 existing stories. `fix`/`bug` and `doc`/`docs`
+# are accepted as coexisting aliases pending a normalization pass (see 162-79 TEA
+# finding / ADR-0043 follow-up).
+VALID_STORY_TYPES = {
+    "feature",
+    "fix",
+    "bug",
+    "chore",
+    "refactor",
+    "test",
+    "doc",
+    "docs",
+    "comment",
+}
 JIRA_KEY_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]+-\d+(\s*/\s*[A-Z][A-Z0-9_]+-\d+)*$")
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
