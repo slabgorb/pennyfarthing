@@ -10,6 +10,7 @@ Entry point for uvicorn.
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import sys
 import time
@@ -21,6 +22,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .otlp import OTLPReceiver
+
+# Frame logs through uvicorn's error logger so records land in .session/frame.log
+_logger = logging.getLogger("uvicorn.error")
 
 # Module-level receiver instance (shared across routes)
 _receiver = OTLPReceiver()
@@ -68,6 +72,11 @@ async def broadcast(channel: str, data: dict) -> None:
         try:
             await ws.send_text(message)
         except Exception:
+            _logger.error(
+                "Frame broadcast to a %s WebSocket client failed; pruning client",
+                channel,
+                exc_info=True,
+            )
             dead.append(ws)
     for ws in dead:
         _ws_clients[channel].discard(ws)
@@ -199,7 +208,7 @@ def create_app() -> FastAPI:
             for span in new_spans:
                 await broadcast("spans", {"type": "span", "span": span})
         except Exception:
-            pass
+            _logger.error("Failed to ingest OTLP logs payload", exc_info=True)
         return JSONResponse({"partialSuccess": {}})
 
     @app.post("/v1/metrics")
@@ -212,7 +221,7 @@ def create_app() -> FastAPI:
                 _receiver.process_metrics(body)
                 await broadcast("token-stats", _receiver.get_token_stats())
         except Exception:
-            pass
+            _logger.error("Failed to ingest OTLP metrics payload", exc_info=True)
         return JSONResponse({"partialSuccess": {}})
 
     @app.post("/v1/traces")
@@ -223,7 +232,7 @@ def create_app() -> FastAPI:
             for span in new_spans:
                 await broadcast("spans", {"type": "span", "span": span})
         except Exception:
-            pass
+            _logger.error("Failed to ingest OTLP traces payload", exc_info=True)
         return JSONResponse({"partialSuccess": {}})
 
     # --- Mount all API route groups ---
