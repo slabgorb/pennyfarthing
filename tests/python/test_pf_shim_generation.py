@@ -307,15 +307,28 @@ class TestBackwardCompatibility:
         _upgrade_hooks(settings_path)
 
         data = json.loads(settings_path.read_text())
-        # The already-upgraded one should not be double-upgraded
-        stop_cmds = [
-            h["command"]
-            for entry in data["hooks"]["Stop"]
-            for h in entry.get("hooks", [])
-        ]
-        # Should have exactly one stop hook, not duplicated
-        stop_pf_hooks = [c for c in stop_cmds if "session-stop" in c]
-        assert len(stop_pf_hooks) >= 1
+
+        # 162-30: this used to look for a surviving `session-stop` command. That
+        # is no longer how the upgrade works — `_upgrade_hooks` consolidates every
+        # per-hook entry into ONE `pf hooks dispatch <Event>` entry per event
+        # (same dispatcher migration that `test_stale_hooks_detection` covers), so
+        # `session-start` / `session-stop` commands are replaced, not preserved.
+        # The invariant the test name promises — "not double-upgraded" — is
+        # asserted directly below, for both the bare and the already-prefixed leg.
+        for event in ("SessionStart", "Stop"):
+            cmds = [
+                h["command"]
+                for entry in data["hooks"][event]
+                for h in entry.get("hooks", [])
+            ]
+            dispatchers = [c for c in cmds if f"hooks dispatch {event}" in c]
+            assert len(dispatchers) == 1, (
+                f"{event} should hold exactly one dispatcher entry, got {cmds}"
+            )
+            leftovers = [c for c in cmds if "hooks session-" in c]
+            assert leftovers == [], (
+                f"{event} still carries old-style per-hook commands: {leftovers}"
+            )
 
     def test_upgrades_statusline(self, project_dir):
         """statusLine command is also upgraded from bare pf."""

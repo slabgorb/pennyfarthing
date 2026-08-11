@@ -1,10 +1,26 @@
 """Tests for Story 110-9: TUI portrait resolution for consumer installs.
 
 Verifies:
-  AC1: Theme-pack portraits resolve in consumer npm installs
+  AC1: Theme-pack theme YAMLs resolve in consumer npm installs
   AC2: Dogfooding mode continues to work with symlinked paths taking priority
-  AC3: portrait_resolver.py discovers portraits from core, npm, and monorepo
-  AC4: Core-only themes degrade gracefully when portraits unavailable
+  AC3: portrait_resolver.py discovers themes from core, npm, and monorepo
+  AC4: Themes degrade gracefully when no portrait is available
+
+CONTRACT CHANGE (story 153-12): `resolve_portrait_path` no longer searches for
+portrait *image files* on disk. Local install / `~/.pennyfarthing` override /
+theme-sibling `portraits/` / Git-LFS / Cyclist-package fallbacks were all
+removed; the R2 CDN (`pf.package.portrait_cdn.fetch_portrait`) is the single
+source of truth for images. What survives — and what this file now pins — is:
+
+  1. the portrait *slug* (`shortName-OCEAN`) is computed from the theme YAML
+     found via `pf.common.themes.discover_all_theme_dirs`, which still spans
+     `.pennyfarthing/`, `pennyfarthing-dist/`, `node_modules/@pennyfarthing/
+     themes-*`, and monorepo `packages/themes-*` in that priority order; and
+  2. the resolver delegates to the CDN with `(theme, slug, preferred_size)`.
+
+So the multi-source / dogfooding-priority ACs are re-derived onto the SLUG
+source rather than the image path, and every test stubs `fetch_portrait` so it
+asserts the resolver's own behavior instead of making a live network call.
 
 Run with: python -m pytest tests/python/test_portrait_consumer_resolution.py -v
 """
@@ -13,6 +29,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -24,16 +41,28 @@ import yaml
 MOCK_OCEAN = {"O": 4, "C": 4, "E": 5, "A": 4, "N": 1}
 
 
-def _write_theme_yaml(themes_dir: Path, theme_name: str, agent: str = "sm") -> None:
-    """Create a minimal theme YAML with one agent."""
+def _write_theme_yaml(
+    themes_dir: Path,
+    theme_name: str,
+    agent: str = "sm",
+    *,
+    short_name: str = "Leader",
+    ocean: dict[str, int] | None = None,
+) -> None:
+    """Create a minimal theme YAML with one agent.
+
+    `short_name` / `ocean` are overridable so a test can tell WHICH theme dir a
+    slug came from: the slug is `shortName-OCEAN`, so giving each source a
+    distinct persona makes the resolution order observable.
+    """
     themes_dir.mkdir(parents=True, exist_ok=True)
     data = {
         "theme": {"name": theme_name},
         "agents": {
             agent: {
-                "character": "Test Leader",
-                "shortName": "Leader",
-                "ocean": MOCK_OCEAN,
+                "character": f"Test {short_name}",
+                "shortName": short_name,
+                "ocean": ocean or MOCK_OCEAN,
             }
         },
     }
@@ -63,6 +92,27 @@ def _write_package_json(pkg_dir: Path, name: str, *, theme_pack: bool = True) ->
 
 # The expected slug for shortName="Leader" with OCEAN {4,4,5,4,1}
 LEADER_SLUG = "leader-44541"
+
+
+def _stub_cdn(tmp_path: Path, *, hit: bool = True):
+    """Patch the CDN fetch so tests exercise the resolver, not the network.
+
+    Returns the patcher's mock. On `hit` the stub writes and returns a fake
+    cached PNG so callers can assert on a real, existing `Path`; otherwise it
+    returns None (the offline / all-404 case).
+    """
+    cache = tmp_path / "_cdn_cache"
+
+    def _fake_fetch(theme: str, slug: str, preferred_size: str = "medium", cache_dir=None):
+        if not hit:
+            return None
+        target = cache / theme / preferred_size
+        target.mkdir(parents=True, exist_ok=True)
+        path = target / f"{slug}.png"
+        path.write_bytes(b"\x89PNG\r\n")
+        return path
+
+    return patch("pf.package.portrait_cdn.fetch_portrait", side_effect=_fake_fetch)
 
 
 @pytest.fixture
@@ -191,18 +241,62 @@ def monorepo_install(tmp_path: Path) -> Path:
 
 
 class TestThemePackNpmResolution:
-    """AC1: resolve_portrait_path() finds portraits from npm theme packs."""
+    """AC1: resolve_portrait_path() resolves theme-pack themes from npm."""
 
     def test_resolve_finds_portrait_in_npm_theme_pack(self, consumer_install: Path):
-        """Theme-pack theme should resolve portrait via node_modules sibling path."""
+        """A theme-pack theme in node_modules should resolve to a portrait."""
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
+        with _stub_cdn(consumer_install):
+            result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
+
         assert result is not None, (
-            "Should find portrait for theme-pack theme in consumer npm install"
+            "Should resolve a portrait for a theme-pack theme in a consumer npm install"
         )
         assert result.exists(), f"Portrait file should exist at {result}"
         assert result.suffix == ".png"
+
+    def test_slug_is_read_from_the_npm_theme_yaml(self, consumer_install: Path):
+        """The slug handed to the CDN must come from the npm pack's theme YAML.
+
+        Replaces the old `test_npm_portrait_found_via_sibling_path`, which
+        asserted the returned path contained "node_modules". That assertion
+        pinned sibling-`portraits/` lookup, deleted in story 153-12 — images now
+        come from the CDN cache, so no resolved path can ever name node_modules.
+        The surviving observable is that the persona data was read from the npm
+        pack, which the slug proves.
+        """
+        from pf.tui.portrait_resolver import resolve_portrait_path
+
+        with _stub_cdn(consumer_install) as fetch:
+            resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
+
+        fetch.assert_called_once()
+        assert fetch.call_args.args[0] == "pack-theme"
+        assert fetch.call_args.args[1] == LEADER_SLUG, (
+            f"Slug should be derived from the npm pack's theme YAML, got {fetch.call_args.args}"
+        )
+
+    def test_local_portrait_files_are_not_consulted(self, consumer_install: Path):
+        """Resolution must succeed with NO local portraits dir at all.
+
+        Positive pin on the 153-12 contract: the CDN is the only image source,
+        so deleting every on-disk portrait must not affect resolution.
+        """
+        from pf.tui.portrait_resolver import resolve_portrait_path
+
+        pack_portraits = (
+            consumer_install / "node_modules" / "@pennyfarthing" / "themes-mock" / "portraits"
+        )
+        for png in pack_portraits.rglob("*.png"):
+            png.unlink()
+
+        with _stub_cdn(consumer_install):
+            result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
+
+        assert result is not None, (
+            "Resolution must not depend on local portrait files (CDN is the only source)"
+        )
 
     def test_discover_includes_npm_theme_dirs(self, consumer_install: Path):
         """discover_all_theme_dirs should include node_modules theme-pack paths."""
@@ -214,24 +308,28 @@ class TestThemePackNpmResolution:
             "discover_all_theme_dirs should find node_modules/@pennyfarthing/themes-* dirs"
         )
 
-    def test_npm_portrait_found_via_sibling_path(self, consumer_install: Path):
-        """Portrait should be found as sibling of the npm themes/ directory."""
-        from pf.tui.portrait_resolver import resolve_portrait_path
-
-        result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
-        assert result is not None
-        # Verify the portrait came from the npm location
-        assert "node_modules" in str(result), (
-            f"Portrait should come from node_modules path, got {result}"
-        )
-
     def test_npm_portrait_prefers_medium_size(self, consumer_install: Path):
-        """npm-resolved portrait should prefer medium size bucket."""
+        """The resolver must ask the CDN for `medium` when no size is requested."""
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
-        assert result is not None
-        assert "medium" in str(result), f"Should prefer medium size, got {result}"
+        with _stub_cdn(consumer_install) as fetch:
+            result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
+
+        assert fetch.call_args.kwargs["preferred_size"] == "medium", (
+            f"Default preferred_size should be 'medium', got {fetch.call_args.kwargs}"
+        )
+        assert result is not None and "medium" in str(result)
+
+    def test_explicit_preferred_size_is_forwarded(self, consumer_install: Path):
+        """Negative leg: an explicit size must not be overwritten by the default."""
+        from pf.tui.portrait_resolver import resolve_portrait_path
+
+        with _stub_cdn(consumer_install) as fetch:
+            resolve_portrait_path(
+                "pack-theme", "sm", project_root=consumer_install, preferred_size="large"
+            )
+
+        assert fetch.call_args.kwargs["preferred_size"] == "large"
 
 
 # ===========================================================================
@@ -246,31 +344,47 @@ class TestDogfoodingPriority:
         """Core theme portrait should resolve in dogfooding mode."""
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        result = resolve_portrait_path("core-theme", "sm", project_root=dogfooding_install)
+        with _stub_cdn(dogfooding_install):
+            result = resolve_portrait_path("core-theme", "sm", project_root=dogfooding_install)
+
         assert result is not None, "Core theme portrait should resolve in dogfooding"
         assert result.exists()
 
     def test_pennyfarthing_dir_takes_priority_over_npm(self, dogfooding_install: Path):
-        """When theme exists in both .pennyfarthing/ and npm, .pennyfarthing/ wins."""
+        """When a theme exists in both `.pennyfarthing/` and npm, `.pennyfarthing/` wins.
+
+        Re-derived from a path assertion (`".pennyfarthing" in str(result)`) onto
+        the slug, because after 153-12 the returned path is a CDN cache path and
+        can never name a theme dir. Giving the npm copy a DIFFERENT persona makes
+        the winning source observable: whichever YAML was read decides the slug.
+        """
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        # Add the same theme to the npm pack so both locations have it
+        # Same theme name in the npm pack, but a distinguishable persona.
         pack_dir = dogfooding_install / "node_modules" / "@pennyfarthing" / "themes-mock"
-        _write_theme_yaml(pack_dir / "themes", "core-theme")
-        _write_portrait(pack_dir / "portraits", "core-theme", LEADER_SLUG)
+        _write_theme_yaml(
+            pack_dir / "themes",
+            "core-theme",
+            short_name="Impostor",
+            ocean={"O": 1, "C": 1, "E": 1, "A": 1, "N": 1},
+        )
 
-        result = resolve_portrait_path("core-theme", "sm", project_root=dogfooding_install)
+        with _stub_cdn(dogfooding_install) as fetch:
+            result = resolve_portrait_path("core-theme", "sm", project_root=dogfooding_install)
+
         assert result is not None
-        # .pennyfarthing/ is first in discovery order
-        assert ".pennyfarthing" in str(result), (
-            f"Dogfooding .pennyfarthing/ should take priority over npm, got {result}"
+        assert fetch.call_args.args[1] == LEADER_SLUG, (
+            "Dogfooding .pennyfarthing/ should take priority over npm, but the slug "
+            f"came from the npm copy: {fetch.call_args.args[1]}"
         )
 
     def test_dogfooding_also_resolves_npm_theme_pack(self, dogfooding_install: Path):
         """Theme-pack themes should still resolve alongside core themes in dogfooding."""
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        result = resolve_portrait_path("pack-theme", "sm", project_root=dogfooding_install)
+        with _stub_cdn(dogfooding_install):
+            result = resolve_portrait_path("pack-theme", "sm", project_root=dogfooding_install)
+
         assert result is not None, "Theme-pack portrait should resolve in dogfooding mode too"
 
 
@@ -280,37 +394,46 @@ class TestDogfoodingPriority:
 
 
 class TestMultiSourceDiscovery:
-    """AC3: Resolver searches core, npm theme packs, and monorepo workspace."""
+    """AC3: Resolver reaches themes in core, npm theme packs, and the monorepo.
 
-    def test_discovers_core_pennyfarthing_dist_portraits(self, monorepo_install: Path):
-        """Should find portraits via pennyfarthing-dist/personas/portraits/."""
+    All three tests were `"<source>" in str(result)` path assertions before
+    153-12. The returned path is now always a CDN cache path, so the source is
+    instead proven by the slug: a theme that lives ONLY in that source can only
+    contribute a slug if that source was discovered. No slug means the resolver
+    returns None before ever calling the CDN.
+    """
+
+    def test_discovers_core_pennyfarthing_dist_theme(self, monorepo_install: Path):
+        """Should reach a theme that exists only in pennyfarthing-dist/personas/themes/."""
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        result = resolve_portrait_path("core-theme", "sm", project_root=monorepo_install)
-        assert result is not None, (
-            "Should resolve core theme portrait via pennyfarthing-dist"
-        )
-        assert "pennyfarthing-dist" in str(result)
+        with _stub_cdn(monorepo_install) as fetch:
+            result = resolve_portrait_path("core-theme", "sm", project_root=monorepo_install)
 
-    def test_discovers_monorepo_workspace_portraits(self, monorepo_install: Path):
-        """Should find portraits via packages/themes-*/portraits/."""
+        assert result is not None, "Should resolve core theme portrait via pennyfarthing-dist"
+        assert fetch.call_args.args == ("core-theme", LEADER_SLUG)
+
+    def test_discovers_monorepo_workspace_theme(self, monorepo_install: Path):
+        """Should reach a theme that exists only in packages/themes-*/themes/."""
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        result = resolve_portrait_path("pack-theme", "sm", project_root=monorepo_install)
+        with _stub_cdn(monorepo_install) as fetch:
+            result = resolve_portrait_path("pack-theme", "sm", project_root=monorepo_install)
+
         assert result is not None, (
             "Should resolve theme-pack portrait via monorepo workspace packages/"
         )
-        assert "packages" in str(result)
+        assert fetch.call_args.args == ("pack-theme", LEADER_SLUG)
 
-    def test_discovers_npm_portraits(self, consumer_install: Path):
-        """Should find portraits via node_modules/@pennyfarthing/themes-*/portraits/."""
+    def test_discovers_npm_theme(self, consumer_install: Path):
+        """Should reach a theme that exists only in node_modules/@pennyfarthing/themes-*."""
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
-        assert result is not None, (
-            "Should resolve theme-pack portrait via npm node_modules"
-        )
-        assert "node_modules" in str(result)
+        with _stub_cdn(consumer_install) as fetch:
+            result = resolve_portrait_path("pack-theme", "sm", project_root=consumer_install)
+
+        assert result is not None, "Should resolve theme-pack portrait via npm node_modules"
+        assert fetch.call_args.args == ("pack-theme", LEADER_SLUG)
 
     def test_all_three_sources_in_discovery(self, tmp_path: Path):
         """discover_all_theme_dirs should include dirs from all three source types."""
@@ -379,57 +502,91 @@ class TestMultiSourceDiscovery:
 
 
 class TestCoreThemeGracefulDegradation:
-    """AC4: Core-only themes return None without error when portraits unavailable."""
+    """AC4: Resolution returns None without error when no portrait is available.
 
-    def test_core_theme_returns_none_in_consumer_install(self, consumer_install: Path):
-        """Core-only theme should return None when no portraits available."""
+    These four tests previously reached the real CDN (they were green only
+    because the fixture theme names happen to 404 upstream) — a live network
+    call masquerading as a unit test. Each now stubs `fetch_portrait` so the
+    "unavailable" case is the one under test rather than an accident of
+    connectivity.
+    """
+
+    def test_returns_none_when_cdn_has_no_image(self, consumer_install: Path):
+        """A resolvable slug with no CDN image should degrade to None."""
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        result = resolve_portrait_path("core-theme", "sm", project_root=consumer_install)
-        assert result is None, (
-            "Core-only theme should return None in consumer install without portraits"
-        )
-
-    def test_core_theme_no_exception_on_missing_portraits(self, consumer_install: Path):
-        """resolve_portrait_path should not raise for core themes without portraits."""
-        from pf.tui.portrait_resolver import resolve_portrait_path
-
-        # Should not raise any exception
-        try:
+        with _stub_cdn(consumer_install, hit=False):
             result = resolve_portrait_path("core-theme", "sm", project_root=consumer_install)
-        except Exception as exc:
-            pytest.fail(f"Should not raise for missing portraits, got: {exc}")
+
+        assert result is None, "Should return None when the CDN has no image for the slug"
+
+    def test_no_exception_when_cdn_raises(self, consumer_install: Path):
+        """A CDN failure must be swallowed into None, not propagated to the TUI."""
+        from pf.tui.portrait_resolver import resolve_portrait_path
+
+        with patch(
+            "pf.package.portrait_cdn.fetch_portrait", side_effect=OSError("network down")
+        ):
+            try:
+                result = resolve_portrait_path("core-theme", "sm", project_root=consumer_install)
+            except Exception as exc:
+                pytest.fail(f"Should not raise when the CDN fails, got: {exc}")
 
         assert result is None
 
     def test_completely_unknown_theme_returns_none(self, consumer_install: Path):
-        """Theme that exists nowhere should return None cleanly."""
+        """A theme that exists nowhere returns None WITHOUT consulting the CDN."""
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        result = resolve_portrait_path("nonexistent-theme", "sm", project_root=consumer_install)
+        with _stub_cdn(consumer_install) as fetch:
+            result = resolve_portrait_path(
+                "nonexistent-theme", "sm", project_root=consumer_install
+            )
+
         assert result is None
+        # No slug means no CDN request should be made.
+        fetch.assert_not_called()
 
-    def test_core_theme_resolves_when_pennyfarthing_dist_has_portraits(self, tmp_path: Path):
-        """Core theme should resolve when pennyfarthing-dist/personas/portraits/ exists."""
+    def test_unknown_agent_returns_none(self, consumer_install: Path):
+        """A known theme with no entry for the requested agent yields no slug."""
         from pf.tui.portrait_resolver import resolve_portrait_path
 
-        # Consumer-like but with pennyfarthing-dist available (monorepo/dogfood)
-        _write_theme_yaml(tmp_path / ".pennyfarthing" / "personas" / "themes", "core-theme")
-        _write_theme_yaml(tmp_path / "pennyfarthing-dist" / "personas" / "themes", "core-theme")
-        _write_portrait(tmp_path / "pennyfarthing-dist" / "personas" / "portraits", "core-theme", LEADER_SLUG)
+        with _stub_cdn(consumer_install) as fetch:
+            result = resolve_portrait_path("pack-theme", "no-such-agent", project_root=consumer_install)
 
-        result = resolve_portrait_path("core-theme", "sm", project_root=tmp_path)
+        assert result is None
+        fetch.assert_not_called()
+
+    def test_core_theme_resolves_via_pennyfarthing_dist_theme_yaml(self, tmp_path: Path):
+        """Core theme should resolve when only pennyfarthing-dist holds its YAML."""
+        from pf.tui.portrait_resolver import resolve_portrait_path
+
+        # Consumer-like but with pennyfarthing-dist available (monorepo/dogfood).
+        # Only the dist copy carries the `sm` persona, so a successful slug
+        # proves the dist theme dir was searched.
+        (tmp_path / ".pennyfarthing" / "personas" / "themes").mkdir(parents=True)
+        _write_theme_yaml(tmp_path / "pennyfarthing-dist" / "personas" / "themes", "core-theme")
+
+        with _stub_cdn(tmp_path) as fetch:
+            result = resolve_portrait_path("core-theme", "sm", project_root=tmp_path)
+
         assert result is not None, (
-            "Core theme should resolve when pennyfarthing-dist has portraits"
+            "Core theme should resolve when pennyfarthing-dist holds the theme YAML"
+        )
+        assert fetch.call_args.args == ("core-theme", LEADER_SLUG)
+
+    def test_theme_yaml_without_ocean_returns_none(self, tmp_path: Path):
+        """An incomplete persona (no OCEAN scores) cannot produce a slug."""
+        from pf.tui.portrait_resolver import resolve_portrait_path
+
+        themes_dir = tmp_path / ".pennyfarthing" / "personas" / "themes"
+        themes_dir.mkdir(parents=True)
+        (themes_dir / "core-theme.yaml").write_text(
+            yaml.dump({"theme": {"name": "core-theme"}, "agents": {"sm": {"shortName": "Leader"}}})
         )
 
-    def test_empty_portraits_dir_returns_none(self, tmp_path: Path):
-        """Empty portraits directory should return None, not crash."""
-        from pf.tui.portrait_resolver import resolve_portrait_path
+        with _stub_cdn(tmp_path) as fetch:
+            result = resolve_portrait_path("core-theme", "sm", project_root=tmp_path)
 
-        _write_theme_yaml(tmp_path / ".pennyfarthing" / "personas" / "themes", "core-theme")
-        # Create portraits dir but leave it empty (no theme subdir)
-        (tmp_path / ".pennyfarthing" / "personas" / "portraits").mkdir(parents=True)
-
-        result = resolve_portrait_path("core-theme", "sm", project_root=tmp_path)
-        assert result is None, "Empty portraits dir should result in None"
+        assert result is None, "A persona without OCEAN scores should not yield a slug"
+        fetch.assert_not_called()

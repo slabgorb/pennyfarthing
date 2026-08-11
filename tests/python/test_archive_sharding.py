@@ -15,6 +15,7 @@ Run with: python -m pytest tests/python/test_archive_sharding.py -v
 from pathlib import Path
 from typing import Any
 
+import pytest
 from pf.sprint.archive_epic import (
     _load_archive_file,
     _write_archive_file,
@@ -33,6 +34,14 @@ def _write_yaml(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         yml.dump(data, f)
+
+
+# An epic ref that is deliberately NOT listed in `completed_epics`. Since the
+# write barrier in `_write_archive_file` now rejects any completed story with a
+# missing/empty `epic`, "orphan" no longer means "no epic field" — it means
+# "epic ref that does not resolve to a shard in this archive". The orphan
+# fixtures below carry this ref so they stay orphans under the new contract.
+UNSHARDED_EPIC = "PROJ-00000"
 
 
 def _make_archive_monolith(archive_dir: Path) -> Path:
@@ -64,10 +73,10 @@ def _make_archive_monolith(archive_dir: Path) -> Path:
             # Epic 87 stories (should go to shard)
             {"id": "87-1", "epic": "PROJ-14784", "title": "Extend repos.yaml schema", "points": 2, "completed": "2026-02-11"},
             {"id": "87-2", "epic": "PROJ-14784", "title": "Wire topology into prime", "points": 2, "completed": "2026-02-11"},
-            # Orphan story (no matching epic ref — stays in index)
-            {"id": "PROJ-14394", "title": "Subagent spans never clear", "points": 2, "completed": "2026-02-06"},
-            # Another orphan (technical debt, no epic ref)
-            {"id": "td-3", "title": "Frame panel state persistence", "points": 2, "completed": "2026-02-12"},
+            # Orphan story (epic ref not in completed_epics — stays in index)
+            {"id": "PROJ-14394", "epic": UNSHARDED_EPIC, "title": "Subagent spans never clear", "points": 2, "completed": "2026-02-06"},
+            # Another orphan (technical debt, epic ref not sharded here)
+            {"id": "td-3", "epic": UNSHARDED_EPIC, "title": "Frame panel state persistence", "points": 2, "completed": "2026-02-12"},
         ],
     }
     _write_archive_file(archive_file, data)
@@ -329,3 +338,62 @@ class TestMigrationIdempotent:
         assert first_count == second_count, (
             f"Idempotency failed: {first_count} after first, {second_count} after second"
         )
+
+
+# ---------------------------------------------------------------------------
+# Write barrier: every completed story must carry an `epic` ref
+# ---------------------------------------------------------------------------
+
+class TestEpicRefIsRequiredOnWrite:
+    """`_write_archive_file` refuses to persist a completed story without a
+    non-empty `epic` ref — sharding and `load_archive` both key off that field,
+    so an entry without one is unreachable after migration.
+
+    This is the guard that made every fixture in this file need `epic:` on its
+    orphan entries; it is pinned here so a silent relaxation of the barrier
+    would fail rather than reintroduce unreachable archive entries.
+    """
+
+    def test_missing_epic_is_rejected(self, tmp_path: Path) -> None:
+        archive_file = tmp_path / "sprint-2606-completed.yaml"
+        data = {
+            "completed_epics": ["PROJ-14465"],
+            "completed_stories": [{"id": "83-9", "title": "No epic ref", "points": 1}],
+        }
+
+        with pytest.raises(ValueError) as exc:
+            _write_archive_file(archive_file, data)
+
+        assert "83-9" in str(exc.value), (
+            f"Error must name the offending story id, got: {exc.value}"
+        )
+        assert not archive_file.exists(), "Rejected archive must not be written"
+
+    def test_empty_epic_is_rejected(self, tmp_path: Path) -> None:
+        archive_file = tmp_path / "sprint-2606-completed.yaml"
+        data = {
+            "completed_epics": ["PROJ-14465"],
+            "completed_stories": [{"id": "83-9", "epic": "   ", "title": "Blank", "points": 1}],
+        }
+
+        with pytest.raises(ValueError) as exc:
+            _write_archive_file(archive_file, data)
+
+        assert "83-9" in str(exc.value), (
+            f"Error must name the offending story id, got: {exc.value}"
+        )
+
+    def test_epic_ref_present_is_accepted(self, tmp_path: Path) -> None:
+        """Positive leg: the barrier only rejects missing/empty refs."""
+        archive_file = tmp_path / "sprint-2606-completed.yaml"
+        data = {
+            "completed_epics": ["PROJ-14465"],
+            "completed_stories": [
+                {"id": "83-9", "epic": "PROJ-14465", "title": "Has epic", "points": 1}
+            ],
+        }
+
+        _write_archive_file(archive_file, data)
+
+        written = _load_archive_file(archive_file)
+        assert [s["id"] for s in written["completed_stories"]] == ["83-9"]

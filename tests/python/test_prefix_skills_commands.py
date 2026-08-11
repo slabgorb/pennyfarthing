@@ -21,85 +21,42 @@ import yaml
 
 # Project root is pennyfarthing/ (two levels up from tests/python/)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SKILLS_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "skills"
-COMMANDS_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "commands"
+DIST_DIR = PROJECT_ROOT / "pennyfarthing-dist"
+SKILLS_DIR = DIST_DIR / "skills"
+COMMANDS_DIR = DIST_DIR / "commands"
+AGENTS_DIR = DIST_DIR / "agents"
 REGISTRY_PATH = SKILLS_DIR / "skill-registry.yaml"
+COMMAND_REGISTRY_PATH = DIST_DIR / "command-registry.yaml"
 
 # Files in the skills directory that are NOT skill directories
 SKILLS_NON_DIRS = {"skill-registry.yaml", "skill-registry.schema.json"}
 
-# Known built-in skills that MUST exist with pf- prefix after migration
-# (These are the 20 directories that exist today without prefix)
-EXPECTED_SKILLS = [
-    "pf-agentic-patterns",
-    "pf-bc",
-    "pf-changelog",
-    "pf-code-review",
-    "pf-context-engineering",
-    "pf-cyclist",
-    "pf-jira",
-    "pf-just",
-    "pf-mermaid",
-    "pf-otel",
-    "pf-sprint",
-    "pf-story",
-    "pf-systematic-debugging",
-    "pf-testing",
-    "pf-theme",
-    "pf-theme-creation",
-    "pf-workflow",
-    "pf-yq",
-]
+# 162-30: the hardcoded EXPECTED_SKILLS / EXPECTED_COMMANDS rosters that used to
+# live here were snapshots of the skill and command sets as they stood at story
+# 98-4. They rotted: pf-cyclist, pf-story and pf-theme-creation were retired,
+# and roughly a third of the 46 pinned command filenames were renamed or removed
+# (pf-close-epic, pf-git-cleanup, pf-new-work, pf-release, ... -> pf-epic,
+# pf-git, pf-session, ...). A frozen roster asserts "the content has not
+# changed", which is not the AC — the AC is the pf- PREFIX invariant and
+# registry/disk agreement. Every expectation below is therefore derived from a
+# live source: skills/skill-registry.yaml, command-registry.yaml, or the
+# skills/ and commands/ directories themselves.
 
-# Known built-in commands that MUST exist with pf- prefix after migration
-EXPECTED_COMMANDS = [
-    "pf-architect.md",
-    "pf-ba.md",
-    "pf-brainstorming.md",
-    "pf-check.md",
-    "pf-chore.md",
-    "pf-close-epic.md",
-    "pf-continue-session.md",
-    "pf-create-branches-from-story.md",
-    "pf-create-theme.md",
-    "pf-dev.md",
-    "pf-devops.md",
-    "pf-fix-blocker.md",
-    "pf-git-cleanup.md",
-    "pf-health-check.md",
-    "pf-help.md",
-    "pf-list-themes.md",
-    "pf-new-work.md",
-    "pf-orchestrator.md",
-    "pf-parallel-work.md",
-    "pf-party-mode.md",
-    "pf-patch.md",
-    "pf-pm.md",
-    "pf-prime.md",
-    "pf-release.md",
-    "pf-repo-status.md",
-    "pf-retro.md",
-    "pf-reviewer.md",
-    "pf-run-ci.md",
-    "pf-set-theme.md",
-    "pf-setup.md",
-    "pf-show-theme.md",
-    "pf-sm.md",
-    "pf-sprint-planning.md",
-    "pf-sprint.md",
-    "pf-standalone.md",
-    "pf-start-epic.md",
-    "pf-sync-epic-to-jira.md",
-    "pf-sync-work-with-sprint.md",
-    "pf-tea.md",
-    "pf-tech-writer.md",
-    "pf-theme-maker.md",
-    "pf-theme.md",
-    "pf-update-domain-docs.md",
-    "pf-ux-designer.md",
-    "pf-work.md",
-    "pf-workflow.md",
-]
+# Skills retired outright (registry entry AND directory removed). Named so a
+# re-introduction under the old identity fails rather than passing silently.
+RETIRED_SKILLS = ["pf-cyclist", "pf-story", "pf-theme-creation"]
+
+
+def _load_command_registry() -> dict:
+    """Load and parse command-registry.yaml (the live slash-command roster)."""
+    if not COMMAND_REGISTRY_PATH.is_file():
+        return {}
+    return yaml.safe_load(COMMAND_REGISTRY_PATH.read_text()) or {}
+
+
+def _registry_agent_names() -> list[str]:
+    """Agent roles that command-registry.yaml declares a slash command for."""
+    return sorted(_load_command_registry().get("agents", {}).get("commands", {}))
 
 
 def _get_skill_dirs() -> list[str]:
@@ -165,20 +122,35 @@ class TestAC1SkillDirectoriesRenamed:
             f"Old unprefixed skill directories still exist: {remaining}"
         )
 
-    def test_expected_skills_all_present(self) -> None:
-        """All expected pf-prefixed skill directories must exist."""
-        skill_dirs = _get_skill_dirs()
-        missing = [s for s in EXPECTED_SKILLS if s not in skill_dirs]
-        assert missing == [], (
-            f"Missing expected skill directories: {missing}"
-        )
+    def test_retired_skills_absent_from_disk_and_registry(self) -> None:
+        """Retired skills must be gone from BOTH the registry and skills/.
 
-    def test_skill_count_preserved(self) -> None:
-        """The number of skill directories should be at least 20 (original count)."""
-        skill_dirs = _get_skill_dirs()
-        assert len(skill_dirs) >= 20, (
-            f"Expected at least 20 skill directories, found {len(skill_dirs)}"
-        )
+        Replaces `test_expected_skills_all_present`, whose frozen roster still
+        demanded pf-cyclist, pf-story and pf-theme-creation. The forward
+        direction (every registry entry has a directory, and vice versa) is
+        covered by `TestIntegrationRealCodebase` against live data; what that
+        pair cannot catch is a retired skill being resurrected in exactly one of
+        the two places, which is what this pins.
+        """
+        skill_dirs = set(_get_skill_dirs())
+        registry_keys = set(_load_registry().get("skills", {}))
+        assert registry_keys, "No skills found in registry"
+
+        resurrected = {
+            name: {
+                "directory": name in skill_dirs,
+                "registry": name in registry_keys,
+            }
+            for name in RETIRED_SKILLS
+            if name in skill_dirs or name in registry_keys
+        }
+        assert resurrected == {}, f"Retired skills are back: {resurrected}"
+
+    # `test_skill_count_preserved` (>= 20 dirs) deleted in 162-30: a count FLOOR
+    # is a vacuous guard. It cannot fail while skills are being added, and it
+    # says nothing about which skills exist. The real invariant — registry keys
+    # and skill directories agree — is asserted from live data by
+    # `TestIntegrationRealCodebase` below.
 
 
 # =============================================================================
@@ -222,20 +194,46 @@ class TestAC2CommandFilesRenamed:
             f"Old unprefixed command files still exist: {remaining}"
         )
 
-    def test_expected_commands_all_present(self) -> None:
-        """All expected pf-prefixed command files must exist."""
-        cmd_files = _get_command_files()
-        missing = [c for c in EXPECTED_COMMANDS if c not in cmd_files]
+    def test_every_registry_agent_has_a_prefixed_command_file(self) -> None:
+        """Each agent command-registry.yaml declares needs `commands/pf-<agent>.md`.
+
+        Replaces `test_expected_commands_all_present`, which pinned a frozen
+        46-filename roster. The roster is derived here from the live
+        `command-registry.yaml` `agents.commands` map, so adding or retiring an
+        agent updates the expectation automatically while still failing loudly
+        if an agent's slash command goes missing or loses its pf- prefix.
+        """
+        agent_names = _registry_agent_names()
+        assert agent_names, "command-registry.yaml declares no agent commands"
+
+        cmd_files = set(_get_command_files())
+        missing = [f"pf-{name}.md" for name in agent_names if f"pf-{name}.md" not in cmd_files]
         assert missing == [], (
-            f"Missing expected command files: {missing}"
+            f"Agents declared in command-registry.yaml with no pf-prefixed "
+            f"command file: {missing}"
         )
 
-    def test_command_count_preserved(self) -> None:
-        """The number of command files should be at least 47 (original count)."""
-        cmd_files = _get_command_files()
-        assert len(cmd_files) >= 47, (
-            f"Expected at least 47 command files, found {len(cmd_files)}"
+    def test_every_registry_agent_has_an_agent_definition(self) -> None:
+        """The other half of the pair: the agent definition itself must exist.
+
+        Without this, a `pf-<agent>.md` command could point at a deleted agent
+        and the test above would still pass.
+        """
+        agent_names = _registry_agent_names()
+        assert agent_names, "command-registry.yaml declares no agent commands"
+
+        missing = [n for n in agent_names if not (AGENTS_DIR / f"{n}.md").is_file()]
+        assert missing == [], (
+            f"Agents declared in command-registry.yaml with no agents/<name>.md "
+            f"definition: {missing}"
         )
+
+    # `test_command_count_preserved` (>= 47 files) deleted in 162-30. There are
+    # 38 command files today — the drop is real and intended (the JS/TS removal
+    # in 038d3c6f0 plus the pf-git / pf-session / pf-epic / pf-ci / pf-docs
+    # regrouping folded many single-purpose commands into groups). A floor over a
+    # deliberately shrinking set can only be satisfied by lowering the number,
+    # which proves nothing; the derived set assertions above replace it.
 
 
 # =============================================================================
@@ -290,13 +288,10 @@ class TestAC3SkillRegistryUpdated:
             f"{unprefixed}"
         )
 
-    def test_registry_skill_count_preserved(self) -> None:
-        """The registry should have at least as many entries as before (22)."""
-        registry = _load_registry()
-        skills = registry.get("skills", {})
-        assert len(skills) >= 22, (
-            f"Expected at least 22 registry entries, found {len(skills)}"
-        )
+    # `test_registry_skill_count_preserved` (>= 22 entries) deleted in 162-30 —
+    # same vacuous count-floor pattern as the two deleted above. Registry/disk
+    # agreement in `TestIntegrationRealCodebase` is the assertion that actually
+    # detects a lost entry.
 
     def test_registry_version_unchanged(self) -> None:
         """Registry version field should still be valid semver."""
@@ -306,20 +301,15 @@ class TestAC3SkillRegistryUpdated:
             f"Registry version is not valid semver: '{version}'"
         )
 
-    def test_deprecated_skills_preserved(self) -> None:
-        """Deprecated skills (story, theme-creation) should keep deprecated flag."""
-        registry = _load_registry()
-        skills = registry.get("skills", {})
-
-        # After rename, these should be pf-story and pf-theme-creation
-        for old_name in ["story", "theme-creation"]:
-            prefixed = f"pf-{old_name}"
-            assert prefixed in skills, (
-                f"Deprecated skill '{prefixed}' missing from registry"
-            )
-            assert skills[prefixed].get("deprecated") is True, (
-                f"Deprecated skill '{prefixed}' should have deprecated: true"
-            )
+    # `test_deprecated_skills_preserved` deleted in 162-30. It required `pf-story`
+    # and `pf-theme-creation` to be present in the registry WITH
+    # `deprecated: true`. Both have since completed the deprecation cycle and
+    # been deleted outright, and NO registry entry carries the `deprecated` flag
+    # any more — so there is nothing left for this test to assert. Rewriting it
+    # as a forward guard ("any deprecated entry must declare a live redirect")
+    # was rejected: with zero deprecated entries the loop body never runs, which
+    # is a vacuous pass. Their removal is pinned instead by
+    # `TestAC1SkillDirectoriesRenamed::test_retired_skills_absent_from_disk_and_registry`.
 
     def test_redirect_fields_updated(self) -> None:
         """Redirect fields should point to pf-prefixed names."""

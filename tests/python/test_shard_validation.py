@@ -353,10 +353,19 @@ class TestWritePathIntegration:
             "id: '63'\ntitle: Jira Epic\nstatus: ready\nstories: []\n"
         )
 
+        # 162-30: inject the Jira project key. `pf.jira.client` resolves
+        # `JIRA_PROJECT` ONCE at import time from `jira.project` in
+        # config.local.yaml or `$JIRA_PROJECT`, and `pf.jira.create` imports it by
+        # value, so on any machine without Jira configured this test failed with
+        # "Jira project key not configured" before reaching the validator it is
+        # actually about. Patching the constant on the consuming module removes
+        # the environment dependency without weakening the assertion.
         with patch(
             "pf.sprint.validator.validate_epic_shard"
         ) as mock_validate, patch(
             "pf.sprint.loader.get_project_root", return_value=tmp_path
+        ), patch(
+            "pf.jira.create.JIRA_PROJECT", "PROJ"
         ):
             mock_validate.return_value = MagicMock(valid=True, errors=[])
             mock_client = MagicMock()

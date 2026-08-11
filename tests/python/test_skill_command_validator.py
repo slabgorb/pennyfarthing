@@ -585,18 +585,31 @@ class TestAC4ZeroFalsePositives:
             + "\n".join(d for d in report.details if "[ERROR]" in d)
         )
 
-    def test_real_command_file_count(self) -> None:
-        """Expected number of command files are discovered."""
+    def test_real_command_files_all_discovered(self) -> None:
+        """Discovery must return EVERY .md file in the real commands/ directory.
+
+        Was `test_real_command_file_count`, a `>= 40` floor (there are 38 files
+        today — the pf-git / pf-session / pf-epic regrouping and the JS/TS
+        removal shrank the set). A floor over a shrinking set only ever gets
+        lowered, and it would not notice discovery silently dropping a file as
+        long as 40 survived. The set assertion below is the contract that
+        `discover_command_files` actually owes its callers, and it is derived
+        from the directory rather than from a pinned number.
+        """
         root = Path(__file__).resolve().parents[2]
         commands_dir = root / "pennyfarthing-dist" / "commands"
 
         if not commands_dir.is_dir():
             pytest.skip("commands/ directory not found (not in repo)")
 
-        files = discover_command_files(commands_dir)
+        on_disk = {p.name for p in commands_dir.iterdir() if p.is_file() and p.suffix == ".md"}
+        assert on_disk, "commands/ directory holds no .md files"
 
-        # Should find at least 40 command files (currently ~46)
-        assert len(files) >= 40, f"Expected >= 40 command files, found {len(files)}"
+        discovered = {p.name for p in discover_command_files(commands_dir)}
+        assert discovered == on_disk, (
+            f"Discovery missed {sorted(on_disk - discovered)} and invented "
+            f"{sorted(discovered - on_disk)}"
+        )
 
 
 # =============================================================================

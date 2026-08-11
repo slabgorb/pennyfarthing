@@ -122,56 +122,57 @@ class TestStoryTemplateCommand:
         assert "bug" in result.stdout.lower(), "Bug template not shown"
 
 
-class TestBackwardsCompatAliases:
-    """Test that old hyphenated aliases still work."""
+RETIRED_ALIASES = ["story-add", "story-update", "epic-add", "archive-epic"]
 
-    def test_story_add_alias_works(self):
-        """pf sprint story-add --help should still work."""
-        result = subprocess.run(
-            [sys.executable, "-m", "pf.cli", "sprint", "story-add", "--help"],
-            capture_output=True,
-            text=True,
-            cwd=str(PROJECT_ROOT),
-            timeout=10,
-        )
-        assert result.returncode == 0, f"story-add --help failed: {result.stderr}"
-        assert "Usage:" in result.stdout or "usage:" in result.stdout.lower()
 
-    def test_story_update_alias_works(self):
-        """pf sprint story-update --help should still work."""
-        result = subprocess.run(
-            [sys.executable, "-m", "pf.cli", "sprint", "story-update", "--help"],
-            capture_output=True,
-            text=True,
-            cwd=str(PROJECT_ROOT),
-            timeout=10,
-        )
-        assert result.returncode == 0, f"story-update --help failed: {result.stderr}"
-        assert "Usage:" in result.stdout or "usage:" in result.stdout.lower()
+class TestRetiredHyphenatedAliases:
+    """The old hyphenated aliases have been removed, not merely hidden.
 
-    def test_epic_add_alias_works(self):
-        """pf sprint epic-add --help should still work."""
-        result = subprocess.run(
-            [sys.executable, "-m", "pf.cli", "sprint", "epic-add", "--help"],
-            capture_output=True,
-            text=True,
-            cwd=str(PROJECT_ROOT),
-            timeout=10,
-        )
-        assert result.returncode == 0, f"epic-add --help failed: {result.stderr}"
-        assert "Usage:" in result.stdout or "usage:" in result.stdout.lower()
+    162-30: this class was `TestBackwardsCompatAliases` and asserted that
+    `pf sprint story-add|story-update|epic-add|archive-epic --help` each still
+    exited 0. They no longer exist — `pf sprint --help` lists only the subgroup
+    form (`story`, `epic`, ...) and each hyphenated name now exits 2 with
+    "No such command". The deprecation cycle those aliases existed to cover has
+    completed, so the four "alias still works" tests pin removed behavior and are
+    replaced by their inverse plus a positive check that the subgroup form (the
+    surface the aliases forwarded to) is the one that answers.
+    """
 
-    def test_archive_epic_alias_works(self):
-        """pf sprint archive-epic --help should still work."""
-        result = subprocess.run(
-            [sys.executable, "-m", "pf.cli", "sprint", "archive-epic", "--help"],
-            capture_output=True,
-            text=True,
-            cwd=str(PROJECT_ROOT),
-            timeout=10,
+    def test_retired_aliases_are_rejected(self):
+        """Each retired alias must fail as an unknown command, not silently work."""
+        still_alive = []
+        for alias in RETIRED_ALIASES:
+            result = subprocess.run(
+                [sys.executable, "-m", "pf.cli", "sprint", alias, "--help"],
+                capture_output=True,
+                text=True,
+                cwd=str(PROJECT_ROOT),
+                timeout=10,
+            )
+            if result.returncode == 0:
+                still_alive.append(alias)
+            else:
+                assert "No such command" in result.stderr, (
+                    f"'{alias}' failed for an unexpected reason: {result.stderr}"
+                )
+        assert still_alive == [], (
+            f"Retired hyphenated aliases are still accepted: {still_alive}"
         )
-        assert result.returncode == 0, f"archive-epic --help failed: {result.stderr}"
-        assert "Usage:" in result.stdout or "usage:" in result.stdout.lower()
+
+    def test_subgroup_form_answers_instead(self):
+        """The surface the aliases forwarded to must be reachable."""
+        for args in (["story", "add"], ["story", "update"], ["epic", "add"], ["epic", "archive"]):
+            result = subprocess.run(
+                [sys.executable, "-m", "pf.cli", "sprint", *args, "--help"],
+                capture_output=True,
+                text=True,
+                cwd=str(PROJECT_ROOT),
+                timeout=10,
+            )
+            assert result.returncode == 0, (
+                f"pf sprint {' '.join(args)} --help failed: {result.stderr}"
+            )
+            assert "Usage:" in result.stdout or "usage:" in result.stdout.lower()
 
     def test_hidden_aliases_not_in_help(self):
         """Hidden aliases should not appear in sprint --help output."""

@@ -15,15 +15,36 @@ Run with: python -m pytest tests/python/test_portrait_pane_catchphrase.py -v
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import random
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 import yaml
 
 # Project root for path resolution in tests
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture(autouse=True)
+def _clear_quote_cache():
+    """Isolate every test from the module-level catchphrase cache.
+
+    `load_persona` memoises its `random.choice` in `persona._quote_cache`, keyed
+    by `(agent_name, theme)`, so a catchphrase is picked ONCE per process and
+    stays stable for the life of the run. Every fixture in this file uses the
+    same `("sm", "test-theme")` key, so without this reset a test inherits the
+    first test's pick and never observes its own YAML. Production ships
+    `reset_quote_cache()` for exactly this purpose.
+    """
+    from pf.prime.persona import reset_quote_cache
+
+    rng_state = random.getstate()
+    reset_quote_cache()
+    yield
+    reset_quote_cache()
+    # Tests below seed `random` to make the selection deterministic; restore the
+    # global RNG so no other test in the tree inherits a seeded generator.
+    random.setstate(rng_state)
 
 
 # ---------------------------------------------------------------------------
@@ -229,18 +250,15 @@ class TestFallbackWhenNoCatchphrases:
 class TestRandomCatchphraseSelection:
     """AC-3: When multiple catchphrases defined, one is randomly selected."""
 
-    def test_quote_varies_across_loads(self, tmp_path: Path):
-        """Loading persona multiple times should eventually produce different quotes."""
-        from pf.prime.persona import load_persona
+    CATCHPHRASES = [
+        "Catchphrase Alpha",
+        "Catchphrase Beta",
+        "Catchphrase Gamma",
+        "Catchphrase Delta",
+        "Catchphrase Epsilon",
+    ]
 
-        catchphrases = [
-            "Catchphrase Alpha",
-            "Catchphrase Beta",
-            "Catchphrase Gamma",
-            "Catchphrase Delta",
-            "Catchphrase Epsilon",
-        ]
-
+    def _seed_theme(self, tmp_path: Path, catchphrases: list[str]) -> None:
         theme_yaml = {
             "theme": {"name": "test-theme"},
             "agents": {
@@ -252,7 +270,6 @@ class TestRandomCatchphraseSelection:
                 }
             },
         }
-
         theme_dir = tmp_path / ".pennyfarthing" / "personas" / "themes"
         theme_dir.mkdir(parents=True)
         (theme_dir / "test-theme.yaml").write_text(yaml.dump(theme_yaml))
@@ -260,19 +277,70 @@ class TestRandomCatchphraseSelection:
             yaml.dump({"theme": "test-theme"})
         )
 
-        # Load multiple times and collect quotes
+    def test_selection_covers_the_whole_catchphrase_list(self, tmp_path: Path):
+        """Every catchphrase must be reachable — selection spans the whole list.
+
+        Replaces `test_quote_varies_across_loads`, which loaded the persona 20
+        times in one process and demanded two distinct quotes. That is no longer
+        the contract: `load_persona` memoises its pick in `persona._quote_cache`
+        keyed by `(agent, theme)`, so within a process the quote is deliberately
+        STABLE (pinned by the next test) — a panel repaint must not reshuffle the
+        header. Variation happens per process, so this drives the RNG directly
+        with fixed seeds instead of relying on 20 draws: deterministic, and it
+        proves coverage of the list rather than merely "not always equal".
+        """
+        from pf.prime.persona import load_persona, reset_quote_cache
+
+        self._seed_theme(tmp_path, self.CATCHPHRASES)
+
         quotes_seen: set[str] = set()
-        for _ in range(20):
+        for seed in range(50):
+            reset_quote_cache()
+            random.seed(seed)
             persona, _ = load_persona("sm", project_root=tmp_path)
             assert persona is not None
-            assert persona.quote is not None
             quotes_seen.add(persona.quote)
 
-        # With 5 catchphrases and 20 loads, we should see at least 2 different ones
-        assert len(quotes_seen) > 1, (
-            f"With {len(catchphrases)} catchphrases, expected variation across "
-            f"20 loads but always got: {quotes_seen}"
+        assert quotes_seen == set(self.CATCHPHRASES), (
+            f"Every catchphrase should be selectable; missing "
+            f"{set(self.CATCHPHRASES) - quotes_seen}, unexpected {quotes_seen - set(self.CATCHPHRASES)}"
         )
+
+    def test_quote_is_stable_within_a_process(self, tmp_path: Path):
+        """Repeat loads return the SAME catchphrase (the `_quote_cache` contract).
+
+        This is the behavior that superseded per-load randomisation: the TUI
+        portrait header calls `load_persona` on every repaint, so an unstable
+        quote would flicker.
+        """
+        from pf.prime.persona import load_persona
+
+        self._seed_theme(tmp_path, self.CATCHPHRASES)
+
+        random.seed(1234)
+        first, _ = load_persona("sm", project_root=tmp_path)
+        assert first is not None and first.quote in self.CATCHPHRASES
+
+        quotes = {load_persona("sm", project_root=tmp_path)[0].quote for _ in range(20)}
+        assert quotes == {first.quote}, (
+            f"Quote should be cached per (agent, theme) for the life of the process; "
+            f"saw {quotes} after first pick '{first.quote}'"
+        )
+
+    def test_seeded_selection_is_reproducible(self, tmp_path: Path):
+        """The same seed must yield the same catchphrase — no hidden entropy."""
+        from pf.prime.persona import load_persona, reset_quote_cache
+
+        self._seed_theme(tmp_path, self.CATCHPHRASES)
+
+        picks = []
+        for _ in range(2):
+            reset_quote_cache()
+            random.seed(99)
+            persona, _ = load_persona("sm", project_root=tmp_path)
+            picks.append(persona.quote)
+
+        assert picks[0] == picks[1], f"Seeded selection should be reproducible, got {picks}"
 
     def test_single_catchphrase_always_selected(self, tmp_path: Path):
         """With only one catchphrase, it should always be selected."""
