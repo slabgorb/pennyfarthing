@@ -164,7 +164,9 @@ def _build_story_label(story: dict[str, Any], current_story_id: str, max_width: 
     story_id = story.get("id", "")
     title = story.get("title", "")
     pts = story.get("points", "")
-    jira = story.get("jiraKey") or "\u2014"
+    # Stories arrive straight from sprint YAML (``jira:``); normalized payloads
+    # use ``jiraKey``. Fall back to the story id, em-dash only if nothing exists.
+    jira = story.get("jiraKey") or story.get("jira") or story_id or "\u2014"
     status = _normalize_status(story.get("status", ""))
     badge = _status_badge(story.get("status", ""))
 
