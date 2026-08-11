@@ -17,17 +17,6 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-
-# WORKAROUND for a production circular import, not a test concern: importing
-# `pf.findings.aggregate` FIRST fails with
-#   ImportError: cannot import name 'aggregate_findings' from partially
-#   initialized module 'pf.findings.aggregate'
-# because aggregate -> pf.sprint.session_parse -> pf.sprint/__init__ ->
-# pf.sprint.cli -> pf.sprint.findings_cmd -> pf.findings.aggregate (still
-# initialising). Importing `pf.sprint` first breaks the cycle. Reproduce with
-# `python -c "from pf.findings.aggregate import aggregate_findings"`. Filed in
-# Delivery Findings for the production batch; delete this line once fixed.
-import pf.sprint  # noqa: E402,F401
 from pf.findings.aggregate import (  # noqa: E402
     aggregate_findings,
     collect_session_files,

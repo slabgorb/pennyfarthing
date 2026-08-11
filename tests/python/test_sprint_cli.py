@@ -9,11 +9,12 @@ Run with: python -m pytest tests/python/test_sprint_cli.py -v
 
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 # Project root for path resolution
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+# src-layout package root (pennyfarthing-dist/src/pf/)
+PACKAGE_ROOT = PROJECT_ROOT / "pennyfarthing-dist" / "src" / "pf"
 
 
 class TestSprintGroupRegistration:
@@ -70,7 +71,7 @@ class TestSprintClickDecorators:
 
     def test_sprint_cli_uses_click_group(self):
         """sprint CLI should use @click.group() decorator."""
-        cli_file = PROJECT_ROOT / "pf" / "sprint" / "cli.py"
+        cli_file = PACKAGE_ROOT / "sprint" / "cli.py"
         assert cli_file.exists(), "sprint/cli.py not found"
 
         source = cli_file.read_text()
@@ -79,7 +80,7 @@ class TestSprintClickDecorators:
 
     def test_sprint_cli_uses_click_command(self):
         """Sprint subcommands should use @click.command() decorator."""
-        cli_file = PROJECT_ROOT / "pf" / "sprint" / "cli.py"
+        cli_file = PACKAGE_ROOT / "sprint" / "cli.py"
         assert cli_file.exists(), "sprint/cli.py not found"
 
         source = cli_file.read_text()
@@ -90,7 +91,7 @@ class TestSprintClickDecorators:
 
     def test_sprint_cli_no_argparse(self):
         """Sprint CLI should not use argparse anymore."""
-        cli_file = PROJECT_ROOT / "pf" / "sprint" / "cli.py"
+        cli_file = PACKAGE_ROOT / "sprint" / "cli.py"
         assert cli_file.exists(), "sprint/cli.py not found"
 
         source = cli_file.read_text()
@@ -100,7 +101,7 @@ class TestSprintClickDecorators:
 
     def test_sprint_cli_imports_click(self):
         """Sprint CLI should import click."""
-        cli_file = PROJECT_ROOT / "pf" / "sprint" / "cli.py"
+        cli_file = PACKAGE_ROOT / "sprint" / "cli.py"
         assert cli_file.exists(), "sprint/cli.py not found"
 
         source = cli_file.read_text()
@@ -171,37 +172,15 @@ class TestSprintSubcommandExecution:
 class TestSprintStartupPerformance:
     """Verify sprint migration doesn't break startup time requirement."""
 
-    def test_sprint_startup_under_200ms(self):
-        """pf sprint --help should complete in under 200ms."""
-        times = []
-        for _ in range(3):
-            start = time.perf_counter()
-            result = subprocess.run(
-                [sys.executable, "-m", "pf.cli", "sprint", "--help"],
-                capture_output=True,
-                text=True,
-                cwd=str(PROJECT_ROOT),
-                timeout=10,
-            )
-            elapsed = (time.perf_counter() - start) * 1000  # ms
-            if result.returncode == 0:
-                times.append(elapsed)
+    # `test_sprint_startup_under_200ms` deleted in 162-30 (same batch as
+    # `test_main_cli_startup_still_under_200ms`). Both measured wall-clock time
+    # for three `python -m pf.cli sprint --help` subprocesses and required the
+    # average under 200ms. A wall-clock budget is not a behavior contract — it is
+    # a property of the machine, Python build, disk cache warmth and whatever
+    # else is running — so it is neither reproducible nor actionable. The
+    # contract it stood in for (lazy Click group loading so `--help` does not
+    # import the world) is a code-shape question covered by
+    # `TestSprintClickDecorators` in this file.
 
-        assert len(times) > 0, "sprint --help failed to run"
-        avg_time = sum(times) / len(times)
-        assert avg_time < 200, f"sprint --help took {avg_time:.1f}ms, should be < 200ms"
-
-    # `test_main_cli_startup_still_under_200ms` deleted in 162-30. It measured
-    # wall-clock time for three `python -m pf.cli --help` subprocesses and
-    # required the average under 200ms; it measured 240.7ms here. A wall-clock
-    # budget is not a behavior contract — it is a property of the machine, the
-    # Python build, disk cache warmth and whatever else is running — so it is
-    # neither reproducible nor actionable, and widening the threshold would just
-    # postpone the same flake. The contract it was standing in for (lazy Click
-    # group loading, so `--help` does not import the world) is a code-shape
-    # question, and it belongs to `TestSprintClickDecorators` in this file (whose
-    # own failures are a separate batch's repair).
-    #
-    # NOTE: `test_sprint_startup_under_200ms` above is the same anti-pattern and
-    # currently passes only by luck of the draw. It was left in place because it
-    # is not one of this batch's failures; it should go the same way.
+    # `test_main_cli_startup_still_under_200ms` deleted in 162-30 batch 5.
+    # Same anti-pattern: averaged 240.7ms on CI. See above.
