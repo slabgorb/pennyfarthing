@@ -159,13 +159,6 @@ def update_story(
             "error": f"Invalid type '{story_type}'. Must be one of: {', '.join(sorted(VALID_STORY_TYPES))}",
         }
 
-    # A story may not depend on itself (fail-loud, no throw)
-    if depends_on is not None and depends_on == story_id:
-        return {
-            "success": False,
-            "error": f"Story '{story_id}' cannot depend on itself.",
-        }
-
     data = read_sprint(sprint_path)
 
     _epic, story, _location = find_story_in_data(data, story_id)
@@ -176,16 +169,20 @@ def update_story(
             "error": format_story_not_found_error(data, story_id),
         }
 
-    # A depends_on target must resolve to a real story (truthfulness charter)
+    # A depends_on target may not be the story itself and must resolve to a real
+    # story (truthfulness charter). One coherent guard, evaluated after the story
+    # resolves so a self-dependency is reported only once the story is known (F6/D3).
     if depends_on is not None:
+        if depends_on == story_id:
+            return {
+                "success": False,
+                "error": f"Story '{story_id}' cannot depend on itself.",
+            }
         _dep_epic, dep_story, _dep_loc = find_story_in_data(data, depends_on)
         if dep_story is None:
             return {
                 "success": False,
-                "error": (
-                    f"--depends-on target '{depends_on}' does not resolve to a "
-                    f"known story."
-                ),
+                "error": f"--depends-on target '{depends_on}' does not resolve to a known story.",
             }
 
     # Apply field updates
@@ -382,8 +379,12 @@ def update_story(
 @click.option(
     "--type",
     "story_type",
+    type=click.Choice(sorted(VALID_STORY_TYPES), case_sensitive=False),
     default=None,
-    help="Story type tag (feature, fix, bug, chore, refactor, test, doc, comment)",
+    # Help derived from the validator's set — one source of truth, no drift (F1).
+    # click.Choice normalises case (`--type Feature` → `feature`) and yields a
+    # Click parse error (exit 2) on an invalid value, matching --status/--review-verdict.
+    help=f"Story type tag ({', '.join(sorted(VALID_STORY_TYPES))})",
 )
 @click.option(
     "--depends-on",

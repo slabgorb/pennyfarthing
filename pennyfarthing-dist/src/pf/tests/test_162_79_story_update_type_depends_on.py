@@ -85,7 +85,7 @@ stories:
     priority: p2
     status: backlog
     workflow: tdd
-    type: feature
+    type: chore
 """
 
 
@@ -154,7 +154,10 @@ class TestUpdateTypeFunction:
         assert story["status"] == "in_progress"
         assert story["points"] == 3
         sibling = _read_shard_story(sharded_sprint_dir, "epic-162.yaml", "162-3")
-        assert sibling["type"] == "feature"  # 162-3 was already 'feature', untouched
+        # 162-3 starts 'chore'; 162-2 was updated to 'feature'. Asserting the
+        # sibling stays 'chore' (not 'feature') catches a bug that clobbers every
+        # story's type to the updated value — the tautological version could not.
+        assert sibling["type"] == "chore"
 
     def test_omitting_type_preserves_existing(self, sharded_sprint_dir: Path) -> None:
         """Default-behavior guard: updating another field must not blank type."""
@@ -347,6 +350,10 @@ class TestUpdateTypeDependsOnCLI:
         assert result.exit_code != 0, (
             f"unknown --depends-on target must exit non-zero; output: {result.output}"
         )
+        assert "does not resolve" in result.output, (
+            "the failure must state WHY (unresolved target), not just exit non-zero; "
+            f"output: {result.output}"
+        )
 
     def test_cli_help_lists_both_options(self, runner: CliRunner) -> None:
         """AC: `--help` advertises both new options so they're discoverable."""
@@ -370,3 +377,51 @@ class TestUpdateTypeDependsOnCLI:
         _epic, story, _loc = find_story_in_data(merged, "162-2")
         assert story is not None, "merged view must still resolve 162-2"
         assert story["type"] == "feature"
+
+    def test_cli_merged_view_reflects_depends_on_update(
+        self, runner: CliRunner, sharded_sprint_dir: Path
+    ) -> None:
+        """The merged view (what `story show` reads) reflects the new depends_on."""
+        runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file", str(sharded_sprint_dir / "current-sprint.yaml"),
+                "162-2", "--depends-on", "162-1",
+            ],
+        )
+        merged = read_sprint(sharded_sprint_dir / "current-sprint.yaml")
+        _epic, story, _loc = find_story_in_data(merged, "162-2")
+        assert story is not None, "merged view must still resolve 162-2"
+        assert story["depends_on"] == "162-1"
+
+    def test_cli_type_is_case_insensitive(
+        self, runner: CliRunner, sharded_sprint_dir: Path
+    ) -> None:
+        """F3: `--type Feature` (capitalised) normalises to canonical `feature`,
+        mirroring how `--status` normalises — not a hard rejection."""
+        result = runner.invoke(
+            story_update_command,
+            [
+                "--sprint-file", str(sharded_sprint_dir / "current-sprint.yaml"),
+                "162-2", "--type", "Feature",
+            ],
+        )
+        assert result.exit_code == 0, (
+            f"capitalised --type must be accepted and normalised; output: {result.output}"
+        )
+        story = _read_shard_story(sharded_sprint_dir, "epic-162.yaml", "162-2")
+        assert story["type"] == "feature", "type must persist as canonical lowercase"
+
+    def test_cli_help_enumerates_all_valid_types(self, runner: CliRunner) -> None:
+        """F1/F3: `--help` derives the accepted set from VALID_STORY_TYPES — every
+        valid value (incl `docs`) is discoverable, no drift from the validator."""
+        from pf.sprint.validator import VALID_STORY_TYPES
+
+        result = runner.invoke(story_update_command, ["--help"])
+        assert result.exit_code == 0
+        # Click's help wraps text; strip newlines/whitespace before substring search.
+        flattened = " ".join(result.output.split())
+        for value in VALID_STORY_TYPES:
+            assert value in flattened, (
+                f"--help must advertise valid type '{value}'; output: {result.output}"
+            )
