@@ -167,8 +167,12 @@ def complete_phase(
     # Update all **Phase:** lines to new phase
     content = re.sub(r"(\*\*Phase:\*\*) \S+", rf"\1 {to_phase}", content)
 
-    # Update all **Phase Started:** lines to now
-    content = re.sub(r"(\*\*Phase Started:\*\*) \S+", rf"\1 {now}", content)
+    # Update all **Phase Started:** lines to now.
+    # 164-17: match the whole rest of the line, not `\S+`. The timestamp may be
+    # the space-separated `YYYY-MM-DD HH:MM:SS UTC` form 159-4 taught the parser
+    # to accept; `\S+` stopped at the first space and left a stale tail glued to
+    # the fresh value (`**Phase Started:** 2026-08-11T12:48:16Z 22:00 UTC`).
+    content = re.sub(r"(\*\*Phase Started:\*\*) [^\n]+", rf"\1 {now}", content)
 
     # Track round-trip count for rework transitions
     if gate_type and "rework" in gate_type:
