@@ -29,13 +29,17 @@ def move_issue(
 
     Checks current status first to avoid redundant transitions.
 
+    A dry run resolves the same state the real call would: the issue must exist
+    and Jira must actually offer a transition to ``target_status``. Only the
+    real path writes; callers own the output.
+
     Args:
         issue_key: Jira issue key (e.g., "PROJ-12345")
         target_status: Target status name (e.g., "In Progress", "Done")
-        dry_run: If True, preview without applying
+        dry_run: If True, resolve and preview without applying
 
     Returns:
-        {success, error?, already_at_status?}
+        {success, error?, already_at_status?, dry_run?}
     """
     client = get_client()
 
@@ -47,7 +51,20 @@ def move_issue(
             return {"success": True, "already_at_status": True}
 
     if dry_run:
-        print(f"[DRY RUN] Would move {issue_key} to '{target_status}'")
+        if not issue:
+            return {"success": False, "error": f"Issue not found: {issue_key}"}
+        transitions = client.get_transitions_sync(issue_key)
+        if transitions is None:
+            return {
+                "success": False,
+                "error": f"Could not get transitions for {issue_key}",
+            }
+        available = [t.get("name") for t in transitions]
+        if target_status.lower() not in {str(n).lower() for n in available}:
+            return {
+                "success": False,
+                "error": f"No transition to '{target_status}' available. Available: {available}",
+            }
         return {"success": True, "dry_run": True}
 
     return client.transition_sync(issue_key, target_status)
