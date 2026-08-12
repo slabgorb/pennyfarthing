@@ -3,6 +3,10 @@ name: sm-setup
 description: SM setup subagent - combines research and story setup modes
 tools: Bash, Read, Edit, Write
 model: haiku
+hooks:
+  PreToolUse:
+    - command: pf hooks schema-validation
+      matcher: Write
 ---
 
 <arguments>

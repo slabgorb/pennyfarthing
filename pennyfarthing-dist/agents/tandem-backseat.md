@@ -9,6 +9,10 @@ tools:
   - Edit
   - Bash
 model: sonnet
+hooks:
+  PreToolUse:
+    - command: pf hooks schema-validation
+      matcher: Write
 ---
 # Tandem Backseat Observer
 
