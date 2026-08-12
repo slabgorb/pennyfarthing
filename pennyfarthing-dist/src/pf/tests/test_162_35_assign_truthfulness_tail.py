@@ -155,6 +155,29 @@ class _FakeTransport:
 
         return None
 
+    def request(self, method: str, endpoint: str, data: Any = None) -> dict[str, Any]:
+        """Stand-in for ``JiraClient._request_sync`` (162-36).
+
+        Writes now go through the status-bearing transport instead of
+        ``_call_api_sync``, so the fake answers that seam too — same recording,
+        wrapped in the result object. A faked call always reached Jira, so it is
+        a 2xx (204/no body for writes) unless there are no credentials.
+        """
+        if not self.token:
+            return {
+                "success": False,
+                "status": None,
+                "data": None,
+                "error": "No Jira credentials configured",
+            }
+        payload = self(method, endpoint, data)
+        return {
+            "success": True,
+            "status": 200 if payload is not None else 204,
+            "data": payload,
+            "error": None,
+        }
+
     # --- recorded-call views -------------------------------------------------
 
     @staticmethod
@@ -198,6 +221,7 @@ def _make_client(transport: _FakeTransport, *, token: str) -> Any:
     )
     transport.token = token
     client._call_api_sync = transport  # type: ignore[method-assign]
+    client._request_sync = transport.request  # type: ignore[method-assign]
     return client
 
 
