@@ -643,15 +643,30 @@ def epic_show(epic_id: str, output_json: bool):
 
 
 def _epic_shard_path(sprint_dir, ref: str):
-    """Resolve an epic shard file path from a ref string.
+    """Resolve an epic shard file path from a ref string, or ``None`` if unsafe.
 
     Handles both 'epic-42' and 'PROJ-12792' style refs.
     The file naming convention is epic-{ref}.yaml, but refs that
     already start with 'epic-' should not be double-prefixed.
+
+    Every epic-shard read AND write in this module routes through here, so the
+    containment guard lives here rather than at each of the eight call sites
+    (CWE-22, 162-44). An unsafe ref warns and yields ``None``; callers must
+    treat ``None`` as "no shard".
     """
-    if ref.startswith("epic-"):
-        return sprint_dir / f"{ref}.yaml"
-    return sprint_dir / f"epic-{ref}.yaml"
+    import warnings
+
+    from pf.sprint.shard_merge import safe_ref_path
+
+    bare = ref[len("epic-") :] if ref.startswith("epic-") else ref
+    try:
+        return safe_ref_path(sprint_dir, bare)
+    except ValueError as e:
+        warnings.warn(
+            f"Epic ref {ref!r} escapes {sprint_dir} — skipping shard: {e}",
+            stacklevel=2,
+        )
+        return None
 
 
 def _epic_ref_matches(ref: str, epic_id: str) -> bool:
@@ -669,8 +684,10 @@ def _find_epic_in_initiatives(epic_id: str, root):
     """
     import yaml
 
+    from pf.sprint.shard_merge import safe_shards
+
     sprint_dir = root / "sprint"
-    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
+    for init_file in safe_shards(sprint_dir, "initiative-*.yaml"):
         with open(init_file) as f:
             init_data = yaml.safe_load(f.read())
         if not init_data:
@@ -682,7 +699,7 @@ def _find_epic_in_initiatives(epic_id: str, root):
             if isinstance(e, str):
                 if _epic_ref_matches(e, epic_id):
                     shard = _epic_shard_path(sprint_dir, e)
-                    if shard.exists():
+                    if shard is not None and shard.exists():
                         with open(shard) as sf:
                             epic_data = yaml.safe_load(sf.read())
                         if epic_data:
@@ -787,9 +804,11 @@ def _cancel_epic_in_initiatives(epic_id: str, root, *, jira: bool, dry_run: bool
     """Find and cancel an epic in initiative shard files."""
     import yaml
 
+    from pf.sprint.shard_merge import safe_shards
+
     sprint_dir = root / "sprint"
 
-    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
+    for init_file in safe_shards(sprint_dir, "initiative-*.yaml"):
         with open(init_file) as f:
             raw = f.read()
         init_data = yaml.safe_load(raw)
@@ -806,7 +825,7 @@ def _cancel_epic_in_initiatives(epic_id: str, root, *, jira: bool, dry_run: bool
             if isinstance(e, str):
                 if _epic_ref_matches(e, epic_id):
                     shard = _epic_shard_path(sprint_dir, e)
-                    if shard.exists():
+                    if shard is not None and shard.exists():
                         with open(shard) as sf:
                             epic_dict = yaml.safe_load(sf.read())
                         matched = True
@@ -846,6 +865,8 @@ def _cancel_epic_in_initiatives(epic_id: str, root, *, jira: bool, dry_run: bool
             # Write back — either shard file or inline in initiative
             if isinstance(e, str):
                 shard = _epic_shard_path(sprint_dir, e)
+                if shard is None:
+                    raise click.ClickException(f"Unsafe epic ref {e!r} — refusing to write shard")
                 with open(shard, "w") as sf:
                     yaml.dump(dict(epic_dict), sf, default_flow_style=False, sort_keys=False)
             else:
@@ -1061,6 +1082,7 @@ def epic_promote(epic_id: str, dry_run: bool):
     import yaml
 
     from pf.common.config import get_project_root
+    from pf.sprint.shard_merge import safe_shards
 
     root = get_project_root()
     sprint_dir = root / "sprint"
@@ -1074,7 +1096,7 @@ def epic_promote(epic_id: str, dry_run: bool):
     source_init_file = None
     source_ref = None
 
-    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
+    for init_file in safe_shards(sprint_dir, "initiative-*.yaml"):
         with open(init_file) as f:
             init_data = yaml.safe_load(f.read())
         if not init_data:
@@ -1310,7 +1332,7 @@ def initiative_show(name: str, output_json: bool):
             if isinstance(e, str):
                 # String ref — try to load shard for details
                 shard = _epic_shard_path(sprint_dir, e)
-                if shard.exists():
+                if shard is not None and shard.exists():
                     with open(shard) as sf:
                         edata = yaml.safe_load(sf.read())
                     if edata:
@@ -1387,7 +1409,7 @@ def initiative_cancel(name: str, jira: bool, dry_run: bool):
     for e in epics:
         if isinstance(e, str):
             shard = _epic_shard_path(sprint_dir, e)
-            if shard.exists():
+            if shard is not None and shard.exists():
                 with open(shard) as sf:
                     edata = yaml.safe_load(sf.read())
                 if edata:
@@ -1424,7 +1446,7 @@ def initiative_cancel(name: str, jira: bool, dry_run: bool):
     for _i, e in enumerate(epics):
         if isinstance(e, str):
             shard = _epic_shard_path(sprint_dir, e)
-            if shard.exists():
+            if shard is not None and shard.exists():
                 with open(shard) as sf:
                     edata = yaml.safe_load(sf.read())
                 if edata:
@@ -1998,11 +2020,14 @@ def future(epic_id: str | None):
     import yaml
 
     from pf.common.config import get_project_root
+    from pf.sprint.shard_merge import safe_shards
 
     root = get_project_root()
     sprint_dir = root / "sprint"
 
-    init_files = sorted(sprint_dir.glob("initiative-*.yaml"))
+    # Materialised: safe_shards is a generator, and this list is truth-tested
+    # and then iterated (possibly by _show_future_epic_detail).
+    init_files = list(safe_shards(sprint_dir, "initiative-*.yaml"))
     if not init_files:
         click.echo("No future initiatives found.")
         return
@@ -2118,7 +2143,7 @@ def _resolve_epic_ref(ref, sprint_dir, init_data=None) -> dict | None:
         return ref
     if isinstance(ref, str):
         shard = _epic_shard_path(sprint_dir, ref)
-        if shard.exists():
+        if shard is not None and shard.exists():
             with open(shard) as f:
                 return yaml.safe_load(f.read())
         # Fall back to inline sibling key in initiative data

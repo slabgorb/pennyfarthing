@@ -16,6 +16,7 @@ import click
 from ruamel.yaml.comments import CommentedMap
 
 from pf.sprint.loader import find_epic
+from pf.sprint.shard_merge import safe_ref_path, safe_shards
 from pf.sprint.validator import is_epic_shard_document, validate_sprint_document
 from pf.sprint.yaml_io import (
     STORY_KEY_ORDER,
@@ -241,11 +242,18 @@ def add_initiative_story(
     from pf.common.config import get_project_root
 
     root = get_project_root()
-    init_path = root / "sprint" / f"initiative-{initiative_slug}.yaml"
+    sprint_dir = root / "sprint"
+    # Guarded: initiative_slug is a raw CLI argument and this file is read AND
+    # dumped back, so an unvalidated slug was an out-of-bounds write (162-44).
+    # ValueError is translated to the result-object contract, not propagated.
+    try:
+        init_path = safe_ref_path(sprint_dir, initiative_slug, prefix="initiative-")
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
 
     if not init_path.exists():
         available = [
-            f.stem.replace("initiative-", "") for f in (root / "sprint").glob("initiative-*.yaml")
+            f.stem.replace("initiative-", "") for f in safe_shards(sprint_dir, "initiative-*.yaml")
         ]
         return {
             "success": False,

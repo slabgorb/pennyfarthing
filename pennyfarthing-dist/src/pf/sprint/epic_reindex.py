@@ -12,6 +12,7 @@ from typing import Any
 
 import click
 
+from pf.sprint.shard_merge import safe_ref_path
 from pf.sprint.yaml_io import _read_yaml_file, read_sprint, write_sprint
 
 
@@ -36,7 +37,13 @@ def reindex_epic(
         Dict with success status and shard details
     """
     sprint_dir = sprint_path.parent
-    shard_file = sprint_dir / f"epic-{shard_ref}.yaml"
+    # Guarded: shard_ref is a raw CLI argument, and on the non-dry-run path the
+    # ref is appended to the sprint index — so an unguarded traversal ref both
+    # read out of bounds and *persisted* the escape (CWE-22, 162-44).
+    try:
+        shard_file = safe_ref_path(sprint_dir, shard_ref)
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
 
     if not shard_file.exists():
         return {

@@ -9,9 +9,11 @@ its preferred YAML library.
 """
 
 import warnings
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from pathlib import Path
 from typing import Any
+
+from pf.sprint.path_validation import validate_shard_filename
 
 
 def is_safe_shard_path(candidate: Path, base_dir: Path) -> bool:
@@ -24,11 +26,99 @@ def is_safe_shard_path(candidate: Path, base_dir: Path) -> bool:
     symlink traversal is caught (a purely lexical ``..`` check would not be).
 
     On any resolution error the path is treated as unsafe (fail closed).
+
+    DELIBERATE DEFERRAL — TOCTOU / ``O_NOFOLLOW`` (story 162-44, Deliverable E):
+    this is a check-then-open containment test, so an attacker who can swap a
+    symlink between ``resolve()`` here and the caller's ``open()``/``unlink()``
+    defeats it. That is accepted for now: the threat model is *local,
+    metadata-derived refs* (epic ids and shard names read out of sprint YAML),
+    not a concurrent attacker holding write access to the sprint directory.
+    Closing the race would require ``O_NOFOLLOW`` plus ``openat()`` against a
+    held directory fd (or re-verifying containment via ``os.fstat`` after open)
+    and threading a file-descriptor API through every call site — tracked as a
+    follow-up story rather than scope creep here.
     """
     try:
         return candidate.resolve().is_relative_to(base_dir.resolve())
     except (OSError, ValueError, RuntimeError):
         return False
+
+
+def safe_ref_path(
+    base_dir: Path,
+    ref: str,
+    *,
+    prefix: str = "epic-",
+    suffix: str = ".yaml",
+) -> Path:
+    """Build ``base_dir/{prefix}{ref}{suffix}``, fail-closed on traversal.
+
+    The one guarded replacement for every raw ``base_dir / f"epic-{ref}.yaml"``
+    interpolation. Applies BOTH layers of the convention:
+
+    1. charset — :func:`~pf.sprint.path_validation.validate_shard_filename`
+       (``[A-Za-z0-9._-]``, no ``..``, non-empty);
+    2. containment — :func:`is_safe_shard_path` on the built path, which catches
+       a charset-clean ref whose shard file is a symlink pointing outside
+       ``base_dir``.
+
+    Args:
+        base_dir: Directory the built path must stay inside.
+        ref: Raw, possibly hostile ref (epic id, jira key, initiative slug).
+        prefix: Filename prefix (``epic-``, ``initiative-``, ``context-epic-``).
+        suffix: Filename suffix (``.yaml``, ``.md``).
+
+    Returns:
+        The built path (unresolved, so it compares equal to the raw
+        interpolation it replaces).
+
+    Raises:
+        ValueError: When *ref* fails the charset check or the built path
+            escapes *base_dir*. Callers whose contract is a result object must
+            translate this to ``{"success": False, "error": ...}``.
+    """
+    validate_shard_filename(str(ref))
+    candidate = Path(base_dir) / f"{prefix}{ref}{suffix}"
+    if not is_safe_shard_path(candidate, Path(base_dir)):
+        raise ValueError(
+            f"Invalid shard filename ref {ref!r}: {candidate} escapes {base_dir}. "
+            "Traversal attempt detected."
+        )
+    return candidate
+
+
+def safe_shards(base_dir: Path, pattern: str = "epic-*.yaml") -> Iterator[Path]:
+    """Yield the shard files matching ``pattern`` in ``base_dir`` that are contained.
+
+    The guarded replacement for every raw ``base_dir.glob("epic-*.yaml")`` read
+    loop. A glob match is a *name* match, so an in-dir symlink pointing outside
+    ``base_dir`` matches happily; such entries are skipped and each skip is
+    surfaced with :func:`warnings.warn` (never silently swallowed).
+
+    A missing ``base_dir`` yields nothing rather than raising — several call
+    sites glob archive directories that may not exist yet.
+
+    Args:
+        base_dir: Directory to glob.
+        pattern: Glob pattern (``epic-*.yaml``, ``initiative-*.yaml``,
+            ``sprint-*-completed.yaml``).
+
+    Yields:
+        Contained matches, sorted by path.
+    """
+    base = Path(base_dir)
+    try:
+        matches = sorted(base.glob(pattern))
+    except (OSError, ValueError):
+        return
+    for match in matches:
+        if not is_safe_shard_path(match, base):
+            warnings.warn(
+                f"Shard {match.name} escapes {base} ({match}) — skipping",
+                stacklevel=2,
+            )
+            continue
+        yield match
 
 
 def merge_epic_shards(

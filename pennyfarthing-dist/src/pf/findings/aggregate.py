@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -53,6 +54,29 @@ def _parse_session_fields(content: str) -> dict[str, str]:
     return _parse_session_lines(content.splitlines())
 
 
+def _safe_shard(base_dir: Path, epic_ref: object) -> Path | None:
+    """Build a contained ``epic-{ref}.yaml`` path, or ``None`` if it escapes.
+
+    Every shard read in this module is driven by refs taken straight out of
+    sprint/archive YAML. Unguarded interpolation leaked out-of-bounds story ids
+    and Jira keys into the findings report (CWE-22, 162-44). Returning ``None``
+    keeps the existing ``if shard.exists()`` skip shape at each call site.
+
+    ``safe_ref_path`` is imported lazily for the same import-cycle reason
+    documented at module scope for ``pf.sprint.session_parse``.
+    """
+    from pf.sprint.shard_merge import safe_ref_path
+
+    try:
+        return safe_ref_path(base_dir, str(epic_ref))
+    except ValueError as e:
+        warnings.warn(
+            f"Epic ref {epic_ref!r} escapes {base_dir} — skipping shard: {e}",
+            stacklevel=2,
+        )
+        return None
+
+
 def _collect_done_stories(project_root: Path, sprint_number: int) -> dict[str, dict]:
     """Collect all done stories from current sprint YAML and completed file.
 
@@ -90,8 +114,8 @@ def _collect_done_stories(project_root: Path, sprint_number: int) -> dict[str, d
 
         # Epic shard stories (archived epics)
         for epic_ref in sprint_data.get("completed_epics", []) or []:
-            shard = archive_dir / f"epic-{epic_ref}.yaml"
-            if shard.exists():
+            shard = _safe_shard(archive_dir, epic_ref)
+            if shard is not None and shard.exists():
                 with open(shard) as f:
                     shard_data = yaml.safe_load(f) or {}
                 for s in shard_data.get("stories", []) or []:
@@ -114,10 +138,10 @@ def _collect_done_stories(project_root: Path, sprint_number: int) -> dict[str, d
         sprint_dir = project_root / "sprint"
         for epic_ref in current_data.get("epics", []) or []:
             if isinstance(epic_ref, str):
-                shard = sprint_dir / f"epic-{epic_ref}.yaml"
+                shard = _safe_shard(sprint_dir, epic_ref)
             else:
-                shard = sprint_dir / f"epic-{epic_ref.get('jira', epic_ref.get('id', ''))}.yaml"
-            if shard.exists():
+                shard = _safe_shard(sprint_dir, epic_ref.get("jira", epic_ref.get("id", "")))
+            if shard is not None and shard.exists():
                 with open(shard) as f:
                     shard_data = yaml.safe_load(f) or {}
                 for s in shard_data.get("stories", []) or []:
@@ -132,8 +156,8 @@ def _find_jira_key_in_shard(archive_dir: Path, epic_ref: str, story_id: str) -> 
     """Look up a story's Jira key from its epic shard file."""
     if not epic_ref:
         return ""
-    shard = archive_dir / f"epic-{epic_ref}.yaml"
-    if not shard.exists():
+    shard = _safe_shard(archive_dir, epic_ref)
+    if shard is None or not shard.exists():
         return ""
     with open(shard) as f:
         data = yaml.safe_load(f) or {}
