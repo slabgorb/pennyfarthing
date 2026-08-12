@@ -26,11 +26,13 @@ PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
 
 # Read pr_mode and pr_strategy
 PR_MODE=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -m pf.common.pr_config)
-PR_STRATEGY=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
+PR_STRATEGY=$("${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" - "{REPOS}" <<'PYEOF'
+import sys
 from pf.git.repos import get_repo_config
-rc = get_repo_config('{REPOS}')
+rc = get_repo_config(sys.argv[1])
 print(rc.pr_strategy if rc else 'standard')
-")
+PYEOF
+)
 ```
 
 Format the PR title using the project's `pr_title_format` from `.pennyfarthing/repos.yaml`:
@@ -93,13 +95,14 @@ and writes the `## Impact Summary` section between Delivery Findings and agent a
 
 ```bash
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" - ".session/{STORY_ID}-session.md" <<'PYEOF'
+import json
+import sys
 from pathlib import Path
 from pf.findings.summary import write_impact_summary_to_session
-import json
-result = write_impact_summary_to_session(Path('.session/{STORY_ID}-session.md'))
+result = write_impact_summary_to_session(Path(sys.argv[1]))
 print(json.dumps(result))
-"
+PYEOF
 ```
 
 - If `success: true`: Impact Summary compiled. Log `finding_count` and `blocking_count`.
@@ -117,13 +120,14 @@ unsuggested candidate.
 
 ```bash
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" - ".session/{STORY_ID}-session.md" "{STORY_ID}" <<'PYEOF'
+import json
+import sys
 from pathlib import Path
 from pf.findings.followups import suggest_followups
-import json
-result = suggest_followups(Path('.session/{STORY_ID}-session.md'), story_id='{STORY_ID}')
+result = suggest_followups(Path(sys.argv[1]), story_id=sys.argv[2])
 print(json.dumps(result))
-"
+PYEOF
 ```
 
 - If `success: true` and `data.suggestions` is non-empty: include the
