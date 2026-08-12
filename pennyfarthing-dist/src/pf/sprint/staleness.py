@@ -53,6 +53,17 @@ _BASE_BRANCH_BY_REPO = {
     "orchestrator": "main",
 }
 
+# Default remote per repo. Mirrors repos.yaml ``remote_name`` (story 162-27);
+# both repos use ``origin`` today, so this defect is LATENT in-tree, but the
+# seam makes ``_resolve_revision`` honor the configured remote (``<remote>/<base>``)
+# rather than a hardcoded ``origin/`` — a non-origin repo would otherwise miss its
+# real upstream tip and silently fall back to a stale local branch. Kept inline
+# alongside ``_BASE_BRANCH_BY_REPO`` so the module stays self-contained.
+_REMOTE_BY_REPO = {
+    "pennyfarthing": "origin",
+    "orchestrator": "origin",
+}
+
 # ``git log -z`` separates commits with NUL bytes, which cannot appear in commit
 # subjects (git rejects them at write time). Within each NUL-separated chunk
 # the format string output is followed by ``\n`` then the file list (newline-
@@ -198,6 +209,7 @@ def check_story_staleness(
             ack=ack,
         )
     base_branch = _BASE_BRANCH_BY_REPO[repo_name]
+    remote = _REMOTE_BY_REPO.get(repo_name, "origin")
 
     paths = _resolve_paths(story)
     if not paths:
@@ -218,7 +230,7 @@ def check_story_staleness(
         )
 
     git_ok, stdout, git_err = _run_git_log(
-        repo_path, base_branch, start_date_str, paths
+        repo_path, base_branch, start_date_str, paths, remote=remote
     )
     if not git_ok:
         return _result(
@@ -426,15 +438,23 @@ def _path_matches(commit_file: str, surface_path: str) -> bool:
     return commit_file.startswith(surface_path.rstrip("/") + "/")
 
 
-def _resolve_revision(repo: Path, base_branch: str) -> tuple[str, str]:
-    """Pick the git revision to log against. Prefers ``origin/<base>`` (the
+def _resolve_revision(
+    repo: Path, base_branch: str, remote: str = "origin"
+) -> tuple[str, str]:
+    """Pick the git revision to log against. Prefers ``<remote>/<base>`` (the
     fetched upstream tip) and falls back to the local ``<base>`` branch when
     the remote-tracking ref doesn't exist (typical in ad-hoc test fixtures).
+
+    ``remote`` honors the repo's configured remote name (story 162-27); the
+    default ``origin`` preserves the pre-162-27 behavior for the common case.
+    The probe stays in the bare ``<remote>/<base>`` shape — full-ref-path
+    hardening is out of scope here because ``remote``/``base_branch`` come from
+    repos.yaml config, not an operator-supplied session field.
 
     Returns ``(revision, error_message)``. On failure to resolve either ref,
     ``revision`` is empty and ``error_message`` describes which refs were tried.
     """
-    candidates = [f"origin/{base_branch}", base_branch]
+    candidates = [f"{remote}/{base_branch}", base_branch]
     tried: list[str] = []
     for ref in candidates:
         tried.append(ref)
@@ -454,11 +474,11 @@ def _resolve_revision(repo: Path, base_branch: str) -> tuple[str, str]:
 
 
 def _run_git_log(
-    repo: Path, base_branch: str, since: str, paths: list[str]
+    repo: Path, base_branch: str, since: str, paths: list[str], remote: str = "origin"
 ) -> tuple[bool, str, str]:
     """Returns ``(success, stdout, error_message)``.
 
-    Logs commits on the base branch (preferring ``origin/<base>``, falling
+    Logs commits on the base branch (preferring ``<remote>/<base>``, falling
     back to the local branch) since ``since`` that touch any of ``paths``.
 
     Uses argv form (``shell=False``) so operator-controlled inputs cannot
@@ -467,7 +487,7 @@ def _run_git_log(
     cannot collide with the record separator — ``\\0`` is forbidden in commit
     subjects by git itself.
     """
-    revision, ref_err = _resolve_revision(repo, base_branch)
+    revision, ref_err = _resolve_revision(repo, base_branch, remote)
     if not revision:
         return False, "", ref_err
 
