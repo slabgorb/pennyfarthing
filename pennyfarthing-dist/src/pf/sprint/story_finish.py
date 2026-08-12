@@ -39,6 +39,7 @@ from pf.sprint.session_parse import (  # noqa: F401  # SESSION_FIELD_RE re-expor
     SESSION_FIELD_RE,
 )
 from pf.sprint.session_parse import parse_session as _parse_session_impl
+from pf.sprint.shard_merge import safe_ref_path
 from pf.sprint.story_transition import transition_story
 from pf.sprint.yaml_io import _get_epic_ref, read_sprint
 
@@ -1331,7 +1332,19 @@ def finish_story(
     Returns:
         Result dict ``{success, data?, error?, steps?}``.
     """
-    session_path = project_root / ".session" / f"{story_id}-session.md"
+    # 162-82: guard session path against charset + symlink traversal (CWE-22).
+    # A story_id containing '..' or a symlink inside .session/ that escapes the
+    # directory are both caught by safe_ref_path before any file I/O.
+    try:
+        session_path = safe_ref_path(
+            project_root / ".session", story_id, prefix="", suffix="-session.md"
+        )
+    except ValueError as exc:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "error": f"Invalid story_id {story_id!r}: path traversal detected — {exc}",
+        }
     sprint_path = project_root / "sprint" / "current-sprint.yaml"
     archive_dir = project_root / "sprint" / "archive"
     archive_dir.mkdir(parents=True, exist_ok=True)
@@ -1473,11 +1486,30 @@ def finish_story(
 
     today = date.today().isoformat()
     steps: list[dict[str, Any]] = []
-    archive_name = f"{jira_key}-session.md" if jira_key else f"{story_id}-session.md"
-
-    # Check for dialogue file
-    dialogue_path = project_root / ".session" / f"{story_id}-dialogue.md"
-    dialogue_archive_name = f"{jira_key}-dialogue.md" if jira_key else f"{story_id}-dialogue.md"
+    # 162-82: guard all four path builds (archive name + dialogue paths) against
+    # charset + symlink traversal (CWE-22). jira_key is already PROJ-\d+ or None;
+    # story_id is the raw CLI arg — a symlink in .session/ or sprint/archive/
+    # pointing outside the directory is caught by safe_ref_path before any I/O.
+    try:
+        _arc_ref = jira_key if jira_key else story_id
+        archive_name = safe_ref_path(
+            archive_dir, _arc_ref, prefix="", suffix="-session.md"
+        ).name
+        dialogue_path = safe_ref_path(
+            project_root / ".session", story_id, prefix="", suffix="-dialogue.md"
+        )
+        dialogue_archive_name = safe_ref_path(
+            archive_dir, _arc_ref, prefix="", suffix="-dialogue.md"
+        ).name
+    except ValueError as exc:
+        return {
+            "success": False,
+            "story_id": story_id,
+            "jira_key": jira_key,
+            "error": (
+                f"Path traversal detected in archive path for {story_id!r}: {exc}"
+            ),
+        }
 
     if dry_run:
         from pf.common.pr_config import get_pr_merge_mode
