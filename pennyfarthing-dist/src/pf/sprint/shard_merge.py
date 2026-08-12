@@ -27,16 +27,39 @@ def is_safe_shard_path(candidate: Path, base_dir: Path) -> bool:
 
     On any resolution error the path is treated as unsafe (fail closed).
 
-    DELIBERATE DEFERRAL — TOCTOU / ``O_NOFOLLOW`` (story 162-44, Deliverable E):
-    this is a check-then-open containment test, so an attacker who can swap a
+    DELIBERATE DEFERRAL — TOCTOU / ``O_NOFOLLOW`` (story 162-44 Deliverable E,
+    decision confirmed in story 162-83):
+    This is a check-then-open containment test, so an attacker who can swap a
     symlink between ``resolve()`` here and the caller's ``open()``/``unlink()``
-    defeats it. That is accepted for now: the threat model is *local,
-    metadata-derived refs* (epic ids and shard names read out of sprint YAML),
-    not a concurrent attacker holding write access to the sprint directory.
-    Closing the race would require ``O_NOFOLLOW`` plus ``openat()`` against a
-    held directory fd (or re-verifying containment via ``os.fstat`` after open)
-    and threading a file-descriptor API through every call site — tracked as a
-    follow-up story rather than scope creep here.
+    defeats it.
+
+    **Why the race is non-exploitable in this threat model.**  The sprint
+    directory lives on a local developer workstation.  An attacker who can swap
+    a symlink in that directory between two Python statements (a sub-millisecond
+    window in a single-threaded CLI invocation) already holds write access to
+    the filesystem — at which point the machine is fully compromised regardless
+    of what this check does.  There is no network boundary, no daemon running
+    continuously, no shared-tenant context, and no privilege-escalation path
+    that a successful race would open.  The ``resolve()``-time containment check
+    we *do* provide catches the meaningful attack class: a symlink planted in
+    the sprint directory before the CLI runs, pointing at a file outside it.
+    That is the only vector available to an attacker who does NOT already hold
+    arbitrary write access to the sprint directory.
+
+    **What would change the calculus.**  If ``pf`` were ever:
+
+    * run as a privileged daemon serving multiple users;
+    * exposed over a network API that accepts untrusted sprint-dir paths; or
+    * executing inside a container where the sprint directory is a shared
+      volume writable by an untrusted peer process,
+
+    then the TOCTOU window could be exploited without full-machine compromise,
+    and hardening via ``O_NOFOLLOW`` plus ``openat()`` against a held directory
+    fd (or re-verifying containment via ``os.fstat`` after open) would be
+    warranted.  Threading an fd-based API through every call site would be
+    required at that point — non-trivial, but straightforward.
+
+    Until one of those conditions holds, the deferral stands.
     """
     try:
         return candidate.resolve().is_relative_to(base_dir.resolve())
