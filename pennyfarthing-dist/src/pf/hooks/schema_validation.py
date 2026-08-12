@@ -66,19 +66,27 @@ SESSION_REQUIRED_FIELDS: dict[str, str] = {
 #: session that merely QUOTES the tag in prose to the XML arm, denying it for
 #: tags it never had (162-43). Leading whitespace is tolerated — a re-indented
 #: file is still an XML session.
-_SESSION_ROOT_RE = re.compile(r"^\s*<session[\s>]", re.MULTILINE)
+#: ``[ \t]*`` and not ``\s*``: ``\s`` matches newlines, so under MULTILINE every
+#: line-start anchor rescans the entire trailing whitespace run — quadratic,
+#: measured at 5s on 128KB of blank indented lines and over a minute at 1.6MB.
+#: A stall is not covered by ``main()``'s fail-open (it never raises, it just
+#: blocks the Write). Horizontal indent is exactly the intent here (162-43).
+_SESSION_ROOT_RE = re.compile(r"^[ \t]*<session[\s>]", re.MULTILINE)
 
 STEP_REQUIRED_TAGS = ["purpose", "instructions", "output"]
 STEP_META_FIELDS = ["step", "workflow", "agent", "next"]
 
 
-#: An archived session lives under an ``archive/`` path SEGMENT — the real
-#: location ``migration/session.py`` globs is ``.session/archive/*-session.md``.
-#: Archived bodies are rewritten by ``story_finish`` and need satisfy neither
-#: the live field contract nor the XML tag contract, so they are not live
-#: sessions. Matching the segment (not the substring "archive") keeps a live
-#: session named ``162-43-archive-session.md`` under validation (162-43).
-_ARCHIVE_SEGMENT_RE = re.compile(r"(?:^|/)archive/")
+#: The ONE archive location: ``.session/archive/*-session.md``, the glob
+#: ``migration/session.py`` uses. Archived bodies are rewritten by
+#: ``story_finish`` and need satisfy neither the live field contract nor the XML
+#: tag contract, so they are not live sessions.
+#: Scoped to that exact segment pair on purpose (162-43): a bare ``archive/``
+#: segment match also matched ANCESTOR directories, so a checkout under
+#: ``~/archive/`` had session validation silently off for every write.
+#: ``sprint/archive/`` stays exempt via the absent ``.session/`` clause below,
+#: and a live session merely NAMED ``162-43-archive-session.md`` stays validated.
+_ARCHIVE_SEGMENT_RE = re.compile(r"(?:^|/)\.session/archive/")
 
 
 def _is_session_file(file_path: str) -> bool:
@@ -117,13 +125,35 @@ def _has_tag(content: str, tag: str) -> bool:
     return f"<{tag}>" in content or f"<{tag} " in content
 
 
+def _normalize_section_heading(heading_text: str) -> str:
+    """Normalize a ``## `` heading's text for section comparison.
+
+    Agents write both ``## Story Details`` and ``## Story Details:`` and finish
+    reads the block either way, so both must be accepted. Exactly ONE trailing
+    colon is stripped — ``## Story Details::`` and ``## Story Details Extra``
+    are different sections (162-43).
+
+    This is ``pf.sprint.session_parse.normalize_section_heading``, duplicated
+    because a PreToolUse hook must not pull in ``pf.sprint`` at import time (the
+    same reason ``_FIELD_LINE_RE`` duplicates ``SESSION_FIELD_RE``). The 162-43
+    suite pins the two to identical behavior over a heading corpus; without that
+    parity the hook could accept a heading the consumer denies authority to,
+    which is the 155-32 failure class this hook exists to prevent.
+    """
+    heading = heading_text.strip().lower()
+    if heading.endswith(":"):
+        heading = heading[:-1].strip()
+    return heading
+
+
 def _story_details_field_labels(content: str) -> set[str]:
     """Labels of the parseable field lines inside Story Details, lowercased.
 
-    Story Details is the section ``story_finish._parse_session`` treats as
-    authoritative for branch/PR (155-40), and the line pattern here is the
-    consumer's own — so a session that passes is by construction one finish can
-    read. Labels are lowercased because finish lowercases before keying. Blank
+    Story Details is the section ``session_parse._parse_session_lines`` treats as
+    authoritative for branch/PR (155-40). Both the line pattern AND the section
+    heading normalization here are the consumer's own — so a session that passes
+    is by construction one finish can read, section authority included. Labels
+    are lowercased because finish lowercases before keying. Blank
     values are dropped: an empty field line and an absent one both extract to
     ``None`` at finish time. A line the consumer's pattern cannot parse (a
     qualified per-repo label, for now) contributes no label — it is tolerated,
@@ -133,14 +163,7 @@ def _story_details_field_labels(content: str) -> set[str]:
     in_details = False
     for line in content.splitlines():
         if line.startswith("## "):
-            heading = line[3:].strip().lower()
-            # Agents write both `## Story Details` and `## Story Details:`, and
-            # finish reads the block either way — accept exactly ONE trailing
-            # colon (162-43). Not a general suffix strip: `## Story Details::`
-            # and `## Story Details Extra` are different sections.
-            if heading.endswith(":"):
-                heading = heading[:-1].strip()
-            in_details = heading == STORY_DETAILS_SECTION
+            in_details = _normalize_section_heading(line[3:]) == STORY_DETAILS_SECTION
             continue
         if not in_details:
             continue

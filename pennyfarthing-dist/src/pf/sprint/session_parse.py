@@ -22,6 +22,31 @@ from pathlib import Path
 #: syntax that silently fails to parse is worse than no syntax.
 SESSION_FIELD_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*(\w[\w\s-]*):\*\*\s*(.*)")
 
+#: The section this parser treats as authoritative for branch/pr (155-40).
+STORY_DETAILS_SECTION = "story details"
+
+
+def normalize_section_heading(heading_text: str) -> str:
+    """Normalize a ``## `` heading's text for section comparison.
+
+    Agents write both ``## Story Details`` and ``## Story Details:`` and the
+    schema-validation hook accepts both (162-43), so this parser must grant
+    Story Details authority to both — a hook looser than its consumer is the
+    155-32 failure class (gate says OK, finish then resolves branch/pr from a
+    stale placeholder in an earlier section).
+
+    Exactly ONE trailing colon is stripped: ``## Story Details::`` and
+    ``## Story Details Extra`` stay different sections.
+
+    ``schema_validation._normalize_section_heading`` is this function,
+    duplicated (the PreToolUse hook must not import ``pf.sprint``); the 162-43
+    suite pins the two to identical behavior over a heading corpus.
+    """
+    heading = heading_text.strip().lower()
+    if heading.endswith(":"):
+        heading = heading[:-1].strip()
+    return heading
+
 
 def _parse_session_lines(lines: list[str]) -> dict[str, str]:
     """Core anchored parser on a pre-split list of lines.
@@ -44,8 +69,8 @@ def _parse_session_lines(lines: list[str]) -> dict[str, str]:
         if in_fence:
             continue
         if line.startswith("## "):
-            candidate = line[3:].strip().lower()
-            if candidate == "story details":
+            candidate = normalize_section_heading(line[3:])
+            if candidate == STORY_DETAILS_SECTION:
                 if not seen_story_details:
                     seen_story_details = True
                     section = candidate
@@ -62,7 +87,7 @@ def _parse_session_lines(lines: list[str]) -> dict[str, str]:
         # First-wins: with anchored matching, a later duplicate field line is
         # a stray record, not a correction.
         fields.setdefault(key, value)
-        if section == "story details":
+        if section == STORY_DETAILS_SECTION:
             detail_fields.setdefault(key, value)
     # Story Details authority for the merge-target fields (155-40).
     for key in ("branch", "pr"):

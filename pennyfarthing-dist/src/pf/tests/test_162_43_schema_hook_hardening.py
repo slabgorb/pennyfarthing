@@ -588,3 +588,170 @@ class TestPerFieldGuard:
             f"deny reason names {sorted(_flagged([reason]))}, expected "
             f"{sorted(expected)}: {reason!r}"
         )
+
+
+# =============================================================================
+# Round 2 (review) — hook/consumer parity at the Story Details seam
+# =============================================================================
+
+#: A placeholder branch/PR pair in an EARLIER section, exactly as sm-setup and
+#: the agents write it. First-wins would resolve these; only the 155-40 Story
+#: Details AUTHORITY override rescues the real values below.
+STALE_EARLIER_SECTION = (
+    "## SM Assessment\n"
+    "- **Branch:** (not created yet)\n"
+    "- **PR:** (none yet - recorded when the PR is created)\n"
+    "\n"
+)
+REAL_BRANCH = "feat/162-43-schema-hook-hardening-tail"
+REAL_PR = "#227"
+DETAILS_REAL = f"- **ID:** 162-43\n- **Branch:** {REAL_BRANCH}\n- **PR:** {REAL_PR}\n"
+
+
+def _session_with_stale_placeholders(heading: str) -> str:
+    """A session whose real branch/PR live under ``heading``, shadowed by
+    placeholders in an earlier section. Resolving correctly requires the
+    Story Details authority override to fire."""
+    return (
+        FRONTMATTER
+        + "# Story 162-43: schema hook hardening tail\n\n"
+        + STALE_EARLIER_SECTION
+        + heading
+        + "\n"
+        + DETAILS_REAL
+        + "\n## Workflow Tracking\n**Workflow:** tdd\n**Phase:** green\n"
+    )
+
+
+class TestStoryDetailsAuthorityParity:
+    """The hook and ``session_parse`` must agree on what "Story Details" is.
+
+    The hook accepting a heading the consumer does not grant authority to is
+    the 155-32 failure class: the gate says OK and finish then resolves
+    branch/PR from a stale placeholder in an earlier section — a story going
+    done pointing at no PR.
+    """
+
+    @pytest.mark.parametrize("heading", [PLAIN_HEADING, COLON_HEADING])
+    def test_story_details_authority_overrides_earlier_placeholders(self, heading: str) -> None:
+        resolved = _parse_session_lines(_session_with_stale_placeholders(heading).splitlines())
+        assert resolved.get("pr") == REAL_PR, (
+            f"under heading {heading!r} the consumer resolved pr to "
+            f"{resolved.get('pr')!r} instead of the real {REAL_PR!r} under "
+            "Story Details. The section was not recognized, so the 155-40 "
+            "authority override never fired and the earlier placeholder won — "
+            "finish would mark the story done pointing at no PR."
+        )
+        assert resolved.get("branch") == REAL_BRANCH, (
+            f"under heading {heading!r} the consumer resolved branch to "
+            f"{resolved.get('branch')!r} instead of {REAL_BRANCH!r}"
+        )
+
+    @pytest.mark.parametrize("heading", [PLAIN_HEADING, COLON_HEADING])
+    def test_hook_accept_implies_consumer_grants_authority(self, heading: str) -> None:
+        """Whatever heading the hook accepts, the consumer must treat as
+        authoritative. Stated as an implication so it holds either way the
+        normalization is settled."""
+        content = _session_with_stale_placeholders(heading)
+        hook_accepts = not _validate_session(content)
+        resolved = _parse_session_lines(content.splitlines())
+        consumer_grants = resolved.get("pr") == REAL_PR and resolved.get("branch") == REAL_BRANCH
+        assert hook_accepts == consumer_grants, (
+            f"heading {heading!r}: hook accepts={hook_accepts}, consumer grants "
+            f"Story Details authority={consumer_grants}. The hook must never be "
+            "looser than the consumer it exists to protect."
+        )
+
+    @pytest.mark.parametrize(
+        "heading",
+        [
+            PLAIN_HEADING,
+            COLON_HEADING,
+            "## Story Details  ",
+            "## Story Details:  ",
+            "## story details:",
+            "## Story Details::",
+            "## Story Details Extra",
+            "## Story Details -",
+            "## Story Detail",
+            "## SM Assessment",
+        ],
+    )
+    def test_heading_recognition_is_identical_on_both_sides(self, heading: str) -> None:
+        """Behavioral parity over a heading corpus — the section-level twin of
+        the ``_FIELD_LINE_RE``/``SESSION_FIELD_RE`` pin. The two normalizations
+        are duplicated (the hook must not import ``pf.sprint``), so only a test
+        keeps them from drifting."""
+        content = _session_with_stale_placeholders(heading)
+        hook_sees_details = bool({"branch", "pr"} & _story_details_field_labels(content))
+        resolved = _parse_session_lines(content.splitlines())
+        consumer_sees_details = resolved.get("pr") == REAL_PR
+        assert hook_sees_details == consumer_sees_details, (
+            f"heading {heading!r}: hook treats it as Story Details="
+            f"{hook_sees_details}, consumer={consumer_sees_details}"
+        )
+
+
+class TestArchiveExemptionIsScoped:
+    """Only ``.session/archive/`` is exempt. An ``archive/`` segment anywhere
+    else must not disable the gate for a whole checkout."""
+
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/Users/k/archive/myproj/.session/162-1-session.md",
+            "/Users/k/projects/archive/2025/proj/.session/162-1-session.md",
+            "archive/.session/162-1-session.md",
+        ],
+    )
+    def test_ancestor_archive_dir_is_still_a_live_session(self, path: str) -> None:
+        assert _get_file_type(path) == "session", (
+            f"{path} was exempted because an ANCESTOR directory is named "
+            "'archive'. Every live session write in that checkout is then "
+            "allowed unvalidated — the gate is off for the whole project."
+        )
+
+    def test_ancestor_archive_dir_live_session_still_denied(self) -> None:
+        path = "/Users/k/archive/myproj/.session/162-1-session.md"
+        out = _run_hook(_write_payload(path, MISSING_BOTH))
+        assert out.get("permissionDecision") == "deny", (
+            f"a live session under an ancestor 'archive/' dir was allowed: {out!r}"
+        )
+
+    def test_dot_session_archive_still_exempt(self) -> None:
+        assert _get_file_type(SESSION_ARCHIVE_PATH) is None, (
+            "narrowing the exemption broke the real archive location"
+        )
+
+    def test_sprint_archive_still_exempt(self) -> None:
+        assert _get_file_type(SPRINT_ARCHIVE_PATH) is None, (
+            "sprint/archive/ must stay exempt via the absent '.session/' clause"
+        )
+
+
+class TestSessionRootRegexIsLinear:
+    """``^\\s*`` under ``re.MULTILINE`` is quadratic: ``\\s`` matches newlines,
+    so every line-start anchor rescans the whole trailing whitespace run. The
+    intent is horizontal indent only, and a stall is NOT covered by ``main()``'s
+    fail-open handler — it never raises, it just blocks the Write hook."""
+
+    def test_whitespace_heavy_content_routes_in_bounded_time(self) -> None:
+        import time
+
+        content = "   \n" * 32000 + "# Story 162-43\n"
+        start = time.perf_counter()
+        schema_validation._SESSION_ROOT_RE.search(content)
+        elapsed = time.perf_counter() - start
+        assert elapsed < 1.0, (
+            f"the session-root regex took {elapsed:.2f}s on 32k blank indented "
+            "lines (~128KB). It is quadratic in the whitespace run length; a "
+            "1.6MB session stalls the PreToolUse hook for over a minute with "
+            "no timeout and no fail-open. Use `^[ \\t]*` — horizontal indent is "
+            "the documented intent and costs nothing."
+        )
+
+    def test_indented_xml_root_still_routes_to_xml(self) -> None:
+        """The tolerance the pattern exists for: a re-indented XML session."""
+        assert schema_validation._SESSION_ROOT_RE.search("  \t" + XML_NO_STORY), (
+            "an indented XML session root stopped matching"
+        )
