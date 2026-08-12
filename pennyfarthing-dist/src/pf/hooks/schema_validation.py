@@ -61,11 +61,29 @@ SESSION_REQUIRED_FIELDS: dict[str, str] = {
         "this requirement."
     ),
 }
+#: A STRUCTURAL session root: a line whose first non-space content is the
+#: opening ``<session`` tag. A whole-body substring test routed a MARKDOWN
+#: session that merely QUOTES the tag in prose to the XML arm, denying it for
+#: tags it never had (162-43). Leading whitespace is tolerated — a re-indented
+#: file is still an XML session.
+_SESSION_ROOT_RE = re.compile(r"^\s*<session[\s>]", re.MULTILINE)
+
 STEP_REQUIRED_TAGS = ["purpose", "instructions", "output"]
 STEP_META_FIELDS = ["step", "workflow", "agent", "next"]
 
 
+#: An archived session lives under an ``archive/`` path SEGMENT — the real
+#: location ``migration/session.py`` globs is ``.session/archive/*-session.md``.
+#: Archived bodies are rewritten by ``story_finish`` and need satisfy neither
+#: the live field contract nor the XML tag contract, so they are not live
+#: sessions. Matching the segment (not the substring "archive") keeps a live
+#: session named ``162-43-archive-session.md`` under validation (162-43).
+_ARCHIVE_SEGMENT_RE = re.compile(r"(?:^|/)archive/")
+
+
 def _is_session_file(file_path: str) -> bool:
+    if _ARCHIVE_SEGMENT_RE.search(file_path):
+        return False
     return file_path.endswith("-session.md") and ".session/" in file_path
 
 
@@ -115,7 +133,14 @@ def _story_details_field_labels(content: str) -> set[str]:
     in_details = False
     for line in content.splitlines():
         if line.startswith("## "):
-            in_details = line[3:].strip().lower() == STORY_DETAILS_SECTION
+            heading = line[3:].strip().lower()
+            # Agents write both `## Story Details` and `## Story Details:`, and
+            # finish reads the block either way — accept exactly ONE trailing
+            # colon (162-43). Not a general suffix strip: `## Story Details::`
+            # and `## Story Details Extra` are different sections.
+            if heading.endswith(":"):
+                heading = heading[:-1].strip()
+            in_details = heading == STORY_DETAILS_SECTION
             continue
         if not in_details:
             continue
@@ -134,7 +159,7 @@ def _validate_session_fields(content: str) -> list[str]:
 
 def _validate_session(content: str) -> list[str]:
     errors = []
-    if "<session" not in content:
+    if not _SESSION_ROOT_RE.search(content):
         # Markdown session: only the Story Details field contract applies (the
         # XML tag requirements below describe a shape it does not have).
         return _validate_session_fields(content)
