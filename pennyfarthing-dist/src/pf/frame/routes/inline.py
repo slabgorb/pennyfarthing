@@ -108,6 +108,19 @@ async def resolve_approval(request_id: str, request: Request) -> JSONResponse:
 # All inline routers
 # ---------------------------------------------------------------------------
 
+def reset_state() -> None:
+    """Restore every module-level store to its pristine value (story 162-37).
+
+    The welcome message, bell queue and pending-approval map are process globals
+    the routers close over; a fresh ``create_app()`` does not clear them.
+    """
+    global _welcome_message, _bell_queue, _pending_approvals
+
+    _welcome_message = {}
+    _bell_queue = []
+    _pending_approvals = {}
+
+
 all_inline_routers = [
     welcome_router,
     bell_queue_router,
