@@ -12,6 +12,10 @@ from pf.validate import ValidateReport
 
 def _discover_files(root: Path) -> list[Path]:
     """Find all validatable YAML in sprint/."""
+    # Local import: mirrors run()'s deferred pf.sprint import so the validate
+    # package stays importable without pulling in the sprint CLI (162-30).
+    from pf.sprint.shard_merge import safe_shards
+
     sprint_dir = root / "sprint"
     if not sprint_dir.is_dir():
         return []
@@ -22,8 +26,11 @@ def _discover_files(root: Path) -> list[Path]:
     if cs.exists():
         files.append(cs)
 
-    files.extend(sorted(sprint_dir.glob("epic-*.yaml")))
-    files.extend(sorted(sprint_dir.glob("initiative-*.yaml")))
+    # Guarded globs: a name-matching symlink pointing outside sprint/ would
+    # otherwise be handed to the validator and read (with content excerpts in
+    # the report) — an out-of-bounds read (CWE-22, 162-44).
+    files.extend(safe_shards(sprint_dir, "epic-*.yaml"))
+    files.extend(safe_shards(sprint_dir, "initiative-*.yaml"))
 
     future = sprint_dir / "future.yaml"
     if future.exists():
