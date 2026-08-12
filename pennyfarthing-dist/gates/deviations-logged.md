@@ -25,13 +25,13 @@ Run the Python validation function to check the session file:
 # pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
 # .venv - derive the interpreter from the launcher shebang, never activate .venv.
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
-from pf.gates.deviations import validate_deviations
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" - "${SESSION_FILE}" "${AGENT}" <<'PYEOF'
 import json, sys
-result = validate_deviations('${SESSION_FILE}', '${AGENT}')
+from pf.gates.deviations import validate_deviations
+result = validate_deviations(sys.argv[1], sys.argv[2])
 print(json.dumps(result))
 sys.exit(0 if result['status'] == 'pass' else 1)
-"
+PYEOF
 ```
 
 The validator checks:
