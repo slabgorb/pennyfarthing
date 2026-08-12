@@ -116,12 +116,30 @@ SENTINEL_TEMPLATES = (
 # be paired correctly. A regex over the whole text cannot: once the empty info
 # string is allowed, the closing delimiter of a ```yaml block looks like the
 # opening of an untagged one and the pairing slides by one fence.
-FENCE_DELIM_RE = re.compile(r"^[ \t]*```(?P<info>[^\s`]*)[ \t]*$")
+#
+# ``ticks`` and ``info`` are both captured because CommonMark pairing needs both
+# (162-38 review): a CLOSING delimiter carries NO info string and a backtick run
+# at least as long as the opening one. Treating any delimiter line as a close —
+# the first cut of this scanner — lets an inner ```bash line close its enclosing
+# block, sliding every later pairing and silently DROPPING real bash fences from
+# the sweep. ``rest`` swallows an attributed info string (```bash title="x"), so
+# such a fence still opens instead of being read as body text. A blockquote
+# marker prefix is allowed too: several steps show their commands inside a `> `
+# quote (workflows/interactive-debug/steps/step-01-connect.md), and the old
+# whole-text regex swept those bodies.
+FENCE_DELIM_RE = re.compile(r"^[ \t]*(?:>[ \t]*)*(?P<ticks>`{3,})(?P<info>[^\s`]*)(?P<rest>[^`]*)$")
 # Info strings whose fence body is shell an agent executes. "" (untagged) counts:
 # an agent runs an untagged fence exactly like a ```bash one, and dropping the
 # tag is the most common markdown slip. ```yaml / ```json / ```python remain
 # data/sample blocks and are NOT swept.
 SHELL_INFO_STRINGS = frozenset({"", "bash", "sh", "shell"})
+# 162-38 review: an UNTAGGED fence is often not shell at all — dist docs use one
+# for Task-tool specs and other YAML mappings (skills/pf-ux-tandem/ux-tandem.md).
+# Sweeping those as shell would fail the policy gate on a block no agent ever
+# executes. A body whose first content line is a YAML-style `key:` mapping is
+# therefore not treated as shell. Tagged ```bash/sh/shell fences are swept
+# regardless — the tag is the author's own statement of intent.
+UNTAGGED_YAML_KEY_RE = re.compile(r"^[A-Za-z_][\w .-]*:(?:\s|$)")
 ANY_FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
 INLINE_SPAN_RE = re.compile(r"`([^`\n]+)`")
 
@@ -160,6 +178,21 @@ def _template_files() -> list[Path]:
     return files
 
 
+def _is_shell_fence(info: str, body: list[str]) -> bool:
+    """Whether a fence with this info string and body is shell an agent runs."""
+    if info not in SHELL_INFO_STRINGS:
+        return False
+    if info:
+        return True
+    # Untagged: shell unless the body is plainly a YAML/Task-spec mapping.
+    for line in body:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        return not UNTAGGED_YAML_KEY_RE.match(stripped)
+    return True
+
+
 def _bash_fences(text: str) -> list[str]:
     """Bodies of every shell fence (```bash/sh/shell, or untagged) in ``text``.
 
@@ -168,20 +201,44 @@ def _bash_fences(text: str) -> list[str]:
     whole-text regex mistakes the CLOSING delimiter of a ```yaml block for the
     opening of an untagged one, shifting every subsequent pairing by one fence
     and dropping real bash fences out of the sweep.
+
+    Pairing follows CommonMark (162-38 review): the opening backtick RUN LENGTH
+    is remembered and only an info-string-free delimiter with a run at least that
+    long closes the block. Without both conditions an inner ```bash line closes
+    its enclosing ```markdown/untagged block and the same fence-dropping bug
+    returns from the other direction —
+    ``test_162_38_pf_py_policy_hardening.py::TestFenceScannerLosesNoPreviouslySweptBody``
+    is the regression guard for exactly that.
+
+    A NON-shell fence is not swept itself, but its body is rescanned: dist docs
+    wrap shell fences inside a ````markdown sample or an untagged Task spec, and
+    those inner fences are real execution sites (they are copied verbatim into a
+    CLAUDE.md an agent then runs). Dropping them would shrink the policy.
     """
     fences: list[str] = []
     info: str | None = None
+    open_ticks = 0
     body: list[str] = []
     for line in text.splitlines(keepends=True):
         delimiter = FENCE_DELIM_RE.match(line)
         if info is None:
             if delimiter:
                 info = delimiter.group("info").lower()
+                open_ticks = len(delimiter.group("ticks"))
                 body = []
             continue
-        if delimiter:
-            if info in SHELL_INFO_STRINGS:
-                fences.append("".join(body))
+        closes = (
+            delimiter is not None
+            and not delimiter.group("info")
+            and not delimiter.group("rest").strip()
+            and len(delimiter.group("ticks")) >= open_ticks
+        )
+        if closes:
+            joined = "".join(body)
+            if _is_shell_fence(info, body):
+                fences.append(joined)
+            else:
+                fences.extend(_bash_fences(joined))
             info = None
             continue
         body.append(line)

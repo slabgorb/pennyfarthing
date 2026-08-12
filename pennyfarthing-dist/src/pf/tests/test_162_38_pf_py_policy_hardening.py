@@ -390,6 +390,103 @@ class TestUntaggedFenceShape:
 
 
 # ---------------------------------------------------------------------------
+# 3d. Fence-scanner regression guard (162-38 review, HIGH)
+# ---------------------------------------------------------------------------
+
+# The fence pattern the sweep used BEFORE the untagged-fence widening replaced it
+# with a line-based scanner. Crude (it cannot see untagged fences and it mispairs
+# nested ones) but it is the coverage BASELINE: whatever it swept was under
+# policy, and a rewrite that widens the sweep must not quietly narrow it.
+OLD_BASH_FENCE_RE = re.compile(r"```bash\n(.*?)```", re.DOTALL)
+
+# Old-regex bodies carry pairing artifacts (a trailing `> ` blockquote marker, the
+# closing delimiter's indentation), so coverage is compared per CONTENT LINE.
+_QUOTE_PREFIX_RE = re.compile(r"^(?:>[ \t]*)*")
+
+
+def _content_lines(bodies: list[str]) -> set[str]:
+    out: set[str] = set()
+    for body in bodies:
+        for line in body.splitlines():
+            stripped = _QUOTE_PREFIX_RE.sub("", line.strip()).strip()
+            if stripped and stripped != "```":
+                out.add(stripped)
+    return out
+
+
+class TestFenceScannerLosesNoPreviouslySweptBody:
+    """The guard the 162-38 review found missing.
+
+    Replacing the fence REGEX with a line-based scanner is exactly the kind of
+    change that can pass every behavioral test while silently dropping fences out
+    of the sweep — and a fence that leaves the sweep takes the PF_PY policy with
+    it, which is the gh #112 failure mode this suite exists to prevent. So: over
+    the real template tree, everything the old regex swept must still be swept.
+    """
+
+    def test_baseline_regex_still_finds_bodies(self):
+        """Anti-vacuity: the baseline must be non-trivial, else the superset
+        assertion below is satisfied by an empty set."""
+        baseline = _content_lines(
+            [
+                b
+                for path in _template_files()
+                for b in OLD_BASH_FENCE_RE.findall(path.read_text(encoding="utf-8"))
+            ]
+        )
+        assert len(baseline) >= 200, (
+            f"the baseline ```bash regex now yields only {len(baseline)} content "
+            "lines over the template tree — the baseline broke, so the coverage "
+            "comparison cannot fail for the right reason"
+        )
+
+    def test_no_previously_swept_bash_line_left_the_sweep(self):
+        """Per template: old-regex coverage ⊆ new-scanner coverage."""
+        losses: list[tuple[str, list[str]]] = []
+        for path in _template_files():
+            text = path.read_text(encoding="utf-8")
+            old = _content_lines(OLD_BASH_FENCE_RE.findall(text))
+            new = _content_lines(_bash_fences(text))
+            missing = sorted(old - new)
+            if missing:
+                losses.append((_rel(path), missing))
+        assert losses == [], (
+            "the fence scanner no longer sweeps shell lines the previous "
+            "```bash regex swept, so those sites left the PF_PY policy with "
+            "every other test still green. Fix the pairing (track the opening "
+            "backtick run length; close only on a delimiter with an EMPTY info "
+            "string and a run at least as long) or widen the enclosing fence in "
+            "the doc to four backticks:\n"
+            + "\n".join(
+                f"  {p}:\n" + "\n".join(f"      {line}" for line in lines) for p, lines in losses
+            )
+        )
+
+    def test_inner_shell_fence_inside_a_markdown_sample_is_still_swept(self):
+        """Unit form of the same rule: a shell fence nested in a non-shell
+        sample block is a real execution site (the sample gets copied into a
+        CLAUDE.md an agent then runs), so the scanner rescans non-shell bodies."""
+        doc = "````markdown\n## Setup\n\n```bash\npython3 -m pf.sprint.status\n```\n````\n"
+        fences = _bash_fences(doc)
+        assert any("-m pf." in f for f in fences), (
+            f"nested shell fence inside a ````markdown sample was dropped; got {fences!r}"
+        )
+
+    def test_untagged_non_shell_body_is_not_swept_as_shell(self):
+        """162-38 review MEDIUM: untagged does NOT mean shell.
+
+        ``skills/pf-ux-tandem/ux-tandem.md`` uses an untagged fence for a
+        Task-tool spec. Sweeping a YAML mapping as shell would let a doc block
+        no agent executes fail the policy gate.
+        """
+        doc = '```\nTask:\n  subagent_type: "general-purpose"\n  prompt: |\n    run python3 -m pf.x\n```\n'
+        assert _bash_fences(doc) == [], (
+            "an untagged Task-spec/YAML block was swept as a shell fence; "
+            f"got {_bash_fences(doc)!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
 # 4. deviation-format.md must document deviations.py's Spec-source rule
 # ---------------------------------------------------------------------------
 

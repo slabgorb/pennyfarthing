@@ -100,7 +100,7 @@ For monorepo:
 
 Extract from repos.yaml and format:
 
-```markdown
+````markdown
 ## Testing Commands
 
 {if orchestrator with subrepos}
@@ -131,7 +131,7 @@ pnpm test --filter @{project}/api
 {test_command} -- --grep "pattern"
 ```
 {/if}
-```
+````
 
 ### 6. Building
 

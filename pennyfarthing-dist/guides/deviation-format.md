@@ -44,7 +44,12 @@ The em-dash (`—`) separates the impact level from the affected stories. Exampl
 
 ### Spec source specificity (enforced)
 
-The `deviations-logged` gate does not just check that **Spec source** is present — it checks that the value is *specific*. An empty value, or a value that is merely descriptive prose, **fails** the gate with `vague Spec source '<value>' — must reference a file path, AC, or section`, and the whole deviations entry is rejected.
+The `deviations-logged` gate does not just check that **Spec source** is present — it checks that the value is *specific*. Either way the entry is rejected, but the two failures have distinct messages:
+
+| Value | Gate message |
+|---|---|
+| Empty (field present, no value) | `has empty Spec source — must cite a specific document or section` |
+| Non-empty but merely descriptive prose | `has vague Spec source '<value>' — must reference a file path, AC, or section` |
 
 A **Spec source** is accepted when it contains at least one of:
 
