@@ -141,23 +141,28 @@ def test_is_safe_shard_path_accepts_benign_path_that_does_not_exist(tmp_path):
 
 
 def test_is_safe_shard_path_fails_closed_on_oserror(tmp_path):
-    """An unresolvable path (e.g. broken symlink target) is treated as unsafe.
+    """An OSError from Path.resolve() causes is_safe_shard_path to return False.
 
-    Fail-closed semantics: resolution errors default to rejected.
+    Fail-closed semantics: any resolution error is caught and the path is
+    treated as unsafe. Pinned by injecting an OSError directly into
+    ``Path.resolve`` so the except branch is actually exercised.
     """
-    # 162-83: fail-closed on resolution error is preserved
+    # 162-83: fail-closed on resolution error — genuinely exercise the except branch
+    from unittest.mock import patch
+
     from pf.sprint.shard_merge import is_safe_shard_path
 
     base = tmp_path / "sprint"
     base.mkdir()
-    link = base / "epic-broken.yaml"
-    link.symlink_to(base / "does-not-exist.yaml")  # dangling symlink
+    candidate = base / "epic-42.yaml"
 
-    # resolve() on a dangling symlink still returns a path in Python 3.6+
-    # (strict=False, the default), so this is actually a path check, not an
-    # OSError. The important invariant is that it doesn't raise and returns a bool.
-    result = is_safe_shard_path(link, base)
-    assert isinstance(result, bool), "is_safe_shard_path must return bool, not raise"
+    with patch("pathlib.Path.resolve", side_effect=OSError("injected resolve error")):
+        result = is_safe_shard_path(candidate, base)
+
+    assert result is False, (
+        "fail-closed contract broken: is_safe_shard_path must return False "
+        "when Path.resolve() raises OSError"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -170,9 +175,11 @@ def test_is_safe_shard_path_fails_closed_on_oserror(tmp_path):
         "162-83 TOCTOU scope: swapping a symlink AFTER resolve() but BEFORE "
         "open() is not protected — this is the knowingly-deferred race. "
         "The test is marked xfail to document the boundary, not to demand hardening. "
-        "See is_safe_shard_path docstring for the full decision record."
+        "See is_safe_shard_path docstring for the full decision record. "
+        "strict=True: if this ever XPASSes, O_NOFOLLOW hardening was added and "
+        "this test must be converted to a normal passing test."
     ),
-    strict=False,
+    strict=True,
 )
 def test_toctou_window_is_documented_as_out_of_scope(tmp_path):
     """Documents (does NOT assert security of) the TOCTOU race window.
