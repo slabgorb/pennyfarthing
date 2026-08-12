@@ -28,6 +28,7 @@ import yaml
 if TYPE_CHECKING:
     from pf.git.repos import RepoConfig
 
+from pf.common import bounded_run
 from pf.sprint.archive_epic import _load_archive_file, _write_archive_file, ensure_archive_file
 from pf.sprint.loader import (
     _has_real_jira_key,
@@ -280,7 +281,13 @@ def _extract_branch(fields: dict[str, str]) -> str | None:
 #: one reviewable block so the trade-off is visible: every bound must be loose
 #: enough that a working-but-slow command is not killed — a tight bound on the
 #: irreversible merge trades a rare hang for a routine mid-merge kill.
-DEFAULT_TIMEOUT_S = 120.0
+#: The default bound and the bounded-run machinery now live in the shared
+#: stdlib-only helper (162-41) so other modules inherit "every subprocess is
+#: bounded and a hang becomes a result object" instead of re-deriving it. The
+#: names below are re-exported: regression suites import ``_TimedOutProcess``
+#: from here, and the class must be SHARED (not duplicated) or a
+#: helper-produced timeout would slip past every timeout arm 162-9 added.
+DEFAULT_TIMEOUT_S = bounded_run.DEFAULT_TIMEOUT_S
 #: Network-facing gh calls, including the irreversible merge.
 GH_TIMEOUT_S = 120.0
 #: Purely local git plumbing: ref existence, commit counting, branch delete.
@@ -292,23 +299,10 @@ SUBCOMMAND_TIMEOUT_S = 120.0
 
 #: timeout(1)'s conventional exit status, so a timed-out result reads as a
 #: failure to every existing ``returncode != 0`` check.
-_TIMEOUT_RETURNCODE = 124
+_TIMEOUT_RETURNCODE = bounded_run.TIMEOUT_RETURNCODE
 
-
-class _TimedOutProcess(subprocess.CompletedProcess):
-    """A :func:`_run` result standing in for a child that blew its timeout.
-
-    A distinct TYPE rather than a marker attribute or a magic returncode:
-    ``_timed_out`` must answer False for every other result shape, including
-    the mocks the finish test suites hand back (a ``getattr`` probe on a
-    ``MagicMock`` invents a truthy attribute, which would read every faked call
-    as timed out).
-    """
-
-
-def _timed_out(result: Any) -> bool:
-    """True when *result* came from a child that hit its timeout."""
-    return isinstance(result, _TimedOutProcess)
+_TimedOutProcess = bounded_run.TimedOutProcess
+_timed_out = bounded_run.timed_out
 
 
 def _run(
@@ -325,18 +319,22 @@ def _run(
     inherits it. An explicitly passed ``timeout`` wins; that is how the
     per-site tiering above is expressed.
 
-    A blown timeout is returned as a :class:`_TimedOutProcess`, never raised:
-    ``TimeoutExpired`` escaping ``finish_story`` violates the no-throw contract
-    (SOUL #10) exactly as badly as the hang it replaced, and after the
-    irreversible merge it strands the story with a traceback instead of a
-    report. ``stderr`` carries the exception's own text, which names the
-    program, its subcommand and the bound that expired — the callers below
-    surface it verbatim so "something timed out" is never the whole story.
+    A blown timeout is returned as a :class:`_TimedOutProcess`, and a child that
+    could not be SPAWNED at all (``gh`` off PATH, ENOMEM, EMFILE) as a plain
+    non-zero result — never raised: an exception escaping ``finish_story``
+    violates the no-throw contract (SOUL #10) exactly as badly as the hang it
+    replaced, and after the irreversible merge it strands the story with a
+    traceback instead of a report. ``stderr`` carries the exception's own text,
+    which names the program, its subcommand and the bound that expired — the
+    callers below surface it verbatim so "something timed out" is never the
+    whole story.
+
+    The machinery lives in :mod:`pf.common.bounded_run` (162-41); the runner is
+    passed in rather than imported there so the patchable seam stays HERE —
+    every finish test suite fakes ``story_finish.subprocess``, and a helper
+    owning its own seam would make all of those fakes no-ops.
     """
-    try:
-        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, **kwargs)
-    except subprocess.TimeoutExpired as exc:
-        return _TimedOutProcess(list(cmd), _TIMEOUT_RETURNCODE, "", str(exc))
+    return bounded_run.run(cmd, timeout=timeout, runner=subprocess.run, **kwargs)
 
 
 def _cwd_kwargs(cwd: Path | None) -> dict[str, str]:
@@ -1516,7 +1514,11 @@ def finish_story(
                 # _classify_pr encodes the precedence order ONCE; the verdict routes
                 # the dry-run step without positional dependence on call order.
                 view, gate_timeout = _pr_view_probe(repo_pr, cwd=repo_path)
-                if gate_timeout:
+                # ``is not None``, never truthiness (162-41): the second element
+                # answers "did the probe HANG?" — a presence, carried as a
+                # string. An empty message would read as "no timeout" and make
+                # the preview promise a merge for a hung probe.
+                if gate_timeout is not None:
                     action = (
                         f"Timed out reading the state of PR #{repo_pr} in "
                         f"{repo_path}: {gate_timeout} — refusing to attempt "
@@ -1620,7 +1622,12 @@ def finish_story(
                 no_pr_steps[repo_path] = verification["step"]
                 continue
             view, gate_timeout = _pr_view_probe(repo_pr, cwd=repo_path)
-            if gate_timeout:
+            # ``is not None``, never truthiness (162-41): the probe's second
+            # element is the PRESENCE of a timeout, carried as a string. Testing
+            # its content makes an empty message indistinguishable from "the
+            # call came back fine" and collapses the hang into the permissive
+            # arm below — the one arm this gate exists to keep it out of.
+            if gate_timeout is not None:
                 # Unlike a gh ERROR, a hung gate probe is not permissively
                 # indeterminate (162-9): the process that just hung will hang on
                 # the merge call too, and falling through would attempt the
@@ -1822,7 +1829,10 @@ def finish_story(
                     "steps": steps,
                 }
             verified_merged, verify_timeout = _pr_merge_verification(repo_pr, cwd=repo_path)
-            if verify_timeout:
+            # ``is not None``, never truthiness (162-41): an empty message would
+            # skip this arm for the one below, which flatly states the PR is not
+            # MERGED — about a merge that landed.
+            if verify_timeout is not None:
                 # The merge command completed; the VERIFICATION hung. Finish
                 # still cannot mark the story done — it has no confirmation —
                 # but the report must say "could not verify", never "the PR did
@@ -2183,6 +2193,24 @@ def finish_story(
                 "warning": (
                     f"Timed out: {(archive_result.stderr or '').strip()} — the story "
                     "is done; re-run the epic archive by hand"
+                ),
+            }
+        )
+    elif archive_result.returncode != 0:
+        # A timeout is not the only way this command can fail to happen
+        # (162-41). A non-zero exit reported as ``ran: True`` is the silent skip
+        # epic 162 exists to kill: the epics are still open and the operator is
+        # told the archive completed. Not fatal — the story is already done —
+        # but the step must carry the reason, verbatim from the subcommand.
+        steps.append(
+            {
+                "step": 5,
+                "action": "archive_epics",
+                "ran": False,
+                "warning": (
+                    f"Epic archive exited {archive_result.returncode}: "
+                    f"{(archive_result.stderr or '').strip() or 'no output'} — the "
+                    "story is done; re-run the epic archive by hand"
                 ),
             }
         )
