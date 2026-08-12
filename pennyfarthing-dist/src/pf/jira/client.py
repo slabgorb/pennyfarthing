@@ -505,6 +505,25 @@ class JiraClient:
         """
         return self._call_api_sync("PUT", f"/rest/api/3/issue/{issue_key}", {"fields": fields})
 
+    def get_transitions_sync(self, issue_key: str) -> list[dict[str, Any]] | None:
+        """List the transitions currently available on an issue, read-only.
+
+        The single resolution rule shared by dry-run previews and real
+        transitions. GET only — it never mutates.
+
+        Args:
+            issue_key: Jira issue key
+
+        Returns:
+            List of transition dicts, or None if the transitions could not be
+            read (missing issue / API failure) — so callers never mistake
+            "could not read" for "no transition available".
+        """
+        transitions_data = self._call_api_sync("GET", f"/rest/api/3/issue/{issue_key}/transitions")
+        if not transitions_data:
+            return None
+        return transitions_data.get("transitions", [])
+
     def transition_sync(self, issue_key: str, target_status: str) -> dict[str, Any]:
         """Transition issue to target status synchronously.
 
@@ -517,11 +536,10 @@ class JiraClient:
         Returns:
             Result dict with success status and optional reason
         """
-        transitions_data = self._call_api_sync("GET", f"/rest/api/3/issue/{issue_key}/transitions")
-        if not transitions_data:
+        transitions = self.get_transitions_sync(issue_key)
+        if transitions is None:
             return {"success": False, "error": "Could not get transitions"}
 
-        transitions = transitions_data.get("transitions", [])
         transition_id = None
         for t in transitions:
             if t.get("name", "").lower() == target_status.lower():

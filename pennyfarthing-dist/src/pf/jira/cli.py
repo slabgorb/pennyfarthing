@@ -78,8 +78,25 @@ def check(key):
 @click.argument("key")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 def claim(key, dry_run):
-    """Claim a story (assign to self + move to In Progress)."""
+    """Claim a story (assign to self + move to In Progress).
+
+    \b
+    --dry-run runs the real availability lookup and fails if the issue does not
+    exist or is already claimed; it never modifies the issue.
+    """
     if dry_run:
+        from pf.jira.claim import check_availability
+
+        availability = check_availability(key)
+        if not availability.get("available"):
+            assigned_to = availability.get("assigned_to")
+            reason = (
+                f"{key} is already claimed by {assigned_to}"
+                if assigned_to
+                else availability.get("error", f"{key} is not available")
+            )
+            click.echo(f"Failed: {reason}", err=True)
+            raise SystemExit(availability.get("exit_code", 1))
         click.echo(f"[DRY-RUN] Would claim {key} (assign to self + move to In Progress)")
         return
     from pf.jira.claim import main as claim_main
@@ -102,6 +119,9 @@ def move(key, status, dry_run):
     result = move_issue(key, status, dry_run=dry_run)
     if result.get("already_at_status"):
         click.echo(f"{key} already at '{status}'")
+    elif result.get("dry_run"):
+        # Preview only — never "Moved", which would claim a write that never happened.
+        click.echo(f"[DRY RUN] Would move {key} to '{status}'")
     elif result.get("success"):
         click.echo(f"Moved {key} to '{status}'")
     else:
