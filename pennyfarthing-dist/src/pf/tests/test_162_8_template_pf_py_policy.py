@@ -37,6 +37,18 @@ ACs (session file 162-8):
 - AC3: suite stays exit 0 apart from the known 162-5 xfails. No test here is
   xfail/skip-by-default.
 
+KNOWN LIMITATION — the script-path blind spot (162-38): a fence that hands a
+``.py`` script to the interpreter (``python3 .pennyfarthing/scripts/foo.py``) is
+NOT detected as pf-executing, even when that script imports pf. ``_executes_pf``
+only sees INLINE pf payloads (``-m pf.x``, or ``from pf.x`` in the fence text),
+and a script carries its imports in another file. Closing the blind spot needs
+cross-file resolution (resolve the path, possibly through ``.pennyfarthing/``
+symlinks, then parse the script's imports), so it stays a documented limitation
+rather than a silent gap. It is pinned executably in
+``test_162_38_pf_py_policy_hardening.py``
+(``TestScriptPathBlindSpotIsDocumented``), which also asserts no template in the
+tree currently uses the shape, keeping the gap latent.
+
 SCOPE DECISION (logged as a Design Deviation in the session file):
 TEMPLATE_ROOTS covers agent/command/skill/workflow-step/template markdown plus
 markdown under scripts/, i.e. files whose bash fences are executed by an agent
@@ -92,21 +104,40 @@ SENTINEL_TEMPLATES = (
     # commands/pf-standalone.md removed in 164-6: its only pf-executing fence
     # (the PR title ${PF_PY} -c block) was replaced with `pf git format-title`.
     # The file no longer invokes the Python interpreter directly.
+    # 162-38: a gates/ sentinel too. With agents/ as the only represented root,
+    # dropping "gates" from TEMPLATE_ROOTS (or a discovery regex that stops
+    # matching the gate fence shape) silently removes five pf-executing gate
+    # templates from the policy with every test still green — the unswept-root
+    # failure mode this suite exists to prevent.
+    "gates/ac-completion.md",
 )
 
-BASH_FENCE_RE = re.compile(r"```(?:bash|sh|shell)\n(.*?)```", re.DOTALL)
+# 162-38: fence delimiters are matched line-by-line so an UNTAGGED ``` fence can
+# be paired correctly. A regex over the whole text cannot: once the empty info
+# string is allowed, the closing delimiter of a ```yaml block looks like the
+# opening of an untagged one and the pairing slides by one fence.
+FENCE_DELIM_RE = re.compile(r"^[ \t]*```(?P<info>[^\s`]*)[ \t]*$")
+# Info strings whose fence body is shell an agent executes. "" (untagged) counts:
+# an agent runs an untagged fence exactly like a ```bash one, and dropping the
+# tag is the most common markdown slip. ```yaml / ```json / ```python remain
+# data/sample blocks and are NOT swept.
+SHELL_INFO_STRINGS = frozenset({"", "bash", "sh", "shell"})
 ANY_FENCE_RE = re.compile(r"```.*?```", re.DOTALL)
 INLINE_SPAN_RE = re.compile(r"`([^`\n]+)`")
 
 PF_PY_ASSIGN_RE = re.compile(r"^\s*(?:export\s+)?PF_PY=.+$", re.MULTILINE)
 
-# A python interpreter invoked to execute code: -m MODULE, -c PAYLOAD, or a
-# bare `-` (heredoc/stdin script, as in `python3 - "$ARG" <<'PYEOF'`).
+# A python interpreter invoked to execute code: -m MODULE, -c PAYLOAD, a bare
+# `-` (heredoc/stdin script, as in `python3 - "$ARG" <<'PYEOF'`), or a dash-less
+# heredoc (`python3 <<'PYEOF'`, which bash runs identically — 162-38).
+# The interpreter name may carry a version suffix (`python3.12`), which is as
+# unpinned as `python3` and need not have pf installed (162-38).
 # Excluded by the lookbehind: `"$PF_PY"`, `${PF_PY:?..}`, `.venv/bin/python`
 # are matched by their own dedicated rules below, not by this one.
-BARE_PYTHON_EXEC_RE = re.compile(r'(?<![\w/"$}-])python3?\s+(?:-[mc]\b|-(?=\s))')
+_EXEC_FORM = r"(?:-[mc]\b|-(?=\s)|<<)"
+BARE_PYTHON_EXEC_RE = re.compile(rf'(?<![\w/"$}}-])python3?(?:\.\d+)?\s+{_EXEC_FORM}')
 # Any python-ish interpreter reference running code, whatever the prefix.
-ANY_PYTHON_EXEC_RE = re.compile(r'python3?["\']?\s+(?:-[mc]\b|-(?=\s))')
+ANY_PYTHON_EXEC_RE = re.compile(rf'python3?(?:\.\d+)?["\']?\s+{_EXEC_FORM}')
 VENV_PYTHON_RE = re.compile(r"\.venv/bin/python3?\b")
 VENV_ACTIVATE_RE = re.compile(r"(?:source|\.)\s+\S*\.venv/bin/activate")
 
@@ -130,7 +161,31 @@ def _template_files() -> list[Path]:
 
 
 def _bash_fences(text: str) -> list[str]:
-    return BASH_FENCE_RE.findall(text)
+    """Bodies of every shell fence (```bash/sh/shell, or untagged) in ``text``.
+
+    Line-based pairing, not a single regex: an untagged fence is a legitimate
+    execution site (162-38), and the moment the empty info string is accepted a
+    whole-text regex mistakes the CLOSING delimiter of a ```yaml block for the
+    opening of an untagged one, shifting every subsequent pairing by one fence
+    and dropping real bash fences out of the sweep.
+    """
+    fences: list[str] = []
+    info: str | None = None
+    body: list[str] = []
+    for line in text.splitlines(keepends=True):
+        delimiter = FENCE_DELIM_RE.match(line)
+        if info is None:
+            if delimiter:
+                info = delimiter.group("info").lower()
+                body = []
+            continue
+        if delimiter:
+            if info in SHELL_INFO_STRINGS:
+                fences.append("".join(body))
+            info = None
+            continue
+        body.append(line)
+    return fences
 
 
 def _executes_pf(fence: str) -> bool:
