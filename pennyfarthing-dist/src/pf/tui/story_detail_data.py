@@ -13,6 +13,25 @@ from pathlib import Path
 from typing import Any
 
 from pf.sprint.session_parse import parse_session as _parse_session_shared
+from pf.sprint.shard_merge import safe_ref_path, safe_shards
+
+
+def _safe_str_path(base_dir: str, ref: str, *, prefix: str, suffix: str) -> str | None:
+    """``safe_ref_path`` adapter for this module's ``os.path`` string paths.
+
+    Every path this module builds is interpolated from a ref that arrives
+    verbatim out of sprint YAML (``ws_push`` ships ``epic_data['id']`` and the
+    shard's ``jira:`` straight from ``merge_epic_shards`` to the TUI), so all of
+    them were traversable via a symlink inside ``sprint/context/``, ``.session/``
+    or ``sprint/archive/`` (CWE-22, 162-44 round 2 — this module appeared in no
+    prior inventory). Returns ``None`` when the ref is unsafe, which each caller
+    treats as "no such file" — these are display lookups, so a hostile ref
+    should render as absent, not raise into the TUI event loop.
+    """
+    try:
+        return str(safe_ref_path(Path(base_dir), ref, prefix=prefix, suffix=suffix))
+    except ValueError:
+        return None
 
 
 def _find_project_root() -> str | None:
@@ -35,17 +54,20 @@ def _find_session_file(
     Returns:
         (path, is_archived) tuple. path is None when no session file found.
     """
-    filename = f"{story_id}-session.md"
     # 1. Active session in project root
     if project_root:
-        candidate = os.path.join(project_root, ".session", filename)
-        if os.path.isfile(candidate):
+        candidate = _safe_str_path(
+            os.path.join(project_root, ".session"), story_id, prefix="", suffix="-session.md"
+        )
+        if candidate and os.path.isfile(candidate):
             return (candidate, False)
     # Walk up from CWD looking for .session/{story_id}-session.md
     path = os.getcwd()
     while True:
-        candidate = os.path.join(path, ".session", filename)
-        if os.path.isfile(candidate):
+        candidate = _safe_str_path(
+            os.path.join(path, ".session"), story_id, prefix="", suffix="-session.md"
+        )
+        if candidate and os.path.isfile(candidate):
             return (candidate, False)
         parent = os.path.dirname(path)
         if parent == path:
@@ -54,16 +76,16 @@ def _find_session_file(
 
     # 2. Archive by local ID: sprint/archive/{story_id}-session.md
     if project_root:
-        candidate = os.path.join(project_root, "sprint", "archive", filename)
-        if os.path.isfile(candidate):
+        archive_dir = os.path.join(project_root, "sprint", "archive")
+        candidate = _safe_str_path(archive_dir, story_id, prefix="", suffix="-session.md")
+        if candidate and os.path.isfile(candidate):
             return (candidate, True)
 
-    # 3. Archive by Jira key: sprint/archive/{jira_key}-session.md
-    if jira_key and project_root:
-        jira_filename = f"{jira_key}-session.md"
-        candidate = os.path.join(project_root, "sprint", "archive", jira_filename)
-        if os.path.isfile(candidate):
-            return (candidate, True)
+        # 3. Archive by Jira key: sprint/archive/{jira_key}-session.md
+        if jira_key:
+            candidate = _safe_str_path(archive_dir, jira_key, prefix="", suffix="-session.md")
+            if candidate and os.path.isfile(candidate):
+                return (candidate, True)
 
     return (None, False)
 
@@ -198,16 +220,16 @@ def _check_context_files(story_id: str, project_root: str | None) -> dict[str, A
         epic_num = parts[0]
         context_dir = os.path.join(project_root, "sprint", "context")
         # Try numeric ID first (e.g. context-epic-110.md)
-        epic_path = os.path.join(context_dir, f"context-epic-{epic_num}.md")
-        if os.path.isfile(epic_path):
+        epic_path = _safe_str_path(context_dir, epic_num, prefix="context-epic-", suffix=".md")
+        if epic_path and os.path.isfile(epic_path):
             result["has_epic_context"] = True
             result["epic_context_path"] = epic_path
         else:
-            # Try PROJ-keyed context file by reading epic Jira key from shard
-            import glob as _glob
-
+            # Try PROJ-keyed context file by reading epic Jira key from shard.
+            # safe_shards, not a bare glob: a glob match is a *name* match, so a
+            # symlinked epic-*.yaml inside sprint/ was opened below.
             sprint_dir = os.path.join(project_root, "sprint")
-            for shard in _glob.glob(os.path.join(sprint_dir, "epic-*.yaml")):
+            for shard in safe_shards(Path(sprint_dir), "epic-*.yaml"):
                 try:
                     with open(shard) as f:
                         for line in f:
@@ -221,10 +243,10 @@ def _check_context_files(story_id: str, project_root: str | None) -> dict[str, A
                         for line in f:
                             if line.startswith("jira:"):
                                 jira_key = line.split(":", 1)[1].strip().strip("'\"")
-                                keyed_path = os.path.join(
-                                    context_dir, f"context-epic-{jira_key}.md"
+                                keyed_path = _safe_str_path(
+                                    context_dir, jira_key, prefix="context-epic-", suffix=".md"
                                 )
-                                if os.path.isfile(keyed_path):
+                                if keyed_path and os.path.isfile(keyed_path):
                                     result["has_epic_context"] = True
                                     result["epic_context_path"] = keyed_path
                                 break
@@ -233,8 +255,13 @@ def _check_context_files(story_id: str, project_root: str | None) -> dict[str, A
                 if result["has_epic_context"]:
                     break
 
-    story_path = os.path.join(project_root, "sprint", "context", f"context-story-{story_id}.md")
-    if os.path.isfile(story_path):
+    story_path = _safe_str_path(
+        os.path.join(project_root, "sprint", "context"),
+        story_id,
+        prefix="context-story-",
+        suffix=".md",
+    )
+    if story_path and os.path.isfile(story_path):
         result["has_story_context"] = True
         result["story_context_path"] = story_path
 

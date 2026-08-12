@@ -166,11 +166,11 @@ def merge_epic_shards(
             merged_epics.append(ref)
             continue
 
-        shard_file = sprint_dir / f"epic-{ref}.yaml"
-        if not is_safe_shard_path(shard_file, sprint_dir):
+        try:
+            shard_file = safe_ref_path(sprint_dir, ref)
+        except ValueError as e:
             warnings.warn(
-                f"Sprint epic ref '{ref}' escapes the sprint directory "
-                f"({shard_file}) — skipping",
+                f"Sprint epic ref '{ref}' escapes the sprint directory — skipping: {e}",
                 stacklevel=2,
             )
             continue
@@ -204,14 +204,7 @@ def merge_epic_shards(
 
     # Collect epic refs owned by initiatives so we don't warn about them.
     initiative_refs: set[str] = set()
-    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
-        if not is_safe_shard_path(init_file, sprint_dir):
-            warnings.warn(
-                f"Initiative shard {init_file.name} escapes the sprint directory "
-                f"({init_file}) — skipping",
-                stacklevel=2,
-            )
-            continue
+    for init_file in safe_shards(sprint_dir, "initiative-*.yaml"):
         try:
             init_data = load_file(init_file)
         except Exception:
@@ -223,14 +216,7 @@ def merge_epic_shards(
                     initiative_refs.add(ref.replace("epic-", ""))
 
     # Warn about truly orphaned shard files (not in index, not in initiatives).
-    for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
-        if not is_safe_shard_path(shard_file, sprint_dir):
-            warnings.warn(
-                f"Sprint shard {shard_file.name} escapes the sprint directory "
-                f"({shard_file}) — skipping",
-                stacklevel=2,
-            )
-            continue
+    for shard_file in safe_shards(sprint_dir, "epic-*.yaml"):
         if shard_file.resolve() in loaded_shard_files:
             continue
         try:
@@ -288,11 +274,12 @@ def detect_orphan_shards(
         # Reconstruct which shard files were loaded
         for ref in (eid, jira_key):
             if ref:
-                shard_file = sprint_dir / f"epic-{ref}.yaml"
-                if not is_safe_shard_path(shard_file, sprint_dir):
+                try:
+                    shard_file = safe_ref_path(sprint_dir, ref)
+                except ValueError as e:
                     warnings.warn(
                         f"Sprint epic ref '{ref}' escapes the sprint directory "
-                        f"({shard_file}) — skipping",
+                        f"— skipping: {e}",
                         stacklevel=2,
                     )
                     continue
@@ -301,14 +288,7 @@ def detect_orphan_shards(
 
     # Collect initiative-owned refs
     initiative_refs: set[str] = set()
-    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
-        if not is_safe_shard_path(init_file, sprint_dir):
-            warnings.warn(
-                f"Initiative shard {init_file.name} escapes the sprint directory "
-                f"({init_file}) — skipping",
-                stacklevel=2,
-            )
-            continue
+    for init_file in safe_shards(sprint_dir, "initiative-*.yaml"):
         try:
             init_data = load_file(init_file)
         except Exception:
@@ -320,14 +300,7 @@ def detect_orphan_shards(
                     initiative_refs.add(ref.replace("epic-", ""))
 
     orphans: list[dict[str, str]] = []
-    for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
-        if not is_safe_shard_path(shard_file, sprint_dir):
-            warnings.warn(
-                f"Sprint shard {shard_file.name} escapes the sprint directory "
-                f"({shard_file}) — skipping",
-                stacklevel=2,
-            )
-            continue
+    for shard_file in safe_shards(sprint_dir, "epic-*.yaml"):
         if shard_file.resolve() in loaded_shard_files:
             continue
         try:

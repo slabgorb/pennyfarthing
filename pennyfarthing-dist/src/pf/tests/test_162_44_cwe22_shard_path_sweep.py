@@ -165,8 +165,10 @@ def escaping_sprint(tmp_path):
         },
     )
     (sprint_dir / "epic-link").symlink_to(outside, target_is_directory=True)
-    assert not (sprint_dir / f"epic-{TRAVERSAL_REF}.yaml").resolve().is_relative_to(
-        sprint_dir.resolve()
+    assert (
+        not (sprint_dir / f"epic-{TRAVERSAL_REF}.yaml")
+        .resolve()
+        .is_relative_to(sprint_dir.resolve())
     ), "test setup: ref must escape sprint_dir"
     return tmp_path, sprint_dir, secret
 
@@ -394,9 +396,7 @@ def archive_epic_project(tmp_path):
     ctx_secret = outside_src / "x.md"
     ctx_secret.write_text("TOP SECRET CONTEXT\n", encoding="utf-8")
 
-    (sprint_dir / "context" / "context-epic-link").symlink_to(
-        outside_src, target_is_directory=True
-    )
+    (sprint_dir / "context" / "context-epic-link").symlink_to(outside_src, target_is_directory=True)
     (archive_dir / "context-epic-link").symlink_to(outside_dst, target_is_directory=True)
 
     _write_yaml(
@@ -433,8 +433,7 @@ def test_archive_epic_context_move_must_not_escape_archive_dir(archive_epic_proj
     result = archive_epic("OP-42", project_root=root)
 
     assert ctx_secret.exists(), (
-        f"path traversal: out-of-sprint context file was MOVED AWAY: {ctx_secret} "
-        f"(result={result})"
+        f"path traversal: out-of-sprint context file was MOVED AWAY: {ctx_secret} (result={result})"
     )
     assert ctx_secret.read_text(encoding="utf-8") == before
     assert list(dst_dir.iterdir()) == [], (
@@ -576,9 +575,7 @@ def _archive_index(epics: list[str], stories: list[dict]) -> dict:
     }
 
 
-def test_collect_done_stories_rejects_traversal_completed_epic_ref(
-    escaping_archive, opened
-):
+def test_collect_done_stories_rejects_traversal_completed_epic_ref(escaping_archive, opened):
     """``completed_epics`` ref → archive shard read must be contained.
 
     RED: findings/aggregate.py:93 builds ``archive_dir/f"epic-{ref}.yaml"`` raw
@@ -588,9 +585,7 @@ def test_collect_done_stories_rejects_traversal_completed_epic_ref(
     from pf.findings.aggregate import _collect_done_stories
 
     root, archive_dir, secret = escaping_archive
-    _write_yaml(
-        archive_dir / "sprint-9001-completed.yaml", _archive_index([TRAVERSAL_REF], [])
-    )
+    _write_yaml(archive_dir / "sprint-9001-completed.yaml", _archive_index([TRAVERSAL_REF], []))
 
     stories = _collect_done_stories(root, 9001)
 
@@ -809,9 +804,7 @@ def test_write_sprint_stale_shard_cleanup_must_not_delete_outside_sprint_dir(tmp
     _write_yaml(sprint_dir / "epic-42.yaml", {"id": "42", "title": "Real"})
 
     sprint_path = sprint_dir / "current-sprint.yaml"
-    _write_yaml(
-        sprint_path, {"sprint": {"number": 9001}, "epics": ["42", TRAVERSAL_REF]}
-    )
+    _write_yaml(sprint_path, {"sprint": {"number": 9001}, "epics": ["42", TRAVERSAL_REF]})
 
     write_sprint(sprint_path, {"sprint": {"number": 9001}, "epics": [{"id": "42"}]})
 
@@ -943,8 +936,7 @@ def test_ws_push_warns_when_skipping_escaping_sprint_ref(ws_push_project):
         payload = fetch_sprint()
 
     assert _warned_about(records, "epic-PWNED"), (
-        "skipped escaping sprint ref silently; warnings seen: "
-        f"{[str(r.message) for r in records]}"
+        f"skipped escaping sprint ref silently; warnings seen: {[str(r.message) for r in records]}"
     )
     ids = [e.get("id") for e in payload.get("epics", [])]
     assert "PWNED" not in ids, f"out-of-sprint epic leaked into payload: {ids}"
@@ -1113,3 +1105,174 @@ def test_lexical_refs_stay_contained_in_findings_aggregate(tmp_path, opened, ref
 
     assert_contained(opened, sprint_dir, f"aggregate lexical ref {ref!r}")
     assert stories == {}, f"lexical ref {ref!r} leaked stories: {stories}"
+
+
+# ===========================================================================
+# ROUND 2 — sprint/cli.py's `initiative-{name}.yaml` sites
+#
+# Reviewer DEMONSTRATED these two live at the end of round 1: the round-1 sweep
+# guarded `_epic_shard_path` and the four `initiative-*.yaml` GLOBS but missed
+# the two direct `initiative-{name}.yaml` INTERPOLATIONS driven by a raw CLI
+# argument — the identical shape already guarded in ``story_add.py``.
+# ===========================================================================
+
+
+@pytest.fixture
+def escaping_initiative(tmp_path, monkeypatch):
+    """sprint/ with an ``initiative-pwned.yaml`` symlink pointing outside.
+
+    ``name="pwned"`` is charset-CLEAN, so only ``resolve()`` containment catches
+    it. Returns (root, sprint_dir, secret).
+    """
+    from pf.common import config as pf_config
+
+    sprint_dir = tmp_path / "sprint"
+    sprint_dir.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    secret = outside / "target.yaml"
+    _write_yaml(
+        secret,
+        {
+            "name": "victim",
+            "status": "active",
+            "description": "TOP SECRET INITIATIVE",
+            "epics": [{"id": "99", "title": "LEAKED_EPIC", "stories": []}],
+            "standalone_stories": [{"id": "v-1", "title": "LEAKED_STORY"}],
+        },
+    )
+    (sprint_dir / "initiative-pwned.yaml").symlink_to(secret)
+    monkeypatch.setattr(pf_config, "get_project_root", lambda: tmp_path)
+    return tmp_path, sprint_dir, secret
+
+
+def test_initiative_cancel_must_not_write_outside_sprint_dir(escaping_initiative):
+    """[CRITICAL] ``initiative cancel`` must not REWRITE an out-of-sprint file.
+
+    RED: ``init_file = sprint_dir / f"initiative-{name}.yaml"`` (cli.py ~1389)
+    is built from a raw CLI argument with no containment check, and the command
+    ends in ``open(init_file, "w")`` (~1474). ``pf sprint initiative cancel
+    pwned`` therefore rewrote the OUTSIDE file to ``status: canceled`` and
+    exited 0 — an out-of-bounds WRITE through an in-sprint symlink.
+    """
+    from click.testing import CliRunner
+
+    from pf.sprint.cli import initiative_cancel
+
+    _root, _sprint_dir, secret = escaping_initiative
+    before = secret.read_text(encoding="utf-8")
+
+    result = CliRunner().invoke(initiative_cancel, ["pwned"])
+
+    assert secret.read_text(encoding="utf-8") == before, (
+        f"path traversal: out-of-sprint initiative file was REWRITTEN: {secret}"
+    )
+    assert result.exit_code != 0, f"traversal initiative name accepted (exit 0): {result.output}"
+
+
+def test_initiative_show_must_not_read_outside_sprint_dir(escaping_initiative, opened):
+    """[HIGH] ``initiative show`` must not READ an out-of-sprint file.
+
+    RED: the same unguarded ``initiative-{name}.yaml`` build (cli.py ~1303);
+    ``--json`` then printed the outside file's contents verbatim.
+    """
+    from click.testing import CliRunner
+
+    from pf.sprint.cli import initiative_show
+
+    _root, sprint_dir, secret = escaping_initiative
+
+    result = CliRunner().invoke(initiative_show, ["pwned", "--json"])
+
+    assert secret.resolve() not in opened, f"read out-of-sprint initiative {secret}"
+    assert_contained(opened, sprint_dir, "initiative_show name")
+    assert "TOP SECRET INITIATIVE" not in result.output, (
+        f"out-of-sprint initiative contents leaked: {result.output}"
+    )
+    assert "LEAKED_EPIC" not in result.output, f"leaked epic: {result.output}"
+    assert result.exit_code != 0, f"traversal initiative name accepted (exit 0): {result.output}"
+
+
+def test_initiative_show_still_shows_benign_initiative(tmp_path, monkeypatch):
+    """Preservation guard: a normal initiative name must still render."""
+    from click.testing import CliRunner
+
+    from pf.common import config as pf_config
+    from pf.sprint.cli import initiative_show
+
+    sprint_dir = tmp_path / "sprint"
+    sprint_dir.mkdir()
+    _write_yaml(
+        sprint_dir / "initiative-debt.yaml",
+        {"name": "debt", "status": "active", "total_points": 5, "epics": []},
+    )
+    monkeypatch.setattr(pf_config, "get_project_root", lambda: tmp_path)
+
+    result = CliRunner().invoke(initiative_show, ["debt"])
+
+    assert result.exit_code == 0, result.output
+    assert "debt" in result.output
+
+
+def test_initiative_cancel_still_cancels_benign_initiative(tmp_path, monkeypatch):
+    """Preservation guard: a normal initiative must still be canceled + written."""
+    from click.testing import CliRunner
+
+    from pf.common import config as pf_config
+    from pf.sprint.cli import initiative_cancel
+
+    sprint_dir = tmp_path / "sprint"
+    sprint_dir.mkdir()
+    init_file = sprint_dir / "initiative-debt.yaml"
+    _write_yaml(
+        init_file,
+        {
+            "name": "debt",
+            "status": "active",
+            "epics": [{"id": "88", "title": "Real", "stories": [{"id": "88-1"}]}],
+            "standalone_stories": [{"id": "s-1", "title": "Loose"}],
+        },
+    )
+    monkeypatch.setattr(pf_config, "get_project_root", lambda: tmp_path)
+
+    result = CliRunner().invoke(initiative_cancel, ["debt"])
+
+    assert result.exit_code == 0, result.output
+    data = yaml.safe_load(init_file.read_text())
+    assert data["status"] == "canceled", data
+    assert data["epics"][0]["status"] == "canceled", data
+    assert data["standalone_stories"][0]["status"] == "canceled", data
+
+
+# ===========================================================================
+# ROUND 2 — yaml_io.write_sprint's string-ref branch must not persist an
+# unvalidated ref back into the sprint index
+# ===========================================================================
+
+
+def test_write_sprint_does_not_persist_unvalidated_string_ref(tmp_path):
+    """A traversal STRING ref must not be written back into the sprint index.
+
+    RED: the ``else`` branch of ``write_sprint``'s epic loop passes a raw string
+    ref straight into ``epic_refs`` (and builds a ``written_shards`` path from
+    it) with no validation, so a hostile ref round-trips into
+    ``current-sprint.yaml`` and lies in wait for the next reader.
+    """
+    from pf.sprint.yaml_io import write_sprint
+
+    sprint_dir = tmp_path / "sprint"
+    sprint_dir.mkdir()
+    _write_yaml(sprint_dir / "epic-42.yaml", {"id": "42"})
+    sprint_path = sprint_dir / "current-sprint.yaml"
+    _write_yaml(sprint_path, {"sprint": {"number": 9001}, "epics": ["42"]})
+
+    write_sprint(
+        sprint_path,
+        {"sprint": {"number": 9001}, "epics": ["42", TRAVERSAL_REF]},
+    )
+
+    persisted = yaml.safe_load(sprint_path.read_text())["epics"]
+    assert TRAVERSAL_REF not in persisted, (
+        f"unvalidated traversal ref persisted into the sprint index: {persisted}"
+    )
+    assert "42" in persisted, f"benign string ref lost: {persisted}"

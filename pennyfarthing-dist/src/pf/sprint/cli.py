@@ -17,7 +17,15 @@ Commands:
     initiative  Initiative subcommands (show, cancel)
 """
 
+from typing import TYPE_CHECKING
+
 import click
+
+# Module-scope imports are kept minimal here for CLI startup speed (every `pf`
+# invocation pays for them), so Path is imported for annotations only and costs
+# nothing at runtime.
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @click.group()
@@ -642,7 +650,7 @@ def epic_show(epic_id: str, output_json: bool):
                 click.echo(f"  {sid}{jira_tag}: {stitle} [{spts}pts] ({sstat})")
 
 
-def _epic_shard_path(sprint_dir, ref: str):
+def _epic_shard_path(sprint_dir, ref: str) -> "Path | None":
     """Resolve an epic shard file path from a ref string, or ``None`` if unsafe.
 
     Handles both 'epic-42' and 'PROJ-12792' style refs.
@@ -1298,9 +1306,16 @@ def initiative_show(name: str, output_json: bool):
     import yaml
 
     from pf.common.config import get_project_root
+    from pf.sprint.shard_merge import safe_ref_path
 
     root = get_project_root()
-    init_file = root / "sprint" / f"initiative-{name}.yaml"
+    # Guarded: `name` is a raw CLI argument. Unguarded, an in-sprint symlink
+    # named initiative-{name}.yaml made this an out-of-bounds READ whose
+    # contents were printed verbatim by --json (CWE-22, 162-44).
+    try:
+        init_file = safe_ref_path(root / "sprint", name, prefix="initiative-")
+    except ValueError as e:
+        raise click.ClickException(f"Invalid initiative name: {e}") from e
 
     if not init_file.exists():
         raise click.ClickException(f"Initiative not found: {name}\n  Expected: {init_file}")
@@ -1383,10 +1398,18 @@ def initiative_cancel(name: str, jira: bool, dry_run: bool):
     import yaml
 
     from pf.common.config import get_project_root
+    from pf.sprint.shard_merge import safe_ref_path
 
     root = get_project_root()
     sprint_dir = root / "sprint"
-    init_file = sprint_dir / f"initiative-{name}.yaml"
+    # Guarded: `name` is a raw CLI argument and this command ends in
+    # `open(init_file, "w")`. Unguarded, an in-sprint symlink named
+    # initiative-{name}.yaml made this an out-of-bounds WRITE — the whole
+    # outside file was rewritten with status: canceled (CWE-22, 162-44).
+    try:
+        init_file = safe_ref_path(sprint_dir, name, prefix="initiative-")
+    except ValueError as e:
+        raise click.ClickException(f"Invalid initiative name: {e}") from e
 
     if not init_file.exists():
         raise click.ClickException(f"Initiative not found: {name}\n  Expected: {init_file}")

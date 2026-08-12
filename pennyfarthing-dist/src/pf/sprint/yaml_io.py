@@ -444,8 +444,20 @@ def write_sprint(path: Path, data: Any) -> None:
             written_shards.add(shard_file)
             epic_refs.append(ref)
         else:
-            # String ref — shard already exists on disk, don't delete it
-            written_shards.add(sprint_dir / f"epic-{epic}.yaml")
+            # String ref — shard already exists on disk, don't delete it.
+            # GUARDED: this branch used to append the ref to the index verbatim,
+            # so a traversal ref round-tripped into current-sprint.yaml and lay
+            # in wait for the next reader. Refuse to PERSIST what we would
+            # refuse to read (CWE-22, 162-44).
+            try:
+                written_shards.add(safe_ref_path(sprint_dir, str(epic)))
+            except ValueError as e:
+                warnings.warn(
+                    f"Sprint epic ref {epic!r} escapes {sprint_dir} — "
+                    f"dropping it from the index rather than persisting it: {e}",
+                    stacklevel=2,
+                )
+                continue
             epic_refs.append(epic)
 
     # Write index with string refs instead of full epic dicts
