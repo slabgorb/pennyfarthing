@@ -573,6 +573,18 @@ async def get_project_info() -> JSONResponse:
 # All data proxy routers
 # ---------------------------------------------------------------------------
 
+def reset_state() -> None:
+    """Clear the identity cache (story 162-37).
+
+    ``_identity_cache`` has a 300s TTL, so without a reset the FIRST test in the
+    process to hit ``GET /api/identity`` decides the answer every later test sees.
+    """
+    global _identity_cache, _identity_cache_time
+
+    _identity_cache = None
+    _identity_cache_time = 0
+
+
 all_data_proxy_routers = [
     persona_router,
     story_router,

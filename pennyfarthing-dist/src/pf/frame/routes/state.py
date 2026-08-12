@@ -558,6 +558,35 @@ async def get_subagent_events() -> JSONResponse:
 # All state routers
 # ---------------------------------------------------------------------------
 
+def reset_state() -> None:
+    """Restore every module-level store to its pristine value (story 162-37).
+
+    ``create_app()`` builds a fresh app per test, but the routers above close over
+    these module globals, so a new app does NOT restore isolation. The test suite
+    calls this from an autouse conftest fixture; production never needs it.
+    """
+    global _settings, _grants, _audit_entries, _tool_events, _web_mode_todos
+    global _tdd_metrics, _agent_stats, _story_stats, _evaluation, _eval_results
+    global _enriched_spans, _benchmark_events, _benchmark_phase, _subagent_events
+    global _receiver
+
+    _settings = {}
+    _grants = []
+    _audit_entries = []
+    _tool_events = []
+    _web_mode_todos = []
+    _tdd_metrics = {}
+    _agent_stats = {}
+    _story_stats = {}
+    _evaluation = {}
+    _eval_results = []
+    _enriched_spans = []
+    _benchmark_events = []
+    _benchmark_phase = {}
+    _subagent_events = []
+    _receiver = None
+
+
 all_state_routers = [
     settings_router,
     permissions_router,
