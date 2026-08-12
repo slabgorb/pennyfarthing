@@ -160,7 +160,14 @@ def assign(key, user, dry_run):
         return
 
     data = result.get("data") or {}
-    who = f"{data.get('display_name')} <{data.get('email')}>"
+    email = data.get("email")
+    # Jira withholds emailAddress for many accounts. Say so — never print the
+    # identifier the user typed as if Jira had returned it.
+    who = (
+        f"{data.get('display_name')} <{email}>"
+        if email
+        else f"{data.get('display_name')} (email withheld; accountId {data.get('account_id')})"
+    )
     if result.get("already_assigned"):
         click.echo(f"{key} already assigned to {who}")
     elif dry_run:
@@ -511,6 +518,12 @@ def sprint_add(sprint_id, issue_key, dry_run):
     from pf.jira.client import get_client
 
     client = get_client()
+
+    # Without credentials the issue read comes back empty, which would be
+    # reported as a bad issue key.
+    if not client.token:
+        click.echo("Cannot verify issue: no Jira credentials", err=True)
+        raise SystemExit(1)
 
     if dry_run:
         # Verify the issue exists — the echo-only preview could not tell you

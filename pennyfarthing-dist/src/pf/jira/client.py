@@ -12,12 +12,30 @@ import shutil
 import subprocess
 import sys
 from typing import Any
+from urllib.parse import quote, urlencode
 
 # Configuration
 
 
 class JiraConfigError(RuntimeError):
     """Raised when a Jira operation needs config that is not present."""
+
+
+class ResolvedUser(str):
+    """An assignee identifier that already knows the accountId it resolved to.
+
+    Behaves as the plain identifier string for display and comparison, so
+    callers holding only an email (``claim.py``, ``story_update.py``) keep
+    working, while a caller that has already run ``find_user_sync`` can hand the
+    resolution down to the write instead of paying for a second lookup.
+    """
+
+    account_id: str | None
+
+    def __new__(cls, value: str, account_id: str | None = None) -> "ResolvedUser":
+        obj = super().__new__(cls, value)
+        obj.account_id = account_id
+        return obj
 
 
 def _resolve_jira_config() -> tuple[str | None, str | None]:
@@ -576,7 +594,10 @@ class JiraClient:
             displayName), or None when nothing matches and None when the
             call fails (no credentials, transport error). Never raises.
         """
-        users = self._call_api_sync("GET", f"/rest/api/3/user/search?query={query}")
+        # The query is user-supplied: display names contain spaces (curl exits 3
+        # on a raw space) and "&", "#", "+" change the URL's meaning entirely.
+        endpoint = "/rest/api/3/user/search?" + urlencode({"query": query}, quote_via=quote)
+        users = self._call_api_sync("GET", endpoint)
         if not users or not isinstance(users, list):
             return None
         first = users[0]
@@ -594,13 +615,19 @@ class JiraClient:
         """
         # Jira Cloud REST API uses accountId, but we can search by email
         if assignee_email:
-            account = self.find_user_sync(assignee_email)
-            if not account:
-                return {
-                    "success": False,
-                    "error": f"User not found: {assignee_email}",
-                }
-            account_id = account.get("accountId")
+            # A caller that already resolved the account (operations.assign_issue)
+            # hands the accountId down with it; re-looking it up here would
+            # search by a string the user never typed and could fail after a
+            # dry-run previewed success.
+            account_id = getattr(assignee_email, "account_id", None)
+            if not account_id:
+                account = self.find_user_sync(assignee_email)
+                if not account:
+                    return {
+                        "success": False,
+                        "error": f"User not found: {assignee_email}",
+                    }
+                account_id = account.get("accountId")
         else:
             account_id = None
 
