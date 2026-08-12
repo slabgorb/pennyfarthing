@@ -158,9 +158,15 @@ Search the session file for a `## Subagent Results` section containing:
    specialist has exactly ONE row whose declared cells are filled (not blank, not the
    template's `-`) and internally consistent (`clean` cannot carry a finding count; a
    finding count cannot carry an `N/A` decision; `N/A` in Status or Findings on a row
-   that RETURNED). A row truncated before a column its header declares counts as
-   blank. A summary line above a missing, duplicated, placeholder, truncated or
-   self-contradicting row FAILS — a specialist's name mentioned in prose is not a row.
+   that RETURNED). **The declared-cell rule is header-conditional:** with the documented
+   header (a `Specialist` and a `Received` column) a row truncated before a declared
+   column counts as blank; with no header, or renamed columns, nothing is declared and
+   the gate reads only the cells each row has — so there the forgery cost is set by ROW
+   count, not column count. That is the accepted trade: demanding columns a table never
+   declared would reject the legitimate three- and four-column sessions in the wild
+   without costing a forger a keystroke. A summary line above a missing, duplicated,
+   placeholder, truncated or self-contradicting row FAILS — a specialist's name
+   mentioned in prose is not a row.
    **Exception, so honesty is expressible:** when EVERY row records a non-return
    (the all-timed-out round), `All received: No` is accepted and `Yes` is refused
    (story 162-85)

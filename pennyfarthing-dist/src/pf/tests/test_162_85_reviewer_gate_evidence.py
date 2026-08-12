@@ -488,3 +488,59 @@ class TestHonestAllTimeoutRoundIsExpressible:
 
         section = _genuine_section().replace("**All received:** Yes", "**All received:** No")
         assert _check_subagent_completion(_session(section)) is not None
+
+
+class TestFailureVocabularyInAnHonestRow:
+    """`error` is a Status a specialist that RETURNED can report.
+
+    Fix round 2: `_records_non_return` grepped Received+Status together without
+    checking Received, so a fully-returned round whose Status cells carried failure
+    vocabulary read as "nothing was received" and the gate demanded
+    `All received: No` — telling an honest reviewer to assert something false.
+    """
+
+    def test_status_error_on_returned_rows_passes(self) -> None:
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        rows = "\n".join(
+            f"| {i} | {name} | Yes | error | none | N/A |" for i, name in enumerate(SUBAGENTS, 1)
+        )
+        result = _check_subagent_completion(_session(_genuine_section(rows)))
+        assert result is None, f"A returned row may report an error status: {result}"
+
+    def test_status_prose_mentioning_errors_on_returned_rows_passes(self) -> None:
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        rows = "\n".join(
+            f"| {i} | {name} | Yes | clean, no errors | none | N/A |"
+            for i, name in enumerate(SUBAGENTS, 1)
+        )
+        result = _check_subagent_completion(_session(_genuine_section(rows)))
+        assert result is None, f"Prose mentioning errors is not a non-return: {result}"
+
+    def test_returned_row_is_not_a_non_return(self) -> None:
+        from pf.handoff.complete_phase import _records_non_return
+
+        assert not _records_non_return(
+            {
+                "specialist": "reviewer-security",
+                "received": "Yes",
+                "status": "error",
+                "findings": "none",
+                "decision": "N/A",
+            }
+        )
+
+    def test_all_timeout_detection_still_works(self) -> None:
+        """The guard must not cost the all-non-return branch anything."""
+        from pf.handoff.complete_phase import _records_non_return
+
+        assert _records_non_return(
+            {
+                "specialist": "reviewer-security",
+                "received": "No — timed out",
+                "status": "error",
+                "findings": "none",
+                "decision": "assessed first-hand",
+            }
+        )

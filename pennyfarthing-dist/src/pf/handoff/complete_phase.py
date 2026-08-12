@@ -732,9 +732,22 @@ def _is_unfilled(cell: str) -> bool:
 def _records_non_return(row: dict[str, str | None]) -> bool:
     """Whether this row records something that happened TO the specialist.
 
-    Read across Received and Status together, because the documented disabled row
-    spreads the notation over both cells (`Skipped` / `disabled`).
+    **A row whose Received says `Yes` never counts, whatever its Status says.** The
+    failure vocabulary is read across Received and Status together, because the
+    documented disabled row spreads the notation over both cells (`Skipped` /
+    `disabled`) — but `error` is also a Status value ``agents/reviewer.md``
+    documents for a specialist that DID return and reported an error, and
+    `clean, no errors` is ordinary prose. Without this guard, an honest
+    fully-returned round of `| i | name | Yes | error | none | N/A |` rows read as
+    "nothing was received" and the gate told the reviewer to write
+    `All received: No` — asserting something false, which is the exact failure mode
+    the all-non-return branch exists to remove (review finding, fix round 2).
+
+    Every intended non-return has a non-`Yes` Received (`No — timed out`,
+    `Skipped`), so the guard costs the all-timeout detection nothing.
     """
+    if _RECEIVED_YES_RE.match(row["received"] or ""):
+        return False
     return bool(_RECORDED_FAILURE_RE.search(f"{row['received'] or ''} {row['status'] or ''}"))
 
 
@@ -755,6 +768,14 @@ def parse_subagent_result_rows(section: str) -> dict[str, list[dict[str, str | N
       deleting trailing pipes is not a way out of the filled-cell rule (review
       finding, fix round 1: ``| 1 | name | Yes |`` under a six-column header used
       to read as "those columns don't exist" and passed).
+
+    **This makes the filled-cell rule header-conditional, deliberately.** With no
+    header — or one that renames `Specialist`/`Received` — nothing is declared, so
+    the enforced floor is that every specialist HAS a row, not that the row is six
+    cells wide. Legitimate three- and four-column sessions exist in the wild
+    (pinned in `test_143_9`, `test_162_21`, `test_162_28`) and rejecting them would
+    not cost a forger a keystroke: anyone typing a fake table types six columns as
+    easily as three. Forgery cost is set by ROW count.
 
     Columns are located by the table's own header when one is present, so an
     extra trailing `Notes` column or a renamed `#` column does not shift the
