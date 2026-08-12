@@ -110,6 +110,41 @@ def safe_ref_path(
     return candidate
 
 
+def safe_ref_path_or_none(
+    base_dir: Path,
+    ref: str,
+    *,
+    prefix: str = "epic-",
+    suffix: str = ".yaml",
+) -> Path | None:
+    """Like :func:`safe_ref_path` but returns ``None`` (with a warning) on unsafe refs.
+
+    Shared adapter for every call site that calls ``safe_ref_path`` and converts
+    its ``ValueError`` to ``None`` — previously duplicated across
+    ``findings/aggregate._safe_shard``, ``sprint/cli._epic_shard_path``, and
+    ``tui/story_detail_data._safe_str_path`` (162-84 dedup).
+
+    Args:
+        base_dir: Directory the built path must stay inside.
+        ref: Raw, possibly hostile ref.
+        prefix: Filename prefix (forwarded to :func:`safe_ref_path`).
+        suffix: Filename suffix (forwarded to :func:`safe_ref_path`).
+
+    Returns:
+        The contained ``Path`` on success, ``None`` when *ref* fails validation
+        or the built path escapes *base_dir*. A ``warnings.warn`` is emitted
+        for every rejected ref so skips are never silent.
+    """
+    try:
+        return safe_ref_path(base_dir, ref, prefix=prefix, suffix=suffix)
+    except ValueError as e:
+        warnings.warn(
+            f"Ref {ref!r} escapes {base_dir} — skipping: {e}",
+            stacklevel=2,
+        )
+        return None
+
+
 def safe_shards(base_dir: Path, pattern: str = "epic-*.yaml") -> Iterator[Path]:
     """Yield the shard files matching ``pattern`` in ``base_dir`` that are contained.
 
