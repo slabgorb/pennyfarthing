@@ -153,7 +153,13 @@ Search the session file for a `## Subagent Results` section containing:
 1. **A table with 9 rows** — one for each specialist subagent
 2. **Every row shows `Yes` in the Received column** (or explicit error/timeout notation)
 3. **Every row has a Decision** — `confirmed N, dismissed N, deferred N` or `N/A` for clean results
-4. **An `All received: Yes` line** after the table
+4. **An `All received: Yes` line** after the table. **The line alone is not evidence.**
+   `complete-phase` parses the table into per-specialist ROWS and checks each enabled
+   specialist has exactly ONE row whose declared cells are filled (not blank, not the
+   template's `-`) and internally consistent (`clean` cannot carry a finding count; a
+   finding count cannot carry an `N/A` decision). A summary line above a missing,
+   duplicated, placeholder or self-contradicting row FAILS — a specialist's name
+   mentioned in prose is not a row (story 162-85)
 5. **On a rework session** (one carrying `**Round-Trip Count:** N` — or, on a legacy hand-written
    session with no such line, `**Rework Cycle:** N`), a `**Cycle: N**` tag matching that count —
    proof the evidence is from the CURRENT cycle. Either a full re-run of the enabled subagents

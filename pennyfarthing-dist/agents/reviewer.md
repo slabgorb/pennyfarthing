@@ -260,6 +260,13 @@ Parenthetical context after `Yes` is accepted — e.g. `Yes (6 returned, 2 asses
 
 This line is validated by the gate programmatically — it is not just documentation. If this line is missing or not set to `Yes`, the gate will reject the phase transition.
 
+**And the line does not stand alone.** The gate parses the table into rows and judges each enabled specialist's row on its own (story 162-85 — before that it only grepped for this line and for each specialist's NAME anywhere in the section, so a review that dispatched nothing passed by typing them):
+
+- **Exactly one row per enabled specialist.** A name in prose is not a row; two rows for one specialist is ambiguous and fails.
+- **Every cell your table declares must be filled** — not blank, and not the generated template's `-` or `Yes/No` placeholder. Fill the row from what the specialist returned.
+- **The row must not contradict itself.** `Status: clean` with a positive finding count fails; a positive finding count with `Decision: N/A` fails.
+- **A specialist that timed out or errored is recorded, never blanked:** `| 3 | reviewer-security | No — timed out | error | none | domain assessed first-hand |`. That row PASSES the gate — and rule 4 still applies: you must assess that domain yourself, and you may not claim coverage from it.
+
 ### Rules
 
 1. **Every row must have `Received: Yes`** before you may write the Reviewer Assessment. If a subagent timed out or errored, record that — do not leave the row blank.

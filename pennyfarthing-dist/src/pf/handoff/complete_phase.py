@@ -617,11 +617,252 @@ REQUIRED_SUBAGENTS = {
 }
 
 
+# Every specialist the framework knows, longest name first so containment matching
+# can never award a row to a shorter name that happens to be a prefix.
+_ALL_SUBAGENT_NAMES = tuple(
+    sorted((name for name, _tag in _SUBAGENT_SETTING_MAP.values()), key=len, reverse=True)
+)
+
+# The five cells a row must carry, in the order the documented table declares them.
+_ROW_FIELDS = ("specialist", "received", "status", "findings", "decision")
+
+# A table row that is structure, not evidence: `|---|---|`, `|:--|--:|`.
+_SEPARATOR_ROW_RE = re.compile(r"^[\s|:\-]+$")
+
+# Cells that assert nothing. A row of these is the GENERATED TEMPLATE, not a
+# result: `pf.reviewer.template` emits `| 1 | reviewer-preflight | Yes/No | - | - | - |`
+# for the reviewer to fill in, and the substring gate accepted it verbatim.
+# `N/A` is deliberately absent — `agents/reviewer.md` documents it as the correct
+# Decision for a clean specialist, so rejecting it would fail honest reviews.
+_UNFILLED_CELLS = frozenset(
+    {
+        "",
+        "-",
+        "--",
+        "---",
+        "–",
+        "—",
+        ".",
+        "..",
+        "...",
+        "…",
+        "?",
+        "??",
+        "tbd",
+        "todo",
+        "pending",
+        "unknown",
+        "yes/no",
+        "clean/findings/error",
+        "confirmed n, dismissed n, deferred n",
+        'count or "none"',
+    }
+)
+
+# `{count or "none"}` — the template's brace placeholders, whatever they contain.
+_BRACE_PLACEHOLDER_RE = re.compile(r"^\{.*\}$", re.DOTALL)
+
+# A Received cell that says the specialist came back.
+_RECEIVED_YES_RE = re.compile(r"^(?:yes|y|true|received|returned|complete[d]?)\b", re.IGNORECASE)
+
+# A Received/Status pair that explicitly records a NON-return. `agents/reviewer.md`
+# rule 1 requires the reviewer to record a timeout or error rather than leave the
+# row blank, and rule 4 requires it to assess that domain first-hand — so a
+# recorded failure is compliant evidence and must pass. This is the exact shape the
+# 162-44 review needed and could not express: all nine specialists timed out.
+#
+# A bare `Skipped` is NOT here. Every notation named is something that happened TO
+# the specialist; skipping is the reviewer's own decision, and `gates/approval.md`
+# is explicit that "skipped because context was high" is not a valid one. The
+# documented disabled row — `| N | x | Skipped | disabled | … |` — still passes,
+# because `disabled` is matched and the pair is searched together; and a disabled
+# specialist is filtered out of the required set before it gets here anyway.
+_RECORDED_FAILURE_RE = re.compile(
+    r"\b(?:error(?:ed|s)?|timed[ -]?out|time[ -]?out|timeout|fail(?:ed|ure|s)?|"
+    r"crash(?:ed)?|unavailable|unreachable|disabled|not[ -]enabled)\b",
+    re.IGNORECASE,
+)
+
+# A Findings cell whose leading number is the count of findings, so `3`,
+# `3 findings` and `2 (1 dup)` all read as positive, while `none` and `0` do not.
+_FINDING_COUNT_RE = re.compile(r"^(\d+)\b")
+
+# A Decision cell that decides nothing — legitimate ONLY for a specialist that
+# found nothing.
+_NO_DECISION_RE = re.compile(r"^(?:n/?a|none|nothing|no decision)\b", re.IGNORECASE)
+
+
+def _cell_text(raw: str) -> str:
+    """A table cell with markdown emphasis and code quoting stripped."""
+    text = raw.strip()
+    # Backtick spans and bold/italic runs wrap the value; they do not change it.
+    text = text.strip("`").strip()
+    text = re.sub(r"^[*_]+", "", text)
+    text = re.sub(r"[*_]+$", "", text)
+    return text.strip()
+
+
+def _split_table_row(line: str) -> list[str] | None:
+    """The cells of a markdown pipe row, or None if the line is not a row."""
+    stripped = line.strip()
+    if not stripped.startswith("|"):
+        return None
+    cells = stripped.split("|")
+    # `| a | b |` splits with an empty element on each side of the outer pipes.
+    # Drop AT MOST one from each end so a genuinely empty final cell survives —
+    # an empty Decision is precisely what the gate has to see.
+    if cells and not cells[0].strip():
+        cells = cells[1:]
+    if cells and not cells[-1].strip():
+        cells = cells[:-1]
+    return [_cell_text(cell) for cell in cells]
+
+
+def _is_unfilled(cell: str) -> bool:
+    """Whether a cell is blank, a dash, or a template placeholder."""
+    normalized = cell.strip().lower()
+    return normalized in _UNFILLED_CELLS or bool(_BRACE_PLACEHOLDER_RE.match(cell.strip()))
+
+
+def parse_subagent_result_rows(section: str) -> dict[str, list[dict[str, str]]]:
+    """Parse a ``## Subagent Results`` section into per-specialist ROWS.
+
+    Maps each specialist name to every row claiming to be its result — a list,
+    because two rows for one specialist is itself a finding the gate reports.
+    Each row is a dict with the keys in :data:`_ROW_FIELDS`; cells absent from a
+    short row come back as ``""``.
+
+    Columns are located by the table's own header when one is present, so an
+    extra trailing `Notes` column or a renamed `#` column does not shift the
+    values. Failing that, the five fields are read as consecutive cells starting
+    at the one naming the specialist, which is the documented layout.
+
+    The section is expected to be one already selected and masked by
+    :func:`gate_recovery.select_last_section` — a fenced example table is blanked
+    before it gets here, so quoted documentation cannot present itself as a row.
+    """
+    rows: dict[str, list[dict[str, str]]] = {}
+    header_index: dict[str, int] | None = None
+
+    for line in section.splitlines():
+        cells = _split_table_row(line)
+        if cells is None or not cells:
+            continue
+
+        lowered = [cell.lower() for cell in cells]
+
+        # Header row: remember where each documented column sits.
+        if "specialist" in lowered and "received" in lowered:
+            found = {field: lowered.index(field) for field in _ROW_FIELDS if field in lowered}
+            if "specialist" in found:
+                header_index = found
+            continue
+
+        if _SEPARATOR_ROW_RE.match(line.strip()):
+            continue
+
+        # Which specialist does this row claim to be? Containment, because a cell
+        # may carry a tag or a note beside the name.
+        name = next((n for n in _ALL_SUBAGENT_NAMES if n in line), None)
+        if name is None:
+            continue
+
+        if header_index is not None and header_index.get("specialist", -1) < len(cells):
+            offsets = header_index
+        else:
+            # No usable header — read the fields as consecutive cells from the
+            # one naming the specialist.
+            anchor = next((i for i, cell in enumerate(cells) if name in cell), None)
+            if anchor is None:
+                continue
+            offsets = {field: anchor + i for i, field in enumerate(_ROW_FIELDS)}
+
+        row: dict[str, str | None] = {}
+        for field in _ROW_FIELDS:
+            idx = offsets.get(field, -1)
+            # None = this table has no such COLUMN; "" = the column is there and
+            # the cell was left blank. The gate judges those differently.
+            row[field] = cells[idx] if 0 <= idx < len(cells) else None
+        rows.setdefault(name, []).append(row)
+
+    return rows
+
+
+def _row_problem(row: dict[str, str | None]) -> str | None:
+    """Why this row is not a usable specialist result, or None if it is.
+
+    Judges the row on its own terms: every cell the table DECLARES is filled, and
+    the filled cells do not contradict each other. A record whose parts contradict
+    each other was not produced by reading a specialist's output.
+
+    **Columns the table does not have are not demanded.** Sessions in the wild
+    carry `| Subagent | Received | Result |` and `| # | Specialist | Received |`
+    as well as the six-column form ``agents/reviewer.md`` documents, and requiring
+    the absent columns would reject those without raising the cost of a forgery by
+    one keystroke — anyone typing a fake table can type six columns as easily as
+    three. What the check buys is that a DECLARED cell cannot be left empty or
+    left as the generated template's ``-``, which is the shape an unfilled table
+    actually has (story 162-85).
+    """
+    received = row["received"]
+    if received is None:
+        return "the row has no Received cell — add a `Received` column to the table"
+    if _is_unfilled(received):
+        return "the Received cell is blank or a placeholder"
+    # The Received and Status cells are read TOGETHER for a recorded failure: the
+    # documented disabled row spreads it across both (`Skipped` / `disabled`).
+    non_return = f"{received} {row['status'] or ''}"
+    if not _RECEIVED_YES_RE.match(received) and not _RECORDED_FAILURE_RE.search(non_return):
+        return (
+            f"Received is '{received}' — write 'Yes', or name what happened to the "
+            "specialist (e.g. 'No — timed out') and assess that domain yourself. "
+            "Choosing to skip an enabled specialist is not a recordable result"
+        )
+
+    unfilled = [
+        field
+        for field in ("status", "findings", "decision")
+        if row[field] is not None and _is_unfilled(row[field] or "")
+    ]
+    if unfilled:
+        return (
+            f"the {', '.join(unfilled)} cell(s) are blank or still the template's "
+            "placeholder — a row nobody filled in is not a result"
+        )
+
+    findings, status, decision = row["findings"], row["status"], row["decision"]
+    count_match = _FINDING_COUNT_RE.match(findings) if findings else None
+    count = int(count_match.group(1)) if count_match else 0
+
+    if count and status and status.lower().startswith("clean"):
+        return (
+            f"Status is 'clean' but Findings claims {count} — a clean specialist "
+            "reports no findings"
+        )
+    if count and decision and _NO_DECISION_RE.match(decision):
+        return (
+            f"Findings claims {count} but Decision is '{decision}' — every "
+            "finding needs a confirmed / dismissed / deferred decision"
+        )
+    return None
+
+
 def _check_subagent_completion(content: str) -> str | None:
     """Check session file for complete Subagent Results table.
 
     Returns an error message string if incomplete, or None if all good.
     Filters required subagents to only those enabled in settings.
+
+    **The table is verified as STRUCTURE, not as text** (story 162-85). The
+    predicate this replaced was two substring searches over the section — an
+    ``All received: Yes`` line anywhere in it, plus each specialist's name
+    appearing anywhere in it — so a review that dispatched nothing passed by
+    typing one line and nine names. That forgery was performed live, twice,
+    during the 162-44 review. There is no out-of-band tool-call log a session-file
+    hook can consult, so the honest strongest check available is that the claim be
+    a COMPLETE, INTERNALLY CONSISTENT record: one row per enabled specialist, with
+    filled Received / Status / Findings / Decision cells that do not contradict
+    each other. See :func:`parse_subagent_result_rows` and :func:`_row_problem`.
     """
     enabled_names, _ = _get_enabled_subagents()
 
@@ -663,13 +904,48 @@ def _check_subagent_completion(content: str) -> str | None:
             "Do not proceed until all subagents are accounted for."
         )
 
-    # Check that each enabled required subagent appears in the table
-    missing = {name for name in REQUIRED_SUBAGENTS & enabled_names if name not in section}
+    # Every enabled specialist must have exactly ONE complete, self-consistent ROW.
+    # A NAME appearing in the section's prose is not a result: the check this
+    # replaced was `name not in section`, which the specialist list quoted in a
+    # sentence satisfied for all nine (story 162-85).
+    rows = parse_subagent_result_rows(section)
+    required = sorted(REQUIRED_SUBAGENTS & enabled_names)
+
+    problems: list[str] = []
+    missing = [name for name in required if not rows.get(name)]
     if missing:
+        problems.append(
+            f"no row at all for: {', '.join(missing)} (a name mentioned in prose is not a row)"
+        )
+    for name in required:
+        candidates = rows.get(name) or []
+        if len(candidates) > 1:
+            # Which row is operative cannot be decided, and picking one is how a
+            # reader fails open — the same reasoning as the duplicate-heading and
+            # duplicate-cycle-tag rules.
+            problems.append(
+                f"{name} has {len(candidates)} rows in the current table — "
+                "which one is the result cannot be determined"
+            )
+            continue
+        if candidates:
+            problem = _row_problem(candidates[0])
+            if problem:
+                problems.append(f"{name}: {problem}")
+
+    if problems:
+        joined = "".join(f"\n  - {problem}" for problem in problems)
         return (
-            f"Subagent Results table missing entries for: {', '.join(sorted(missing))}. "
-            "To fix: Every enabled specialist subagent must have a row in the Subagent Results "
-            "table with its result status and decision documented."
+            "Subagent Results table is not a usable record of specialist results — "
+            f"the 'All received: Yes' line is not corroborated by the table:{joined}\n"
+            "To fix: give EVERY enabled specialist its own row with all four cells "
+            "filled from what the specialist actually returned. A specialist that "
+            "timed out or errored is recorded as such (e.g. `| 3 | reviewer-security "
+            "| No — timed out | error | none | domain assessed first-hand |`) and its "
+            "domain assessed first-hand — never left blank, and never claimed as "
+            "coverage. Row format:\n"
+            "| # | Specialist | Received | Status | Findings | Decision |\n"
+            "| 1 | reviewer-preflight | Yes | clean | none | N/A |"
         )
 
     return None
