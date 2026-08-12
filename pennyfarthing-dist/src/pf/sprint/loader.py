@@ -19,7 +19,7 @@ from pf.common.config import (
     save_pennyfarthing_config_key,
 )
 from pf.core.resolver import resolve_sprint_context
-from pf.sprint.shard_merge import is_safe_shard_path
+from pf.sprint.shard_merge import is_safe_shard_path, safe_ref_path_or_none
 
 # Sentinel ``jira`` values that mean "no real Jira key" even though the field is
 # present. Single source of truth (story 160-3) — consumed by story_update,
@@ -332,14 +332,10 @@ def get_archived_stories(
         stories.extend(data["completed_stories"])
 
         # Also load stories from archived epic shards referenced by completed_epics
+        # 162-84: safe_ref_path_or_none replaces hand-rolled guard + warn.
         for epic_ref in data.get("completed_epics", []):
-            shard_path = archive_dir / f"epic-{epic_ref}.yaml"
-            if not is_safe_shard_path(shard_path, archive_dir):
-                warnings.warn(
-                    f"Archived epic ref '{epic_ref}' escapes the archive directory "
-                    f"({shard_path}) — skipping",
-                    stacklevel=2,
-                )
+            shard_path = safe_ref_path_or_none(archive_dir, str(epic_ref))
+            if shard_path is None:
                 continue
             if shard_path.exists():
                 shard_data = load_yaml_config(shard_path)

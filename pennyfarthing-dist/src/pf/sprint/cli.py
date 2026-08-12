@@ -661,20 +661,13 @@ def _epic_shard_path(sprint_dir, ref: str) -> "Path | None":
     containment guard lives here rather than at each of the eight call sites
     (CWE-22, 162-44). An unsafe ref warns and yields ``None``; callers must
     treat ``None`` as "no shard".
-    """
-    import warnings
 
-    from pf.sprint.shard_merge import safe_ref_path
+    162-84: delegates to ``safe_ref_path_or_none`` (shared adapter).
+    """
+    from pf.sprint.shard_merge import safe_ref_path_or_none  # noqa: PLC0415
 
     bare = ref[len("epic-") :] if ref.startswith("epic-") else ref
-    try:
-        return safe_ref_path(sprint_dir, bare)
-    except ValueError as e:
-        warnings.warn(
-            f"Epic ref {ref!r} escapes {sprint_dir} — skipping shard: {e}",
-            stacklevel=2,
-        )
-        return None
+    return safe_ref_path_or_none(sprint_dir, bare)
 
 
 def _epic_ref_matches(ref: str, epic_id: str) -> bool:

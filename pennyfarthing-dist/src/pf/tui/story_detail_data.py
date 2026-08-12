@@ -13,11 +13,15 @@ from pathlib import Path
 from typing import Any
 
 from pf.sprint.session_parse import parse_session as _parse_session_shared
-from pf.sprint.shard_merge import safe_ref_path, safe_shards
+from pf.sprint.shard_merge import safe_ref_path_or_none, safe_shards
+
+# 162-84: module-level dedup set — suppresses repeated safe_shards warnings
+# across TUI repaints that each call _check_context_files.
+_warned_shards: set[str] = set()
 
 
 def _safe_str_path(base_dir: str, ref: str, *, prefix: str, suffix: str) -> str | None:
-    """``safe_ref_path`` adapter for this module's ``os.path`` string paths.
+    """``safe_ref_path_or_none`` adapter for this module's ``os.path`` string paths.
 
     Every path this module builds is interpolated from a ref that arrives
     verbatim out of sprint YAML (``ws_push`` ships ``epic_data['id']`` and the
@@ -27,11 +31,35 @@ def _safe_str_path(base_dir: str, ref: str, *, prefix: str, suffix: str) -> str 
     prior inventory). Returns ``None`` when the ref is unsafe, which each caller
     treats as "no such file" — these are display lookups, so a hostile ref
     should render as absent, not raise into the TUI event loop.
+
+    162-84: thin ``str`` wrapper over the shared ``safe_ref_path_or_none`` adapter.
     """
-    try:
-        return str(safe_ref_path(Path(base_dir), ref, prefix=prefix, suffix=suffix))
-    except ValueError:
-        return None
+    path = safe_ref_path_or_none(Path(base_dir), ref, prefix=prefix, suffix=suffix)
+    return str(path) if path is not None else None
+
+
+def _safe_shards_once(base_dir: Path, pattern: str = "epic-*.yaml") -> list[Path]:
+    """``safe_shards`` wrapper: suppress repeated skipped-shard warns across repaints.
+
+    ``_check_context_files`` runs on every TUI repaint; ``safe_shards`` emits a
+    ``warnings.warn`` per skipped (symlinked) shard, so one bad symlink warns on
+    every render cycle. This wrapper catches those warnings, re-emits only the
+    first occurrence per unique message (keyed into ``_warned_shards``), and
+    returns the contained matches as a list so the caller can iterate normally.
+
+    162-84: throttle for the per-repaint warn.
+    """
+    import warnings as _w
+
+    with _w.catch_warnings(record=True) as _caught:
+        _w.simplefilter("always")
+        results = list(safe_shards(base_dir, pattern))
+    for w in _caught:
+        key = str(w.message)
+        if key not in _warned_shards:
+            _warned_shards.add(key)
+            _w.warn(str(w.message), w.category, stacklevel=2)
+    return results
 
 
 def _find_project_root() -> str | None:
@@ -226,10 +254,11 @@ def _check_context_files(story_id: str, project_root: str | None) -> dict[str, A
             result["epic_context_path"] = epic_path
         else:
             # Try PROJ-keyed context file by reading epic Jira key from shard.
-            # safe_shards, not a bare glob: a glob match is a *name* match, so a
-            # symlinked epic-*.yaml inside sprint/ was opened below.
+            # _safe_shards_once, not a bare glob: a glob match is a *name* match,
+            # so a symlinked epic-*.yaml inside sprint/ was opened below.
+            # 162-84: _safe_shards_once dedupes per-repaint warns.
             sprint_dir = os.path.join(project_root, "sprint")
-            for shard in safe_shards(Path(sprint_dir), "epic-*.yaml"):
+            for shard in _safe_shards_once(Path(sprint_dir), "epic-*.yaml"):
                 try:
                     with open(shard) as f:
                         for line in f:

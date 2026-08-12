@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 import re
-import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -62,19 +61,14 @@ def _safe_shard(base_dir: Path, epic_ref: object) -> Path | None:
     and Jira keys into the findings report (CWE-22, 162-44). Returning ``None``
     keeps the existing ``if shard.exists()`` skip shape at each call site.
 
-    ``safe_ref_path`` is imported lazily for the same import-cycle reason
+    ``safe_ref_path_or_none`` is imported lazily for the same import-cycle reason
     documented at module scope for ``pf.sprint.session_parse``.
-    """
-    from pf.sprint.shard_merge import safe_ref_path
 
-    try:
-        return safe_ref_path(base_dir, str(epic_ref))
-    except ValueError as e:
-        warnings.warn(
-            f"Epic ref {epic_ref!r} escapes {base_dir} — skipping shard: {e}",
-            stacklevel=2,
-        )
-        return None
+    162-84: delegates to ``safe_ref_path_or_none`` (shared adapter).
+    """
+    from pf.sprint.shard_merge import safe_ref_path_or_none  # noqa: PLC0415
+
+    return safe_ref_path_or_none(base_dir, str(epic_ref))
 
 
 def _collect_done_stories(project_root: Path, sprint_number: int) -> dict[str, dict]:

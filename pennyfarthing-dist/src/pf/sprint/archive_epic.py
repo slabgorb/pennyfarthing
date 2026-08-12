@@ -15,7 +15,7 @@ from typing import Any
 from pf.common.config import get_project_root
 from pf.sprint.loader import load_sprint
 from pf.sprint.path_validation import validate_sprint_id
-from pf.sprint.shard_merge import is_safe_shard_path, safe_ref_path
+from pf.sprint.shard_merge import is_safe_shard_path, safe_ref_path, safe_ref_path_or_none
 from pf.sprint.yaml_io import (
     _get_epic_ref,
     _make_yaml,
@@ -174,15 +174,11 @@ def migrate_completed_archive(archive_path: Path) -> dict[str, Any]:
     shards_created = 0
     stories_migrated = 0
     for epic_ref, stories in epic_stories.items():
-        shard_path = archive_dir / f"epic-{epic_ref}.yaml"
         # Path traversal (CWE-22): this site both reads and rewrites the shard,
         # so an escaping ref would be an out-of-bounds write. Fail closed.
-        if not is_safe_shard_path(shard_path, archive_dir):
-            warnings.warn(
-                f"Archived epic ref '{epic_ref}' escapes the archive directory "
-                f"({shard_path}) — skipping",
-                stacklevel=2,
-            )
+        # 162-84: safe_ref_path_or_none replaces hand-rolled guard + warn.
+        shard_path = safe_ref_path_or_none(archive_dir, str(epic_ref))
+        if shard_path is None:
             continue
         if shard_path.exists():
             existing = _read_yaml_file(shard_path)
@@ -232,13 +228,9 @@ def load_archive(archive_path: Path) -> dict[str, Any]:
     # Collect stories from shards
     all_stories: list[dict[str, Any]] = []
     for epic_ref in data["completed_epics"]:
-        shard_path = archive_dir / f"epic-{epic_ref}.yaml"
-        if not is_safe_shard_path(shard_path, archive_dir):
-            warnings.warn(
-                f"Archived epic ref '{epic_ref}' escapes the archive directory "
-                f"({shard_path}) — skipping",
-                stacklevel=2,
-            )
+        # 162-84: safe_ref_path_or_none replaces hand-rolled guard + warn.
+        shard_path = safe_ref_path_or_none(archive_dir, str(epic_ref))
+        if shard_path is None:
             continue
         if shard_path.exists():
             shard = _read_yaml_file(shard_path)
