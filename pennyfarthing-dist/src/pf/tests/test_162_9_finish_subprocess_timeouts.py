@@ -811,6 +811,26 @@ class TestTimeoutBeforeDoneAbortsLoudly:
             f"precondition: the {case_id} call site was never reached, so this "
             f"test proves nothing: {[a for a, _ in ledger.calls]}"
         )
+        # 162-41: the abort invariants below are all satisfied by a gate that
+        # FELL THROUGH. Every predicate here hangs a whole command family, so if
+        # the pre-merge gate degraded a hung probe into the permissive arm, the
+        # merge would run and the POST-MERGE view would hang instead — landing
+        # on the verification abort, which keeps the session, archives nothing
+        # and never goes done. Indistinguishable from a gate that held, unless
+        # the ledger is asked whether the irreversible command ran at all.
+        merge_calls = ledger.matching("gh", "merge")
+        if case_id == "gh-pr-merge":
+            assert merge_calls, (
+                "precondition: this case hangs the merge itself, so the merge "
+                f"must have been attempted: {[a for a, _ in ledger.calls]}"
+            )
+        else:
+            assert merge_calls == [], (
+                f"the {case_id} probe hung BEFORE the merge and finish attempted "
+                "the irreversible merge anyway. A hung pre-merge probe must abort, "
+                "not degrade into the permissive arm (162-9): "
+                f"{[a for a, _ in merge_calls]}"
+            )
         _assert_abort_invariants(result, project, mock_transition)
         _assert_names_timeout_and_command(result, tokens, case_id)
 
