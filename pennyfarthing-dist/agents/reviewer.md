@@ -263,7 +263,9 @@ This line is validated by the gate programmatically — it is not just documenta
 **And the line does not stand alone.** The gate parses the table into rows and judges each enabled specialist's row on its own (story 162-85 — before that it only grepped for this line and for each specialist's NAME anywhere in the section, so a review that dispatched nothing passed by typing them):
 
 - **Exactly one row per enabled specialist.** A name in prose is not a row; two rows for one specialist is ambiguous and fails.
-- **Every cell your table declares must be filled** — not blank, and not the generated template's `-` or `Yes/No` placeholder. Fill the row from what the specialist returned.
+- **Every cell your table declares must be filled** — not blank, and not the generated template's `-` or `Yes/No` placeholder. Fill the row from what the specialist returned. **Stopping a row short of the columns your header declares counts as leaving those cells blank**, so dropping the trailing pipes is not a shortcut.
+- **`N/A` answers "what did you decide", not "what did you find".** On a row that returned, write `Status: clean, Findings: none` — `N/A` in Status or Findings fails. On a row that never ran, `N/A` is accepted everywhere.
+- **If NO specialist returned** (the all-timed-out round), write `**All received:** No` and keep the nine rows. That is accepted, and it is the honest record. `All received: Yes` over rows that all record a non-return is refused as the contradiction it is — the gate will not ask you to assert something false in order to report the truth.
 - **The row must not contradict itself.** `Status: clean` with a positive finding count fails; a positive finding count with `Decision: N/A` fails.
 - **A specialist that timed out or errored is recorded, never blanked:** `| 3 | reviewer-security | No — timed out | error | none | domain assessed first-hand |`. That row PASSES the gate — and rule 4 still applies: you must assess that domain yourself, and you may not claim coverage from it.
 

@@ -275,15 +275,35 @@ class TestGenuineRecordsPass:
         assert _check_subagent_completion(_session(_genuine_section(rows))) is None
 
     def test_recorded_timeout_passes(self) -> None:
-        """The 162-44 reality: specialists timed out, the reviewer recorded it."""
+        """The 162-44 reality: specialists timed out, the reviewer recorded it.
+
+        The honest summary for that round is `All received: No` — see
+        ``TestHonestAllTimeoutRoundIsExpressible``.
+        """
         from pf.handoff.complete_phase import _check_subagent_completion
 
         rows = "\n".join(
             f"| {i} | {name} | No — timed out | error | none | domain assessed first-hand by lead |"
             for i, name in enumerate(SUBAGENTS, 1)
         )
-        result = _check_subagent_completion(_session(_genuine_section(rows)))
+        section = _genuine_section(rows).replace("**All received:** Yes", "**All received:** No")
+        result = _check_subagent_completion(_session(section))
         assert result is None, f"Recorded timeouts must be accepted: {result}"
+
+    def test_partial_timeout_with_yes_summary_passes(self) -> None:
+        """Some returned, some timed out — `Yes` stays the required summary."""
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        rows = "\n".join(
+            (
+                f"| {i} | {name} | No — timed out | error | none | assessed first-hand |"
+                if i > 6
+                else f"| {i} | {name} | Yes | clean | none | N/A |"
+            )
+            for i, name in enumerate(SUBAGENTS, 1)
+        )
+        result = _check_subagent_completion(_session(_genuine_section(rows)))
+        assert result is None, result
 
     def test_extra_trailing_notes_column_passes(self) -> None:
         from pf.handoff.complete_phase import _check_subagent_completion
@@ -352,11 +372,119 @@ class TestSkipIsNotAResult:
         assert result is not None, "An enabled specialist cannot be skipped"
 
     def test_documented_disabled_row_passes(self) -> None:
-        """`| N | x | Skipped | disabled | N/A | Disabled via settings |` — reviewer.md."""
+        """`| N | x | Skipped | disabled | N/A | Disabled via settings |` — reviewer.md.
+
+        Summary is `No` because in this fixture ALL nine are (contradictorily)
+        pinned enabled while every row says disabled; a `Yes` over rows that all
+        record a non-return is refused as the contradiction it is. In production a
+        disabled specialist is filtered out of the required set entirely.
+        """
         from pf.handoff.complete_phase import _check_subagent_completion
 
         rows = "\n".join(
             f"| {i} | {name} | Skipped | disabled | N/A | Disabled via settings |"
             for i, name in enumerate(SUBAGENTS, 1)
         )
-        assert _check_subagent_completion(_session(_genuine_section(rows))) is None
+        section = _genuine_section(rows).replace("**All received:** Yes", "**All received:** No")
+        assert _check_subagent_completion(_session(section)) is None
+
+
+class TestTruncatedRowUnderDeclaredHeader:
+    """Deleting trailing pipes must not delete the filled-cell rule.
+
+    Review finding, fix round 1: a row SHORTER than the six-column header used to
+    read as "those columns do not exist" — the escape the blank-cell rule exists to
+    close, available for the price of three keystrokes.
+    """
+
+    def test_row_truncated_after_received_fails_under_six_column_header(self) -> None:
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        rows = "\n".join(f"| {i} | {name} | Yes |" for i, name in enumerate(SUBAGENTS, 1))
+        result = _check_subagent_completion(_session(_genuine_section(rows)))
+        assert result is not None, "A truncated row under a declaring header must fail"
+        assert "reviewer-preflight" in result
+
+    def test_row_truncated_after_status_fails_under_six_column_header(self) -> None:
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        rows = "\n".join(f"| {i} | {name} | Yes | clean |" for i, name in enumerate(SUBAGENTS, 1))
+        assert _check_subagent_completion(_session(_genuine_section(rows))) is not None
+
+    def test_declared_columns_report_as_empty_not_absent(self) -> None:
+        from pf.handoff.complete_phase import parse_subagent_result_rows
+
+        section = _genuine_section("| 1 | reviewer-security | Yes |")
+        row = parse_subagent_result_rows(section)["reviewer-security"][0]
+        assert row["status"] == "" and row["findings"] == "" and row["decision"] == ""
+
+    def test_short_table_with_no_header_still_reports_absent_columns(self) -> None:
+        """No header = nothing declared, so a three-column table stays legitimate."""
+        from pf.handoff.complete_phase import parse_subagent_result_rows
+
+        section = "## Subagent Results\n\n| reviewer-security | Yes | PASS |\n"
+        row = parse_subagent_result_rows(section)["reviewer-security"][0]
+        assert row["status"] == "PASS"
+        assert row["findings"] is None and row["decision"] is None
+
+
+class TestNotApplicableIsOnlyADecision:
+    """`N/A` answers "what did you decide", never "what did you find"."""
+
+    def test_na_in_findings_on_a_returned_row_fails(self) -> None:
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        rows = "\n".join(
+            f"| {i} | {name} | Yes | N/A | N/A | N/A |" for i, name in enumerate(SUBAGENTS, 1)
+        )
+        result = _check_subagent_completion(_session(_genuine_section(rows)))
+        assert result is not None, "N/A says nothing about a specialist that ran"
+        assert "reviewer-preflight" in result
+
+    def test_none_in_findings_still_passes(self) -> None:
+        """`Findings: none` is the documented clean value — not a placeholder."""
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        assert _check_subagent_completion(_session(_genuine_section())) is None
+
+    def test_na_is_accepted_on_a_row_that_never_ran(self) -> None:
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        rows = "\n".join(
+            f"| {i} | {name} | No — timed out | error | N/A | assessed first-hand |"
+            for i, name in enumerate(SUBAGENTS, 1)
+        )
+        section = _genuine_section(rows).replace("**All received:** Yes", "**All received:** No")
+        assert _check_subagent_completion(_session(section)) is None
+
+
+class TestHonestAllTimeoutRoundIsExpressible:
+    """The gate must not require a false attestation to report the truth."""
+
+    def test_no_summary_over_all_failed_rows_passes(self) -> None:
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        rows = "\n".join(
+            f"| {i} | {name} | No — timed out | error | none | assessed first-hand |"
+            for i, name in enumerate(SUBAGENTS, 1)
+        )
+        section = _genuine_section(rows).replace("**All received:** Yes", "**All received:** No")
+        assert _check_subagent_completion(_session(section)) is None
+
+    def test_yes_summary_over_all_failed_rows_is_a_contradiction(self) -> None:
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        rows = "\n".join(
+            f"| {i} | {name} | No — timed out | error | none | assessed first-hand |"
+            for i, name in enumerate(SUBAGENTS, 1)
+        )
+        result = _check_subagent_completion(_session(_genuine_section(rows)))
+        assert result is not None, "Nothing was received; the summary cannot say Yes"
+        assert "All received: No" in result
+
+    def test_no_summary_over_returned_rows_still_fails(self) -> None:
+        """148-17's pin: a `No` summary over rows that DID return is still wrong."""
+        from pf.handoff.complete_phase import _check_subagent_completion
+
+        section = _genuine_section().replace("**All received:** Yes", "**All received:** No")
+        assert _check_subagent_completion(_session(section)) is not None

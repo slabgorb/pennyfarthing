@@ -691,6 +691,11 @@ _FINDING_COUNT_RE = re.compile(r"^(\d+)\b")
 # found nothing.
 _NO_DECISION_RE = re.compile(r"^(?:n/?a|none|nothing|no decision)\b", re.IGNORECASE)
 
+# `N/A` and nothing else. Deliberately NARROWER than _NO_DECISION_RE, which also
+# matches `none` — `Findings: none` is the value `agents/reviewer.md` documents for
+# a clean specialist and must stay accepted.
+_NOT_APPLICABLE_RE = re.compile(r"^(?:n\.?/?a\.?|not applicable)$", re.IGNORECASE)
+
 
 def _cell_text(raw: str) -> str:
     """A table cell with markdown emphasis and code quoting stripped."""
@@ -724,24 +729,45 @@ def _is_unfilled(cell: str) -> bool:
     return normalized in _UNFILLED_CELLS or bool(_BRACE_PLACEHOLDER_RE.match(cell.strip()))
 
 
-def parse_subagent_result_rows(section: str) -> dict[str, list[dict[str, str]]]:
+def _records_non_return(row: dict[str, str | None]) -> bool:
+    """Whether this row records something that happened TO the specialist.
+
+    Read across Received and Status together, because the documented disabled row
+    spreads the notation over both cells (`Skipped` / `disabled`).
+    """
+    return bool(_RECORDED_FAILURE_RE.search(f"{row['received'] or ''} {row['status'] or ''}"))
+
+
+def parse_subagent_result_rows(section: str) -> dict[str, list[dict[str, str | None]]]:
     """Parse a ``## Subagent Results`` section into per-specialist ROWS.
 
     Maps each specialist name to every row claiming to be its result — a list,
     because two rows for one specialist is itself a finding the gate reports.
-    Each row is a dict with the keys in :data:`_ROW_FIELDS`; cells absent from a
-    short row come back as ``""``.
+    Each row is a dict with the keys in :data:`_ROW_FIELDS`.
+
+    **The two absent-cell values are not interchangeable, and the distinction is
+    load-bearing:**
+
+    - ``None`` — the table has no such COLUMN. :func:`_row_problem` does not
+      demand it (see that docstring for why absent columns are not required).
+    - ``""`` — the column exists and the cell is empty. That FAILS. A row DECLARED
+      by the header but truncated before that column yields ``""`` too, so
+      deleting trailing pipes is not a way out of the filled-cell rule (review
+      finding, fix round 1: ``| 1 | name | Yes |`` under a six-column header used
+      to read as "those columns don't exist" and passed).
 
     Columns are located by the table's own header when one is present, so an
     extra trailing `Notes` column or a renamed `#` column does not shift the
     values. Failing that, the five fields are read as consecutive cells starting
-    at the one naming the specialist, which is the documented layout.
+    at the one naming the specialist, which is the documented layout — those
+    offsets are INFERRED rather than declared, so a short row genuinely means the
+    column is absent and stays ``None``.
 
     The section is expected to be one already selected and masked by
     :func:`gate_recovery.select_last_section` — a fenced example table is blanked
     before it gets here, so quoted documentation cannot present itself as a row.
     """
-    rows: dict[str, list[dict[str, str]]] = {}
+    rows: dict[str, list[dict[str, str | None]]] = {}
     header_index: dict[str, int] | None = None
 
     for line in section.splitlines():
@@ -769,20 +795,30 @@ def parse_subagent_result_rows(section: str) -> dict[str, list[dict[str, str]]]:
 
         if header_index is not None and header_index.get("specialist", -1) < len(cells):
             offsets = header_index
+            declared = True
         else:
             # No usable header — read the fields as consecutive cells from the
-            # one naming the specialist.
+            # one naming the specialist. These offsets are a GUESS about an
+            # undeclared layout, not a promise the table made.
             anchor = next((i for i, cell in enumerate(cells) if name in cell), None)
             if anchor is None:
                 continue
             offsets = {field: anchor + i for i, field in enumerate(_ROW_FIELDS)}
+            declared = False
 
         row: dict[str, str | None] = {}
         for field in _ROW_FIELDS:
             idx = offsets.get(field, -1)
-            # None = this table has no such COLUMN; "" = the column is there and
-            # the cell was left blank. The gate judges those differently.
-            row[field] = cells[idx] if 0 <= idx < len(cells) else None
+            if 0 <= idx < len(cells):
+                row[field] = cells[idx]
+            elif declared and field in offsets:
+                # The HEADER declares this column and the row stops short of it.
+                # That is an empty declared cell, not an absent column — otherwise
+                # a forger drops the trailing pipes and the filled-cell rule never
+                # runs (review finding, fix round 1).
+                row[field] = ""
+            else:
+                row[field] = None
         rows.setdefault(name, []).append(row)
 
     return rows
@@ -809,21 +845,30 @@ def _row_problem(row: dict[str, str | None]) -> str | None:
         return "the row has no Received cell — add a `Received` column to the table"
     if _is_unfilled(received):
         return "the Received cell is blank or a placeholder"
-    # The Received and Status cells are read TOGETHER for a recorded failure: the
-    # documented disabled row spreads it across both (`Skipped` / `disabled`).
-    non_return = f"{received} {row['status'] or ''}"
-    if not _RECEIVED_YES_RE.match(received) and not _RECORDED_FAILURE_RE.search(non_return):
+    non_return = _records_non_return(row)
+    if not _RECEIVED_YES_RE.match(received) and not non_return:
         return (
             f"Received is '{received}' — write 'Yes', or name what happened to the "
             "specialist (e.g. 'No — timed out') and assess that domain yourself. "
             "Choosing to skip an enabled specialist is not a recordable result"
         )
 
-    unfilled = [
-        field
-        for field in ("status", "findings", "decision")
-        if row[field] is not None and _is_unfilled(row[field] or "")
-    ]
+    def _empty(field: str) -> bool:
+        value = row[field]
+        if value is None:  # column not declared and not truncated away
+            return False
+        if _is_unfilled(value):
+            return True
+        # `N/A` says nothing about a specialist that RAN. `agents/reviewer.md`
+        # exempts it for Decision only — a clean run reports `Status: clean,
+        # Findings: none`, not N/A (review finding, fix round 1). On a row that
+        # records a non-return, N/A is the honest value for both: there is no
+        # status or finding to report from a specialist that never ran.
+        if field != "decision" and not non_return and _NOT_APPLICABLE_RE.match(value):
+            return True
+        return False
+
+    unfilled = [field for field in ("status", "findings", "decision") if _empty(field)]
     if unfilled:
         return (
             f"the {', '.join(unfilled)} cell(s) are blank or still the template's "
@@ -894,16 +939,6 @@ def _check_subagent_completion(content: str) -> str | None:
 
     section = selected["section"]
 
-    # Check for "All received: Yes" (tolerates bold markdown: **All received:** **Yes**)
-    if not re.search(r"\*{0,2}All received:\*{0,2}\s*\*{0,2}Yes\*{0,2}", section, re.IGNORECASE):
-        count = len(enabled_names)
-        return (
-            "Subagent Results table is incomplete — 'All received: Yes' not found. "
-            f"To fix: Wait for all {count} enabled subagents to return results. Fill in "
-            "every row of the table with Received: Yes (or explicit error notation). "
-            "Do not proceed until all subagents are accounted for."
-        )
-
     # Every enabled specialist must have exactly ONE complete, self-consistent ROW.
     # A NAME appearing in the section's prose is not a result: the check this
     # replaced was `name not in section`, which the specialist list quoted in a
@@ -912,6 +947,40 @@ def _check_subagent_completion(content: str) -> str | None:
     required = sorted(REQUIRED_SUBAGENTS & enabled_names)
 
     problems: list[str] = []
+
+    # The summary line, judged AGAINST the rows rather than alone.
+    #
+    # `All received: Yes` is still required — except when EVERY required row
+    # records a non-return, the shape of the 162-44 rounds where all nine
+    # specialists timed out. Demanding `Yes` there asked the reviewer to assert
+    # something false in order to report the truth honestly, which is how a gate
+    # teaches forgery. In that one case a `No` (or absent) summary is accepted, and
+    # a `Yes` is REFUSED as the contradiction it is: nothing was received.
+    single_rows = [rows[name][0] for name in required if len(rows.get(name) or []) == 1]
+    all_non_return = (
+        bool(required)
+        and len(single_rows) == len(required)
+        and all(_records_non_return(row) for row in single_rows)
+    )
+    summary_says_yes = bool(
+        re.search(r"\*{0,2}All received:\*{0,2}\s*\*{0,2}Yes\*{0,2}", section, re.IGNORECASE)
+    )
+    if all_non_return:
+        if summary_says_yes:
+            problems.append(
+                "every row records a specialist that did NOT return, yet the section "
+                "claims 'All received: Yes' — write 'All received: No' and keep the "
+                "per-specialist rows, which is the honest record of that round"
+            )
+    elif not summary_says_yes:
+        problems.append(
+            f"'All received: Yes' not found. Wait for all {len(enabled_names)} enabled "
+            "subagents to return, then fill in every row with Received: Yes (or an "
+            "explicit error notation). Accepted forms of the line: `All received: Yes`, "
+            "`**All received:** Yes`, `**All received:** **Yes**`, and either with "
+            "parenthetical context after `Yes`"
+        )
+
     missing = [name for name in required if not rows.get(name)]
     if missing:
         problems.append(
@@ -936,8 +1005,8 @@ def _check_subagent_completion(content: str) -> str | None:
     if problems:
         joined = "".join(f"\n  - {problem}" for problem in problems)
         return (
-            "Subagent Results table is not a usable record of specialist results — "
-            f"the 'All received: Yes' line is not corroborated by the table:{joined}\n"
+            "Subagent Results is not a usable record of specialist results — the "
+            f"summary line is not corroborated by the table:{joined}\n"
             "To fix: give EVERY enabled specialist its own row with all four cells "
             "filled from what the specialist actually returned. A specialist that "
             "timed out or errored is recorded as such (e.g. `| 3 | reviewer-security "

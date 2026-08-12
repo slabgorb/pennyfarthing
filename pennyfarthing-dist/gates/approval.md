@@ -157,9 +157,13 @@ Search the session file for a `## Subagent Results` section containing:
    `complete-phase` parses the table into per-specialist ROWS and checks each enabled
    specialist has exactly ONE row whose declared cells are filled (not blank, not the
    template's `-`) and internally consistent (`clean` cannot carry a finding count; a
-   finding count cannot carry an `N/A` decision). A summary line above a missing,
-   duplicated, placeholder or self-contradicting row FAILS — a specialist's name
-   mentioned in prose is not a row (story 162-85)
+   finding count cannot carry an `N/A` decision; `N/A` in Status or Findings on a row
+   that RETURNED). A row truncated before a column its header declares counts as
+   blank. A summary line above a missing, duplicated, placeholder, truncated or
+   self-contradicting row FAILS — a specialist's name mentioned in prose is not a row.
+   **Exception, so honesty is expressible:** when EVERY row records a non-return
+   (the all-timed-out round), `All received: No` is accepted and `Yes` is refused
+   (story 162-85)
 5. **On a rework session** (one carrying `**Round-Trip Count:** N` — or, on a legacy hand-written
    session with no such line, `**Rework Cycle:** N`), a `**Cycle: N**` tag matching that count —
    proof the evidence is from the CURRENT cycle. Either a full re-run of the enabled subagents
