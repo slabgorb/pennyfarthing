@@ -27,6 +27,7 @@ Acceptance Criteria:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 from starlette.testclient import TestClient
@@ -48,6 +49,41 @@ def client(pf_project_dir: Path) -> TestClient:
     — once, at the client — is what makes the numbers below mean something.
     """
     return TestClient(create_app())
+
+
+# ---------------------------------------------------------------------------
+# Story 164-25: async collaborator spy for the brownfield analysis routes
+# ---------------------------------------------------------------------------
+
+
+class _AsyncCallSpy:
+    """Records calls to an async collaborator and returns a canned result.
+
+    The body of ``__call__`` only runs when the coroutine it produces is
+    actually *awaited*. The 164-25 brownfield defect wraps an ``async`` function
+    in ``asyncio.to_thread(...)`` and never awaits the resulting coroutine
+    (lang-review python rule #9), so under the bug ``calls`` stays empty — that
+    empty list is the RED signal these tests hang their assertions on. The
+    canned dict is JSON-serializable so the *fixed* route renders a clean 200.
+    """
+
+    def __init__(self, result: Any):
+        self.calls: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
+        self._result = result
+
+    async def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        self.calls.append((args, kwargs))
+        return self._result
+
+
+def _all_values(call: tuple[tuple[Any, ...], dict[str, Any]]) -> list[Any]:
+    """Flatten a recorded (args, kwargs) call into a single list of values.
+
+    Lets an assertion stay agnostic about whether the route passes ``name`` /
+    ``path`` positionally (as the CLI does) or by keyword.
+    """
+    args, kwargs = call
+    return list(args) + list(kwargs.values())
 
 
 # ---------------------------------------------------------------------------
@@ -577,19 +613,61 @@ class TestSpansRoute:
 
 
 class TestHotspotsRoute:
-    """Hotspot analysis route."""
+    """Hotspot analysis route (Story 164-25 brownfield fix).
 
-    def test_get_hotspots(self, client: TestClient):
-        """AC3+AC5: GET /api/hotspots returns analysis data."""
+    Bug: the route called ``asyncio.to_thread(analyze_repo, project_dir, days=days)``
+    — wrapping an ``async`` function in a thread (so the coroutine is never
+    awaited) AND passing only ``project_dir`` as the ``name`` while omitting the
+    required ``path`` argument. The former ``status_code in (200, 500)``
+    assertion is what let that crash ship green.
+    """
+
+    def test_get_hotspots_returns_200(self, client: TestClient, monkeypatch):
+        """AC5 + tighten: happy path returns exactly 200, not 200-or-500."""
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_hotspots", spy)
         response = client.get("/api/hotspots")
-        assert response.status_code in (200, 500)
+        assert response.status_code == 200, response.text
         data = response.json()
         assert isinstance(data, dict)
 
-    def test_hotspots_accepts_days_param(self, client: TestClient):
-        """AC3: Hotspots endpoint accepts ?days= query parameter."""
+    def test_hotspots_awaits_analyze_repo_once(self, client: TestClient, monkeypatch):
+        """AC1 + rule #9 (missing await): the route must ``await`` analyze_repo.
+
+        Under the ``to_thread(async_fn)`` defect the coroutine is never awaited,
+        so the spy body never runs and ``calls`` stays empty.
+        """
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_hotspots", spy)
+        client.get("/api/hotspots")
+        assert len(spy.calls) == 1
+
+    def test_hotspots_passes_name_and_path_object(
+        self, client: TestClient, monkeypatch, pf_project_dir: Path
+    ):
+        """AC1 + rule #5: analyze_repo(name, path) — ``name`` is the repo
+        basename, ``path`` is a ``Path`` (not the raw ``project_dir`` string)."""
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_hotspots", spy)
+        client.get("/api/hotspots")
+        assert len(spy.calls) == 1, "analyze_repo was never awaited"
+        values = _all_values(spy.calls[0])
+        paths = [v for v in values if isinstance(v, Path)]
+        assert paths, "analyze_repo must receive a Path for the repo path, not a str"
+        assert paths[0] == Path(str(pf_project_dir)), paths
+        assert pf_project_dir.name in values, (
+            "analyze_repo must receive the repo display name (basename)"
+        )
+
+    def test_hotspots_forwards_days_param(self, client: TestClient, monkeypatch):
+        """AC3: ?days= is forwarded to analyze_repo."""
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_hotspots", spy)
         response = client.get("/api/hotspots?days=30")
-        assert response.status_code in (200, 500)
+        assert response.status_code == 200, response.text
+        assert len(spy.calls) == 1, "analyze_repo was never awaited"
+        args, kwargs = spy.calls[0]
+        assert kwargs.get("days") == 30 or 30 in args, spy.calls[0]
 
 
 # ---------------------------------------------------------------------------
@@ -646,14 +724,53 @@ class TestDependenciesRoute:
 
 
 class TestHealthScoreRoute:
-    """Health score route."""
+    """Health score route (Story 164-25 brownfield fix).
 
-    def test_get_health_score(self, client: TestClient):
-        """AC3+AC5: GET /api/health-score returns composite score."""
+    Bug: called ``asyncio.to_thread(analyze_healthscore, project_dir, use_cache=False)``
+    — ``use_cache`` is not a parameter of ``analyze_healthscore`` (its cache knob
+    is ``cache_ttl``), and ``project_dir`` was a ``str`` where a ``Path`` is
+    required. The former ``status_code in (200, 404, 500)`` tuple masked it.
+    """
+
+    def test_get_health_score_returns_200(self, client: TestClient, monkeypatch):
+        """AC5 + tighten: happy path returns exactly 200."""
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_healthscore", spy)
         response = client.get("/api/health-score")
-        assert response.status_code in (200, 404, 500)
+        assert response.status_code == 200, response.text
         data = response.json()
         assert isinstance(data, dict)
+
+    def test_health_score_awaits_analyze_once(self, client: TestClient, monkeypatch):
+        """rule #9 (missing await): the route must ``await`` analyze_healthscore."""
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_healthscore", spy)
+        client.get("/api/health-score")
+        assert len(spy.calls) == 1
+
+    def test_health_score_omits_use_cache_kwarg(self, client: TestClient, monkeypatch):
+        """AC2: ``use_cache`` is not a valid kwarg for analyze_healthscore."""
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_healthscore", spy)
+        client.get("/api/health-score")
+        assert len(spy.calls) == 1, "analyze_healthscore was never awaited"
+        _, kwargs = spy.calls[0]
+        assert "use_cache" not in kwargs, (
+            "use_cache is not a parameter of analyze_healthscore; its cache knob is cache_ttl"
+        )
+
+    def test_health_score_passes_path_object(
+        self, client: TestClient, monkeypatch, pf_project_dir: Path
+    ):
+        """rule #5: ``target_path`` must be a ``Path``, not the project_dir string."""
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_healthscore", spy)
+        client.get("/api/health-score")
+        assert len(spy.calls) == 1, "analyze_healthscore was never awaited"
+        values = _all_values(spy.calls[0])
+        paths = [v for v in values if isinstance(v, Path)]
+        assert paths, "analyze_healthscore must receive a Path target, not a str"
+        assert paths[0] == Path(str(pf_project_dir)), paths
 
 
 # ---------------------------------------------------------------------------
@@ -678,14 +795,46 @@ class TestAgentLoadRoute:
 
 
 class TestCodeMarkersRoute:
-    """Code markers route."""
+    """Code markers route (Story 164-25 brownfield fix).
 
-    def test_get_code_markers(self, client: TestClient):
-        """AC3+AC5: GET /api/code-markers returns markers data."""
+    Bug: called ``asyncio.to_thread(analyze_repo, project_dir)`` — an ``async``
+    function wrapped in a thread (never awaited), passing only ``project_dir`` as
+    ``name`` while omitting the required ``path`` argument. The former
+    ``status_code in (200, 500)`` tuple masked the crash.
+    """
+
+    def test_get_code_markers_returns_200(self, client: TestClient, monkeypatch):
+        """AC5 + tighten: happy path returns exactly 200."""
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_code_markers", spy)
         response = client.get("/api/code-markers")
-        assert response.status_code in (200, 500)
+        assert response.status_code == 200, response.text
         data = response.json()
         assert isinstance(data, dict)
+
+    def test_code_markers_awaits_analyze_repo_once(self, client: TestClient, monkeypatch):
+        """AC3 + rule #9 (missing await): the route must ``await`` analyze_repo."""
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_code_markers", spy)
+        client.get("/api/code-markers")
+        assert len(spy.calls) == 1
+
+    def test_code_markers_passes_name_and_path_object(
+        self, client: TestClient, monkeypatch, pf_project_dir: Path
+    ):
+        """AC3 + rule #5: analyze_repo(name, path) — ``name`` is the repo
+        basename, ``path`` is a ``Path`` (not the raw ``project_dir`` string)."""
+        spy = _AsyncCallSpy({"success": True})
+        monkeypatch.setattr("pf.frame.routes.analysis.analyze_code_markers", spy)
+        client.get("/api/code-markers")
+        assert len(spy.calls) == 1, "analyze_repo was never awaited"
+        values = _all_values(spy.calls[0])
+        paths = [v for v in values if isinstance(v, Path)]
+        assert paths, "analyze_repo must receive a Path for the repo path, not a str"
+        assert paths[0] == Path(str(pf_project_dir)), paths
+        assert pf_project_dir.name in values, (
+            "analyze_repo must receive the repo display name (basename)"
+        )
 
 
 # ---------------------------------------------------------------------------
