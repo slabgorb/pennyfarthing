@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+*No unreleased changes*
+
+## [13.6.0] - 2026-08-13
+
+### Added
+
+- **`pf sprint story update --type` and `--depends-on` (162-79)** — set a story's type and its dependencies directly from the CLI.
+- **Configurable remotes in the finish probe (162-71)** — `finish` honors non-`origin` configured remotes when verifying that a branch/PR actually landed.
+
+### Changed
+
+- **Shard-path safety consolidation (162-84)** — deduplicated the `safe_ref_path` adapters, adopted `safe_shards` across call sites, and throttled repeated TUI warnings.
+
+### Fixed
+
+- **Frame brownfield analysis routes (164-25)** — the hotspots, health-score, and code-markers routes now correctly `await` their async collaborators with the right arguments (`Path` + repo name; `cache_ttl=0` preserves the health-score no-cache intent). Route tests no longer accept the permissive `(200, 500)` status tuple that had masked the missing-await defect.
+- **Path-traversal hardening across the shard/session/archive surface (162-82, 162-44, 162-43)** — CWE-22 guards for `.session/{story_id}-*` and archive path builds, completion of the shard-path sweep behind a shared `safe_ref_path`/`safe_shards` API, and structural XML routing plus archive exemption and colon-heading parity in the schema hook.
+- **Command-injection hardening (162-39, 162-38)** — CWE-78 sweep converting 11 template fences to positional argv and single-quoted heredocs, plus PF_PY policy hardening for gate-fence sentinels, heredocs, and version/untagged coverage.
+- **Schema-validation hook coverage (162-42)** — the hook is now declared on `sm-setup` and `tandem-backseat`.
+- **Jira truthfulness (162-36, 162-35, 162-34)** — the transport distinguishes real 2xx responses (including 204) from curl/HTTP failures; `assign`/`claim`/`move`/`create-story` report dry-runs and outcomes truthfully, with hardened credential resolution, withheld-email handling, and URL encoding.
+- **Multi-repo finish edge cases (162-33, 162-32)** — pre-merge verification, landed-repo recovery, dry-run PR pairing, a `_resolve_story_repos` existence guard with path de-duplication, and `_git_cleanup` return-code propagation.
+- **Approval gate integrity (162-85)** — the gate now verifies structured specialist rows instead of a fragile substring match.
+- **Timeout hardening (162-41)** — is-not-None gates, non-timeout exit surfacing, an OSError-safe `_run`, and a shared bounded-run helper.
+- **Test-suite stabilization (162-30, 162-31, 162-37)** — repaired 311 failing tests (2965 passing), quarantined an XPASS-forcing helper, tightened the tracking-ref regex, and reset Frame-route module globals and leakage `SKIP_DIRS` between tests.
+
 ## [13.5.0] - 2026-08-11
 
 ### Added
@@ -722,7 +747,8 @@ For detailed history of these releases, see the git log.
 
 ---
 
-[Unreleased]: https://github.com/slabgorb/pennyfarthing/compare/v13.5.0...HEAD
+[Unreleased]: https://github.com/slabgorb/pennyfarthing/compare/v13.6.0...HEAD
+[13.6.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.5.0...v13.6.0
 [13.5.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.4.0...v13.5.0
 [13.4.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.3.0...v13.4.0
 [13.3.0]: https://github.com/slabgorb/pennyfarthing/compare/v13.2.0...v13.3.0

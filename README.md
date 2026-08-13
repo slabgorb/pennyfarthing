@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v13.5.0** | *The outer loop goes once, the inner loop goes many times.*
+**v13.6.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
