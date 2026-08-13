@@ -43,17 +43,18 @@ Run the validator with the pf launcher's own interpreter. A bare interpreter
 resolves to whatever is first on PATH — usually a project `.venv` that has no
 pf installed, so the import dies with ModuleNotFoundError (gh #112). The
 scenario data is fed on stdin through a single-quoted heredoc, so nothing in it
-is expanded by the shell or interpolated into the Python source (CWE-78).
+is expanded by the shell or interpolated into the Python source (CWE-78). The
+`-c` payload is single-quoted for the same reason — the shell must not expand it.
 
 ```bash
 # pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
 # .venv - derive the interpreter from the launcher shebang, never activate .venv.
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c '
 import json, sys, yaml
 from pf.benchmark.scenario_validator import validate_scenario
 print(json.dumps(validate_scenario(yaml.safe_load(sys.stdin)), indent=2))
-" <<'SCENARIOEOF'
+' <<'SCENARIOEOF'
 {assembled scenario YAML, with the validator field mapping below applied}
 SCENARIOEOF
 ```

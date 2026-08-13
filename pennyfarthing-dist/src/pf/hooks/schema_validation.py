@@ -35,7 +35,11 @@ SKILL_REQUIRED_TAGS = ["run", "output"]
 #: do not count as the required line until finish can read them.
 #: Anchoring is the other load-bearing part — a mid-prose mention of a field
 #: token is not a field (155-40).
-_FIELD_LINE_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*(\w[\w\s]*):\*\*\s*(.*)")
+#: Hyphens inside the key are accepted (162-33) so a per-repo ``**PR my-repo:**``
+#: line is a field for a real (hyphenated) repo name. Kept byte-identical to the
+#: consumer's ``SESSION_FIELD_RE``; the test at
+#: ``test_162_11_schema_hook_session_fields.py`` pins that equality.
+_FIELD_LINE_RE = re.compile(r"^\s*(?:[-*]\s+)?\*\*(\w[\w\s-]*):\*\*\s*(.*)")
 
 #: Merge-target fields the 155-33 template contract puts in Story Details, and
 #: which ``story_finish`` reads. Missing lines here are how 155-32 went done
@@ -57,11 +61,37 @@ SESSION_REQUIRED_FIELDS: dict[str, str] = {
         "this requirement."
     ),
 }
+#: A STRUCTURAL session root: a line whose first non-space content is the
+#: opening ``<session`` tag. A whole-body substring test routed a MARKDOWN
+#: session that merely QUOTES the tag in prose to the XML arm, denying it for
+#: tags it never had (162-43). Leading whitespace is tolerated — a re-indented
+#: file is still an XML session.
+#: ``[ \t]*`` and not ``\s*``: ``\s`` matches newlines, so under MULTILINE every
+#: line-start anchor rescans the entire trailing whitespace run — quadratic,
+#: measured at 5s on 128KB of blank indented lines and over a minute at 1.6MB.
+#: A stall is not covered by ``main()``'s fail-open (it never raises, it just
+#: blocks the Write). Horizontal indent is exactly the intent here (162-43).
+_SESSION_ROOT_RE = re.compile(r"^[ \t]*<session[\s>]", re.MULTILINE)
+
 STEP_REQUIRED_TAGS = ["purpose", "instructions", "output"]
 STEP_META_FIELDS = ["step", "workflow", "agent", "next"]
 
 
+#: The ONE archive location: ``.session/archive/*-session.md``, the glob
+#: ``migration/session.py`` uses. Archived bodies are rewritten by
+#: ``story_finish`` and need satisfy neither the live field contract nor the XML
+#: tag contract, so they are not live sessions.
+#: Scoped to that exact segment pair on purpose (162-43): a bare ``archive/``
+#: segment match also matched ANCESTOR directories, so a checkout under
+#: ``~/archive/`` had session validation silently off for every write.
+#: ``sprint/archive/`` stays exempt via the absent ``.session/`` clause below,
+#: and a live session merely NAMED ``162-43-archive-session.md`` stays validated.
+_ARCHIVE_SEGMENT_RE = re.compile(r"(?:^|/)\.session/archive/")
+
+
 def _is_session_file(file_path: str) -> bool:
+    if _ARCHIVE_SEGMENT_RE.search(file_path):
+        return False
     return file_path.endswith("-session.md") and ".session/" in file_path
 
 
@@ -95,13 +125,35 @@ def _has_tag(content: str, tag: str) -> bool:
     return f"<{tag}>" in content or f"<{tag} " in content
 
 
+def _normalize_section_heading(heading_text: str) -> str:
+    """Normalize a ``## `` heading's text for section comparison.
+
+    Agents write both ``## Story Details`` and ``## Story Details:`` and finish
+    reads the block either way, so both must be accepted. Exactly ONE trailing
+    colon is stripped — ``## Story Details::`` and ``## Story Details Extra``
+    are different sections (162-43).
+
+    This is ``pf.sprint.session_parse.normalize_section_heading``, duplicated
+    because a PreToolUse hook must not pull in ``pf.sprint`` at import time (the
+    same reason ``_FIELD_LINE_RE`` duplicates ``SESSION_FIELD_RE``). The 162-43
+    suite pins the two to identical behavior over a heading corpus; without that
+    parity the hook could accept a heading the consumer denies authority to,
+    which is the 155-32 failure class this hook exists to prevent.
+    """
+    heading = heading_text.strip().lower()
+    if heading.endswith(":"):
+        heading = heading[:-1].strip()
+    return heading
+
+
 def _story_details_field_labels(content: str) -> set[str]:
     """Labels of the parseable field lines inside Story Details, lowercased.
 
-    Story Details is the section ``story_finish._parse_session`` treats as
-    authoritative for branch/PR (155-40), and the line pattern here is the
-    consumer's own — so a session that passes is by construction one finish can
-    read. Labels are lowercased because finish lowercases before keying. Blank
+    Story Details is the section ``session_parse._parse_session_lines`` treats as
+    authoritative for branch/PR (155-40). Both the line pattern AND the section
+    heading normalization here are the consumer's own — so a session that passes
+    is by construction one finish can read, section authority included. Labels
+    are lowercased because finish lowercases before keying. Blank
     values are dropped: an empty field line and an absent one both extract to
     ``None`` at finish time. A line the consumer's pattern cannot parse (a
     qualified per-repo label, for now) contributes no label — it is tolerated,
@@ -111,7 +163,7 @@ def _story_details_field_labels(content: str) -> set[str]:
     in_details = False
     for line in content.splitlines():
         if line.startswith("## "):
-            in_details = line[3:].strip().lower() == STORY_DETAILS_SECTION
+            in_details = _normalize_section_heading(line[3:]) == STORY_DETAILS_SECTION
             continue
         if not in_details:
             continue
@@ -130,7 +182,7 @@ def _validate_session_fields(content: str) -> list[str]:
 
 def _validate_session(content: str) -> list[str]:
     errors = []
-    if "<session" not in content:
+    if not _SESSION_ROOT_RE.search(content):
         # Markdown session: only the Story Details field contract applies (the
         # XML tag requirements below describe a shape it does not have).
         return _validate_session_fields(content)

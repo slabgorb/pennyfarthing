@@ -24,10 +24,10 @@ from typing import Any
 from unittest.mock import MagicMock
 
 from pf.tui.base_panel import PANEL_ICONS, BasePanel
+from pf.tui.client import FrameClient
 
 # Import the panel under test — will fail until implemented
 from pf.tui.debug_panel import DebugPanel
-from pf.tui.client import FrameClient
 from rich.console import Console
 from textual.widgets import Static
 
@@ -99,7 +99,10 @@ SAMPLE_TOKEN_STATS: dict[str, Any] = {
     "outputTokens": 12000,
     "cacheReadTokens": 8500,
     "cacheCreationTokens": 3200,
-    "totalCostUsd": 0.1234,
+    # Wire key is "totalCost" — see frame/otlp.py:OTLPReceiver and
+    # frame/websocket.py:_default_token_stats_data. "totalCostUsd" was never
+    # emitted by the producer.
+    "totalCost": 0.1234,
 }
 
 SAMPLE_TOKEN_STATS_PARTIAL: dict[str, Any] = {

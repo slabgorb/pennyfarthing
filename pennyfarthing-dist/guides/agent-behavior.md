@@ -72,6 +72,46 @@ To hand off plan execution to a different agent: `echo "dev" > .session/.plan-ex
 
 ---
 
+<team-mode>
+## Team Mode — Phase-Scoped Native Teams
+
+When your workflow phase has a `team:` block (see `workflows/tdd-team.yaml`), you are the **team lead** for that phase and the agents you spawn are **teammates**. Teams are phase-scoped: created on phase entry, destroyed before handoff. If the prerequisites are not met — no `team:` block, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` unset, or a non-interactive session — fall back to solo execution. Team mode is always optional, never an error.
+
+**As lead:**
+
+1. **Team creation** — on phase entry, `TeamCreate("phase-{phase}-{story-id}")`.
+2. **Teammate spawning** — spawn each entry in the workflow YAML `teammates:` list via the Task tool with `team_name` set. The spawn prompt needs only `pf agent start {agent}`, the story id, and the task assignment.
+3. **Coordination** — use `SendMessage` for every intra-phase exchange. You remain the primary worker; teammates assist, they do not replace you.
+4. **Cleanup before handoff** — send each teammate a shutdown request via `SendMessage`, wait for them to go idle, then `TeamDelete`. Only then start the exit protocol.
+
+**As teammate:** you are not the lead. You do not own the phase, do not run the exit protocol, and do not emit handoff markers. Communicate via `SendMessage`, go idle when your task is done, and shut down when the lead asks.
+
+**Channel discipline:** `SendMessage` is for intra-phase collaboration only. Inter-phase handoff is always `pf handoff` plus the handoff marker it emits. Never substitute one for the other.
+
+Full protocol, including detection and teammate spawn prompts: `guides/team-mode.md`.
+</team-mode>
+
+---
+
+<agent-exit-protocol>
+## Exit Protocol
+
+1. Write your assessment to the session file
+2. **If team mode is active:** shut down all teammates via `SendMessage`, then `TeamDelete`. Wait for cleanup before continuing.
+3. Terminate the tandem backseat observer (if active)
+4. `pf handoff resolve-gate {story-id} {workflow} {phase}` → RESOLVE_RESULT
+   - `blocked` / `error` → report the error and STOP
+   - `skip` → jump to step 6
+   - `ready` → spawn the gate subagent with the gate file → GATE_RESULT. On fail, fix the issues and retry from step 4 (max 3 retries).
+5. If RESOLVE_RESULT carries `gate_extensions`, run each extension gate in order; the first failure stops the chain
+6. `pf handoff complete-phase {story-id} {workflow} {from} {to} {gate-type}`
+7. `pf handoff marker {next_agent}` → if the output contains `relay: true`, invoke the `invoke` value with the Skill tool; otherwise output the fallback text and EXIT
+
+Agents drive exit directly — there is no handoff subagent. See `guides/handoff-cli.md` for the full command contract.
+</agent-exit-protocol>
+
+---
+
 ## Reference
 
 <info>

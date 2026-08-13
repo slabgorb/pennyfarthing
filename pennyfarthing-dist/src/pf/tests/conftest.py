@@ -124,6 +124,60 @@ def _reset_persona_quote_cache():
     reset_quote_cache()
 
 
+@pytest.fixture(autouse=True)
+def _reset_frame_route_state():
+    """Reset the frame-route module globals before and after every test (story 162-37).
+
+    ``create_app()`` returns a fresh app per test, but the routers close over
+    module-level mutable stores, so every frame-route test in the process shares
+    one set of them:
+
+    - ``pf.frame.routes.state``: ``_settings``, ``_grants``, ``_audit_entries``,
+      ``_tool_events``, ``_web_mode_todos``, ``_tdd_metrics``, ``_agent_stats``,
+      ``_story_stats``, ``_evaluation``, ``_eval_results``, ``_enriched_spans``,
+      ``_benchmark_events``, ``_benchmark_phase``, ``_subagent_events``, ``_receiver``
+    - ``pf.frame.routes.inline``: ``_welcome_message``, ``_bell_queue``,
+      ``_pending_approvals``
+    - ``pf.frame.routes.data_proxy``: ``_identity_cache`` / ``_identity_cache_time``
+      (300s TTL — the first test to hit ``/api/identity`` otherwise decides the
+      answer for every later test)
+
+    Autouse in conftest rather than per-module on purpose: nine test modules touch
+    frame routes, and a local fixture would leave the other eight sharing state.
+    """
+    from pf.frame.routes import data_proxy, inline, state
+
+    for module in (state, inline, data_proxy):
+        module.reset_state()
+    yield
+    for module in (state, inline, data_proxy):
+        module.reset_state()
+
+
+@pytest.fixture(autouse=True)
+def _stub_frame_identity_probe(monkeypatch):
+    """Keep ``GET /api/identity`` off the network and out of the cache (story 162-37).
+
+    ``data_proxy._get_identity`` shells out with ``os.popen("gh api user")`` /
+    ``os.popen("jira me --raw")`` and memoises the result in a process global with
+    a 300s TTL, so the suite made live calls and captured this machine's real
+    GitHub login for every later test. Stubbed here the way ``pf_project_dir``
+    stubs ``portrait_cdn.fetch_portrait``: canned payload, no subprocess, no cache
+    write.
+
+    The probe-behaviour tests (``test_160_17_fail_loud_4``,
+    ``test_160_18_warning_sink_sanitization``) bind ``_get_identity`` at import
+    time and call it directly, so this module-attribute stub never masks them.
+    """
+    from pf.frame.routes import data_proxy
+
+    monkeypatch.setattr(
+        data_proxy,
+        "_get_identity",
+        lambda: {"jiraEmail": None, "githubUsername": None, "avatarUrl": None},
+    )
+
+
 @pytest.fixture
 def project_root() -> Path:
     """Return the project root path."""

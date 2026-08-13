@@ -42,6 +42,29 @@ Each deviation entry is a markdown bullet with a bold short description, followe
 
 The em-dash (`—`) separates the impact level from the affected stories. Example: `breaking — Story 5-3 assumes ! is available for filter expressions`.
 
+### Spec source specificity (enforced)
+
+The `deviations-logged` gate does not just check that **Spec source** is present — it checks that the value is *specific*. Either way the entry is rejected, but the two failures have distinct messages:
+
+| Value | Gate message |
+|---|---|
+| Empty (field present, no value) | `has empty Spec source — must cite a specific document or section` |
+| Non-empty but merely descriptive prose | `has vague Spec source '<value>' — must reference a file path, AC, or section` |
+
+A **Spec source** is accepted when it contains at least one of:
+
+| Accepted form | Example |
+|---|---|
+| File reference with an extension | `context-story-5-1.md`, `.session/162-38-session.md` |
+| AC reference | `AC-3`, `AC3` |
+| Numbered section reference | `Section 4` |
+| `SOUL.md` | `SOUL.md, Rule 2` |
+| Markdown heading reference | `## Acceptance Criteria` |
+
+Combining a file with a section or AC is the preferred form: `context-story-5-1.md, AC-2`.
+
+REJECTED (each of these is vague and fails the gate): `the story`, `the spec`, `story context`, `epic requirements`, `AC` with no number.
+
 ## Agent Subsections
 
 Deviation entries are organized under agent-specific subsections within `## Design Deviations` in the session file. Each agent populates only their own subsection — TEA does not write under `### Dev (implementation)`, and Dev does not write under `### TEA (test design)`.

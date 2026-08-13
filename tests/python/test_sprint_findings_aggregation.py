@@ -17,7 +17,6 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-
 from pf.findings.aggregate import (  # noqa: E402
     aggregate_findings,
     collect_session_files,
@@ -138,6 +137,48 @@ SPRINT_COMPLETED_YAML = textwrap.dedent("""\
         completed: '2026-01-13'
 """)
 
+# Epic shard for PROJ-99000. `_collect_done_stories` resolves each inlined
+# completed story's Jira key by looking it up in `epic-<ref>.yaml`, so without
+# this shard every story resolves to an empty key and no session ever matches.
+EPIC_SHARD_YAML = textwrap.dedent("""\
+    jira: PROJ-99000
+    status: done
+    stories:
+      - id: 99-1
+        jira: PROJ-99001
+        status: done
+      - id: 99-2
+        jira: PROJ-99002
+        status: done
+      - id: 99-3
+        jira: PROJ-99003
+        status: done
+      - id: 99-4
+        jira: PROJ-99004
+        status: done
+""")
+
+
+def _make_archive(tmp_path: Path, *, shard: bool = True) -> Path:
+    """Build an archive directory at the layout `collect_session_files` requires.
+
+    162-30: these tests used to pass a bare `tmp_path / "archive"` (or `tmp_path`
+    itself). `collect_session_files(archive_dir, n)` derives
+    `project_root = archive_dir.parent.parent` and then re-reads the completed
+    YAML from `project_root / "sprint" / "archive"`, so an archive that is not
+    nested under `<root>/sprint/archive` resolves to a path that does not exist:
+    zero done stories, zero sessions, and — because the empty-result branch
+    checks the PASSED directory rather than the re-derived one — a
+    `success: True` with an empty list instead of an error. The fixture layout is
+    what was stale; see Delivery Findings for the parameter/re-derivation
+    inconsistency in production.
+    """
+    archive = tmp_path / "sprint" / "archive"
+    archive.mkdir(parents=True)
+    if shard:
+        (archive / "epic-PROJ-99000.yaml").write_text(EPIC_SHARD_YAML)
+    return archive
+
 
 # ---------------------------------------------------------------------------
 # AC1: Script reads all archived sessions for a specified sprint
@@ -149,8 +190,7 @@ class TestCollectSessionFiles:
 
     def test_finds_sessions_from_completed_yaml(self, tmp_path):
         """Reads sprint-completed YAML and locates matching session files."""
-        archive = tmp_path / "archive"
-        archive.mkdir()
+        archive = _make_archive(tmp_path)
 
         # Write sprint completed file
         (archive / "sprint-9999-completed.yaml").write_text(SPRINT_COMPLETED_YAML)
@@ -183,8 +223,7 @@ class TestCollectSessionFiles:
 
     def test_missing_sprint_completed_file(self, tmp_path):
         """Returns error when sprint-completed YAML doesn't exist."""
-        archive = tmp_path / "archive"
-        archive.mkdir()
+        archive = _make_archive(tmp_path, shard=False)
 
         result = collect_session_files(archive, 8888)
         assert result["success"] is False
@@ -192,8 +231,7 @@ class TestCollectSessionFiles:
 
     def test_empty_sprint_no_stories(self, tmp_path):
         """Handles sprint with no completed stories."""
-        archive = tmp_path / "archive"
-        archive.mkdir()
+        archive = _make_archive(tmp_path, shard=False)
 
         empty_yaml = textwrap.dedent("""\
             sprint:
@@ -209,8 +247,7 @@ class TestCollectSessionFiles:
 
     def test_story_id_extracted_from_yaml(self, tmp_path):
         """Story IDs are extracted from the completed YAML entries."""
-        archive = tmp_path / "archive"
-        archive.mkdir()
+        archive = _make_archive(tmp_path)
 
         (archive / "sprint-9999-completed.yaml").write_text(SPRINT_COMPLETED_YAML)
         (archive / "PROJ-99001-session.md").write_text(SESSION_WITH_FINDINGS)
@@ -620,7 +657,7 @@ class TestEndToEnd:
 
     def test_full_pipeline_with_findings(self, tmp_path):
         """Collect → aggregate → detect patterns → format markdown."""
-        archive = tmp_path
+        archive = _make_archive(tmp_path)
         (archive / "sprint-9999-completed.yaml").write_text(SPRINT_COMPLETED_YAML)
         (archive / "PROJ-99001-session.md").write_text(SESSION_WITH_FINDINGS)
         (archive / "PROJ-99002-session.md").write_text(SESSION_WITH_SAME_PATH)

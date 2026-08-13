@@ -51,7 +51,7 @@ Create two tasks:
 
 Use the Task tool to spawn the observer teammate:
 
-```
+````
 Task:
   subagent_type: "general-purpose"
   model: "sonnet"
@@ -111,7 +111,7 @@ Task:
 
     Stay in character as {CHARACTER}. Begin by capturing the pane and sending
     your first observation.
-```
+````
 
 ## Step 6: Implement Suggestions
 

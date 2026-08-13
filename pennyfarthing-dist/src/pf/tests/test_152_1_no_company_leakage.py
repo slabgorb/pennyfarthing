@@ -41,6 +41,11 @@ SKIP_DIRS = {
     ".session",  # Gitignored runtime artifact; not redistributed.
     "__pycache__",
     ".venv",
+    # Story 162-37: `python -m venv venv` (and most IDE defaults) produce an
+    # UNHIDDEN `venv/`. Walking it scans pip's `*.dist-info/RECORD` rows, whose
+    # third column is a byte count that can equal the forbidden brand number —
+    # this tripped the gate twice on 2026-08-05 on third-party bytes.
+    "venv",
     ".pytest_cache",
     ".mypy_cache",
     ".ruff_cache",

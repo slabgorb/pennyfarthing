@@ -12,6 +12,7 @@ Provides:
 import io
 import os
 import re
+import warnings
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,8 @@ from typing import Any
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.scalarstring import LiteralScalarString
+
+from pf.sprint.shard_merge import is_safe_shard_path, safe_ref_path
 
 JIRA_PATTERN = re.compile(r"^[A-Z][A-Z0-9]+-\d+$")
 
@@ -409,7 +412,11 @@ def write_sprint(path: Path, data: Any) -> None:
     sprint_dir = path.parent
     epic_refs = CommentedSeq()
 
-    # Read old index refs so we can detect renamed shards
+    # Read old index refs so we can detect renamed shards.
+    # GUARDED: these refs come straight off disk and feed the stale-shard
+    # unlink() below. An unguarded interpolation here meant a traversal ref left
+    # in current-sprint.yaml DELETED an arbitrary file outside sprint/
+    # (CWE-22, 162-44 — the sweep's worst site: an out-of-bounds delete).
     old_indexed: set[Path] = set()
     yml = _make_yaml()
     try:
@@ -417,7 +424,14 @@ def write_sprint(path: Path, data: Any) -> None:
             old_data = yml.load(f)
         for ref in old_data.get("epics", []):
             if isinstance(ref, str):
-                old_indexed.add(sprint_dir / f"epic-{ref}.yaml")
+                try:
+                    old_indexed.add(safe_ref_path(sprint_dir, ref))
+                except ValueError as e:
+                    warnings.warn(
+                        f"Stale-shard cleanup: index ref {ref!r} escapes {sprint_dir} "
+                        f"— skipping: {e}",
+                        stacklevel=2,
+                    )
     except Exception:
         pass
 
@@ -430,8 +444,20 @@ def write_sprint(path: Path, data: Any) -> None:
             written_shards.add(shard_file)
             epic_refs.append(ref)
         else:
-            # String ref — shard already exists on disk, don't delete it
-            written_shards.add(sprint_dir / f"epic-{epic}.yaml")
+            # String ref — shard already exists on disk, don't delete it.
+            # GUARDED: this branch used to append the ref to the index verbatim,
+            # so a traversal ref round-tripped into current-sprint.yaml and lay
+            # in wait for the next reader. Refuse to PERSIST what we would
+            # refuse to read (CWE-22, 162-44).
+            try:
+                written_shards.add(safe_ref_path(sprint_dir, str(epic)))
+            except ValueError as e:
+                warnings.warn(
+                    f"Sprint epic ref {epic!r} escapes {sprint_dir} — "
+                    f"dropping it from the index rather than persisting it: {e}",
+                    stacklevel=2,
+                )
+                continue
             epic_refs.append(epic)
 
     # Write index with string refs instead of full epic dicts
@@ -444,7 +470,15 @@ def write_sprint(path: Path, data: Any) -> None:
 
     _write_yaml_file(path, index)
 
-    # Remove stale shards that were in the old index but not the new one
+    # Remove stale shards that were in the old index but not the new one.
+    # Containment is re-checked immediately before the unlink: a delete is
+    # irreversible, so it must not rely solely on the build-time guard above.
     for stale in old_indexed - written_shards:
+        if not is_safe_shard_path(stale, sprint_dir):
+            warnings.warn(
+                f"Refusing to unlink stale shard outside {sprint_dir}: {stale}",
+                stacklevel=2,
+            )
+            continue
         if stale.exists():
             stale.unlink()

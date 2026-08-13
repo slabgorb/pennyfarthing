@@ -2,6 +2,15 @@
 
 Story 110-2: Story drill-through with dossier detail screen.
 Pushed via Screen.push() from SprintPanel when user presses Enter on a story.
+
+Two render variants:
+
+- ``dossier`` (default, SprintPanel) — dense Tufte layout of id-tagged Static
+  sections plus the markdown preview.
+- ``collapsible`` (ProgressPanel drill-through) — delegates to
+  :class:`~pf.tui.story_detail_widget.StoryDetailWidget`, whose Collapsible
+  sections are keyboard-navigable and better suited to reading a single story
+  end to end.
 """
 
 from __future__ import annotations
@@ -106,10 +115,16 @@ class StoryDetailScreen(Screen):
         Binding("enter", "open_pr_link", "Open PR"),
     ]
 
-    def __init__(self, story_data: dict[str, Any] | None = None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        story_data: dict[str, Any] | None = None,
+        variant: str = "dossier",
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
         ws_data: dict[str, Any] = story_data or {}
         self._story_data = self._enrich(ws_data)
+        self._variant = variant if variant in ("dossier", "collapsible") else "dossier"
 
     @staticmethod
     def _enrich(ws_data: dict[str, Any]) -> dict[str, Any]:
@@ -136,11 +151,25 @@ class StoryDetailScreen(Screen):
         return merged
 
     def compose(self):
-        """Compose the dossier layout with header, ACs, workflow, git info.
+        """Compose the story detail layout for the active variant.
 
+        ``collapsible`` delegates to StoryDetailWidget; ``dossier`` renders the
         Tufte-style dense layout — absent sections are simply omitted.
         """
         data = self._story_data
+
+        if self._variant == "collapsible":
+            from pf.tui.story_detail_widget import StoryDetailWidget
+
+            yield VerticalScroll(
+                StoryDetailWidget(story_data=data),
+                id="detail-scroll",
+            )
+            yield Static(
+                Text.from_markup("\n[dim][Escape] Back  [Enter] Open PR[/dim]"),
+                id="dossier-hint",
+            )
+            return
 
         # Header section
         title = data.get("title", "Unknown Story")

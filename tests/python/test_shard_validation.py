@@ -93,14 +93,19 @@ class TestValidateEpicShard:
         assert not result.valid
 
     def test_invalid_jira_key_format_rejected(self):
-        """Epic shard with malformed jira key should be rejected."""
+        """Epic shard with malformed jira key should be rejected.
+
+        The contract is PROJECT-NUMBER, not a specific project prefix — any
+        uppercase project key is accepted (e.g. PROJ-17, TEAM-12345), so the
+        malformed case is a key that does not match the shape at all.
+        """
         from pf.sprint.validator import validate_epic_shard
 
         epic = self._make_valid_epic()
-        epic["jira"] = "BAD-123"
+        epic["jira"] = "bad_key123"
         result = validate_epic_shard(epic)
         assert not result.valid
-        assert any("jira" in e.message.lower() or "PROJ" in e.message for e in result.errors)
+        assert any("jira" in e.message.lower() for e in result.errors)
 
     def test_valid_jira_key_passes(self):
         """Epic shard with valid PROJ-NNNNN jira key should pass."""
@@ -348,10 +353,19 @@ class TestWritePathIntegration:
             "id: '63'\ntitle: Jira Epic\nstatus: ready\nstories: []\n"
         )
 
+        # 162-30: inject the Jira project key. `pf.jira.client` resolves
+        # `JIRA_PROJECT` ONCE at import time from `jira.project` in
+        # config.local.yaml or `$JIRA_PROJECT`, and `pf.jira.create` imports it by
+        # value, so on any machine without Jira configured this test failed with
+        # "Jira project key not configured" before reaching the validator it is
+        # actually about. Patching the constant on the consuming module removes
+        # the environment dependency without weakening the assertion.
         with patch(
             "pf.sprint.validator.validate_epic_shard"
         ) as mock_validate, patch(
             "pf.sprint.loader.get_project_root", return_value=tmp_path
+        ), patch(
+            "pf.jira.create.JIRA_PROJECT", "PROJ"
         ):
             mock_validate.return_value = MagicMock(valid=True, errors=[])
             mock_client = MagicMock()

@@ -9,7 +9,6 @@ python3 -m pf.hotspots etc. Now they import the Python modules directly.
 
 from __future__ import annotations
 
-import asyncio
 import os
 from pathlib import Path
 from typing import Any
@@ -60,7 +59,8 @@ async def get_hotspots(request: Request) -> JSONResponse:
     project_dir = _get_project_dir()
     days = int(request.query_params.get("days", "90"))
     try:
-        result = await asyncio.to_thread(analyze_hotspots, project_dir, days=days)
+        path = Path(project_dir)
+        result = await analyze_hotspots(path.name, path, days=days)
         return JSONResponse(_safe_to_dict(result))
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
@@ -130,7 +130,11 @@ health_score_router = APIRouter(prefix="/api/health-score", tags=["health-score"
 async def get_health_score(request: Request) -> JSONResponse:
     project_dir = _get_project_dir()
     try:
-        result = await asyncio.to_thread(analyze_healthscore, project_dir, use_cache=False)
+        # cache_ttl=0 preserves the original use_cache=False intent (disable
+        # caching) — the health-score endpoint serves fresh scores. analyze_healthscore
+        # has no use_cache parameter; its cache knob is cache_ttl (cf. `--no-cache`
+        # → cache_ttl=0 in healthscore/cli.py).
+        result = await analyze_healthscore(Path(project_dir), cache_ttl=0)
         return JSONResponse(_safe_to_dict(result))
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
@@ -160,7 +164,8 @@ code_markers_router = APIRouter(prefix="/api/code-markers", tags=["code-markers"
 async def get_code_markers(request: Request) -> JSONResponse:
     project_dir = _get_project_dir()
     try:
-        result = await asyncio.to_thread(analyze_code_markers, project_dir)
+        path = Path(project_dir)
+        result = await analyze_code_markers(path.name, path)
         return JSONResponse(_safe_to_dict(result))
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)

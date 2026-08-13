@@ -22,6 +22,27 @@ from pf.sprint.story_finish import (
     finish_story,
 )
 
+# Valid JSON a real `gh pr view` returns for a merged PR — needed so
+# _pr_merge_verification() sees state=="MERGED" and doesn't abort finish.
+_MERGED_PR_JSON = (
+    '{"state":"MERGED","mergedAt":"2026-01-01T00:00:00Z",'
+    '"mergeable":"MERGEABLE","mergeStateStatus":"CLEAN","baseRefName":"develop"}'
+)
+
+
+def _run_side_effect(cmd, **kwargs):
+    """Return MERGED PR JSON for `gh pr view` calls; empty success for all else."""
+
+    class _R:
+        def __init__(self, returncode=0, stdout="", stderr=""):
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    if len(cmd) >= 3 and cmd[0] == "gh" and cmd[1] == "pr" and cmd[2] == "view":
+        return _R(0, _MERGED_PR_JSON)
+    return _R(0, "", "")
+
 
 @pytest.fixture
 def project_tree(tmp_path):
@@ -67,10 +88,16 @@ def project_tree(tmp_path):
             title: "Python dependencies module"
             points: 2
             priority: P0
-            status: planning
+            status: in_review
             assigned_to: dev-agent
             repos: pennyfarthing
             jira: PROJ-14467
+          - id: "99-1"
+            title: "Test story without Jira key"
+            points: 1
+            priority: P1
+            status: in_review
+            repos: pennyfarthing
     """)
     (sprint_dir / "epic-PROJ-14465.yaml").write_text(shard)
 
@@ -147,7 +174,9 @@ class TestFinishStoryDryRun:
         assert result["success"] is True
         assert result["dry_run"] is True
         assert result["jira_key"] == "PROJ-14467"
-        assert len(result["steps"]) == 7
+        # 8 steps: archive_session, merge_pr, jira, yaml_update, demo(4c),
+        # archive_epics, git_cleanup, remove_session
+        assert len(result["steps"]) == 8
 
     @patch("pf.sprint.story_finish._run")
     def test_dry_run_no_side_effects(self, mock_run, project_tree):
@@ -158,15 +187,17 @@ class TestFinishStoryDryRun:
         assert not (project_tree / "sprint" / "archive" / "PROJ-14467-session.md").exists()
         # YAML unchanged
         shard = (project_tree / "sprint" / "epic-PROJ-14465.yaml").read_text()
-        assert "status: planning" in shard
+        assert "status: in_review" in shard
 
 
 class TestFinishStoryYamlUpdate:
     """Test the critical YAML update (step 4) — the bug fix."""
 
+    @patch("pf.sprint.story_transition.get_client")
     @patch("pf.sprint.story_finish._run")
-    def test_updates_story_status_to_done(self, mock_run, project_tree):
-        mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+    def test_updates_story_status_to_done(self, mock_run, mock_get_client, project_tree):
+        mock_run.side_effect = _run_side_effect
+        mock_get_client.return_value.token = ""
         result = finish_story(project_tree, "83-2")
         assert result["success"] is True
 
@@ -182,9 +213,11 @@ class TestFinishStoryYamlUpdate:
                     return
         pytest.fail("Story 83-2 not found in sprint data after finish")
 
+    @patch("pf.sprint.story_transition.get_client")
     @patch("pf.sprint.story_finish._run")
-    def test_does_not_modify_other_stories(self, mock_run, project_tree):
-        mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+    def test_does_not_modify_other_stories(self, mock_run, mock_get_client, project_tree):
+        mock_run.side_effect = _run_side_effect
+        mock_get_client.return_value.token = ""
         finish_story(project_tree, "83-2")
 
         from pf.sprint.yaml_io import read_sprint
@@ -196,15 +229,19 @@ class TestFinishStoryYamlUpdate:
                     return
         pytest.fail("Story 83-1 not found")
 
+    @patch("pf.sprint.story_transition.get_client")
     @patch("pf.sprint.story_finish._run")
-    def test_archives_session_file(self, mock_run, project_tree):
-        mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+    def test_archives_session_file(self, mock_run, mock_get_client, project_tree):
+        mock_run.side_effect = _run_side_effect
+        mock_get_client.return_value.token = ""
         finish_story(project_tree, "83-2")
         assert (project_tree / "sprint" / "archive" / "PROJ-14467-session.md").exists()
 
+    @patch("pf.sprint.story_transition.get_client")
     @patch("pf.sprint.story_finish._run")
-    def test_removes_session_file(self, mock_run, project_tree):
-        mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+    def test_removes_session_file(self, mock_run, mock_get_client, project_tree):
+        mock_run.side_effect = _run_side_effect
+        mock_get_client.return_value.token = ""
         finish_story(project_tree, "83-2")
         assert not (project_tree / ".session" / "83-2-session.md").exists()
 
@@ -220,10 +257,14 @@ class TestFinishStoryErrors:
     @patch("pf.sprint.story_finish._run")
     def test_no_jira_key_still_succeeds(self, mock_run, project_tree):
         # When no Jira key in session or shard, finish should still succeed
-        # but skip Jira transition and use story_id for archive name
+        # but skip Jira transition and use story_id for archive name.
+        # **Branch:** none is required: the 155-34 no-PR gate now aborts if
+        # neither a PR nor a verified branch resolves — an absent Branch field
+        # is "unverifiable", not "no branch". The sentinel "none" affirms the
+        # agent's deliberate no-branch choice and routes through the skip arm.
         mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
         session = project_tree / ".session" / "99-1-session.md"
-        session.write_text("# Story\n\n**Phase:** finish\n")
+        session.write_text("# Story\n\n**Branch:** none\n**Phase:** finish\n")
         result = finish_story(project_tree, "99-1")
         assert result["success"] is True
         # Archive uses story_id as filename when no Jira key
@@ -232,13 +273,18 @@ class TestFinishStoryErrors:
         jira_step = [s for s in result["steps"] if s["step"] == 3][0]
         assert jira_step.get("skipped") is True
 
+    @patch("pf.sprint.story_transition.get_client")
     @patch("pf.sprint.story_finish._run")
-    def test_returns_steps_on_success(self, mock_run, project_tree):
-        mock_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+    def test_returns_steps_on_success(self, mock_run, mock_get_client, project_tree):
+        mock_run.side_effect = _run_side_effect
+        mock_get_client.return_value.token = ""
         result = finish_story(project_tree, "83-2")
         assert result["success"] is True
         assert "steps" in result
-        assert len(result["steps"]) == 7
+        # 9 steps: merge_pr(2), archive_session(1), jira_done(3), yaml_update(4),
+        # add_completed_story(4b), demo_generate(4c), archive_epics(5),
+        # git_cleanup(6-skipped), remove_session(7)
+        assert len(result["steps"]) == 9
         actions = [s["action"] for s in result["steps"]]
         assert "archive_session" in actions
         assert "yaml_update" in actions

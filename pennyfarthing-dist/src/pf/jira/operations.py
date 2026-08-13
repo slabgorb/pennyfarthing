@@ -13,6 +13,7 @@ Usage:
 from typing import Any
 
 from pf.jira.client import (
+    ResolvedUser,
     get_client,
     get_jira_field,
     map_github_to_jira,
@@ -29,13 +30,17 @@ def move_issue(
 
     Checks current status first to avoid redundant transitions.
 
+    A dry run resolves the same state the real call would: the issue must exist
+    and Jira must actually offer a transition to ``target_status``. Only the
+    real path writes; callers own the output.
+
     Args:
         issue_key: Jira issue key (e.g., "PROJ-12345")
         target_status: Target status name (e.g., "In Progress", "Done")
-        dry_run: If True, preview without applying
+        dry_run: If True, resolve and preview without applying
 
     Returns:
-        {success, error?, already_at_status?}
+        {success, error?, already_at_status?, dry_run?}
     """
     client = get_client()
 
@@ -47,7 +52,20 @@ def move_issue(
             return {"success": True, "already_at_status": True}
 
     if dry_run:
-        print(f"[DRY RUN] Would move {issue_key} to '{target_status}'")
+        if not issue:
+            return {"success": False, "error": f"Issue not found: {issue_key}"}
+        transitions = client.get_transitions_sync(issue_key)
+        if transitions is None:
+            return {
+                "success": False,
+                "error": f"Could not get transitions for {issue_key}",
+            }
+        available = [t.get("name") for t in transitions]
+        if target_status.lower() not in {str(n).lower() for n in available}:
+            return {
+                "success": False,
+                "error": f"No transition to '{target_status}' available. Available: {available}",
+            }
         return {"success": True, "dry_run": True}
 
     return client.transition_sync(issue_key, target_status)
@@ -95,11 +113,13 @@ def assign_issue(
         # Name what the user typed, not a substituted email.
         return {"success": False, "error": f"User not found: {assignee}"}
 
+    account_id = account.get("accountId")
     resolved = {
-        "account_id": account.get("accountId"),
-        # Jira may withhold emailAddress; fall back to the resolved query so we
-        # never pass None down to assign_issue_sync (which would unassign).
-        "email": account.get("emailAddress") or query,
+        "account_id": account_id,
+        # Jira withholds emailAddress for many accounts. Reporting the input
+        # string here would dress the user's own query up as a resolved Jira
+        # address; None means "Jira did not tell us" and callers say so.
+        "email": account.get("emailAddress"),
         "display_name": account.get("displayName") or query,
     }
 
@@ -113,7 +133,9 @@ def assign_issue(
     if dry_run:
         return {"success": True, "data": resolved, "dry_run": True}
 
-    result = client.assign_issue_sync(issue_key, resolved["email"])
+    # Carry the resolution to the write: one lookup for both dry-run and real.
+    identifier = ResolvedUser(resolved["email"] or account_id or "", account_id=account_id)
+    result = client.assign_issue_sync(issue_key, identifier)
     if result.get("success"):
         return {**result, "data": resolved}
     return result
@@ -138,6 +160,11 @@ def link_issues(
         {success, error?}
     """
     client = get_client()
+
+    # Without credentials every read comes back empty, which reads downstream as
+    # "no such issue" — a tooling failure blamed on the operator's keys.
+    if not client.token:
+        return {"success": False, "error": "Cannot verify issues: no Jira credentials"}
 
     if dry_run:
         # Verify both endpoints exist — a typo in either key used to preview

@@ -28,13 +28,13 @@ Run the Python validation function to check spec alignment:
 # pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
 # .venv - derive the interpreter from the launcher shebang, never activate .venv.
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
-from pf.gates.spec_check import validate_spec_alignment
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" - "${SESSION_FILE}" "${CONTEXT_FILE}" <<'PYEOF'
 import json, sys
-result = validate_spec_alignment('${SESSION_FILE}', '${CONTEXT_FILE}')
+from pf.gates.spec_check import validate_spec_alignment
+result = validate_spec_alignment(sys.argv[1], sys.argv[2])
 print(json.dumps(result, indent=2))
 sys.exit(0 if result['success'] else 1)
-"
+PYEOF
 ```
 
 The validator checks:

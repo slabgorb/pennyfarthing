@@ -15,8 +15,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from pf.tui.app import (
     STATE_DISPLAY,
-    TuiApp,
     ConnectionStatus,
+    TuiApp,
 )
 from pf.tui.client import ConnectionState, FrameClient
 
@@ -138,7 +138,9 @@ class TestTUIResponsiveness:
         app = TuiApp()
         async with app.run_test():
             assert len(app.query("Header")) > 0
-            assert len(app.query("Footer")) > 0
+            # The stock Textual Footer was replaced by the custom StatusFooter
+            # (pf/tui/context_meter_footer.py).
+            assert len(app.query("StatusFooter")) > 0
             assert len(app.query("#connection-status")) > 0
             assert len(app.query("#main-content")) > 0
 

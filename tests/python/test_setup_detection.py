@@ -226,7 +226,7 @@ class TestSessionStartIntegration:
                 {"CLAUDE_PROJECT_DIR": str(init_only_project)},
             ),
             patch("pf.hooks.session_start._ensure_frame", return_value=None),
-            patch("pf.hooks.session_start._show_welcome"),
+            # _show_welcome was removed from session_start (welcome flow parked).
             patch("pf.hooks.session_start._write_env_file"),
         ):
             from pf.hooks.session_start import main
@@ -269,7 +269,7 @@ class TestSessionStartIntegration:
                 {"CLAUDE_PROJECT_DIR": str(complete_project)},
             ),
             patch("pf.hooks.session_start._ensure_frame", return_value=None),
-            patch("pf.hooks.session_start._show_welcome", return_value=False),
+            # _show_welcome was removed from session_start (welcome flow parked).
             patch("pf.hooks.session_start._write_env_file"),
         ):
             from pf.hooks.session_start import main

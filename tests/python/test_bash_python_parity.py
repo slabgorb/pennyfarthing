@@ -27,14 +27,31 @@ ORCHESTRATOR_ROOT = PENNYFARTHING_ROOT.parent
 BASH_SCRIPTS_DIR = ORCHESTRATOR_ROOT / ".pennyfarthing" / "scripts"
 
 
+def _pf_import_root() -> str:
+    """Directory that must be on sys.path for `-m pf.cli` to resolve.
+
+    Since the src-layout migration (5d92bf792) the `pf` package lives at
+    `pennyfarthing-dist/src/pf`, which is not under the cwd these tests use.
+    Derive it from the already-importable package instead of hardcoding.
+    """
+    import pf
+
+    return str(Path(pf.__file__).resolve().parent.parent)
+
+
 def run_python_cli(args: list[str], cwd: Path = PENNYFARTHING_ROOT) -> subprocess.CompletedProcess:
     """Run the Python CLI with given arguments."""
+    env = {**os.environ}
+    existing = env.get("PYTHONPATH")
+    root = _pf_import_root()
+    env["PYTHONPATH"] = f"{root}{os.pathsep}{existing}" if existing else root
     return subprocess.run(
         [sys.executable, "-m", "pf.cli"] + args,
         capture_output=True,
         text=True,
         cwd=str(cwd),
         timeout=30,
+        env=env,
     )
 
 
@@ -124,30 +141,40 @@ class TestWorkflowHandoffParity:
 
     @pytest.mark.parametrize("agent", ["dev", "tea", "reviewer", "sm"])
     def test_handoff_marker_format_matches(self, agent: str):
-        """Python handoff output should produce valid Cyclist markers."""
+        """Python handoff output should produce a valid AGENT_COMMAND marker.
+
+        The CYCLIST:* marker protocol was removed in e10aa3bd1 (Cyclist → BikeRack);
+        `AGENT_COMMAND:` with a `/pf-<agent>` invoke is the current contract.
+        """
         py_result = run_python_cli(["workflow", "handoff", agent])
 
         assert py_result.returncode == 0, f"Handoff failed: {py_result.stderr}"
 
         output = py_result.stdout
 
-        # Should contain the marker format
-        assert "CYCLIST:HANDOFF" in output, f"Missing CYCLIST:HANDOFF in: {output}"
-        assert f"/{agent}" in output, f"Missing /{agent} in marker: {output}"
         assert "AGENT_COMMAND:" in output, f"Missing AGENT_COMMAND format: {output}"
+        assert f"/pf-{agent}" in output, f"Missing /pf-{agent} in marker: {output}"
+        assert "CYCLIST" not in output, f"Retired CYCLIST marker resurfaced: {output}"
 
     def test_handoff_marker_is_yaml_parseable(self):
-        """Handoff output should be valid YAML-like format."""
+        """Handoff output should be a parseable YAML document."""
+        import yaml
+
         py_result = run_python_cli(["workflow", "handoff", "dev"])
 
         assert py_result.returncode == 0
 
         output = py_result.stdout
 
-        # Should have the expected structure
-        assert "---" in output, "Missing YAML document markers"
-        assert "marker:" in output, "Missing marker field"
-        assert "fallback:" in output, "Missing fallback field"
+        assert output.strip().startswith("---"), f"Missing YAML document marker: {output}"
+
+        docs = [d for d in yaml.safe_load_all(output) if d]
+        assert len(docs) == 1, f"Expected one YAML document, got {docs!r}"
+
+        marker = docs[0]["AGENT_COMMAND"]
+        assert marker["invoke"] == "/pf-dev", f"Wrong invoke: {marker!r}"
+        assert "fallback" in marker, f"Missing fallback field: {marker!r}"
+        assert isinstance(marker["relay"], bool), f"relay should be a bool: {marker!r}"
 
 
 class TestWorkflowCheckParity:

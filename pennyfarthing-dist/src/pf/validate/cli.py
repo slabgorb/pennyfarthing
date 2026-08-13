@@ -32,6 +32,7 @@ VALIDATORS = {
     "workflow": "pf.validate.adapters.workflow",
     "skill-command": "pf.validate.adapters.skill_command",
     "tandem-awareness": "pf.validate.adapters.tandem_awareness",
+    "team-mode": "pf.validate.adapters.team_mode",
     "context": "pf.validate.adapters.context",
     "adr": "pf.validate.adapters.adr",
     "prd": "pf.validate.adapters.prd",
@@ -113,6 +114,7 @@ def validate(ctx, names: tuple[str, ...], fix: bool, strict: bool):
       workflow           - Workflow definitions (phased/stepped/procedural structure)
       skill-command      - Skill registry and command files (prefix, deprecated, cross-ref)
       tandem-awareness   - Agent tandem consultation sections (ADR-0012 pairings)
+      team-mode          - Team-mode protocol (behavior guide, exit protocol, lead agents)
       context            - Context sources and schema validation
       adr                - Architecture Decision Records (format, status, sections)
       prd                - Product Requirements Documents (structure, density, measurability)
@@ -219,6 +221,16 @@ def validate_skill_command(ctx):
 def validate_tandem_awareness(ctx):
     """Validate agent tandem consultation sections (ADR-0012 pairings, roles)."""
     report = _run_validator("tandem-awareness", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
+    _print_reports([report])
+    if not report.success:
+        raise SystemExit(1)
+
+
+@validate.command("team-mode")
+@click.pass_context
+def validate_team_mode(ctx):
+    """Validate team-mode protocol sections (behavior guide, exit protocol, lead agents)."""
+    report = _run_validator("team-mode", fix=ctx.obj["fix"], strict=ctx.obj["strict"])
     _print_reports([report])
     if not report.success:
         raise SystemExit(1)

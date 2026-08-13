@@ -39,13 +39,15 @@ def _coerce_bool(value: Any) -> bool | None:
     return None
 
 
-def parse_otlp_metrics(body: dict[str, Any]) -> dict[str, int]:
-    """Extract token counts from OTLP metrics payload.
+def parse_otlp_metrics(body: dict[str, Any]) -> dict[str, int | float]:
+    """Extract token counts and cost from OTLP metrics payload.
 
-    Only processes metrics named 'claude_code.token.usage'.
-    Returns dict with keys: inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens.
+    Processes metrics named 'claude_code.token.usage' (tokens, keyed by the
+    ``type`` attribute) and 'claude_code.cost.usage' (cost in USD).
+    Returns dict with keys: inputTokens, outputTokens, cacheReadTokens,
+    cacheCreationTokens, totalCost.
     """
-    result: dict[str, int] = {}
+    result: dict[str, int | float] = {}
     resource_metrics = body.get("resourceMetrics")
     if not resource_metrics:
         return result
@@ -53,7 +55,21 @@ def parse_otlp_metrics(body: dict[str, Any]) -> dict[str, int]:
     for rm in resource_metrics:
         for sm in rm.get("scopeMetrics") or []:
             for metric in sm.get("metrics") or []:
-                if metric.get("name") != "claude_code.token.usage":
+                name = metric.get("name")
+                if name == "claude_code.cost.usage":
+                    sum_field = metric.get("sum")
+                    if not sum_field:
+                        continue
+                    for dp in sum_field.get("dataPoints") or []:
+                        # Cost is emitted in USD as a double; fall back to asInt
+                        # for exporters that round whole-dollar values.
+                        cost = dp.get("asDouble")
+                        if cost is None:
+                            cost = dp.get("asInt")
+                        if cost is not None:
+                            result["totalCost"] = float(cost)
+                    continue
+                if name != "claude_code.token.usage":
                     continue
                 sum_field = metric.get("sum")
                 if not sum_field:
@@ -217,6 +233,7 @@ class OTLPReceiver:
         self._token_stats["outputTokens"] += data.get("outputTokens", 0)
         self._token_stats["cacheCreationTokens"] += data.get("cacheCreationTokens", 0)
         self._token_stats["cacheReadTokens"] += data.get("cacheReadTokens", 0)
+        self._token_stats["totalCost"] += data.get("totalCost", 0)
         return self.get_token_stats()
 
     def get_spans(self) -> list[dict[str, Any]]:

@@ -208,9 +208,13 @@ class TestAC1Discovery:
 
     def test_run_returns_error_when_no_workflows_dir(self, tmp_path: Path):
         """run() reports error when workflows/ directory is missing."""
+        # A dist root must exist, otherwise get_dist_root() falls back to the
+        # installed package's bundled pf._dist and finds the real workflows/.
+        (tmp_path / "pennyfarthing-dist").mkdir()
+
         report = run(tmp_path, fix=False, strict=False)
 
-        assert report.errors >= 1
+        assert len(report.errors) >= 1
         assert any("not found" in d.lower() or "directory" in d.lower() for d in report.details)
 
 
@@ -312,7 +316,7 @@ class TestAC2CommonFields:
 
         report = run(tmp_path, fix=False, strict=False)
 
-        assert report.errors >= 1
+        assert len(report.errors) >= 1
         assert any("workflow" in d.lower() for d in report.details)
 
 
@@ -667,7 +671,7 @@ class TestAC7StrictAndCLI:
         report = run(tmp_path, fix=False, strict=True)
 
         # In strict mode, warnings should be promoted to errors
-        assert report.errors >= 1
+        assert len(report.errors) >= 1
         assert any("[ERROR]" in d for d in report.details)
 
     def test_non_strict_keeps_warnings(self, tmp_path: Path):
@@ -703,7 +707,7 @@ class TestAC7StrictAndCLI:
 
         # All 3 valid workflows should pass
         assert report.passed >= 3
-        assert report.errors == 0
+        assert report.errors == []
 
 
 # =============================================================================
@@ -725,8 +729,8 @@ class TestAC8RealWorkflows:
 
         report = run(root, fix=False, strict=False)
 
-        assert report.errors == 0, (
-            f"Real workflow files have {report.errors} errors:\n"
+        assert report.errors == [], (
+            f"Real workflow files have {len(report.errors)} errors:\n"
             + "\n".join(d for d in report.details if "[ERROR]" in d)
         )
 
@@ -844,7 +848,7 @@ class TestEdgeCases:
         report = run(tmp_path, fix=False, strict=False)
 
         # Should handle gracefully — report error, not crash
-        assert report.errors >= 1
+        assert len(report.errors) >= 1
 
     def test_workflow_key_is_not_dict(self, tmp_path: Path):
         """workflow key that isn't a dict produces an error."""
@@ -854,7 +858,7 @@ class TestEdgeCases:
 
         report = run(tmp_path, fix=False, strict=False)
 
-        assert report.errors >= 1
+        assert len(report.errors) >= 1
 
     def test_mixed_valid_and_invalid(self, tmp_path: Path):
         """Report correctly tallies mixed valid and invalid workflows."""
@@ -872,7 +876,7 @@ class TestEdgeCases:
         report = run(tmp_path, fix=False, strict=False)
 
         assert report.passed >= 1
-        assert report.errors >= 1
+        assert len(report.errors) >= 1
 
     def test_report_format_uses_error_prefix(self, tmp_path: Path):
         """Error details use [ERROR] prefix format."""

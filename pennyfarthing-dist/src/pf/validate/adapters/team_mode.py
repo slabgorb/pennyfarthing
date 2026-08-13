@@ -17,6 +17,11 @@ from pf.validate import ValidateReport
 # Regex to extract <team-mode> section content
 _TEAM_MODE_RE = re.compile(r"<team-mode>(.*?)</team-mode>", re.DOTALL)
 
+# Inter-phase handoff marker reference (`pf handoff marker`, `handoff-marker`).
+# Replaces the retired CYCLIST marker protocol (removed in e10aa3bd1 when
+# Cyclist became BikeRack GUI); markers are now emitted by `pf handoff marker`.
+_HANDOFF_MARKER_RE = re.compile(r"handoff[\s-]+marker", re.IGNORECASE)
+
 # Required topics in the behavior guide's <team-mode> section
 _BEHAVIOR_GUIDE_TOPICS = {
     "team_creation": ["TeamCreate", "team creation", "create team"],
@@ -183,10 +188,10 @@ def validate_exit_protocol_team_branch(
 def validate_communication_protocols(
     content: str,
 ) -> tuple[list[str], list[str]]:
-    """Validate that reflector markers and SendMessage are properly documented.
+    """Validate that handoff markers and SendMessage are properly documented.
 
-    Reflector markers for inter-phase handoff (unchanged).
-    SendMessage for intra-phase teammate communication (new).
+    Handoff markers (`pf handoff marker`) for inter-phase handoff.
+    SendMessage for intra-phase teammate communication.
 
     Returns:
         (errors, warnings) — two lists of message strings.
@@ -194,10 +199,11 @@ def validate_communication_protocols(
     errors: list[str] = []
     warnings: list[str] = []
 
-    # Reflector section must still exist
-    if "<critical>" not in content or "CYCLIST" not in content:
+    # The inter-phase handoff marker protocol must still be documented as critical
+    if "<critical>" not in content or not _HANDOFF_MARKER_RE.search(content):
         errors.append(
-            "Reflector/CYCLIST marker section missing — must remain for inter-phase handoff"
+            "Handoff marker protocol missing — `pf handoff marker` must remain "
+            "documented in a <critical> section for inter-phase handoff"
         )
 
     # Team-mode section must reference SendMessage for intra-phase

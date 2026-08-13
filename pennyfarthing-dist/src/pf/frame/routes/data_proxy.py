@@ -211,8 +211,19 @@ async def get_workflow() -> JSONResponse:
 git_router = APIRouter(prefix="/api/git", tags=["git"])
 
 
-def _get_git_info(repo_path: str) -> dict[str, Any] | None:
-    """Get git status for a repo using gitpython-free approach."""
+def _get_git_info(
+    repo_path: str, base: str = "develop", remote: str = "origin"
+) -> dict[str, Any] | None:
+    """Get git status for a repo using gitpython-free approach.
+
+    ``base``/``remote`` are the repo's configured default branch and remote
+    (story 162-27). The "behind base" probe honors them (``<remote>/<base>``)
+    instead of a hardcoded ``origin/develop`` — the dogfood orchestrator is
+    trunk-based ``main``, so ``origin/develop`` did not exist for it and the
+    count was silently ``None``. The returned JSON field keeps its
+    ``developBehind`` name; renaming it to ``baseBehind`` is a deferred
+    follow-up (see session Delivery Findings).
+    """
     import shutil
 
     git_bin = shutil.which("git")
@@ -266,7 +277,7 @@ def _get_git_info(repo_path: str) -> dict[str, Any] | None:
             behind = int(b)
 
         develop_behind: int | None = None
-        db = _run(["rev-list", "--count", "HEAD..origin/develop"])
+        db = _run(["rev-list", "--count", f"HEAD..{remote}/{base}"])
         if db is not None:
             develop_behind = int(db)
 
@@ -290,7 +301,13 @@ def _get_git_info(repo_path: str) -> dict[str, Any] | None:
 
 
 def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
-    """Read repos from repos.yaml."""
+    """Read repos from repos.yaml.
+
+    Each entry carries ``base`` (repos.yaml ``default_branch``, default
+    ``develop``) and ``remote`` (``remote_name``, default ``origin``) so the
+    caller can probe each repo's configured base branch (story 162-27) rather
+    than a hardcoded ``origin/develop``.
+    """
     import yaml
 
     candidates = [
@@ -306,6 +323,10 @@ def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
                         {
                             "name": name,
                             "path": (rc or {}).get("path", name) if isinstance(rc, dict) else name,
+                            "base": (rc.get("default_branch") if isinstance(rc, dict) else None)
+                            or "develop",
+                            "remote": (rc.get("remote_name") if isinstance(rc, dict) else None)
+                            or "origin",
                         }
                         for name, rc in config["repos"].items()
                     ]
@@ -322,6 +343,9 @@ def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
                 )
 
     dir_name = Path(project_dir).name or "project"
+    # No base/remote keys here: the single-repo fallback keeps its original
+    # shape (pinned by test_160_16/test_160_18), and the git-route callers
+    # default missing keys to develop/origin via ``.get`` (story 162-27).
     return [{"name": dir_name, "path": "."}]
 
 
@@ -331,7 +355,16 @@ async def get_git() -> JSONResponse:
     if not _detect_pf_project(project_dir):
         return JSONResponse({"error": "Not a Pennyfarthing project"}, status_code=404)
 
-    info = _get_git_info(project_dir)
+    # Resolve the root repo's configured base/remote (story 162-27) so the
+    # single-repo panel probes the project's real base, not a hardcoded
+    # origin/develop. The root repo is the one declared at path ".".
+    repos = _get_repos_config(project_dir)
+    root = next((r for r in repos if r.get("path") in (".", "")), None) or (
+        repos[0] if repos else {}
+    )
+    info = _get_git_info(
+        project_dir, base=root.get("base", "develop"), remote=root.get("remote", "origin")
+    )
     if not info:
         return JSONResponse({"error": "Not a git repository"}, status_code=404)
     return JSONResponse(info)
@@ -347,7 +380,9 @@ async def get_git_all() -> JSONResponse:
     results = []
     for repo in repos:
         repo_path = str(Path(project_dir, repo["path"]))
-        info = _get_git_info(repo_path)
+        info = _get_git_info(
+            repo_path, base=repo.get("base", "develop"), remote=repo.get("remote", "origin")
+        )
         results.append(
             {
                 "name": repo["name"],
@@ -572,6 +607,18 @@ async def get_project_info() -> JSONResponse:
 # ---------------------------------------------------------------------------
 # All data proxy routers
 # ---------------------------------------------------------------------------
+
+def reset_state() -> None:
+    """Clear the identity cache (story 162-37).
+
+    ``_identity_cache`` has a 300s TTL, so without a reset the FIRST test in the
+    process to hit ``GET /api/identity`` decides the answer every later test sees.
+    """
+    global _identity_cache, _identity_cache_time
+
+    _identity_cache = None
+    _identity_cache_time = 0
+
 
 all_data_proxy_routers = [
     persona_router,

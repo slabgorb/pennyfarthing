@@ -318,7 +318,7 @@ def fetch_sprint() -> dict[str, Any]:
     # monolithic format, keyed by `id` with no `jira`) AND sharded epics
     # (string refs + epic-{ref}.yaml) both arrive as fully-merged dicts.
     # The bespoke shard-only path silently dropped inline epics (gh #50).
-    from pf.sprint.shard_merge import is_safe_shard_path, merge_epic_shards
+    from pf.sprint.shard_merge import is_safe_shard_path, merge_epic_shards, safe_shards
 
     epics: list[dict[str, Any]] = []
     completed_epics: list[dict[str, Any]] = []
@@ -367,7 +367,13 @@ def fetch_sprint() -> dict[str, Any]:
             candidate = sprint_dir / f"epic-{ref}.yaml"
             if not is_safe_shard_path(candidate, sprint_dir):
                 # Path traversal (CWE-22): a crafted ref escapes sprint_dir.
-                # merge_epic_shards warns + skips; here we just refuse the read.
+                # Refuse the read AND surface it — this skip used to be silent
+                # (162-44 Deliverable C; SOUL: no silent failure).
+                warnings.warn(
+                    f"Sprint epic ref {ref!r} escapes the sprint directory "
+                    f"({candidate}) — skipping",
+                    stacklevel=2,
+                )
                 continue
             shard = _load_file(candidate)
             resolved_id = str(shard.get("id", "")) if isinstance(shard, dict) else ""
@@ -410,11 +416,11 @@ def fetch_sprint() -> dict[str, Any]:
     archive_dir = Path(project_dir, "sprint", "archive")
     if archive_dir.is_dir():
         sprint_number = sprint_info.get("number")
-        for archive_path in sorted(archive_dir.glob("sprint-*-completed.yaml")):
-            # Path traversal (CWE-22): a glob match is a *name* match, so a
-            # symlink inside archive_dir pointing outside it is yielded happily.
-            if not is_safe_shard_path(archive_path, archive_dir):
-                continue
+        # safe_shards applies the containment check a raw glob cannot (a glob
+        # match is a *name* match, so a symlink inside archive_dir pointing
+        # outside it matches happily) and warns on each skip rather than
+        # dropping it silently (162-44 Deliverable C).
+        for archive_path in safe_shards(archive_dir, "sprint-*-completed.yaml"):
             archive_data = _read_yaml_file(archive_path)
             if not isinstance(archive_data, dict):
                 continue
@@ -426,7 +432,13 @@ def fetch_sprint() -> dict[str, Any]:
                 shard_path = archive_dir / f"epic-{epic_ref}.yaml"
                 if not is_safe_shard_path(shard_path, archive_dir):
                     # Path traversal (CWE-22): a crafted completed-epic ref
-                    # escapes archive_dir — refuse the read.
+                    # escapes archive_dir — refuse the read and surface the skip
+                    # (162-44 Deliverable C; this skip used to be silent).
+                    warnings.warn(
+                        f"Archived epic ref {epic_ref!r} escapes the archive directory "
+                        f"({shard_path}) — skipping",
+                        stacklevel=2,
+                    )
                     continue
                 if not shard_path.is_file():
                     continue

@@ -12,12 +12,30 @@ import shutil
 import subprocess
 import sys
 from typing import Any
+from urllib.parse import quote, urlencode
 
 # Configuration
 
 
 class JiraConfigError(RuntimeError):
     """Raised when a Jira operation needs config that is not present."""
+
+
+class ResolvedUser(str):
+    """An assignee identifier that already knows the accountId it resolved to.
+
+    Behaves as the plain identifier string for display and comparison, so
+    callers holding only an email (``claim.py``, ``story_update.py``) keep
+    working, while a caller that has already run ``find_user_sync`` can hand the
+    resolution down to the write instead of paying for a second lookup.
+    """
+
+    account_id: str | None
+
+    def __new__(cls, value: str, account_id: str | None = None) -> "ResolvedUser":
+        obj = super().__new__(cls, value)
+        obj.account_id = account_id
+        return obj
 
 
 def _resolve_jira_config() -> tuple[str | None, str | None]:
@@ -422,13 +440,24 @@ class JiraClient:
     # Sync methods (using subprocess curl for reliability)
     # -------------------------------------------------------------------------
 
-    def _call_api_sync(
+    def _redact(self, text: str) -> str:
+        """Strip credential material out of an operator-facing message."""
+        for secret in (self.token, self.user, self.base_url):
+            if secret:
+                text = text.replace(secret, "[redacted]")
+        return text
+
+    def _request_sync(
         self,
         method: str,
         endpoint: str,
         data: dict[str, Any] | None = None,
-    ) -> dict[str, Any] | None:
-        """Call Jira REST API synchronously.
+    ) -> dict[str, Any]:
+        """Call Jira REST API synchronously, reporting the real outcome.
+
+        Asks curl for the HTTP status (``-w '\\n%{http_code}'``) so a 204 with an
+        empty body is distinguishable from a 4xx/5xx and from a curl transport
+        failure — all three of which used to collapse into "empty".
 
         Args:
             method: HTTP method (GET, POST, PUT)
@@ -436,16 +465,25 @@ class JiraClient:
             data: Request body data
 
         Returns:
-            Response JSON if successful, None otherwise
+            ``{"success": bool, "status": int | None, "data": Any | None,
+            "error": str | None}``. Success iff curl exited 0 and the status is
+            2xx; an empty 2xx body is success with ``data=None``. Never raises.
         """
         if not self.token:
-            return None
+            return {
+                "success": False,
+                "status": None,
+                "data": None,
+                "error": "No Jira credentials configured",
+            }
 
         url = f"{self.base_url}{endpoint}"
 
         curl_args = [
             "curl",
             "-s",
+            "-w",
+            "\\n%{http_code}",
             "-X",
             method,
             "-H",
@@ -464,12 +502,66 @@ class JiraClient:
         result = subprocess.run(curl_args, capture_output=True, text=True)
 
         if result.returncode != 0:
-            return None
+            detail = (result.stderr or "").strip()
+            return {
+                "success": False,
+                "status": None,
+                "data": None,
+                "error": self._redact(
+                    f"curl transport failure (exit {result.returncode})"
+                    + (f": {detail}" if detail else "")
+                ),
+            }
 
-        try:
-            return json.loads(result.stdout)
-        except json.JSONDecodeError:
-            return None
+        # The status was appended to stdout by -w; split it off before parsing.
+        body, _, status_text = (result.stdout or "").rpartition("\n")
+        status_text = status_text.strip()
+        if not status_text.isdigit():
+            return {
+                "success": False,
+                "status": None,
+                "data": None,
+                "error": "curl reported no HTTP status",
+            }
+        status = int(status_text)
+
+        if not 200 <= status < 300:
+            detail = body.strip()[:500] or "(empty response body)"
+            return {
+                "success": False,
+                "status": status,
+                "data": None,
+                "error": self._redact(f"Jira returned HTTP {status}: {detail}"),
+            }
+
+        payload: Any = None
+        if body.strip():
+            try:
+                payload = json.loads(body)
+            except json.JSONDecodeError:
+                payload = None
+
+        return {"success": True, "status": status, "data": payload, "error": None}
+
+    def _call_api_sync(
+        self,
+        method: str,
+        endpoint: str,
+        data: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Reader wrapper over :meth:`_request_sync`.
+
+        Args:
+            method: HTTP method (GET, POST, PUT)
+            endpoint: API endpoint (e.g., /rest/api/3/issue/PROJ-123)
+            data: Request body data
+
+        Returns:
+            Parsed response JSON on a 2xx, None otherwise — never the parsed
+            body of an HTTP error response.
+        """
+        result = self._request_sync(method, endpoint, data)
+        return result["data"] if result["success"] else None
 
     def get_issue_sync(self, issue_key: str) -> dict[str, Any] | None:
         """Fetch issue from Jira synchronously.
@@ -505,6 +597,25 @@ class JiraClient:
         """
         return self._call_api_sync("PUT", f"/rest/api/3/issue/{issue_key}", {"fields": fields})
 
+    def get_transitions_sync(self, issue_key: str) -> list[dict[str, Any]] | None:
+        """List the transitions currently available on an issue, read-only.
+
+        The single resolution rule shared by dry-run previews and real
+        transitions. GET only — it never mutates.
+
+        Args:
+            issue_key: Jira issue key
+
+        Returns:
+            List of transition dicts, or None if the transitions could not be
+            read (missing issue / API failure) — so callers never mistake
+            "could not read" for "no transition available".
+        """
+        transitions_data = self._call_api_sync("GET", f"/rest/api/3/issue/{issue_key}/transitions")
+        if not transitions_data:
+            return None
+        return transitions_data.get("transitions", [])
+
     def transition_sync(self, issue_key: str, target_status: str) -> dict[str, Any]:
         """Transition issue to target status synchronously.
 
@@ -517,11 +628,10 @@ class JiraClient:
         Returns:
             Result dict with success status and optional reason
         """
-        transitions_data = self._call_api_sync("GET", f"/rest/api/3/issue/{issue_key}/transitions")
-        if not transitions_data:
+        transitions = self.get_transitions_sync(issue_key)
+        if transitions is None:
             return {"success": False, "error": "Could not get transitions"}
 
-        transitions = transitions_data.get("transitions", [])
         transition_id = None
         for t in transitions:
             if t.get("name", "").lower() == target_status.lower():
@@ -535,13 +645,19 @@ class JiraClient:
                 "error": f"No transition to '{target_status}' available. Available: {available}",
             }
 
-        self._call_api_sync(
+        # The transition POST answers 204 (empty body) on success; only a real
+        # 2xx counts — a curl failure or a 4xx/5xx is reported truthfully.
+        result = self._request_sync(
             "POST",
             f"/rest/api/3/issue/{issue_key}/transitions",
             {"transition": {"id": transition_id}},
         )
-        # Transition POST returns empty body on success (204)
-        # _call_api_sync returns None on empty response, which is OK here
+        if not result["success"]:
+            return {
+                "success": False,
+                "error": f"Could not transition {issue_key} to '{target_status}': "
+                f"{result['error']}",
+            }
         return {"success": True}
 
     def find_user_sync(self, query: str) -> dict[str, Any] | None:
@@ -558,7 +674,10 @@ class JiraClient:
             displayName), or None when nothing matches and None when the
             call fails (no credentials, transport error). Never raises.
         """
-        users = self._call_api_sync("GET", f"/rest/api/3/user/search?query={query}")
+        # The query is user-supplied: display names contain spaces (curl exits 3
+        # on a raw space) and "&", "#", "+" change the URL's meaning entirely.
+        endpoint = "/rest/api/3/user/search?" + urlencode({"query": query}, quote_via=quote)
+        users = self._call_api_sync("GET", endpoint)
         if not users or not isinstance(users, list):
             return None
         first = users[0]
@@ -576,19 +695,31 @@ class JiraClient:
         """
         # Jira Cloud REST API uses accountId, but we can search by email
         if assignee_email:
-            account = self.find_user_sync(assignee_email)
-            if not account:
-                return {
-                    "success": False,
-                    "error": f"User not found: {assignee_email}",
-                }
-            account_id = account.get("accountId")
+            # A caller that already resolved the account (operations.assign_issue)
+            # hands the accountId down with it; re-looking it up here would
+            # search by a string the user never typed and could fail after a
+            # dry-run previewed success.
+            account_id = getattr(assignee_email, "account_id", None)
+            if not account_id:
+                account = self.find_user_sync(assignee_email)
+                if not account:
+                    return {
+                        "success": False,
+                        "error": f"User not found: {assignee_email}",
+                    }
+                account_id = account.get("accountId")
         else:
             account_id = None
 
         payload = {"accountId": account_id}
-        self._call_api_sync("PUT", f"/rest/api/3/issue/{issue_key}/assignee", payload)
-        # Assign PUT returns empty body on success (204)
+        # The assignee PUT answers 204 (empty body) on success; only a real 2xx
+        # counts — a curl failure or a 4xx/5xx is reported truthfully.
+        result = self._request_sync("PUT", f"/rest/api/3/issue/{issue_key}/assignee", payload)
+        if not result["success"]:
+            return {
+                "success": False,
+                "error": f"Could not assign {issue_key}: {result['error']}",
+            }
         return {"success": True}
 
     def add_comment_sync(self, issue_key: str, comment: str) -> dict[str, Any]:

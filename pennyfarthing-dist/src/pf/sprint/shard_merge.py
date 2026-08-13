@@ -9,9 +9,11 @@ its preferred YAML library.
 """
 
 import warnings
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from pathlib import Path
 from typing import Any
+
+from pf.sprint.path_validation import validate_shard_filename
 
 
 def is_safe_shard_path(candidate: Path, base_dir: Path) -> bool:
@@ -24,11 +26,157 @@ def is_safe_shard_path(candidate: Path, base_dir: Path) -> bool:
     symlink traversal is caught (a purely lexical ``..`` check would not be).
 
     On any resolution error the path is treated as unsafe (fail closed).
+
+    DELIBERATE DEFERRAL — TOCTOU / ``O_NOFOLLOW`` (story 162-44 Deliverable E,
+    decision confirmed in story 162-83):
+    This is a check-then-open containment test, so an attacker who can swap a
+    symlink between ``resolve()`` here and the caller's ``open()``/``unlink()``
+    defeats it.
+
+    **Why the race is non-exploitable in this threat model.**  The sprint
+    directory lives on a local developer workstation.  An attacker who can swap
+    a symlink in that directory between two Python statements (a sub-millisecond
+    window in a single-threaded CLI invocation) already holds write access to
+    the filesystem — at which point the machine is fully compromised regardless
+    of what this check does.  There is no network boundary, no daemon running
+    continuously, no shared-tenant context, and no privilege-escalation path
+    that a successful race would open.  The ``resolve()``-time containment check
+    we *do* provide catches the meaningful attack class: a symlink planted in
+    the sprint directory before the CLI runs, pointing at a file outside it.
+    That is the only vector available to an attacker who does NOT already hold
+    arbitrary write access to the sprint directory.
+
+    **What would change the calculus.**  If ``pf`` were ever:
+
+    * run as a privileged daemon serving multiple users;
+    * exposed over a network API that accepts untrusted sprint-dir paths; or
+    * executing inside a container where the sprint directory is a shared
+      volume writable by an untrusted peer process,
+
+    then the TOCTOU window could be exploited without full-machine compromise,
+    and hardening via ``O_NOFOLLOW`` plus ``openat()`` against a held directory
+    fd (or re-verifying containment via ``os.fstat`` after open) would be
+    warranted.  Threading an fd-based API through every call site would be
+    required at that point — non-trivial, but straightforward.
+
+    Until one of those conditions holds, the deferral stands.
     """
     try:
         return candidate.resolve().is_relative_to(base_dir.resolve())
     except (OSError, ValueError, RuntimeError):
         return False
+
+
+def safe_ref_path(
+    base_dir: Path,
+    ref: str,
+    *,
+    prefix: str = "epic-",
+    suffix: str = ".yaml",
+) -> Path:
+    """Build ``base_dir/{prefix}{ref}{suffix}``, fail-closed on traversal.
+
+    The one guarded replacement for every raw ``base_dir / f"epic-{ref}.yaml"``
+    interpolation. Applies BOTH layers of the convention:
+
+    1. charset — :func:`~pf.sprint.path_validation.validate_shard_filename`
+       (``[A-Za-z0-9._-]``, no ``..``, non-empty);
+    2. containment — :func:`is_safe_shard_path` on the built path, which catches
+       a charset-clean ref whose shard file is a symlink pointing outside
+       ``base_dir``.
+
+    Args:
+        base_dir: Directory the built path must stay inside.
+        ref: Raw, possibly hostile ref (epic id, jira key, initiative slug).
+        prefix: Filename prefix (``epic-``, ``initiative-``, ``context-epic-``).
+        suffix: Filename suffix (``.yaml``, ``.md``).
+
+    Returns:
+        The built path (unresolved, so it compares equal to the raw
+        interpolation it replaces).
+
+    Raises:
+        ValueError: When *ref* fails the charset check or the built path
+            escapes *base_dir*. Callers whose contract is a result object must
+            translate this to ``{"success": False, "error": ...}``.
+    """
+    validate_shard_filename(str(ref))
+    candidate = Path(base_dir) / f"{prefix}{ref}{suffix}"
+    if not is_safe_shard_path(candidate, Path(base_dir)):
+        raise ValueError(
+            f"Invalid shard filename ref {ref!r}: {candidate} escapes {base_dir}. "
+            "Traversal attempt detected."
+        )
+    return candidate
+
+
+def safe_ref_path_or_none(
+    base_dir: Path,
+    ref: str,
+    *,
+    prefix: str = "epic-",
+    suffix: str = ".yaml",
+) -> Path | None:
+    """Like :func:`safe_ref_path` but returns ``None`` (with a warning) on unsafe refs.
+
+    Shared adapter for every call site that calls ``safe_ref_path`` and converts
+    its ``ValueError`` to ``None`` — previously duplicated across
+    ``findings/aggregate._safe_shard``, ``sprint/cli._epic_shard_path``, and
+    ``tui/story_detail_data._safe_str_path`` (162-84 dedup).
+
+    Args:
+        base_dir: Directory the built path must stay inside.
+        ref: Raw, possibly hostile ref.
+        prefix: Filename prefix (forwarded to :func:`safe_ref_path`).
+        suffix: Filename suffix (forwarded to :func:`safe_ref_path`).
+
+    Returns:
+        The contained ``Path`` on success, ``None`` when *ref* fails validation
+        or the built path escapes *base_dir*. A ``warnings.warn`` is emitted
+        for every rejected ref so skips are never silent.
+    """
+    try:
+        return safe_ref_path(base_dir, ref, prefix=prefix, suffix=suffix)
+    except ValueError as e:
+        warnings.warn(
+            f"Ref {ref!r} escapes {base_dir} — skipping: {e}",
+            stacklevel=2,
+        )
+        return None
+
+
+def safe_shards(base_dir: Path, pattern: str = "epic-*.yaml") -> Iterator[Path]:
+    """Yield the shard files matching ``pattern`` in ``base_dir`` that are contained.
+
+    The guarded replacement for every raw ``base_dir.glob("epic-*.yaml")`` read
+    loop. A glob match is a *name* match, so an in-dir symlink pointing outside
+    ``base_dir`` matches happily; such entries are skipped and each skip is
+    surfaced with :func:`warnings.warn` (never silently swallowed).
+
+    A missing ``base_dir`` yields nothing rather than raising — several call
+    sites glob archive directories that may not exist yet.
+
+    Args:
+        base_dir: Directory to glob.
+        pattern: Glob pattern (``epic-*.yaml``, ``initiative-*.yaml``,
+            ``sprint-*-completed.yaml``).
+
+    Yields:
+        Contained matches, sorted by path.
+    """
+    base = Path(base_dir)
+    try:
+        matches = sorted(base.glob(pattern))
+    except (OSError, ValueError):
+        return
+    for match in matches:
+        if not is_safe_shard_path(match, base):
+            warnings.warn(
+                f"Shard {match.name} escapes {base} ({match}) — skipping",
+                stacklevel=2,
+            )
+            continue
+        yield match
 
 
 def merge_epic_shards(
@@ -76,11 +224,11 @@ def merge_epic_shards(
             merged_epics.append(ref)
             continue
 
-        shard_file = sprint_dir / f"epic-{ref}.yaml"
-        if not is_safe_shard_path(shard_file, sprint_dir):
+        try:
+            shard_file = safe_ref_path(sprint_dir, ref)
+        except ValueError as e:
             warnings.warn(
-                f"Sprint epic ref '{ref}' escapes the sprint directory "
-                f"({shard_file}) — skipping",
+                f"Sprint epic ref '{ref}' escapes the sprint directory — skipping: {e}",
                 stacklevel=2,
             )
             continue
@@ -114,14 +262,7 @@ def merge_epic_shards(
 
     # Collect epic refs owned by initiatives so we don't warn about them.
     initiative_refs: set[str] = set()
-    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
-        if not is_safe_shard_path(init_file, sprint_dir):
-            warnings.warn(
-                f"Initiative shard {init_file.name} escapes the sprint directory "
-                f"({init_file}) — skipping",
-                stacklevel=2,
-            )
-            continue
+    for init_file in safe_shards(sprint_dir, "initiative-*.yaml"):
         try:
             init_data = load_file(init_file)
         except Exception:
@@ -133,14 +274,7 @@ def merge_epic_shards(
                     initiative_refs.add(ref.replace("epic-", ""))
 
     # Warn about truly orphaned shard files (not in index, not in initiatives).
-    for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
-        if not is_safe_shard_path(shard_file, sprint_dir):
-            warnings.warn(
-                f"Sprint shard {shard_file.name} escapes the sprint directory "
-                f"({shard_file}) — skipping",
-                stacklevel=2,
-            )
-            continue
+    for shard_file in safe_shards(sprint_dir, "epic-*.yaml"):
         if shard_file.resolve() in loaded_shard_files:
             continue
         try:
@@ -198,11 +332,12 @@ def detect_orphan_shards(
         # Reconstruct which shard files were loaded
         for ref in (eid, jira_key):
             if ref:
-                shard_file = sprint_dir / f"epic-{ref}.yaml"
-                if not is_safe_shard_path(shard_file, sprint_dir):
+                try:
+                    shard_file = safe_ref_path(sprint_dir, ref)
+                except ValueError as e:
                     warnings.warn(
                         f"Sprint epic ref '{ref}' escapes the sprint directory "
-                        f"({shard_file}) — skipping",
+                        f"— skipping: {e}",
                         stacklevel=2,
                     )
                     continue
@@ -211,14 +346,7 @@ def detect_orphan_shards(
 
     # Collect initiative-owned refs
     initiative_refs: set[str] = set()
-    for init_file in sorted(sprint_dir.glob("initiative-*.yaml")):
-        if not is_safe_shard_path(init_file, sprint_dir):
-            warnings.warn(
-                f"Initiative shard {init_file.name} escapes the sprint directory "
-                f"({init_file}) — skipping",
-                stacklevel=2,
-            )
-            continue
+    for init_file in safe_shards(sprint_dir, "initiative-*.yaml"):
         try:
             init_data = load_file(init_file)
         except Exception:
@@ -230,14 +358,7 @@ def detect_orphan_shards(
                     initiative_refs.add(ref.replace("epic-", ""))
 
     orphans: list[dict[str, str]] = []
-    for shard_file in sorted(sprint_dir.glob("epic-*.yaml")):
-        if not is_safe_shard_path(shard_file, sprint_dir):
-            warnings.warn(
-                f"Sprint shard {shard_file.name} escapes the sprint directory "
-                f"({shard_file}) — skipping",
-                stacklevel=2,
-            )
-            continue
+    for shard_file in safe_shards(sprint_dir, "epic-*.yaml"):
         if shard_file.resolve() in loaded_shard_files:
             continue
         try:

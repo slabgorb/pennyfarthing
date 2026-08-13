@@ -27,13 +27,13 @@ Run the Python validation function:
 # pf.* modules live in the pf CLI's OWN venv (uv-tool install), NOT the project
 # .venv - derive the interpreter from the launcher shebang, never activate .venv.
 PF_PY="$(sed -n '1s/^#!//p' "$(command -v pf)")"
-"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" -c "
-from pf.gates.spec_drift_precheck import run_spec_drift_precheck
+"${PF_PY:?PF_PY not set - could not resolve the pf launcher interpreter}" - "${SESSION_FILE}" "${CONTEXT_FILE}" <<'PYEOF'
 import json, sys
-result = run_spec_drift_precheck('${SESSION_FILE}', '${CONTEXT_FILE}')
+from pf.gates.spec_drift_precheck import run_spec_drift_precheck
+result = run_spec_drift_precheck(sys.argv[1], sys.argv[2])
 print(json.dumps(result, indent=2))
 sys.exit(0 if result['success'] else 1)
-"
+PYEOF
 ```
 
 If all checks pass:

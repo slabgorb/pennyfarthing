@@ -600,7 +600,7 @@ class TestValidatorRun:
 
         report = run(agents_dir.parent.parent, fix=False, strict=False)
 
-        assert report.errors == 0, (
+        assert report.errors == [], (
             f"Expected 0 errors, got {report.errors}:\n"
             + "\n".join(d for d in report.details if "[ERROR]" in d)
         )
@@ -612,7 +612,7 @@ class TestValidatorRun:
 
         report = run(agents_dir.parent.parent, fix=False, strict=False)
 
-        assert report.errors > 0
+        assert len(report.errors) > 0
 
     def test_strict_mode_promotes_warnings(self, agents_dir: Path) -> None:
         """Strict mode promotes warnings to errors."""
@@ -622,7 +622,7 @@ class TestValidatorRun:
         report_strict = run(agents_dir.parent.parent, fix=False, strict=True)
 
         assert report_normal.warnings > 0
-        assert report_strict.errors >= report_normal.warnings
+        assert len(report_strict.errors) >= report_normal.warnings
 
 
 # =============================================================================
@@ -713,7 +713,7 @@ class TestRealAgentFiles:
 
         report = run(project_root, fix=False, strict=False)
 
-        assert report.errors == 0, (
+        assert report.errors == [], (
             f"Real agent files have {report.errors} tandem-awareness errors:\n"
             + "\n".join(d for d in report.details if "[ERROR]" in d)
         )

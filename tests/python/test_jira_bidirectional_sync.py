@@ -33,8 +33,8 @@ class TestModuleImport:
     """Tests for module existence and imports."""
 
     def test_module_exists(self):
-        """jira/bidirectional.py module should exist."""
-        module_path = PROJECT_ROOT / "pf" / "jira" / "bidirectional.py"
+        """jira/bidirectional.py module should exist (src layout: pennyfarthing-dist/src/pf/jira/bidirectional.py)."""
+        module_path = PROJECT_ROOT / "pennyfarthing-dist" / "src" / "pf" / "jira" / "bidirectional.py"
         assert module_path.exists(), "jira/bidirectional.py not found"
 
     def test_module_imports(self):

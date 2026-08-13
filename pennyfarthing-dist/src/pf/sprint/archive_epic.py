@@ -15,7 +15,7 @@ from typing import Any
 from pf.common.config import get_project_root
 from pf.sprint.loader import load_sprint
 from pf.sprint.path_validation import validate_sprint_id
-from pf.sprint.shard_merge import is_safe_shard_path
+from pf.sprint.shard_merge import is_safe_shard_path, safe_ref_path, safe_ref_path_or_none
 from pf.sprint.yaml_io import (
     _get_epic_ref,
     _make_yaml,
@@ -174,15 +174,11 @@ def migrate_completed_archive(archive_path: Path) -> dict[str, Any]:
     shards_created = 0
     stories_migrated = 0
     for epic_ref, stories in epic_stories.items():
-        shard_path = archive_dir / f"epic-{epic_ref}.yaml"
         # Path traversal (CWE-22): this site both reads and rewrites the shard,
         # so an escaping ref would be an out-of-bounds write. Fail closed.
-        if not is_safe_shard_path(shard_path, archive_dir):
-            warnings.warn(
-                f"Archived epic ref '{epic_ref}' escapes the archive directory "
-                f"({shard_path}) — skipping",
-                stacklevel=2,
-            )
+        # 162-84: safe_ref_path_or_none replaces hand-rolled guard + warn.
+        shard_path = safe_ref_path_or_none(archive_dir, str(epic_ref))
+        if shard_path is None:
             continue
         if shard_path.exists():
             existing = _read_yaml_file(shard_path)
@@ -232,13 +228,9 @@ def load_archive(archive_path: Path) -> dict[str, Any]:
     # Collect stories from shards
     all_stories: list[dict[str, Any]] = []
     for epic_ref in data["completed_epics"]:
-        shard_path = archive_dir / f"epic-{epic_ref}.yaml"
-        if not is_safe_shard_path(shard_path, archive_dir):
-            warnings.warn(
-                f"Archived epic ref '{epic_ref}' escapes the archive directory "
-                f"({shard_path}) — skipping",
-                stacklevel=2,
-            )
+        # 162-84: safe_ref_path_or_none replaces hand-rolled guard + warn.
+        shard_path = safe_ref_path_or_none(archive_dir, str(epic_ref))
+        if shard_path is None:
             continue
         if shard_path.exists():
             shard = _read_yaml_file(shard_path)
@@ -494,6 +486,43 @@ def get_completed_epics(project_root: Path | None = None) -> list[dict[str, Any]
     return completed
 
 
+def _safe_context_candidates(
+    sprint_dir: Path,
+    archive_dir: Path,
+    refs: list[str],
+) -> list[tuple[Path, Path, str]]:
+    """Build the contained ``context-epic-{ref}.md`` move candidates.
+
+    ``archive_epic`` tries two refs for the context file: the validated shard
+    ref and the epic's RAW ``id``. The raw id never passed through
+    ``_get_epic_ref``, so interpolating it produced an unguarded
+    read + delete + write (``shutil.move``) that could escape the sprint tree
+    entirely (162-44). Both ends of the move are now guarded — source under
+    ``sprint/context/`` and destination under ``archive_dir`` — and an unsafe
+    ref is skipped with a warning rather than moved.
+
+    Returns:
+        ``(source, destination, filename)`` triples, in ref order, for the refs
+        that are safe on both ends.
+    """
+    context_dir = sprint_dir / "context"
+    candidates: list[tuple[Path, Path, str]] = []
+    for ref in refs:
+        if not ref:
+            continue
+        try:
+            src = safe_ref_path(context_dir, ref, prefix="context-epic-", suffix=".md")
+            dst = safe_ref_path(archive_dir, ref, prefix="context-epic-", suffix=".md")
+        except ValueError as e:
+            warnings.warn(
+                f"Epic context ref {ref!r} escapes the sprint directory — skipping: {e}",
+                stacklevel=2,
+            )
+            continue
+        candidates.append((src, dst, src.name))
+    return candidates
+
+
 def archive_epic(
     epic_id: str,
     *,
@@ -571,9 +600,10 @@ def archive_epic(
         msg_parts = [f"Would archive {epic_id} ({story_count} stories, {total_points} pts)"]
         if shard_file.exists():
             msg_parts.append(f"  Move: {shard_file.name} → archive/")
-        # Check for context file
-        for ctx_name in [f"context-epic-{epic_ref}.md", f"context-epic-{epic.get('id', '')}.md"]:
-            ctx_file = sprint_dir / "context" / ctx_name
+        # Check for context file (guarded: the raw epic id is never trusted)
+        for ctx_file, _ctx_dst, ctx_name in _safe_context_candidates(
+            sprint_dir, archive_dir, [epic_ref, str(epic.get("id", ""))]
+        ):
             if ctx_file.exists():
                 msg_parts.append(f"  Move: context/{ctx_name} → archive/")
                 break
@@ -604,10 +634,11 @@ def archive_epic(
 
     # 2. Move context file if it exists
     context_moved = None
-    for ctx_name in [f"context-epic-{epic_ref}.md", f"context-epic-{epic.get('id', '')}.md"]:
-        ctx_file = sprint_dir / "context" / ctx_name
+    for ctx_file, ctx_dst, ctx_name in _safe_context_candidates(
+        sprint_dir, archive_dir, [epic_ref, str(epic.get("id", ""))]
+    ):
         if ctx_file.exists():
-            shutil.move(str(ctx_file), str(archive_dir / ctx_name))
+            shutil.move(str(ctx_file), str(ctx_dst))
             context_moved = ctx_name
             break
 

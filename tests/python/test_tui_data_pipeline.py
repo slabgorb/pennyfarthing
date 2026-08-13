@@ -18,9 +18,10 @@ Run with: python -m pytest tests/python/test_tui_tui_data_pipeline.py -v
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from io import StringIO
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from pf.tui.context_meter_footer import StatusFooter
 from pf.tui.debug_panel import DebugPanel
@@ -104,7 +105,9 @@ TOKEN_STATS_VALID: dict[str, Any] = {
     "inputTokens": 25000,
     "outputTokens": 12000,
     "cacheReadTokens": 8500,
-    "totalCostUsd": 0.1234,
+    # Wire key is "totalCost" (frame/otlp.py, frame/websocket.py); the old
+    # "totalCostUsd" was silently ignored by _render_token_stats.
+    "totalCost": 0.1234,
 }
 
 # Sprint payload: valid data
@@ -151,6 +154,25 @@ def _render_to_string(renderable: Any, width: int = 120) -> str:
     return console.file.getvalue()
 
 
+@contextmanager
+def _no_local_fallback():
+    """Disable DebugPanel's local context fallback.
+
+    ``bf379e2e5`` made ``_handle_context_message`` fall back to
+    ``pf.context_window.check_context()`` whenever Frame reports a context
+    error, so on a machine with a live Claude Code session the error never
+    reaches the renderer — the panel silently recovers with locally-computed
+    numbers. That makes every error-path assertion environment-dependent, so
+    these tests make the fallback fail explicitly and assert the surviving
+    contract: when no local data is available, the Frame error IS surfaced.
+    """
+    with patch(
+        "pf.context_window.check_context",
+        side_effect=RuntimeError("no local context in test"),
+    ):
+        yield
+
+
 # ===========================================================================
 # AC1: DebugPanel Error State
 # ===========================================================================
@@ -163,7 +185,8 @@ class TestDebugPanelErrorState:
         """When context channel returns {error: 'context_window.py not found', percent: null},
         panel should show the error message, not 'No context data'."""
         panel = DebugPanel(client=MagicMock())
-        panel._handle_context_message(CONTEXT_ERROR)
+        with _no_local_fallback():
+            panel._handle_context_message(CONTEXT_ERROR)
         result = panel.render_panel(panel._context_data or {})
         output = _render_to_string(result)
         assert "context_window.py not found" in output, (
@@ -176,11 +199,44 @@ class TestDebugPanelErrorState:
     def test_context_error_generic_shows_error(self):
         """Generic server error should display error state."""
         panel = DebugPanel(client=MagicMock())
-        panel._handle_context_message(CONTEXT_ERROR_GENERIC)
+        with _no_local_fallback():
+            panel._handle_context_message(CONTEXT_ERROR_GENERIC)
         result = panel.render_panel(panel._context_data or {})
         output = _render_to_string(result)
         assert "Internal server error" in output or "error" in output.lower(), (
             f"Error should be visible, got: {output!r}"
+        )
+
+    def test_context_error_prefers_local_fallback_when_available(self):
+        """A Frame context error is masked by locally-computed data (bf379e2e5).
+
+        This is the other half of the contract exercised by
+        ``_no_local_fallback()``: when ``check_context()`` succeeds, the panel
+        renders those numbers and drops the Frame error entirely.
+        """
+        local = MagicMock()
+        local.error = None
+        local.percent = 40
+        local.tokens = 80_000
+        local.status = "ok"
+        local.baseline = 0
+        local.usable_tokens = 200_000
+        local.usable_percent = 40
+        local.available = 120_000
+
+        panel = DebugPanel(client=MagicMock())
+        with patch("pf.context_window.check_context", return_value=local):
+            panel._handle_context_message(CONTEXT_ERROR)
+
+        assert panel._context_data["error"] is None, (
+            f"Local fallback should clear the Frame error, got: {panel._context_data}"
+        )
+        assert panel._context_data["tokens"] == 80_000, (
+            f"Local fallback numbers should win, got: {panel._context_data}"
+        )
+        output = _render_to_string(panel.render_panel(panel._context_data))
+        assert "context_window.py not found" not in output, (
+            f"Frame error must not surface once the fallback succeeded, got: {output!r}"
         )
 
     def test_context_error_empty_string_not_treated_as_error(self):
@@ -402,7 +458,8 @@ class TestAutomaticRecovery:
         """DebugPanel recovers from context error when valid data arrives."""
         panel = DebugPanel(client=MagicMock())
         # Error state
-        panel._handle_context_message(CONTEXT_ERROR)
+        with _no_local_fallback():
+            panel._handle_context_message(CONTEXT_ERROR)
         error_result = panel.render_panel(panel._context_data or {})
         error_output = _render_to_string(error_result)
         # Verify error is shown
@@ -538,7 +595,8 @@ class TestDebugPanelChannelIndependence:
     def test_context_error_token_stats_healthy(self):
         """Context errors should not prevent token stats from rendering."""
         panel = DebugPanel(client=MagicMock())
-        panel._handle_context_message(CONTEXT_ERROR)
+        with _no_local_fallback():
+            panel._handle_context_message(CONTEXT_ERROR)
         panel._handle_token_stats_message(TOKEN_STATS_VALID)
         result = panel.render_panel(panel._context_data or {})
         output = _render_to_string(result)
@@ -565,7 +623,8 @@ class TestDebugPanelChannelIndependence:
     def test_both_channels_error(self):
         """Both channels erroring should show combined error state."""
         panel = DebugPanel(client=MagicMock())
-        panel._handle_context_message(CONTEXT_ERROR)
+        with _no_local_fallback():
+            panel._handle_context_message(CONTEXT_ERROR)
         # Token stats don't have an error field in the same way,
         # but absence of data is an error state
         result = panel.render_panel(panel._context_data or {})
@@ -593,7 +652,8 @@ class TestDebugPanelChannelIndependence:
     def test_context_shows_error_while_token_stats_table_renders(self):
         """Context section shows error message, token stats section renders table."""
         panel = DebugPanel(client=MagicMock())
-        panel._handle_context_message(CONTEXT_ERROR)
+        with _no_local_fallback():
+            panel._handle_context_message(CONTEXT_ERROR)
         panel._handle_token_stats_message(TOKEN_STATS_VALID)
         result = panel.render_panel(panel._context_data or {})
         output = _render_to_string(result)

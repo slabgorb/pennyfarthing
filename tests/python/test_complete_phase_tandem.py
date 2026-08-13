@@ -157,6 +157,40 @@ Test story context.
 """
 
 
+# The `approval` gate was hardened: leaving the review phase now also requires a
+# `## Subagent Results` section and specialist tags in the Reviewer Assessment.
+# Tests below that cross review -> finish append this so they exercise the tandem
+# line behavior rather than tripping over unrelated gate content requirements.
+APPROVAL_GATE_SECTIONS = """
+## Subagent Results
+
+| # | Specialist | Received | Status | Findings | Decision |
+|---|-----------|----------|--------|----------|----------|
+| 1 | reviewer-preflight | Yes | clean | none | N/A |
+| 2 | reviewer-rule-checker | Yes | clean | none | N/A |
+| 3 | reviewer-security | Yes | clean | none | N/A |
+| 4 | reviewer-test-analyzer | Yes | clean | none | N/A |
+| 5 | reviewer-type-design | Yes | clean | none | N/A |
+
+**All received: Yes**
+
+## Reviewer Assessment
+
+**Verdict:** APPROVED
+
+- [RULE] clean
+- [SEC] clean
+- [TEST] clean
+- [TYPE] clean
+"""
+
+
+def _append_approval_sections(session_path: Path) -> None:
+    """Satisfy the hardened `approval` gate's content requirements."""
+    with session_path.open("a") as fh:
+        fh.write(APPROVAL_GATE_SECTIONS)
+
+
 @pytest.fixture()
 def tmp_project(tmp_path):
     """Create a temporary project with .pennyfarthing and .session dirs."""
@@ -324,7 +358,8 @@ class TestNoTandemForPlainPhases:
 
     def test_tandem_workflow_finish_phase_no_tandem(self, tandem_project):
         """Finish phase has no tandem even in tdd-tandem workflow."""
-        _create_session(tandem_project, "review", "tdd-tandem")
+        session_path = _create_session(tandem_project, "review", "tdd-tandem")
+        _append_approval_sections(session_path)
 
         result = complete_phase(
             story_id="99-1",
@@ -360,6 +395,7 @@ class TestTandemLineRemoved:
         content = content.replace("**Tandem:** architect (file-watch)",
                                   "**Tandem:** pm (file-watch)")
         session_path.write_text(content)
+        _append_approval_sections(session_path)
 
         result = complete_phase(
             story_id="99-1",

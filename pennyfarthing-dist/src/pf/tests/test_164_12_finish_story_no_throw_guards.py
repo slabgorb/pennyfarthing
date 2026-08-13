@@ -328,7 +328,9 @@ class TestResolveStoryReposMalformedRepos:
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()
         (pf_dir / "repos.yaml").write_text(_MALFORMED_REPOS_YAML, encoding="utf-8")
-        result = _resolve_story_repos(tmp_path, {})
+        # 162-32 turned the return into a result object; the degrade behavior
+        # this test pins is unchanged — it now travels under ``data``.
+        result = _resolve_story_repos(tmp_path, {})["data"]
         assert result == [(tmp_path, None)], (
             f"_resolve_story_repos must degrade to [(project_root, None)] on "
             f"malformed repos.yaml; got {result!r}"
@@ -507,7 +509,8 @@ class TestRegressionValidSession:
         pf_dir = tmp_path / ".pennyfarthing"
         pf_dir.mkdir()
         (pf_dir / "repos.yaml").write_text(_VALID_REPOS_YAML, encoding="utf-8")
-        result = _resolve_story_repos(tmp_path, {})
+        # 162-32: result object; the resolved list travels under ``data``.
+        result = _resolve_story_repos(tmp_path, {})["data"]
         # story has no repos: field → degrades to project root (existing behavior)
         assert len(result) == 1, (
             f"_resolve_story_repos with no repos: field must return exactly one entry: {result}"

@@ -103,8 +103,17 @@ def create_story_in_jira(
     priority = PRIORITY_MAP.get(story.get("priority", "P2"), "Medium")
 
     if dry_run:
+        # The sprint YAML says which epic is the parent; only Jira knows whether
+        # that key still exists. Without this the real create fails on `parent`
+        # after the dry run previewed success.
+        parent_key = epic.get("jira") or epic_jira_key
+        if not get_client().get_issue_sync(parent_key):
+            return {
+                "success": False,
+                "error": f"Parent epic not found in Jira: {parent_key}",
+            }
         print(f"[DRY RUN] Would create: {story_id} - {title}")
-        print(f"  Parent: {epic_jira_key}, Priority: {priority}, Points: {points}")
+        print(f"  Parent: {parent_key}, Priority: {priority}, Points: {points}")
         return {"success": True, "dry_run": True, "story_id": story_id}
 
     try:
