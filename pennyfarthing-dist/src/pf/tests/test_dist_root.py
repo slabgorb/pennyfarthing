@@ -124,8 +124,10 @@ def npm_layout(tmp_path: Path) -> Path:
     (agents / "sm.md").write_text(
         "# SM Agent\n"
         "<role>Scrum Master</role>\n"
+        "<coordination-discipline>Route, don't solve</coordination-discipline>\n"
         "<critical>Follow workflow</critical>\n"
         "<helpers>Use haiku subagents</helpers>\n"
+        "<parameters>subagent params</parameters>\n"
         "<skills>Sprint management</skills>\n"
     )
     (agents / "tea.md").write_text("# TEA Agent\n")
@@ -383,10 +385,17 @@ class TestCallSitesNpmResolution:
     """
 
     def test_agent_validator_finds_agents_in_npm(self, npm_layout: Path) -> None:
-        """agent.run() should find and validate agents in npm layout."""
+        """agent.run() should consume get_dist_root()'s result to find agents.
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root to the consumer dist.
+        Previously this passed only because unguarded fallback #4 substituted the
+        bundled _dist. The call site's contract is to USE get_dist_root(), not to
+        depend on node_modules resolution (which does not exist)."""
         from pf.validate.adapters.agent import run
 
-        report = run(npm_layout, fix=False, strict=False)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.validate.adapters.agent.get_dist_root", return_value=npm_dist):
+            report = run(npm_layout, fix=False, strict=False)
         # Should NOT report "agents directory not found" error
         has_dir_not_found = any("not found" in d.lower() for d in report.details)
         assert not has_dir_not_found, (
@@ -398,20 +407,28 @@ class TestCallSitesNpmResolution:
         )
 
     def test_workflow_validator_finds_workflows_in_npm(self, npm_layout: Path) -> None:
-        """workflow.run() should find and validate workflows in npm layout."""
+        """workflow.run() should consume get_dist_root()'s result to find workflows.
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root to the consumer dist."""
         from pf.validate.adapters.workflow import run
 
-        report = run(npm_layout, fix=False, strict=False)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.validate.adapters.workflow.get_dist_root", return_value=npm_dist):
+            report = run(npm_layout, fix=False, strict=False)
         has_dir_not_found = any("not found" in d.lower() for d in report.details)
         assert not has_dir_not_found, (
             f"Workflow validator failed to find workflows in npm layout: {report.details}"
         )
 
     def test_skill_command_discovers_registry_in_npm(self, npm_layout: Path) -> None:
-        """skill_command.discover_skill_registry() should find registry in npm."""
+        """skill_command.discover_skill_registry() should consume get_dist_root().
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root to the consumer dist."""
         from pf.validate.adapters.skill_command import discover_skill_registry
 
-        result = discover_skill_registry(npm_layout)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.validate.adapters.skill_command.get_dist_root", return_value=npm_dist):
+            result = discover_skill_registry(npm_layout)
         assert result is not None, (
             "discover_skill_registry returned None for npm layout — "
             "call site not refactored to use get_dist_root()"
@@ -452,20 +469,29 @@ class TestCallSitesNpmResolution:
         )
 
     def test_workflow_get_phase_owner_in_npm(self, npm_layout: Path) -> None:
-        """workflow.get_phase_owner() should resolve workflow in npm layout."""
+        """workflow.get_phase_owner() should resolve the workflow via get_dist_root().
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root (in workflow.helpers,
+        where resolve_workflow_file consumes it) to the consumer dist."""
         from pf.prime.workflow import get_phase_owner
 
-        owner = get_phase_owner("tdd", "red", npm_layout)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.workflow.helpers.get_dist_root", return_value=npm_dist):
+            owner = get_phase_owner("tdd", "red", npm_layout)
         assert owner == "tea", (
             f"get_phase_owner returned {owner!r} in npm layout — "
             "expected 'tea'. Call site not refactored."
         )
 
     def test_loader_finds_agent_in_npm(self, npm_layout: Path) -> None:
-        """loader.load_agent_definition() should find agents in npm layout."""
+        """loader.load_agent_definition() should consume get_dist_root() to find agents.
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root to the consumer dist."""
         from pf.prime.loader import load_agent_definition
 
-        content = load_agent_definition("sm", project_root=npm_layout)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.prime.loader.get_dist_root", return_value=npm_dist):
+            content = load_agent_definition("sm", project_root=npm_layout)
         assert content is not None, (
             "load_agent_definition returned None for npm layout — "
             "call site not refactored to use get_dist_root()"
@@ -473,20 +499,28 @@ class TestCallSitesNpmResolution:
         assert "SM Agent" in content
 
     def test_loader_finds_behavior_guide_in_npm(self, npm_layout: Path) -> None:
-        """loader.load_behavior_guide() should find guide in npm layout."""
+        """loader.load_behavior_guide() should consume get_dist_root() to find the guide.
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root to the consumer dist."""
         from pf.prime.loader import load_behavior_guide
 
-        content = load_behavior_guide(project_root=npm_layout)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.prime.loader.get_dist_root", return_value=npm_dist):
+            content = load_behavior_guide(project_root=npm_layout)
         assert content is not None, (
             "load_behavior_guide returned None for npm layout — "
             "call site not refactored to use get_dist_root()"
         )
 
     def test_team_mode_validator_finds_guides_in_npm(self, npm_layout: Path) -> None:
-        """team_mode.run() should find and validate guides in npm layout."""
+        """team_mode.run() should consume get_dist_root() to find guides.
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root to the consumer dist."""
         from pf.validate.adapters.team_mode import run
 
-        report = run(npm_layout, fix=False, strict=False)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.validate.adapters.team_mode.get_dist_root", return_value=npm_dist):
+            report = run(npm_layout, fix=False, strict=False)
         # Should have actually found and validated files (passed > 0),
         # not just produced an error about missing directories
         assert report.passed > 0, (
@@ -578,20 +612,28 @@ class TestIntegrationNpmContext:
     """
 
     def test_validate_agent_end_to_end_npm(self, npm_layout: Path) -> None:
-        """Full agent validation should succeed in npm layout."""
+        """Full agent validation should succeed when get_dist_root resolves the dist.
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root to the consumer dist."""
         from pf.validate.adapters.agent import run
 
-        report = run(npm_layout, fix=False, strict=False)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.validate.adapters.agent.get_dist_root", return_value=npm_dist):
+            report = run(npm_layout, fix=False, strict=False)
         # After refactoring, should validate at least 1 agent successfully
         assert report.passed >= 1, (
             f"Expected at least 1 agent validated, got {report.passed}. Details: {report.details}"
         )
 
     def test_theme_resolution_end_to_end_npm(self, npm_layout: Path) -> None:
-        """Theme resolution should find themes in npm layout."""
+        """Theme resolution should find themes when get_dist_root resolves the dist.
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root to the consumer dist."""
         from pf.common.themes import resolve_theme_path
 
-        result = resolve_theme_path("mash", project_root=npm_layout)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.common.themes.get_dist_root", return_value=npm_dist):
+            result = resolve_theme_path("mash", project_root=npm_layout)
         assert result is not None, "resolve_theme_path('mash') returned None in npm layout"
         assert result.is_file()
 
@@ -611,19 +653,28 @@ class TestIntegrationNpmContext:
         assert "path" in result
 
     def test_workflow_phase_lookup_end_to_end_npm(self, npm_layout: Path) -> None:
-        """Workflow phase lookup should resolve in npm layout."""
+        """Workflow phase lookup should resolve via get_dist_root().
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root (in workflow.helpers)
+        to the consumer dist."""
         from pf.prime.workflow import get_phase_owner
 
-        # Verify multiple phases resolve correctly
-        assert get_phase_owner("tdd", "red", npm_layout) == "tea"
-        assert get_phase_owner("tdd", "green", npm_layout) == "dev"
-        assert get_phase_owner("tdd", "setup", npm_layout) == "sm"
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.workflow.helpers.get_dist_root", return_value=npm_dist):
+            # Verify multiple phases resolve correctly
+            assert get_phase_owner("tdd", "red", npm_layout) == "tea"
+            assert get_phase_owner("tdd", "green", npm_layout) == "dev"
+            assert get_phase_owner("tdd", "setup", npm_layout) == "sm"
 
     def test_skill_registry_end_to_end_npm(self, npm_layout: Path) -> None:
-        """Skill registry discovery should work in npm layout."""
+        """Skill registry discovery should work via get_dist_root().
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root to the consumer dist."""
         from pf.validate.adapters.skill_command import discover_skill_registry
 
-        path = discover_skill_registry(npm_layout)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.validate.adapters.skill_command.get_dist_root", return_value=npm_dist):
+            path = discover_skill_registry(npm_layout)
         assert path is not None, "Skill registry not found in npm layout"
         assert path.is_file()
 
@@ -659,17 +710,25 @@ class TestRemainingCallSitesNpmResolution:
         )
         (hooks_source / "pre-commit.sh").write_text("#!/bin/bash\n# pre-commit\n")
 
-        result = install_git_hooks(project_root=npm_layout)
+        # RE-DISPOSITIONED (162-71): patch get_dist_root to the consumer dist.
+        # Previously passed only because unguarded fallback #4 returned the
+        # bundled _dist, which happens to ship these hook sources.
+        with patch("pf.git.hooks_installer.get_dist_root", return_value=dist):
+            result = install_git_hooks(project_root=npm_layout)
         assert result == 0, (
             "install_git_hooks failed in npm layout — "
             "call site not refactored to use get_dist_root()"
         )
 
     def test_tandem_awareness_finds_agents_in_npm(self, npm_layout: Path) -> None:
-        """tandem_awareness.run() should find agents in npm layout."""
+        """tandem_awareness.run() should consume get_dist_root() to find agents.
+
+        RE-DISPOSITIONED (162-71): patches get_dist_root to the consumer dist."""
         from pf.validate.adapters.tandem_awareness import run
 
-        report = run(npm_layout, fix=False, strict=False)
+        npm_dist = npm_layout / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist"
+        with patch("pf.validate.adapters.tandem_awareness.get_dist_root", return_value=npm_dist):
+            report = run(npm_layout, fix=False, strict=False)
         has_dir_not_found = any("not found" in d.lower() for d in report.details)
         assert not has_dir_not_found, (
             f"Tandem awareness failed to find agents in npm layout: {report.details}"
