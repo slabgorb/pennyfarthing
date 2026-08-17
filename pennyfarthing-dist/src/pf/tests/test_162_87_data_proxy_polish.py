@@ -267,11 +267,11 @@ class TestAC2ReposConfigContract:
         entries = data_proxy._get_repos_config(project)
         assert len(entries) == 1, f"expected one repo entry; got {entries}"
         entry = entries[0]
-        assert entry["base"] == "develop", (
+        assert entry.get("base") == "develop", (
             "AC2: an omitted default_branch must default-fill to 'develop'; "
             f"got {entry.get('base')!r}"
         )
-        assert entry["remote"] == "origin", (
+        assert entry.get("remote") == "origin", (
             "AC2: an omitted remote_name must default-fill to 'origin'; "
             f"got {entry.get('remote')!r}"
         )
