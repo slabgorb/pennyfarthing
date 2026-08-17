@@ -54,7 +54,6 @@ from pf.frame import ws_push
 from pf.frame.app import create_app
 from pf.frame.routes import data_proxy
 
-
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
 # ---------------------------------------------------------------------------

@@ -300,16 +300,24 @@ def _get_git_info(
         return None
 
 
-class RepoConfig(TypedDict, total=False):
-    """A repo entry from :func:`_get_repos_config`.
-
-    ``name`` and ``path`` are always present. ``base`` and ``remote`` are
-    present ONLY on the repos.yaml path; the single-repo fallback omits them
-    (story 162-87 — the annotation now matches the two shapes honestly).
-    """
+class _RepoConfigBase(TypedDict):
+    """Keys present on EVERY repo entry from :func:`_get_repos_config`."""
 
     name: str
     path: str
+
+
+class RepoConfig(_RepoConfigBase, total=False):
+    """A repo entry from :func:`_get_repos_config`.
+
+    ``name`` and ``path`` are ALWAYS present (declared required in
+    :class:`_RepoConfigBase`). ``base`` and ``remote`` are present ONLY on the
+    repos.yaml path; the single-repo fallback omits them (story 162-87 — the
+    two-level split makes the annotation match both shapes honestly, so ``{}``
+    is NOT a valid ``RepoConfig`` and direct ``entry["name"]`` / ``entry["path"]``
+    access is type-safe).
+    """
+
     base: str
     remote: str
 
