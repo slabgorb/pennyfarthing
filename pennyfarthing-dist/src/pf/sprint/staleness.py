@@ -46,22 +46,18 @@ _PATH_HEURISTIC_RE = re.compile(
 # separated tokens).
 _HASH_RE = re.compile(r"[0-9a-f]{40}")
 
-# Default base branch per repo. Mirrors repos.yaml; kept inline so this module
-# stays self-contained for the test seam (``repo_path_overrides``).
-_BASE_BRANCH_BY_REPO = {
-    "pennyfarthing": "develop",
-    "orchestrator": "main",
-}
-
-# Default remote per repo. Mirrors repos.yaml ``remote_name`` (story 162-27);
-# both repos use ``origin`` today, so this defect is LATENT in-tree, but the
-# seam makes ``_resolve_revision`` honor the configured remote (``<remote>/<base>``)
-# rather than a hardcoded ``origin/`` — a non-origin repo would otherwise miss its
-# real upstream tip and silently fall back to a stale local branch. Kept inline
-# alongside ``_BASE_BRANCH_BY_REPO`` so the module stays self-contained.
-_REMOTE_BY_REPO = {
-    "pennyfarthing": "origin",
-    "orchestrator": "origin",
+# Per-repo base branch AND remote, mirroring repos.yaml (base branch +
+# ``remote_name``). Kept inline so this module stays self-contained for the test
+# seam (``repo_path_overrides``). One guarded lookup carries both fields so a
+# non-origin repo is honored by editing a single entry — the two values never
+# drift apart across parallel maps. Both repos use ``origin`` today, so the
+# non-origin path is latent in-tree, but the seam makes ``_resolve_revision``
+# honor the configured remote (``<remote>/<base>``) rather than a hardcoded
+# ``origin/`` — otherwise a non-origin repo misses its real upstream tip and
+# silently falls back to a stale local branch.
+_REPO_CONFIG: dict[str, dict[str, str]] = {
+    "pennyfarthing": {"base": "develop", "remote": "origin"},
+    "orchestrator": {"base": "main", "remote": "origin"},
 }
 
 # ``git log -z`` separates commits with NUL bytes, which cannot appear in commit
@@ -196,7 +192,8 @@ def check_story_staleness(
                 )
 
     repo_name, repo_path = _resolve_repo_path(story, repo_path_overrides, project_root)
-    if repo_name not in _BASE_BRANCH_BY_REPO:
+    repo_cfg = _REPO_CONFIG.get(repo_name)
+    if repo_cfg is None:
         return _result(
             success=False,
             status="error",
@@ -204,12 +201,12 @@ def check_story_staleness(
             since=start_date_str,
             error=(
                 f"unknown repo {repo_name!r}: no base branch configured in "
-                f"_BASE_BRANCH_BY_REPO. Known: {sorted(_BASE_BRANCH_BY_REPO)}"
+                f"_REPO_CONFIG. Known: {sorted(_REPO_CONFIG)}"
             ),
             ack=ack,
         )
-    base_branch = _BASE_BRANCH_BY_REPO[repo_name]
-    remote = _REMOTE_BY_REPO.get(repo_name, "origin")
+    base_branch = repo_cfg["base"]
+    remote = repo_cfg["remote"]
 
     paths = _resolve_paths(story)
     if not paths:
@@ -219,6 +216,7 @@ def check_story_staleness(
             story_id=story_id,
             since=start_date_str,
             base_branch=base_branch,
+            remote=remote,
             paths_checked=[],
             commits=[],
             warning=(
@@ -239,6 +237,7 @@ def check_story_staleness(
             story_id=story_id,
             since=start_date_str,
             base_branch=base_branch,
+            remote=remote,
             paths_checked=paths,
             error=git_err,
             ack=ack,
@@ -266,6 +265,7 @@ def check_story_staleness(
         story_id=story_id,
         since=start_date_str,
         base_branch=base_branch,
+        remote=remote,
         paths_checked=paths,
         commits=drift_commits,
         ack=ack,
@@ -333,6 +333,7 @@ def _result(
     commits: list[dict[str, Any]] | None = None,
     since: str = "",
     base_branch: str = "",
+    remote: str = "",
     warning: str | None = None,
     error: str | None = None,
     ack: bool = False,
@@ -343,6 +344,7 @@ def _result(
         "story_id": story_id,
         "since": since,
         "base_branch": base_branch,
+        "remote": remote,
         "paths_checked": paths_checked or [],
         "commits": commits or [],
     }
@@ -590,7 +592,8 @@ def _print_human_summary(result: dict[str, Any]) -> None:
         print(
             f"[staleness] {story_id}: DRIFT — "
             f"{len(result.get('commits') or [])} overlapping commit(s) since "
-            f"{result.get('since')} on origin/{result.get('base_branch')}"
+            f"{result.get('since')} on "
+            f"{result.get('remote') or 'origin'}/{result.get('base_branch')}"
         )
         for c in result.get("commits") or []:
             print(
