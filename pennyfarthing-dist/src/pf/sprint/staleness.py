@@ -26,7 +26,7 @@ import fnmatch
 import re
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from pf.sprint.loader import load_sprint
 
@@ -55,7 +55,12 @@ _HASH_RE = re.compile(r"[0-9a-f]{40}")
 # honor the configured remote (``<remote>/<base>``) rather than a hardcoded
 # ``origin/`` — otherwise a non-origin repo misses its real upstream tip and
 # silently falls back to a stale local branch.
-_REPO_CONFIG: dict[str, dict[str, str]] = {
+class _RepoConfig(TypedDict):
+    base: str
+    remote: str
+
+
+_REPO_CONFIG: dict[str, _RepoConfig] = {
     "pennyfarthing": {"base": "develop", "remote": "origin"},
     "orchestrator": {"base": "main", "remote": "origin"},
 }
@@ -593,7 +598,7 @@ def _print_human_summary(result: dict[str, Any]) -> None:
             f"[staleness] {story_id}: DRIFT — "
             f"{len(result.get('commits') or [])} overlapping commit(s) since "
             f"{result.get('since')} on "
-            f"{result.get('remote') or 'origin'}/{result.get('base_branch')}"
+            f"{result.get('remote')}/{result.get('base_branch')}"
         )
         for c in result.get("commits") or []:
             print(

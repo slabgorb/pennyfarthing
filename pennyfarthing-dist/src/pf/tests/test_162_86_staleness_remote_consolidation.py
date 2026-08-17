@@ -291,6 +291,47 @@ class TestConsolidatedRepoLookup:
             f"alongside the base branch; got remote={result.get('remote')!r}"
         )
 
+    def test_non_origin_remote_traverses_lookup_into_result_end_to_end(
+        self,
+        sprint_root: Path,
+        impl_repo: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """RED-for-rework (162-86 F1): the story's headline behavior — a
+        NON-origin configured remote honored end-to-end — must be pinned through
+        the real `check_story_staleness` pipeline, not only at the isolated
+        banner. Every other pipeline test uses the sole `_REPO_CONFIG` entry
+        (`pennyfarthing` → remote `origin`), so `test_known_repo_resolves_*` is
+        tautological: a hardcoded `_result(remote="origin")` would pass it.
+
+        Here we monkeypatch the `pennyfarthing` config entry to a NON-origin
+        remote and assert the result echoes it — a hardcoded `origin` fails this,
+        proving the value traverses `_REPO_CONFIG` lookup → `remote` var →
+        `_result()`.
+        """
+        monkeypatch.setitem(
+            staleness._REPO_CONFIG,
+            "pennyfarthing",
+            {"base": "develop", "remote": "upstream"},
+        )
+        result = check_story_staleness(
+            "151-5",
+            project_root=sprint_root,
+            repo_path_overrides={"pennyfarthing": impl_repo},
+        )
+        # Clean run (no drift commits) — the point is the threaded remote value,
+        # which must be the configured non-origin one, not a hardcoded 'origin'.
+        assert result.get("success") is True, f"sanity: expected success, got {result}"
+        assert result.get("remote") == "upstream", (
+            "162-86 F1: a non-origin configured remote must traverse the "
+            "_REPO_CONFIG lookup all the way into the result dict; a hardcoded "
+            f"'origin' would fail here. got remote={result.get('remote')!r}"
+        )
+        assert result.get("base_branch") == "develop", (
+            f"base branch must still resolve from the same entry; got "
+            f"{result.get('base_branch')!r}"
+        )
+
     def test_unknown_repo_still_guarded_after_consolidation(
         self, tmp_path: Path
     ) -> None:
