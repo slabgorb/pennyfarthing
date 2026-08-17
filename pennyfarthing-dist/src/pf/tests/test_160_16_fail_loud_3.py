@@ -8,7 +8,7 @@ This story sweeps the three:
 
 * **data_proxy._get_git_info** (``data_proxy.py:~187``) — the outer
   ``except Exception: return None`` swallows the ``int()`` parse of the
-  ``git rev-list --count`` outputs (``ahead``/``behind``/``developBehind``). A
+  ``git rev-list --count`` outputs (``ahead``/``behind``/``baseBehind``). A
   present-but-broken count silently collapses the WHOLE repo to ``None`` →
   ``get_git_all`` then renders the repo as ``branch="unknown", clean=True`` with
   zero diagnostics (AC-1).

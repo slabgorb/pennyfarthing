@@ -162,7 +162,18 @@ def fetch_git() -> dict[str, Any]:
     results = []
     for repo in repos:
         repo_path = str(Path(project_dir, repo["path"]))
-        info = _get_git_info(repo_path)
+        # 162-87: thread each repo's configured base/remote, mirroring
+        # data_proxy.get_git_all. Previously this called _get_git_info(repo_path)
+        # with no args, so the WebSocket transport always probed origin/develop
+        # while the HTTP route honored the config — a two-transport divergence
+        # (same class 162-49 fixed). Renaming the field to baseBehind demands it
+        # actually be base-aware, not a develop-hardcoded count wearing a
+        # base-agnostic name.
+        info = _get_git_info(
+            repo_path,
+            base=repo.get("base", "develop"),
+            remote=repo.get("remote", "origin"),
+        )
         results.append({
             "name": repo["name"],
             "path": repo["path"],
@@ -170,7 +181,7 @@ def fetch_git() -> dict[str, Any]:
             "clean": info["clean"] if info else True,
             "ahead": info.get("ahead") if info else None,
             "behind": info.get("behind") if info else None,
-            "developBehind": info.get("developBehind") if info else None,
+            "baseBehind": info.get("baseBehind") if info else None,
             "dirtyFiles": info.get("dirtyFiles", []) if info else [],
             "openPrs": _get_open_prs(repo_path),
         })

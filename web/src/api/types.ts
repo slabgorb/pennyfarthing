@@ -49,7 +49,7 @@ export interface GitRepo {
   clean: boolean
   ahead: number | null
   behind: number | null
-  developBehind: number | null
+  baseBehind: number | null
   dirtyFiles: { path?: string; status?: string }[]
   openPrs?: { number: number; title: string; isDraft: boolean }[]
 }
