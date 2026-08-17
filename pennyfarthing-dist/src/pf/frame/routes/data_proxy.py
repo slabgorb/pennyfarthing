@@ -16,7 +16,7 @@ import sys
 import time
 import warnings
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
@@ -220,9 +220,9 @@ def _get_git_info(
     (story 162-27). The "behind base" probe honors them (``<remote>/<base>``)
     instead of a hardcoded ``origin/develop`` — the dogfood orchestrator is
     trunk-based ``main``, so ``origin/develop`` did not exist for it and the
-    count was silently ``None``. The returned JSON field keeps its
-    ``developBehind`` name; renaming it to ``baseBehind`` is a deferred
-    follow-up (see session Delivery Findings).
+    count was silently ``None``. The returned JSON field is named ``baseBehind``
+    (story 162-87) — a repo-agnostic name, since the count is measured against
+    each repo's configured base branch, not always ``develop``.
     """
     import shutil
 
@@ -276,10 +276,10 @@ def _get_git_info(
         if b is not None:
             behind = int(b)
 
-        develop_behind: int | None = None
+        base_behind: int | None = None
         db = _run(["rev-list", "--count", f"HEAD..{remote}/{base}"])
         if db is not None:
-            develop_behind = int(db)
+            base_behind = int(db)
 
         return {
             "branch": branch,
@@ -287,7 +287,7 @@ def _get_git_info(
             "ahead": ahead,
             "behind": behind,
             "dirtyFiles": dirty_files,
-            "developBehind": develop_behind,
+            "baseBehind": base_behind,
         }
     except Exception as exc:
         # AC-1 (160-16): a present-but-broken git probe (e.g. a non-numeric
@@ -300,13 +300,40 @@ def _get_git_info(
         return None
 
 
-def _get_repos_config(project_dir: str) -> list[dict[str, str]]:
+class _RepoConfigBase(TypedDict):
+    """Keys present on EVERY repo entry from :func:`_get_repos_config`."""
+
+    name: str
+    path: str
+
+
+class RepoConfig(_RepoConfigBase, total=False):
+    """A repo entry from :func:`_get_repos_config`.
+
+    ``name`` and ``path`` are ALWAYS present (declared required in
+    :class:`_RepoConfigBase`). ``base`` and ``remote`` are present ONLY on the
+    repos.yaml path; the single-repo fallback omits them (story 162-87 — the
+    two-level split makes the annotation match both shapes honestly, so ``{}``
+    is NOT a valid ``RepoConfig`` and direct ``entry["name"]`` / ``entry["path"]``
+    access is type-safe).
+    """
+
+    base: str
+    remote: str
+
+
+def _get_repos_config(project_dir: str) -> list[RepoConfig]:
     """Read repos from repos.yaml.
 
-    Each entry carries ``base`` (repos.yaml ``default_branch``, default
-    ``develop``) and ``remote`` (``remote_name``, default ``origin``) so the
-    caller can probe each repo's configured base branch (story 162-27) rather
-    than a hardcoded ``origin/develop``.
+    **repos.yaml path:** each entry carries ``base`` (repos.yaml
+    ``default_branch``, default ``develop``) and ``remote`` (``remote_name``,
+    default ``origin``) so the caller can probe each repo's configured base
+    branch (story 162-27) rather than a hardcoded ``origin/develop``.
+
+    **Single-repo fallback** (no readable repos.yaml): a single entry with only
+    ``name`` and ``path`` (``"."``) — NO ``base``/``remote`` keys. Callers
+    default the missing keys to ``develop``/``origin`` via ``.get`` (story
+    162-87 corrected this docstring: the fallback shape never carried them).
     """
     import yaml
 
@@ -359,9 +386,22 @@ async def get_git() -> JSONResponse:
     # single-repo panel probes the project's real base, not a hardcoded
     # origin/develop. The root repo is the one declared at path ".".
     repos = _get_repos_config(project_dir)
-    root = next((r for r in repos if r.get("path") in (".", "")), None) or (
-        repos[0] if repos else {}
+    root: RepoConfig | dict[str, str] | None = next(
+        (r for r in repos if r.get("path") in (".", "")), None
     )
+    if root is None:
+        # AC3 (162-87): repos.yaml declared repos but NONE at path "." (or an
+        # empty ``repos: {}``), so we cannot identify the root repo. Fail loud
+        # (this file's 160-16..22 pattern) instead of silently probing a
+        # non-root fallback's base/remote — the operator's repos.yaml is
+        # misconfigured. Degrade to ``repos[0]``/defaults unchanged.
+        warnings.warn(
+            f"No root repo (path '.') found among {len(repos)} configured repo(s); "
+            "the git panel is falling back to defaults. Declare the root repo with "
+            "path '.' in repos.yaml.",
+            stacklevel=2,
+        )
+        root = repos[0] if repos else {}
     info = _get_git_info(
         project_dir, base=root.get("base", "develop"), remote=root.get("remote", "origin")
     )
@@ -395,7 +435,7 @@ async def get_git_all() -> JSONResponse:
                 "clean": info["clean"] if info else True,
                 "ahead": info.get("ahead") if info else None,
                 "behind": info.get("behind") if info else None,
-                "developBehind": info.get("developBehind") if info else None,
+                "baseBehind": info.get("baseBehind") if info else None,
                 "dirtyFiles": info.get("dirtyFiles", []) if info else [],
             }
         )
