@@ -106,6 +106,21 @@ def _write_empty_repos_project(tmp_path) -> str:
     return str(tmp_path)
 
 
+def _write_repo_omitting_base_remote(tmp_path) -> str:
+    """repos.yaml declaring ONE repo at "." that OMITS ``default_branch`` and
+    ``remote_name`` — the default-fill path (story 162-88 AC2 / 162-87 F4). The
+    existing single-repo fixture always supplies both keys, so this exercises the
+    ``.get(...) or "develop"``/``or "origin"`` branch in ``_get_repos_config``."""
+    pf_dir = tmp_path / ".pennyfarthing"
+    pf_dir.mkdir()
+    (tmp_path / ".git").mkdir()
+    (pf_dir / "repos.yaml").write_text(
+        'repos:\n  orchestrator:\n    path: "."\n',
+        encoding="utf-8",
+    )
+    return str(tmp_path)
+
+
 def _install_process_recorder(monkeypatch) -> list[list[str]]:
     """Record and benignly answer every ``git`` and ``gh`` subprocess call;
     non-git/gh calls fall through to the real implementation so app startup is
@@ -239,6 +254,28 @@ class TestAC2ReposConfigContract:
         )
         assert entries[0]["path"] == "."
 
+    def test_repos_yaml_entry_omitting_base_remote_defaults_develop_origin(
+        self, tmp_path
+    ) -> None:
+        """162-88 AC2 (162-87 F4): a repos.yaml entry present but OMITTING
+        ``default_branch``/``remote_name`` must default-fill ``base=develop`` /
+        ``remote=origin``. Mutation-probe: a regression hardcoding ``""`` instead
+        of ``.get(...) or "develop"``/``or "origin"`` (data_proxy.py:353-356)
+        would fail this. The other AC2 tests always supply both keys, so this
+        default-fill branch was previously untested."""
+        project = _write_repo_omitting_base_remote(tmp_path)
+        entries = data_proxy._get_repos_config(project)
+        assert len(entries) == 1, f"expected one repo entry; got {entries}"
+        entry = entries[0]
+        assert entry.get("base") == "develop", (
+            "AC2: an omitted default_branch must default-fill to 'develop'; "
+            f"got {entry.get('base')!r}"
+        )
+        assert entry.get("remote") == "origin", (
+            "AC2: an omitted remote_name must default-fill to 'origin'; "
+            f"got {entry.get('remote')!r}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # AC3 — get_git root-repo edge handling (fail-loud)
@@ -276,9 +313,10 @@ class TestAC3RootRepoEdgeHandling:
             resp = client.get("/api/git/")
         assert resp.status_code == 200
         messages = " ".join(str(w.message) for w in record)
-        assert "root" in messages.lower() or "repos" in messages.lower(), (
-            "AC3: /api/git/ must warn on an empty `repos: {}` config instead of "
-            f"silently defaulting; warnings seen: {messages!r}"
+        assert "root" in messages.lower(), (
+            "162-88 AC1 (162-87 F3): the empty-`repos: {}` warning must pin 'root' "
+            "— the same fail-loud signal as the no-root-among-multiple sibling, not "
+            f"the weaker root/repos disjunction; warnings seen: {messages!r}"
         )
 
 
