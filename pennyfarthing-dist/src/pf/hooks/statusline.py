@@ -14,7 +14,6 @@ import os
 import re
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 from pf.hooks import load_settings
@@ -396,130 +395,6 @@ def _get_story_id(project_root: str) -> str:
     return ""
 
 
-def _get_phase(project_root: str, story_id: str) -> str:
-    """Read the current phase from the story's session file. Fail-soft."""
-    if not story_id:
-        return ""
-    session_file = Path(project_root) / ".session" / f"{story_id}-session.md"
-    try:
-        content = session_file.read_text(errors="ignore")
-    except OSError:
-        return ""
-    m = re.search(r"\*\*Phase:\*\* (\S+)", content)
-    return m.group(1) if m else ""
-
-
-def _compose_tab_title(dir_name: str, story_id: str, phase: str) -> str:
-    """Compose the terminal tab title: `<dir> <story> <phase>`.
-
-    Degrades left-to-right: no phase drops the phase, no story drops both
-    (a phase without a story is stale data and is never shown).
-    """
-    parts = [dir_name]
-    if story_id:
-        parts.append(story_id)
-        if phase:
-            parts.append(phase)
-    return " ".join(parts)
-
-
-def _resolve_ancestor_tty() -> str:
-    """Find the tty device of the nearest ancestor process that has one.
-
-    Claude Code spawns hooks without a controlling terminal, so /dev/tty is
-    unavailable; the parent claude process still owns the real terminal.
-    Returns a device path like /dev/ttys000 (macOS) or /dev/pts/1 (Linux),
-    or "" if no ancestor has a tty.
-    """
-    pid = os.getppid()
-    for _ in range(5):
-        if pid <= 1:
-            break
-        try:
-            out = subprocess.run(
-                ["ps", "-o", "ppid=,tty=", "-p", str(pid)],
-                capture_output=True,
-                text=True,
-                timeout=2,
-            ).stdout.split()
-        except (OSError, subprocess.SubprocessError):
-            return ""
-        if len(out) < 2:
-            return ""
-        ppid_str, tty = out[0], out[1]
-        if tty and not tty.startswith("?"):
-            return f"/dev/{tty}"
-        try:
-            pid = int(ppid_str)
-        except ValueError:
-            return ""
-    return ""
-
-
-def _write_title_to_tty(title: str) -> None:
-    """Write an OSC 2 title escape to the terminal.
-
-    Statusline stdout belongs to Claude Code's status bar; only a tty
-    device reaches the terminal emulator (Ghostty tab title). Tries the
-    controlling terminal first, then falls back to the nearest ancestor's
-    tty (hooks are spawned without a controlling terminal). Control
-    characters are stripped so untrusted session-file content cannot
-    inject escape sequences.
-    """
-    title = re.sub(r"[\x00-\x1f\x7f-\x9f]", "", title)
-    try:
-        tty = open("/dev/tty", "w")
-    except OSError:
-        tty_path = _resolve_ancestor_tty()
-        if not tty_path:
-            raise OSError("no tty available")
-        tty = open(tty_path, "w")
-    with tty:
-        tty.write(f"\x1b]2;{title}\x07")
-        tty.flush()
-
-
-def _set_terminal_title(project_root: Path, dir_name: str, story_id: str) -> None:
-    """Sync the terminal tab title to `<dir> <story> <phase>`. Fail-soft.
-
-    Subagent renders (PF_SUBAGENT set) skip — a worker pane must never
-    retitle the main tab. The last-written title is cached so the tty is
-    only touched when the title actually changes. The cache is written
-    after the tty write succeeds, so a failed write retries next render —
-    except after a failed write, which touches a sentinel
-    that suppresses retries for 60s so headless environments don't pay
-    the ancestor-tty walk on every render.
-    """
-    if os.environ.get("PF_SUBAGENT"):
-        return
-    try:
-        phase = _get_phase(str(project_root), story_id)
-        title = _compose_tab_title(dir_name, story_id, phase)
-        cache = project_root / ".pennyfarthing" / ".runtime" / "tab-title"
-        try:
-            if cache.read_text() == title:
-                return
-        except OSError:
-            pass
-        sentinel = cache.with_name("tab-title-no-tty")
-        try:
-            if time.time() - sentinel.stat().st_mtime < 60:
-                return
-        except OSError:
-            pass
-        try:
-            _write_title_to_tty(title)
-        except OSError:
-            sentinel.parent.mkdir(parents=True, exist_ok=True)
-            sentinel.touch()
-            return
-        sentinel.unlink(missing_ok=True)
-        cache.parent.mkdir(parents=True, exist_ok=True)
-        cache.write_text(title)
-    except OSError:
-        pass
-
-
 def _tmux_context_bar(pct: str | int) -> str:
     """Build a tmux-formatted context bar using tmux style tags."""
     bar_width = 10
@@ -590,10 +465,6 @@ def main() -> None:
 
         # Always write tmux cache (side-channel for tmux status line)
         _write_tmux_cache(project_root, pct, story_id, dir_name)
-
-        # Sync terminal tab title (side-channel via /dev/tty or ancestor tty)
-        root_name = Path(project_root).name if project_root else dir_name
-        _set_terminal_title(Path(project_root), root_name, story_id)
 
         # Suppress statusline for subagent panes (teammates in tmux)
         if os.environ.get("PF_SUBAGENT"):
