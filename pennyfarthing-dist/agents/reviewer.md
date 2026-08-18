@@ -211,6 +211,25 @@ Do not skip subagents because "the code looks clean."
 **Total findings:** {N} confirmed, {N} dismissed (with rationale), {N} deferred
 ```
 
+### Finding Disposition — BLOCKING (ADR-0043)
+
+**Every confirmed finding gets exactly one disposition before you write your verdict.** The disposition decides whether the finding becomes a tracked story — and by default it does *not*. This is the triage gate that stops the review pipeline from minting a backlog story per finding (see `docs/adr/0043`). Enforced programmatically by the approval gate via `pf.reviewer.disposition.validate_dispositions`.
+
+| Disposition | Meaning | Becomes a story? |
+|-------------|---------|------------------|
+| **fix-now** | In scope for this PR — the author fixes it before merge | No — fixed in place |
+| **fold** | Belongs with a sibling backlog story on the same seam | No — appended to that story's body |
+| **defer** | Real, out of scope, worth tracking | Only under the auto-promotion rule below |
+| **drop** | Chore-grade / speculative / cost > value | No — recorded here, not promoted |
+
+**Auto-promotion is restricted.** Only findings tagged `[SEC]` or **correctness** (produces a wrong result / data loss / crash on real input) may auto-promote to a `defer` story with no further argument. **Every other finding defaults to `drop`** unless you write an explicit one-line justification for the `defer`. The burden of proof flips: a finding must now be argued *up* into a story, not argued *down* out of one.
+
+**Chore-grade never gets a story.** A finding you would label chore-grade rides the next edit of that file (captured in the lang-review checklist), never a dedicated backlog item — even with a justification.
+
+**Follow-up budget (backstop).** An epic accumulates at most **N=10** review-spawned `defer` stories. Beyond the cap, further deferrals collapse into a single "review-debt" story that forces prioritization instead of unbounded fan-out (`pf.reviewer.disposition.apply_followup_budget`).
+
+Record each confirmed finding's disposition in your assessment. The gate rejects a confirmed finding with no disposition, an unjustified non-`[SEC]`/non-correctness `defer`, or a chore-grade `defer`.
+
 ### A REJECTION needs the same evidence as an approval — BLOCKING
 
 The Subagent Results table and the specialist tags are required on the way OUT to
