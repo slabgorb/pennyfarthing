@@ -49,6 +49,8 @@ Check the session file for a Reviewer Assessment section AND a complete Subagent
 
 7. **Verify VERIFIED rule citations** (see nested gate below) — every VERIFIED includes rule compatibility check
 
+8. **Verify finding dispositions** (ADR-0043) — every CONFIRMED finding carries exactly one disposition (`fix-now` / `fold` / `defer` / `drop`). Reject if any confirmed finding has no disposition, if a `defer` on a non-`[SEC]`/non-correctness finding lacks a one-line justification, or if a chore-grade finding is `defer`red. The rule is codified in `pf.reviewer.disposition.validate_dispositions` — that module is the source of truth for the classification.
+
 If the review is APPROVED and all subgates pass, return:
 
 ```yaml
@@ -72,6 +74,9 @@ GATE_RESULT:
     - name: verified-rule-citation
       status: pass
       detail: "All VERIFIEDs include rule compatibility checks"
+    - name: finding-disposition
+      status: pass
+      detail: "Every confirmed finding has a valid ADR-0043 disposition"
 ```
 </pass>
 
