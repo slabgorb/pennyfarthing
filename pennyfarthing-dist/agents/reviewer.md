@@ -213,7 +213,7 @@ Do not skip subagents because "the code looks clean."
 
 ### Finding Disposition — BLOCKING (ADR-0043)
 
-**Every confirmed finding gets exactly one disposition before you write your verdict.** The disposition decides whether the finding becomes a tracked story — and by default it does *not*. This is the triage gate that stops the review pipeline from minting a backlog story per finding (see `docs/adr/0043`). Enforced programmatically by the approval gate via `pf.reviewer.disposition.validate_dispositions`.
+**Every confirmed finding gets exactly one disposition before you write your verdict.** The disposition decides whether the finding becomes a tracked story — and by default it does *not*. This is the triage gate that stops the review pipeline from minting a backlog story per finding (see `docs/adr/0043`). The classification rules are codified in `pf.reviewer.disposition.validate_dispositions` (the source of truth); the approval gate checks dispositions by reading your assessment.
 
 | Disposition | Meaning | Becomes a story? |
 |-------------|---------|------------------|

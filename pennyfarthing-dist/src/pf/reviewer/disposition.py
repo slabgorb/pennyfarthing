@@ -6,12 +6,15 @@ product work. ADR-0043 closes that triage gap with a disposition gate at
 reviewer exit: every confirmed finding gets exactly one disposition, and only
 ``[SEC]``/correctness findings may auto-promote to a tracked story.
 
-This module is the pure-logic core the reviewer exit gate calls. It is kept
+This module is the pure-logic core the reviewer exit gate consults. It is kept
 separate from :mod:`pf.reviewer.findings` (story 150-20), whose ``Finding``
 carries a legacy go/no-go ``FIX``/``RECORD`` disposition — see the Design
 Deviation logged for 162-78 for the reconciliation decision.
 
-Functions return result dicts (SOUL #10 — return results, don't throw).
+Functions return result dicts and never raise (SOUL #10 — return results, don't
+throw). ``disposition`` and ``category`` inputs are normalized (stripped and
+lowercased) before comparison, so whitespace/case variants from agent-authored
+finding tables cannot slip a chore-grade finding past the gate.
 
 Story: 162-78
 """
@@ -24,15 +27,21 @@ VALID_DISPOSITIONS = frozenset({"fix-now", "fold", "defer", "drop"})
 # Only these categories may auto-promote a ``defer`` into a tracked story.
 PROMOTABLE_CATEGORIES = frozenset({"SEC", "correctness"})
 
+# Normalized lookup used for case/whitespace-insensitive comparison. The public
+# constant above keeps its canonical casing (it is part of the module's API).
+_PROMOTABLE_LOWER = frozenset(c.lower() for c in PROMOTABLE_CATEGORIES)
+
 # Findings the reviewer would label chore-grade never earn a story.
 _NEVER_PROMOTE_CATEGORY = "chore-grade"
-
-# Dispositions that resolve inside the current PR / review — never a story.
-_NON_STORY_DISPOSITIONS = frozenset({"fix-now", "fold", "drop"})
 
 # Per-epic cap on review-spawned ``defer`` stories; overflow collapses into a
 # single "review-debt" story instead of unbounded fan-out.
 DEFAULT_FOLLOWUP_BUDGET = 10
+
+
+def _normalize(value: str | None) -> str:
+    """Strip and lowercase a disposition/category token; ``None`` -> ``""``."""
+    return (value or "").strip().lower()
 
 
 def classify_promotion(
@@ -44,37 +53,49 @@ def classify_promotion(
     """Decide whether a confirmed finding becomes a tracked story.
 
     Args:
-        disposition: One of :data:`VALID_DISPOSITIONS`.
+        disposition: One of :data:`VALID_DISPOSITIONS` (case/space-insensitive).
         category: The finding category — ``SEC``, ``correctness``,
-            ``chore-grade``, or anything else ("other").
+            ``chore-grade``, or anything else ("other"). Required for a ``defer``.
         justification: One-line reason required to ``defer`` a
             non-``[SEC]``/non-correctness finding.
 
     Returns:
         ``{"valid", "becomes_story", "effective_disposition", "error"}``.
     """
-    if disposition not in VALID_DISPOSITIONS:
+    disp = _normalize(disposition)
+
+    if disp not in VALID_DISPOSITIONS:
         return {
             "valid": False,
             "becomes_story": False,
-            "effective_disposition": disposition,
+            "effective_disposition": None,
             "error": (
                 f"Invalid disposition '{disposition}'. "
                 f"Must be one of: {', '.join(sorted(VALID_DISPOSITIONS))}"
             ),
         }
 
-    # fix-now / fold / drop resolve in place — never a story.
-    if disposition in _NON_STORY_DISPOSITIONS:
+    # fix-now / fold / drop resolve in place — never a story. After the validity
+    # guard, "not defer" is exactly that set, so no separate constant to drift.
+    if disp != "defer":
         return {
             "valid": True,
             "becomes_story": False,
-            "effective_disposition": disposition,
+            "effective_disposition": disp,
             "error": None,
         }
 
-    # disposition == "defer" below.
-    if category == _NEVER_PROMOTE_CATEGORY:
+    # disposition == "defer": category drives promotion.
+    cat = _normalize(category)
+    if not cat:
+        return {
+            "valid": False,
+            "becomes_story": False,
+            "effective_disposition": "drop",
+            "error": "a defer finding requires a category ([SEC], correctness, chore-grade, or other)",
+        }
+
+    if cat == _NEVER_PROMOTE_CATEGORY:
         return {
             "valid": False,
             "becomes_story": False,
@@ -82,7 +103,7 @@ def classify_promotion(
             "error": "chore-grade findings never get a story; drop it",
         }
 
-    if category in PROMOTABLE_CATEGORIES:
+    if cat in _PROMOTABLE_LOWER:
         # Auto-promotion: [SEC]/correctness may defer without justification.
         return {
             "valid": True,
@@ -123,8 +144,17 @@ def apply_followup_budget(
     the cap, the overflow collapses into a single "review-debt" story.
 
     Returns:
-        ``{"stories_created", "review_debt_story", "collapsed"}``.
+        ``{"stories_created", "review_debt_story", "collapsed", "error"}``.
+        On invalid (negative) input, counts are zeroed and ``error`` is set.
     """
+    if new_defers < 0 or existing_defers < 0 or budget < 0:
+        return {
+            "stories_created": 0,
+            "review_debt_story": False,
+            "collapsed": 0,
+            "error": "new_defers, existing_defers and budget must be non-negative",
+        }
+
     allowed = max(0, budget - existing_defers)
     filled = min(new_defers, allowed)
     collapsed = new_defers - filled
@@ -134,10 +164,11 @@ def apply_followup_budget(
         "stories_created": stories_created,
         "review_debt_story": review_debt_story,
         "collapsed": collapsed,
+        "error": None,
     }
 
 
-def validate_dispositions(findings: list[dict]) -> dict:
+def validate_dispositions(findings: list[dict] | None) -> dict:
     """Validate that every confirmed finding carries a legal disposition.
 
     Each finding is a mapping with ``id``, ``disposition``, ``category``, and
@@ -147,18 +178,20 @@ def validate_dispositions(findings: list[dict]) -> dict:
     Returns:
         ``{"valid": bool, "errors": [str]}``.
     """
+    if findings is None:
+        return {"valid": False, "errors": ["findings list is None"]}
+
     errors: list[str] = []
 
     for finding in findings:
         fid = finding.get("id", "?")
-        disposition = (finding.get("disposition") or "").strip()
 
-        if not disposition:
+        if not (finding.get("disposition") or "").strip():
             errors.append(f"Finding {fid}: missing disposition")
             continue
 
         result = classify_promotion(
-            disposition=disposition,
+            disposition=finding.get("disposition"),
             category=finding.get("category"),
             justification=finding.get("justification"),
         )

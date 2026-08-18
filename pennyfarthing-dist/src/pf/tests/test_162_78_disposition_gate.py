@@ -172,12 +172,65 @@ class TestChoreGradeNeverPromotes:
             justification="I really want this one tracked.",
         )
         assert result["becomes_story"] is False
+        # chore-grade is unconditionally invalid, not merely non-promoting —
+        # a justification must not buy it validity (mutation guard, 162-78 review F4).
+        assert result["valid"] is False
+
+    def test_chore_grade_defer_ignores_surrounding_whitespace(self) -> None:
+        # Un-normalized "chore-grade " (trailing space) must not slip past the
+        # bare-equality suppression into the "other" promote path (162-78 review F1/[SEC]).
+        from pf.reviewer.disposition import classify_promotion
+
+        result = classify_promotion(
+            disposition="defer",
+            category="  Chore-Grade ",
+            justification="legit-looking",
+        )
+        assert result["valid"] is False
+        assert result["becomes_story"] is False
 
     def test_chore_grade_defer_defaults_to_drop(self) -> None:
         from pf.reviewer.disposition import classify_promotion
 
         result = classify_promotion(disposition="defer", category="chore-grade")
         assert result["effective_disposition"] == "drop"
+
+
+# ---------------------------------------------------------------------------
+# Input normalization & required-category (162-78 review F1: [SEC]/[EDGE])
+# ---------------------------------------------------------------------------
+
+
+class TestNormalizationAndRequiredCategory:
+    def test_mixed_case_disposition_is_accepted(self) -> None:
+        from pf.reviewer.disposition import classify_promotion
+
+        result = classify_promotion(disposition="Defer", category="SEC")
+        assert result["valid"] is True
+        assert result["becomes_story"] is True
+
+    def test_mixed_case_disposition_via_validate(self) -> None:
+        from pf.reviewer.disposition import validate_dispositions
+
+        result = validate_dispositions(
+            [{"id": "F1", "disposition": "DEFER", "category": "correctness"}]
+        )
+        assert result["valid"] is True
+
+    def test_defer_without_category_is_invalid(self) -> None:
+        from pf.reviewer.disposition import classify_promotion
+
+        result = classify_promotion(disposition="defer", category=None)
+        assert result["valid"] is False
+        assert result["becomes_story"] is False
+        assert "category" in result["error"].lower()
+
+    def test_defer_missing_category_key_via_validate(self) -> None:
+        from pf.reviewer.disposition import validate_dispositions
+
+        result = validate_dispositions([{"id": "F1", "disposition": "defer"}])
+        assert result["valid"] is False
+        assert any("F1" in e for e in result["errors"])
 
 
 # ---------------------------------------------------------------------------
@@ -231,6 +284,28 @@ class TestFollowupBudget:
         assert result["stories_created"] == 0
         assert result["review_debt_story"] is False
 
+    def test_at_budget_boundary_reports_zero_collapsed(self) -> None:
+        from pf.reviewer.disposition import apply_followup_budget
+
+        result = apply_followup_budget(new_defers=8, existing_defers=2)  # total == 10
+        assert result["collapsed"] == 0
+
+    def test_zero_budget_freezes_all_defers_into_one_debt_story(self) -> None:
+        from pf.reviewer.disposition import apply_followup_budget
+
+        result = apply_followup_budget(new_defers=3, existing_defers=0, budget=0)
+        assert result["review_debt_story"] is True
+        assert result["collapsed"] == 3
+        assert result["stories_created"] == 1
+
+    def test_negative_input_returns_error_not_nonsense(self) -> None:
+        from pf.reviewer.disposition import apply_followup_budget
+
+        # SOUL #10: return an error result, do not silently inflate/deflate the cap.
+        result = apply_followup_budget(new_defers=3, existing_defers=-5)
+        assert result["error"] is not None
+        assert result["stories_created"] == 0
+
 
 # ---------------------------------------------------------------------------
 # AC7: The exit-gate validator (what the reviewer approval gate calls)
@@ -257,6 +332,14 @@ class TestValidateDispositions:
         result = validate_dispositions(findings)
         assert result["valid"] is True
         assert result["errors"] == []
+
+    def test_none_findings_returns_error_not_throw(self) -> None:
+        # SOUL #10: the module docstring promises no throw — None must not TypeError.
+        from pf.reviewer.disposition import validate_dispositions
+
+        result = validate_dispositions(None)
+        assert result["valid"] is False
+        assert result["errors"]
 
     def test_missing_disposition_is_rejected(self) -> None:
         from pf.reviewer.disposition import validate_dispositions
