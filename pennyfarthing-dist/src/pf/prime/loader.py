@@ -16,6 +16,7 @@ import re
 from pathlib import Path
 
 from pf.common.config import get_dist_root, get_project_root
+from pf.workflow.helpers import get_all_workflows_dirs, is_contained_path
 
 
 def load_agent_definition(agent_name: str, project_root: Path | None = None) -> str | None:
@@ -387,21 +388,19 @@ def load_step_content(
     step_num = f"{current_step:02d}"
     pattern = f"step-{step_num}-*.md"
 
-    # Check .pennyfarthing/workflows/{name}/steps/
-    steps_dir = root / ".pennyfarthing" / "workflows" / workflow_name / "steps"
-    if steps_dir.is_dir():
-        matches = list(steps_dir.glob(pattern))
-        if matches:
-            return matches[0].read_text()
-
-    # Fallback: pennyfarthing-dist via get_dist_root
-    dist_root = get_dist_root(project_root=root)
-    if dist_root:
-        steps_dir = dist_root / "workflows" / workflow_name / "steps"
+    # workflow_name is untrusted — it comes from the session **Workflow:** line —
+    # so resolve steps through the shared multi-tier workflows dirs (project
+    # tiers first, dist floor last) and containment-check each candidate against
+    # its tier. A traversal or absolute name must not read a step file from
+    # outside the workflows directory (CWE-22).
+    for workflows_dir in get_all_workflows_dirs(root, include_dist=True):
+        steps_dir = workflows_dir / workflow_name / "steps"
+        if not is_contained_path(steps_dir, workflows_dir):
+            continue
         if steps_dir.is_dir():
-            matches = list(steps_dir.glob(pattern))
+            matches = sorted(steps_dir.glob(pattern))
             if matches:
-                return matches[0].read_text()
+                return matches[0].read_text(encoding="utf-8")
 
     return None
 

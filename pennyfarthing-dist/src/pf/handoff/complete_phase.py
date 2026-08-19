@@ -521,17 +521,25 @@ def _get_phase_tandem(project_root: Path, workflow: str, phase: str) -> dict | N
     return None
 
 
-def _get_phase_agent(project_root: Path, workflow: str, phase: str) -> str:
+def _get_phase_agent(project_root: Path, workflow: str, phase: str) -> str | None:
+    """Return the agent that owns a phase, or None if it cannot be determined.
+
+    Mirrors ``prime.workflow.get_phase_owner`` exactly: an unknown workflow, an
+    unknown phase, or a phase with no ``agent:`` key all yield None. The old
+    ``p.get("agent", phase)`` fallback invented a non-agent owner (it is why
+    ``handoff marker`` had to avoid this function to keep from emitting
+    ``/pf-red``); returning None removes that reader/writer divergence.
+    """
     path = resolve_workflow_file(workflow, project_root)
     if path is not None:
         try:
             data = yaml.safe_load(path.read_text(encoding="utf-8"))
             for p in data["workflow"]["phases"]:
                 if p["name"] == phase:
-                    return p.get("agent", phase)
+                    return p.get("agent")
         except Exception:
             pass
-    return phase
+    return None
 
 
 def _validate_phase_names(

@@ -217,13 +217,25 @@ def resolve_steps_path(
 
 
 def _resolve_path(path_str: str, workflow_dir: Path, project_root: Path) -> Path:
-    """Resolve a path string relative to workflow dir or project root."""
+    """Resolve a path string relative to workflow dir or project root.
+
+    An absolute ``path_str`` arrives from workflow YAML (``modes`` / ``steps.path``)
+    and was otherwise returned verbatim — an absolute-path sink that lets step
+    enumeration (``count_steps`` / ``find_step_file``) point at any directory
+    (CWE-22). Keep an absolute path only while it stays inside the project root;
+    otherwise re-root it under the project so it can never escape.
+    """
     if path_str.startswith("./"):
         return workflow_dir / path_str[2:]
-    elif not Path(path_str).is_absolute():
+    if not Path(path_str).is_absolute():
         return project_root / path_str
-    else:
-        return Path(path_str)
+    candidate = Path(path_str)
+    try:
+        if candidate.resolve().is_relative_to(project_root.resolve()):
+            return candidate
+    except (OSError, ValueError, RuntimeError):
+        pass
+    return project_root / path_str.lstrip("/")
 
 
 def count_steps(steps_path: Path) -> int:

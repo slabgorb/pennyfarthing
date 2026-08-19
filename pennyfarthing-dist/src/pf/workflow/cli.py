@@ -136,13 +136,11 @@ def workflow_phases(story_id: str | None, output_json: bool):
 
     from pf.common.config import get_project_root
     from pf.workflow.helpers import (
-        find_workflow_file,
-        get_workflows_dir,
         load_workflow_data,
+        resolve_workflow_file,
     )
 
     root = get_project_root()
-    workflows_dir = get_workflows_dir(root)
 
     # Determine workflow name from story session or default
     workflow_name = None
@@ -177,7 +175,7 @@ def workflow_phases(story_id: str | None, output_json: bool):
     if not workflow_name:
         workflow_name = "tdd"
 
-    wf_file = find_workflow_file(workflows_dir, workflow_name)
+    wf_file = resolve_workflow_file(workflow_name, root)
     if not wf_file:
         if output_json:
             import json
@@ -254,14 +252,12 @@ def workflow_type_cmd(workflow_name: str):
       WORKFLOW_NAME  - Workflow name (e.g., tdd, architecture)
     """
     from pf.workflow.helpers import (
-        find_workflow_file,
         get_workflow_type,
-        get_workflows_dir,
         load_workflow_data,
+        resolve_workflow_file,
     )
 
-    workflows_dir = get_workflows_dir()
-    wf_file = find_workflow_file(workflows_dir, workflow_name)
+    wf_file = resolve_workflow_file(workflow_name)
     if not wf_file:
         click.echo(f"Error: Workflow '{workflow_name}' not found", err=True)
         raise SystemExit(1)
@@ -337,8 +333,10 @@ def workflow_route_cmd(story_id: str, output_json: bool):
                 click.echo(f"Reason: {result['reason']}")
             return
 
-    # Load all workflow definitions
-    workflows_dirs = get_all_workflows_dirs(root)
+    # Load all workflow definitions. include_dist=True so trigger-tag routing
+    # still resolves in an npm/pip consumer, where workflows live only in dist
+    # (otherwise the candidate list is empty and no story ever matches).
+    workflows_dirs = get_all_workflows_dirs(root, include_dist=True)
     all_workflows: list[tuple[str, dict]] = []
     for wdir in workflows_dirs:
         for wf_path in sorted(wdir.glob("*.yaml")):
@@ -452,26 +450,37 @@ def workflow_list_cmd():
     Shows a markdown table with type, phases/steps, modes, and descriptions.
     """
 
+    from pf.common.config import get_project_root
     from pf.workflow.helpers import (
         count_steps,
-        get_workflows_dir,
+        get_all_workflows_dirs,
         load_workflow_data,
         resolve_steps_path,
     )
 
-    workflows_dir = get_workflows_dir()
+    project_root = get_project_root()
+    # Pure listing enumerates the project-local workflow tiers only; the dist
+    # floor is for resolution, not for `pf workflow list` (get_all_workflows_dirs
+    # keeps include_dist off by default — see 162-29 / 162-74).
+    workflows_dirs = get_all_workflows_dirs(project_root)
 
-    if not workflows_dir.is_dir():
-        click.echo(f"Error: Workflows directory not found at {workflows_dir}", err=True)
-        raise SystemExit(1)
-
-    # Collect workflow files: top-level *.yaml and nested workflow.yaml
-    workflow_files = sorted(workflows_dir.glob("*.yaml"))
-    for subdir in sorted(workflows_dir.iterdir()):
-        if subdir.is_dir():
-            nested = subdir / "workflow.yaml"
-            if nested.exists():
-                workflow_files.append(nested)
+    # Collect workflow files across tiers (top-level *.yaml and nested
+    # workflow.yaml), project tiers first, de-duplicated by workflow name.
+    workflow_files = []
+    seen_names: set[str] = set()
+    for wdir in workflows_dirs:
+        candidates = sorted(wdir.glob("*.yaml"))
+        for subdir in sorted(wdir.iterdir()):
+            if subdir.is_dir():
+                nested = subdir / "workflow.yaml"
+                if nested.exists():
+                    candidates.append(nested)
+        for wf_path in candidates:
+            key = wf_path.parent.name if wf_path.name == "workflow.yaml" else wf_path.stem
+            if key in seen_names:
+                continue
+            seen_names.add(key)
+            workflow_files.append(wf_path)
 
     if not workflow_files:
         click.echo("No workflows found.")
@@ -481,10 +490,6 @@ def workflow_list_cmd():
     click.echo("")
     click.echo("| Workflow | Type | Default | Steps/Phases | Modes | Description |")
     click.echo("|----------|------|---------|--------------|-------|-------------|")
-
-    from pf.common.config import get_project_root
-
-    project_root = get_project_root()
 
     for wf_file in workflow_files:
         data = load_workflow_data(wf_file)
@@ -559,14 +564,12 @@ def workflow_show_cmd(name: str | None, output_json: bool):
     """
     from pf.common.config import get_project_root
     from pf.workflow.helpers import (
-        find_workflow_file,
         get_session_dir,
-        get_workflows_dir,
         load_workflow_data,
+        resolve_workflow_file,
     )
 
     project_root = get_project_root()
-    workflows_dir = get_workflows_dir(project_root)
     session_dir = get_session_dir(project_root)
 
     workflow_name = name
@@ -599,7 +602,7 @@ def workflow_show_cmd(name: str | None, output_json: bool):
             click.echo(f"# Workflow: {workflow_name}")
             click.echo("")
 
-    wf_file = find_workflow_file(workflows_dir, workflow_name)
+    wf_file = resolve_workflow_file(workflow_name, project_root)
     if not wf_file:
         if output_json:
             import json
@@ -618,8 +621,14 @@ def workflow_show_cmd(name: str | None, output_json: bool):
         click.echo(f"Error: Workflow '{workflow_name}' not found", err=True)
         click.echo("", err=True)
         click.echo("Available workflows:", err=True)
-        for f in sorted(workflows_dir.glob("*.yaml")):
-            click.echo(f"  {f.stem}", err=True)
+        from pf.workflow.helpers import get_all_workflows_dirs
+
+        seen_stems: set[str] = set()
+        for wdir in get_all_workflows_dirs(project_root, include_dist=True):
+            for f in sorted(wdir.glob("*.yaml")):
+                if f.stem not in seen_stems:
+                    seen_stems.add(f.stem)
+                    click.echo(f"  {f.stem}", err=True)
         raise SystemExit(1)
 
     data = load_workflow_data(wf_file)
@@ -723,20 +732,18 @@ def workflow_start_cmd(name: str, mode: str | None):
     from pf.workflow.helpers import (
         count_steps,
         find_step_file,
-        find_workflow_file,
         get_session_dir,
-        get_workflows_dir,
         load_workflow_data,
         resolve_steps_path,
+        resolve_workflow_file,
         strip_frontmatter,
     )
 
     project_root = get_project_root()
-    workflows_dir = get_workflows_dir(project_root)
     session_dir = get_session_dir(project_root)
 
     # Find workflow file
-    wf_file = find_workflow_file(workflows_dir, name)
+    wf_file = resolve_workflow_file(name, project_root)
     if not wf_file:
         click.echo(f"Error: Workflow '{name}' not found", err=True)
         raise SystemExit(1)
@@ -891,19 +898,17 @@ def workflow_resume_cmd(name: str | None):
     from pf.workflow.helpers import (
         count_steps,
         find_step_file,
-        find_workflow_file,
         find_workflow_session,
         get_session_dir,
-        get_workflows_dir,
         load_workflow_data,
         parse_session_field,
         parse_steps_completed,
         resolve_steps_path,
+        resolve_workflow_file,
         strip_frontmatter,
     )
 
     project_root = get_project_root()
-    workflows_dir = get_workflows_dir(project_root)
     session_dir = get_session_dir(project_root)
 
     if not session_dir.is_dir():
@@ -952,7 +957,7 @@ def workflow_resume_cmd(name: str | None):
         return
 
     # Find workflow definition
-    wf_file = find_workflow_file(workflows_dir, workflow_name)
+    wf_file = resolve_workflow_file(workflow_name, project_root)
     if not wf_file:
         click.echo(f"Error: Workflow definition '{workflow_name}' not found", err=True)
         raise SystemExit(1)
@@ -1019,18 +1024,16 @@ def workflow_status_cmd(name: str | None):
     from pf.common.config import get_project_root
     from pf.workflow.helpers import (
         count_steps,
-        find_workflow_file,
         find_workflow_session,
         get_session_dir,
-        get_workflows_dir,
         load_workflow_data,
         parse_session_field,
         parse_steps_completed,
         resolve_steps_path,
+        resolve_workflow_file,
     )
 
     project_root = get_project_root()
-    workflows_dir = get_workflows_dir(project_root)
     session_dir = get_session_dir(project_root)
 
     if not session_dir.is_dir():
@@ -1073,7 +1076,7 @@ def workflow_status_cmd(name: str | None):
     # Get step count from workflow file
     step_count_str = "?"
     wf_desc = "-"
-    wf_file = find_workflow_file(workflows_dir, workflow_name)
+    wf_file = resolve_workflow_file(workflow_name, project_root)
     if wf_file:
         data = load_workflow_data(wf_file)
         wf_desc = data.get("workflow", {}).get("description", "-")
@@ -1337,20 +1340,18 @@ def workflow_complete_step_cmd(name: str | None, step_override: int | None):
     from pf.workflow.helpers import (
         count_steps,
         find_step_file,
-        find_workflow_file,
         find_workflow_session,
         format_steps_completed,
         get_session_dir,
-        get_workflows_dir,
         load_workflow_data,
         parse_session_field,
         parse_steps_completed,
         resolve_steps_path,
+        resolve_workflow_file,
         strip_frontmatter,
     )
 
     project_root = get_project_root()
-    workflows_dir = get_workflows_dir(project_root)
     session_dir = get_session_dir(project_root)
 
     if not session_dir.is_dir():
@@ -1394,7 +1395,7 @@ def workflow_complete_step_cmd(name: str | None, step_override: int | None):
     completing_step = step_override if step_override is not None else current_step
 
     # Find workflow file and resolve steps path
-    wf_file = find_workflow_file(workflows_dir, workflow_name)
+    wf_file = resolve_workflow_file(workflow_name, project_root)
     if not wf_file:
         click.echo(f"Error: Workflow definition '{workflow_name}' not found", err=True)
         raise SystemExit(1)
