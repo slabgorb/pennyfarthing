@@ -116,7 +116,10 @@ def complete_phase(
         return {
             "status": "error",
             "session_file": str(session_path),
-            "error": missing_assessment_error(from_agent),
+            # from_agent is None when the phase carries no agent / is unknown
+            # (see _get_phase_agent); fall back to the phase name so the error
+            # helper never dereferences None.
+            "error": missing_assessment_error(from_agent or from_phase),
         }
 
     # Subgate: setup-exit requires the epic + story context documents to exist.
@@ -280,9 +283,12 @@ def complete_phase(
         result_lines.append(line)
     content = "\n".join(result_lines)
 
-    # Add Handoff History row at end of table
+    # Add Handoff History row at end of table. from_agent/to_agent may be None
+    # (unknown/no-agent phase); use the phase name as the label so the row never
+    # records the literal "None" as an agent.
     handoff_row = (
-        f"| {from_phase} ({from_agent}) | {to_phase} ({to_agent}) | {gate_type} | PASSED | {now} |"
+        f"| {from_phase} ({from_agent or from_phase}) | "
+        f"{to_phase} ({to_agent or to_phase}) | {gate_type} | PASSED | {now} |"
     )
     lines = content.splitlines()
     insert_after = None
@@ -325,13 +331,13 @@ def complete_phase(
 
         emit_subagent_event(
             "phase_complete",
-            agent=from_agent,
+            agent=from_agent or "",
             story_id=story_id,
             workflow=workflow,
             from_phase=from_phase,
             to_phase=to_phase,
             gate_type=gate_type,
-            next_agent=to_agent,
+            next_agent=to_agent or "",
         )
     except Exception:
         pass  # Non-fatal — observability should never block workflow
@@ -537,7 +543,9 @@ def _get_phase_agent(project_root: Path, workflow: str, phase: str) -> str | Non
             for p in data["workflow"]["phases"]:
                 if p["name"] == phase:
                     return p.get("agent")
-        except Exception:
+        except (OSError, yaml.YAMLError, KeyError, TypeError):
+            # Missing/unreadable/malformed workflow YAML → degrade to None
+            # (SOUL #10), matching the reader get_phase_owner.
             pass
     return None
 

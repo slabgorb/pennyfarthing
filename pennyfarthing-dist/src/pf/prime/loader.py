@@ -397,6 +397,9 @@ def load_step_content(
         steps_dir = workflows_dir / workflow_name / "steps"
         if not is_contained_path(steps_dir, workflows_dir):
             continue
+        # Enumerate the RESOLVED dir so a symlink swapped in after the
+        # containment check cannot redirect the read outside the tier.
+        steps_dir = steps_dir.resolve()
         if steps_dir.is_dir():
             matches = sorted(steps_dir.glob(pattern))
             if matches:

@@ -293,8 +293,33 @@ class TestResolvePathAbsoluteSink:
             "arbitrary directory (CWE-22)."
         )
 
-    def test_absolute_path_inside_root_is_preserved(self, tmp_path: Path) -> None:
-        """The guard must not break a legitimate in-tree absolute path."""
+    def test_relative_traversal_escaping_root_is_contained(self, tmp_path: Path) -> None:
+        """A relative ``..`` path (not just absolute) must not escape the root.
+
+        The classic traversal vector: `project_root / "../../../evil"` escapes on
+        OS normalization. The absolute-path guard alone left this open.
+        """
+        from pf.workflow.helpers import _resolve_path
+
+        project_root = tmp_path / "proj"
+        project_root.mkdir()
+        workflow_dir = project_root / ".pennyfarthing" / "workflows" / "wf"
+        workflow_dir.mkdir(parents=True)
+
+        resolved = _resolve_path("../../../evil", workflow_dir, project_root).resolve()
+        assert resolved.is_relative_to(project_root.resolve()), (
+            f"_resolve_path returned {resolved} for a relative traversal path — "
+            "it escapes the project root. Containment must cover the relative "
+            "(`..`) branch, not just absolute paths (CWE-22)."
+        )
+
+    def test_absolute_path_inside_root_is_identity(self, tmp_path: Path) -> None:
+        """A legitimate in-tree absolute path resolves to itself (not re-rooted).
+
+        Pins identity, not mere containment: a guard that re-homed a valid path
+        to a *different* in-tree location would still be inside the root and pass
+        a containment-only check, silently pointing steps at the wrong dir.
+        """
         from pf.workflow.helpers import _resolve_path
 
         project_root = tmp_path / "proj"
@@ -303,11 +328,14 @@ class TestResolvePathAbsoluteSink:
         workflow_dir.mkdir(parents=True)
         inside = project_root / "steps"
 
-        resolved = _resolve_path(str(inside), workflow_dir, project_root).resolve()
-        assert resolved.is_relative_to(project_root.resolve())
+        assert _resolve_path(str(inside), workflow_dir, project_root) == inside.resolve()
 
     def test_relative_paths_unaffected(self, tmp_path: Path) -> None:
-        """``./x`` resolves against workflow_dir; bare ``x`` against project_root."""
+        """``./x`` resolves against workflow_dir; bare ``x`` against project_root.
+
+        _resolve_path returns the resolved (symlink/`..`-collapsed) path, so
+        compare against the resolved forms.
+        """
         from pf.workflow.helpers import _resolve_path
 
         project_root = tmp_path / "proj"
@@ -315,8 +343,14 @@ class TestResolvePathAbsoluteSink:
         workflow_dir = project_root / ".pennyfarthing" / "workflows" / "wf"
         workflow_dir.mkdir(parents=True)
 
-        assert _resolve_path("./steps", workflow_dir, project_root) == workflow_dir / "steps"
-        assert _resolve_path("steps", workflow_dir, project_root) == project_root / "steps"
+        assert (
+            _resolve_path("./steps", workflow_dir, project_root)
+            == (workflow_dir / "steps").resolve()
+        )
+        assert (
+            _resolve_path("steps", workflow_dir, project_root)
+            == (project_root / "steps").resolve()
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -431,7 +465,9 @@ class TestGetPhaseAgentProxyConsistency:
 
         reader = get_phase_owner("tdd", "red", phase_without_agent)
         writer = _get_phase_agent(phase_without_agent, "tdd", "red")
-        assert writer == reader, (
+        # Pin the concrete value (None), not just equality — writer == reader
+        # alone would pass spuriously if both later returned the phase name.
+        assert writer == reader is None, (
             f"Reader/writer disagreement on a phase with no agent: reader="
             f"{reader!r} (None) but _get_phase_agent={writer!r} (the phase name). "
             "The writer must not invent 'red' as the owner — it stamps that agent "
@@ -486,13 +522,12 @@ class TestLoaderNullabilityUnified:
         """chain, gate and complete_phase resolve the SAME phase sequence.
 
         Non-vacuous: pins the concrete packaged tdd phase names, so a loader
-        answering from a different file (or nothing) is caught.
+        answering from a different file (or nothing) is caught. With no project
+        workflows tier, tdd.yaml resolves from the bundled ``pf._dist`` package
+        (get_dist_root's final fallback) — no fixture workflows dir is needed.
         """
         (tmp_path / ".pennyfarthing").mkdir()
         (tmp_path / ".pennyfarthing" / "config.local.yaml").write_text("theme: mash\n")
-        (
-            tmp_path / "node_modules" / "@pennyfarthing" / "core" / "pennyfarthing-dist" / "workflows"
-        ).mkdir(parents=True)
 
         from pf.handoff.complete_phase import _load_workflow_phases as cp_phases
         from pf.subagent.chain import _load_workflow_phases as chain_phases
