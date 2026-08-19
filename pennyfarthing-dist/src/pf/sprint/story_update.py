@@ -54,6 +54,7 @@ def update_story(
     clear_ac: bool = False,
     story_type: str | None = None,
     depends_on: str | None = None,
+    clear_depends_on: bool = False,
     dry_run: bool = False,
     update_jira: bool = False,
     epic: str | None = None,
@@ -83,6 +84,8 @@ def update_story(
         story_type: New story type tag (validated against VALID_STORY_TYPES)
         depends_on: Story ID this story depends on. Must resolve to a real
             story and may not be the story itself (fail-loud on either).
+        clear_depends_on: If True, remove the story's ``depends_on`` entirely.
+            Contradictory with ``depends_on`` (fail-loud, no silent drop).
         dry_run: If True, report changes without writing
         update_jira: If True, sync changed fields to Jira after YAML update
 
@@ -122,6 +125,7 @@ def update_story(
             "--clear-ac": clear_ac,
             "--type": story_type is not None,
             "--depends-on": depends_on is not None,
+            "--clear-depends-on": clear_depends_on,
         }
         conflicting = [flag for flag, present in field_flags.items() if present]
         if conflicting:
@@ -144,6 +148,18 @@ def update_story(
                 details.get("new_id") or details.get("id") or story_id
             )
         return move_result
+
+    # --clear-depends-on removes the dependency; combining it with --depends-on
+    # (which sets one) is contradictory — reject rather than silently pick a
+    # winner (162-80, no-silent-drop charter).
+    if clear_depends_on and depends_on is not None:
+        return {
+            "success": False,
+            "error": (
+                "--clear-depends-on cannot be combined with --depends-on "
+                "(one removes the dependency, the other sets it)."
+            ),
+        }
 
     # Validate status before reading file
     if status is not None and status not in VALID_STORY_STATUSES:
@@ -206,6 +222,10 @@ def update_story(
         story["type"] = story_type
     if depends_on is not None:
         story["depends_on"] = depends_on
+    if clear_depends_on:
+        # Remove the key entirely (idempotent no-op if absent) rather than
+        # blanking it, so the story reads as a true stack root afterward.
+        story.pop("depends_on", None)
     if description is not None:
         story["description"] = description
     if review_findings is not None:
@@ -392,6 +412,11 @@ def update_story(
     help="Story ID this story depends on (must resolve to a real story)",
 )
 @click.option(
+    "--clear-depends-on",
+    is_flag=True,
+    help="Remove the story's depends_on (cannot combine with --depends-on)",
+)
+@click.option(
     "--epic",
     default=None,
     help=(
@@ -420,6 +445,7 @@ def story_update_command(
     clear_ac: bool,
     story_type: str | None,
     depends_on: str | None,
+    clear_depends_on: bool,
     dry_run: bool,
     update_jira: bool,
     epic: str | None,
@@ -432,7 +458,7 @@ def story_update_command(
       --status --title --points --priority --assigned-to
       --completed --started --workflow --description
       --review-findings --review-verdict --add-ac --clear-ac
-      --type --depends-on
+      --type --depends-on --clear-depends-on
 
     \b
     Move between epics (mutually exclusive with the field flags):
@@ -468,6 +494,7 @@ def story_update_command(
         clear_ac=clear_ac,
         story_type=story_type,
         depends_on=depends_on,
+        clear_depends_on=clear_depends_on,
         dry_run=dry_run,
         update_jira=update_jira,
         epic=epic,

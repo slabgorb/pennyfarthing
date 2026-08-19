@@ -15,7 +15,7 @@ from typing import Any
 import click
 from ruamel.yaml.comments import CommentedMap
 
-from pf.sprint.loader import find_epic
+from pf.sprint.loader import find_epic, find_story_in_data
 from pf.sprint.shard_merge import safe_ref_path, safe_shards
 from pf.sprint.validator import is_epic_shard_document, validate_sprint_document
 from pf.sprint.yaml_io import (
@@ -117,6 +117,24 @@ def add_story(
             }
 
     story_id = generate_story_id(data, epic)
+
+    # depends_on integrity at add time, parity with update_story (162-82):
+    # a target may not be the story itself and must resolve to a real story.
+    # Rejected BEFORE insert with the same message shape as update_story, so
+    # the caller gets a clear reason instead of a generic post-insert
+    # "Validation failed after insertion" wrapper.
+    if depends_on is not None:
+        if depends_on == story_id:
+            return {
+                "success": False,
+                "error": f"Story '{story_id}' cannot depend on itself.",
+            }
+        _dep_epic, dep_story, _dep_loc = find_story_in_data(data, depends_on)
+        if dep_story is None:
+            return {
+                "success": False,
+                "error": f"--depends-on target '{depends_on}' does not resolve to a known story.",
+            }
 
     # Build story as CommentedMap with canonical key ordering
     story = CommentedMap()

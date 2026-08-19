@@ -427,6 +427,54 @@ def story_show(story_id: str, output_json: bool):
             click.echo(f"Description: {story_data.get('description')}")
 
 
+@story.command("stack-ready")
+@click.argument("story_id")
+@click.option("--json", "output_json", is_flag=True, help="Output verdict as JSON")
+@click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
+def story_stack_ready(story_id: str, output_json: bool, sprint_file: str | None):
+    """Report whether a story's depends_on parent(s) are all merged.
+
+    Resolves scalar OR multi-parent (list) depends_on into a machine-readable
+    verdict (162-45). The stack-ready gate consumes this instead of a scalar
+    field read so multi-parent stacks resolve correctly. Exit 0 when ready,
+    exit 1 when a parent still blocks.
+
+    \b
+    Arguments:
+      STORY_ID  - Story ID (e.g., 67-1)
+    """
+    from pathlib import Path
+
+    from pf.sprint.stack_ready import evaluate_stack_ready
+
+    if sprint_file is not None:
+        from pf.sprint.yaml_io import read_sprint
+
+        sprint_data = read_sprint(Path(sprint_file))
+    else:
+        from pf.sprint.loader import load_sprint
+
+        sprint_data = load_sprint()
+    if not sprint_data:
+        raise click.ClickException("No sprint data found")
+
+    verdict = evaluate_stack_ready(sprint_data, story_id)
+
+    if output_json:
+        import json
+
+        click.echo(json.dumps(verdict, indent=2))
+    elif verdict["ready"]:
+        click.echo(f"Stack-ready: {story_id} — all parents merged")
+    else:
+        click.echo(
+            f"Blocked: {story_id} waiting on {', '.join(verdict['blocking'])}"
+        )
+
+    if not verdict["ready"]:
+        raise SystemExit(1)
+
+
 @story.command("size")
 @click.argument("points", required=False, type=int)
 def story_size(points: int | None):

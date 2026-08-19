@@ -1,15 +1,20 @@
 <gate name="stack-ready" model="haiku">
 
 <purpose>
-Verify that a stacked PR's parent story is merged before allowing this PR to merge.
+Verify that a stacked PR's parent story (or stories) are merged before allowing this PR to merge.
 Prevents out-of-order merges that create broken intermediate states on the integration branch.
 
 Used by: sm-finish (before merge step) when repo has `pr_strategy: stacked`.
 
+Multi-parent aware (162-89 / 162-45): `depends_on` may be a scalar id or a
+list. `pf sprint story stack-ready` resolves either form and reports readiness
+machine-readably (all parents merged/archived -> ready), so a multi-parent
+stack no longer false-passes on a stringified list.
+
 Auto-pass when:
 - Story has no `depends_on` (stack root)
 - Repo `pr_strategy` is not `stacked`
-- Parent story status is `done`
+- Every parent story is `done` (or archived/completed)
 </purpose>
 
 <arguments>
@@ -20,49 +25,47 @@ Auto-pass when:
 </arguments>
 
 <pass>
-1. Read `depends_on` from sprint YAML for the story.
-2. If no `depends_on`, auto-pass (stack root).
-3. If `depends_on` is set, check parent story status.
-4. If parent status is `done`, pass.
+1. Resolve readiness via the machine-readable consumer (handles scalar OR
+   multi-parent list `depends_on`, plus archived-parent resolution).
+2. A story with no `depends_on` reports `is_root: true, ready: true` — auto-pass.
+3. Every parent `done` (or archived) -> `ready: true` -> pass.
 
 ```bash
-DEPENDS_ON=$(pf sprint story field {STORY_ID} depends_on 2>/dev/null || echo "")
-if [ -z "$DEPENDS_ON" ]; then
-  # Stack root or non-stacked — auto-pass
-  exit 0
-fi
-
-PARENT_STATUS=$(pf sprint story field "$DEPENDS_ON" status)
+# Exit 0 + ready:true when every parent is merged; exit 1 otherwise.
+VERDICT=$(pf sprint story stack-ready {STORY_ID} --json)
+echo "$VERDICT"
 ```
+
+`VERDICT` is JSON: `{"story_id", "ready", "is_root", "parents":[{"id","status","satisfied"}], "blocking":[...]}`.
 
 ```yaml
 GATE_RESULT:
   status: pass
   gate: stack-ready
-  message: "Parent story {DEPENDS_ON} is merged (status: done)"
+  message: "All parents merged for {STORY_ID}"
   checks:
-    - name: parent-merged
+    - name: parents-merged
       status: pass
-      detail: "Parent {DEPENDS_ON} status: done"
+      detail: "Every depends_on parent is done/archived (see verdict.parents)"
 ```
 </pass>
 
 <fail>
-If parent story is not yet `done`:
+If `ready` is false, one or more parents in `verdict.blocking` are not yet merged:
 
 ```yaml
 GATE_RESULT:
   status: fail
   gate: stack-ready
-  message: "Parent story {DEPENDS_ON} not yet merged (status: {PARENT_STATUS})"
+  message: "Parent(s) {blocking} not yet merged for {STORY_ID}"
   checks:
-    - name: parent-merged
+    - name: parents-merged
       status: fail
-      detail: "Parent {DEPENDS_ON} status: {PARENT_STATUS}, must be done before merging this PR"
+      detail: "Unsatisfied parents: {blocking}; each must be done before merging this PR"
   recovery:
-    - "Merge parent story {DEPENDS_ON}'s PR first"
+    - "Merge each blocking parent's PR first"
     - "Or remove depends_on from this story if the dependency no longer applies"
-    - "After parent merges, run 'gt sync' to restack, then retry"
+    - "After parents merge, run 'gt sync' to restack, then retry"
 ```
 </fail>
 

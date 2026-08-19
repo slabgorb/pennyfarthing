@@ -267,6 +267,57 @@ class TestStackReadyConsumerMultiParent:
         assert verdict["ready"] is True, "archived (completed) parent is satisfied"
 
 
+class TestStackReadyCliWiring:
+    """The gate consumes ``pf sprint story stack-ready`` — pin the CLI glue so
+    it can't be deleted without a test failing (avoids orphaned code)."""
+
+    def test_cli_multi_parent_ready_emits_json(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        from pf.sprint.cli import story_stack_ready
+
+        path = tmp_path / "current-sprint.yaml"
+        data = _merged_sprint(
+            [
+                _story("162-1", status="done"),
+                _story("162-2", status="done"),
+                _story("162-3", depends_on=["162-1", "162-2"]),
+            ]
+        )
+        with open(path, "w") as f:
+            yaml.dump(data, f)
+        result = runner.invoke(
+            story_stack_ready,
+            ["--sprint-file", str(path), "--json", "162-3"],
+        )
+        assert result.exit_code == 0, f"all parents done -> ready; {result.output}"
+        import json
+
+        verdict = json.loads(result.output)
+        assert verdict["ready"] is True
+        assert {p["id"] for p in verdict["parents"]} == {"162-1", "162-2"}
+
+    def test_cli_blocked_parent_exits_nonzero(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        from pf.sprint.cli import story_stack_ready
+
+        path = tmp_path / "current-sprint.yaml"
+        data = _merged_sprint(
+            [
+                _story("162-1", status="in_progress"),
+                _story("162-2", depends_on="162-1"),
+            ]
+        )
+        with open(path, "w") as f:
+            yaml.dump(data, f)
+        result = runner.invoke(
+            story_stack_ready, ["--sprint-file", str(path), "162-2"]
+        )
+        assert result.exit_code == 1, "an unmerged parent must block (exit 1)"
+        assert "162-1" in result.output
+
+
 # =============================================================================
 # 162-80 — ``--clear-depends-on`` on ``story update``
 #

@@ -18,7 +18,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 
@@ -66,7 +66,10 @@ class ValidationResult:
 # =============================================================================
 
 VALID_SPRINT_STATUSES = {"active", "closed"}
-VALID_STORY_STATUSES = {
+# Canonical story `status` values. frozenset so a caller can never mutate the
+# shared module-level constant (162-85). The paired ``StoryStatus`` Literal is
+# the static-typing view of the same closed set — keep the two in sync.
+StoryStatus = Literal[
     "backlog",
     "ready",
     "in_progress",
@@ -75,7 +78,19 @@ VALID_STORY_STATUSES = {
     "canceled",
     "planning",
     "split",
-}
+]
+VALID_STORY_STATUSES: frozenset[str] = frozenset(
+    {
+        "backlog",
+        "ready",
+        "in_progress",
+        "in_review",
+        "done",
+        "canceled",
+        "planning",
+        "split",
+    }
+)
 # Canonical story `type` tags. Deliberately the UNION of (a) every value already
 # present in the live sprint corpus (bug/chore/refactor/feature/docs/fix/test) and
 # (b) the classification the 162 tagging request asked for
@@ -83,7 +98,9 @@ VALID_STORY_STATUSES = {
 # would retroactively invalidate ~315 existing stories. `fix`/`bug` and `doc`/`docs`
 # are accepted as coexisting aliases pending a normalization pass (see 162-79 TEA
 # finding / ADR-0043 follow-up).
-VALID_STORY_TYPES = {
+# frozenset (162-85): immutable shared constant. ``StoryType`` is the paired
+# Literal view for static typing — keep the two in sync.
+StoryType = Literal[
     "feature",
     "fix",
     "bug",
@@ -93,7 +110,20 @@ VALID_STORY_TYPES = {
     "doc",
     "docs",
     "comment",
-}
+]
+VALID_STORY_TYPES: frozenset[str] = frozenset(
+    {
+        "feature",
+        "fix",
+        "bug",
+        "chore",
+        "refactor",
+        "test",
+        "doc",
+        "docs",
+        "comment",
+    }
+)
 JIRA_KEY_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]+-\d+(\s*/\s*[A-Z][A-Z0-9_]+-\d+)*$")
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -454,6 +484,17 @@ def validate_epic_shard(epic: dict[str, Any]) -> ValidationResult:
                         if not err.message.startswith("Missing required field"):
                             result.add_error(err.message, err.path, err.severity)
 
+            # depends_on integrity on the SHARD route (162-81): the full-sprint
+            # path runs _validate_depends_on, but a raw shard validated via
+            # --sprint-file previously skipped it — so an intra-shard 2-hop
+            # cycle or dangling ref slipped through. Resolve refs against the
+            # shard's own ids (+ archive, inside _validate_depends_on) by
+            # wrapping the shard as a single-epic pseudo-sprint.
+            shard_story_ids = {
+                str(s["id"]) for s in stories if isinstance(s, dict) and s.get("id")
+            }
+            _validate_depends_on({"epics": [epic]}, shard_story_ids, result)
+
     return result
 
 
@@ -678,9 +719,23 @@ def _validate_depends_on(
     A target is considered to exist if it is an active story in the merged
     sprint OR an archived (completed) story. Only references that resolve to
     neither are reported as non-existent.
+
+    Terminal-state targets (162-83, Client decision):
+      * ``done`` (active, not yet archived) -> SATISFIED, silent
+      * archived/completed                  -> SATISFIED, silent (gh #90)
+      * ``canceled``                        -> WARNING (surface the abandoned
+        dependency without hard-failing merged-sprint validation)
     """
     adjacency: dict[str, list[str]] = {}  # story_id -> active depends_on targets
     archived_ids: set[str] | None = None  # lazily resolved on first miss
+
+    # Status lookup for resolved targets so a canceled dependency can be
+    # surfaced as a WARNING (162-83) without blocking validation.
+    status_by_id: dict[str, str] = {}
+    for story in _iter_all_stories(data):
+        sid = str(story.get("id", ""))
+        if sid:
+            status_by_id[sid] = str(story.get("status", ""))
 
     # Walk stories from ALL locations (epics + standalone + top-level) so a
     # dangling depends_on anywhere is caught, not just on epic stories (160-2).
@@ -692,6 +747,16 @@ def _validate_depends_on(
         for ref in _normalize_depends_on(dep, sid, result):
             if ref in all_story_ids:
                 adjacency.setdefault(sid, []).append(ref)
+                # A canceled target is satisfied-enough not to block, but the
+                # dependent is likely orphaned — surface it as a WARNING.
+                if status_by_id.get(ref) == "canceled":
+                    result.add_error(
+                        f"depends_on '{ref}' references a canceled story. "
+                        "The dependency was abandoned — review whether this "
+                        "story is still needed or should drop the dependency.",
+                        f"{sid}.depends_on",
+                        severity=ValidationSeverity.WARNING,
+                    )
                 continue
             # Active sprint miss — resolve against the archive before failing.
             if archived_ids is None:
