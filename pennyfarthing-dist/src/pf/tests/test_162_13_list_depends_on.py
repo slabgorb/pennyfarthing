@@ -765,7 +765,6 @@ class TestStackReadyConsumerResolvesMultiParent:
             "the field read must hand back exactly the parent story id; "
             f"got {value!r}"
         )
-        assert str(value) == "162-1"
 
     def test_list_field_read_is_returned_as_a_list(self) -> None:
         """The field read hands back the list unmangled for the consumer."""

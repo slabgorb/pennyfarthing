@@ -65,7 +65,9 @@ class ValidationResult:
 # Constants
 # =============================================================================
 
-VALID_SPRINT_STATUSES = {"active", "closed"}
+# frozenset (162-85 consistency): immutable shared constant, matching the story
+# type/status sets below — no caller can mutate it.
+VALID_SPRINT_STATUSES: frozenset[str] = frozenset({"active", "closed"})
 # Canonical story `status` values. frozenset so a caller can never mutate the
 # shared module-level constant (162-85). The paired ``StoryStatus`` Literal is
 # the static-typing view of the same closed set — keep the two in sync.

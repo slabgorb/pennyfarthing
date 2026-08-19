@@ -266,6 +266,45 @@ class TestStackReadyConsumerMultiParent:
         verdict = self._eval(data, "162-2")
         assert verdict["ready"] is True, "archived (completed) parent is satisfied"
 
+    def test_unknown_story_is_not_ready_and_flagged(self) -> None:
+        """B1: an unknown story id must NOT auto-pass — distinct from a root.
+
+        The stack-ready gate consumes `ready` to allow a merge; a stale/typo'd
+        id (epic renumber, etc.) must surface, not silently pass.
+        """
+        data = _merged_sprint([_story("162-1")])
+        verdict = self._eval(data, "999-99")
+        assert verdict["found"] is False, "an unknown id must not be reported as found"
+        assert verdict["ready"] is False, (
+            "the gate must NOT auto-pass on an unknown story id (B1 fail-open fix)"
+        )
+        assert verdict["is_root"] is False, "unknown id is not a stack root"
+        assert verdict["warnings"], "the unresolvable id must be surfaced"
+
+    def test_root_verdict_reports_found_true(self) -> None:
+        """A true root (found, no depends_on) is distinguished from not-found."""
+        data = _merged_sprint([_story("162-1")])
+        verdict = self._eval(data, "162-1")
+        assert verdict["found"] is True and verdict["is_root"] is True
+
+    def test_canceled_parent_warns_but_does_not_block(self) -> None:
+        """B2 (Client decision): a canceled parent warns but does NOT block,
+        mirroring 162-83 across the merge gate and validate_full_sprint."""
+        data = _merged_sprint(
+            [
+                _story("162-1", status="canceled"),
+                _story("162-2", depends_on="162-1"),
+            ]
+        )
+        verdict = self._eval(data, "162-2")
+        assert verdict["ready"] is True, (
+            "a canceled parent must NOT block the merge gate (162-83 mirrored)"
+        )
+        assert "162-1" not in verdict["blocking"]
+        assert any(
+            "162-1" in w and "cancel" in w.lower() for w in verdict["warnings"]
+        ), f"the canceled dep must be surfaced as a warning; got {verdict['warnings']!r}"
+
 
 class TestStackReadyCliWiring:
     """The gate consumes ``pf sprint story stack-ready`` — pin the CLI glue so
@@ -317,6 +356,21 @@ class TestStackReadyCliWiring:
         assert result.exit_code == 1, "an unmerged parent must block (exit 1)"
         assert "162-1" in result.output
 
+    def test_cli_unknown_story_exits_nonzero(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """B1 at the CLI: an unresolvable id must not exit 0 (no silent pass)."""
+        from pf.sprint.cli import story_stack_ready
+
+        path = tmp_path / "current-sprint.yaml"
+        with open(path, "w") as f:
+            yaml.dump(_merged_sprint([_story("162-1")]), f)
+        result = runner.invoke(
+            story_stack_ready, ["--sprint-file", str(path), "999-99"]
+        )
+        assert result.exit_code == 1, "unknown story id must not auto-pass the gate"
+        assert "Not found" in result.output
+
 
 # =============================================================================
 # 162-80 — ``--clear-depends-on`` on ``story update``
@@ -358,6 +412,12 @@ class TestClearDependsOn:
             ["--sprint-file", str(sprint_file), "162-1", "--clear-depends-on"],
         )
         assert result.exit_code == 0, f"idempotent clear; output: {result.output}"
+        # S3c: assert the data state, not just the exit code — a stray
+        # `depends_on: null` write would pass an exit-code-only check.
+        merged = read_sprint(sprint_file)
+        _epic, story, _loc = find_story_in_data(merged, "162-1")
+        assert story is not None
+        assert "depends_on" not in story, "no-op clear must not introduce a blank key"
 
     def test_clear_and_set_together_is_rejected(
         self, runner: CliRunner, sprint_file: Path
@@ -372,6 +432,11 @@ class TestClearDependsOn:
         )
         assert result.exit_code != 0, (
             "--clear-depends-on + --depends-on is contradictory and must be rejected"
+        )
+        # S3b: pin the mutual-exclusion branch specifically — exit_code alone
+        # would pass for any error (bad path, parse error, unknown id).
+        assert "cannot be combined" in result.output, (
+            f"rejection must cite the clear/set conflict; got {result.output!r}"
         )
 
     def test_update_story_clear_param_behavior(self, sprint_file: Path) -> None:
@@ -426,6 +491,21 @@ class TestShardRouteCycleDetection:
         assert result.valid, (
             f"acyclic intra-shard chain must pass; got {[e.message for e in result.errors]!r}"
         )
+
+    def test_shard_route_canceled_dep_warns_not_errors(self) -> None:
+        """S3d: the shard route runs _validate_depends_on, so the 162-83
+        canceled->WARNING policy must apply there too (distinct code path)."""
+        shard = _epic_shard(
+            [
+                _story("162-1", status="canceled"),
+                _story("162-2", depends_on="162-1"),
+            ]
+        )
+        result = validate_epic_shard(shard)
+        assert result.valid, "a canceled dep must not fail shard validation"
+        warns = _warnings(result)
+        assert len(warns) == 1, f"expected one canceled warning; got {warns!r}"
+        assert "162-1" in warns[0].message and "cancel" in warns[0].message.lower()
 
     def test_update_via_shard_file_rejects_introduced_cycle(
         self, tmp_path: Path
@@ -618,6 +698,32 @@ class TestValidSetsAreFrozen:
         assert "chore" in VALID_STORY_TYPES
         assert "canceled" in VALID_STORY_STATUSES
         assert "done" in VALID_STORY_STATUSES
+
+    def test_valid_sprint_statuses_is_frozenset(self) -> None:
+        """S1: the sibling sprint-status set is hardened for consistency."""
+        from pf.sprint.validator import VALID_SPRINT_STATUSES
+
+        assert isinstance(VALID_SPRINT_STATUSES, frozenset)
+
+    def test_story_status_literal_matches_frozenset(self) -> None:
+        """B3 drift guard: the Literal and the frozenset must not diverge.
+
+        Python can't derive a Literal from a runtime set, so the two are hand-
+        maintained — this test fails loudly if a future edit updates one only.
+        """
+        from typing import get_args
+
+        from pf.sprint.validator import StoryStatus
+
+        assert set(get_args(StoryStatus)) == set(VALID_STORY_STATUSES)
+
+    def test_story_type_literal_matches_frozenset(self) -> None:
+        """B3 drift guard: StoryType Literal must match VALID_STORY_TYPES."""
+        from typing import get_args
+
+        from pf.sprint.validator import StoryType
+
+        assert set(get_args(StoryType)) == set(VALID_STORY_TYPES)
 
 
 # =============================================================================

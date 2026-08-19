@@ -431,13 +431,13 @@ def story_show(story_id: str, output_json: bool):
 @click.argument("story_id")
 @click.option("--json", "output_json", is_flag=True, help="Output verdict as JSON")
 @click.option("--sprint-file", type=click.Path(), default=None, help="Path to sprint YAML file")
-def story_stack_ready(story_id: str, output_json: bool, sprint_file: str | None):
+def story_stack_ready(story_id: str, output_json: bool, sprint_file: str | None) -> None:
     """Report whether a story's depends_on parent(s) are all merged.
 
     Resolves scalar OR multi-parent (list) depends_on into a machine-readable
     verdict (162-45). The stack-ready gate consumes this instead of a scalar
     field read so multi-parent stacks resolve correctly. Exit 0 when ready,
-    exit 1 when a parent still blocks.
+    exit 1 when a parent still blocks or the story id cannot be resolved.
 
     \b
     Arguments:
@@ -464,12 +464,16 @@ def story_stack_ready(story_id: str, output_json: bool, sprint_file: str | None)
         import json
 
         click.echo(json.dumps(verdict, indent=2))
-    elif verdict["ready"]:
-        click.echo(f"Stack-ready: {story_id} — all parents merged")
     else:
-        click.echo(
-            f"Blocked: {story_id} waiting on {', '.join(verdict['blocking'])}"
-        )
+        if not verdict["found"]:
+            click.echo(f"Not found: {story_id} — cannot confirm its dependencies")
+        elif verdict["ready"]:
+            click.echo(f"Stack-ready: {story_id} — all parents merged")
+        else:
+            click.echo(f"Blocked: {story_id} waiting on {', '.join(verdict['blocking'])}")
+        # Surface non-blocking notes (e.g. a canceled parent) on their own line.
+        for warning in verdict["warnings"]:
+            click.echo(f"  [warn] {warning}")
 
     if not verdict["ready"]:
         raise SystemExit(1)

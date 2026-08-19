@@ -26,6 +26,8 @@ from pf.sprint.story_move import move_story
 from pf.sprint.validator import (
     VALID_STORY_STATUSES,
     VALID_STORY_TYPES,
+    StoryStatus,
+    StoryType,
     validate_sprint_document,
 )
 from pf.sprint.yaml_io import read_sprint, write_sprint
@@ -39,7 +41,7 @@ def update_story(
     sprint_path: Path,
     story_id: str,
     *,
-    status: str | None = None,
+    status: StoryStatus | None = None,
     title: str | None = None,
     points: int | None = None,
     priority: str | None = None,
@@ -52,7 +54,7 @@ def update_story(
     review_verdict: str | None = None,
     add_ac: list[str] | None = None,
     clear_ac: bool = False,
-    story_type: str | None = None,
+    story_type: StoryType | None = None,
     depends_on: str | None = None,
     clear_depends_on: bool = False,
     dry_run: bool = False,
