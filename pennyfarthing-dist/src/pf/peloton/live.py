@@ -18,9 +18,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
-
 from pf.workflow.helpers import load_workflow_data, resolve_workflow_file
+
+logger = logging.getLogger(__name__)
 
 _STATE_FILE = "peloton-state.json"
 _CLAUDE_DIR = Path.home() / ".claude"
