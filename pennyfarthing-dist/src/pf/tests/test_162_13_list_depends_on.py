@@ -737,18 +737,23 @@ class TestStoryMoveRewritesListForm:
 
 
 # =============================================================================
-# AC3 (pin) -- stack-ready gate consumer is scalar-only
+# AC3 -- stack-ready consumer resolves multi-parent depends_on (UNPINNED)
 #
-# The stack-ready gate (pennyfarthing-dist/gates/stack-ready.md) resolves the
-# parent via a shell capture of `pf sprint story field <id> depends_on`, which
-# echoes str(value) and then uses the result as a single story id. That cannot
-# express a list. These tests PIN that boundary so the limitation is explicit
-# and a later change to the gate has to break a test to move it. Logged as a
-# Delivery Finding for follow-up (multi-parent stacking is out of scope here).
+# Previously the stack-ready gate read depends_on via a shell capture of
+# `pf sprint story field <id> depends_on`, echoing str(value) and using the
+# result as a single story id -- which could not express a list, so these
+# tests PINNED the scalar-only limitation (Delivery Finding).
+#
+# Story 162-89 (folding 162-45) removes that limitation: the gate now resolves
+# its parent(s) through the machine-readable Python consumer
+# ``pf.sprint.stack_ready.evaluate_stack_ready``, which handles scalar OR list
+# depends_on. These tests are UNPINNED accordingly -- the field read still
+# hands back the raw value shape, and the consumer resolves a multi-parent list
+# rather than choking on it.
 # =============================================================================
 
 
-class TestStackReadyGateConsumerIsScalarOnly:
+class TestStackReadyConsumerResolvesMultiParent:
     def test_scalar_field_read_is_a_usable_story_id(self) -> None:
         data = _merged_sprint(
             epic_stories=[_story("162-1"), _story("162-2", depends_on="162-1")],
@@ -757,19 +762,13 @@ class TestStackReadyGateConsumerIsScalarOnly:
         value = get_story_field(data, "162-2", "depends_on")
 
         assert value == "162-1", (
-            "the gate's scalar contract: the field read must hand back exactly "
-            f"the parent story id; got {value!r}"
+            "the field read must hand back exactly the parent story id; "
+            f"got {value!r}"
         )
-        assert str(value) == "162-1", (
-            "the gate captures str(value) in shell -- it must equal the id"
-        )
+        assert str(value) == "162-1"
 
-    def test_list_field_read_is_returned_as_a_list_not_an_id(self) -> None:
-        """PIN: the gate gets a list, and str() of it is NOT a story id.
-
-        Documents the known limitation rather than asserting the gate works:
-        multi-parent stacking needs a gate change (Delivery Finding).
-        """
+    def test_list_field_read_is_returned_as_a_list(self) -> None:
+        """The field read hands back the list unmangled for the consumer."""
         data = _merged_sprint(
             epic_stories=[
                 _story("162-1"),
@@ -786,7 +785,27 @@ class TestStackReadyGateConsumerIsScalarOnly:
         assert value == ["162-1", "162-2"], (
             f"the field read must not mangle the list; got {value!r}"
         )
-        assert str(value) not in ("162-1", "162-2"), (
-            "pin: str() of a list is not a single story id -- the stack-ready "
-            "gate cannot resolve a multi-parent depends_on"
+
+    def test_consumer_resolves_multi_parent_stack(self) -> None:
+        """UNPIN: the stack-ready consumer resolves a multi-parent list.
+
+        Replaces the old scalar-only pin: multi-parent stacking is now
+        supported (162-89 / 162-45). All parents done -> ready.
+        """
+        from pf.sprint.stack_ready import evaluate_stack_ready
+
+        data = _merged_sprint(
+            epic_stories=[
+                _story("162-1", status="done"),
+                _story("162-2", status="done"),
+                _story("162-3", depends_on=["162-1", "162-2"]),
+            ],
         )
+
+        verdict = evaluate_stack_ready(data, "162-3")
+
+        assert verdict["ready"] is True, (
+            "the stack-ready consumer must resolve a multi-parent depends_on "
+            f"(all parents done -> ready); got {verdict!r}"
+        )
+        assert {p["id"] for p in verdict["parents"]} == {"162-1", "162-2"}
